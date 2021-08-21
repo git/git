@@ -177,8 +177,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git 2.31\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2021-08-03 17:06+0800\n"
-"PO-Revision-Date: 2021-08-06 13:38+0300\n"
+"POT-Creation-Date: 2021-08-14 07:56+0800\n"
+"PO-Revision-Date: 2021-08-21 18:19+0200\n"
 "Last-Translator: Alexander Shopov <ash@kambanaria.org>\n"
 "Language-Team: Bulgarian <dict@fsa-bg.org>\n"
 "Language: bg\n"
@@ -192,7 +192,7 @@ msgstr ""
 msgid "Huh (%s)?"
 msgstr "Неуспешен анализ — „%s“."
 
-#: add-interactive.c:529 add-interactive.c:830 reset.c:65 sequencer.c:3493
+#: add-interactive.c:529 add-interactive.c:830 reset.c:64 sequencer.c:3493
 #: sequencer.c:3964 sequencer.c:4119 builtin/rebase.c:1528
 #: builtin/rebase.c:1953
 msgid "could not read index"
@@ -222,7 +222,7 @@ msgstr "Обновяване"
 msgid "could not stage '%s'"
 msgstr "неуспешно добавяне в индекса на „%s“"
 
-#: add-interactive.c:703 add-interactive.c:892 reset.c:89 sequencer.c:3707
+#: add-interactive.c:703 add-interactive.c:892 reset.c:88 sequencer.c:3707
 msgid "could not write index"
 msgstr "индексът не може да бъде записан"
 
@@ -381,9 +381,10 @@ msgstr "извън индекса"
 #: add-interactive.c:1144 apply.c:4994 apply.c:4997 builtin/am.c:2309
 #: builtin/am.c:2312 builtin/bugreport.c:135 builtin/clone.c:128
 #: builtin/fetch.c:152 builtin/merge.c:285 builtin/pull.c:190
-#: builtin/submodule--helper.c:408 builtin/submodule--helper.c:1818
-#: builtin/submodule--helper.c:1821 builtin/submodule--helper.c:2326
-#: builtin/submodule--helper.c:2329 builtin/submodule--helper.c:2572
+#: builtin/submodule--helper.c:410 builtin/submodule--helper.c:1886
+#: builtin/submodule--helper.c:1889 builtin/submodule--helper.c:2343
+#: builtin/submodule--helper.c:2346 builtin/submodule--helper.c:2589
+#: builtin/submodule--helper.c:2890 builtin/submodule--helper.c:2893
 #: git-add--interactive.perl:213
 msgid "path"
 msgstr "път"
@@ -979,7 +980,7 @@ msgstr ""
 msgid "Exiting because of an unresolved conflict."
 msgstr "Изход от програмата заради некоригиран конфликт."
 
-#: advice.c:283 builtin/merge.c:1374
+#: advice.c:283 builtin/merge.c:1375
 msgid "You have not concluded your merge (MERGE_HEAD exists)."
 msgstr "Не сте завършили сливане.  (Указателят „MERGE_HEAD“ съществува)."
 
@@ -1774,7 +1775,7 @@ msgstr "обектът „%s“ не може да бъде прочетен"
 
 #: archive.c:342 sequencer.c:460 sequencer.c:1915 sequencer.c:3095
 #: sequencer.c:3537 sequencer.c:3665 builtin/am.c:262 builtin/commit.c:833
-#: builtin/merge.c:1143
+#: builtin/merge.c:1144
 #, c-format
 msgid "could not read '%s'"
 msgstr "файлът „%s“ не може да бъде прочетен"
@@ -1863,7 +1864,8 @@ msgid "list supported archive formats"
 msgstr "извеждане на списъка с поддържаните формати"
 
 #: archive.c:569 builtin/archive.c:91 builtin/clone.c:118 builtin/clone.c:121
-#: builtin/submodule--helper.c:1830 builtin/submodule--helper.c:2335
+#: builtin/submodule--helper.c:1898 builtin/submodule--helper.c:2352
+#: builtin/submodule--helper.c:2902
 msgid "repo"
 msgstr "хранилище"
 
@@ -2057,7 +2059,7 @@ msgstr ""
 "Едновременното задаване на опциите „--reverse“ и „--first-parent“ изисква "
 "указването на крайно подаване"
 
-#: blame.c:2820 bundle.c:224 ref-filter.c:2274 remote.c:2041 sequencer.c:2333
+#: blame.c:2820 bundle.c:224 ref-filter.c:2278 remote.c:2041 sequencer.c:2333
 #: sequencer.c:4865 submodule.c:844 builtin/commit.c:1113 builtin/log.c:414
 #: builtin/log.c:1021 builtin/log.c:1629 builtin/log.c:2056 builtin/log.c:2346
 #: builtin/merge.c:428 builtin/pack-objects.c:3343 builtin/pack-objects.c:3806
@@ -3228,7 +3230,7 @@ msgstr "стандартният вход на списъка с версиит�
 #: convert.c:183
 #, c-format
 msgid "illegal crlf_action %d"
-msgstr "неправилно действие за край на ред: %d"
+msgstr "неправилно действие за край на ред (crlf_action): %d"
 
 #: convert.c:196
 #, c-format
@@ -3338,7 +3340,7 @@ msgstr "неочакван вид филтър"
 msgid "path name too long for external filter"
 msgstr "пътят е прекалено дълъг за външен филтър"
 
-#: convert.c:934
+#: convert.c:935
 #, c-format
 msgid ""
 "external filter '%s' is not available anymore although not all paths have "
@@ -3347,17 +3349,17 @@ msgstr ""
 "външният филтър „%s“ вече не е наличен, въпреки че не всички пътища са "
 "филтрирани"
 
-#: convert.c:1234
+#: convert.c:1236
 msgid "true/false are no valid working-tree-encodings"
 msgstr ""
 "„true“/„false“ (истина/лъжа̀) не може да са кодирания на работното дърво"
 
-#: convert.c:1414 convert.c:1447
+#: convert.c:1416 convert.c:1449
 #, c-format
 msgid "%s: clean filter '%s' failed"
 msgstr "%s: неуспешно изпълнение на декодиращ филтър „%s“"
 
-#: convert.c:1490
+#: convert.c:1492
 #, c-format
 msgid "%s: smudge filter %s failed"
 msgstr "%s: неуспешно изпълнение на кодиращ филтър „%s“"
@@ -3539,8 +3541,8 @@ msgid ""
 "'dimmed-zebra', 'plain'"
 msgstr ""
 "настройката за цвят за преместване трябва да е една от: „no“ (без), "
-"„default“ (стандартно), „blocks“ (парчета), „zebra“ (райе), "
-"„dimmed_zebra“ (тъмно райе), „plain“ (обикновено)"
+"„default“ (стандартно), „blocks“ (парчета), „zebra“ (райе), „dimmed-"
+"zebra“ (тъмно райе), „plain“ (обикновено)"
 
 #: diff.c:325
 #, c-format
@@ -3602,7 +3604,7 @@ msgstr ""
 
 #: diff.c:4643
 msgid ""
-"---pickaxe-all and --find-object are mutually exclusive, use --pickaxe-all "
+"--pickaxe-all and --find-object are mutually exclusive, use --pickaxe-all "
 "with -G and -S"
 msgstr ""
 "опциите „--pickaxe-all“ и „--find-object“ са несъвместими една с друга.  "
@@ -3724,7 +3726,7 @@ msgstr "файловете с разлики да са в суров форма�
 
 #: diff.c:5398
 msgid "synonym for '-p --raw'"
-msgstr "псевдоним на „-p --stat“"
+msgstr "псевдоним на „-p --raw“"
 
 #: diff.c:5402
 msgid "synonym for '-p --stat'"
@@ -3753,7 +3755,7 @@ msgstr "псевдоним на „--dirstat=cumulative“"
 
 #: diff.c:5420
 msgid "synonym for --dirstat=files,param1,param2..."
-msgstr "псевдоним на „--dirstat=ФАЙЛОВЕ,ПАРАМЕТЪР_1,ПАРАМЕТЪР_2,…“"
+msgstr "псевдоним на „--dirstat=ФАЙЛ…,ПАРАМЕТЪР_1,ПАРАМЕТЪР_2,…“"
 
 #: diff.c:5424
 msgid "warn if changes introduce conflict markers or whitespace errors"
@@ -4180,7 +4182,7 @@ msgstr "задайте променливата „%s“ да е поне %d и 
 msgid "failed to read orderfile '%s'"
 msgstr "файлът с подредбата на съответствията „%s“ не може да бъде прочетен"
 
-#: diffcore-rename.c:1510
+#: diffcore-rename.c:1514
 msgid "Performing inexact rename detection"
 msgstr "Търсене на преименувания на обекти съчетани с промени"
 
@@ -4199,52 +4201,52 @@ msgstr "пътят „%s“ не съвпада с никой файл в git"
 msgid "unrecognized pattern: '%s'"
 msgstr "непознат шаблон: „%s“"
 
-#: dir.c:792 dir.c:806
+#: dir.c:790 dir.c:804
 #, c-format
 msgid "unrecognized negative pattern: '%s'"
 msgstr "непознат отрицателен шаблон: „%s“"
 
-#: dir.c:824
+#: dir.c:820
 #, c-format
 msgid "your sparse-checkout file may have issues: pattern '%s' is repeated"
 msgstr ""
 "файлът определящ частичността на изтегленото хранилище може да има проблем: "
 "шаблонът „%s“ се повтаря"
 
-#: dir.c:834
+#: dir.c:830
 msgid "disabling cone pattern matching"
 msgstr "изключване на пътеводното напасване"
 
-#: dir.c:1221
+#: dir.c:1214
 #, c-format
 msgid "cannot use %s as an exclude file"
 msgstr "„%s“ не може да се ползва за игнорираните файлове (като gitignore)"
 
-#: dir.c:2358
+#: dir.c:2351
 #, c-format
 msgid "could not open directory '%s'"
 msgstr "директорията „%s“ не може да бъде отворена"
 
-#: dir.c:2660
+#: dir.c:2653
 msgid "failed to get kernel name and information"
 msgstr "името и версията на ядрото не бяха получени"
 
-#: dir.c:2784
+#: dir.c:2777
 msgid "untracked cache is disabled on this system or location"
 msgstr ""
 "кешът за неследените файлове е изключен на тази система или местоположение"
 
-#: dir.c:3617
+#: dir.c:3610
 #, c-format
 msgid "index file corrupt in repo %s"
 msgstr "файлът с индекса е повреден в хранилището „%s“"
 
-#: dir.c:3664 dir.c:3669
+#: dir.c:3657 dir.c:3662
 #, c-format
 msgid "could not create directories for %s"
 msgstr "директориите за „%s“ не може да бъдат създадени"
 
-#: dir.c:3698
+#: dir.c:3691
 #, c-format
 msgid "could not migrate git directory from '%s' to '%s'"
 msgstr "директорията на git не може да се мигрира от „%s“ до „%s“"
@@ -4268,7 +4270,7 @@ msgstr "неуспешно изпълнение на „stat“ върху фа�
 msgid "bad git namespace path \"%s\""
 msgstr "неправилен път към пространства от имена „%s“"
 
-#: environment.c:335
+#: environment.c:334
 #, c-format
 msgid "could not set GIT_DIR to '%s'"
 msgstr "GIT_DIR не може да се зададе да е „%s“"
@@ -4915,34 +4917,34 @@ msgstr "цитирани знаци CRLF"
 msgid "bad action '%s' for '%s'"
 msgstr "неправилно действие „%s“ за „%s“"
 
-#: merge-ort.c:1228 merge-recursive.c:1206
+#: merge-ort.c:1569 merge-recursive.c:1201
 #, c-format
 msgid "Failed to merge submodule %s (not checked out)"
 msgstr "Неуспешно сливане на подмодула „%s“ (не е изтеглен)"
 
-#: merge-ort.c:1237 merge-recursive.c:1213
+#: merge-ort.c:1578 merge-recursive.c:1208
 #, c-format
 msgid "Failed to merge submodule %s (commits not present)"
 msgstr "Неуспешно сливане на подмодула „%s“ (няма подавания)"
 
-#: merge-ort.c:1246 merge-recursive.c:1220
+#: merge-ort.c:1587 merge-recursive.c:1215
 #, c-format
 msgid "Failed to merge submodule %s (commits don't follow merge-base)"
 msgstr ""
 "Подмодулът „%s“ не може да бъде слят (базата за сливане не предшества "
 "подаванията)"
 
-#: merge-ort.c:1256 merge-ort.c:1263
+#: merge-ort.c:1597 merge-ort.c:1604
 #, c-format
 msgid "Note: Fast-forwarding submodule %s to %s"
 msgstr "Бележка: Превъртане на подмодула „%s“ към „%s“"
 
-#: merge-ort.c:1284
+#: merge-ort.c:1625
 #, c-format
 msgid "Failed to merge submodule %s"
 msgstr "Неуспешно сливане на подмодула „%s“"
 
-#: merge-ort.c:1291
+#: merge-ort.c:1632
 #, c-format
 msgid ""
 "Failed to merge submodule %s, but a possible merge resolution exists:\n"
@@ -4951,7 +4953,7 @@ msgstr ""
 "Неуспешно сливане на подмодула „%s“, но е открито възможно решение:\n"
 "%s\n"
 
-#: merge-ort.c:1295 merge-recursive.c:1274
+#: merge-ort.c:1636 merge-recursive.c:1269
 #, c-format
 msgid ""
 "If this is correct simply add it to the index for example\n"
@@ -4967,7 +4969,7 @@ msgstr ""
 "\n"
 "Това приема предложеното.\n"
 
-#: merge-ort.c:1308
+#: merge-ort.c:1649
 #, c-format
 msgid ""
 "Failed to merge submodule %s, but multiple possible merges exist:\n"
@@ -4976,21 +4978,21 @@ msgstr ""
 "Неуспешно сливане на подмодула „%s“, но са открити множество решения:\n"
 "%s"
 
-#: merge-ort.c:1527 merge-recursive.c:1363
+#: merge-ort.c:1868 merge-recursive.c:1358
 msgid "Failed to execute internal merge"
 msgstr "Неуспешно вътрешно сливане"
 
-#: merge-ort.c:1532 merge-recursive.c:1368
+#: merge-ort.c:1873 merge-recursive.c:1363
 #, c-format
 msgid "Unable to add %s to database"
 msgstr "„%s“ не може да се добави в базата с данни"
 
-#: merge-ort.c:1539 merge-recursive.c:1401
+#: merge-ort.c:1880 merge-recursive.c:1396
 #, c-format
 msgid "Auto-merging %s"
 msgstr "Автоматично сливане на „%s“"
 
-#: merge-ort.c:1678 merge-recursive.c:2123
+#: merge-ort.c:2019 merge-recursive.c:2118
 #, c-format
 msgid ""
 "CONFLICT (implicit dir rename): Existing file/dir at %s in the way of "
@@ -4999,7 +5001,7 @@ msgstr ""
 "КОНФЛИКТ (косвено преименуване на директория): следният файл или директория "
 "„%s“ не позволяват косвеното преименуване на следния път/ища: %s."
 
-#: merge-ort.c:1688 merge-recursive.c:2133
+#: merge-ort.c:2029 merge-recursive.c:2128
 #, c-format
 msgid ""
 "CONFLICT (implicit dir rename): Cannot map more than one path to %s; "
@@ -5009,7 +5011,7 @@ msgstr ""
 "съответства на „%s“.  Косвено преименуване на директория води до поставянето "
 "на тези пътища там: %s."
 
-#: merge-ort.c:1746
+#: merge-ort.c:2087
 #, c-format
 msgid ""
 "CONFLICT (directory rename split): Unclear where to rename %s to; it was "
@@ -5020,7 +5022,7 @@ msgstr ""
 "да се преименува „%s“, защото е преместен в няколко нови директории, без "
 "никоя от тях да е по-честа цел."
 
-#: merge-ort.c:1900 merge-recursive.c:2469
+#: merge-ort.c:2241 merge-recursive.c:2464
 #, c-format
 msgid ""
 "WARNING: Avoiding applying %s -> %s rename to %s, because %s itself was "
@@ -5029,7 +5031,7 @@ msgstr ""
 "ПРЕДУПРЕЖДЕНИЕ: прескачане на преименуването на „%s“ на „%s“ в „%s“, защото "
 "„%s“ също е с променено име."
 
-#: merge-ort.c:2044 merge-recursive.c:3252
+#: merge-ort.c:2385 merge-recursive.c:3247
 #, c-format
 msgid ""
 "Path updated: %s added in %s inside a directory that was renamed in %s; "
@@ -5038,7 +5040,7 @@ msgstr ""
 "Обновен път: „%s“ е добавен в „%s“ в директория, която е преименувана в "
 "„%s“.  Обектът се мести в „%s“."
 
-#: merge-ort.c:2051 merge-recursive.c:3259
+#: merge-ort.c:2392 merge-recursive.c:3254
 #, c-format
 msgid ""
 "Path updated: %s renamed to %s in %s, inside a directory that was renamed in "
@@ -5047,7 +5049,7 @@ msgstr ""
 "Обновен път: „%s“ е преименуван на „%s“ в „%s“ в директория, която е "
 "преименувана в „%s“.  Обектът се мести в „%s“."
 
-#: merge-ort.c:2064 merge-recursive.c:3255
+#: merge-ort.c:2405 merge-recursive.c:3250
 #, c-format
 msgid ""
 "CONFLICT (file location): %s added in %s inside a directory that was renamed "
@@ -5056,7 +5058,7 @@ msgstr ""
 "КОНФЛИКТ (места на файлове): „%s“ е добавен в „%s“ в директория, която е "
 "преименувана в „%s“.  Предложението е да преместите обекта в „%s“."
 
-#: merge-ort.c:2072 merge-recursive.c:3262
+#: merge-ort.c:2413 merge-recursive.c:3257
 #, c-format
 msgid ""
 "CONFLICT (file location): %s renamed to %s in %s, inside a directory that "
@@ -5065,14 +5067,14 @@ msgstr ""
 "КОНФЛИКТ (места на файлове): „%s“ е преименуван на „%s“ в „%s“ в директория, "
 "която е преименувана в „%s“.  Предложението е да преместите обекта в „%s“."
 
-#: merge-ort.c:2228
+#: merge-ort.c:2569
 #, c-format
 msgid "CONFLICT (rename/rename): %s renamed to %s in %s and to %s in %s."
 msgstr ""
 "КОНФЛИКТ (преименуване/преименуване): „%s“ е преименуван на „%s“ в клон „%s“ "
 "и на „%s“ в „%s“."
 
-#: merge-ort.c:2323
+#: merge-ort.c:2664
 #, c-format
 msgid ""
 "CONFLICT (rename involved in collision): rename of %s -> %s has content "
@@ -5083,24 +5085,24 @@ msgstr ""
 "има и промени в съдържанието, а и има съвпадение на пътя.  Може да се "
 "получат вложени маркери за конфликт."
 
-#: merge-ort.c:2342 merge-ort.c:2366
+#: merge-ort.c:2683 merge-ort.c:2707
 #, c-format
 msgid "CONFLICT (rename/delete): %s renamed to %s in %s, but deleted in %s."
 msgstr ""
 "КОНФЛИКТ (преименуване/добавяне): „%s“ е преименуван на „%s“ в клон „%s“, а "
 "е изтрит в „%s“."
 
-#: merge-ort.c:2819 merge-recursive.c:3013
+#: merge-ort.c:3182 merge-recursive.c:3008
 #, c-format
 msgid "cannot read object %s"
 msgstr "обектът „%s“ не може да се прочете"
 
-#: merge-ort.c:2822 merge-recursive.c:3016
+#: merge-ort.c:3185 merge-recursive.c:3011
 #, c-format
 msgid "object %s is not a blob"
 msgstr "обектът „%s“ не е BLOB"
 
-#: merge-ort.c:3250
+#: merge-ort.c:3613
 #, c-format
 msgid ""
 "CONFLICT (file/directory): directory in the way of %s from %s; moving it to "
@@ -5109,7 +5111,7 @@ msgstr ""
 "КОНФЛИКТ (файл/директория): директория на мястото на „%s“ от „%s“, вместо "
 "това се извършва преместване в „%s“."
 
-#: merge-ort.c:3326
+#: merge-ort.c:3689
 #, c-format
 msgid ""
 "CONFLICT (distinct types): %s had different types on each side; renamed both "
@@ -5118,7 +5120,7 @@ msgstr ""
 "КОНФЛИКТ (различни видове): „%s“ е различен вид обект в двата варианта.  И "
 "двата се преименуват, за да може всичко да е отразено."
 
-#: merge-ort.c:3333
+#: merge-ort.c:3696
 #, c-format
 msgid ""
 "CONFLICT (distinct types): %s had different types on each side; renamed one "
@@ -5127,24 +5129,24 @@ msgstr ""
 "КОНФЛИКТ (различни видове): „%s“ е различен вид обект в двата варианта.  "
 "Извършва се преименуване в единия, за да може всичко да е отразено."
 
-#: merge-ort.c:3433 merge-recursive.c:3092
+#: merge-ort.c:3796 merge-recursive.c:3087
 msgid "content"
 msgstr "съдържание"
 
-#: merge-ort.c:3435 merge-recursive.c:3096
+#: merge-ort.c:3798 merge-recursive.c:3091
 msgid "add/add"
 msgstr "добавяне/добавяне"
 
-#: merge-ort.c:3437 merge-recursive.c:3141
+#: merge-ort.c:3800 merge-recursive.c:3136
 msgid "submodule"
 msgstr "ПОДМОДУЛ"
 
-#: merge-ort.c:3439 merge-recursive.c:3142
+#: merge-ort.c:3802 merge-recursive.c:3137
 #, c-format
 msgid "CONFLICT (%s): Merge conflict in %s"
 msgstr "КОНФЛИКТ (%s): Конфликт при сливане на „%s“"
 
-#: merge-ort.c:3470
+#: merge-ort.c:3833
 #, c-format
 msgid ""
 "CONFLICT (modify/delete): %s deleted in %s and modified in %s.  Version %s "
@@ -5153,7 +5155,7 @@ msgstr ""
 "КОНФЛИКТ (промяна/изтриване): „%s“ е изтрит в %s, а е променен в %s.  Версия "
 "%s на „%s“ е оставена в дървото."
 
-#: merge-ort.c:3757
+#: merge-ort.c:4120
 #, c-format
 msgid ""
 "Note: %s not up to date and in way of checking out conflicted version; old "
@@ -5165,12 +5167,12 @@ msgstr ""
 #. TRANSLATORS: The %s arguments are: 1) tree hash of a merge
 #. base, and 2-3) the trees for the two trees we're merging.
 #.
-#: merge-ort.c:4116
+#: merge-ort.c:4487
 #, c-format
 msgid "collecting merge info failed for trees %s, %s, %s"
 msgstr "неуспешно събиране на информацията за сливането на „%s“, „%s“ и „%s“"
 
-#: merge-ort-wrappers.c:13 merge-recursive.c:3707
+#: merge-ort-wrappers.c:13 merge-recursive.c:3702
 #, c-format
 msgid ""
 "Your local changes to the following files would be overwritten by merge:\n"
@@ -5179,113 +5181,113 @@ msgstr ""
 "Сливането ще презапише локалните промени на тези файлове:\n"
 "    %s"
 
-#: merge-ort-wrappers.c:33 merge-recursive.c:3473 builtin/merge.c:402
+#: merge-ort-wrappers.c:33 merge-recursive.c:3468 builtin/merge.c:402
 msgid "Already up to date."
 msgstr "Вече е обновено."
 
-#: merge-recursive.c:357
+#: merge-recursive.c:352
 msgid "(bad commit)\n"
 msgstr "(лошо подаване)\n"
 
-#: merge-recursive.c:380
+#: merge-recursive.c:375
 #, c-format
 msgid "add_cacheinfo failed for path '%s'; merge aborting."
 msgstr ""
 "неуспешно изпълнение на „add_cacheinfo“ за пътя „%s“.  Сливането е "
 "преустановено."
 
-#: merge-recursive.c:389
+#: merge-recursive.c:384
 #, c-format
 msgid "add_cacheinfo failed to refresh for path '%s'; merge aborting."
 msgstr ""
 "неуспешно изпълнение на „add_cacheinfo“ за обновяването на пътя „%s“.  "
 "Сливането е преустановено."
 
-#: merge-recursive.c:877
+#: merge-recursive.c:872
 #, c-format
 msgid "failed to create path '%s'%s"
 msgstr "грешка при създаването на пътя „%s“%s"
 
-#: merge-recursive.c:888
+#: merge-recursive.c:883
 #, c-format
 msgid "Removing %s to make room for subdirectory\n"
 msgstr "Изтриване на „%s“, за да се освободи място за поддиректория\n"
 
-#: merge-recursive.c:902 merge-recursive.c:921
+#: merge-recursive.c:897 merge-recursive.c:916
 msgid ": perhaps a D/F conflict?"
 msgstr ": възможно е да има конфликт директория/файл."
 
-#: merge-recursive.c:911
+#: merge-recursive.c:906
 #, c-format
 msgid "refusing to lose untracked file at '%s'"
 msgstr ""
 "преустановяване на действието, за да не се изтрие неследеният файл „%s“"
 
-#: merge-recursive.c:952 builtin/cat-file.c:41
+#: merge-recursive.c:947 builtin/cat-file.c:41
 #, c-format
 msgid "cannot read object %s '%s'"
 msgstr "обектът „%s“ (%s) не може да бъде прочетен"
 
-#: merge-recursive.c:957
+#: merge-recursive.c:952
 #, c-format
 msgid "blob expected for %s '%s'"
 msgstr "обектът „%s“ (%s) се очакваше да е BLOB, а не е"
 
-#: merge-recursive.c:982
+#: merge-recursive.c:977
 #, c-format
 msgid "failed to open '%s': %s"
 msgstr "„%s“ не може да се отвори: %s"
 
-#: merge-recursive.c:993
+#: merge-recursive.c:988
 #, c-format
 msgid "failed to symlink '%s': %s"
 msgstr "неуспешно създаване на символната връзка „%s“: %s"
 
-#: merge-recursive.c:998
+#: merge-recursive.c:993
 #, c-format
 msgid "do not know what to do with %06o %s '%s'"
 msgstr ""
 "не е ясно какво да се прави с обекта „%2$s“ (%3$s) с права за достъп „%1$06o“"
 
-#: merge-recursive.c:1228 merge-recursive.c:1240
+#: merge-recursive.c:1223 merge-recursive.c:1235
 #, c-format
 msgid "Fast-forwarding submodule %s to the following commit:"
 msgstr "Превъртане на подмодула „%s“ до следното подаване:"
 
-#: merge-recursive.c:1231 merge-recursive.c:1243
+#: merge-recursive.c:1226 merge-recursive.c:1238
 #, c-format
 msgid "Fast-forwarding submodule %s"
 msgstr "Превъртане на подмодула „%s“"
 
-#: merge-recursive.c:1266
+#: merge-recursive.c:1261
 #, c-format
 msgid "Failed to merge submodule %s (merge following commits not found)"
 msgstr ""
 "Неуспешно сливане на подмодула „%s“ (липсва сливането, което се предшества "
 "от подаванията)"
 
-#: merge-recursive.c:1270
+#: merge-recursive.c:1265
 #, c-format
 msgid "Failed to merge submodule %s (not fast-forward)"
 msgstr "Неуспешно сливане на подмодула „%s“ (не е превъртане)"
 
-#: merge-recursive.c:1271
+#: merge-recursive.c:1266
 msgid "Found a possible merge resolution for the submodule:\n"
 msgstr ""
 "Открито е сливане, което може да решава проблема със сливането на "
 "подмодула:\n"
 
-#: merge-recursive.c:1283
+#: merge-recursive.c:1278
 #, c-format
 msgid "Failed to merge submodule %s (multiple merges found)"
 msgstr "Неуспешно сливане на подмодула „%s“ (открити са множество сливания)"
 
-#: merge-recursive.c:1425
+#: merge-recursive.c:1420
 #, c-format
 msgid "Error: Refusing to lose untracked file at %s; writing to %s instead."
 msgstr "Грешка: за да не се изтрие неследеният файл „%s“, се записва в „%s“."
 
-#: merge-recursive.c:1497
+#: merge-recursive.c:1492
 #, c-format
 msgid ""
 "CONFLICT (%s/delete): %s deleted in %s and %s in %s. Version %s of %s left "
@@ -5294,7 +5296,7 @@ msgstr ""
 "КОНФЛИКТ (%s/изтриване): „%s“ е изтрит в %s, а „%s“ в %s.  Версия %s на „%s“ "
 "е оставена в дървото."
 
-#: merge-recursive.c:1502
+#: merge-recursive.c:1497
 #, c-format
 msgid ""
 "CONFLICT (%s/delete): %s deleted in %s and %s to %s in %s. Version %s of %s "
@@ -5303,7 +5305,7 @@ msgstr ""
 "КОНФЛИКТ (%s/изтриване): „%s“ е изтрит в %s, а „%s“ е преименуван на „%s“ в "
 "%s.  Версия %s на „%s“ е оставена в дървото."
 
-#: merge-recursive.c:1509
+#: merge-recursive.c:1504
 #, c-format
 msgid ""
 "CONFLICT (%s/delete): %s deleted in %s and %s in %s. Version %s of %s left "
@@ -5312,7 +5314,7 @@ msgstr ""
 "КОНФЛИКТ (%s/изтриване): „%s“ е изтрит в %s, а „%s“ в %s.  Версия %s на „%s“ "
 "е оставена в дървото: %s."
 
-#: merge-recursive.c:1514
+#: merge-recursive.c:1509
 #, c-format
 msgid ""
 "CONFLICT (%s/delete): %s deleted in %s and %s to %s in %s. Version %s of %s "
@@ -5321,45 +5323,45 @@ msgstr ""
 "КОНФЛИКТ (%s/изтриване): „%s“ е изтрит в %s, а „%s“ е преименуван на „%s“ в "
 "%s.  Версия %s на „%s“ е оставена в дървото: %s."
 
-#: merge-recursive.c:1549
+#: merge-recursive.c:1544
 msgid "rename"
 msgstr "преименуване"
 
-#: merge-recursive.c:1549
+#: merge-recursive.c:1544
 msgid "renamed"
 msgstr "преименуван"
 
-#: merge-recursive.c:1600 merge-recursive.c:2506 merge-recursive.c:3169
+#: merge-recursive.c:1595 merge-recursive.c:2501 merge-recursive.c:3164
 #, c-format
 msgid "Refusing to lose dirty file at %s"
 msgstr "Преустановяване на действието, за да не се изгуби промененият „%s“"
 
-#: merge-recursive.c:1610
+#: merge-recursive.c:1605
 #, c-format
 msgid "Refusing to lose untracked file at %s, even though it's in the way."
 msgstr ""
 "Отказ да се загуби неследеният файл „%s“, защото е на място, където пречи."
 
-#: merge-recursive.c:1668
+#: merge-recursive.c:1663
 #, c-format
 msgid "CONFLICT (rename/add): Rename %s->%s in %s.  Added %s in %s"
 msgstr ""
 "КОНФЛИКТ (преименуване/добавяне): „%s“ е преименуван на „%s“ в клон „%s“, а "
 "„%s“ е добавен в „%s“"
 
-#: merge-recursive.c:1699
+#: merge-recursive.c:1694
 #, c-format
 msgid "%s is a directory in %s adding as %s instead"
 msgstr "„%s“ е директория в „%s“, затова се добавя като „%s“"
 
-#: merge-recursive.c:1704
+#: merge-recursive.c:1699
 #, c-format
 msgid "Refusing to lose untracked file at %s; adding as %s instead"
 msgstr ""
 "Преустановяване на действието, за да не се изгуби неследеният файл „%s“.  "
 "Вместо него се добавя „%s“"
 
-#: merge-recursive.c:1731
+#: merge-recursive.c:1726
 #, c-format
 msgid ""
 "CONFLICT (rename/rename): Rename \"%s\"->\"%s\" in branch \"%s\" rename \"%s"
@@ -5368,18 +5370,18 @@ msgstr ""
 "КОНФЛИКТ (преименуване/преименуване): „%s“ е преименуван на „%s“ в клон "
 "„%s“, а „%s“ е преименуван на „%s“ в „%s“/%s."
 
-#: merge-recursive.c:1736
+#: merge-recursive.c:1731
 msgid " (left unresolved)"
 msgstr " (некоригиран конфликт)"
 
-#: merge-recursive.c:1828
+#: merge-recursive.c:1823
 #, c-format
 msgid "CONFLICT (rename/rename): Rename %s->%s in %s. Rename %s->%s in %s"
 msgstr ""
 "КОНФЛИКТ (преименуване/преименуване): „%s“ е преименуван на „%s“ в клон "
 "„%s“, а „%s“ е преименуван на „%s“ в „%s“"
 
-#: merge-recursive.c:2091
+#: merge-recursive.c:2086
 #, c-format
 msgid ""
 "CONFLICT (directory rename split): Unclear where to place %s because "
@@ -5390,7 +5392,7 @@ msgstr ""
 "постави „%s“, защото няколко нови директории поделят съдържанието на "
 "директория „%s“, като никоя не съдържа мнозинство от файловете ѝ."
 
-#: merge-recursive.c:2225
+#: merge-recursive.c:2220
 #, c-format
 msgid ""
 "CONFLICT (rename/rename): Rename directory %s->%s in %s. Rename directory %s-"
@@ -5399,80 +5401,80 @@ msgstr ""
 "КОНФЛИКТ (преименуване/преименуване): „%s“ е преименуван на „%s“ в клон "
 "„%s“, а „%s“ е преименуван на „%s“ в „%s“"
 
-#: merge-recursive.c:3080
+#: merge-recursive.c:3075
 msgid "modify"
 msgstr "промяна"
 
-#: merge-recursive.c:3080
+#: merge-recursive.c:3075
 msgid "modified"
 msgstr "променен"
 
-#: merge-recursive.c:3119
+#: merge-recursive.c:3114
 #, c-format
 msgid "Skipped %s (merged same as existing)"
 msgstr "Прескачане на „%s“ (слетият резултат е идентичен със сегашния)"
 
-#: merge-recursive.c:3172
+#: merge-recursive.c:3167
 #, c-format
 msgid "Adding as %s instead"
 msgstr "Добавяне като „%s“"
 
-#: merge-recursive.c:3376
+#: merge-recursive.c:3371
 #, c-format
 msgid "Removing %s"
 msgstr "Изтриване на „%s“"
 
-#: merge-recursive.c:3399
+#: merge-recursive.c:3394
 msgid "file/directory"
 msgstr "файл/директория"
 
-#: merge-recursive.c:3404
+#: merge-recursive.c:3399
 msgid "directory/file"
 msgstr "директория/файл"
 
-#: merge-recursive.c:3411
+#: merge-recursive.c:3406
 #, c-format
 msgid "CONFLICT (%s): There is a directory with name %s in %s. Adding %s as %s"
 msgstr ""
 "КОНФЛИКТ (%s): Съществува директория на име „%s“ в „%s“.  Добавяне на „%s“ "
 "като „%s“"
 
-#: merge-recursive.c:3420
+#: merge-recursive.c:3415
 #, c-format
 msgid "Adding %s"
 msgstr "Добавяне на „%s“"
 
-#: merge-recursive.c:3429
+#: merge-recursive.c:3424
 #, c-format
 msgid "CONFLICT (add/add): Merge conflict in %s"
 msgstr "КОНФЛИКТ (добавяне/добавяне): Конфликт при сливане на „%s“"
 
-#: merge-recursive.c:3482
+#: merge-recursive.c:3477
 #, c-format
 msgid "merging of trees %s and %s failed"
 msgstr "неуспешно сливане на дърветата „%s“ и „%s“"
 
-#: merge-recursive.c:3576
+#: merge-recursive.c:3571
 msgid "Merging:"
 msgstr "Сливане:"
 
-#: merge-recursive.c:3589
+#: merge-recursive.c:3584
 #, c-format
 msgid "found %u common ancestor:"
 msgid_plural "found %u common ancestors:"
 msgstr[0] "открит е %u общ предшественик:"
 msgstr[1] "открити са %u общи предшественици:"
 
-#: merge-recursive.c:3639
+#: merge-recursive.c:3634
 msgid "merge returned no commit"
 msgstr "сливането не върна подаване"
 
-#: merge-recursive.c:3804
+#: merge-recursive.c:3799
 #, c-format
 msgid "Could not parse object '%s'"
 msgstr "Неуспешен анализ на обекта „%s“"
 
-#: merge-recursive.c:3822 builtin/merge.c:716 builtin/merge.c:900
+#: merge-recursive.c:3817 builtin/merge.c:717 builtin/merge.c:901
 #: builtin/stash.c:473
 msgid "Unable to write index."
 msgstr "Индексът не може да бъде прочетен"
@@ -5482,7 +5484,7 @@ msgid "failed to read the cache"
 msgstr "кешът не може да бъде прочетен"
 
 #: merge.c:108 rerere.c:704 builtin/am.c:1932 builtin/am.c:1966
-#: builtin/checkout.c:595 builtin/checkout.c:849 builtin/clone.c:821
+#: builtin/checkout.c:590 builtin/checkout.c:844 builtin/clone.c:821
 #: builtin/stash.c:267
 msgid "unable to write new index file"
 msgstr "неуспешно записване на новия индекс"
@@ -5683,17 +5685,17 @@ msgstr "командата „pack-objects“ не може да бъде зав
 #: name-hash.c:542
 #, c-format
 msgid "unable to create lazy_dir thread: %s"
-msgstr "не може да се създаде нишка за директории: %s"
+msgstr "не може да се създаде нишка за директории (lazy_dir): %s"
 
 #: name-hash.c:564
 #, c-format
 msgid "unable to create lazy_name thread: %s"
-msgstr "не може да се създаде нишка за имена: %s"
+msgstr "не може да се създаде нишка за имена (lazy_name): %s"
 
 #: name-hash.c:570
 #, c-format
 msgid "unable to join lazy_name thread: %s"
-msgstr "не може да се изчака нишка за имена: %s"
+msgstr "не може да се изчака нишка за имена (lazy_name): %s"
 
 #: notes-merge.c:277
 #, c-format
@@ -6032,9 +6034,9 @@ msgstr ""
 "с 40 шестнадесетични знака, защото стандартно те ще бъдат прескачани.\n"
 "Възможно е такива указатели да са създадени случайно.  Например:\n"
 "\n"
-"    git switch -c $BRANCH $(git rev-parse …)\n"
+"    git switch -c $br $(git rev-parse …)\n"
 "\n"
-"където стойността на променливата на средата BRANCH е празна, при което\n"
+"където стойността на променливата на средата „$br“ е празна, при което\n"
 "се създава подобен указател.  Прегледайте тези указатели и ги изтрийте.\n"
 "За да изключите това съобщение, изпълнете:\n"
 "\n"
@@ -6660,22 +6662,26 @@ msgstr "неподредени записи за „%s“"
 
 #: read-cache.c:2041 read-cache.c:2339 rerere.c:549 rerere.c:583 rerere.c:1095
 #: submodule.c:1622 builtin/add.c:575 builtin/check-ignore.c:183
-#: builtin/checkout.c:522 builtin/checkout.c:711 builtin/clean.c:987
+#: builtin/checkout.c:519 builtin/checkout.c:706 builtin/clean.c:987
 #: builtin/commit.c:377 builtin/diff-tree.c:122 builtin/grep.c:505
 #: builtin/mv.c:146 builtin/reset.c:247 builtin/rm.c:291
-#: builtin/submodule--helper.c:331
+#: builtin/submodule--helper.c:333
 msgid "index file corrupt"
 msgstr "файлът с индекса е повреден"
 
 #: read-cache.c:2185
 #, c-format
 msgid "unable to create load_cache_entries thread: %s"
-msgstr "не може да се създаде нишка за зареждане на обектите от кеша: %s"
+msgstr ""
+"не може да се създаде нишка за зареждане на обектите от кеша "
+"(load_cache_entries): %s"
 
 #: read-cache.c:2198
 #, c-format
 msgid "unable to join load_cache_entries thread: %s"
-msgstr "не може да се изчака нишка за зареждане на обектите от кеша: %s"
+msgstr ""
+"не може да се изчака нишка за зареждане на обектите от кеша "
+"(load_cache_entries): %s"
 
 #: read-cache.c:2231
 #, c-format
@@ -6701,13 +6707,15 @@ msgstr "%s: неуспешно изпълнение на „mmap“ върху �
 #, c-format
 msgid "unable to create load_index_extensions thread: %s"
 msgstr ""
-"не може да се създаде нишка за зареждане на разширенията на индекса: %s"
+"не може да се създаде нишка за зареждане на разширенията на индекса "
+"(load_index_extensions): %s"
 
 #: read-cache.c:2313
 #, c-format
 msgid "unable to join load_index_extensions thread: %s"
 msgstr ""
-"не може да се създаде нишка за зареждане на разширенията на индекса: %s"
+"не може да се създаде нишка за зареждане на разширенията на индекса "
+"(load_index_extensions): %s"
 
 #: read-cache.c:2351
 #, c-format
@@ -6719,36 +6727,36 @@ msgstr "споделеният индекс „%s“ не може да се о�
 msgid "broken index, expect %s in %s, got %s"
 msgstr "грешки в индекса — в „%2$s“ се очаква „%1$s“, а бе получено „%3$s“"
 
-#: read-cache.c:3031 strbuf.c:1173 wrapper.c:633 builtin/merge.c:1145
+#: read-cache.c:3032 strbuf.c:1173 wrapper.c:633 builtin/merge.c:1146
 #, c-format
 msgid "could not close '%s'"
 msgstr "„%s“ не може да се затвори"
 
-#: read-cache.c:3074
+#: read-cache.c:3075
 msgid "failed to convert to a sparse-index"
 msgstr "индексът не може да бъде превърнат в частичен"
 
-#: read-cache.c:3145 sequencer.c:2684 sequencer.c:4440
+#: read-cache.c:3146 sequencer.c:2684 sequencer.c:4440
 #, c-format
 msgid "could not stat '%s'"
 msgstr "неуспешно изпълнение на „stat“ върху „%s“"
 
-#: read-cache.c:3158
+#: read-cache.c:3159
 #, c-format
 msgid "unable to open git dir: %s"
 msgstr "не може да се отвори директорията на git: %s"
 
-#: read-cache.c:3170
+#: read-cache.c:3171
 #, c-format
 msgid "unable to unlink: %s"
 msgstr "неуспешно изтриване на „%s“"
 
-#: read-cache.c:3199
+#: read-cache.c:3200
 #, c-format
 msgid "cannot fix permission bits on '%s'"
 msgstr "правата за достъп до „%s“ не може да бъдат поправени"
 
-#: read-cache.c:3348
+#: read-cache.c:3349
 #, c-format
 msgid "%s: cannot drop to stage #0"
 msgstr "%s: не може да се премине към етап №0"
@@ -7165,17 +7173,17 @@ msgstr "игнориране на указателя с грешно име „%
 msgid "ignoring broken ref %s"
 msgstr "игнориране на повредения указател „%s“"
 
-#: ref-filter.c:2498
+#: ref-filter.c:2502
 #, c-format
 msgid "format: %%(end) atom missing"
 msgstr "грешка във форма̀та: липсва лексемата %%(end)"
 
-#: ref-filter.c:2592
+#: ref-filter.c:2596
 #, c-format
 msgid "malformed object name %s"
 msgstr "неправилно име на обект „%s“"
 
-#: ref-filter.c:2597
+#: ref-filter.c:2601
 #, c-format
 msgid "option `%s' must point to a commit"
 msgstr "опцията „%s“ не сочи към подаване"
@@ -7248,7 +7256,7 @@ msgstr "указател не може да се обнови с грешно и
 #: refs.c:1157
 #, c-format
 msgid "update_ref failed for ref '%s': %s"
-msgstr "неуспешно обновяване на указателя „%s“: %s"
+msgstr "неуспешно обновяване на указателя (update_ref) „%s“: %s"
 
 #: refs.c:2051
 #, c-format
@@ -7637,7 +7645,7 @@ msgid "Recorded preimage for '%s'"
 msgstr "Предварителният вариант на „%s“ е запазен"
 
 #: rerere.c:865 submodule.c:2076 builtin/log.c:2002
-#: builtin/submodule--helper.c:1878 builtin/submodule--helper.c:1890
+#: builtin/submodule--helper.c:1805 builtin/submodule--helper.c:1848
 #, c-format
 msgid "could not create directory '%s'"
 msgstr "Директорията „%s“ не може да бъде създадена"
@@ -7675,7 +7683,7 @@ msgstr "директорията „rr-cache“ не може да се отво
 msgid "could not determine HEAD revision"
 msgstr "не може да се определи към какво да сочи указателят „HEAD“"
 
-#: reset.c:70 reset.c:76 sequencer.c:3689
+#: reset.c:69 reset.c:75 sequencer.c:3689
 #, c-format
 msgid "failed to find tree of %s"
 msgstr "дървото, сочено от „%s“, не може да бъде открито"
@@ -7890,7 +7898,7 @@ msgid "unable to dequote value of '%s'"
 msgstr "цитирането на стойността на „%s“ не може да бъде изчистено"
 
 #: sequencer.c:827 wrapper.c:201 wrapper.c:371 builtin/am.c:729
-#: builtin/am.c:821 builtin/merge.c:1140 builtin/rebase.c:910
+#: builtin/am.c:821 builtin/merge.c:1141 builtin/rebase.c:910
 #, c-format
 msgid "could not open '%s' for reading"
 msgstr "файлът не може да бъде прочетен: „%s“"
@@ -8043,7 +8051,7 @@ msgstr "указателят „HEAD“ не може да бъде анализ
 msgid "HEAD %s is not a commit!"
 msgstr "указателят „HEAD“ „%s“ сочи към нещо, което не е подаване!"
 
-#: sequencer.c:1354 sequencer.c:1432 builtin/commit.c:1702
+#: sequencer.c:1354 sequencer.c:1432 builtin/commit.c:1705
 msgid "could not parse HEAD commit"
 msgstr "върховото подаване „HEAD“ не може да бъде прочетено"
 
@@ -8051,7 +8059,7 @@ msgstr "върховото подаване „HEAD“ не може да бъд
 msgid "unable to parse commit author"
 msgstr "авторът на подаването не може да бъде анализиран"
 
-#: sequencer.c:1421 builtin/am.c:1615 builtin/merge.c:706
+#: sequencer.c:1421 builtin/am.c:1615 builtin/merge.c:707
 msgid "git write-tree failed to write a tree"
 msgstr "Командата „git write-tree“ не успя да запише обект-дърво"
 
@@ -8069,8 +8077,8 @@ msgstr "неправилна самоличност за автор: „%s“"
 msgid "corrupt author: missing date information"
 msgstr "повредена информация за автор: липсва дата"
 
-#: sequencer.c:1530 builtin/am.c:1642 builtin/commit.c:1816 builtin/merge.c:909
-#: builtin/merge.c:934 t/helper/test-fast-rebase.c:78
+#: sequencer.c:1530 builtin/am.c:1642 builtin/commit.c:1819 builtin/merge.c:910
+#: builtin/merge.c:935 t/helper/test-fast-rebase.c:78
 msgid "failed to write commit object"
 msgstr "обектът за подаването не може да бъде записан"
 
@@ -8281,7 +8289,7 @@ msgstr "в момента вече се извършва отмяна на по�
 #: sequencer.c:3031
 #, c-format
 msgid "try \"git revert (--continue | %s--abort | --quit)\""
-msgstr "използвайте „git cherry-pick (--continue | %s--abort | --quit)“"
+msgstr "използвайте „git revert (--continue | %s--abort | --quit)“"
 
 #: sequencer.c:3034
 msgid "cherry-pick is already in progress"
@@ -8882,11 +8890,11 @@ msgstr "неуспешно изпълнение на „setsid“"
 msgid "attempting to use sparse-index without cone mode"
 msgstr "опит за ползване на частичен индекс без пътеводен режим"
 
-#: sparse-index.c:174
+#: sparse-index.c:176
 msgid "unable to update cache-tree, staying full"
 msgstr "дървото на кеша не може да бъде обновено и остава пълно"
 
-#: sparse-index.c:261
+#: sparse-index.c:263
 #, c-format
 msgid "index entry is a directory, but not sparse (%08x)"
 msgstr "обектът в индекса е директория, но не частично изтеглена (%08x)"
@@ -9043,7 +9051,7 @@ msgstr ""
 msgid "process for submodule '%s' failed"
 msgstr "процесът за подмодула „%s“ завърши неуспешно"
 
-#: submodule.c:1145 builtin/branch.c:691 builtin/submodule--helper.c:2469
+#: submodule.c:1145 builtin/branch.c:691 builtin/submodule--helper.c:2486
 msgid "Failed to resolve HEAD as a valid ref."
 msgstr "Не може да се открие към какво сочи указателят „HEAD“"
 
@@ -9794,7 +9802,7 @@ msgstr ""
 msgid "Updating index flags"
 msgstr "Обновяване на флаговете на индекса"
 
-#: unpack-trees.c:2707
+#: unpack-trees.c:2718
 #, c-format
 msgid "worktree and untracked commit have duplicate entries: %s"
 msgstr ""
@@ -10604,7 +10612,7 @@ msgstr "пробно изпълнение"
 msgid "interactive picking"
 msgstr "интерактивно отбиране на промени"
 
-#: builtin/add.c:367 builtin/checkout.c:1567 builtin/reset.c:308
+#: builtin/add.c:367 builtin/checkout.c:1562 builtin/reset.c:308
 msgid "select hunks interactively"
 msgstr "интерактивен избор на парчета код"
 
@@ -10744,13 +10752,13 @@ msgstr "опцията „--ignore-missing“ изисква „--dry-run“"
 msgid "--chmod param '%s' must be either -x or +x"
 msgstr "параметърът към „--chmod“ — „%s“ може да е или „-x“, или „+x“"
 
-#: builtin/add.c:544 builtin/checkout.c:1735 builtin/commit.c:363
+#: builtin/add.c:544 builtin/checkout.c:1733 builtin/commit.c:363
 #: builtin/reset.c:328 builtin/rm.c:273 builtin/stash.c:1633
 msgid "--pathspec-from-file is incompatible with pathspec arguments"
 msgstr ""
 "опцията „--pathspec-from-file“ е несъвместима с аргументи, указващи пътища"
 
-#: builtin/add.c:551 builtin/checkout.c:1747 builtin/commit.c:369
+#: builtin/add.c:551 builtin/checkout.c:1745 builtin/commit.c:369
 #: builtin/reset.c:334 builtin/rm.c:279 builtin/stash.c:1639
 msgid "--pathspec-file-nul requires --pathspec-from-file"
 msgstr "опцията „--pathspec-file-nul“ изисква опция „--pathspec-from-file“"
@@ -11009,7 +11017,7 @@ msgstr "git am [ОПЦИЯ…] [(ФАЙЛ_С_ПОЩА|ДИРЕКТОРИЯ_С_П
 
 #: builtin/am.c:2263
 msgid "git am [<options>] (--continue | --skip | --abort)"
-msgstr "git am [ОПЦИЯ…] (--continue | --quit | --abort)"
+msgstr "git am [ОПЦИЯ…] (--continue | --skip | --abort)"
 
 #: builtin/am.c:2269
 msgid "run interactively"
@@ -11248,19 +11256,19 @@ msgstr "git bisect--helper --bisect-next"
 
 #: builtin/bisect--helper.c:29
 msgid "git bisect--helper --bisect-state (bad|new) [<rev>]"
-msgstr "git bisect--helper --bisect-reset (ЛОШО) [ВЕРСИЯ]"
+msgstr "git bisect--helper --bisect-state (ЛОШО) [ВЕРСИЯ]"
 
 #: builtin/bisect--helper.c:30
 msgid "git bisect--helper --bisect-state (good|old) [<rev>...]"
-msgstr "git bisect--helper --bisect-reset (ДОБРО) [ВЕРСИЯ…]"
+msgstr "git bisect--helper --bisect-state (ДОБРО) [ВЕРСИЯ…]"
 
 #: builtin/bisect--helper.c:31
 msgid "git bisect--helper --bisect-replay <filename>"
-msgstr "git bisect--helper --bisect-next ИМЕ_НА_ФАЙЛ"
+msgstr "git bisect--helper --bisect-replay ИМЕ_НА_ФАЙЛ"
 
 #: builtin/bisect--helper.c:32
 msgid "git bisect--helper --bisect-skip [(<rev>|<range>)...]"
-msgstr "git bisect--helper --bisect-reset [(ВЕРСИЯ|ДИАПАЗОН)…]"
+msgstr "git bisect--helper --bisect-skip [(ВЕРСИЯ|ДИАПАЗОН)…]"
 
 #: builtin/bisect--helper.c:107
 #, c-format
@@ -11597,7 +11605,7 @@ msgstr ""
 msgid "show work cost statistics"
 msgstr "извеждане на статистика за извършените действия"
 
-#: builtin/blame.c:871 builtin/checkout.c:1524 builtin/clone.c:94
+#: builtin/blame.c:871 builtin/checkout.c:1519 builtin/clone.c:94
 #: builtin/commit-graph.c:84 builtin/commit-graph.c:222 builtin/fetch.c:179
 #: builtin/merge.c:297 builtin/multi-pack-index.c:55 builtin/pull.c:119
 #: builtin/push.c:566 builtin/send-pack.c:198
@@ -12419,7 +12427,7 @@ msgstr "изчитане на имената на файловете от ста
 msgid "terminate input and output records by a NUL character"
 msgstr "разделяне на входните и изходните записи с нулевия знак „NUL“"
 
-#: builtin/check-ignore.c:21 builtin/checkout.c:1520 builtin/gc.c:549
+#: builtin/check-ignore.c:21 builtin/checkout.c:1515 builtin/gc.c:549
 #: builtin/worktree.c:493
 msgid "suppress progress reporting"
 msgstr "без показване на напредъка"
@@ -12478,9 +12486,10 @@ msgid "git checkout--worker [<options>]"
 msgstr "git checkout--worker [ОПЦИЯ…]"
 
 #: builtin/checkout--worker.c:118 builtin/checkout-index.c:201
-#: builtin/column.c:31 builtin/submodule--helper.c:1824
-#: builtin/submodule--helper.c:1827 builtin/submodule--helper.c:1835
-#: builtin/submodule--helper.c:2333 builtin/worktree.c:491
+#: builtin/column.c:31 builtin/submodule--helper.c:1892
+#: builtin/submodule--helper.c:1895 builtin/submodule--helper.c:1903
+#: builtin/submodule--helper.c:2350 builtin/submodule--helper.c:2896
+#: builtin/submodule--helper.c:2899 builtin/worktree.c:491
 #: builtin/worktree.c:728
 msgid "string"
 msgstr "НИЗ"
@@ -12575,69 +12584,69 @@ msgstr "пътят „%s“ не може да бъде слян"
 msgid "Unable to add merge result for '%s'"
 msgstr "Резултатът за „%s“ не може да бъде слян"
 
-#: builtin/checkout.c:414
+#: builtin/checkout.c:411
 #, c-format
 msgid "Recreated %d merge conflict"
 msgid_plural "Recreated %d merge conflicts"
 msgstr[0] "Пресъздаден е %d конфликт при сливане"
 msgstr[1] "Пресъздадени са %d конфликта при сливане"
 
-#: builtin/checkout.c:419
+#: builtin/checkout.c:416
 #, c-format
 msgid "Updated %d path from %s"
 msgid_plural "Updated %d paths from %s"
 msgstr[0] "Обновен е %d път от „%s“"
 msgstr[1] "Обновени са %d пътя от „%s“"
 
-#: builtin/checkout.c:426
+#: builtin/checkout.c:423
 #, c-format
 msgid "Updated %d path from the index"
 msgid_plural "Updated %d paths from the index"
 msgstr[0] "Обновен е %d път от индекса"
 msgstr[1] "Обновени са %d пътя от индекса"
 
-#: builtin/checkout.c:449 builtin/checkout.c:452 builtin/checkout.c:455
-#: builtin/checkout.c:459
+#: builtin/checkout.c:446 builtin/checkout.c:449 builtin/checkout.c:452
+#: builtin/checkout.c:456
 #, c-format
 msgid "'%s' cannot be used with updating paths"
 msgstr "опцията „%s“ е несъвместима с обновяването на пътища"
 
-#: builtin/checkout.c:462 builtin/checkout.c:465
+#: builtin/checkout.c:459 builtin/checkout.c:462
 #, c-format
 msgid "'%s' cannot be used with %s"
 msgstr "опциите „%s“ и „%s“ са несъвместими"
 
-#: builtin/checkout.c:469
+#: builtin/checkout.c:466
 #, c-format
 msgid "Cannot update paths and switch to branch '%s' at the same time."
 msgstr ""
 "Невъзможно е едновременно да обновявате пътища и да преминете към клона „%s“."
 
-#: builtin/checkout.c:473
+#: builtin/checkout.c:470
 #, c-format
 msgid "neither '%s' or '%s' is specified"
 msgstr "не е указано нито „%s“, нито „%s“"
 
-#: builtin/checkout.c:477
+#: builtin/checkout.c:474
 #, c-format
 msgid "'%s' must be used when '%s' is not specified"
 msgstr "опцията „%s“ е задължителна, когато „%s“ не е зададена"
 
-#: builtin/checkout.c:482 builtin/checkout.c:487
+#: builtin/checkout.c:479 builtin/checkout.c:484
 #, c-format
 msgid "'%s' or '%s' cannot be used with %s"
 msgstr "опцията „%3$s“ е несъвместима както с „%1$s“, така и с „%2$s“"
 
-#: builtin/checkout.c:563 builtin/checkout.c:570
+#: builtin/checkout.c:558 builtin/checkout.c:565
 #, c-format
 msgid "path '%s' is unmerged"
 msgstr "пътят „%s“ не е слят"
 
-#: builtin/checkout.c:739
+#: builtin/checkout.c:734
 msgid "you need to resolve your current index first"
 msgstr "първо трябва да коригирате индекса си"
 
-#: builtin/checkout.c:793
+#: builtin/checkout.c:788
 #, c-format
 msgid ""
 "cannot continue with staged changes in the following files:\n"
@@ -12647,50 +12656,50 @@ msgstr ""
 "индекса:\n"
 "%s"
 
-#: builtin/checkout.c:886
+#: builtin/checkout.c:881
 #, c-format
 msgid "Can not do reflog for '%s': %s\n"
 msgstr "Журналът на указателите за „%s“ не може да се проследи: %s\n"
 
-#: builtin/checkout.c:928
+#: builtin/checkout.c:923
 msgid "HEAD is now at"
 msgstr "Указателят „HEAD“ в момента сочи към"
 
-#: builtin/checkout.c:932 builtin/clone.c:725 t/helper/test-fast-rebase.c:203
+#: builtin/checkout.c:927 builtin/clone.c:725 t/helper/test-fast-rebase.c:203
 msgid "unable to update HEAD"
 msgstr "Указателят „HEAD“ не може да бъде обновен"
 
-#: builtin/checkout.c:936
+#: builtin/checkout.c:931
 #, c-format
 msgid "Reset branch '%s'\n"
 msgstr "Зануляване на клона „%s“\n"
 
-#: builtin/checkout.c:939
+#: builtin/checkout.c:934
 #, c-format
 msgid "Already on '%s'\n"
 msgstr "Вече сте на „%s“\n"
 
-#: builtin/checkout.c:943
+#: builtin/checkout.c:938
 #, c-format
 msgid "Switched to and reset branch '%s'\n"
 msgstr "Преминаване към клона „%s“ и зануляване на промените\n"
 
-#: builtin/checkout.c:945 builtin/checkout.c:1376
+#: builtin/checkout.c:940 builtin/checkout.c:1371
 #, c-format
 msgid "Switched to a new branch '%s'\n"
 msgstr "Преминахте към новия клон „%s“\n"
 
-#: builtin/checkout.c:947
+#: builtin/checkout.c:942
 #, c-format
 msgid "Switched to branch '%s'\n"
 msgstr "Преминахте към клона „%s“\n"
 
-#: builtin/checkout.c:998
+#: builtin/checkout.c:993
 #, c-format
 msgid " ... and %d more.\n"
 msgstr "… и още %d.\n"
 
-#: builtin/checkout.c:1004
+#: builtin/checkout.c:999
 #, c-format
 msgid ""
 "Warning: you are leaving %d commit behind, not connected to\n"
@@ -12712,7 +12721,7 @@ msgstr[1] ""
 "\n"
 "%s\n"
 
-#: builtin/checkout.c:1023
+#: builtin/checkout.c:1018
 #, c-format
 msgid ""
 "If you want to keep it by creating a new branch, this may be a good time\n"
@@ -12739,19 +12748,19 @@ msgstr[1] ""
 "    git branch ИМЕ_НА_НОВИЯ_КЛОН %s\n"
 "\n"
 
-#: builtin/checkout.c:1058
+#: builtin/checkout.c:1053
 msgid "internal error in revision walk"
 msgstr "вътрешна грешка при обхождането на версиите"
 
-#: builtin/checkout.c:1062
+#: builtin/checkout.c:1057
 msgid "Previous HEAD position was"
 msgstr "Преди това „HEAD“ сочеше към"
 
-#: builtin/checkout.c:1102 builtin/checkout.c:1371
+#: builtin/checkout.c:1097 builtin/checkout.c:1366
 msgid "You are on a branch yet to be born"
 msgstr "В момента сте на клон, който все още не е създаден"
 
-#: builtin/checkout.c:1184
+#: builtin/checkout.c:1179
 #, c-format
 msgid ""
 "'%s' could be both a local file and a tracking branch.\n"
@@ -12760,7 +12769,7 @@ msgstr ""
 "„%s“ може да е както локален файл, така и следящ клон.  За уточняване\n"
 "ползвайте разделителя „--“ (и евентуално опцията „--no-guess“)"
 
-#: builtin/checkout.c:1191
+#: builtin/checkout.c:1186
 msgid ""
 "If you meant to check out a remote tracking branch on, e.g. 'origin',\n"
 "you can do so by fully qualifying the name with the --track option:\n"
@@ -12782,51 +12791,51 @@ msgstr ""
 "\n"
 "    checkout.defaultRemote=origin"
 
-#: builtin/checkout.c:1201
+#: builtin/checkout.c:1196
 #, c-format
 msgid "'%s' matched multiple (%d) remote tracking branches"
 msgstr "„%s“ напасва с множество (%d) отдалечени клони"
 
-#: builtin/checkout.c:1267
+#: builtin/checkout.c:1262
 msgid "only one reference expected"
 msgstr "очаква се само един указател"
 
-#: builtin/checkout.c:1284
+#: builtin/checkout.c:1279
 #, c-format
 msgid "only one reference expected, %d given."
 msgstr "очаква се един указател, а сте подали %d."
 
-#: builtin/checkout.c:1330 builtin/worktree.c:268 builtin/worktree.c:436
+#: builtin/checkout.c:1325 builtin/worktree.c:268 builtin/worktree.c:436
 #, c-format
 msgid "invalid reference: %s"
 msgstr "неправилен указател: %s"
 
-#: builtin/checkout.c:1343 builtin/checkout.c:1709
+#: builtin/checkout.c:1338 builtin/checkout.c:1707
 #, c-format
 msgid "reference is not a tree: %s"
 msgstr "указателят не сочи към обект-дърво: %s"
 
-#: builtin/checkout.c:1390
+#: builtin/checkout.c:1385
 #, c-format
 msgid "a branch is expected, got tag '%s'"
 msgstr "очаква се клон, а не етикет — „%s“"
 
-#: builtin/checkout.c:1392
+#: builtin/checkout.c:1387
 #, c-format
 msgid "a branch is expected, got remote branch '%s'"
 msgstr "очаква се локален, а не отдалечен клон — „%s“"
 
-#: builtin/checkout.c:1393 builtin/checkout.c:1401
+#: builtin/checkout.c:1388 builtin/checkout.c:1396
 #, c-format
 msgid "a branch is expected, got '%s'"
 msgstr "очаква се клон, а не „%s“"
 
-#: builtin/checkout.c:1396
+#: builtin/checkout.c:1391
 #, c-format
 msgid "a branch is expected, got commit '%s'"
 msgstr "очаква се клон, а не подаване — „%s“"
 
-#: builtin/checkout.c:1412
+#: builtin/checkout.c:1407
 msgid ""
 "cannot switch branch while merging\n"
 "Consider \"git merge --quit\" or \"git worktree add\"."
@@ -12834,7 +12843,7 @@ msgstr ""
 "по време на сливане не може да преминете към друг клон.\n"
 "Пробвайте с „git merge --quit“ или „git worktree add“."
 
-#: builtin/checkout.c:1416
+#: builtin/checkout.c:1411
 msgid ""
 "cannot switch branch in the middle of an am session\n"
 "Consider \"git am --quit\" or \"git worktree add\"."
@@ -12843,7 +12852,7 @@ msgstr ""
 "клон.\n"
 "Пробвайте с „git am --quit“ или „git worktree add“."
 
-#: builtin/checkout.c:1420
+#: builtin/checkout.c:1415
 msgid ""
 "cannot switch branch while rebasing\n"
 "Consider \"git rebase --quit\" or \"git worktree add\"."
@@ -12851,7 +12860,7 @@ msgstr ""
 "по време на пребазиране не може да преминете към друг клон.\n"
 "Пробвайте с „git rebase --quit“ или „git worktree add“."
 
-#: builtin/checkout.c:1424
+#: builtin/checkout.c:1419
 msgid ""
 "cannot switch branch while cherry-picking\n"
 "Consider \"git cherry-pick --quit\" or \"git worktree add\"."
@@ -12859,7 +12868,7 @@ msgstr ""
 "по време на отбиране на подавания не може да преминете към друг клон.\n"
 "Пробвайте с „git cherry-pick --quit“ или „git worktree add“."
 
-#: builtin/checkout.c:1428
+#: builtin/checkout.c:1423
 msgid ""
 "cannot switch branch while reverting\n"
 "Consider \"git revert --quit\" or \"git worktree add\"."
@@ -12867,139 +12876,139 @@ msgstr ""
 "по време на отмяна на подавания не може да преминете към друг клон.\n"
 "Пробвайте с „git revert --quit“ или „git worktree add“."
 
-#: builtin/checkout.c:1432
+#: builtin/checkout.c:1427
 msgid "you are switching branch while bisecting"
 msgstr "преминаване към друг клон по време на двоично търсене"
 
-#: builtin/checkout.c:1439
+#: builtin/checkout.c:1434
 msgid "paths cannot be used with switching branches"
 msgstr "задаването на път е несъвместимо с преминаването от един клон към друг"
 
-#: builtin/checkout.c:1442 builtin/checkout.c:1446 builtin/checkout.c:1450
+#: builtin/checkout.c:1437 builtin/checkout.c:1441 builtin/checkout.c:1445
 #, c-format
 msgid "'%s' cannot be used with switching branches"
 msgstr "опцията „%s“ е несъвместима с преминаването от един клон към друг"
 
-#: builtin/checkout.c:1454 builtin/checkout.c:1457 builtin/checkout.c:1460
-#: builtin/checkout.c:1465 builtin/checkout.c:1470
+#: builtin/checkout.c:1449 builtin/checkout.c:1452 builtin/checkout.c:1455
+#: builtin/checkout.c:1460 builtin/checkout.c:1465
 #, c-format
 msgid "'%s' cannot be used with '%s'"
 msgstr "опцията „%s“ е несъвместима с „%s“"
 
-#: builtin/checkout.c:1467
+#: builtin/checkout.c:1462
 #, c-format
 msgid "'%s' cannot take <start-point>"
 msgstr "опцията „%s“ е несъвместима със задаването на НАЧАЛО"
 
-#: builtin/checkout.c:1475
+#: builtin/checkout.c:1470
 #, c-format
 msgid "Cannot switch branch to a non-commit '%s'"
 msgstr ""
 "За да преминете към клон, подайте указател, който сочи към подаване.  „%s“ "
 "не е такъв"
 
-#: builtin/checkout.c:1482
+#: builtin/checkout.c:1477
 msgid "missing branch or commit argument"
 msgstr "липсва аргумент — клон или подаване"
 
-#: builtin/checkout.c:1525
+#: builtin/checkout.c:1520
 msgid "perform a 3-way merge with the new branch"
 msgstr "извършване на тройно сливане с новия клон"
 
-#: builtin/checkout.c:1526 builtin/log.c:1810 parse-options.h:323
+#: builtin/checkout.c:1521 builtin/log.c:1810 parse-options.h:323
 msgid "style"
 msgstr "СТИЛ"
 
-#: builtin/checkout.c:1527
+#: builtin/checkout.c:1522
 msgid "conflict style (merge or diff3)"
 msgstr "действие при конфликт (сливане или тройна разлика)"
 
-#: builtin/checkout.c:1539 builtin/worktree.c:488
+#: builtin/checkout.c:1534 builtin/worktree.c:488
 msgid "detach HEAD at named commit"
 msgstr "отделяне на указателя „HEAD“ към указаното подаване"
 
-#: builtin/checkout.c:1540
+#: builtin/checkout.c:1535
 msgid "set upstream info for new branch"
 msgstr "задаване на кой клон бива следен при създаването на новия клон"
 
-#: builtin/checkout.c:1542
+#: builtin/checkout.c:1537
 msgid "force checkout (throw away local modifications)"
 msgstr "принудително изтегляне (вашите промени ще бъдат занулени)"
 
-#: builtin/checkout.c:1544
+#: builtin/checkout.c:1539
 msgid "new-branch"
 msgstr "НОВ_КЛОН"
 
-#: builtin/checkout.c:1544
+#: builtin/checkout.c:1539
 msgid "new unparented branch"
 msgstr "нов клон без родител"
 
-#: builtin/checkout.c:1546 builtin/merge.c:301
+#: builtin/checkout.c:1541 builtin/merge.c:301
 msgid "update ignored files (default)"
 msgstr "обновяване на игнорираните файлове (стандартно)"
 
-#: builtin/checkout.c:1549
+#: builtin/checkout.c:1544
 msgid "do not check if another worktree is holding the given ref"
 msgstr "без проверка дали друго работно дърво държи указателя"
 
-#: builtin/checkout.c:1562
+#: builtin/checkout.c:1557
 msgid "checkout our version for unmerged files"
 msgstr "изтегляне на вашата версия на неслетите файлове"
 
-#: builtin/checkout.c:1565
+#: builtin/checkout.c:1560
 msgid "checkout their version for unmerged files"
 msgstr "изтегляне на чуждата версия на неслетите файлове"
 
-#: builtin/checkout.c:1569
+#: builtin/checkout.c:1564
 msgid "do not limit pathspecs to sparse entries only"
 msgstr "без ограничаване на изброените пътища само до частично изтеглените"
 
-#: builtin/checkout.c:1624
+#: builtin/checkout.c:1622
 #, c-format
 msgid "-%c, -%c and --orphan are mutually exclusive"
 msgstr "опциите „-%c“, „-%c“ и „--orphan“ са несъвместими една с друга"
 
-#: builtin/checkout.c:1628
+#: builtin/checkout.c:1626
 msgid "-p and --overlay are mutually exclusive"
 msgstr "опциите „-p“ и „--overlay“ са несъвместими"
 
-#: builtin/checkout.c:1665
+#: builtin/checkout.c:1663
 msgid "--track needs a branch name"
 msgstr "опцията „--track“ изисква име на клон"
 
-#: builtin/checkout.c:1670
+#: builtin/checkout.c:1668
 #, c-format
 msgid "missing branch name; try -%c"
 msgstr "липсва име на клон, използвайте опцията „-%c“"
 
-#: builtin/checkout.c:1702
+#: builtin/checkout.c:1700
 #, c-format
 msgid "could not resolve %s"
 msgstr "„%s“ не може да бъде открит"
 
-#: builtin/checkout.c:1718
+#: builtin/checkout.c:1716
 msgid "invalid path specification"
 msgstr "указан е неправилен път"
 
-#: builtin/checkout.c:1725
+#: builtin/checkout.c:1723
 #, c-format
 msgid "'%s' is not a commit and a branch '%s' cannot be created from it"
 msgstr "„%s“ не е подаване, затова от него не може да се създаде клон „%s“"
 
-#: builtin/checkout.c:1729
+#: builtin/checkout.c:1727
 #, c-format
 msgid "git checkout: --detach does not take a path argument '%s'"
 msgstr "git checkout: опцията „--detach“ не приема аргумент-път „%s“"
 
-#: builtin/checkout.c:1738
+#: builtin/checkout.c:1736
 msgid "--pathspec-from-file is incompatible with --detach"
 msgstr "опциите „--pathspec-from-file“ и „--detach“ са несъвместими"
 
-#: builtin/checkout.c:1741 builtin/reset.c:325 builtin/stash.c:1630
+#: builtin/checkout.c:1739 builtin/reset.c:325 builtin/stash.c:1630
 msgid "--pathspec-from-file is incompatible with --patch"
 msgstr "опциите „--pathspec-from-file“ и „--patch“ са несъвместими"
 
-#: builtin/checkout.c:1754
+#: builtin/checkout.c:1752
 msgid ""
 "git checkout: --ours/--theirs, --force and --merge are incompatible when\n"
 "checking out of the index."
@@ -13007,74 +13016,75 @@ msgstr ""
 "git checkout: опциите „--ours“/„--theirs“, „--force“ и „--merge“\n"
 "са несъвместими с изтегляне от индекса."
 
-#: builtin/checkout.c:1759
+#: builtin/checkout.c:1757
 msgid "you must specify path(s) to restore"
 msgstr "трябва да укажете поне един път за възстановяване"
 
-#: builtin/checkout.c:1785 builtin/checkout.c:1787 builtin/checkout.c:1836
-#: builtin/checkout.c:1838 builtin/clone.c:126 builtin/remote.c:170
-#: builtin/remote.c:172 builtin/submodule--helper.c:2719 builtin/worktree.c:484
+#: builtin/checkout.c:1783 builtin/checkout.c:1785 builtin/checkout.c:1834
+#: builtin/checkout.c:1836 builtin/clone.c:126 builtin/remote.c:170
+#: builtin/remote.c:172 builtin/submodule--helper.c:2736
+#: builtin/submodule--helper.c:2887 builtin/worktree.c:484
 #: builtin/worktree.c:486
 msgid "branch"
 msgstr "клон"
 
-#: builtin/checkout.c:1786
+#: builtin/checkout.c:1784
 msgid "create and checkout a new branch"
 msgstr "създаване и преминаване към нов клон"
 
-#: builtin/checkout.c:1788
+#: builtin/checkout.c:1786
 msgid "create/reset and checkout a branch"
 msgstr "създаване/зануляване на клон и преминаване към него"
 
-#: builtin/checkout.c:1789
+#: builtin/checkout.c:1787
 msgid "create reflog for new branch"
 msgstr "създаване на журнал на указателите за нов клон"
 
-#: builtin/checkout.c:1791
+#: builtin/checkout.c:1789
 msgid "second guess 'git checkout <no-such-branch>' (default)"
 msgstr ""
 "опит за отгатване на име на клон след неуспешен опит с „git checkout "
 "НЕСЪЩЕСТВУВАЩ_КЛОН“ (стандартно)"
 
-#: builtin/checkout.c:1792
+#: builtin/checkout.c:1790
 msgid "use overlay mode (default)"
 msgstr "използване на припокриващ режим (стандартно)"
 
-#: builtin/checkout.c:1837
+#: builtin/checkout.c:1835
 msgid "create and switch to a new branch"
 msgstr "създаване и преминаване към нов клон"
 
-#: builtin/checkout.c:1839
+#: builtin/checkout.c:1837
 msgid "create/reset and switch to a branch"
 msgstr "създаване/зануляване на клон и преминаване към него"
 
-#: builtin/checkout.c:1841
+#: builtin/checkout.c:1839
 msgid "second guess 'git switch <no-such-branch>'"
 msgstr ""
 "опит за отгатване на име на клон след неуспешен опит с „git switch "
 "НЕСЪЩЕСТВУВАЩ_КЛОН“"
 
-#: builtin/checkout.c:1843
+#: builtin/checkout.c:1841
 msgid "throw away local modifications"
 msgstr "зануляване на локалните промени"
 
-#: builtin/checkout.c:1877
+#: builtin/checkout.c:1875
 msgid "which tree-ish to checkout from"
 msgstr "към кой указател към дърво да се премине"
 
-#: builtin/checkout.c:1879
+#: builtin/checkout.c:1877
 msgid "restore the index"
 msgstr "възстановяване на индекса"
 
-#: builtin/checkout.c:1881
+#: builtin/checkout.c:1879
 msgid "restore the working tree (default)"
 msgstr "възстановяване на работното дърво (стандартно)"
 
-#: builtin/checkout.c:1883
+#: builtin/checkout.c:1881
 msgid "ignore unmerged entries"
 msgstr "пренебрегване на неслетите елементи"
 
-#: builtin/checkout.c:1884
+#: builtin/checkout.c:1882
 msgid "use overlay mode"
 msgstr "използване на припокриващ режим"
 
@@ -13305,13 +13315,13 @@ msgstr "директория с шаблони"
 msgid "directory from which templates will be used"
 msgstr "директория, която съдържа шаблоните, които да се ползват"
 
-#: builtin/clone.c:119 builtin/clone.c:121 builtin/submodule--helper.c:1831
-#: builtin/submodule--helper.c:2336
+#: builtin/clone.c:119 builtin/clone.c:121 builtin/submodule--helper.c:1899
+#: builtin/submodule--helper.c:2353 builtin/submodule--helper.c:2903
 msgid "reference repository"
 msgstr "еталонно хранилище"
 
-#: builtin/clone.c:123 builtin/submodule--helper.c:1833
-#: builtin/submodule--helper.c:2338
+#: builtin/clone.c:123 builtin/submodule--helper.c:1901
+#: builtin/submodule--helper.c:2355 builtin/submodule--helper.c:2905
 msgid "use --reference only while cloning"
 msgstr "опцията „--reference“ може да се използва само при клониране"
 
@@ -13360,8 +13370,8 @@ msgstr "ВЕРСИЯ"
 msgid "deepen history of shallow clone, excluding rev"
 msgstr "задълбочаване на историята на плитко хранилище до изключващ указател"
 
-#: builtin/clone.c:137 builtin/submodule--helper.c:1843
-#: builtin/submodule--helper.c:2352
+#: builtin/clone.c:137 builtin/submodule--helper.c:1911
+#: builtin/submodule--helper.c:2369
 msgid "clone only one branch, HEAD or --branch"
 msgstr ""
 "клониране само на един клон — или сочения от отдалечения „HEAD“, или изрично "
@@ -13949,7 +13959,7 @@ msgstr "Дървото на основния кеш не може да бъде 
 
 #: builtin/commit.c:437 builtin/commit.c:460 builtin/commit.c:508
 msgid "unable to write new_index file"
-msgstr "новият индекс не може да бъде записан"
+msgstr "новият индекс (new_index) не може да бъде записан"
 
 #: builtin/commit.c:489
 msgid "cannot do a partial commit during a merge."
@@ -14459,36 +14469,36 @@ msgstr "позволяване на празни подавания"
 msgid "ok to record a change with an empty message"
 msgstr "позволяване на подавания с празни съобщения"
 
-#: builtin/commit.c:1747
+#: builtin/commit.c:1750
 #, c-format
 msgid "Corrupt MERGE_HEAD file (%s)"
 msgstr "Повреден файл за върха за сливането „MERGE_HEAD“ (%s)"
 
-#: builtin/commit.c:1754
+#: builtin/commit.c:1757
 msgid "could not read MERGE_MODE"
 msgstr "режимът на сливане „MERGE_MODE“ не може да бъде прочетен"
 
-#: builtin/commit.c:1775
+#: builtin/commit.c:1778
 #, c-format
 msgid "could not read commit message: %s"
 msgstr "съобщението за подаване не може да бъде прочетено: %s"
 
-#: builtin/commit.c:1782
+#: builtin/commit.c:1785
 #, c-format
 msgid "Aborting commit due to empty commit message.\n"
 msgstr "Неизвършване на подаване поради празно съобщение.\n"
 
-#: builtin/commit.c:1787
+#: builtin/commit.c:1790
 #, c-format
 msgid "Aborting commit; you did not edit the message.\n"
 msgstr "Неизвършване на подаване поради нередактирано съобщение.\n"
 
-#: builtin/commit.c:1798
+#: builtin/commit.c:1801
 #, c-format
 msgid "Aborting commit due to empty commit message body.\n"
 msgstr "Неизвършване на подаване поради празно съобщение.\n"
 
-#: builtin/commit.c:1834
+#: builtin/commit.c:1837
 msgid ""
 "repository has been updated, but unable to write\n"
 "new_index file. Check that disk is not full and quota is\n"
@@ -14756,7 +14766,7 @@ msgstr "„--worktree“ може да се използва само в хра�
 
 #: builtin/config.c:684
 msgid "$HOME not set"
-msgstr "променливата „HOME“ не е зададена"
+msgstr "стойността „$HOME“ не е зададена"
 
 #: builtin/config.c:708
 msgid ""
@@ -14764,7 +14774,7 @@ msgid ""
 "extension worktreeConfig is enabled. Please read \"CONFIGURATION FILE\"\n"
 "section in \"git help worktree\" for details"
 msgstr ""
-"опцията „--worktre“ не приема множество работни дървета, преди\n"
+"опцията „--worktree“ не приема множество работни дървета, преди\n"
 "включването на разширението в настройките „worktreeConfig“.  За\n"
 "повече информация вижте раздела „CONFIGURATION FILE“ в\n"
 "„git help worktree“"
@@ -14865,8 +14875,8 @@ msgstr "извеждане на съобщенията за трасиране �
 #: builtin/credential-cache--daemon.c:316
 msgid "credential-cache--daemon unavailable; no unix socket support"
 msgstr ""
-"демонът за кеша с идентификациите е недостъпен — липсва поддръжка на гнезда "
-"на unix"
+"демонът за кеша с идентификациите е недостъпен (credential-cache--daemon) — "
+"липсва поддръжка на гнезда на unix"
 
 #: builtin/credential-cache.c:154
 msgid "credential-cache unavailable; no unix socket support"
@@ -15049,7 +15059,7 @@ msgstr "опцията „--broken“ е несъвместима с указа�
 
 #: builtin/diff-tree.c:155
 msgid "--stdin and --merge-base are mutually exclusive"
-msgstr "опциите „-stdin“ и „--merge-base“ са несъвместими"
+msgstr "опциите „--stdin“ и „--merge-base“ са несъвместими"
 
 #: builtin/diff-tree.c:157
 msgid "--merge-base only works with two commits"
@@ -15783,7 +15793,7 @@ msgid ""
 "partialclone"
 msgstr ""
 "опцията „--filter“ може да се ползва само с отдалеченото хранилище указано в "
-"настройката „extensions.partialClone“"
+"настройката „extensions.partialclone“"
 
 #: builtin/fetch.c:2086
 msgid "--atomic can only be used when fetching from one remote"
@@ -15886,15 +15896,15 @@ msgstr "извеждане само на указателите, които не
 msgid "git for-each-repo --config=<config> <command-args>"
 msgstr "git for-each-repo --config=НАСТРОЙКА АРГУМЕНТ…"
 
-#: builtin/for-each-repo.c:37
+#: builtin/for-each-repo.c:34
 msgid "config"
 msgstr "настройка"
 
-#: builtin/for-each-repo.c:38
+#: builtin/for-each-repo.c:35
 msgid "config key storing a list of repository paths"
 msgstr "настройка, която съдържа списък с пътища към хранилища"
 
-#: builtin/for-each-repo.c:46
+#: builtin/for-each-repo.c:43
 msgid "missing --config=<config>"
 msgstr "липсва --config=НАСТРОЙКА"
 
@@ -16656,7 +16666,7 @@ msgstr "не сте задали шаблон"
 
 #: builtin/grep.c:1049
 msgid "--no-index or --untracked cannot be used with revs"
-msgstr "опциите „--cached“ и „--untracked“ са несъвместими с версии."
+msgstr "опциите „--no-index“ и „--untracked“ са несъвместими с версии."
 
 #: builtin/grep.c:1057
 #, c-format
@@ -17030,10 +17040,7 @@ msgstr "не може да се създаде нишка: %s"
 
 #: builtin/index-pack.c:1281
 msgid "confusion beyond insanity"
-msgstr ""
-"фатална грешка във функцията „conclude_pack“.  Това е грешка в Git, "
-"докладвайте я на разработчиците, като пратите е-писмо на адрес: „git@vger."
-"kernel.org“."
+msgstr "фатална грешка"
 
 #: builtin/index-pack.c:1287
 #, c-format
@@ -17365,7 +17372,7 @@ msgstr "епилози за добавяне"
 
 #: builtin/interpret-trailers.c:123
 msgid "--trailer with --only-input does not make sense"
-msgstr "опцията „--trailer“ е несъвместима с „--name-only“"
+msgstr "опцията „--trailer“ е несъвместима с „--only-input“"
 
 #: builtin/interpret-trailers.c:133
 msgid "no input file given for in-place editing"
@@ -17738,7 +17745,7 @@ msgstr "опциите „-n“ и „-k“ са несъвместими"
 
 #: builtin/log.c:1933
 msgid "--subject-prefix/--rfc and -k are mutually exclusive"
-msgstr "опциите „--subject-prefix“/„-rfc“ и „-k“ са несъвместими"
+msgstr "опциите „--subject-prefix“/„--rfc“ и „-k“ са несъвместими"
 
 #: builtin/log.c:1941
 msgid "--name-only does not make sense"
@@ -18012,9 +18019,7 @@ msgstr ""
 #. TRANSLATORS: keep <> in "<" mail ">" info.
 #: builtin/mailinfo.c:14
 msgid "git mailinfo [<options>] <msg> <patch> < mail >info"
-msgstr ""
-"git mailinfo [ОПЦИЯ…] СЪОБЩЕНИЕ КРЪПКА < ПИСМО >ИНФОРМАЦИЯ\n"
-"git diff --no-index  ПЪТ ПЪТ"
+msgstr "git mailinfo [ОПЦИЯ…] СЪОБЩЕНИЕ КРЪПКА < ПИСМО >ИНФОРМАЦИЯ"
 
 #: builtin/mailinfo.c:58
 msgid "keep subject"
@@ -18277,7 +18282,7 @@ msgstr "преустановяване на текущото сливане"
 
 #: builtin/merge.c:292
 msgid "--abort but leave index and working tree alone"
-msgstr "преустановяване без промяна на индекса и работното дърво"
+msgstr "преустановяване (--abort) без промяна на индекса и работното дърво"
 
 #: builtin/merge.c:294
 msgid "continue the current in-progress merge"
@@ -18330,38 +18335,38 @@ msgstr ""
 msgid "'%s' does not point to a commit"
 msgstr "„%s“ не сочи към подаване"
 
-#: builtin/merge.c:602
+#: builtin/merge.c:603
 #, c-format
 msgid "Bad branch.%s.mergeoptions string: %s"
 msgstr "Неправилен низ за настройката „branch.%s.mergeoptions“: „%s“"
 
-#: builtin/merge.c:728
+#: builtin/merge.c:729
 msgid "Not handling anything other than two heads merge."
 msgstr "Поддържа се само сливане на точно две истории."
 
-#: builtin/merge.c:741
+#: builtin/merge.c:742
 #, c-format
 msgid "Unknown option for merge-recursive: -X%s"
 msgstr "Непозната опция за рекурсивното сливане „merge-recursive“: „-X%s“"
 
-#: builtin/merge.c:760 t/helper/test-fast-rebase.c:223
+#: builtin/merge.c:761 t/helper/test-fast-rebase.c:223
 #, c-format
 msgid "unable to write %s"
 msgstr "„%s“ не може да бъде записан"
 
-#: builtin/merge.c:812
+#: builtin/merge.c:813
 #, c-format
 msgid "Could not read from '%s'"
 msgstr "От „%s“ не може да се чете"
 
-#: builtin/merge.c:821
+#: builtin/merge.c:822
 #, c-format
 msgid "Not committing merge; use 'git commit' to complete the merge.\n"
 msgstr ""
 "Сливането няма да бъде подадено.  За завършването му и подаването му "
 "използвайте командата „git commit“.\n"
 
-#: builtin/merge.c:827
+#: builtin/merge.c:828
 msgid ""
 "Please enter a commit message to explain why this merge is necessary,\n"
 "especially if it merges an updated upstream into a topic branch.\n"
@@ -18370,11 +18375,11 @@ msgstr ""
 "В съобщението при подаване добавете информация за причината за\n"
 "сливането, особено ако сливате обновен отдалечен клон в тематичен клон.\n"
 
-#: builtin/merge.c:832
+#: builtin/merge.c:833
 msgid "An empty message aborts the commit.\n"
 msgstr "Празно съобщение предотвратява подаването.\n"
 
-#: builtin/merge.c:835
+#: builtin/merge.c:836
 #, c-format
 msgid ""
 "Lines starting with '%c' will be ignored, and an empty message aborts\n"
@@ -18383,76 +18388,76 @@ msgstr ""
 "Редовете, които започват с „%c“, ще бъдат пропуснати, а празно\n"
 "съобщение преустановява подаването.\n"
 
-#: builtin/merge.c:888
+#: builtin/merge.c:889
 msgid "Empty commit message."
 msgstr "Празно съобщение при подаване."
 
-#: builtin/merge.c:903
+#: builtin/merge.c:904
 #, c-format
 msgid "Wonderful.\n"
 msgstr "Първият етап на сливането завърши.\n"
 
-#: builtin/merge.c:964
+#: builtin/merge.c:965
 #, c-format
 msgid "Automatic merge failed; fix conflicts and then commit the result.\n"
 msgstr ""
 "Неуспешно автоматично сливане — коригирайте конфликтите и подайте "
 "резултата.\n"
 
-#: builtin/merge.c:1003
+#: builtin/merge.c:1004
 msgid "No current branch."
 msgstr "Няма текущ клон."
 
-#: builtin/merge.c:1005
+#: builtin/merge.c:1006
 msgid "No remote for the current branch."
 msgstr "Текущият клон не следи никой."
 
-#: builtin/merge.c:1007
+#: builtin/merge.c:1008
 msgid "No default upstream defined for the current branch."
 msgstr "Текущият клон не следи никой клон."
 
-#: builtin/merge.c:1012
+#: builtin/merge.c:1013
 #, c-format
 msgid "No remote-tracking branch for %s from %s"
 msgstr "Никой клон не следи клона „%s“ от хранилището „%s“"
 
-#: builtin/merge.c:1069
+#: builtin/merge.c:1070
 #, c-format
 msgid "Bad value '%s' in environment '%s'"
 msgstr "Неправилна стойност „%s“ в средата „%s“"
 
-#: builtin/merge.c:1172
+#: builtin/merge.c:1173
 #, c-format
 msgid "not something we can merge in %s: %s"
 msgstr "не може да се слее в „%s“: %s"
 
-#: builtin/merge.c:1206
+#: builtin/merge.c:1207
 msgid "not something we can merge"
 msgstr "не може да се слее"
 
-#: builtin/merge.c:1316
+#: builtin/merge.c:1317
 msgid "--abort expects no arguments"
 msgstr "опцията „--abort“ не приема аргументи"
 
-#: builtin/merge.c:1320
+#: builtin/merge.c:1321
 msgid "There is no merge to abort (MERGE_HEAD missing)."
 msgstr ""
 "Не може да преустановите сливане, защото в момента не се извършва такова "
 "(липсва указател „MERGE_HEAD“)."
 
-#: builtin/merge.c:1338
+#: builtin/merge.c:1339
 msgid "--quit expects no arguments"
 msgstr "опцията „--quit“ не приема аргументи"
 
-#: builtin/merge.c:1351
+#: builtin/merge.c:1352
 msgid "--continue expects no arguments"
 msgstr "опцията „--continue“ не приема аргументи"
 
-#: builtin/merge.c:1355
+#: builtin/merge.c:1356
 msgid "There is no merge in progress (MERGE_HEAD missing)."
 msgstr "В момента не се извършва сливане (липсва указател „MERGE_HEAD“)."
 
-#: builtin/merge.c:1371
+#: builtin/merge.c:1372
 msgid ""
 "You have not concluded your merge (MERGE_HEAD exists).\n"
 "Please, commit your changes before you merge."
@@ -18460,7 +18465,7 @@ msgstr ""
 "Не сте завършили сливане.  (Указателят „MERGE_HEAD“ съществува).\n"
 "Подайте промените си, преди да започнете ново сливане."
 
-#: builtin/merge.c:1378
+#: builtin/merge.c:1379
 msgid ""
 "You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists).\n"
 "Please, commit your changes before you merge."
@@ -18468,100 +18473,98 @@ msgstr ""
 "Не сте завършили отбиране на подаване (указателят „CHERRY_PICK_HEAD“\n"
 "съществува).  Подайте промените си, преди да започнете ново сливане."
 
-#: builtin/merge.c:1381
+#: builtin/merge.c:1382
 msgid "You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists)."
 msgstr ""
 "Не сте завършили отбиране на подаване (указателят „CHERRY_PICK_HEAD“\n"
 "съществува)."
 
-#: builtin/merge.c:1395
+#: builtin/merge.c:1396
 msgid "You cannot combine --squash with --no-ff."
 msgstr "опциите „--squash“ и „--no-ff“ са несъвместими."
 
-#: builtin/merge.c:1397
+#: builtin/merge.c:1398
 msgid "You cannot combine --squash with --commit."
 msgstr "опциите „--squash“ и „--commit“ са несъвместими."
 
-#: builtin/merge.c:1413
+#: builtin/merge.c:1414
 msgid "No commit specified and merge.defaultToUpstream not set."
 msgstr ""
 "Не е указано подаване и настройката „merge.defaultToUpstream“ не е зададена."
 
-#: builtin/merge.c:1430
+#: builtin/merge.c:1431
 msgid "Squash commit into empty head not supported yet"
 msgstr "Вкарване на подаване във връх без история все още не се поддържа"
 
-#: builtin/merge.c:1432
+#: builtin/merge.c:1433
 msgid "Non-fast-forward commit does not make sense into an empty head"
 msgstr ""
-"Понеже върхът е без история, всички сливания са превъртания, не може да се "
-"извърши същинско сливане изисквано от опцията „--no-ff“"
+"Понеже върхът е без история, сливания, които не са превъртания, са невъзможни"
 
-#: builtin/merge.c:1437
+#: builtin/merge.c:1438
 #, c-format
 msgid "%s - not something we can merge"
 msgstr "„%s“ — не е нещо, което може да се слее"
 
-#: builtin/merge.c:1439
+#: builtin/merge.c:1440
 msgid "Can merge only exactly one commit into empty head"
 msgstr "Може да слеете точно едно подаване във връх без история"
 
-#: builtin/merge.c:1520
+#: builtin/merge.c:1521
 msgid "refusing to merge unrelated histories"
 msgstr "независими истории не може да се слеят"
 
-#: builtin/merge.c:1539
+#: builtin/merge.c:1540
 #, c-format
 msgid "Updating %s..%s\n"
 msgstr "Обновяване „%s..%s“\n"
 
-#: builtin/merge.c:1585
+#: builtin/merge.c:1587
 #, c-format
 msgid "Trying really trivial in-index merge...\n"
 msgstr "Проба със сливане в рамките на индекса…\n"
 
-#: builtin/merge.c:1592
+#: builtin/merge.c:1594
 #, c-format
 msgid "Nope.\n"
 msgstr "Неуспешно сливане.\n"
 
-#: builtin/merge.c:1623
+#: builtin/merge.c:1625
 msgid "Not possible to fast-forward, aborting."
 msgstr "Не може да се извърши превъртане, преустановяване на действието."
 
-#: builtin/merge.c:1651 builtin/merge.c:1716
+#: builtin/merge.c:1653 builtin/merge.c:1719
 #, c-format
 msgid "Rewinding the tree to pristine...\n"
 msgstr "Привеждане на дървото към първоначалното…\n"
 
-#: builtin/merge.c:1655
+#: builtin/merge.c:1657
 #, c-format
 msgid "Trying merge strategy %s...\n"
 msgstr "Пробване със стратегията за сливане „%s“…\n"
 
-#: builtin/merge.c:1707
+#: builtin/merge.c:1709
 #, c-format
 msgid "No merge strategy handled the merge.\n"
 msgstr "Никоя стратегия за сливане не може да извърши сливането.\n"
 
-#: builtin/merge.c:1709
+#: builtin/merge.c:1711
 #, c-format
 msgid "Merge with strategy %s failed.\n"
 msgstr "Неуспешно сливане със стратегия „%s“.\n"
 
-#: builtin/merge.c:1718
+#: builtin/merge.c:1721
 #, c-format
-msgid "Using the %s to prepare resolving by hand.\n"
+msgid "Using the %s strategy to prepare resolving by hand.\n"
 msgstr ""
 "Ползва се стратегията „%s“, която ще подготви дървото за коригиране на "
 "ръка.\n"
 
-#: builtin/merge.c:1732
+#: builtin/merge.c:1735
 #, c-format
 msgid "Automatic merge went well; stopped before committing as requested\n"
 msgstr ""
-"Автоматичното сливане завърши успешно.  Самото подаване не е извършено, "
-"защото бе зададена опцията „--no-commit“.\n"
+"Автоматичното сливане завърши успешно.  Самото подаване не е извършено\n"
 
 #: builtin/mktag.c:10
 msgid "git mktag"
@@ -19646,11 +19649,11 @@ msgstr "опциите „--keep-unreachable“ и „--unpack-unreachable“ с
 
 #: builtin/pack-objects.c:4110
 msgid "cannot use --filter without --stdout"
-msgstr "опцията „-filter“ изисква „-stdout“"
+msgstr "опцията „--filter“ изисква „--stdout“"
 
 #: builtin/pack-objects.c:4112
 msgid "cannot use --filter with --stdin-packs"
-msgstr "опциите „-filter“ и „--stdin-packs“ са несъвместими"
+msgstr "опциите „--filter“ и „--stdin-packs“ са несъвместими"
 
 #: builtin/pack-objects.c:4116
 msgid "cannot use internal rev list with --stdin-packs"
@@ -20813,7 +20816,7 @@ msgstr "прилагане на всички промени, дори и нал�
 #: builtin/rebase.c:1442
 msgid "It looks like 'git am' is in progress. Cannot rebase."
 msgstr ""
-"Изглежда, че сега се прилагат кръпки чрез командата „git-am“.  Не може да "
+"Изглежда, че сега се прилагат кръпки чрез командата „git am“.  Не може да "
 "пребазирате в момента."
 
 #: builtin/rebase.c:1483
@@ -20956,7 +20959,7 @@ msgid "fatal: no such branch/commit '%s'"
 msgstr "ФАТАЛНА ГРЕШКА: не съществува клон „%s“"
 
 #: builtin/rebase.c:1929 builtin/submodule--helper.c:39
-#: builtin/submodule--helper.c:2414
+#: builtin/submodule--helper.c:2431
 #, c-format
 msgid "No such ref: %s"
 msgstr "Такъв указател няма: %s"
@@ -21395,8 +21398,8 @@ msgstr " неясно състояние"
 #, c-format
 msgid "invalid branch.%s.merge; cannot rebase onto > 1 branch"
 msgstr ""
-"неправилен клон за сливане „%s“.  Невъзможно е да пребазирате върху повече "
-"от 1 клон"
+"неправилен клон за сливане „branch.%s.merge“.  Невъзможно е да пребазирате "
+"върху повече от 1 клон"
 
 #: builtin/remote.c:1056
 #, c-format
@@ -22720,7 +22723,7 @@ msgstr "не е зададен клон, а указателят „HEAD“ е �
 
 #: builtin/show-branch.c:738
 msgid "--reflog option needs one branch name"
-msgstr "опцията „--track“ изисква точно едно име на клон"
+msgstr "опцията „--reflog“ изисква точно едно име на клон"
 
 #: builtin/show-branch.c:741
 #, c-format
@@ -22855,37 +22858,37 @@ msgstr "настройките на частичния индекс не мож�
 msgid "failed to open '%s'"
 msgstr "„%s“ не може да се отвори"
 
-#: builtin/sparse-checkout.c:419
+#: builtin/sparse-checkout.c:413
 #, c-format
 msgid "could not normalize path %s"
 msgstr "пътят „%s“  не може да се нормализира"
 
-#: builtin/sparse-checkout.c:431
+#: builtin/sparse-checkout.c:425
 msgid "git sparse-checkout (set|add) (--stdin | <patterns>)"
 msgstr "git sparse-checkout (set|add) (--stdin | ШАБЛОН…)"
 
-#: builtin/sparse-checkout.c:456
+#: builtin/sparse-checkout.c:450
 #, c-format
 msgid "unable to unquote C-style string '%s'"
 msgstr "цитирането на низ, форматиран за C — „%s“ не може да бъде изчистено"
 
-#: builtin/sparse-checkout.c:510 builtin/sparse-checkout.c:534
+#: builtin/sparse-checkout.c:504 builtin/sparse-checkout.c:528
 msgid "unable to load existing sparse-checkout patterns"
 msgstr "шаблоните за частично изтегляне не може да се заредят"
 
-#: builtin/sparse-checkout.c:579
+#: builtin/sparse-checkout.c:573
 msgid "read patterns from standard in"
 msgstr "изчитане на шаблоните от стандартния вход"
 
-#: builtin/sparse-checkout.c:594
+#: builtin/sparse-checkout.c:588
 msgid "git sparse-checkout reapply"
 msgstr "git sparse-checkout reapply"
 
-#: builtin/sparse-checkout.c:613
+#: builtin/sparse-checkout.c:607
 msgid "git sparse-checkout disable"
 msgstr "git sparse-checkout disable"
 
-#: builtin/sparse-checkout.c:644
+#: builtin/sparse-checkout.c:638
 msgid "error while refreshing working directory"
 msgstr "грешка при обновяване на работната директория"
 
@@ -23170,7 +23173,7 @@ msgstr "пропускане на всички редове, които запо
 msgid "prepend comment character and space to each line"
 msgstr "добавяне на „# “ в началото на всеки ред"
 
-#: builtin/submodule--helper.c:46 builtin/submodule--helper.c:2423
+#: builtin/submodule--helper.c:46 builtin/submodule--helper.c:2440
 #, c-format
 msgid "Expecting a full ref name, got %s"
 msgstr "Очаква се пълно име на указател, а не „%s“"
@@ -23185,59 +23188,60 @@ msgstr ""
 msgid "cannot strip one component off url '%s'"
 msgstr "не може да се махне компонент от адреса „%s“"
 
-#: builtin/submodule--helper.c:409 builtin/submodule--helper.c:1819
+#: builtin/submodule--helper.c:411 builtin/submodule--helper.c:1887
+#: builtin/submodule--helper.c:2891
 msgid "alternative anchor for relative paths"
 msgstr "директория за определянето на относителните пътища"
 
-#: builtin/submodule--helper.c:414
+#: builtin/submodule--helper.c:416
 msgid "git submodule--helper list [--prefix=<path>] [<path>...]"
 msgstr "git submodule--helper list [--prefix=ПЪТ] [ПЪТ…]"
 
-#: builtin/submodule--helper.c:472 builtin/submodule--helper.c:629
-#: builtin/submodule--helper.c:652
+#: builtin/submodule--helper.c:474 builtin/submodule--helper.c:631
+#: builtin/submodule--helper.c:654
 #, c-format
 msgid "No url found for submodule path '%s' in .gitmodules"
 msgstr "Във файла „.gitmodules“ не е открит адрес за пътя към подмодул „%s“"
 
-#: builtin/submodule--helper.c:524
+#: builtin/submodule--helper.c:526
 #, c-format
 msgid "Entering '%s'\n"
 msgstr "Влизане в „%s“\n"
 
-#: builtin/submodule--helper.c:527
+#: builtin/submodule--helper.c:529
 #, c-format
 msgid ""
 "run_command returned non-zero status for %s\n"
 "."
 msgstr ""
-"изпълнената команда завърши с ненулев изход за „%s“\n"
+"изпълнената команда (run_command) завърши с ненулев изход за „%s“\n"
 "."
 
-#: builtin/submodule--helper.c:549
+#: builtin/submodule--helper.c:551
 #, c-format
 msgid ""
 "run_command returned non-zero status while recursing in the nested "
 "submodules of %s\n"
 "."
 msgstr ""
-"изпълнената команда завърши с ненулев изход при обхождане на подмодулите, "
-"вложени в „%s“\n"
+"изпълнената команда (run_command) завърши с ненулев изход при обхождане на "
+"подмодулите, вложени в „%s“\n"
 "."
 
-#: builtin/submodule--helper.c:565
+#: builtin/submodule--helper.c:567
 msgid "suppress output of entering each submodule command"
 msgstr "без извеждане на изход при въвеждането на всяка команда за подмодули"
 
-#: builtin/submodule--helper.c:567 builtin/submodule--helper.c:888
-#: builtin/submodule--helper.c:1487
+#: builtin/submodule--helper.c:569 builtin/submodule--helper.c:890
+#: builtin/submodule--helper.c:1489
 msgid "recurse into nested submodules"
 msgstr "рекурсивно обхождане на подмодулите"
 
-#: builtin/submodule--helper.c:572
+#: builtin/submodule--helper.c:574
 msgid "git submodule--helper foreach [--quiet] [--recursive] [--] <command>"
 msgstr "git submodule--helper foreach [--quiet] [--recursive] [--] КОМАНДА"
 
-#: builtin/submodule--helper.c:599
+#: builtin/submodule--helper.c:601
 #, c-format
 msgid ""
 "could not look up configuration '%s'. Assuming this repository is its own "
@@ -23246,55 +23250,55 @@ msgstr ""
 "настройката „%s“ липсва.  Приема се, че това хранилище е правилният източник "
 "за себе си."
 
-#: builtin/submodule--helper.c:666
+#: builtin/submodule--helper.c:668
 #, c-format
 msgid "Failed to register url for submodule path '%s'"
 msgstr "Неуспешно регистриране на адрес за пътя към подмодул „%s“"
 
-#: builtin/submodule--helper.c:670
+#: builtin/submodule--helper.c:672
 #, c-format
 msgid "Submodule '%s' (%s) registered for path '%s'\n"
 msgstr "Регистриран е подмодул „%s“ (%s) за пътя към подмодул „%s“\n"
 
-#: builtin/submodule--helper.c:680
+#: builtin/submodule--helper.c:682
 #, c-format
 msgid "warning: command update mode suggested for submodule '%s'\n"
 msgstr "ПРЕДУПРЕЖДЕНИЕ: препоръчва се режим на обновяване за подмодула „%s“\n"
 
-#: builtin/submodule--helper.c:687
+#: builtin/submodule--helper.c:689
 #, c-format
 msgid "Failed to register update mode for submodule path '%s'"
 msgstr ""
 "Неуспешно регистриране на режима на обновяване за пътя към подмодул „%s“"
 
-#: builtin/submodule--helper.c:709
+#: builtin/submodule--helper.c:711
 msgid "suppress output for initializing a submodule"
 msgstr "без извеждане на информация при инициализирането на подмодул"
 
-#: builtin/submodule--helper.c:714
+#: builtin/submodule--helper.c:716
 msgid "git submodule--helper init [<options>] [<path>]"
 msgstr "git submodule--helper init [ОПЦИЯ…] [ПЪТ]"
 
-#: builtin/submodule--helper.c:787 builtin/submodule--helper.c:922
+#: builtin/submodule--helper.c:789 builtin/submodule--helper.c:924
 #, c-format
 msgid "no submodule mapping found in .gitmodules for path '%s'"
 msgstr "Във файла „.gitmodules“ липсва информация за пътя „%s“"
 
-#: builtin/submodule--helper.c:835
+#: builtin/submodule--helper.c:837
 #, c-format
 msgid "could not resolve HEAD ref inside the submodule '%s'"
 msgstr "указателят сочен от „HEAD“ в подмодула „%s“ не може да бъде открит"
 
-#: builtin/submodule--helper.c:862 builtin/submodule--helper.c:1457
+#: builtin/submodule--helper.c:864 builtin/submodule--helper.c:1459
 #, c-format
 msgid "failed to recurse into submodule '%s'"
 msgstr "неуспешно рекурсивно обхождане на подмодула „%s“"
 
-#: builtin/submodule--helper.c:886 builtin/submodule--helper.c:1623
+#: builtin/submodule--helper.c:888 builtin/submodule--helper.c:1625
 msgid "suppress submodule status output"
 msgstr "без изход за състоянието на подмодула"
 
-#: builtin/submodule--helper.c:887
+#: builtin/submodule--helper.c:889
 msgid ""
 "use commit stored in the index instead of the one stored in the submodule "
 "HEAD"
@@ -23302,100 +23306,100 @@ msgstr ""
 "използване на подаването указано в индекса, а не това от указателя „HEAD“ на "
 "подмодула"
 
-#: builtin/submodule--helper.c:893
+#: builtin/submodule--helper.c:895
 msgid "git submodule status [--quiet] [--cached] [--recursive] [<path>...]"
 msgstr "git submodule status [--quiet] [--cached] [--recursive] [ПЪТ…]"
 
-#: builtin/submodule--helper.c:917
+#: builtin/submodule--helper.c:919
 msgid "git submodule--helper name <path>"
 msgstr "git submodule--helper name ПЪТ"
 
-#: builtin/submodule--helper.c:989
+#: builtin/submodule--helper.c:991
 #, c-format
 msgid "* %s %s(blob)->%s(submodule)"
 msgstr "● %s %s(обект-BLOB)→%s(подмодул)"
 
-#: builtin/submodule--helper.c:992
+#: builtin/submodule--helper.c:994
 #, c-format
 msgid "* %s %s(submodule)->%s(blob)"
 msgstr "● %s %s(подмодул)→%s(обект-BLOB)"
 
-#: builtin/submodule--helper.c:1005
+#: builtin/submodule--helper.c:1007
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: builtin/submodule--helper.c:1055
+#: builtin/submodule--helper.c:1057
 #, c-format
 msgid "couldn't hash object from '%s'"
 msgstr "неуспешно изчисляване на контролната сума на обект от „%s“"
 
-#: builtin/submodule--helper.c:1059
+#: builtin/submodule--helper.c:1061
 #, c-format
 msgid "unexpected mode %o\n"
 msgstr "неочакван режим „%o“\n"
 
-#: builtin/submodule--helper.c:1300
+#: builtin/submodule--helper.c:1302
 msgid "use the commit stored in the index instead of the submodule HEAD"
 msgstr ""
 "използване на подаването указано в индекса, а не това от указателя „HEAD“ на "
 "подмодула"
 
-#: builtin/submodule--helper.c:1302
+#: builtin/submodule--helper.c:1304
 msgid "compare the commit in the index with that in the submodule HEAD"
 msgstr ""
 "сравнение на подаването указано в индекса с това от указателя „HEAD“ на "
 "подмодула"
 
-#: builtin/submodule--helper.c:1304
+#: builtin/submodule--helper.c:1306
 msgid "skip submodules with 'ignore_config' value set to 'all'"
 msgstr "прескачане на подмодули, чиято настройка „ignore_config“ е „all“"
 
-#: builtin/submodule--helper.c:1306
+#: builtin/submodule--helper.c:1308
 msgid "limit the summary size"
 msgstr "ограничаване на размера на обобщението"
 
-#: builtin/submodule--helper.c:1311
+#: builtin/submodule--helper.c:1313
 msgid "git submodule--helper summary [<options>] [<commit>] [--] [<path>]"
 msgstr "git submodule--helper summary [ОПЦИЯ…] [ПОДАВАНЕ] -- [ПЪТ]"
 
-#: builtin/submodule--helper.c:1335
+#: builtin/submodule--helper.c:1337
 msgid "could not fetch a revision for HEAD"
 msgstr "не може да се достави версия за „HEAD“"
 
-#: builtin/submodule--helper.c:1340
+#: builtin/submodule--helper.c:1342
 msgid "--cached and --files are mutually exclusive"
 msgstr "опциите „--cached“ и „--files“ са несъвместими"
 
-#: builtin/submodule--helper.c:1407
+#: builtin/submodule--helper.c:1409
 #, c-format
 msgid "Synchronizing submodule url for '%s'\n"
 msgstr "Синхронизиране на адреса на подмодул за „%s“\n"
 
-#: builtin/submodule--helper.c:1413
+#: builtin/submodule--helper.c:1415
 #, c-format
 msgid "failed to register url for submodule path '%s'"
 msgstr "неуспешно регистриране на адрес за пътя към подмодул „%s“"
 
-#: builtin/submodule--helper.c:1427
+#: builtin/submodule--helper.c:1429
 #, c-format
 msgid "failed to get the default remote for submodule '%s'"
 msgstr "отдалеченият адрес на подмодула „%s“ не може да бъде получен"
 
-#: builtin/submodule--helper.c:1438
+#: builtin/submodule--helper.c:1440
 #, c-format
 msgid "failed to update remote for submodule '%s'"
 msgstr "отдалеченият адрес на подмодула „%s“ не може да бъде променен"
 
-#: builtin/submodule--helper.c:1485
+#: builtin/submodule--helper.c:1487
 msgid "suppress output of synchronizing submodule url"
 msgstr "без извеждане на информация при синхронизирането на подмодул"
 
-#: builtin/submodule--helper.c:1492
+#: builtin/submodule--helper.c:1494
 msgid "git submodule--helper sync [--quiet] [--recursive] [<path>]"
 msgstr "git submodule--helper sync [--quiet] [--recursive] [ПЪТ]"
 
-#: builtin/submodule--helper.c:1546
+#: builtin/submodule--helper.c:1548
 #, c-format
 msgid ""
 "Submodule work tree '%s' contains a .git directory (use 'rm -rf' if you "
@@ -23404,7 +23408,7 @@ msgstr ""
 "Работното дърво на подмодул „%s“ съдържа директория „.git“.\n"
 "(ако искате да ги изтриете заедно с цялата им история, използвайте „rm -rf“)"
 
-#: builtin/submodule--helper.c:1558
+#: builtin/submodule--helper.c:1560
 #, c-format
 msgid ""
 "Submodule work tree '%s' contains local modifications; use '-f' to discard "
@@ -23413,47 +23417,47 @@ msgstr ""
 "Работното дърво на подмодул „%s“ съдържа локални промени.  Може да ги "
 "отхвърлите с опцията „-f“"
 
-#: builtin/submodule--helper.c:1566
+#: builtin/submodule--helper.c:1568
 #, c-format
 msgid "Cleared directory '%s'\n"
 msgstr "Директорията „%s“ е изчистена\n"
 
-#: builtin/submodule--helper.c:1568
+#: builtin/submodule--helper.c:1570
 #, c-format
 msgid "Could not remove submodule work tree '%s'\n"
 msgstr ""
 "Директорията към работното дърво на подмодула „%s“ не може да бъде изтрита\n"
 
-#: builtin/submodule--helper.c:1579
+#: builtin/submodule--helper.c:1581
 #, c-format
 msgid "could not create empty submodule directory %s"
 msgstr "празната директория за подмодула „%s“ не може да бъде създадена"
 
-#: builtin/submodule--helper.c:1595
+#: builtin/submodule--helper.c:1597
 #, c-format
 msgid "Submodule '%s' (%s) unregistered for path '%s'\n"
 msgstr "Регистрацията на подмодула „%s“ (%s) за пътя „%s“ е премахната\n"
 
-#: builtin/submodule--helper.c:1624
+#: builtin/submodule--helper.c:1626
 msgid "remove submodule working trees even if they contain local changes"
 msgstr ""
 "изтриване на работните дървета на подмодулите, дори когато те съдържат "
 "локални промени"
 
-#: builtin/submodule--helper.c:1625
+#: builtin/submodule--helper.c:1627
 msgid "unregister all submodules"
 msgstr "премахване на регистрациите на всички подмодули"
 
-#: builtin/submodule--helper.c:1630
+#: builtin/submodule--helper.c:1632
 msgid ""
 "git submodule deinit [--quiet] [-f | --force] [--all | [--] [<path>...]]"
 msgstr "git submodule deinit [--quiet] [-f | --force] [--all | [--] [ПЪТ…]]"
 
-#: builtin/submodule--helper.c:1644
+#: builtin/submodule--helper.c:1646
 msgid "Use '--all' if you really want to deinitialize all submodules"
 msgstr "Използвайте „--all“, за да премахнете всички подмодули"
 
-#: builtin/submodule--helper.c:1713
+#: builtin/submodule--helper.c:1690
 msgid ""
 "An alternate computed from a superproject's alternate is invalid.\n"
 "To allow Git to clone without an alternate in such a case, set\n"
@@ -23465,47 +23469,70 @@ msgstr ""
 "задайте настройката „submodule.alternateErrorStrategy“ да е „info“ или\n"
 "при клониране ползвайте опцията „--reference-if-able“ вместо „--reference“."
 
-#: builtin/submodule--helper.c:1752 builtin/submodule--helper.c:1755
+#: builtin/submodule--helper.c:1729 builtin/submodule--helper.c:1732
 #, c-format
 msgid "submodule '%s' cannot add alternate: %s"
 msgstr "към подмодула „%s“ не може да се добави алтернативен източник: %s"
 
-#: builtin/submodule--helper.c:1791
+#: builtin/submodule--helper.c:1768
 #, c-format
 msgid "Value '%s' for submodule.alternateErrorStrategy is not recognized"
 msgstr ""
 "Непозната стойност „%s“ за настройката „submodule.alternateErrorStrategy“"
 
-#: builtin/submodule--helper.c:1798
+#: builtin/submodule--helper.c:1775
 #, c-format
 msgid "Value '%s' for submodule.alternateLocation is not recognized"
 msgstr "Непозната стойност „%s“ за настройката „submodule.alternateLocation“"
 
-#: builtin/submodule--helper.c:1822
+#: builtin/submodule--helper.c:1800
+#, c-format
+msgid "refusing to create/use '%s' in another submodule's git dir"
+msgstr ""
+"„%s“ не може нито да се създаде, нито да се ползва в директорията на git на "
+"друг подмодул"
+
+#: builtin/submodule--helper.c:1841
+#, c-format
+msgid "clone of '%s' into submodule path '%s' failed"
+msgstr "Неуспешно клониране на адреса „%s“ в пътя „%s“ като подмодул"
+
+#: builtin/submodule--helper.c:1846
+#, c-format
+msgid "directory not empty: '%s'"
+msgstr "директорията не е празна: „%s“"
+
+#: builtin/submodule--helper.c:1858
+#, c-format
+msgid "could not get submodule directory for '%s'"
+msgstr "директорията на подмодула „%s“ не може да бъде получена"
+
+#: builtin/submodule--helper.c:1890 builtin/submodule--helper.c:2894
 msgid "where the new submodule will be cloned to"
 msgstr "къде да се клонира новият подмодул"
 
-#: builtin/submodule--helper.c:1825
+#: builtin/submodule--helper.c:1893 builtin/submodule--helper.c:2897
 msgid "name of the new submodule"
 msgstr "име на новия подмодул"
 
-#: builtin/submodule--helper.c:1828
+#: builtin/submodule--helper.c:1896 builtin/submodule--helper.c:2900
 msgid "url where to clone the submodule from"
 msgstr "адрес, от който да се клонира новият подмодул"
 
-#: builtin/submodule--helper.c:1836
+#: builtin/submodule--helper.c:1904 builtin/submodule--helper.c:2907
 msgid "depth for shallow clones"
 msgstr "дълбочина на плитките хранилища"
 
-#: builtin/submodule--helper.c:1839 builtin/submodule--helper.c:2348
+#: builtin/submodule--helper.c:1907 builtin/submodule--helper.c:2365
+#: builtin/submodule--helper.c:2909
 msgid "force cloning progress"
 msgstr "извеждане на напредъка на клонирането"
 
-#: builtin/submodule--helper.c:1841 builtin/submodule--helper.c:2350
+#: builtin/submodule--helper.c:1909 builtin/submodule--helper.c:2367
 msgid "disallow cloning into non-empty directory"
 msgstr "предотвратяване на клониране в непразна история"
 
-#: builtin/submodule--helper.c:1848
+#: builtin/submodule--helper.c:1916
 msgid ""
 "git submodule--helper clone [--prefix=<path>] [--quiet] [--reference "
 "<repository>] [--name <name>] [--depth <depth>] [--single-branch] --url "
@@ -23514,108 +23541,86 @@ msgstr ""
 "git submodule--helper clone [--prefix=ПЪТ] [--quiet] [--reference ХРАНИЛИЩЕ] "
 "[--name ИМЕ] [--depth ДЪЛБОЧИНА] [--single-branch] --url АДРЕС --path ПЪТ"
 
-#: builtin/submodule--helper.c:1873
-#, c-format
-msgid "refusing to create/use '%s' in another submodule's git dir"
-msgstr ""
-"„%s“ не може нито да се създаде, нито да се ползва в директорията на git на "
-"друг подмодул"
-
-#: builtin/submodule--helper.c:1884
-#, c-format
-msgid "clone of '%s' into submodule path '%s' failed"
-msgstr "Неуспешно клониране на адреса „%s“ в пътя „%s“ като подмодул"
-
-#: builtin/submodule--helper.c:1888
-#, c-format
-msgid "directory not empty: '%s'"
-msgstr "директорията не е празна: „%s“"
-
-#: builtin/submodule--helper.c:1900
-#, c-format
-msgid "could not get submodule directory for '%s'"
-msgstr "директорията на подмодула „%s“ не може да бъде получена"
-
-#: builtin/submodule--helper.c:1936
+#: builtin/submodule--helper.c:1953
 #, c-format
 msgid "Invalid update mode '%s' for submodule path '%s'"
 msgstr "Неправилен режим на обновяване „%s“ за пътя към подмодул „%s“"
 
-#: builtin/submodule--helper.c:1940
+#: builtin/submodule--helper.c:1957
 #, c-format
 msgid "Invalid update mode '%s' configured for submodule path '%s'"
 msgstr ""
 "Настроен е неправилен режим на обновяване „%s“ за пътя към подмодул „%s“"
 
-#: builtin/submodule--helper.c:2041
+#: builtin/submodule--helper.c:2058
 #, c-format
 msgid "Submodule path '%s' not initialized"
 msgstr "Пътят на подмодула „%s“ не е инициализиран"
 
-#: builtin/submodule--helper.c:2045
+#: builtin/submodule--helper.c:2062
 msgid "Maybe you want to use 'update --init'?"
 msgstr "Вероятно искахте да използвате „update --init“?"
 
-#: builtin/submodule--helper.c:2075
+#: builtin/submodule--helper.c:2092
 #, c-format
 msgid "Skipping unmerged submodule %s"
 msgstr "Прескачане на неслетия подмодул „%s“"
 
-#: builtin/submodule--helper.c:2104
+#: builtin/submodule--helper.c:2121
 #, c-format
 msgid "Skipping submodule '%s'"
 msgstr "Прескачане на подмодула „%s“"
 
-#: builtin/submodule--helper.c:2254
+#: builtin/submodule--helper.c:2271
 #, c-format
 msgid "Failed to clone '%s'. Retry scheduled"
 msgstr "Неуспешен опит за клониране на „%s“.  Насрочен е втори опит"
 
-#: builtin/submodule--helper.c:2265
+#: builtin/submodule--helper.c:2282
 #, c-format
 msgid "Failed to clone '%s' a second time, aborting"
 msgstr ""
 "Втори неуспешен опит за клониране на „%s“.  Действието се преустановява"
 
-#: builtin/submodule--helper.c:2327 builtin/submodule--helper.c:2573
+#: builtin/submodule--helper.c:2344 builtin/submodule--helper.c:2590
 msgid "path into the working tree"
 msgstr "път към работното дърво"
 
-#: builtin/submodule--helper.c:2330
+#: builtin/submodule--helper.c:2347
 msgid "path into the working tree, across nested submodule boundaries"
 msgstr "път към работното дърво, през границите на вложените подмодули"
 
-#: builtin/submodule--helper.c:2334
+#: builtin/submodule--helper.c:2351
 msgid "rebase, merge, checkout or none"
 msgstr ""
 "„rebase“ (пребазиране), „merge“ (сливане), „checkout“ (изтегляне) или "
 "„none“ (нищо да не се прави)"
 
-#: builtin/submodule--helper.c:2340
+#: builtin/submodule--helper.c:2357
 msgid "create a shallow clone truncated to the specified number of revisions"
 msgstr "извършване на плитко клониране, отрязано до указания брой версии"
 
-#: builtin/submodule--helper.c:2343
+#: builtin/submodule--helper.c:2360
 msgid "parallel jobs"
 msgstr "брой паралелни процеси"
 
-#: builtin/submodule--helper.c:2345
+#: builtin/submodule--helper.c:2362
 msgid "whether the initial clone should follow the shallow recommendation"
 msgstr "дали първоначалното клониране да е плитко, както се препоръчва"
 
-#: builtin/submodule--helper.c:2346
+#: builtin/submodule--helper.c:2363
 msgid "don't print cloning progress"
 msgstr "без извеждане на напредъка на клонирането"
 
-#: builtin/submodule--helper.c:2357
+#: builtin/submodule--helper.c:2374
 msgid "git submodule--helper update-clone [--prefix=<path>] [<path>...]"
 msgstr "git submodule--helper update-clone [--prefix=ПЪТ] [ПЪТ…]"
 
-#: builtin/submodule--helper.c:2370
+#: builtin/submodule--helper.c:2387
 msgid "bad value for update parameter"
 msgstr "неправилен параметър към опцията „--update“"
 
-#: builtin/submodule--helper.c:2418
+#: builtin/submodule--helper.c:2435
 #, c-format
 msgid ""
 "Submodule (%s) branch configured to inherit branch from superproject, but "
@@ -23624,83 +23629,142 @@ msgstr ""
 "Клонът на подмодула „%s“ е настроен да наследява клона от обхващащия проект, "
 "но той не е на никой клон"
 
-#: builtin/submodule--helper.c:2541
+#: builtin/submodule--helper.c:2558
 #, c-format
 msgid "could not get a repository handle for submodule '%s'"
 msgstr "не може да се получи връзка към хранилище за подмодула „%s“"
 
-#: builtin/submodule--helper.c:2574
+#: builtin/submodule--helper.c:2591
 msgid "recurse into submodules"
 msgstr "рекурсивно обхождане подмодулите"
 
-#: builtin/submodule--helper.c:2580
+#: builtin/submodule--helper.c:2597
 msgid "git submodule--helper absorb-git-dirs [<options>] [<path>...]"
 msgstr "git submodule--helper absorb-git-dirs [ОПЦИЯ…] [ПЪТ…]"
 
-#: builtin/submodule--helper.c:2636
+#: builtin/submodule--helper.c:2653
 msgid "check if it is safe to write to the .gitmodules file"
 msgstr "проверка дали писането във файла „.gitmodules“ е безопасно"
 
-#: builtin/submodule--helper.c:2639
+#: builtin/submodule--helper.c:2656
 msgid "unset the config in the .gitmodules file"
 msgstr "изтриване на настройка във файла „.gitmodules“"
 
-#: builtin/submodule--helper.c:2644
+#: builtin/submodule--helper.c:2661
 msgid "git submodule--helper config <name> [<value>]"
 msgstr "git submodule--helper config ИМЕ [СТОЙНОСТ]"
 
-#: builtin/submodule--helper.c:2645
+#: builtin/submodule--helper.c:2662
 msgid "git submodule--helper config --unset <name>"
 msgstr "git submodule--helper config --unset ИМЕ"
 
-#: builtin/submodule--helper.c:2646
+#: builtin/submodule--helper.c:2663
 msgid "git submodule--helper config --check-writeable"
 msgstr "git submodule--helper config --check-writeable"
 
-#: builtin/submodule--helper.c:2665 git-submodule.sh:150
+#: builtin/submodule--helper.c:2682 git-submodule.sh:150
 #, sh-format
 msgid "please make sure that the .gitmodules file is in the working tree"
 msgstr "файлът „.gitmodules“ трябва да е в работното дърво"
 
-#: builtin/submodule--helper.c:2681
+#: builtin/submodule--helper.c:2698
 msgid "suppress output for setting url of a submodule"
 msgstr "без извеждане на информация при задаването на адреса на подмодул"
 
-#: builtin/submodule--helper.c:2685
+#: builtin/submodule--helper.c:2702
 msgid "git submodule--helper set-url [--quiet] <path> <newurl>"
 msgstr "git submodule--helper set-url [--quiet] [ПЪТ] [НОВ_ПЪТ]"
 
-#: builtin/submodule--helper.c:2718
+#: builtin/submodule--helper.c:2735
 msgid "set the default tracking branch to master"
 msgstr "задаване на стандартния следящ клон да е „master“"
 
-#: builtin/submodule--helper.c:2720
+#: builtin/submodule--helper.c:2737
 msgid "set the default tracking branch"
 msgstr "задаване на стандартния следящ клон"
 
-#: builtin/submodule--helper.c:2724
+#: builtin/submodule--helper.c:2741
 msgid "git submodule--helper set-branch [-q|--quiet] (-d|--default) <path>"
 msgstr "git submodule--helper set-branch [-q|--quiet] (-d|--default) ПЪТ"
 
-#: builtin/submodule--helper.c:2725
+#: builtin/submodule--helper.c:2742
 msgid ""
 "git submodule--helper set-branch [-q|--quiet] (-b|--branch) <branch> <path>"
 msgstr "git submodule--helper set-branch [-q|--quiet] (-b|--branch) КЛОН ПЪТ"
 
-#: builtin/submodule--helper.c:2732
+#: builtin/submodule--helper.c:2749
 msgid "--branch or --default required"
 msgstr "необходимо е една от опциите „--branch“ и „--default“"
 
-#: builtin/submodule--helper.c:2735
+#: builtin/submodule--helper.c:2752
 msgid "--branch and --default are mutually exclusive"
 msgstr "опциите „--branch“ и „--default“ са несъвместими"
 
-#: builtin/submodule--helper.c:2792 git.c:449 git.c:724
+#: builtin/submodule--helper.c:2815
+#, c-format
+msgid "Adding existing repo at '%s' to the index\n"
+msgstr "Добавяне на съществуващото хранилище в „%s“ към индекса\n"
+
+#: builtin/submodule--helper.c:2818
+#, c-format
+msgid "'%s' already exists and is not a valid git repo"
+msgstr "„%s“ съществува, а не е хранилище на Git"
+
+#: builtin/submodule--helper.c:2828
+#, c-format
+msgid "A git directory for '%s' is found locally with remote(s):"
+msgstr ""
+"Открита е локална директория на Git — „%s“, която сочи към отдалечените "
+"хранилища:"
+
+#: builtin/submodule--helper.c:2833
+#, c-format
+msgid ""
+"If you want to reuse this local git directory instead of cloning again from\n"
+"  %s\n"
+"use the '--force' option. If the local git directory is not the correct "
+"repo\n"
+"or if you are unsure what this means, choose another name with the '--name' "
+"option.\n"
+msgstr ""
+"Ако искате да преизползвате тази директория на git, вместо да клонирате "
+"отново\n"
+"    %s\n"
+"използвайте опцията „--force“.  Ако локалната директория на git не е за\n"
+"правилното хранилище или ако не знаете какво означава това, използвайте\n"
+"друго име като аргумент към опцията „--name“.\n"
+
+#: builtin/submodule--helper.c:2842
+#, c-format
+msgid "Reactivating local git directory for submodule '%s'\n"
+msgstr "Активиране на локалното хранилище за подмодула „%s“ наново.\n"
+
+#: builtin/submodule--helper.c:2875
+#, c-format
+msgid "unable to checkout submodule '%s'"
+msgstr "Подмодулът „%s“ не може да бъде изтеглен"
+
+#: builtin/submodule--helper.c:2888
+msgid "branch of repository to checkout on cloning"
+msgstr "клонът, към който да се премине при клониране"
+
+#: builtin/submodule--helper.c:2910
+msgid "allow adding an otherwise ignored submodule path"
+msgstr "позволяване на добавяне и на иначе игнорираните файлове"
+
+#: builtin/submodule--helper.c:2917
+msgid ""
+"git submodule--helper add-clone [<options>...] --url <url> --path <path> --"
+"name <name>"
+msgstr ""
+"git submodule--helper add-clone [ОПЦИЯ…] --url АДРЕС --path ПЪТ --name ИМЕ"
+
+#: builtin/submodule--helper.c:2985 git.c:449 git.c:724
 #, c-format
 msgid "%s doesn't support --super-prefix"
 msgstr "„%s“ не поддържа опцията „--super-prefix“"
 
-#: builtin/submodule--helper.c:2798
+#: builtin/submodule--helper.c:2991
 #, c-format
 msgid "'%s' is not a valid submodule--helper subcommand"
 msgstr "„%s“ не е подкоманда на „submodule--helper“"
@@ -23915,15 +23979,15 @@ msgstr "опцията „-n“ изисква режим на списък."
 
 #: builtin/tag.c:550
 msgid "--contains option is only allowed in list mode"
-msgstr "опцията „-contains“ изисква режим на списък."
+msgstr "опцията „--contains“ изисква режим на списък."
 
 #: builtin/tag.c:552
 msgid "--no-contains option is only allowed in list mode"
-msgstr "опцията „-contains“ изисква  режим на списък."
+msgstr "опцията „--no-contains“ изисква  режим на списък."
 
 #: builtin/tag.c:554
 msgid "--points-at option is only allowed in list mode"
-msgstr "опцията „-points-at“ изисква режим на списък."
+msgstr "опцията „--points-at“ изисква режим на списък."
 
 #: builtin/tag.c:556
 msgid "--merged and --no-merged options are only allowed in list mode"
@@ -24269,7 +24333,7 @@ msgstr "обновяване на информационните файлове 
 
 #: builtin/upload-pack.c:11
 msgid "git upload-pack [<options>] <dir>"
-msgstr "git upload-repack [ОПЦИЯ…] ДИРЕКТОРИЯ"
+msgstr "git upload-pack [ОПЦИЯ…] ДИРЕКТОРИЯ"
 
 #: builtin/upload-pack.c:23 t/helper/test-serve-v2.c:17
 msgid "quit after a single request/response exchange"
@@ -24290,7 +24354,7 @@ msgstr "трансферът да се преустанови след този 
 
 #: builtin/verify-commit.c:19
 msgid "git verify-commit [-v | --verbose] <commit>..."
-msgstr "git verify-tag [-v | --verbose] ПОДАВАНЕ…"
+msgstr "git verify-commit [-v | --verbose] ПОДАВАНЕ…"
 
 #: builtin/verify-commit.c:68
 msgid "print commit contents"
@@ -25973,71 +26037,27 @@ msgstr "„${sm_path}“ вече съществува в индекса и не
 msgid "'$sm_path' does not have a commit checked out"
 msgstr "в „${sm_path}“ не е изтеглено подаване"
 
-#: git-submodule.sh:249
-#, sh-format
-msgid "Adding existing repo at '$sm_path' to the index"
-msgstr "Добавяне на съществуващото хранилище в „${sm_path}“ към индекса"
-
-#: git-submodule.sh:251
-#, sh-format
-msgid "'$sm_path' already exists and is not a valid git repo"
-msgstr "„${sm_path}“ съществува, а не е хранилище на Git"
-
-#: git-submodule.sh:259
-#, sh-format
-msgid "A git directory for '$sm_name' is found locally with remote(s):"
-msgstr ""
-"Открита е локална директория на Git — „${sm_name}“, която сочи към "
-"отдалечените хранилища:"
-
-#: git-submodule.sh:261
-#, sh-format
-msgid ""
-"If you want to reuse this local git directory instead of cloning again from\n"
-"  $realrepo\n"
-"use the '--force' option. If the local git directory is not the correct "
-"repo\n"
-"or you are unsure what this means choose another name with the '--name' "
-"option."
-msgstr ""
-"Ако искате да преизползвате тази директория на git, вместо да клонирате "
-"отново\n"
-"    $realrepo\n"
-"използвайте опцията „--force“.  Ако локалната директория на git не е за\n"
-"правилното хранилище или ако не знаете какво означава това, използвайте\n"
-"друго име като аргумент към опцията „--name“."
-
-#: git-submodule.sh:267
-#, sh-format
-msgid "Reactivating local git directory for submodule '$sm_name'."
-msgstr "Активиране на локалното хранилище за подмодула „${sm_name}“ наново."
-
-#: git-submodule.sh:279
-#, sh-format
-msgid "Unable to checkout submodule '$sm_path'"
-msgstr "Подмодулът „${sm_path}“ не може да бъде изтеглен"
-
-#: git-submodule.sh:284
+#: git-submodule.sh:248
 #, sh-format
 msgid "Failed to add submodule '$sm_path'"
 msgstr "Неуспешно добавяне на подмодула „${sm_path}“"
 
-#: git-submodule.sh:293
+#: git-submodule.sh:257
 #, sh-format
 msgid "Failed to register submodule '$sm_path'"
 msgstr "Неуспешно регистриране на подмодула „${sm_path}“"
 
-#: git-submodule.sh:568
+#: git-submodule.sh:532
 #, sh-format
 msgid "Unable to find current revision in submodule path '$displaypath'"
 msgstr "Текущата версия за подмодула в „${displaypath}“ липсва"
 
-#: git-submodule.sh:578
+#: git-submodule.sh:542
 #, sh-format
 msgid "Unable to fetch in submodule path '$sm_path'"
 msgstr "Неуспешно доставяне в пътя към подмодул „${sm_path}“"
 
-#: git-submodule.sh:583
+#: git-submodule.sh:547
 #, sh-format
 msgid ""
 "Unable to find current ${remote_name}/${branch} revision in submodule path "
@@ -26046,7 +26066,7 @@ msgstr ""
 "Текущата версия „${remote_name}/${branch}“ в пътя към подмодул „${sm_path}“ "
 "липсва"
 
-#: git-submodule.sh:601
+#: git-submodule.sh:565
 #, sh-format
 msgid ""
 "Unable to fetch in submodule path '$displaypath'; trying to directly fetch "
@@ -26055,7 +26075,7 @@ msgstr ""
 "Неуспешно доставяне в пътя към подмодул „${displaypath}“, опит за директно "
 "доставяне на „${sha1}“"
 
-#: git-submodule.sh:607
+#: git-submodule.sh:571
 #, sh-format
 msgid ""
 "Fetched in submodule path '$displaypath', but it did not contain $sha1. "
@@ -26064,53 +26084,53 @@ msgstr ""
 "Подмодулът в пътя „$displaypath“ е доставен, но не съдържа обекта със сума\n"
 "„${sha1}“.  Директното доставяне на това подаване е неуспешно."
 
-#: git-submodule.sh:614
+#: git-submodule.sh:578
 #, sh-format
 msgid "Unable to checkout '$sha1' in submodule path '$displaypath'"
 msgstr ""
 "Неуспешно изтегляне на версия „${sha1}“ в пътя към подмодул „${displaypath}“'"
 
-#: git-submodule.sh:615
+#: git-submodule.sh:579
 #, sh-format
 msgid "Submodule path '$displaypath': checked out '$sha1'"
 msgstr "Път към подмодул „${displaypath}“: изтеглена е версия „${sha1}“"
 
-#: git-submodule.sh:619
+#: git-submodule.sh:583
 #, sh-format
 msgid "Unable to rebase '$sha1' in submodule path '$displaypath'"
 msgstr ""
 "Неуспешно пребазиране на версия „${sha1}“ в пътя към подмодул "
 "„${displaypath}“"
 
-#: git-submodule.sh:620
+#: git-submodule.sh:584
 #, sh-format
 msgid "Submodule path '$displaypath': rebased into '$sha1'"
 msgstr "Път към подмодул „${displaypath}“: пребазиране върху версия „${sha1}“"
 
-#: git-submodule.sh:625
+#: git-submodule.sh:589
 #, sh-format
 msgid "Unable to merge '$sha1' in submodule path '$displaypath'"
 msgstr ""
 "Неуспешно сливане на версия „${sha1}“ в пътя към подмодул „${displaypath}“"
 
-#: git-submodule.sh:626
+#: git-submodule.sh:590
 #, sh-format
 msgid "Submodule path '$displaypath': merged in '$sha1'"
 msgstr "Път към подмодул „${displaypath}“: сливане с версия „${sha1}“"
 
-#: git-submodule.sh:631
+#: git-submodule.sh:595
 #, sh-format
 msgid "Execution of '$command $sha1' failed in submodule path '$displaypath'"
 msgstr ""
 "Неуспешно изпълнение на командата „${command} ${sha1}“ в пътя към подмодул "
 "„${displaypath}“"
 
-#: git-submodule.sh:632
+#: git-submodule.sh:596
 #, sh-format
 msgid "Submodule path '$displaypath': '$command $sha1'"
 msgstr "Път към подмодул „${displaypath}“: „${command} ${sha1}“"
 
-#: git-submodule.sh:663
+#: git-submodule.sh:627
 #, sh-format
 msgid "Failed to recurse into submodule path '$displaypath'"
 msgstr ""
@@ -26860,7 +26880,7 @@ msgstr "„--“ липсва"
 #: git-add--interactive.perl:1866
 #, perl-format
 msgid "unknown --patch mode: %s"
-msgstr "неизвестна стратегия за прилагане на кръпка: „%s“"
+msgstr "неизвестна стратегия за прилагане на кръпка към „--patch“: „%s“"
 
 #: git-add--interactive.perl:1872 git-add--interactive.perl:1878
 #, perl-format
