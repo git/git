@@ -345,6 +345,7 @@ int cmd_commit_graph(int argc, const char **argv, const char *prefix)
 	else if (argc && !strcmp(argv[0], "write"))
 		return graph_write(argc, argv);
 
+	error(_("unrecognized subcommand: %s"), argv[0]);
 usage:
 	usage_with_options(builtin_commit_graph_usage,
 			   builtin_commit_graph_options);
