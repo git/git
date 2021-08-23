@@ -5,7 +5,6 @@
 
 struct string_list;
 
-extern int advice_add_embedded_repo;
 extern int advice_graft_file_deprecated;
 
 /*

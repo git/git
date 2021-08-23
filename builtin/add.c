@@ -419,6 +419,7 @@ static const char embedded_advice[] = N_(
 static void check_embedded_repo(const char *path)
 {
 	struct strbuf name = STRBUF_INIT;
+	static int adviced_on_embedded_repo = 0;
 
 	if (!warn_on_embedded_repo)
 		return;
@@ -430,10 +431,10 @@ static void check_embedded_repo(const char *path)
 	strbuf_strip_suffix(&name, "/");
 
 	warning(_("adding embedded git repository: %s"), name.buf);
-	if (advice_add_embedded_repo) {
+	if (!adviced_on_embedded_repo &&
+	    advice_enabled(ADVICE_ADD_EMBEDDED_REPO)) {
 		advise(embedded_advice, name.buf, name.buf);
-		/* there may be multiple entries; advise only once */
-		advice_add_embedded_repo = 0;
+		adviced_on_embedded_repo = 1;
 	}
 
 	strbuf_release(&name);

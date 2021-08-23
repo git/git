@@ -4,7 +4,6 @@
 #include "help.h"
 #include "string-list.h"
 
-int advice_add_embedded_repo = 1;
 int advice_graft_file_deprecated = 1;
 
 static int advice_use_color = -1;
@@ -38,7 +37,6 @@ static struct {
 	const char *name;
 	int *preference;
 } advice_config[] = {
-	{ "addEmbeddedRepo", &advice_add_embedded_repo },
 	{ "graftFileDeprecated", &advice_graft_file_deprecated },
 };
 
