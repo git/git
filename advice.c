@@ -4,8 +4,6 @@
 #include "help.h"
 #include "string-list.h"
 
-int advice_graft_file_deprecated = 1;
-
 static int advice_use_color = -1;
 static char advice_colors[][COLOR_MAXLEN] = {
 	GIT_COLOR_RESET,
@@ -32,13 +30,6 @@ static const char *advise_get_color(enum color_advice ix)
 		return advice_colors[ix];
 	return "";
 }
-
-static struct {
-	const char *name;
-	int *preference;
-} advice_config[] = {
-	{ "graftFileDeprecated", &advice_graft_file_deprecated },
-};
 
 static struct {
 	const char *key;
@@ -161,13 +152,6 @@ int git_default_advice_config(const char *var, const char *value)
 
 	if (!skip_prefix(var, "advice.", &k))
 		return 0;
-
-	for (i = 0; i < ARRAY_SIZE(advice_config); i++) {
-		if (strcasecmp(k, advice_config[i].name))
-			continue;
-		*advice_config[i].preference = git_config_bool(var, value);
-		break;
-	}
 
 	for (i = 0; i < ARRAY_SIZE(advice_setting); i++) {
 		if (strcasecmp(k, advice_setting[i].key))

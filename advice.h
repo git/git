@@ -5,8 +5,6 @@
 
 struct string_list;
 
-extern int advice_graft_file_deprecated;
-
 /*
  * To add a new advice, you need to:
  * Define a new advice_type.
