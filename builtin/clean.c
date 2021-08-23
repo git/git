@@ -175,7 +175,7 @@ static int remove_dirs(struct strbuf *path, const char *prefix, int force_flag,
 
 	if (is_mount_point(path)) {
 		if (!quiet) {
-			quote_path_relative(path->buf, prefix, &quoted);
+			quote_path(path->buf, prefix, &quoted, 0);
 			printf(dry_run ?
 			       _(msg_would_skip_mount_point) :
 			       _(msg_skip_mount_point), quoted.buf);
