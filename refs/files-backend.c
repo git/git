@@ -852,42 +852,6 @@ static struct ref_iterator *files_ref_iterator_begin(
 	return ref_iterator;
 }
 
-/*
- * Verify that the reference locked by lock has the value old_oid
- * (unless it is NULL).  Fail if the reference doesn't exist and
- * mustexist is set. Return 0 on success. On error, write an error
- * message to err, set errno, and return a negative value.
- */
-static int verify_lock(struct ref_store *ref_store, struct ref_lock *lock,
-		       const struct object_id *old_oid, int mustexist,
-		       struct strbuf *err)
-{
-	assert(err);
-
-	if (refs_read_ref_full(ref_store, lock->ref_name,
-			       mustexist ? RESOLVE_REF_READING : 0,
-			       &lock->old_oid, NULL)) {
-		if (old_oid) {
-			int save_errno = errno;
-			strbuf_addf(err, "can't verify ref '%s'", lock->ref_name);
-			errno = save_errno;
-			return -1;
-		} else {
-			oidclr(&lock->old_oid);
-			return 0;
-		}
-	}
-	if (old_oid && !oideq(&lock->old_oid, old_oid)) {
-		strbuf_addf(err, "ref '%s' is at %s but expected %s",
-			    lock->ref_name,
-			    oid_to_hex(&lock->old_oid),
-			    oid_to_hex(old_oid));
-		errno = EBUSY;
-		return -1;
-	}
-	return 0;
-}
-
 static int remove_empty_directories(struct strbuf *path)
 {
 	/*
@@ -912,15 +876,12 @@ static int create_reflock(const char *path, void *cb)
  * On failure errno is set to something meaningful.
  */
 static struct ref_lock *lock_ref_oid_basic(struct files_ref_store *refs,
-					   const char *refname,
-					   const struct object_id *old_oid,
-					   int *type, struct strbuf *err)
+					   const char *refname, int *type,
+					   struct strbuf *err)
 {
 	struct strbuf ref_file = STRBUF_INIT;
 	struct ref_lock *lock;
 	int last_errno = 0;
-	int mustexist = (old_oid && !is_null_oid(old_oid));
-	int resolve_flags = RESOLVE_REF_NO_RECURSE;
 	int resolved;
 
 	files_assert_main_repository(refs, "lock_ref_oid_basic");
@@ -928,12 +889,9 @@ static struct ref_lock *lock_ref_oid_basic(struct files_ref_store *refs,
 
 	CALLOC_ARRAY(lock, 1);
 
-	if (mustexist)
-		resolve_flags |= RESOLVE_REF_READING;
-
 	files_ref_path(refs, &ref_file, refname);
-	resolved = !!refs_resolve_ref_unsafe(&refs->base,
-					     refname, resolve_flags,
+	resolved = !!refs_resolve_ref_unsafe(&refs->base, refname,
+					     RESOLVE_REF_NO_RECURSE,
 					     &lock->old_oid, type);
 	if (!resolved && errno == EISDIR) {
 		/*
@@ -951,8 +909,8 @@ static struct ref_lock *lock_ref_oid_basic(struct files_ref_store *refs,
 					    refname);
 			goto error_return;
 		}
-		resolved = !!refs_resolve_ref_unsafe(&refs->base,
-						     refname, resolve_flags,
+		resolved = !!refs_resolve_ref_unsafe(&refs->base, refname,
+						     RESOLVE_REF_NO_RECURSE,
 						     &lock->old_oid, type);
 	}
 	if (!resolved) {
@@ -987,10 +945,10 @@ static struct ref_lock *lock_ref_oid_basic(struct files_ref_store *refs,
 		goto error_return;
 	}
 
-	if (verify_lock(&refs->base, lock, old_oid, mustexist, err)) {
-		last_errno = errno;
-		goto error_return;
-	}
+	if (refs_read_ref_full(&refs->base, lock->ref_name,
+			       0,
+			       &lock->old_oid, NULL))
+		oidclr(&lock->old_oid);
 	goto out;
 
  error_return:
@@ -1409,7 +1367,7 @@ static int files_copy_or_rename_ref(struct ref_store *ref_store,
 
 	logmoved = log;
 
-	lock = lock_ref_oid_basic(refs, newrefname, NULL, NULL, &err);
+	lock = lock_ref_oid_basic(refs, newrefname, NULL, &err);
 	if (!lock) {
 		if (copy)
 			error("unable to copy '%s' to '%s': %s", oldrefname, newrefname, err.buf);
@@ -1431,7 +1389,7 @@ static int files_copy_or_rename_ref(struct ref_store *ref_store,
 	goto out;
 
  rollback:
-	lock = lock_ref_oid_basic(refs, oldrefname, NULL, NULL, &err);
+	lock = lock_ref_oid_basic(refs, oldrefname, NULL, &err);
 	if (!lock) {
 		error("unable to lock %s for rollback: %s", oldrefname, err.buf);
 		strbuf_release(&err);
@@ -1838,7 +1796,7 @@ static int files_create_symref(struct ref_store *ref_store,
 	struct ref_lock *lock;
 	int ret;
 
-	lock = lock_ref_oid_basic(refs, refname, NULL, NULL, &err);
+	lock = lock_ref_oid_basic(refs, refname, NULL, &err);
 	if (!lock) {
 		error("%s", err.buf);
 		strbuf_release(&err);
@@ -3056,7 +3014,7 @@ static int files_reflog_expire(struct ref_store *ref_store,
 	 * reference itself, plus we might need to update the
 	 * reference if --updateref was specified:
 	 */
-	lock = lock_ref_oid_basic(refs, refname, NULL, &type, &err);
+	lock = lock_ref_oid_basic(refs, refname, &type, &err);
 	if (!lock) {
 		error("cannot lock ref '%s': %s", refname, err.buf);
 		strbuf_release(&err);
