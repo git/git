@@ -915,8 +915,6 @@ static int create_reflock(const char *path, void *cb)
 static struct ref_lock *lock_ref_oid_basic(struct files_ref_store *refs,
 					   const char *refname,
 					   const struct object_id *old_oid,
-					   const struct string_list *extras,
-					   const struct string_list *skip,
 					   int *type, struct strbuf *err)
 {
 	struct strbuf ref_file = STRBUF_INIT;
@@ -949,7 +947,7 @@ static struct ref_lock *lock_ref_oid_basic(struct files_ref_store *refs,
 			last_errno = errno;
 			if (!refs_verify_refname_available(
 					    &refs->base,
-					    refname, extras, skip, err))
+					    refname, NULL, NULL, err))
 				strbuf_addf(err, "there are still refs under '%s'",
 					    refname);
 			goto error_return;
@@ -962,7 +960,7 @@ static struct ref_lock *lock_ref_oid_basic(struct files_ref_store *refs,
 		last_errno = errno;
 		if (last_errno != ENOTDIR ||
 		    !refs_verify_refname_available(&refs->base, refname,
-						   extras, skip, err))
+						   NULL, NULL, err))
 			strbuf_addf(err, "unable to resolve reference '%s': %s",
 				    refname, strerror(last_errno));
 
@@ -977,7 +975,7 @@ static struct ref_lock *lock_ref_oid_basic(struct files_ref_store *refs,
 	 */
 	if (is_null_oid(&lock->old_oid) &&
 	    refs_verify_refname_available(refs->packed_ref_store, refname,
-					  extras, skip, err)) {
+					  NULL, NULL, err)) {
 		last_errno = ENOTDIR;
 		goto error_return;
 	}
@@ -1412,9 +1410,7 @@ static int files_copy_or_rename_ref(struct ref_store *ref_store,
 
 	logmoved = log;
 
-
-	lock = lock_ref_oid_basic(refs, newrefname, NULL, NULL, NULL,
-				  NULL, &err);
+	lock = lock_ref_oid_basic(refs, newrefname, NULL, NULL, &err);
 	if (!lock) {
 		if (copy)
 			error("unable to copy '%s' to '%s': %s", oldrefname, newrefname, err.buf);
@@ -1436,8 +1432,7 @@ static int files_copy_or_rename_ref(struct ref_store *ref_store,
 	goto out;
 
  rollback:
-	lock = lock_ref_oid_basic(refs, oldrefname, NULL, NULL, NULL,
-				  NULL, &err);
+	lock = lock_ref_oid_basic(refs, oldrefname, NULL, NULL, &err);
 	if (!lock) {
 		error("unable to lock %s for rollback: %s", oldrefname, err.buf);
 		strbuf_release(&err);
@@ -1844,9 +1839,7 @@ static int files_create_symref(struct ref_store *ref_store,
 	struct ref_lock *lock;
 	int ret;
 
-	lock = lock_ref_oid_basic(refs, refname, NULL,
-				  NULL, NULL, NULL,
-				  &err);
+	lock = lock_ref_oid_basic(refs, refname, NULL, NULL, &err);
 	if (!lock) {
 		error("%s", err.buf);
 		strbuf_release(&err);
@@ -3063,8 +3056,7 @@ static int files_reflog_expire(struct ref_store *ref_store,
 	 * reference itself, plus we might need to update the
 	 * reference if --updateref was specified:
 	 */
-	lock = lock_ref_oid_basic(refs, refname, oid,
-				  NULL, NULL, &type, &err);
+	lock = lock_ref_oid_basic(refs, refname, oid, &type, &err);
 	if (!lock) {
 		error("cannot lock ref '%s': %s", refname, err.buf);
 		strbuf_release(&err);
