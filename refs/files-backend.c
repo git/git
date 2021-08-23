@@ -3027,7 +3027,7 @@ static int expire_reflog_ent(struct object_id *ooid, struct object_id *noid,
 }
 
 static int files_reflog_expire(struct ref_store *ref_store,
-			       const char *refname, const struct object_id *oid,
+			       const char *refname, const struct object_id *unused_oid,
 			       unsigned int flags,
 			       reflog_expiry_prepare_fn prepare_fn,
 			       reflog_expiry_should_prune_fn should_prune_fn,
@@ -3044,6 +3044,7 @@ static int files_reflog_expire(struct ref_store *ref_store,
 	int status = 0;
 	int type;
 	struct strbuf err = STRBUF_INIT;
+	const struct object_id *oid;
 
 	memset(&cb, 0, sizeof(cb));
 	cb.flags = flags;
@@ -3055,12 +3056,13 @@ static int files_reflog_expire(struct ref_store *ref_store,
 	 * reference itself, plus we might need to update the
 	 * reference if --updateref was specified:
 	 */
-	lock = lock_ref_oid_basic(refs, refname, oid, &type, &err);
+	lock = lock_ref_oid_basic(refs, refname, NULL, &type, &err);
 	if (!lock) {
 		error("cannot lock ref '%s': %s", refname, err.buf);
 		strbuf_release(&err);
 		return -1;
 	}
+	oid = &lock->old_oid;
 
 	/*
 	 * When refs are deleted, their reflog is deleted before the
@@ -3104,6 +3106,7 @@ static int files_reflog_expire(struct ref_store *ref_store,
 		}
 	}
 
+	assert(!unused_oid);
 	(*prepare_fn)(refname, oid, cb.policy_cb);
 	refs_for_each_reflog_ent(ref_store, refname, expire_reflog_ent, &cb);
 	(*cleanup_fn)(cb.policy_cb);
