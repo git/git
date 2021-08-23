@@ -134,6 +134,16 @@ void trace2_cmd_path_fl(const char *file, int line, const char *pathname);
 #define trace2_cmd_path(p) trace2_cmd_path_fl(__FILE__, __LINE__, (p))
 
 /*
+ * Emit an 'ancestry' event with the process name of the current process's
+ * parent process.
+ * This gives post-processors a way to determine what invoked the command and
+ * learn more about usage patterns.
+ */
+void trace2_cmd_ancestry_fl(const char *file, int line, const char **parent_names);
+
+#define trace2_cmd_ancestry(v) trace2_cmd_ancestry_fl(__FILE__, __LINE__, (v))
+
+/*
  * Emit a 'cmd_name' event with the canonical name of the command.
  * This gives post-processors a simple field to identify the command
  * without having to parse the argv.
@@ -492,13 +502,7 @@ enum trace2_process_info_reason {
 	TRACE2_PROCESS_INFO_EXIT,
 };
 
-#if defined(GIT_WINDOWS_NATIVE)
 void trace2_collect_process_info(enum trace2_process_info_reason reason);
-#else
-#define trace2_collect_process_info(reason) \
-	do {                                \
-	} while (0)
-#endif
 
 const char *trace2_session_id(void);
 
