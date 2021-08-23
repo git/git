@@ -893,8 +893,7 @@ static struct ref_lock *lock_ref_oid_basic(struct files_ref_store *refs,
 				     RESOLVE_REF_NO_RECURSE,
 				     &lock->old_oid, type)) {
 		last_errno = errno;
-		if (last_errno != ENOTDIR ||
-		    !refs_verify_refname_available(&refs->base, refname,
+		if (!refs_verify_refname_available(&refs->base, refname,
 						   NULL, NULL, err))
 			strbuf_addf(err, "unable to resolve reference '%s': %s",
 				    refname, strerror(last_errno));
