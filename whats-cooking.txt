@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2021, #07; Fri, 20)
+Subject: What's cooking in git.git (Aug 2021, #08; Mon, 23)
 X-master-at: 225bc32a989d7a22fa6addafd4ce7dcd04675dbf
-X-next-at: c128427fd74129b5a9814d069c2d800d1d1e5021
+X-next-at: 09f9fbdd9fd7fdf4d572df3ab25b50b66ac29d70
 
-What's cooking in git.git (Aug 2021, #07; Fri, 20)
+What's cooking in git.git (Aug 2021, #08; Mon, 23)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,8 +17,9 @@ useful").  Do not read too much into a topic being in (or not in)
 'seen'.  The ones marked with '.' do not appear in any of the
 integration branches, but I am still holding onto them.
 
-The tip of 'next' has not been rewound yet, but I've been instead
-reverting a few topics out of it to prepare.
+The tip of 'next' has been rewound, and the first batch of this
+cycle should be in 'master' in a few days.  As discussed, let's make
+'ort' the default early in this cycle.
 
 Most notably, since the "errno cleanup around refs API" topics have
 been blocking the "reftable backend" topic, I've reverted the former
@@ -59,12 +60,15 @@ Release tarballs are available at:
 --------------------------------------------------
 [New Topics]
 
-* sg/make-fix-ar-invocation (2021-08-19) 1 commit
- - Makefile: remove archives before manipulating them with 'ar'
-
-
-* ti/tcsh-completion-regression-fix (2021-08-18) 1 commit
- - completion: tcsh: Fix regression by drop of wrapper functions
+* ps/fetch-optim (2021-08-20) 7 commits
+ - fetch: avoid second connectivity check if we already have all objects
+ - fetch: refactor fetch refs to be more extendable
+ - fetch-pack: optimize loading of refs via commit graph
+ - connected: refactor iterator to return next object ID directly
+ - fetch: avoid unpacking headers in object existence check
+ - fetch: speed up lookup of want refs via commit-graph
+ - Merge branch 'ps/connectivity-optim' into ps/fetch-optim
+ (this branch uses ps/connectivity-optim.)
 
 --------------------------------------------------
 [Stalled]
@@ -132,8 +136,242 @@ Release tarballs are available at:
 
  Waiting for reviews.
 
+
+* ab/fsck-unexpected-type (2021-07-12) 21 commits
+ - fsck: report invalid object type-path combinations
+ - fsck: report invalid types recorded in objects
+ - object-store.h: move read_loose_object() below 'struct object_info'
+ - fsck: don't hard die on invalid object types
+ - object-file.c: return -2 on "header too long" in unpack_loose_header()
+ - object-file.c: return -1, not "status" from unpack_loose_header()
+ - object-file.c: guard against future bugs in loose_object_info()
+ - object-file.c: stop dying in parse_loose_header()
+ - object-file.c: split up ternary in parse_loose_header()
+ - object-file.c: simplify unpack_loose_short_header()
+ - object-file.c: add missing braces to loose_object_info()
+ - object-file.c: make parse_loose_header_extended() public
+ - object-file.c: don't set "typep" when returning non-zero
+ - cache.h: move object functions to object-store.h
+ - cat-file tests: test for current --allow-unknown-type behavior
+ - cat-file tests: add corrupt loose object test
+ - rev-list tests: test for behavior with invalid object types
+ - cat-file tests: test that --allow-unknown-type isn't on by default
+ - cat-file tests: test for missing object with -t and -s
+ - fsck tests: add test for fsck-ing an unknown type
+ - fsck tests: refactor one test to use a sub-repo
+
+ "git fsck" has been taught to report mismatch between expected and
+ actual types of an object better.
+
+ Needs review.
+
 --------------------------------------------------
 [Cooking]
+
+* ps/fetch-pack-load-refs-optim (2021-08-04) 1 commit
+  (merged to 'next' on 2021-08-23 at 09f9fbdd9f)
+ + fetch-pack: speed up loading of refs via commit graph
+
+ Originally merged to 'next' on 2021-08-09
+
+ Loading of ref tips to prepare for common ancestry negotiation in
+ "git fetch-pack" has been optimized by taking advantage of the
+ commit graph when available.
+
+ Will merge to 'master'.
+
+
+* jc/bisect-sans-show-branch (2021-07-28) 2 commits
+  (merged to 'next' on 2021-08-23 at 4d01043b2e)
+ + bisect: simplify return code from bisect_checkout()
+ + bisect: do not run show-branch just to show the current commit
+
+ Originally merged to 'next' on 2021-08-02
+
+ "git bisect" spawned "git show-branch" only to pretty-print the
+ title of the commit after checking out the next version to be
+ tested; this has been rewritten in C.
+
+ Will merge to 'master'.
+
+
+* ab/http-drop-old-curl (2021-07-30) 5 commits
+  (merged to 'next' on 2021-08-23 at 70188594a0)
+ + http: rename CURLOPT_FILE to CURLOPT_WRITEDATA
+ + http: drop support for curl < 7.19.3 and < 7.17.0 (again)
+ + http: drop support for curl < 7.19.4
+ + http: drop support for curl < 7.16.0
+ + http: drop support for curl < 7.11.1
+
+ Originally merged to 'next' on 2021-08-02
+
+ Support for ancient versions of cURL library has been dropped.
+
+ Will merge to 'master'.
+
+
+* ds/add-with-sparse-index (2021-07-29) 5 commits
+  (merged to 'next' on 2021-08-23 at 179c4747ac)
+ + add: remove ensure_full_index() with --renormalize
+ + add: ignore outside the sparse-checkout in refresh()
+ + pathspec: stop calling ensure_full_index
+ + add: allow operating on a sparse-only index
+ + t1092: test merge conflicts outside cone
+ (this branch is used by ds/sparse-index-ignored-files.)
+
+ Originally merged to 'next' on 2021-08-02
+
+ "git add" can work better with the sparse index.
+
+ Will merge to 'master'.
+
+
+* en/ort-perf-batch-15 (2021-08-03) 9 commits
+  (merged to 'next' on 2021-08-23 at d22a850986)
+ + merge-ort: remove compile-time ability to turn off usage of memory pools
+ + merge-ort: reuse path strings in pool_alloc_filespec
+ + merge-ort: store filepairs and filespecs in our mem_pool
+ + diffcore-rename, merge-ort: add wrapper functions for filepair alloc/dealloc
+ + merge-ort: switch our strmaps over to using memory pools
+ + merge-ort: set up a memory pool
+ + merge-ort: add pool_alloc, pool_calloc, and pool_strndup wrappers
+ + diffcore-rename: use a mem_pool for exact rename detection's hashmap
+ + merge-ort: rename str{map,intmap,set}_func()
+
+ Originally merged to 'next' on 2021-08-04
+
+ Final batch for "merge -sort" optimization.
+
+ Will merge to 'master'.
+
+
+* js/expand-runtime-prefix (2021-07-26) 6 commits
+  (merged to 'next' on 2021-08-23 at cf274b0177)
+ + expand_user_path: allow in-flight topics to keep using the old name
+ + interpolate_path(): allow specifying paths relative to the runtime prefix
+ + Use a better name for the function interpolating paths
+ + expand_user_path(): clarify the role of the `real_home` parameter
+ + expand_user_path(): remove stale part of the comment
+ + tests: exercise the RUNTIME_PREFIX feature
+
+ Originally merged to 'next' on 2021-08-04
+
+ Pathname expansion (like "~username/") learned a way to specify a
+ location relative to Git installation (e.g. its $sharedir which is
+ $(prefix)/share), with "%(prefix)".
+
+ Will merge to 'master'.
+
+
+* hn/refs-test-cleanup (2021-08-02) 11 commits
+  (merged to 'next' on 2021-08-23 at 96fe62cbc1)
+ + t6001: avoid direct file system access
+ + t6500: use "ls -1" to snapshot ref database state
+ + t7064: use update-ref -d to remove upstream branch
+ + t1410: mark test as REFFILES
+ + t1405: mark test for 'git pack-refs' as REFFILES
+ + t1405: use 'git reflog exists' to check reflog existence
+ + t2402: use ref-store test helper to create broken symlink
+ + t3320: use git-symbolic-ref rather than filesystem access
+ + t6120: use git-update-ref rather than filesystem access
+ + t1503: mark symlink test as REFFILES
+ + t6050: use git-update-ref rather than filesystem access
+
+ Originally merged to 'next' on 2021-08-04
+
+ A handful of tests that assumed implementation details of files
+ backend for refs have been cleaned up.
+
+ Will merge to 'master'.
+
+
+* ab/bundle-doc (2021-08-02) 4 commits
+  (merged to 'next' on 2021-08-23 at af25d34e71)
+ + bundle doc: replace "basis" with "prerequsite(s)"
+ + bundle doc: elaborate on rev<->ref restriction
+ + bundle doc: elaborate on object prerequisites
+ + bundle doc: rewrite the "DESCRIPTION" section
+
+ Originally merged to 'next' on 2021-08-04
+
+ Doc update.
+
+ Will merge to 'master'.
+
+
+* ab/pack-stdin-packs-fix (2021-07-09) 2 commits
+  (merged to 'next' on 2021-08-23 at ec9d0ba95f)
+ + pack-objects: fix segfault in --stdin-packs option
+ + pack-objects tests: cover blindspots in stdin handling
+
+ Originally merged to 'next' on 2021-08-04
+
+ Input validation of "git pack-objects --stdin-packs" has been
+ corrected.
+
+ Will merge to 'master'.
+
+
+* jt/push-negotiation-fixes (2021-07-15) 3 commits
+  (merged to 'next' on 2021-08-23 at 6b3dcc1092)
+ + fetch: die on invalid --negotiation-tip hash
+ + send-pack: fix push nego. when remote has refs
+ + send-pack: fix push.negotiate with remote helper
+
+ Originally merged to 'next' on 2021-08-09
+
+ Bugfix for common ancestor negotiation recently introduced in "git
+ push" codepath.
+
+ Will merge to 'master'.
+
+
+* zh/ref-filter-raw-data (2021-07-26) 6 commits
+  (merged to 'next' on 2021-08-23 at 5c06fb48a5)
+ + ref-filter: add %(rest) atom
+ + ref-filter: use non-const ref_format in *_atom_parser()
+ + ref-filter: --format=%(raw) support --perl
+ + ref-filter: add %(raw) atom
+ + ref-filter: add obj-type check in grab contents
+ + Merge branch 'zh/cat-file-batch-fix' into zh/ref-filter-raw-data
+
+ Originally merged to 'next' on 2021-08-04
+
+ Prepare the "ref-filter" machinery that drives the "--format"
+ option of "git for-each-ref" and its friends to be used in "git
+ cat-file --batch".
+
+ Will merge to 'master'.
+
+
+* es/trace2-log-parent-process-name (2021-07-22) 2 commits
+  (merged to 'next' on 2021-08-23 at a93182081d)
+ + tr2: log parent process name
+ + tr2: make process info collection platform-generic
+
+ Originally merged to 'next' on 2021-08-04
+
+ trace2 logs learned to show parent process name to see in what
+ context Git was invoked.
+
+ Will merge to 'master'.
+
+
+* sg/make-fix-ar-invocation (2021-08-19) 1 commit
+ - Makefile: remove archives before manipulating them with 'ar'
+
+ Build fix.
+
+ Will merge to 'next'.
+
+
+* ti/tcsh-completion-regression-fix (2021-08-18) 1 commit
+ - completion: tcsh: Fix regression by drop of wrapper functions
+
+ Update to the command line completion (in contrib/) for tcsh.
+
+ Will merge to 'next'.
+
 
 * fc/completion-updates (2021-08-18) 4 commits
  - completion: bash: add correct suffix in variables
@@ -143,7 +381,7 @@ Release tarballs are available at:
 
  Command line completion updates.
 
- Will merge to 'next'?
+ Will merge to 'next'.
 
 
 * ar/submodule-run-update-procedure (2021-08-13) 1 commit
@@ -183,13 +421,15 @@ Release tarballs are available at:
  to true.
 
 
-* pw/rebase-r-fixes (2021-08-15) 4 commits
+* pw/rebase-r-fixes (2021-08-23) 4 commits
  - rebase -r: fix merge -c with a merge strategy
  - rebase -r: don't write .git/MERGE_MSG when fast-forwarding
- - rebase -i: Add another reword test
+ - rebase -i: add another reword test
  - rebase -r: make 'merge -c' behave like reword
 
  Various bugs in "git rebase -r" have been fixed.
+
+ Will merge to 'next'.
 
 
 * th/userdiff-more-java (2021-08-11) 1 commit
@@ -200,12 +440,14 @@ Release tarballs are available at:
  Will merge to 'next'.
 
 
-* zh/cherry-pick-advice (2021-08-14) 1 commit
+* zh/cherry-pick-advice (2021-08-23) 1 commit
  - cherry-pick: use better advice message
 
  The advice message that "git cherry-pick" gives when it asks
  conflicted replay of a commit to be resolved by the end user has
  been updated.
+
+ Will merge to 'next'?
 
 
 * es/config-based-hooks (2021-08-19) 7 commits
@@ -222,6 +464,7 @@ Release tarballs are available at:
  upon the same event and control via the configuration variables.
 
  Will merge to 'next'?
+ cf. <87v93wflm0.fsf@evledraar.gmail.com>
 
 
 * mk/clone-recurse-submodules (2021-08-18) 2 commits
@@ -388,23 +631,13 @@ Release tarballs are available at:
  an alternate object store" mechanism (which is suboptimal).
 
 
-* ps/fetch-pack-load-refs-optim (2021-08-04) 1 commit
-  (merged to 'next' on 2021-08-09 at 4744a01fd5)
- + fetch-pack: speed up loading of refs via commit graph
-
- Loading of ref tips to prepare for common ancestry negotiation in
- "git fetch-pack" has been optimized by taking advantage of the
- commit graph when available.
-
- Will cook in 'next'.
-
-
 * ps/connectivity-optim (2021-08-09) 5 commits
  - revision: avoid hitting packfiles when commits are in commit-graph
  - commit-graph: split out function to search commit position
  - revision: stop retrieving reference twice
  - connected: do not sort input revisions
  - revision: separate walk and unsorted flags
+ (this branch is used by ps/fetch-optim.)
 
  The revision traversal API has been optimized by taking advantage
  of the commit-graph, when available, to determine if a commit is
@@ -435,17 +668,6 @@ Release tarballs are available at:
  - build: update detect-compiler for newer Xcode version
 
  Build update.
-
-
-* jk/refs-files-cleanup-cleanup (2021-08-19) 1 commit
- - refs: drop unused "flags" parameter to lock_ref_oid_basic()
- (this branch is used by hn/refs-errno-cleanup; uses ab/refs-files-cleanup.)
-
- Code cleanup.
-
- Kicked out of 'next', to give ab/refs/files-cleanup a clean restart.
- I suspect that ab/refs-files-cleanup can fix its commit by
- squashing it in, but I'll leave that to the owner of the topic.
 
 
 * en/merge-strategy-docs (2021-08-05) 10 commits
@@ -494,18 +716,6 @@ Release tarballs are available at:
  cf. <20210802174944.53745-1-oystwa@gmail.com>
 
 
-* jc/bisect-sans-show-branch (2021-07-28) 2 commits
-  (merged to 'next' on 2021-08-02 at 89a8d9a47b)
- + bisect: simplify return code from bisect_checkout()
- + bisect: do not run show-branch just to show the current commit
-
- "git bisect" spawned "git show-branch" only to pretty-print the
- title of the commit after checking out the next version to be
- tested; this has been rewritten in C.
-
- Will cook in 'next'.
-
-
 * jc/trivial-threeway-binary-merge (2021-07-28) 1 commit
  - ll-merge: teach ll_binary_merge() a trivial three-way merge
 
@@ -517,19 +727,6 @@ Release tarballs are available at:
  Will discard.
  Replace with a trivial-merge logic in apply.c::try_treeway() or
  apply.c::three_way_merge().
-
-
-* ab/http-drop-old-curl (2021-07-30) 5 commits
-  (merged to 'next' on 2021-08-02 at b382ac042f)
- + http: rename CURLOPT_FILE to CURLOPT_WRITEDATA
- + http: drop support for curl < 7.19.3 and < 7.17.0 (again)
- + http: drop support for curl < 7.19.4
- + http: drop support for curl < 7.16.0
- + http: drop support for curl < 7.11.1
-
- Support for ancient versions of cURL library has been dropped.
-
- Will cook in 'next'.
 
 
 * ab/lib-subtest (2021-08-05) 11 commits
@@ -546,20 +743,6 @@ Release tarballs are available at:
  - Merge branch 'jk/t0000-subtests-fix' into ab/lib-subtest
 
  Updates to the tests in t0000 to test the test framework.
-
-
-* ds/add-with-sparse-index (2021-07-29) 5 commits
-  (merged to 'next' on 2021-08-02 at ee3e1323bb)
- + add: remove ensure_full_index() with --renormalize
- + add: ignore outside the sparse-checkout in refresh()
- + pathspec: stop calling ensure_full_index
- + add: allow operating on a sparse-only index
- + t1092: test merge conflicts outside cone
- (this branch is used by ds/sparse-index-ignored-files.)
-
- "git add" can work better with the sparse index.
-
- Will cook in 'next'.
 
 
 * ab/only-single-progress-at-once (2021-07-23) 8 commits
@@ -594,51 +777,6 @@ Release tarballs are available at:
  Large part of "git submodule add" gets rewritten in C.
 
 
-* en/ort-perf-batch-15 (2021-08-03) 9 commits
-  (merged to 'next' on 2021-08-04 at 87fc290e71)
- + merge-ort: remove compile-time ability to turn off usage of memory pools
- + merge-ort: reuse path strings in pool_alloc_filespec
- + merge-ort: store filepairs and filespecs in our mem_pool
- + diffcore-rename, merge-ort: add wrapper functions for filepair alloc/dealloc
- + merge-ort: switch our strmaps over to using memory pools
- + merge-ort: set up a memory pool
- + merge-ort: add pool_alloc, pool_calloc, and pool_strndup wrappers
- + diffcore-rename: use a mem_pool for exact rename detection's hashmap
- + merge-ort: rename str{map,intmap,set}_func()
-
- Final batch for "merge -sort" optimization.
-
- Will cook in 'next'.
-
-
-* js/expand-runtime-prefix (2021-07-26) 6 commits
-  (merged to 'next' on 2021-08-04 at b95a81a004)
- + expand_user_path: allow in-flight topics to keep using the old name
- + interpolate_path(): allow specifying paths relative to the runtime prefix
- + Use a better name for the function interpolating paths
- + expand_user_path(): clarify the role of the `real_home` parameter
- + expand_user_path(): remove stale part of the comment
- + tests: exercise the RUNTIME_PREFIX feature
-
- Pathname expansion (like "~username/") learned a way to specify a
- location relative to Git installation (e.g. its $sharedir which is
- $(prefix)/share), with "%(prefix)".
-
- Will cook in 'next'.
-
-
-* zh/cherry-pick-help-is-only-for-sequencer (2021-08-03) 2 commits
-  (merged to 'next' on 2021-08-04 at 9ea14ed106)
- + cherry-pick: use better advice message
- + cherry-pick: fix bug when used with GIT_CHERRY_PICK_HELP
-
- "git cherry-pick" loses its state file when a stray
- GIT_CHERRY_PICK_HELP environment is present, which has been
- corrected.
-
- Will cook in 'next'.
-
-
 * dt/submodule-diff-fixes (2021-08-11) 3 commits
  - diff --submodule=diff: don't print failure message twice
  - diff --submodule=diff: do not fail on ever-initialied deleted submodules
@@ -668,77 +806,6 @@ Release tarballs are available at:
  Comments?
 
 
-* hn/refs-test-cleanup (2021-08-02) 11 commits
-  (merged to 'next' on 2021-08-04 at 5651c32f4b)
- + t6001: avoid direct file system access
- + t6500: use "ls -1" to snapshot ref database state
- + t7064: use update-ref -d to remove upstream branch
- + t1410: mark test as REFFILES
- + t1405: mark test for 'git pack-refs' as REFFILES
- + t1405: use 'git reflog exists' to check reflog existence
- + t2402: use ref-store test helper to create broken symlink
- + t3320: use git-symbolic-ref rather than filesystem access
- + t6120: use git-update-ref rather than filesystem access
- + t1503: mark symlink test as REFFILES
- + t6050: use git-update-ref rather than filesystem access
-
- A handful of tests that assumed implementation details of files
- backend for refs have been cleaned up.
-
- Will cook in 'next'.
-
-
-* hn/reftable (2021-08-18) 25 commits
- - t1404: annotate test cases with REFFILES
- - t1401,t2011: parameterize HEAD.lock for REFFILES
- - t1301: document what needs to be done for reftable
- - reftable: add "test-tool dump-reftable" command.
- - git-prompt: prepare for reftable refs backend
- - refs: RFC: Reftable support for git-core
- - reftable: add dump utility
- - reftable: implement stack, a mutable database of reftable files.
- - reftable: implement refname validation
- - reftable: add merged table view
- - reftable: add a heap-based priority queue for reftable records
- - reftable: reftable file level tests
- - reftable: read reftable files
- - reftable: generic interface to tables
- - reftable: write reftable files
- - reftable: a generic binary tree implementation
- - reftable: reading/writing blocks
- - compat: provide zlib's uncompress2 from compat/zlib-compat.c
- - reftable: (de)serialization for the polymorphic record type.
- - reftable: add blocksource, an abstraction for random access reads
- - reftable: utility functions
- - reftable: add error related functionality
- - reftable: RFC: add LICENSE
- - init-db: set the_repository->hash_algo early on
- - hash.h: provide constants for the hash IDs
-
- The "reftable" backend for the refs API.
-
-
-* ab/refs-files-cleanup (2021-08-19) 11 commits
- - refs/files: remove unused "errno != ENOTDIR" condition
- - refs/files: remove unused "errno == EISDIR" code
- - refs/files: remove unused "oid" in lock_ref_oid_basic()
- - reflog expire: don't lock reflogs using previously seen OID
- - refs/files: add a comment about refs_reflog_exists() call
- - refs: make repo_dwim_log() accept a NULL oid
- - refs/debug: re-indent argument list for "prepare"
- - refs/files: remove unused "skip" in lock_raw_ref() too
- - refs/files: remove unused "extras/skip" in lock_ref_oid_basic()
- - refs/files: remove unused REF_DELETING in lock_ref_oid_basic()
- - refs/packet: add missing BUG() invocations to reflog callbacks
- (this branch is used by hn/refs-errno-cleanup and jk/refs-files-cleanup-cleanup.)
-
- Kicked out of 'next', to give ab/refs/files-cleanup a clean restart.
-
- I suspect that jk/refs-files-cleanup-cleanup should be squashed
- into the commits in this topic, but I'll leave that to the owner of
- the topic.
-
-
 * en/pull-conflicting-options (2021-07-22) 8 commits
  - pull: fix handling of multiple heads
  - pull: update docs & code for option compatibility with rebasing
@@ -765,41 +832,6 @@ Release tarballs are available at:
 
  Expecting a reroll.
  cf. <xmqqsg0ri5mq.fsf@gitster.g>
-
-
-* ab/bundle-doc (2021-08-02) 4 commits
-  (merged to 'next' on 2021-08-04 at b3b3b0fa98)
- + bundle doc: replace "basis" with "prerequsite(s)"
- + bundle doc: elaborate on rev<->ref restriction
- + bundle doc: elaborate on object prerequisites
- + bundle doc: rewrite the "DESCRIPTION" section
-
- Doc update.
-
- Will cook in 'next'.
-
-
-* ab/pack-stdin-packs-fix (2021-07-09) 2 commits
-  (merged to 'next' on 2021-08-04 at f464b74a6f)
- + pack-objects: fix segfault in --stdin-packs option
- + pack-objects tests: cover blindspots in stdin handling
-
- Input validation of "git pack-objects --stdin-packs" has been
- corrected.
-
- Will cook in 'next'.
-
-
-* jt/push-negotiation-fixes (2021-07-15) 3 commits
-  (merged to 'next' on 2021-08-09 at ea7da8239c)
- + fetch: die on invalid --negotiation-tip hash
- + send-pack: fix push nego. when remote has refs
- + send-pack: fix push.negotiate with remote helper
-
- Bugfix for common ancestor negotiation recently introduced in "git
- push" codepath.
-
- Will cook in 'next'.
 
 
 * ab/make-tags-cleanup (2021-08-05) 5 commits
@@ -912,46 +944,6 @@ Release tarballs are available at:
  Expecting a reroll.
 
 
-* pw/diff-color-moved-fix (2021-08-05) 13 commits
-  (merged to 'next' on 2021-08-05 at 7b5e312aac)
- + diff: drop unused options parameter from cmp_in_block_with_wsd()
-  (merged to 'next' on 2021-08-04 at 4de4a451e0)
- + diff --color-moved: intern strings
- + diff: use designated initializers for emitted_diff_symbol
- + diff --color-moved-ws=allow-indentation-change: improve hash lookups
- + diff --color-moved: stop clearing potential moved blocks
- + diff --color-moved: shrink potential moved blocks as we go
- + diff --color-moved: unify moved block growth functions
- + diff --color-moved: call comparison function directly
- + diff --color-moved-ws=allow-indentation-change: simplify and optimize
- + diff: simplify allow-indentation-change delta calculation
- + diff --color-moved: avoid false short line matches and bad zerba coloring
- + diff --color-moved=zebra: fix alternate coloring
- + diff --color-moved: add perf tests
-
- Long-overdue correctness and performance update to "diff
- --color-moved" feature.
-
- Eject for reroll.
- cf. <8bec1a6d-5052-50c3-4100-e6348289d581@gmail.com>
-
-
-* hn/refs-errno-cleanup (2021-08-19) 7 commits
- - refs: make errno output explicit for refs_resolve_ref_unsafe
- - refs: explicitly return failure_errno from parse_loose_ref_contents
- - refs: add failure_errno to refs_read_raw_ref() signature
- - refs: make errno output explicit for read_raw_ref_fn
- - refs/files-backend: stop setting errno from lock_ref_oid_basic
- - refs: remove EINVAL errno output from specification of read_raw_ref_fn
- - refs file backend: move raceproof_create_file() here
- (this branch uses ab/refs-files-cleanup and jk/refs-files-cleanup-cleanup.)
-
- Futz with the way 'errno' is relied on in the refs API to carry the
- failure modes up the callchain.
-
- Kicked out of 'next', to give ab/refs/files-cleanup a clean restart.
-
-
 * ab/test-tool-cache-cleanup (2021-06-08) 4 commits
  - read-cache perf: add a perf test for refresh_index()
  - test-tool: migrate read-cache-again to parse_options()
@@ -975,20 +967,106 @@ Release tarballs are available at:
  Waiting for reviews.
 
 
-* zh/ref-filter-raw-data (2021-07-26) 6 commits
-  (merged to 'next' on 2021-08-04 at 4c4529d8d0)
- + ref-filter: add %(rest) atom
- + ref-filter: use non-const ref_format in *_atom_parser()
- + ref-filter: --format=%(raw) support --perl
- + ref-filter: add %(raw) atom
- + ref-filter: add obj-type check in grab contents
- + Merge branch 'zh/cat-file-batch-fix' into zh/ref-filter-raw-data
+* pw/diff-color-moved-fix (2021-08-05) 13 commits
+ - diff: drop unused options parameter from cmp_in_block_with_wsd()
+ - diff --color-moved: intern strings
+ - diff: use designated initializers for emitted_diff_symbol
+ - diff --color-moved-ws=allow-indentation-change: improve hash lookups
+ - diff --color-moved: stop clearing potential moved blocks
+ - diff --color-moved: shrink potential moved blocks as we go
+ - diff --color-moved: unify moved block growth functions
+ - diff --color-moved: call comparison function directly
+ - diff --color-moved-ws=allow-indentation-change: simplify and optimize
+ - diff: simplify allow-indentation-change delta calculation
+ - diff --color-moved: avoid false short line matches and bad zerba coloring
+ - diff --color-moved=zebra: fix alternate coloring
+ - diff --color-moved: add perf tests
 
- Prepare the "ref-filter" machinery that drives the "--format"
- option of "git for-each-ref" and its friends to be used in "git
- cat-file --batch".
+ Originally merged to 'next' on 2021-08-05
 
- Will cook in 'next'.
+ Long-overdue correctness and performance update to "diff
+ --color-moved" feature.
+
+ Eject for reroll.
+ cf. <8bec1a6d-5052-50c3-4100-e6348289d581@gmail.com>
+
+
+* hn/reftable (2021-08-18) 25 commits
+ - t1404: annotate test cases with REFFILES
+ - t1401,t2011: parameterize HEAD.lock for REFFILES
+ - t1301: document what needs to be done for reftable
+ - reftable: add "test-tool dump-reftable" command.
+ - git-prompt: prepare for reftable refs backend
+ - refs: RFC: Reftable support for git-core
+ - reftable: add dump utility
+ - reftable: implement stack, a mutable database of reftable files.
+ - reftable: implement refname validation
+ - reftable: add merged table view
+ - reftable: add a heap-based priority queue for reftable records
+ - reftable: reftable file level tests
+ - reftable: read reftable files
+ - reftable: generic interface to tables
+ - reftable: write reftable files
+ - reftable: a generic binary tree implementation
+ - reftable: reading/writing blocks
+ - compat: provide zlib's uncompress2 from compat/zlib-compat.c
+ - reftable: (de)serialization for the polymorphic record type.
+ - reftable: add blocksource, an abstraction for random access reads
+ - reftable: utility functions
+ - reftable: add error related functionality
+ - reftable: RFC: add LICENSE
+ - init-db: set the_repository->hash_algo early on
+ - hash.h: provide constants for the hash IDs
+
+ The "reftable" backend for the refs API.
+
+
+* ab/refs-files-cleanup (2021-08-19) 11 commits
+ - refs/files: remove unused "errno != ENOTDIR" condition
+ - refs/files: remove unused "errno == EISDIR" code
+ - refs/files: remove unused "oid" in lock_ref_oid_basic()
+ - reflog expire: don't lock reflogs using previously seen OID
+ - refs/files: add a comment about refs_reflog_exists() call
+ - refs: make repo_dwim_log() accept a NULL oid
+ - refs/debug: re-indent argument list for "prepare"
+ - refs/files: remove unused "skip" in lock_raw_ref() too
+ - refs/files: remove unused "extras/skip" in lock_ref_oid_basic()
+ - refs/files: remove unused REF_DELETING in lock_ref_oid_basic()
+ - refs/packet: add missing BUG() invocations to reflog callbacks
+ (this branch is used by hn/refs-errno-cleanup and jk/refs-files-cleanup-cleanup.)
+
+ Kicked out of 'next', to give ab/refs/files-cleanup a clean restart.
+
+ I suspect that jk/refs-files-cleanup-cleanup should be squashed
+ into the commits in this topic, but I'll leave that to the owner of
+ the topic.
+
+
+* jk/refs-files-cleanup-cleanup (2021-08-19) 1 commit
+ - refs: drop unused "flags" parameter to lock_ref_oid_basic()
+ (this branch is used by hn/refs-errno-cleanup; uses ab/refs-files-cleanup.)
+
+ Code cleanup.
+
+ Kicked out of 'next', to give ab/refs/files-cleanup a clean restart.
+ I suspect that ab/refs-files-cleanup can fix its commit by
+ squashing it in, but I'll leave that to the owner of the topic.
+
+
+* hn/refs-errno-cleanup (2021-08-19) 7 commits
+ - refs: make errno output explicit for refs_resolve_ref_unsafe
+ - refs: explicitly return failure_errno from parse_loose_ref_contents
+ - refs: add failure_errno to refs_read_raw_ref() signature
+ - refs: make errno output explicit for read_raw_ref_fn
+ - refs/files-backend: stop setting errno from lock_ref_oid_basic
+ - refs: remove EINVAL errno output from specification of read_raw_ref_fn
+ - refs file backend: move raceproof_create_file() here
+ (this branch uses ab/refs-files-cleanup and jk/refs-files-cleanup-cleanup.)
+
+ Futz with the way 'errno' is relied on in the refs API to carry the
+ failure modes up the callchain.
+
+ Kicked out of 'next', to give ab/refs/files-cleanup a clean restart.
 
 
 * jh/builtin-fsmonitor (2021-07-12) 35 commits
@@ -1033,42 +1111,17 @@ Release tarballs are available at:
 
  Expecting a reroll post 2.33 release.
 
+--------------------------------------------------
+[Discarded]
 
-* es/trace2-log-parent-process-name (2021-07-22) 2 commits
-  (merged to 'next' on 2021-08-04 at 47e35c31b0)
- + tr2: log parent process name
- + tr2: make process info collection platform-generic
+* zh/cherry-pick-help-is-only-for-sequencer (2021-08-03) 2 commits
+ . cherry-pick: use better advice message
+ . cherry-pick: fix bug when used with GIT_CHERRY_PICK_HELP
 
- trace2 logs learned to show parent process name to see in what
- context Git was invoked.
+ Originally merged to 'next' on 2021-08-04
 
- Will cook in 'next'.
+ "git cherry-pick" loses its state file when a stray
+ GIT_CHERRY_PICK_HELP environment is present, which has been
+ corrected.
 
-
-* ab/fsck-unexpected-type (2021-07-12) 21 commits
- - fsck: report invalid object type-path combinations
- - fsck: report invalid types recorded in objects
- - object-store.h: move read_loose_object() below 'struct object_info'
- - fsck: don't hard die on invalid object types
- - object-file.c: return -2 on "header too long" in unpack_loose_header()
- - object-file.c: return -1, not "status" from unpack_loose_header()
- - object-file.c: guard against future bugs in loose_object_info()
- - object-file.c: stop dying in parse_loose_header()
- - object-file.c: split up ternary in parse_loose_header()
- - object-file.c: simplify unpack_loose_short_header()
- - object-file.c: add missing braces to loose_object_info()
- - object-file.c: make parse_loose_header_extended() public
- - object-file.c: don't set "typep" when returning non-zero
- - cache.h: move object functions to object-store.h
- - cat-file tests: test for current --allow-unknown-type behavior
- - cat-file tests: add corrupt loose object test
- - rev-list tests: test for behavior with invalid object types
- - cat-file tests: test that --allow-unknown-type isn't on by default
- - cat-file tests: test for missing object with -t and -s
- - fsck tests: add test for fsck-ing an unknown type
- - fsck tests: refactor one test to use a sub-repo
-
- "git fsck" has been taught to report mismatch between expected and
- actual types of an object better.
-
- Needs review.
+ Reverted out of 'next' at 1f62d2e1 on 2021-08-11
