@@ -1918,7 +1918,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 						   &options.orig_head))
 			options.head_name = NULL;
 		else
-			die(_("fatal: no such branch/commit '%s'"),
+			die(_("no such branch/commit '%s'"),
 			    branch_name);
 	} else if (argc == 0) {
 		/* Do not need to switch branches, we are already on it. */
