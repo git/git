@@ -105,6 +105,8 @@ static int graph_verify(int argc, const char **argv)
 	argc = parse_options(argc, argv, NULL,
 			     options,
 			     builtin_commit_graph_verify_usage, 0);
+	if (argc)
+		usage_with_options(builtin_commit_graph_verify_usage, options);
 
 	if (!opts.obj_dir)
 		opts.obj_dir = get_object_directory();
@@ -262,6 +264,8 @@ static int graph_write(int argc, const char **argv)
 	argc = parse_options(argc, argv, NULL,
 			     options,
 			     builtin_commit_graph_write_usage, 0);
+	if (argc)
+		usage_with_options(builtin_commit_graph_write_usage, options);
 
 	if (opts.reachable + opts.stdin_packs + opts.stdin_commits > 1)
 		die(_("use at most one of --reachable, --stdin-commits, or --stdin-packs"));
