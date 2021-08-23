@@ -1336,7 +1336,7 @@ const char *find_hook(const char *name)
 			err = errno;
 #endif
 
-		if (err == EACCES && advice_ignored_hook) {
+		if (err == EACCES && advice_enabled(ADVICE_IGNORED_HOOK)) {
 			static struct string_list advise_given = STRING_LIST_INIT_DUP;
 
 			if (!string_list_lookup(&advise_given, name)) {

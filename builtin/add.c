@@ -447,7 +447,7 @@ static int add_files(struct dir_struct *dir, int flags)
 		fprintf(stderr, _(ignore_error));
 		for (i = 0; i < dir->ignored_nr; i++)
 			fprintf(stderr, "%s\n", dir->ignored[i]->name);
-		if (advice_add_ignored_file)
+		if (advice_enabled(ADVICE_ADD_IGNORED_FILE))
 			advise(_("Use -f if you really want to add them.\n"
 				"Turn this message off by running\n"
 				"\"git config advice.addIgnoredFile false\""));
@@ -553,7 +553,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 	if (require_pathspec && pathspec.nr == 0) {
 		fprintf(stderr, _("Nothing specified, nothing added.\n"));
-		if (advice_add_empty_pathspec)
+		if (advice_enabled(ADVICE_ADD_EMPTY_PATHSPEC))
 			advise( _("Maybe you wanted to say 'git add .'?\n"
 				"Turn this message off by running\n"
 				"\"git config advice.addEmptyPathspec false\""));
