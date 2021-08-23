@@ -3316,9 +3316,9 @@ static size_t append_system_bin_dirs(char *path, size_t size)
 
 static int is_system32_path(const char *path)
 {
-	WCHAR system32[MAX_LONG_PATH], wpath[MAX_LONG_PATH];
+	WCHAR system32[MAX_PATH], wpath[MAX_PATH];
 
-	if (xutftowcs_long_path(wpath, path) < 0 ||
+	if (xutftowcs_path(wpath, path) < 0 ||
 	    !GetSystemDirectoryW(system32, ARRAY_SIZE(system32)) ||
 	    _wcsicmp(system32, wpath))
 		return 0;
