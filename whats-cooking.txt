@@ -321,7 +321,7 @@ Release tarballs are available at:
  Originally merged to 'next' on 2021-08-09
 
  Bugfix for common ancestor negotiation recently introduced in "git
- push" codepath.
+ push" code path.
 
  Will merge to 'master'.
 
@@ -570,7 +570,7 @@ Release tarballs are available at:
  - Merge branch 'ds/add-with-sparse-index' into ds/sparse-index-ignored-files
  (this branch uses ds/add-with-sparse-index.)
 
- In cone mode, the sparse-index codepath learned to remove ignored
+ In cone mode, the sparse-index code path learned to remove ignored
  files (like build artifacts) outside the sparse cone, allowing the
  entire directory outside the sparse cone to be removed, which is
  especially useful when the sparse patterns change.
@@ -659,7 +659,7 @@ Release tarballs are available at:
  - Merge branch 'ar/submodule-add-config' into ar/submodule-add
  (this branch uses ar/submodule-add-config.)
 
- More parts of "git submoudle add" has been rewritten in C.
+ More parts of "git submodule add" has been rewritten in C.
 
 
 * cb/makefile-apple-clang (2021-08-06) 3 commits
@@ -763,7 +763,7 @@ Release tarballs are available at:
  - midx: don't provide a total for QSORT() progress
  - commit-graph: fix bogus counter in "Scanning merged commits" progress line
 
- The code to show progress indicator in a few codepaths did not
+ The code to show progress indicator in a few code paths did not
  cover between 0-100%, which has been corrected.
 
  The middle one wants to be discarded.
