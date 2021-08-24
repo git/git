@@ -298,6 +298,15 @@ pathname::
 	tilde expansion happens to such a string: `~/`
 	is expanded to the value of `$HOME`, and `~user/` to the
 	specified user's home directory.
++
+If a path starts with `%(prefix)/`, the remainder is interpreted as a
+path relative to Git's "runtime prefix", i.e. relative to the location
+where Git itself was installed. For example, `%(prefix)/bin/` refers to
+the directory in which the Git executable itself lives. If Git was
+compiled without runtime prefix support, the compiled-in prefix will be
+subsituted instead. In the unlikely event that a literal path needs to
+be specified that should _not_ be expanded, it needs to be prefixed by
+`./`, like so: `./%(prefix)/bin`.
 
 
 Variables

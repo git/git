@@ -1542,7 +1542,7 @@ static char *launchctl_service_filename(const char *name)
 	struct strbuf filename = STRBUF_INIT;
 	strbuf_addf(&filename, "~/Library/LaunchAgents/%s.plist", name);
 
-	expanded = expand_user_path(filename.buf, 1);
+	expanded = interpolate_path(filename.buf, 1);
 	if (!expanded)
 		die(_("failed to expand path '%s'"), filename.buf);
 
