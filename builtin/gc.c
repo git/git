@@ -1602,16 +1602,14 @@ static int launchctl_remove_plists(const char *cmd)
 
 static int launchctl_schedule_plist(const char *exec_path, enum schedule_priority schedule, const char *cmd)
 {
-	FILE *plist;
-	int i;
+	int i, fd;
 	const char *preamble, *repeat;
 	const char *frequency = get_frequency(schedule);
 	char *name = launchctl_service_name(frequency);
 	char *filename = launchctl_service_filename(name);
-
-	if (safe_create_leading_directories(filename))
-		die(_("failed to create directories for '%s'"), filename);
-	plist = xfopen(filename, "w");
+	struct lock_file lk = LOCK_INIT;
+	static unsigned long lock_file_timeout_ms = ULONG_MAX;
+	struct strbuf plist = STRBUF_INIT;
 
 	preamble = "<?xml version=\"1.0\"?>\n"
 		   "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
@@ -1630,7 +1628,7 @@ static int launchctl_schedule_plist(const char *exec_path, enum schedule_priorit
 		   "</array>\n"
 		   "<key>StartCalendarInterval</key>\n"
 		   "<array>\n";
-	fprintf(plist, preamble, name, exec_path, exec_path, frequency);
+	strbuf_addf(&plist, preamble, name, exec_path, exec_path, frequency);
 
 	switch (schedule) {
 	case SCHEDULE_HOURLY:
@@ -1639,7 +1637,7 @@ static int launchctl_schedule_plist(const char *exec_path, enum schedule_priorit
 			 "<key>Minute</key><integer>0</integer>\n"
 			 "</dict>\n";
 		for (i = 1; i <= 23; i++)
-			fprintf(plist, repeat, i);
+			strbuf_addf(&plist, repeat, i);
 		break;
 
 	case SCHEDULE_DAILY:
@@ -1649,24 +1647,38 @@ static int launchctl_schedule_plist(const char *exec_path, enum schedule_priorit
 			 "<key>Minute</key><integer>0</integer>\n"
 			 "</dict>\n";
 		for (i = 1; i <= 6; i++)
-			fprintf(plist, repeat, i);
+			strbuf_addf(&plist, repeat, i);
 		break;
 
 	case SCHEDULE_WEEKLY:
-		fprintf(plist,
-			"<dict>\n"
-			"<key>Day</key><integer>0</integer>\n"
-			"<key>Hour</key><integer>0</integer>\n"
-			"<key>Minute</key><integer>0</integer>\n"
-			"</dict>\n");
+		strbuf_addstr(&plist,
+			      "<dict>\n"
+			      "<key>Day</key><integer>0</integer>\n"
+			      "<key>Hour</key><integer>0</integer>\n"
+			      "<key>Minute</key><integer>0</integer>\n"
+			      "</dict>\n");
 		break;
 
 	default:
 		/* unreachable */
 		break;
 	}
-	fprintf(plist, "</array>\n</dict>\n</plist>\n");
-	fclose(plist);
+	strbuf_addstr(&plist, "</array>\n</dict>\n</plist>\n");
+
+	if (safe_create_leading_directories(filename))
+		die(_("failed to create directories for '%s'"), filename);
+
+	if ((long)lock_file_timeout_ms < 0 &&
+	    git_config_get_ulong("gc.launchctlplistlocktimeoutms",
+				 &lock_file_timeout_ms))
+		lock_file_timeout_ms = 150;
+
+	fd = hold_lock_file_for_update_timeout(&lk, filename, LOCK_DIE_ON_ERROR,
+					       lock_file_timeout_ms);
+
+	if (write_in_full(fd, plist.buf, plist.len) < 0 ||
+	    commit_lock_file(&lk))
+		die_errno(_("could not write '%s'"), filename);
 
 	/* bootout might fail if not already running, so ignore */
 	launchctl_boot_plist(0, filename, cmd);
@@ -1675,6 +1687,7 @@ static int launchctl_schedule_plist(const char *exec_path, enum schedule_priorit
 
 	free(filename);
 	free(name);
+	strbuf_release(&plist);
 	return 0;
 }
 
