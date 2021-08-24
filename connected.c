@@ -106,6 +106,7 @@ no_promisor_pack_found:
 	if (opt->progress)
 		strvec_pushf(&rev_list.args, "--progress=%s",
 			     _("Checking connectivity"));
+	strvec_push(&rev_list.args, "--unsorted-input");
 
 	rev_list.git_cmd = 1;
 	rev_list.env = opt->env;
