@@ -61,6 +61,8 @@ merge has resulted in conflicts.
 
 OPTIONS
 -------
+:git-merge: 1
+
 include::merge-options.txt[]
 
 -m <msg>::
