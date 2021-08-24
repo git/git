@@ -3311,9 +3311,26 @@ static void read_packs_list_from_stdin(void)
 	}
 
 	/*
-	 * First handle all of the excluded packs, marking them as kept in-core
-	 * so that later calls to add_object_entry() discards any objects that
-	 * are also found in excluded packs.
+	 * Arguments we got on stdin may not even be packs. First
+	 * check that to avoid segfaulting later on in
+	 * e.g. pack_mtime_cmp(), excluded packs are handled below.
+	 *
+	 * Since we first parsed our STDIN and then sorted the input
+	 * lines the pack we error on will be whatever line happens to
+	 * sort first. This is lazy, it's enough that we report one
+	 * bad case here, we don't need to report the first/last one,
+	 * or all of them.
+	 */
+	for_each_string_list_item(item, &include_packs) {
+		struct packed_git *p = item->util;
+		if (!p)
+			die(_("could not find pack '%s'"), item->string);
+	}
+
+	/*
+	 * Then, handle all of the excluded packs, marking them as
+	 * kept in-core so that later calls to add_object_entry()
+	 * discards any objects that are also found in excluded packs.
 	 */
 	for_each_string_list_item(item, &exclude_packs) {
 		struct packed_git *p = item->util;
