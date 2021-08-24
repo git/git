@@ -1,0 +1,48 @@
+Git 2.34 Release Notes
+======================
+
+Updates since Git 2.33
+----------------------
+
+UI, Workflows & Features
+
+ * Pathname expansion (like "~username/") learned a way to specify a
+   location relative to Git installation (e.g. its $sharedir which is
+   $(prefix)/share), with "%(prefix)".
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ * "git bisect" spawned "git show-branch" only to pretty-print the
+   title of the commit after checking out the next version to be
+   tested; this has been rewritten in C.
+
+ * "git add" can work better with the sparse index.
+
+ * Support for ancient versions of cURL library (pre 7.19.4) has been
+   dropped.
+
+ * A handful of tests that assumed implementation details of files
+   backend for refs have been cleaned up.
+
+ * trace2 logs learned to show parent process name to see in what
+   context Git was invoked.
+
+ * Loading of ref tips to prepare for common ancestry negotiation in
+   "git fetch-pack" has been optimized by taking advantage of the
+   commit graph when available.
+
+
+Fixes since v2.33
+-----------------
+
+ * Input validation of "git pack-objects --stdin-packs" has been
+   corrected.
+   (merge 561fa03529 ab/pack-stdin-packs-fix later to maint).
+
+ * Bugfix for common ancestor negotiation recently introduced in "git
+   push" code path.
+   (merge 82823118b9 jt/push-negotiation-fixes later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
+   (merge 1d9c8daef8 ab/bundle-doc later to maint).
