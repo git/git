@@ -1600,6 +1600,29 @@ static int launchctl_remove_plists(const char *cmd)
 		launchctl_remove_plist(SCHEDULE_WEEKLY, cmd);
 }
 
+static int launchctl_list_contains_plist(const char *name, const char *cmd)
+{
+	int result;
+	struct child_process child = CHILD_PROCESS_INIT;
+	char *uid = launchctl_get_uid();
+
+	strvec_split(&child.args, cmd);
+	strvec_pushl(&child.args, "list", name, NULL);
+
+	child.no_stderr = 1;
+	child.no_stdout = 1;
+
+	if (start_command(&child))
+		die(_("failed to start launchctl"));
+
+	result = finish_command(&child);
+
+	free(uid);
+
+	/* Returns failure if 'name' doesn't exist. */
+	return !result;
+}
+
 static int launchctl_schedule_plist(const char *exec_path, enum schedule_priority schedule, const char *cmd)
 {
 	int i, fd;
@@ -1609,7 +1632,8 @@ static int launchctl_schedule_plist(const char *exec_path, enum schedule_priorit
 	char *filename = launchctl_service_filename(name);
 	struct lock_file lk = LOCK_INIT;
 	static unsigned long lock_file_timeout_ms = ULONG_MAX;
-	struct strbuf plist = STRBUF_INIT;
+	struct strbuf plist = STRBUF_INIT, plist2 = STRBUF_INIT;
+	struct stat st;
 
 	preamble = "<?xml version=\"1.0\"?>\n"
 		   "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
@@ -1676,18 +1700,30 @@ static int launchctl_schedule_plist(const char *exec_path, enum schedule_priorit
 	fd = hold_lock_file_for_update_timeout(&lk, filename, LOCK_DIE_ON_ERROR,
 					       lock_file_timeout_ms);
 
-	if (write_in_full(fd, plist.buf, plist.len) < 0 ||
-	    commit_lock_file(&lk))
-		die_errno(_("could not write '%s'"), filename);
+	/*
+	 * Does this file already exist? With the intended contents? Is it
+	 * registered already? Then it does not need to be re-registered.
+	 */
+	if (!stat(filename, &st) && st.st_size == plist.len &&
+	    strbuf_read_file(&plist2, filename, plist.len) == plist.len &&
+	    !strbuf_cmp(&plist, &plist2) &&
+	    launchctl_list_contains_plist(name, cmd))
+		rollback_lock_file(&lk);
+	else {
+		if (write_in_full(fd, plist.buf, plist.len) < 0 ||
+		    commit_lock_file(&lk))
+			die_errno(_("could not write '%s'"), filename);
 
-	/* bootout might fail if not already running, so ignore */
-	launchctl_boot_plist(0, filename, cmd);
-	if (launchctl_boot_plist(1, filename, cmd))
-		die(_("failed to bootstrap service %s"), filename);
+		/* bootout might fail if not already running, so ignore */
+		launchctl_boot_plist(0, filename, cmd);
+		if (launchctl_boot_plist(1, filename, cmd))
+			die(_("failed to bootstrap service %s"), filename);
+	}
 
 	free(filename);
 	free(name);
 	strbuf_release(&plist);
+	strbuf_release(&plist2);
 	return 0;
 }
 
