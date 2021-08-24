@@ -983,7 +983,8 @@ static int run_git_commit(const char *defmsg,
 
 	cmd.git_cmd = 1;
 
-	if (is_rebase_i(opts) && read_env_script(&cmd.env_array)) {
+	if (is_rebase_i(opts) && !(!defmsg && (flags & AMEND_MSG)) &&
+	    read_env_script(&cmd.env_array)) {
 		const char *gpg_opt = gpg_sign_opt_quoted(opts);
 
 		return error(_(staged_changes_advice),
@@ -3739,10 +3740,9 @@ static struct commit *lookup_label(const char *label, int len,
 static int do_merge(struct repository *r,
 		    struct commit *commit,
 		    const char *arg, int arg_len,
-		    int flags, struct replay_opts *opts)
+		    int flags, int *check_todo, struct replay_opts *opts)
 {
-	int run_commit_flags = (flags & TODO_EDIT_MERGE_MSG) ?
-		EDIT_MSG | VERIFY_MSG : 0;
+	int run_commit_flags = 0;
 	struct strbuf ref_name = STRBUF_INIT;
 	struct commit *head_commit, *merge_commit, *i;
 	struct commit_list *bases, *j, *reversed = NULL;
@@ -3816,6 +3816,45 @@ static int do_merge(struct repository *r,
 		goto leave_merge;
 	}
 
+	/*
+	 * If HEAD is not identical to the first parent of the original merge
+	 * commit, we cannot fast-forward.
+	 */
+	can_fast_forward = opts->allow_ff && commit && commit->parents &&
+		oideq(&commit->parents->item->object.oid,
+		      &head_commit->object.oid);
+
+	/*
+	 * If any merge head is different from the original one, we cannot
+	 * fast-forward.
+	 */
+	if (can_fast_forward) {
+		struct commit_list *p = commit->parents->next;
+
+		for (j = to_merge; j && p; j = j->next, p = p->next)
+			if (!oideq(&j->item->object.oid,
+				   &p->item->object.oid)) {
+				can_fast_forward = 0;
+				break;
+			}
+		/*
+		 * If the number of merge heads differs from the original merge
+		 * commit, we cannot fast-forward.
+		 */
+		if (j || p)
+			can_fast_forward = 0;
+	}
+
+	if (can_fast_forward) {
+		rollback_lock_file(&lock);
+		ret = fast_forward_to(r, &commit->object.oid,
+				      &head_commit->object.oid, 0, opts);
+		if (flags & TODO_EDIT_MERGE_MSG)
+			goto fast_forward_edit;
+
+		goto leave_merge;
+	}
+
 	if (commit) {
 		const char *encoding = get_commit_output_encoding();
 		const char *message = logmsg_reencode(commit, NULL, encoding);
@@ -3865,46 +3904,6 @@ static int do_merge(struct repository *r,
 		}
 	}
 
-	/*
-	 * If HEAD is not identical to the first parent of the original merge
-	 * commit, we cannot fast-forward.
-	 */
-	can_fast_forward = opts->allow_ff && commit && commit->parents &&
-		oideq(&commit->parents->item->object.oid,
-		      &head_commit->object.oid);
-
-	/*
-	 * If any merge head is different from the original one, we cannot
-	 * fast-forward.
-	 */
-	if (can_fast_forward) {
-		struct commit_list *p = commit->parents->next;
-
-		for (j = to_merge; j && p; j = j->next, p = p->next)
-			if (!oideq(&j->item->object.oid,
-				   &p->item->object.oid)) {
-				can_fast_forward = 0;
-				break;
-			}
-		/*
-		 * If the number of merge heads differs from the original merge
-		 * commit, we cannot fast-forward.
-		 */
-		if (j || p)
-			can_fast_forward = 0;
-	}
-
-	if (can_fast_forward) {
-		rollback_lock_file(&lock);
-		ret = fast_forward_to(r, &commit->object.oid,
-				      &head_commit->object.oid, 0, opts);
-		if (flags & TODO_EDIT_MERGE_MSG) {
-			run_commit_flags |= AMEND_MSG;
-			goto fast_forward_edit;
-		}
-		goto leave_merge;
-	}
-
 	if (strategy || to_merge->next) {
 		/* Octopus merge */
 		struct child_process cmd = CHILD_PROCESS_INIT;
@@ -3935,7 +3934,10 @@ static int do_merge(struct repository *r,
 				strvec_pushf(&cmd.args,
 					     "-X%s", opts->xopts[k]);
 		}
-		strvec_push(&cmd.args, "--no-edit");
+		if (!(flags & TODO_EDIT_MERGE_MSG))
+			strvec_push(&cmd.args, "--no-edit");
+		else
+			strvec_push(&cmd.args, "--edit");
 		strvec_push(&cmd.args, "--no-ff");
 		strvec_push(&cmd.args, "--no-log");
 		strvec_push(&cmd.args, "--no-stat");
@@ -4035,9 +4037,16 @@ static int do_merge(struct repository *r,
 		 * value (a negative one would indicate that the `merge`
 		 * command needs to be rescheduled).
 		 */
-	fast_forward_edit:
 		ret = !!run_git_commit(git_path_merge_msg(r), opts,
 				       run_commit_flags);
+
+	if (!ret && flags & TODO_EDIT_MERGE_MSG) {
+	fast_forward_edit:
+		*check_todo = 1;
+		run_commit_flags |= AMEND_MSG | EDIT_MSG | VERIFY_MSG;
+		ret = !!run_git_commit(NULL, opts, run_commit_flags);
+	}
+
 
 leave_merge:
 	strbuf_release(&ref_name);
@@ -4405,9 +4414,8 @@ static int pick_commits(struct repository *r,
 			if ((res = do_reset(r, arg, item->arg_len, opts)))
 				reschedule = 1;
 		} else if (item->command == TODO_MERGE) {
-			if ((res = do_merge(r, item->commit,
-					    arg, item->arg_len,
-					    item->flags, opts)) < 0)
+			if ((res = do_merge(r, item->commit, arg, item->arg_len,
+					    item->flags, &check_todo, opts)) < 0)
 				reschedule = 1;
 			else if (item->commit)
 				record_in_rewritten(&item->commit->object.oid,
