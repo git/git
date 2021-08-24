@@ -317,10 +317,11 @@ static int find_identical_files(struct hashmap *srcs,
 }
 
 static void insert_file_table(struct repository *r,
+			      struct mem_pool *pool,
 			      struct hashmap *table, int index,
 			      struct diff_filespec *filespec)
 {
-	struct file_similarity *entry = xmalloc(sizeof(*entry));
+	struct file_similarity *entry = mem_pool_alloc(pool, sizeof(*entry));
 
 	entry->index = index;
 	entry->filespec = filespec;
@@ -336,7 +337,8 @@ static void insert_file_table(struct repository *r,
  * and then during the second round we try to match
  * cache-dirty entries as well.
  */
-static int find_exact_renames(struct diff_options *options)
+static int find_exact_renames(struct diff_options *options,
+			      struct mem_pool *pool)
 {
 	int i, renames = 0;
 	struct hashmap file_table;
@@ -346,7 +348,7 @@ static int find_exact_renames(struct diff_options *options)
 	 */
 	hashmap_init(&file_table, NULL, NULL, rename_src_nr);
 	for (i = rename_src_nr-1; i >= 0; i--)
-		insert_file_table(options->repo,
+		insert_file_table(options->repo, pool,
 				  &file_table, i,
 				  rename_src[i].p->one);
 
@@ -354,8 +356,8 @@ static int find_exact_renames(struct diff_options *options)
 	for (i = 0; i < rename_dst_nr; i++)
 		renames += find_identical_files(&file_table, i, options);
 
-	/* Free the hash data structure and entries */
-	hashmap_clear_and_free(&file_table, struct file_similarity, entry);
+	/* Free the hash data structure (entries will be freed with the pool) */
+	hashmap_clear(&file_table);
 
 	return renames;
 }
@@ -1330,7 +1332,47 @@ static void handle_early_known_dir_renames(struct dir_rename_info *info,
 	rename_src_nr = new_num_src;
 }
 
+static void free_filespec_data(struct diff_filespec *spec)
+{
+	if (!--spec->count)
+		diff_free_filespec_data(spec);
+}
+
+static void pool_free_filespec(struct mem_pool *pool,
+			       struct diff_filespec *spec)
+{
+	if (!pool) {
+		free_filespec(spec);
+		return;
+	}
+
+	/*
+	 * Similar to free_filespec(), but only frees the data.  The spec
+	 * itself was allocated in the pool and should not be individually
+	 * freed.
+	 */
+	free_filespec_data(spec);
+}
+
+void pool_diff_free_filepair(struct mem_pool *pool,
+			     struct diff_filepair *p)
+{
+	if (!pool) {
+		diff_free_filepair(p);
+		return;
+	}
+
+	/*
+	 * Similar to diff_free_filepair() but only frees the data from the
+	 * filespecs; not the filespecs or the filepair which were
+	 * allocated from the pool.
+	 */
+	free_filespec_data(p->one);
+	free_filespec_data(p->two);
+}
+
 void diffcore_rename_extended(struct diff_options *options,
+			      struct mem_pool *pool,
 			      struct strintmap *relevant_sources,
 			      struct strintmap *dirs_removed,
 			      struct strmap *dir_rename_count,
@@ -1345,6 +1387,7 @@ void diffcore_rename_extended(struct diff_options *options,
 	int num_destinations, dst_cnt;
 	int num_sources, want_copies;
 	struct progress *progress = NULL;
+	struct mem_pool local_pool;
 	struct dir_rename_info info;
 	struct diff_populate_filespec_options dpf_options = {
 		.check_binary = 0,
@@ -1413,11 +1456,18 @@ void diffcore_rename_extended(struct diff_options *options,
 		goto cleanup; /* nothing to do */
 
 	trace2_region_enter("diff", "exact renames", options->repo);
+	mem_pool_init(&local_pool, 32*1024);
 	/*
 	 * We really want to cull the candidates list early
 	 * with cheap tests in order to avoid doing deltas.
 	 */
-	rename_count = find_exact_renames(options);
+	rename_count = find_exact_renames(options, &local_pool);
+	/*
+	 * Discard local_pool immediately instead of at "cleanup:" in order
+	 * to reduce maximum memory usage; inexact rename detection uses up
+	 * a fair amount of memory, and mem_pools can too.
+	 */
+	mem_pool_discard(&local_pool, 0);
 	trace2_region_leave("diff", "exact renames", options->repo);
 
 	/* Did we only want exact renames? */
@@ -1636,7 +1686,7 @@ void diffcore_rename_extended(struct diff_options *options,
 			pair_to_free = p;
 
 		if (pair_to_free)
-			diff_free_filepair(pair_to_free);
+			pool_diff_free_filepair(pool, pair_to_free);
 	}
 	diff_debug_queue("done copying original", &outq);
 
@@ -1646,7 +1696,7 @@ void diffcore_rename_extended(struct diff_options *options,
 
 	for (i = 0; i < rename_dst_nr; i++)
 		if (rename_dst[i].filespec_to_free)
-			free_filespec(rename_dst[i].filespec_to_free);
+			pool_free_filespec(pool, rename_dst[i].filespec_to_free);
 
 	cleanup_dir_rename_info(&info, dirs_removed, dir_rename_count != NULL);
 	FREE_AND_NULL(rename_dst);
@@ -1663,5 +1713,5 @@ void diffcore_rename_extended(struct diff_options *options,
 
 void diffcore_rename(struct diff_options *options)
 {
-	diffcore_rename_extended(options, NULL, NULL, NULL, NULL);
+	diffcore_rename_extended(options, NULL, NULL, NULL, NULL, NULL);
 }
