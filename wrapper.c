@@ -193,7 +193,9 @@ int xopen(const char *path, int oflag, ...)
 		if (errno == EINTR)
 			continue;
 
-		if ((oflag & O_RDWR) == O_RDWR)
+		if ((oflag & (O_CREAT | O_EXCL)) == (O_CREAT | O_EXCL))
+			die_errno(_("unable to create '%s'"), path);
+		else if ((oflag & O_RDWR) == O_RDWR)
 			die_errno(_("could not open '%s' for reading and writing"), path);
 		else if ((oflag & O_WRONLY) == O_WRONLY)
 			die_errno(_("could not open '%s' for writing"), path);
