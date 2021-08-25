@@ -65,6 +65,7 @@ struct ls_refs_data {
 	unsigned peel;
 	unsigned symrefs;
 	struct strvec prefixes;
+	struct strbuf buf;
 	unsigned unborn : 1;
 };
 
@@ -73,7 +74,8 @@ static int send_ref(const char *refname, const struct object_id *oid,
 {
 	struct ls_refs_data *data = cb_data;
 	const char *refname_nons = strip_namespace(refname);
-	struct strbuf refline = STRBUF_INIT;
+
+	strbuf_reset(&data->buf);
 
 	if (ref_is_hidden(refname_nons, refname))
 		return 0;
@@ -82,9 +84,9 @@ static int send_ref(const char *refname, const struct object_id *oid,
 		return 0;
 
 	if (oid)
-		strbuf_addf(&refline, "%s %s", oid_to_hex(oid), refname_nons);
+		strbuf_addf(&data->buf, "%s %s", oid_to_hex(oid), refname_nons);
 	else
-		strbuf_addf(&refline, "unborn %s", refname_nons);
+		strbuf_addf(&data->buf, "unborn %s", refname_nons);
 	if (data->symrefs && flag & REF_ISSYMREF) {
 		struct object_id unused;
 		const char *symref_target = resolve_ref_unsafe(refname, 0,
@@ -94,20 +96,19 @@ static int send_ref(const char *refname, const struct object_id *oid,
 		if (!symref_target)
 			die("'%s' is a symref but it is not?", refname);
 
-		strbuf_addf(&refline, " symref-target:%s",
+		strbuf_addf(&data->buf, " symref-target:%s",
 			    strip_namespace(symref_target));
 	}
 
 	if (data->peel && oid) {
 		struct object_id peeled;
 		if (!peel_iterated_oid(oid, &peeled))
-			strbuf_addf(&refline, " peeled:%s", oid_to_hex(&peeled));
+			strbuf_addf(&data->buf, " peeled:%s", oid_to_hex(&peeled));
 	}
 
-	strbuf_addch(&refline, '\n');
-	packet_write(1, refline.buf, refline.len);
+	strbuf_addch(&data->buf, '\n');
+	packet_write(1, data->buf.buf, data->buf.len);
 
-	strbuf_release(&refline);
 	return 0;
 }
 
@@ -145,6 +146,7 @@ int ls_refs(struct repository *r, struct strvec *keys,
 
 	memset(&data, 0, sizeof(data));
 	strvec_init(&data.prefixes);
+	strbuf_init(&data.buf, 0);
 
 	ensure_config_read();
 	git_config(ls_refs_config, NULL);
@@ -173,6 +175,7 @@ int ls_refs(struct repository *r, struct strvec *keys,
 				     send_ref, &data, 0);
 	packet_flush(1);
 	strvec_clear(&data.prefixes);
+	strbuf_release(&data.buf);
 	return 0;
 }
 
