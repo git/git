@@ -131,12 +131,8 @@ struct hashfile *hashfd_check(const char *name)
 	int sink, check;
 	struct hashfile *f;
 
-	sink = open("/dev/null", O_WRONLY);
-	if (sink < 0)
-		die_errno("unable to open /dev/null");
-	check = open(name, O_RDONLY);
-	if (check < 0)
-		die_errno("unable to open '%s'", name);
+	sink = xopen("/dev/null", O_WRONLY);
+	check = xopen(name, O_RDONLY);
 	f = hashfd(sink, name);
 	f->check_fd = check;
 	f->check_buffer = xmalloc(f->buffer_len);
