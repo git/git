@@ -159,7 +159,8 @@ static int remove_available_paths(struct string_list_item *item, void *cb_data)
 	return !available;
 }
 
-int finish_delayed_checkout(struct checkout *state, int *nr_checkouts)
+int finish_delayed_checkout(struct checkout *state, int *nr_checkouts,
+			    int show_progress)
 {
 	int errs = 0;
 	unsigned delayed_object_count;
@@ -173,7 +174,9 @@ int finish_delayed_checkout(struct checkout *state, int *nr_checkouts)
 
 	dco->state = CE_RETRY;
 	delayed_object_count = dco->paths.nr;
-	progress = start_delayed_progress(_("Filtering content"), delayed_object_count);
+	progress = show_progress
+		? start_delayed_progress(_("Filtering content"), delayed_object_count)
+		: NULL;
 	while (dco->filters.nr > 0) {
 		for_each_string_list_item(filter, &dco->filters) {
 			struct string_list available_paths = STRING_LIST_INIT_NODUP;
