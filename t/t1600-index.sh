@@ -79,7 +79,7 @@ test_index_version () {
 		else
 			unset GIT_INDEX_VERSION
 		fi &&
-		git add a 2>&1 &&
+		git add a &&
 		echo $EXPECTED_OUTPUT_VERSION >expect &&
 		test-tool index-version <.git/index >actual &&
 		test_cmp expect actual
