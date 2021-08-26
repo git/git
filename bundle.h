@@ -27,6 +27,13 @@ int create_bundle(struct repository *r, const char *path,
 		  int version);
 int verify_bundle(struct repository *r, struct bundle_header *header, int verbose);
 #define BUNDLE_VERBOSE 1
+
+/**
+ * Unbundle after reading the header with read_bundle_header().
+ *
+ * We'll invoke "git index-pack --stdin --fix-thin" for you on the
+ * provided `bundle_fd` from read_bundle_header().
+ */
 int unbundle(struct repository *r, struct bundle_header *header,
 	     int bundle_fd, int flags);
 int list_bundle_refs(struct bundle_header *header,
