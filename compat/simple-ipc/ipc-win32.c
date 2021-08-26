@@ -3,6 +3,8 @@
 #include "strbuf.h"
 #include "pkt-line.h"
 #include "thread-utils.h"
+#include "accctrl.h"
+#include "aclapi.h"
 
 #ifndef SUPPORTS_SIMPLE_IPC
 /*
@@ -592,11 +594,132 @@ finished:
 	return NULL;
 }
 
+/*
+ * We need to build a Windows "SECURITY_ATTRIBUTES" object and use it
+ * to apply an ACL when we create the initial instance of the Named
+ * Pipe.  The construction is somewhat involved and consists of
+ * several sequential steps and intermediate objects.
+ *
+ * We use this structure to hold these intermediate pointers so that
+ * we can free them as a group.  (It is unclear from the docs whether
+ * some of these intermediate pointers can be freed before we are
+ * finished using the "lpSA" member.)
+ */
+struct my_sa_data
+{
+	PSID pEveryoneSID;
+	PACL pACL;
+	PSECURITY_DESCRIPTOR pSD;
+	LPSECURITY_ATTRIBUTES lpSA;
+};
+
+static void init_sa(struct my_sa_data *d)
+{
+	memset(d, 0, sizeof(*d));
+}
+
+static void release_sa(struct my_sa_data *d)
+{
+	if (d->pEveryoneSID)
+		FreeSid(d->pEveryoneSID);
+	if (d->pACL)
+		LocalFree(d->pACL);
+	if (d->pSD)
+		LocalFree(d->pSD);
+	if (d->lpSA)
+		LocalFree(d->lpSA);
+
+	memset(d, 0, sizeof(*d));
+}
+
+/*
+ * Create SECURITY_ATTRIBUTES to apply to the initial named pipe.  The
+ * creator of the first server instance gets to set the ACLs on it.
+ *
+ * We allow the well-known group `EVERYONE` to have read+write access
+ * to the named pipe so that clients can send queries to the daemon
+ * and receive the response.
+ *
+ * Normally, this is not necessary since the daemon is usually
+ * automatically started by a foreground command like `git status`,
+ * but in those cases where an elevated Git command started the daemon
+ * (such that the daemon itself runs with elevation), we need to add
+ * the ACL so that non-elevated commands can write to it.
+ *
+ * The following document was helpful:
+ * https://docs.microsoft.com/en-us/windows/win32/secauthz/creating-a-security-descriptor-for-a-new-object-in-c--
+ *
+ * Returns d->lpSA set to a SA or NULL.
+ */
+static LPSECURITY_ATTRIBUTES get_sa(struct my_sa_data *d)
+{
+	SID_IDENTIFIER_AUTHORITY sid_auth_world = SECURITY_WORLD_SID_AUTHORITY;
+#define NR_EA (1)
+	EXPLICIT_ACCESS ea[NR_EA];
+	DWORD dwResult;
+
+	if (!AllocateAndInitializeSid(&sid_auth_world, 1,
+				      SECURITY_WORLD_RID, 0,0,0,0,0,0,0,
+				      &d->pEveryoneSID)) {
+		DWORD gle = GetLastError();
+		trace2_data_intmax("ipc-debug", NULL, "alloc-world-sid/gle",
+				   (intmax_t)gle);
+		goto fail;
+	}
+
+	memset(ea, 0, NR_EA * sizeof(EXPLICIT_ACCESS));
+
+	ea[0].grfAccessPermissions = GENERIC_READ | GENERIC_WRITE;
+	ea[0].grfAccessMode = SET_ACCESS;
+	ea[0].grfInheritance = NO_INHERITANCE;
+	ea[0].Trustee.MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
+	ea[0].Trustee.TrusteeForm = TRUSTEE_IS_SID;
+	ea[0].Trustee.TrusteeType = TRUSTEE_IS_WELL_KNOWN_GROUP;
+	ea[0].Trustee.ptstrName = (LPTSTR)d->pEveryoneSID;
+
+	dwResult = SetEntriesInAcl(NR_EA, ea, NULL, &d->pACL);
+	if (dwResult != ERROR_SUCCESS) {
+		DWORD gle = GetLastError();
+		trace2_data_intmax("ipc-debug", NULL, "set-acl-entry/gle",
+				   (intmax_t)gle);
+		trace2_data_intmax("ipc-debug", NULL, "set-acl-entry/dw",
+				   (intmax_t)dwResult);
+		goto fail;
+	}
+
+	d->pSD = (PSECURITY_DESCRIPTOR)LocalAlloc(
+		LPTR, SECURITY_DESCRIPTOR_MIN_LENGTH);
+	if (!InitializeSecurityDescriptor(d->pSD, SECURITY_DESCRIPTOR_REVISION)) {
+		DWORD gle = GetLastError();
+		trace2_data_intmax("ipc-debug", NULL, "init-sd/gle", (intmax_t)gle);
+		goto fail;
+	}
+
+	if (!SetSecurityDescriptorDacl(d->pSD, TRUE, d->pACL, FALSE)) {
+		DWORD gle = GetLastError();
+		trace2_data_intmax("ipc-debug", NULL, "set-sd-dacl/gle", (intmax_t)gle);
+		goto fail;
+	}
+
+	d->lpSA = (LPSECURITY_ATTRIBUTES)LocalAlloc(LPTR, sizeof(SECURITY_ATTRIBUTES));
+	d->lpSA->nLength = sizeof(SECURITY_ATTRIBUTES);
+	d->lpSA->lpSecurityDescriptor = d->pSD;
+	d->lpSA->bInheritHandle = FALSE;
+
+	return d->lpSA;
+
+fail:
+	release_sa(d);
+	return NULL;
+}
+
 static HANDLE create_new_pipe(wchar_t *wpath, int is_first)
 {
 	HANDLE hPipe;
 	DWORD dwOpenMode, dwPipeMode;
-	LPSECURITY_ATTRIBUTES lpsa = NULL;
+	struct my_sa_data my_sa_data;
+
+	init_sa(&my_sa_data);
 
 	dwOpenMode = PIPE_ACCESS_INBOUND | PIPE_ACCESS_OUTBOUND |
 		FILE_FLAG_OVERLAPPED;
@@ -612,20 +735,15 @@ static HANDLE create_new_pipe(wchar_t *wpath, int is_first)
 		 * set the ACL / Security Attributes on the named
 		 * pipe; subsequent instances inherit and cannot
 		 * change them.
-		 *
-		 * TODO Should we allow the application layer to
-		 * specify security attributes, such as `LocalService`
-		 * or `LocalSystem`, when we create the named pipe?
-		 * This question is probably not important when the
-		 * daemon is started by a foreground user process and
-		 * only needs to talk to the current user, but may be
-		 * if the daemon is run via the Control Panel as a
-		 * System Service.
 		 */
+		get_sa(&my_sa_data);
 	}
 
 	hPipe = CreateNamedPipeW(wpath, dwOpenMode, dwPipeMode,
-				 PIPE_UNLIMITED_INSTANCES, 1024, 1024, 0, lpsa);
+				 PIPE_UNLIMITED_INSTANCES, 1024, 1024, 0,
+				 my_sa_data.lpSA);
+
+	release_sa(&my_sa_data);
 
 	return hPipe;
 }
