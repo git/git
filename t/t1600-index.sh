@@ -4,6 +4,8 @@ test_description='index file specific tests'
 
 . ./test-lib.sh
 
+sane_unset GIT_TEST_SPLIT_INDEX
+
 test_expect_success 'setup' '
 	echo 1 >a
 '
