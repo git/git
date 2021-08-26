@@ -533,4 +533,15 @@ test_expect_success 'reading split index at alternate location' '
 	test_cmp expect actual
 '
 
+test_expect_success 'GIT_TEST_SPLIT_INDEX works' '
+	git init git-test-split-index &&
+	(
+		cd git-test-split-index &&
+		>file &&
+		GIT_TEST_SPLIT_INDEX=1 git update-index --add file &&
+		ls -l .git/sharedindex.* >actual &&
+		test_line_count = 1 actual
+	)
+'
+
 test_done
