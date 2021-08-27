@@ -31,29 +31,30 @@ static void get_ancestry_names(struct strvec *names)
 
 void trace2_collect_process_info(enum trace2_process_info_reason reason)
 {
+	struct strvec names = STRVEC_INIT;
+
 	if (!trace2_is_enabled())
 		return;
 
-	if (reason == TRACE2_PROCESS_INFO_EXIT)
+	switch (reason) {
+	case TRACE2_PROCESS_INFO_EXIT:
 		/*
 		 * The Windows version of this calls its
 		 * get_peak_memory_info() here. We may want to insert
 		 * similar process-end statistics here in the future.
 		 */
-		return;
-
-	if (reason == TRACE2_PROCESS_INFO_STARTUP) {
+		break;
+	case TRACE2_PROCESS_INFO_STARTUP:
 		/*
 		 * NEEDSWORK: we could do the entire ptree in an array instead,
 		 * see compat/win32/trace2_win32_process_info.c.
 		 */
-		struct strvec names = STRVEC_INIT;
-
 		get_ancestry_names(&names);
 
 		if (names.nr)
 			trace2_cmd_ancestry(names.v);
 		strvec_clear(&names);
+		break;
 	}
 
 	return;
