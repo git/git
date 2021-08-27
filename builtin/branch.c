@@ -168,7 +168,7 @@ static int check_branch_commit(const char *branchname, const char *refname,
 			       int kinds, int force)
 {
 	struct commit *rev = lookup_commit_reference(the_repository, oid);
-	if (!rev) {
+	if (!force && !rev) {
 		error(_("Couldn't look up commit object for '%s'"), refname);
 		return -1;
 	}

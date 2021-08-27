@@ -118,7 +118,8 @@ OPTIONS
 	Reset <branchname> to <startpoint>, even if <branchname> exists
 	already. Without `-f`, 'git branch' refuses to change an existing branch.
 	In combination with `-d` (or `--delete`), allow deleting the
-	branch irrespective of its merged status. In combination with
+	branch irrespective of its merged status, or whether it even
+	points to a valid commit. In combination with
 	`-m` (or `--move`), allow renaming the branch even if the new
 	branch name already exists, the same applies for `-c` (or `--copy`).
 
