@@ -18,11 +18,13 @@ static void get_ancestry_names(struct strvec *names)
 
 	/* try to use procfs if it's present. */
 	strbuf_addf(&procfs_path, "/proc/%d/comm", getppid());
-	if (strbuf_read_file(&name, procfs_path.buf, 0)) {
-		strbuf_release(&procfs_path);
+	if (strbuf_read_file(&name, procfs_path.buf, 0) > 0) {
 		strbuf_trim_trailing_newline(&name);
-		strvec_push(names, strbuf_detach(&name, NULL));
+		strvec_push(names, name.buf);
 	}
+
+	strbuf_release(&procfs_path);
+	strbuf_release(&name);
 
 	return;
 }
