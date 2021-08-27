@@ -32,8 +32,12 @@ void trace2_collect_process_info(enum trace2_process_info_reason reason)
 	if (!trace2_is_enabled())
 		return;
 
-	/* someday we may want to write something extra here, but not today */
 	if (reason == TRACE2_PROCESS_INFO_EXIT)
+		/*
+		 * The Windows version of this calls its
+		 * get_peak_memory_info() here. We may want to insert
+		 * similar process-end statistics here in the future.
+		 */
 		return;
 
 	if (reason == TRACE2_PROCESS_INFO_STARTUP) {
