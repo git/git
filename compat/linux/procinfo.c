@@ -25,7 +25,6 @@ static void get_ancestry_names(struct strvec *names)
 	}
 
 	return;
-	/* NEEDSWORK: add non-procfs-linux implementations here */
 }
 
 void trace2_collect_process_info(enum trace2_process_info_reason reason)
