@@ -39,7 +39,7 @@ OPTIONS
 --indent=<string>::
 	String to be printed at the beginning of each line.
 
---nl=<N>::
+--nl=<string>::
 	String to be printed at the end of each line,
 	including newline character.
 
