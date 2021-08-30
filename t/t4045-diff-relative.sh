@@ -162,4 +162,57 @@ check_diff_relative_option subdir file2 true --no-relative --relative
 check_diff_relative_option . file2 false --no-relative --relative=subdir
 check_diff_relative_option . file2 true --no-relative --relative=subdir
 
+test_expect_success 'setup diff --relative unmerged' '
+	test_commit zero file0 &&
+	test_commit base subdir/file0 &&
+	git switch -c br1 &&
+	test_commit one file0 &&
+	test_commit sub1 subdir/file0 &&
+	git switch -c br2 base &&
+	test_commit two file0 &&
+	git switch -c br3 &&
+	test_commit sub3 subdir/file0
+'
+
+test_expect_success 'diff --relative without change in subdir' '
+	git switch br2 &&
+	test_when_finished "git merge --abort" &&
+	test_must_fail git merge one &&
+	git -C subdir diff --relative >out &&
+	test_must_be_empty out &&
+	git -C subdir diff --relative --name-only >out &&
+	test_must_be_empty out
+'
+
+test_expect_success 'diff --relative --name-only with change in subdir' '
+	git switch br3 &&
+	test_when_finished "git merge --abort" &&
+	test_must_fail git merge sub1 &&
+	test_write_lines file0 file0 >expected &&
+	git -C subdir diff --relative --name-only >out &&
+	test_cmp expected out
+'
+
+test_expect_failure 'diff --relative with change in subdir' '
+	git switch br3 &&
+	br1_blob=$(git rev-parse --short --verify br1:subdir/file0) &&
+	br3_blob=$(git rev-parse --short --verify br3:subdir/file0) &&
+	test_when_finished "git merge --abort" &&
+	test_must_fail git merge br1 &&
+	cat >expected <<-EOF &&
+	diff --cc file0
+	index $br3_blob,$br1_blob..0000000
+	--- a/file0
+	+++ b/file0
+	@@@ -1,1 -1,1 +1,5 @@@
+	++<<<<<<< HEAD
+	 +sub3
+	++=======
+	+ sub1
+	++>>>>>>> br1
+	EOF
+	git -C subdir diff --relative >out &&
+	test_cmp expected out
+'
+
 test_done
