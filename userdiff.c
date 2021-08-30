@@ -13,6 +13,16 @@ static int drivers_alloc;
 #define IPATTERN(name, pattern, word_regex)			\
 	{ name, NULL, -1, { pattern, REG_EXTENDED | REG_ICASE }, \
 	  word_regex "|[^[:space:]]|[\xc0-\xff][\x80-\xbf]+" }
+
+/*
+ * Built-in drivers for various languages, sorted by their names
+ * (except that the "default" is left at the end).
+ *
+ * When writing or updating patterns, assume that the contents these
+ * patterns are applied to are syntactically correct.  The patterns
+ * can be simple without implementing all syntactical corner cases, as
+ * long as they are sufficiently permissive.
+ */
 static struct userdiff_driver builtin_drivers[] = {
 IPATTERN("ada",
 	 "!^(.*[ \t])?(is[ \t]+new|renames|is[ \t]+separate)([ \t].*)?$\n"
