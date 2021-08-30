@@ -91,7 +91,8 @@ test_expect_success 'ridiculously long subject in boundary' '
 
 	git fetch long-subject-bundle.bdl &&
 
-	if ! test_have_prereq SHA1
+	algo=$(test_oid algo) &&
+	if test "$algo" != sha1
 	then
 		echo "@object-format=sha256"
 	fi >expect &&
@@ -100,7 +101,7 @@ test_expect_success 'ridiculously long subject in boundary' '
 	$(git rev-parse HEAD) HEAD
 	EOF
 
-	if test_have_prereq SHA1
+	if test "$algo" = sha1
 	then
 		head -n 3 long-subject-bundle.bdl
 	else
