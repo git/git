@@ -3405,13 +3405,9 @@ static void read_object_list_from_stdin(void)
 	}
 }
 
-/* Remember to update object flag allocation in object.h */
-#define OBJECT_ADDED (1u<<20)
-
 static void show_commit(struct commit *commit, void *data)
 {
 	add_object_entry(&commit->object.oid, OBJ_COMMIT, NULL, 0);
-	commit->object.flags |= OBJECT_ADDED;
 
 	if (write_bitmap_index)
 		index_commit_for_bitmap(commit);
@@ -3424,7 +3420,6 @@ static void show_object(struct object *obj, const char *name, void *data)
 {
 	add_preferred_base_object(name);
 	add_object_entry(&obj->oid, obj->type, name, 0);
-	obj->flags |= OBJECT_ADDED;
 
 	if (use_delta_islands) {
 		const char *p;
@@ -3510,11 +3505,7 @@ static int add_object_in_unpacked_pack(const struct object_id *oid,
 				       uint32_t pos,
 				       void *_data)
 {
-	struct object *obj = lookup_unknown_object(the_repository, oid);
-	if (obj->flags & OBJECT_ADDED)
-		return 0;
-	add_object_entry(oid, obj->type, "", 0);
-	obj->flags |= OBJECT_ADDED;
+	add_object_entry(oid, OBJ_NONE, "", 0);
 	return 0;
 }
 
