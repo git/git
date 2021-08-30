@@ -6,13 +6,6 @@ backend 'merge strategies' to be chosen with `-s` option.  Some strategies
 can also take their own options, which can be passed by giving `-X<option>`
 arguments to `git merge` and/or `git pull`.
 
-resolve::
-	This can only resolve two heads (i.e. the current branch
-	and another branch you pulled from) using a 3-way merge
-	algorithm.  It tries to carefully detect criss-cross
-	merge ambiguities and is considered generally safe and
-	fast.
-
 recursive::
 	This can only resolve two heads using a 3-way merge
 	algorithm.  When there is more than one common
@@ -23,9 +16,9 @@ recursive::
 	causing mismerges by tests done on actual merge commits
 	taken from Linux 2.6 kernel development history.
 	Additionally this can detect and handle merges involving
-	renames, but currently cannot make use of detected
-	copies.  This is the default merge strategy when pulling
-	or merging one branch.
+	renames.  It does not make use of detected copies.  This
+	is the default merge strategy when pulling or merging one
+	branch.
 +
 The 'recursive' strategy can take the following options:
 
@@ -44,17 +37,14 @@ theirs;;
 	no 'theirs' merge strategy to confuse this merge option with.
 
 patience;;
-	With this option, 'merge-recursive' spends a little extra time
-	to avoid mismerges that sometimes occur due to unimportant
-	matching lines (e.g., braces from distinct functions).  Use
-	this when the branches to be merged have diverged wildly.
-	See also linkgit:git-diff[1] `--patience`.
+	Deprecated synonym for `diff-algorithm=patience`.
 
 diff-algorithm=[patience|minimal|histogram|myers];;
-	Tells 'merge-recursive' to use a different diff algorithm, which
-	can help avoid mismerges that occur due to unimportant matching
-	lines (such as braces from distinct functions).  See also
-	linkgit:git-diff[1] `--diff-algorithm`.
+	Use a different diff algorithm while merging, which can help
+	avoid mismerges that occur due to unimportant matching lines
+	(such as braces from distinct functions).  See also
+	linkgit:git-diff[1] `--diff-algorithm`.  Defaults to the
+	`diff.algorithm` config setting.
 
 ignore-space-change;;
 ignore-all-space;;
@@ -104,6 +94,26 @@ subtree[=<path>];;
 	match with each other when merging.  Instead, the specified path
 	is prefixed (or stripped from the beginning) to make the shape of
 	two trees to match.
+
+ort::
+	This is meant as a drop-in replacement for the `recursive`
+	algorithm (as reflected in its acronym -- "Ostensibly
+	Recursive's Twin"), and will likely replace it in the future.
+	It fixes corner cases that the `recursive` strategy handles
+	suboptimally, and is significantly faster in large
+	repositories -- especially when many renames are involved.
++
+The `ort` strategy takes all the same options as `recursive`.
+However, it ignores three of those options: `no-renames`,
+`patience` and `diff-algorithm`.  It always runs with rename
+detection (it handles it much faster than `recursive` does), and
+it specifically uses `diff-algorithm=histogram`.
+
+resolve::
+	This can only resolve two heads (i.e. the current branch
+	and another branch you pulled from) using a 3-way merge
+	algorithm.  It tries to carefully detect criss-cross
+	merge ambiguities.  It does not handle renames.
 
 octopus::
 	This resolves cases with more than two heads, but refuses to do
