@@ -75,9 +75,7 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 			index_name = strbuf_detach(&tmp_file, NULL);
 		} else {
 			unlink(index_name);
-			fd = open(index_name, O_CREAT|O_EXCL|O_WRONLY, 0600);
-			if (fd < 0)
-				die_errno("unable to create '%s'", index_name);
+			fd = xopen(index_name, O_CREAT|O_EXCL|O_WRONLY, 0600);
 		}
 		f = hashfd(fd, index_name);
 	}
@@ -256,9 +254,7 @@ const char *write_rev_file_order(const char *rev_name,
 			rev_name = strbuf_detach(&tmp_file, NULL);
 		} else {
 			unlink(rev_name);
-			fd = open(rev_name, O_CREAT|O_EXCL|O_WRONLY, 0600);
-			if (fd < 0)
-				die_errno("unable to create '%s'", rev_name);
+			fd = xopen(rev_name, O_CREAT|O_EXCL|O_WRONLY, 0600);
 		}
 		f = hashfd(fd, rev_name);
 	} else if (flags & WRITE_REV_VERIFY) {
