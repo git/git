@@ -10,6 +10,10 @@ UI, Workflows & Features
    location relative to Git installation (e.g. its $sharedir which is
    $(prefix)/share), with "%(prefix)".
 
+ * Use `ort` instead of `recursive` as the default merge strategy.
+
+ * The userdiff pattern for "java" language has been updated.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -32,6 +36,14 @@ Performance, Internal Implementation, Development Support etc.
    "git fetch-pack" has been optimized by taking advantage of the
    commit graph when available.
 
+ * Remind developers that the userdiff patterns should be kept simple
+   and permissive, assuming that the contents they apply are always
+   syntactically correct.
+
+ * The current implementation of GIT_TEST_FAIL_PREREQS is broken in
+   that checking for the lack of a prerequisite would not work.  Avoid
+   the use of "if ! test_have_prereq X" in a test script.
+
 
 Fixes since v2.33
 -----------------
@@ -44,5 +56,22 @@ Fixes since v2.33
    push" code path.
    (merge 82823118b9 jt/push-negotiation-fixes later to maint).
 
+ * "git pull" had various corner cases that were not well thought out
+   around its --rebase backend, e.g. "git pull --ff-only" did not stop
+   but went ahead and rebased when the history on other side is not a
+   descendant of our history.  The series tries to fix them up.
+   (merge 6f843a3355 en/pull-conflicting-options later to maint).
+
+ * "git apply" miscounted the bytes and failed to read to the end of
+   binary hunks.
+   (merge 46d723ce57 jk/apply-binary-hunk-parsing-fix later to maint).
+
+ * "git range-diff" code clean-up.
+   (merge c4d5907324 jk/range-diff-fixes later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 1d9c8daef8 ab/bundle-doc later to maint).
+   (merge 81483fe613 en/merge-strategy-docs later to maint).
+   (merge 626beebdf8 js/log-protocol-version later to maint).
+   (merge 00e302da76 cb/builtin-merge-format-string-fix later to maint).
+   (merge ad51ae4dc0 cb/ci-freebsd-update later to maint).
