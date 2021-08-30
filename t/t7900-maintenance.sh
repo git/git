@@ -582,6 +582,23 @@ test_expect_success 'start and stop macOS maintenance' '
 	test_line_count = 0 actual
 '
 
+test_expect_success 'use launchctl list to prevent extra work' '
+	# ensure we are registered
+	GIT_TEST_MAINT_SCHEDULER=launchctl:./print-args git maintenance start &&
+
+	# do it again on a fresh args file
+	rm -f args &&
+	GIT_TEST_MAINT_SCHEDULER=launchctl:./print-args git maintenance start &&
+
+	ls "$HOME/Library/LaunchAgents" >actual &&
+	cat >expect <<-\EOF &&
+	list org.git-scm.git.hourly
+	list org.git-scm.git.daily
+	list org.git-scm.git.weekly
+	EOF
+	test_cmp expect args
+'
+
 test_expect_success 'start and stop Windows maintenance' '
 	write_script print-args <<-\EOF &&
 	echo $* >>args
