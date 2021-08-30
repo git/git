@@ -144,7 +144,7 @@ endif::git-pull[]
 	Use the given merge strategy; can be supplied more than
 	once to specify them in the order they should be tried.
 	If there is no `-s` option, a built-in list of strategies
-	is used instead (`recursive` when merging a single head,
+	is used instead (`ort` when merging a single head,
 	`octopus` otherwise).
 
 -X <option>::
