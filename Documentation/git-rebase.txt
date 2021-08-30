@@ -79,9 +79,10 @@ remain the checked-out branch.
 
 If the upstream branch already contains a change you have made (e.g.,
 because you mailed a patch which was applied upstream), then that commit
-will be skipped. For example, running `git rebase master` on the
-following history (in which `A'` and `A` introduce the same set of changes,
-but have different committer information):
+will be skipped and warnings will be issued (if the `merge` backend is
+used).  For example, running `git rebase master` on the following
+history (in which `A'` and `A` introduce the same set of changes, but
+have different committer information):
 
 ------------
           A---B---C topic
@@ -312,7 +313,10 @@ See also INCOMPATIBLE OPTIONS below.
 By default (or if `--no-reapply-cherry-picks` is given), these commits
 will be automatically dropped.  Because this necessitates reading all
 upstream commits, this can be expensive in repos with a large number
-of upstream commits that need to be read.
+of upstream commits that need to be read.  When using the `merge`
+backend, warnings will be issued for each dropped commit (unless
+`--quiet` is given). Advice will also be issued unless
+`advice.skippedCherryPicks` is set to false (see linkgit:git-config[1]).
 +
 `--reapply-cherry-picks` allows rebase to forgo reading all upstream
 commits, potentially improving performance.
