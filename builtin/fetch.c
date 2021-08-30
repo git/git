@@ -712,7 +712,7 @@ static void adjust_refcol_width(const struct ref *ref)
 	int max, rlen, llen, len;
 
 	/* uptodate lines are only shown on high verbosity level */
-	if (!verbosity && oideq(&ref->peer_ref->old_oid, &ref->old_oid))
+	if (verbosity <= 0 && oideq(&ref->peer_ref->old_oid, &ref->old_oid))
 		return;
 
 	max    = term_columns();
@@ -747,6 +747,9 @@ static void prepare_format_display(struct ref *ref_map)
 {
 	struct ref *rm;
 	const char *format = "full";
+
+	if (verbosity < 0)
+		return;
 
 	git_config_get_string_tmp("fetch.output", &format);
 	if (!strcasecmp(format, "full"))
@@ -827,7 +830,12 @@ static void format_display(struct strbuf *display, char code,
 			   const char *remote, const char *local,
 			   int summary_width)
 {
-	int width = (summary_width + strlen(summary) - gettext_width(summary));
+	int width;
+
+	if (verbosity < 0)
+		return;
+
+	width = (summary_width + strlen(summary) - gettext_width(summary));
 
 	strbuf_addf(display, "%c %-*s ", code, width, summary);
 	if (!compact_format)
@@ -1202,13 +1210,12 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 					       "FETCH_HEAD", summary_width);
 			}
 			if (note.len) {
-				if (verbosity >= 0 && !shown_url) {
+				if (!shown_url) {
 					fprintf(stderr, _("From %.*s\n"),
 							url_len, url);
 					shown_url = 1;
 				}
-				if (verbosity >= 0)
-					fprintf(stderr, " %s\n", note.buf);
+				fprintf(stderr, " %s\n", note.buf);
 			}
 		}
 	}
