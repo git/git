@@ -27,6 +27,9 @@ static int fsmonitor__ipc_threads = 8;
 #define FSMONITOR__START_TIMEOUT "fsmonitor.starttimeout"
 static int fsmonitor__start_timeout_sec = 60;
 
+#define FSMONITOR__ANNOUNCE_STARTUP "fsmonitor.announcestartup"
+static int fsmonitor__announce_startup = 0;
+
 static int fsmonitor_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, FSMONITOR__IPC_THREADS)) {
@@ -44,6 +47,16 @@ static int fsmonitor_config(const char *var, const char *value, void *cb)
 			return error(_("value of '%s' out of range: %d"),
 				     FSMONITOR__START_TIMEOUT, i);
 		fsmonitor__start_timeout_sec = i;
+		return 0;
+	}
+
+	if (!strcmp(var, FSMONITOR__ANNOUNCE_STARTUP)) {
+		int is_bool;
+		int i = git_config_bool_or_int(var, value, &is_bool);
+		if (i < 0)
+			return error(_("value of '%s' not bool or int: %d"),
+				     var, i);
+		fsmonitor__announce_startup = i;
 		return 0;
 	}
 
@@ -1307,9 +1320,11 @@ static int try_to_run_foreground_daemon(int free_console)
 		die("fsmonitor--daemon is already running '%s'",
 		    the_repository->worktree);
 
-	printf(_("running fsmonitor-daemon in '%s'\n"),
-	       the_repository->worktree);
-	fflush(stdout);
+	if (fsmonitor__announce_startup) {
+		fprintf(stderr, _("running fsmonitor-daemon in '%s'\n"),
+			the_repository->worktree);
+		fflush(stderr);
+	}
 
 #ifdef GIT_WINDOWS_NATIVE
 	if (free_console)
@@ -1360,9 +1375,11 @@ static int try_to_start_background_daemon(void)
 		die("fsmonitor--daemon is already running '%s'",
 		    the_repository->worktree);
 
-	printf(_("starting fsmonitor-daemon in '%s'\n"),
-	       the_repository->worktree);
-	fflush(stdout);
+	if (fsmonitor__announce_startup) {
+		fprintf(stderr, _("starting fsmonitor-daemon in '%s'\n"),
+			the_repository->worktree);
+		fflush(stderr);
+	}
 
 	cp.git_cmd = 1;
 
