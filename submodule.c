@@ -720,8 +720,10 @@ void show_submodule_inline_diff(struct diff_options *o, const char *path,
 		strvec_push(&cp.env_array, GIT_WORK_TREE_ENVIRONMENT "=.");
 	}
 
-	if (start_command(&cp))
+	if (start_command(&cp)) {
 		diff_emit_submodule_error(o, "(diff failed)\n");
+		goto done;
+	}
 
 	while (strbuf_getwholeline_fd(&sb, cp.out, '\n') != EOF)
 		diff_emit_submodule_pipethrough(o, sb.buf, sb.len);
