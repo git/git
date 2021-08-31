@@ -230,6 +230,9 @@ int cmd_revert(int argc, const char **argv, const char *prefix)
 	struct replay_opts opts = REPLAY_OPTS_INIT;
 	int res;
 
+	if (prefix)
+		die(_("You need to run this command from the toplevel of the working tree."));
+
 	opts.action = REPLAY_REVERT;
 	sequencer_init_config(&opts);
 	res = run_sequencer(argc, argv, &opts);
@@ -242,6 +245,9 @@ int cmd_cherry_pick(int argc, const char **argv, const char *prefix)
 {
 	struct replay_opts opts = REPLAY_OPTS_INIT;
 	int res;
+
+	if (prefix)
+		die(_("You need to run this command from the toplevel of the working tree."));
 
 	opts.action = REPLAY_PICK;
 	sequencer_init_config(&opts);
