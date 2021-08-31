@@ -842,4 +842,9 @@ test_expect_success 'usage shown without sub-command' '
 	! test_i18ngrep "unrecognized subcommand" err
 '
 
+test_expect_success 'complains when run outside of a repository' '
+	nongit test_must_fail git multi-pack-index write 2>err &&
+	grep "not a git repository" err
+'
+
 test_done
