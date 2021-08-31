@@ -201,6 +201,34 @@ test_expect_success 'write midx with twelve packs' '
 
 compare_results_with_midx "twelve packs"
 
+test_expect_success 'multi-pack-index *.rev cleanup with --object-dir' '
+	git init repo &&
+	git clone -s repo alternate &&
+
+	test_when_finished "rm -rf repo alternate" &&
+
+	(
+		cd repo &&
+		test_commit base &&
+		git repack -d
+	) &&
+
+	ours="alternate/.git/objects/pack/multi-pack-index-123.rev" &&
+	theirs="repo/.git/objects/pack/multi-pack-index-abc.rev" &&
+	touch "$ours" "$theirs" &&
+
+	(
+		cd alternate &&
+		git multi-pack-index --object-dir ../repo/.git/objects write
+	) &&
+
+	# writing a midx in "repo" should not remove the .rev file in the
+	# alternate
+	test_path_is_file repo/.git/objects/pack/multi-pack-index &&
+	test_path_is_file $ours &&
+	test_path_is_missing $theirs
+'
+
 test_expect_success 'warn on improper hash version' '
 	git init --object-format=sha1 sha1 &&
 	(
