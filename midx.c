@@ -1086,9 +1086,10 @@ static int write_midx_internal(const char *object_dir, struct multi_pack_index *
 
 	if (flags & MIDX_WRITE_REV_INDEX)
 		write_midx_reverse_index(midx_name, midx_hash, &ctx);
-	clear_midx_files_ext(object_dir, ".rev", midx_hash);
 
 	commit_lock_file(&lk);
+
+	clear_midx_files_ext(object_dir, ".rev", midx_hash);
 
 cleanup:
 	for (i = 0; i < ctx.nr; i++) {
