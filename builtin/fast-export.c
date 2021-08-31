@@ -821,6 +821,7 @@ static void handle_tag(const char *name, struct tag *tag)
 			static struct hashmap tags;
 			message = anonymize_str(&tags, anonymize_tag,
 						message, message_size, NULL);
+			message_size = strlen(message);
 		}
 	}
 
