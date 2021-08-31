@@ -37,9 +37,9 @@ write::
 --
 	--preferred-pack=<pack>::
 		Optionally specify the tie-breaking pack used when
-		multiple packs contain the same object. If not given,
-		ties are broken in favor of the pack with the lowest
-		mtime.
+		multiple packs contain the same object. `<pack>` must
+		contain at least one object. If not given, ties are
+		broken in favor of the pack with the lowest mtime.
 --
 
 verify::

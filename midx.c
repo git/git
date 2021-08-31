@@ -934,6 +934,25 @@ static int write_midx_internal(const char *object_dir, struct multi_pack_index *
 			ctx.info[ctx.nr].pack_name = xstrdup(ctx.m->pack_names[i]);
 			ctx.info[ctx.nr].p = NULL;
 			ctx.info[ctx.nr].expired = 0;
+
+			if (flags & MIDX_WRITE_REV_INDEX) {
+				/*
+				 * If generating a reverse index, need to have
+				 * packed_git's loaded to compare their
+				 * mtimes and object count.
+				 */
+				if (prepare_midx_pack(the_repository, ctx.m, i)) {
+					error(_("could not load pack"));
+					result = 1;
+					goto cleanup;
+				}
+
+				if (open_pack_index(ctx.m->packs[i]))
+					die(_("could not open index for %s"),
+					    ctx.m->packs[i]->pack_name);
+				ctx.info[ctx.nr].p = ctx.m->packs[i];
+			}
+
 			ctx.nr++;
 		}
 	}
@@ -958,6 +977,16 @@ static int write_midx_internal(const char *object_dir, struct multi_pack_index *
 				ctx.preferred_pack_idx = i;
 				break;
 			}
+		}
+	}
+
+	if (ctx.preferred_pack_idx > -1) {
+		struct packed_git *preferred = ctx.info[ctx.preferred_pack_idx].p;
+		if (!preferred->num_objects) {
+			error(_("cannot select preferred pack %s with no objects"),
+			      preferred->pack_name);
+			result = 1;
+			goto cleanup;
 		}
 	}
 

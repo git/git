@@ -305,6 +305,23 @@ test_expect_success 'midx picks objects from preferred pack' '
 	)
 '
 
+test_expect_success 'preferred packs must be non-empty' '
+	test_when_finished rm -rf preferred.git &&
+	git init preferred.git &&
+	(
+		cd preferred.git &&
+
+		test_commit base &&
+		git repack -ad &&
+
+		empty="$(git pack-objects $objdir/pack/pack </dev/null)" &&
+
+		test_must_fail git multi-pack-index write \
+			--preferred-pack=pack-$empty.pack 2>err &&
+		grep "with no objects" err
+	)
+'
+
 test_expect_success 'verify multi-pack-index success' '
 	git multi-pack-index verify --object-dir=$objdir
 '
