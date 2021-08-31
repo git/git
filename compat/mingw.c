@@ -1091,6 +1091,7 @@ int pipe(int filedes[2])
 	return 0;
 }
 
+#ifndef __MINGW64__
 struct tm *gmtime_r(const time_t *timep, struct tm *result)
 {
 	if (gmtime_s(result, timep) == 0)
@@ -1104,6 +1105,7 @@ struct tm *localtime_r(const time_t *timep, struct tm *result)
 		return result;
 	return NULL;
 }
+#endif
 
 char *mingw_strbuf_realpath(struct strbuf *resolved, const char *path)
 {
