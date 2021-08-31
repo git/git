@@ -1124,6 +1124,11 @@ static void write_reused_pack(struct hashfile *f)
 				break;
 
 			offset += ewah_bit_ctz64(word >> offset);
+			/*
+			 * Can use bit positions directly, even for MIDX
+			 * bitmaps. See comment in try_partial_reuse()
+			 * for why.
+			 */
 			write_reused_pack_one(pos + offset, f, &w_curs);
 			display_progress(progress_state, ++written);
 		}

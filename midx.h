@@ -42,6 +42,8 @@ struct multi_pack_index {
 #define MIDX_PROGRESS     (1 << 0)
 #define MIDX_WRITE_REV_INDEX (1 << 1)
 
+const unsigned char *get_midx_checksum(struct multi_pack_index *m);
+char *get_midx_filename(const char *object_dir);
 char *get_midx_rev_filename(struct multi_pack_index *m);
 
 struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local);
