@@ -260,3 +260,7 @@ have_delta () {
 	echo $1 | git cat-file --batch-check="%(deltabase)" >actual &&
 	test_cmp expect actual
 }
+
+midx_checksum () {
+	test-tool read-midx --checksum "$1"
+}
