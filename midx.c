@@ -195,6 +195,8 @@ void close_midx(struct multi_pack_index *m)
 	if (!m)
 		return;
 
+	close_midx(m->next);
+
 	munmap((unsigned char *)m->data, m->data_len);
 
 	for (i = 0; i < m->num_packs; i++) {
@@ -203,6 +205,7 @@ void close_midx(struct multi_pack_index *m)
 	}
 	FREE_AND_NULL(m->packs);
 	FREE_AND_NULL(m->pack_names);
+	free(m);
 }
 
 int prepare_midx_pack(struct repository *r, struct multi_pack_index *m, uint32_t pack_int_id)
