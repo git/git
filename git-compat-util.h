@@ -127,7 +127,9 @@
 /* Approximation of the length of the decimal representation of this type. */
 #define decimal_length(x)	((int)(sizeof(x) * 2.56 + 0.5) + 1)
 
-#if defined(__sun__)
+#ifdef __MINGW64__
+#define _POSIX_C_SOURCE 1
+#elif defined(__sun__)
  /*
   * On Solaris, when _XOPEN_EXTENDED is set, its header file
   * forces the programs to be XPG4v2, defeating any _XOPEN_SOURCE
