@@ -962,7 +962,7 @@ static int update_local_ref(struct ref *ref,
 	}
 }
 
-static int iterate_ref_map(void *cb_data, struct object_id *oid)
+static const struct object_id *iterate_ref_map(void *cb_data)
 {
 	struct ref **rm = cb_data;
 	struct ref *ref = *rm;
@@ -970,10 +970,9 @@ static int iterate_ref_map(void *cb_data, struct object_id *oid)
 	while (ref && ref->status == REF_STATUS_REJECT_SHALLOW)
 		ref = ref->next;
 	if (!ref)
-		return -1; /* end of the list */
+		return NULL;
 	*rm = ref->next;
-	oidcpy(oid, &ref->old_oid);
-	return 0;
+	return &ref->old_oid;
 }
 
 struct fetch_head {
