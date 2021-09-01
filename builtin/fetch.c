@@ -846,13 +846,11 @@ static int update_local_ref(struct ref *ref,
 			    int summary_width)
 {
 	struct commit *current = NULL, *updated;
-	enum object_type type;
 	struct branch *current_branch = branch_get(NULL);
 	const char *pretty_ref = prettify_refname(ref->name);
 	int fast_forward = 0;
 
-	type = oid_object_info(the_repository, &ref->new_oid, NULL);
-	if (type < 0)
+	if (!repo_has_object_file(the_repository, &ref->new_oid))
 		die(_("object %s not found"), oid_to_hex(&ref->new_oid));
 
 	if (oideq(&ref->old_oid, &ref->new_oid)) {
