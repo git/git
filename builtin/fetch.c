@@ -1291,8 +1291,9 @@ static int check_exist_and_connected(struct ref *ref_map)
 	return check_connected(iterate_ref_map, &rm, &opt);
 }
 
-static int fetch_refs(struct transport *transport, struct ref *ref_map)
+static int fetch_and_consume_refs(struct transport *transport, struct ref *ref_map)
 {
+	int connectivity_checked;
 	int ret;
 
 	/*
@@ -1308,30 +1309,18 @@ static int fetch_refs(struct transport *transport, struct ref *ref_map)
 			goto out;
 	}
 
-	/*
-	 * Keep the new pack's ".keep" file around to allow the caller
-	 * time to update refs to reference the new objects.
-	 */
-	return ret;
-
-out:
-	transport_unlock_pack(transport);
-	return ret;
-}
-
-/* Update local refs based on the ref values fetched from a remote */
-static int consume_refs(struct transport *transport, struct ref *ref_map)
-{
-	int connectivity_checked = transport->smart_options
+	connectivity_checked = transport->smart_options
 		? transport->smart_options->connectivity_checked : 0;
-	int ret;
+
 	trace2_region_enter("fetch", "consume_refs", the_repository);
 	ret = store_updated_refs(transport->url,
 				 transport->remote->name,
 				 connectivity_checked,
 				 ref_map);
-	transport_unlock_pack(transport);
 	trace2_region_leave("fetch", "consume_refs", the_repository);
+
+out:
+	transport_unlock_pack(transport);
 	return ret;
 }
 
@@ -1520,8 +1509,7 @@ static void backfill_tags(struct transport *transport, struct ref *ref_map)
 	transport_set_option(transport, TRANS_OPT_FOLLOWTAGS, NULL);
 	transport_set_option(transport, TRANS_OPT_DEPTH, "0");
 	transport_set_option(transport, TRANS_OPT_DEEPEN_RELATIVE, NULL);
-	if (!fetch_refs(transport, ref_map))
-		consume_refs(transport, ref_map);
+	fetch_and_consume_refs(transport, ref_map);
 
 	if (gsecondary) {
 		transport_disconnect(gsecondary);
@@ -1612,7 +1600,7 @@ static int do_fetch(struct transport *transport,
 				   transport->url);
 		}
 	}
-	if (fetch_refs(transport, ref_map) || consume_refs(transport, ref_map)) {
+	if (fetch_and_consume_refs(transport, ref_map)) {
 		free_refs(ref_map);
 		retcode = 1;
 		goto cleanup;
