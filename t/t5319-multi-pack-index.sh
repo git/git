@@ -582,7 +582,15 @@ test_expect_success 'force some 64-bit offsets with pack-objects' '
 	idx64=objects64/pack/test-64-$pack64.idx &&
 	chmod u+w $idx64 &&
 	corrupt_data $idx64 $(test_oid idxoff) "\02" &&
-	midx64=$(git multi-pack-index --object-dir=objects64 write) &&
+	# objects64 is not a real repository, but can serve as an alternate
+	# anyway so we can write a MIDX into it
+	git init repo &&
+	test_when_finished "rm -fr repo" &&
+	(
+		cd repo &&
+		( cd ../objects64 && pwd ) >.git/objects/info/alternates &&
+		midx64=$(git multi-pack-index --object-dir=../objects64 write)
+	) &&
 	midx_read_expect 1 63 5 objects64 " large-offsets"
 '
 
