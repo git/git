@@ -1293,18 +1293,28 @@ static int check_exist_and_connected(struct ref *ref_map)
 
 static int fetch_refs(struct transport *transport, struct ref *ref_map)
 {
-	int ret = check_exist_and_connected(ref_map);
+	int ret;
+
+	/*
+	 * We don't need to perform a fetch in case we can already satisfy all
+	 * refs.
+	 */
+	ret = check_exist_and_connected(ref_map);
 	if (ret) {
 		trace2_region_enter("fetch", "fetch_refs", the_repository);
 		ret = transport_fetch_refs(transport, ref_map);
 		trace2_region_leave("fetch", "fetch_refs", the_repository);
+		if (ret)
+			goto out;
 	}
-	if (!ret)
-		/*
-		 * Keep the new pack's ".keep" file around to allow the caller
-		 * time to update refs to reference the new objects.
-		 */
-		return 0;
+
+	/*
+	 * Keep the new pack's ".keep" file around to allow the caller
+	 * time to update refs to reference the new objects.
+	 */
+	return ret;
+
+out:
 	transport_unlock_pack(transport);
 	return ret;
 }
