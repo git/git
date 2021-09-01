@@ -1074,7 +1074,6 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 			      int connectivity_checked, struct ref *ref_map)
 {
 	struct fetch_head fetch_head;
-	struct commit *commit;
 	int url_len, i, rc = 0;
 	struct strbuf note = STRBUF_INIT, err = STRBUF_INIT;
 	struct ref_transaction *transaction = NULL;
@@ -1122,6 +1121,7 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 	     want_status <= FETCH_HEAD_IGNORE;
 	     want_status++) {
 		for (rm = ref_map; rm; rm = rm->next) {
+			struct commit *commit = NULL;
 			struct ref *ref = NULL;
 
 			if (rm->status == REF_STATUS_REJECT_SHALLOW) {
@@ -1131,11 +1131,23 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 				continue;
 			}
 
-			commit = lookup_commit_reference_gently(the_repository,
-								&rm->old_oid,
-								1);
-			if (!commit)
-				rm->fetch_head_status = FETCH_HEAD_NOT_FOR_MERGE;
+			/*
+			 * References in "refs/tags/" are often going to point
+			 * to annotated tags, which are not part of the
+			 * commit-graph. We thus only try to look up refs in
+			 * the graph which are not in that namespace to not
+			 * regress performance in repositories with many
+			 * annotated tags.
+			 */
+			if (!starts_with(rm->name, "refs/tags/"))
+				commit = lookup_commit_in_graph(the_repository, &rm->old_oid);
+			if (!commit) {
+				commit = lookup_commit_reference_gently(the_repository,
+									&rm->old_oid,
+									1);
+				if (!commit)
+					rm->fetch_head_status = FETCH_HEAD_NOT_FOR_MERGE;
+			}
 
 			if (rm->fetch_head_status != want_status)
 				continue;
