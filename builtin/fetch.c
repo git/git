@@ -1293,7 +1293,7 @@ static int check_exist_and_connected(struct ref *ref_map)
 
 static int fetch_and_consume_refs(struct transport *transport, struct ref *ref_map)
 {
-	int connectivity_checked;
+	int connectivity_checked = 1;
 	int ret;
 
 	/*
@@ -1307,10 +1307,9 @@ static int fetch_and_consume_refs(struct transport *transport, struct ref *ref_m
 		trace2_region_leave("fetch", "fetch_refs", the_repository);
 		if (ret)
 			goto out;
+		connectivity_checked = transport->smart_options ?
+			transport->smart_options->connectivity_checked : 0;
 	}
-
-	connectivity_checked = transport->smart_options
-		? transport->smart_options->connectivity_checked : 0;
 
 	trace2_region_enter("fetch", "consume_refs", the_repository);
 	ret = store_updated_refs(transport->url,
