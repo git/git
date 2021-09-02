@@ -47,20 +47,23 @@ test_expect_success 'failed cherry-pick does not advance HEAD' '
 	test "$head" = "$newhead"
 '
 
-test_expect_success 'advice from failed cherry-pick' "
+test_expect_success 'advice from failed cherry-pick' '
 	pristine_detach initial &&
 
-	picked=\$(git rev-parse --short picked) &&
+	picked=$(git rev-parse --short picked) &&
 	cat <<-EOF >expected &&
-	error: could not apply \$picked... picked
-	hint: after resolving the conflicts, mark the corrected paths
-	hint: with 'git add <paths>' or 'git rm <paths>'
-	hint: and commit the result with 'git commit'
+	error: could not apply $picked... picked
+	hint: After resolving the conflicts, mark them with
+	hint: "git add/rm <pathspec>", then run
+	hint: "git cherry-pick --continue".
+	hint: You can instead skip this commit with "git cherry-pick --skip".
+	hint: To abort and get back to the state before "git cherry-pick",
+	hint: run "git cherry-pick --abort".
 	EOF
 	test_must_fail git cherry-pick picked 2>actual &&
 
 	test_cmp expected actual
-"
+'
 
 test_expect_success 'advice from failed cherry-pick --no-commit' "
 	pristine_detach initial &&
