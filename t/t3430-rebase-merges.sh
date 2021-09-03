@@ -473,7 +473,22 @@ test_expect_success '--rebase-merges with strategies' '
 test_expect_success '--rebase-merges with commit that can generate bad characters for filename' '
 	git checkout -b colon-in-label E &&
 	git merge -m "colon: this should work" G &&
-	git rebase --rebase-merges --force-rebase E
+	git rebase --rebase-merges --force-rebase E &&
+	test_cmp_graph <<-\EOF
+	*   colon: this should work
+	|\
+	| * G
+	| * F
+	* |   E
+	|\ \
+	| * | B
+	* | | D
+	| |/
+	|/|
+	* | C
+	|/
+	* A
+	EOF
 '
 
 test_expect_success '--rebase-merges with message matched with onto label' '
