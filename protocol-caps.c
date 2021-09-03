@@ -69,9 +69,10 @@ static void send_info(struct repository *r, struct packet_writer *writer,
 			}
 		}
 
-		packet_writer_write(writer, "%s",
-				    strbuf_detach(&send_buffer, NULL));
+		packet_writer_write(writer, "%s", send_buffer.buf);
+		strbuf_reset(&send_buffer);
 	}
+	strbuf_release(&send_buffer);
 }
 
 int cap_object_info(struct repository *r, struct strvec *keys,
