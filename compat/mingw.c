@@ -333,7 +333,7 @@ static const wchar_t *make_relative_to(const wchar_t *path,
 
 	len = wcslen(path);
 	if (i + len + 1 > size) {
-		error("Could not make '%S' relative to '%S' (too large)",
+		error("Could not make '%ls' relative to '%ls' (too large)",
 		      path, relative_to);
 		return NULL;
 	}
