@@ -24,7 +24,7 @@ test_expect_success setup '
 	git commit -m dirORfile
 '
 
-test_expect_failure 'checkout does not clean cwd incidentally' '
+test_expect_success 'checkout does not clean cwd incidentally' '
 	git checkout foo/bar/baz &&
 	test_path_is_dir foo/bar &&
 
@@ -53,7 +53,7 @@ test_expect_success 'checkout fails if cwd needs to be removed' '
 	test_path_is_dir dirORfile
 '
 
-test_expect_failure 'reset --hard does not clean cwd incidentally' '
+test_expect_success 'reset --hard does not clean cwd incidentally' '
 	git checkout foo/bar/baz &&
 	test_path_is_dir foo/bar &&
 
@@ -82,7 +82,7 @@ test_expect_success 'reset --hard fails if cwd needs to be removed' '
 	test_path_is_dir dirORfile
 '
 
-test_expect_failure 'merge does not remove cwd incidentally' '
+test_expect_success 'merge does not remove cwd incidentally' '
 	git checkout foo/bar/baz &&
 	test_when_finished "git clean -fdx" &&
 
@@ -109,7 +109,7 @@ test_expect_success 'merge fails if cwd needs to be removed' '
 	test_path_is_dir dirORfile
 '
 
-test_expect_failure 'cherry-pick does not remove cwd incidentally' '
+test_expect_success 'cherry-pick does not remove cwd incidentally' '
 	git checkout foo/bar/baz &&
 	test_when_finished "git clean -fdx" &&
 
@@ -136,7 +136,7 @@ test_expect_success 'cherry-pick fails if cwd needs to be removed' '
 	test_path_is_dir dirORfile
 '
 
-test_expect_failure 'rebase does not remove cwd incidentally' '
+test_expect_success 'rebase does not remove cwd incidentally' '
 	git checkout foo/bar/baz &&
 	test_when_finished "git clean -fdx" &&
 
@@ -163,7 +163,7 @@ test_expect_success 'rebase fails if cwd needs to be removed' '
 	test_path_is_dir dirORfile
 '
 
-test_expect_failure 'revert does not remove cwd incidentally' '
+test_expect_success 'revert does not remove cwd incidentally' '
 	git checkout foo/bar/baz &&
 	test_when_finished "git clean -fdx" &&
 

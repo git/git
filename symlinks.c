@@ -275,11 +275,18 @@ static int threaded_has_dirs_only_path(struct cache_def *cache, const char *name
 
 static struct strbuf removal = STRBUF_INIT;
 
+static int cant_remove(char *dirname)
+{
+	if (the_cwd && !strcmp(dirname, the_cwd))
+		return 1;
+	return rmdir(dirname);
+}
+
 static void do_remove_scheduled_dirs(int new_len)
 {
 	while (removal.len > new_len) {
 		removal.buf[removal.len] = '\0';
-		if (rmdir(removal.buf))
+		if (cant_remove(removal.buf))
 			break;
 		do {
 			removal.len--;
@@ -292,6 +299,9 @@ static void do_remove_scheduled_dirs(int new_len)
 void schedule_dir_for_removal(const char *name, int len)
 {
 	int match_len, last_slash, i, previous_slash;
+
+	if (the_cwd && !strcmp(name, the_cwd))
+		return;	/* Do not remove the current working directory */
 
 	match_len = last_slash = i =
 		longest_path_match(name, len, removal.buf, removal.len,
