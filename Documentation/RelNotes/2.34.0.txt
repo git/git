@@ -44,6 +44,10 @@ Performance, Internal Implementation, Development Support etc.
    that checking for the lack of a prerequisite would not work.  Avoid
    the use of "if ! test_have_prereq X" in a test script.
 
+ * The revision traversal API has been optimized by taking advantage
+   of the commit-graph, when available, to determine if a commit is
+   reachable from any of the existing refs.
+
 
 Fixes since v2.33
 -----------------
@@ -69,9 +73,30 @@ Fixes since v2.33
  * "git range-diff" code clean-up.
    (merge c4d5907324 jk/range-diff-fixes later to maint).
 
+ * "git commit --fixup" now works with "--edit" again, after it was
+   broken in v2.32.
+   (merge 8ef6aad664 jk/commit-edit-fixup-fix later to maint).
+
+ * Use upload-artifacts v1 (instead of v2) for 32-bit linux, as the
+   new version has a blocker bug for that architecture.
+   (merge 3cf9bb36bf cb/ci-use-upload-artifacts-v1 later to maint).
+
+ * Checking out all the paths from HEAD during the last conflicted
+   step in "git rebase" and continuing would cause the step to be
+   skipped (which is expected), but leaves MERGE_MSG file behind in
+   $GIT_DIR and confuses the next "git commit", which has been
+   corrected.
+   (merge e5ee33e855 pw/rebase-skip-final-fix later to maint).
+
+ * Various bugs in "git rebase -r" have been fixed.
+   (merge f2563c9ef3 pw/rebase-r-fixes later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 1d9c8daef8 ab/bundle-doc later to maint).
    (merge 81483fe613 en/merge-strategy-docs later to maint).
    (merge 626beebdf8 js/log-protocol-version later to maint).
    (merge 00e302da76 cb/builtin-merge-format-string-fix later to maint).
    (merge ad51ae4dc0 cb/ci-freebsd-update later to maint).
+   (merge be6444d1ca fc/completion-updates later to maint).
+   (merge ff7b83f562 ti/tcsh-completion-regression-fix later to maint).
+   (merge 325b06deda sg/make-fix-ar-invocation later to maint).
