@@ -4716,6 +4716,9 @@ static int commit_staged_changes(struct repository *r,
 		    refs_delete_ref(get_main_ref_store(r), "",
 				    "CHERRY_PICK_HEAD", NULL, 0))
 			return error(_("could not remove CHERRY_PICK_HEAD"));
+		if (unlink(git_path_merge_msg(r)) && errno != ENOENT)
+			return error_errno(_("could not remove '%s'"),
+					   git_path_merge_msg(r));
 		if (!final_fixup)
 			return 0;
 	}
