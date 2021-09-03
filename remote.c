@@ -135,7 +135,7 @@ static inline void init_remotes_hash(void)
 
 static struct remote *make_remote(const char *name, int len)
 {
-	struct remote *ret, *replaced;
+	struct remote *ret;
 	struct remotes_hash_key lookup;
 	struct hashmap_entry lookup_entry, *e;
 
@@ -162,8 +162,8 @@ static struct remote *make_remote(const char *name, int len)
 	remotes[remotes_nr++] = ret;
 
 	hashmap_entry_init(&ret->ent, lookup_entry.hash);
-	replaced = hashmap_put_entry(&remotes_hash, ret, ent);
-	assert(replaced == NULL);  /* no previous entry overwritten */
+	if (hashmap_put_entry(&remotes_hash, ret, ent))
+		BUG("hashmap_put overwrote entry after hashmap_get returned NULL");
 	return ret;
 }
 
