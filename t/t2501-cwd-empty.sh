@@ -109,7 +109,7 @@ test_required_dir_removal () {
 }
 
 test_expect_success 'checkout does not clean cwd incidentally' '
-	test_incidental_dir_removal failure git checkout init
+	test_incidental_dir_removal success git checkout init
 '
 
 test_expect_success 'checkout fails if cwd needs to be removed' '
@@ -117,7 +117,7 @@ test_expect_success 'checkout fails if cwd needs to be removed' '
 '
 
 test_expect_success 'reset --hard does not clean cwd incidentally' '
-	test_incidental_dir_removal failure git reset --hard init
+	test_incidental_dir_removal success git reset --hard init
 '
 
 test_expect_success 'reset --hard fails if cwd needs to be removed' '
@@ -125,7 +125,7 @@ test_expect_success 'reset --hard fails if cwd needs to be removed' '
 '
 
 test_expect_success 'merge does not clean cwd incidentally' '
-	test_incidental_dir_removal failure git merge reverted
+	test_incidental_dir_removal success git merge reverted
 '
 
 # This file uses some simple merges where
@@ -158,7 +158,7 @@ test_expect_success 'merge fails if cwd needs to be removed' '
 '
 
 test_expect_success 'cherry-pick does not clean cwd incidentally' '
-	test_incidental_dir_removal failure git cherry-pick reverted
+	test_incidental_dir_removal success git cherry-pick reverted
 '
 
 test_expect_success 'cherry-pick fails if cwd needs to be removed' '
@@ -174,7 +174,7 @@ test_expect_success 'rebase fails if cwd needs to be removed' '
 '
 
 test_expect_success 'revert does not clean cwd incidentally' '
-	test_incidental_dir_removal failure git revert HEAD
+	test_incidental_dir_removal success git revert HEAD
 '
 
 test_expect_success 'revert fails if cwd needs to be removed' '
