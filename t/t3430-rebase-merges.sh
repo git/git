@@ -529,6 +529,42 @@ test_expect_success '--rebase-merges with conflicting special branch names handl
 	test_cmp expect actual
 '
 
+test_expect_success '--rebase-merges with branch with slashes preserved' '
+	git checkout -b slash/in/branch E &&
+	git merge -m "Merge branch F into ${SQ}slash/in/branch${SQ}" F &&
+	m1=$(git rev-parse --short HEAD) &&
+
+	git checkout -b slashes-preserved H &&
+	git merge -m "Merge branch ${SQ}slash/in/branch${SQ} into slashes-preserved" slash/in/branch &&
+	m2=$(git rev-parse --short HEAD) &&
+
+	cat >expect <<-EOF &&
+	label onto
+
+	reset $a # A
+	pick $b B
+	label E
+
+	reset $c # C
+	pick $d D
+	merge -C $e E # E
+	label branch-point
+	merge -C $m1 $f # Merge branch F into '\''slash/in/branch'\''
+	label slash/in/branch
+
+	reset branch-point # E
+	merge -C $h onto # H
+	merge -C $m2 slash/in/branch # Merge branch '\''slash/in/branch'\'' into slashes-preserved
+
+	EOF
+
+	cp expect script-from-scratch &&
+	test_config sequence.editor \""$PWD"/replace-editor.sh\" &&
+	git rebase --rebase-merges --force-rebase -i G &&
+	grep -v "^#" .git/ORIGINAL-TODO >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success '--rebase-merges with commit that can generate bad characters for filename' '
 	git checkout -b colon-in-label E &&
 	git merge -m "colon: this should work" G &&

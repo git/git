@@ -5038,17 +5038,35 @@ static const char *label_oid(struct object_id *oid, const char *label,
 		 * (including white-space ones) by dashes, as they might be
 		 * illegal in file names (and hence in ref names).
 		 *
+		 * Slashes are permitted, as long as it follows an alphanumeric
+		 * character (e.g. not another slash, not a dash, not a control
+		 * char) and is not the first or last character.
+		 *
 		 * Note that we retain non-ASCII UTF-8 characters (identified
 		 * via the most significant bit). They should be all acceptable
 		 * in file names. We do not validate the UTF-8 here, that's not
 		 * the job of this function.
+		 *
+		 * For more info on valid formats, see
+		 * check_or_sanitize_refname in refs.c
 		 */
-		for (; *label; label++)
+		for (; *label; label++) {
 			if ((*label & 0x80) || isalnum(*label))
 				strbuf_addch(buf, *label);
-			/* avoid leading dash and double-dashes */
-			else if (buf->len && buf->buf[buf->len - 1] != '-')
-				strbuf_addch(buf, '-');
+			else if (buf->len) {
+				char prev = buf->buf[buf->len - 1];
+				/*
+				 * Allow a slash as long as it's preceded by an
+				 * alphanum, and is not the last character.
+				 */
+				if (*label == '/' && isalnum(prev) &&
+				    *(label + 1))
+					strbuf_addch(buf, '/');
+				/* avoid leading dash and double-dashes */
+				else if (prev != '-')
+					strbuf_addch(buf, '-');
+			}
+		}
 		if (!buf->len) {
 			strbuf_addstr(buf, "rev-");
 			strbuf_add_unique_abbrev(buf, oid, default_abbrev);
