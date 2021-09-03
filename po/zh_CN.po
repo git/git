@@ -26076,3 +26076,4 @@ msgstr "略过 %s 含备份后缀 '%s'。\n"
 #, perl-format
 msgid "Do you really want to send %s? [y|N]: "
 msgstr "您真的要发送 %s？[y|N]："
+# 1
