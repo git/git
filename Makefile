@@ -486,9 +486,9 @@ all::
 #        setting this flag the exceptions are removed, and all of
 #        -Wextra is used.
 #
-#    pedantic:
+#    no-pedantic:
 #
-#        Enable -pedantic compilation.
+#        Disable -pedantic compilation.
 
 GIT-VERSION-FILE: FORCE
 	@$(SHELL_PATH) ./GIT-VERSION-GEN

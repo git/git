@@ -7,9 +7,11 @@ DEVELOPER_CFLAGS += -Werror
 SPARSE_FLAGS += -Wsparse-error
 endif
 DEVELOPER_CFLAGS += -Wall
-ifneq ($(filter pedantic,$(DEVOPTS)),)
+ifeq ($(filter no-pedantic,$(DEVOPTS)),)
 DEVELOPER_CFLAGS += -pedantic
+DEVELOPER_CFLAGS += -Wpedantic
 ifneq ($(filter gcc5,$(COMPILER_FEATURES)),)
+DEVELOPER_CFLAGS += -Wno-pedantic-ms-format
 DEVELOPER_CFLAGS += -Wno-incompatible-pointer-types
 endif
 endif
