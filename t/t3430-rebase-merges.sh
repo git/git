@@ -37,6 +37,7 @@ test_expect_success 'setup' '
 	EOF
 
 	test_commit A &&
+	a=$(git rev-parse --short HEAD) &&
 	git checkout -b first &&
 	test_commit B &&
 	b=$(git rev-parse --short HEAD) &&
