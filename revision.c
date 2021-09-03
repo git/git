@@ -360,20 +360,18 @@ static struct object *get_reference(struct rev_info *revs, const char *name,
 				    unsigned int flags)
 {
 	struct object *object;
+	struct commit *commit;
 
 	/*
-	 * If the repository has commit graphs, repo_parse_commit() avoids
-	 * reading the object buffer, so use it whenever possible.
+	 * If the repository has commit graphs, we try to opportunistically
+	 * look up the object ID in those graphs. Like this, we can avoid
+	 * parsing commit data from disk.
 	 */
-	if (oid_object_info(revs->repo, oid, NULL) == OBJ_COMMIT) {
-		struct commit *c = lookup_commit(revs->repo, oid);
-		if (!repo_parse_commit(revs->repo, c))
-			object = (struct object *) c;
-		else
-			object = NULL;
-	} else {
+	commit = lookup_commit_in_graph(revs->repo, oid);
+	if (commit)
+		object = &commit->object;
+	else
 		object = parse_object(revs->repo, oid);
-	}
 
 	if (!object) {
 		if (revs->ignore_missing)
@@ -1534,7 +1532,7 @@ static int handle_one_ref(const char *path, const struct object_id *oid,
 
 	object = get_reference(cb->all_revs, path, oid, cb->all_flags);
 	add_rev_cmdline(cb->all_revs, object, path, REV_CMD_REF, cb->all_flags);
-	add_pending_oid(cb->all_revs, path, oid, cb->all_flags);
+	add_pending_object(cb->all_revs, object, path);
 	return 0;
 }
 
@@ -2256,6 +2254,10 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	} else if (!strcmp(arg, "--author-date-order")) {
 		revs->sort_order = REV_SORT_BY_AUTHOR_DATE;
 		revs->topo_order = 1;
+	} else if (!strcmp(arg, "--unsorted-input")) {
+		if (revs->no_walk)
+			die(_("--unsorted-input is incompatible with --no-walk"));
+		revs->unsorted_input = 1;
 	} else if (!strcmp(arg, "--early-output")) {
 		revs->early_output = 100;
 		revs->topo_order = 1;
@@ -2651,16 +2653,22 @@ static int handle_revision_pseudo_opt(const char *submodule,
 	} else if (!strcmp(arg, "--not")) {
 		*flags ^= UNINTERESTING | BOTTOM;
 	} else if (!strcmp(arg, "--no-walk")) {
-		revs->no_walk = REVISION_WALK_NO_WALK_SORTED;
+		if (!revs->no_walk && revs->unsorted_input)
+			die(_("--no-walk is incompatible with --unsorted-input"));
+		revs->no_walk = 1;
 	} else if (skip_prefix(arg, "--no-walk=", &optarg)) {
+		if (!revs->no_walk && revs->unsorted_input)
+			die(_("--no-walk is incompatible with --unsorted-input"));
+
 		/*
 		 * Detached form ("--no-walk X" as opposed to "--no-walk=X")
 		 * not allowed, since the argument is optional.
 		 */
+		revs->no_walk = 1;
 		if (!strcmp(optarg, "sorted"))
-			revs->no_walk = REVISION_WALK_NO_WALK_SORTED;
+			revs->unsorted_input = 0;
 		else if (!strcmp(optarg, "unsorted"))
-			revs->no_walk = REVISION_WALK_NO_WALK_UNSORTED;
+			revs->unsorted_input = 1;
 		else
 			return error("invalid argument to --no-walk");
 	} else if (!strcmp(arg, "--do-walk")) {
@@ -3584,7 +3592,7 @@ int prepare_revision_walk(struct rev_info *revs)
 
 	if (!revs->reflog_info)
 		prepare_to_use_bloom_filter(revs);
-	if (revs->no_walk != REVISION_WALK_NO_WALK_UNSORTED)
+	if (!revs->unsorted_input)
 		commit_list_sort_by_date(&revs->commits);
 	if (revs->no_walk)
 		return 0;
