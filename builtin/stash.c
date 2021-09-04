@@ -256,7 +256,7 @@ static int reset_tree(struct object_id *i_tree, int update, int reset)
 	opts.src_index = &the_index;
 	opts.dst_index = &the_index;
 	opts.merge = 1;
-	opts.reset = reset;
+	opts.reset_keep_untracked = reset;
 	opts.update = update;
 	opts.fn = oneway_merge;
 

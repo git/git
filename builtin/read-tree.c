@@ -133,7 +133,7 @@ int cmd_read_tree(int argc, const char **argv, const char *cmd_prefix)
 			 N_("3-way merge if no file level merging required")),
 		OPT_BOOL(0, "aggressive", &opts.aggressive,
 			 N_("3-way merge in presence of adds and removes")),
-		OPT_BOOL(0, "reset", &opts.reset,
+		OPT_BOOL(0, "reset", &opts.reset_keep_untracked,
 			 N_("same as -m, but discard unmerged entries")),
 		{ OPTION_STRING, 0, "prefix", &opts.prefix, N_("<subdirectory>/"),
 		  N_("read the tree into the index under <subdirectory>/"),
@@ -162,6 +162,11 @@ int cmd_read_tree(int argc, const char **argv, const char *cmd_prefix)
 	opts.head_idx = -1;
 	opts.src_index = &the_index;
 	opts.dst_index = &the_index;
+	if (opts.reset_keep_untracked) {
+		opts.dir = xcalloc(1, sizeof(*opts.dir));
+		opts.dir->flags |= DIR_SHOW_IGNORED;
+		setup_standard_excludes(opts.dir);
+	}
 
 	git_config(git_read_tree_config, NULL);
 
@@ -171,7 +176,7 @@ int cmd_read_tree(int argc, const char **argv, const char *cmd_prefix)
 	hold_locked_index(&lock_file, LOCK_DIE_ON_ERROR);
 
 	prefix_set = opts.prefix ? 1 : 0;
-	if (1 < opts.merge + opts.reset + prefix_set)
+	if (1 < opts.merge + opts.reset_keep_untracked + prefix_set)
 		die("Which one? -m, --reset, or --prefix?");
 
 	/*
@@ -183,7 +188,7 @@ int cmd_read_tree(int argc, const char **argv, const char *cmd_prefix)
 	 * mode.
 	 */
 
-	if (opts.reset || opts.merge || opts.prefix) {
+	if (opts.reset_keep_untracked || opts.merge || opts.prefix) {
 		if (read_cache_unmerged() && (opts.prefix || opts.merge))
 			die(_("You need to resolve your current index first"));
 		stage = opts.merge = 1;

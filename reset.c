@@ -1,5 +1,6 @@
 #include "git-compat-util.h"
 #include "cache-tree.h"
+#include "dir.h"
 #include "lockfile.h"
 #include "refs.h"
 #include "reset.h"
@@ -57,8 +58,12 @@ int reset_head(struct repository *r, struct object_id *oid, const char *action,
 	unpack_tree_opts.update = 1;
 	unpack_tree_opts.merge = 1;
 	init_checkout_metadata(&unpack_tree_opts.meta, switch_to_branch, oid, NULL);
-	if (!detach_head)
-		unpack_tree_opts.reset = 1;
+	if (!detach_head) {
+		unpack_tree_opts.reset_keep_untracked = 1;
+		unpack_tree_opts.dir = xcalloc(1, sizeof(*unpack_tree_opts.dir));
+		unpack_tree_opts.dir->flags |= DIR_SHOW_IGNORED;
+		setup_standard_excludes(unpack_tree_opts.dir);
+	}
 
 	if (repo_read_index_unmerged(r) < 0) {
 		ret = error(_("could not read index"));

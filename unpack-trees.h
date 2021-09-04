@@ -46,7 +46,9 @@ void setup_unpack_trees_porcelain(struct unpack_trees_options *opts,
 void clear_unpack_trees_porcelain(struct unpack_trees_options *opts);
 
 struct unpack_trees_options {
-	unsigned int reset,
+	unsigned int reset_nuke_untracked,
+		     reset_keep_untracked,
+		     reset_either, /* internal use only */
 		     merge,
 		     update,
 		     clone,

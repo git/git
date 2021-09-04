@@ -1918,8 +1918,12 @@ static int fast_forward_to(struct tree *head, struct tree *remote, int reset)
 	opts.dst_index = &the_index;
 	opts.update = 1;
 	opts.merge = 1;
-	opts.reset = reset;
+	opts.reset_keep_untracked = reset;
 	opts.fn = twoway_merge;
+	/* Setup opts.dir so that ignored files in the way get overwritten */
+	opts.dir = xcalloc(1, sizeof(*opts.dir));
+	opts.dir->flags |= DIR_SHOW_IGNORED;
+	setup_standard_excludes(opts.dir);
 	init_tree_desc(&t[0], head->buffer, head->size);
 	init_tree_desc(&t[1], remote->buffer, remote->size);
 

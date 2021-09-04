@@ -301,7 +301,7 @@ static int check_submodule_move_head(const struct cache_entry *ce,
 	if (!sub)
 		return 0;
 
-	if (o->reset)
+	if (o->reset_nuke_untracked)
 		flags |= SUBMODULE_MOVE_HEAD_FORCE;
 
 	if (submodule_move_head(ce->name, old_id, new_id, flags))
@@ -1696,6 +1696,13 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 	if (len > MAX_UNPACK_TREES)
 		die("unpack_trees takes at most %d trees", MAX_UNPACK_TREES);
 
+	if (o->reset_nuke_untracked && o->reset_keep_untracked)
+		BUG("reset_nuke_untracked and reset_keep_untracked are incompatible");
+
+	o->reset_either = 0;
+	if (o->reset_nuke_untracked || o->reset_keep_untracked)
+		o->reset_either = 1;
+
 	trace_performance_enter();
 	trace2_region_enter("unpack_trees", "unpack_trees", the_repository);
 
@@ -1989,7 +1996,7 @@ static int verify_uptodate_1(const struct cache_entry *ce,
 	 */
 	if ((ce->ce_flags & CE_VALID) || ce_skip_worktree(ce))
 		; /* keep checking */
-	else if (o->reset || ce_uptodate(ce))
+	else if (o->reset_either || ce_uptodate(ce))
 		return 0;
 
 	if (!lstat(ce->name, &st)) {
@@ -2218,7 +2225,7 @@ static int verify_absent_1(const struct cache_entry *ce,
 	int len;
 	struct stat st;
 
-	if (o->index_only || o->reset || !o->update)
+	if (o->index_only || o->reset_nuke_untracked || !o->update)
 		return 0;
 
 	len = check_leading_path(ce->name, ce_namelen(ce), 0);
@@ -2585,7 +2592,7 @@ int twoway_merge(const struct cache_entry * const *src,
 
 	if (current) {
 		if (current->ce_flags & CE_CONFLICTED) {
-			if (same(oldtree, newtree) || o->reset) {
+			if (same(oldtree, newtree) || o->reset_either) {
 				if (!newtree)
 					return deleted_entry(current, current, o);
 				else
@@ -2683,7 +2690,7 @@ int oneway_merge(const struct cache_entry * const *src,
 
 	if (old && same(old, a)) {
 		int update = 0;
-		if (o->reset && o->update && !ce_uptodate(old) && !ce_skip_worktree(old) &&
+		if (o->reset_either && o->update && !ce_uptodate(old) && !ce_skip_worktree(old) &&
 			!(old->ce_flags & CE_FSMONITOR_VALID)) {
 			struct stat st;
 			if (lstat(old->name, &st) ||
