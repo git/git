@@ -13,11 +13,11 @@ static inline void debug_mm(const char *format, ...) {}
 static inline const char *debug_str(const char *s) { return s; }
 #endif
 
-const char *git_mailmap_file;
+const char *git_mailmap_file; 
 const char *git_mailmap_blob;
 
 struct mailmap_info {
-	char *name;
+	char *name; 
 	char *email;
 };
 
