@@ -2074,10 +2074,210 @@ done_editing:
 	return result;
 }
 
+static int real_is_systemd_timer_available(void)
+{
+	struct child_process child = CHILD_PROCESS_INIT;
+
+	strvec_pushl(&child.args, "systemctl", "--user", "list-timers", NULL);
+	child.no_stdin = 1;
+	child.no_stdout = 1;
+	child.no_stderr = 1;
+	child.silent_exec_failure = 1;
+
+	if (start_command(&child))
+		return 0;
+	if (finish_command(&child))
+		return 0;
+	return 1;
+}
+
+static int is_systemd_timer_available(void)
+{
+	const char *cmd = "systemctl";
+	int is_available;
+
+	if (get_schedule_cmd(&cmd, &is_available))
+		return is_available;
+
+	return real_is_systemd_timer_available();
+}
+
+static char *xdg_config_home_systemd(const char *filename)
+{
+	return xdg_config_home_for("systemd/user", filename);
+}
+
+static int systemd_timer_enable_unit(int enable,
+				     enum schedule_priority schedule)
+{
+	const char *cmd = "systemctl";
+	struct child_process child = CHILD_PROCESS_INIT;
+	const char *frequency = get_frequency(schedule);
+
+	/*
+	 * Disabling the systemd unit while it is already disabled makes
+	 * systemctl print an error.
+	 * Let's ignore it since it means we already are in the expected state:
+	 * the unit is disabled.
+	 *
+	 * On the other hand, enabling a systemd unit which is already enabled
+	 * produces no error.
+	 */
+	if (!enable)
+		child.no_stderr = 1;
+
+	get_schedule_cmd(&cmd, NULL);
+	strvec_split(&child.args, cmd);
+	strvec_pushl(&child.args, "--user", enable ? "enable" : "disable",
+		     "--now", NULL);
+	strvec_pushf(&child.args, "git-maintenance@%s.timer", frequency);
+
+	if (start_command(&child))
+		return error(_("failed to start systemctl"));
+	if (finish_command(&child))
+		/*
+		 * Disabling an already disabled systemd unit makes
+		 * systemctl fail.
+		 * Let's ignore this failure.
+		 *
+		 * Enabling an enabled systemd unit doesn't fail.
+		 */
+		if (enable)
+			return error(_("failed to run systemctl"));
+	return 0;
+}
+
+static int systemd_timer_delete_unit_templates(void)
+{
+	int ret = 0;
+	char *filename = xdg_config_home_systemd("git-maintenance@.timer");
+	if (unlink(filename) && !is_missing_file_error(errno))
+		ret = error_errno(_("failed to delete '%s'"), filename);
+	FREE_AND_NULL(filename);
+
+	filename = xdg_config_home_systemd("git-maintenance@.service");
+	if (unlink(filename) && !is_missing_file_error(errno))
+		ret = error_errno(_("failed to delete '%s'"), filename);
+
+	free(filename);
+	return ret;
+}
+
+static int systemd_timer_delete_units(void)
+{
+	return systemd_timer_enable_unit(0, SCHEDULE_HOURLY) ||
+	       systemd_timer_enable_unit(0, SCHEDULE_DAILY) ||
+	       systemd_timer_enable_unit(0, SCHEDULE_WEEKLY) ||
+	       systemd_timer_delete_unit_templates();
+}
+
+static int systemd_timer_write_unit_templates(const char *exec_path)
+{
+	char *filename;
+	FILE *file;
+	const char *unit;
+
+	filename = xdg_config_home_systemd("git-maintenance@.timer");
+	if (safe_create_leading_directories(filename)) {
+		error(_("failed to create directories for '%s'"), filename);
+		goto error;
+	}
+	file = fopen_or_warn(filename, "w");
+	if (file == NULL)
+		goto error;
+
+	unit = "# This file was created and is maintained by Git.\n"
+	       "# Any edits made in this file might be replaced in the future\n"
+	       "# by a Git command.\n"
+	       "\n"
+	       "[Unit]\n"
+	       "Description=Optimize Git repositories data\n"
+	       "\n"
+	       "[Timer]\n"
+	       "OnCalendar=%i\n"
+	       "Persistent=true\n"
+	       "\n"
+	       "[Install]\n"
+	       "WantedBy=timers.target\n";
+	if (fputs(unit, file) == EOF) {
+		error(_("failed to write to '%s'"), filename);
+		fclose(file);
+		goto error;
+	}
+	if (fclose(file) == EOF) {
+		error_errno(_("failed to flush '%s'"), filename);
+		goto error;
+	}
+	free(filename);
+
+	filename = xdg_config_home_systemd("git-maintenance@.service");
+	file = fopen_or_warn(filename, "w");
+	if (file == NULL)
+		goto error;
+
+	unit = "# This file was created and is maintained by Git.\n"
+	       "# Any edits made in this file might be replaced in the future\n"
+	       "# by a Git command.\n"
+	       "\n"
+	       "[Unit]\n"
+	       "Description=Optimize Git repositories data\n"
+	       "\n"
+	       "[Service]\n"
+	       "Type=oneshot\n"
+	       "ExecStart=\"%s/git\" --exec-path=\"%s\" for-each-repo --config=maintenance.repo maintenance run --schedule=%%i\n"
+	       "LockPersonality=yes\n"
+	       "MemoryDenyWriteExecute=yes\n"
+	       "NoNewPrivileges=yes\n"
+	       "RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6\n"
+	       "RestrictNamespaces=yes\n"
+	       "RestrictRealtime=yes\n"
+	       "RestrictSUIDSGID=yes\n"
+	       "SystemCallArchitectures=native\n"
+	       "SystemCallFilter=@system-service\n";
+	if (fprintf(file, unit, exec_path, exec_path) < 0) {
+		error(_("failed to write to '%s'"), filename);
+		fclose(file);
+		goto error;
+	}
+	if (fclose(file) == EOF) {
+		error_errno(_("failed to flush '%s'"), filename);
+		goto error;
+	}
+	free(filename);
+	return 0;
+
+error:
+	free(filename);
+	systemd_timer_delete_unit_templates();
+	return -1;
+}
+
+static int systemd_timer_setup_units(void)
+{
+	const char *exec_path = git_exec_path();
+
+	int ret = systemd_timer_write_unit_templates(exec_path) ||
+		  systemd_timer_enable_unit(1, SCHEDULE_HOURLY) ||
+		  systemd_timer_enable_unit(1, SCHEDULE_DAILY) ||
+		  systemd_timer_enable_unit(1, SCHEDULE_WEEKLY);
+	if (ret)
+		systemd_timer_delete_units();
+	return ret;
+}
+
+static int systemd_timer_update_schedule(int run_maintenance, int fd)
+{
+	if (run_maintenance)
+		return systemd_timer_setup_units();
+	else
+		return systemd_timer_delete_units();
+}
+
 enum scheduler {
 	SCHEDULER_INVALID = -1,
 	SCHEDULER_AUTO,
 	SCHEDULER_CRON,
+	SCHEDULER_SYSTEMD,
 	SCHEDULER_LAUNCHCTL,
 	SCHEDULER_SCHTASKS,
 };
@@ -2091,6 +2291,11 @@ static const struct {
 		.name = "crontab",
 		.is_available = is_crontab_available,
 		.update_schedule = crontab_update_schedule,
+	},
+	[SCHEDULER_SYSTEMD] = {
+		.name = "systemctl",
+		.is_available = is_systemd_timer_available,
+		.update_schedule = systemd_timer_update_schedule,
 	},
 	[SCHEDULER_LAUNCHCTL] = {
 		.name = "launchctl",
@@ -2112,6 +2317,9 @@ static enum scheduler parse_scheduler(const char *value)
 		return SCHEDULER_AUTO;
 	else if (!strcasecmp(value, "cron") || !strcasecmp(value, "crontab"))
 		return SCHEDULER_CRON;
+	else if (!strcasecmp(value, "systemd") ||
+		 !strcasecmp(value, "systemd-timer"))
+		return SCHEDULER_SYSTEMD;
 	else if (!strcasecmp(value, "launchctl"))
 		return SCHEDULER_LAUNCHCTL;
 	else if (!strcasecmp(value, "schtasks"))
@@ -2147,6 +2355,14 @@ static enum scheduler resolve_scheduler(enum scheduler scheduler)
 
 #elif defined(GIT_WINDOWS_NATIVE)
 	return SCHEDULER_SCHTASKS;
+
+#elif defined(__linux__)
+	if (is_systemd_timer_available())
+		return SCHEDULER_SYSTEMD;
+	else if (is_crontab_available())
+		return SCHEDULER_CRON;
+	else
+		die(_("neither systemd timers nor crontab are available"));
 
 #else
 	return SCHEDULER_CRON;
