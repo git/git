@@ -718,7 +718,9 @@ test_expect_success 'merge-recursive remembers the names of all base trees' '
 	# merge-recursive prints in reverse order, but we do not care
 	sort <trees >expect &&
 	sed -n "s/^virtual //p" out | sort >actual &&
-	test_cmp expect actual
+	test_cmp expect actual &&
+
+	git clean -fd
 '
 
 test_expect_success 'merge-recursive internal merge resolves to the sameness' '
