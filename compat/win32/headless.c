@@ -44,8 +44,9 @@ static int extend_path(wchar_t *dir, size_t dir_len)
 	return 1;
 }
 
-int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
-		    wchar_t *command_line, int show)
+int WINAPI wWinMain(_In_ HINSTANCE instance,
+		    _In_opt_ HINSTANCE previous_instance,
+		    _In_ LPWSTR command_line, _In_ int show)
 {
 	wchar_t git_command_line[32768];
 	size_t size = sizeof(git_command_line) / sizeof(wchar_t);
@@ -53,6 +54,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
 	int slash = 0, i;
 
 	STARTUPINFO startup_info = {
+		.cb = sizeof(STARTUPINFO),
 		.dwFlags = STARTF_USESHOWWINDOW,
 		.wShowWindow = SW_HIDE,
 	};
@@ -68,7 +70,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
 		else if (_wpgmptr[i] == L'\\')
 			slash = i;
 
-	if (slash + 11 >= sizeof(git_command_line) / sizeof(wchar_t))
+	if (slash >= size - 11)
 		return 127; /* Too long path */
 
 	/* If it is in Git's exec path, add the bin/ directory to the PATH */
@@ -88,8 +90,6 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
 			return 127;
 	}
 
-	startup_info.cb = sizeof(STARTUPINFO);
-
 	startup_info.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
 	startup_info.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
 	startup_info.hStdError = GetStdHandle(STD_ERROR_HANDLE);
@@ -105,10 +105,11 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
 			   &startup_info, &process_info))
 		return 129; /* could not start */
 	WaitForSingleObject(process_info.hProcess, INFINITE);
-	if (!GetExitCodeProcess(process_info.hProcess, &exit_code)) {
-		CloseHandle(process_info.hProcess);
-		return 130; /* Could not determine exit code? */
-	}
+	if (!GetExitCodeProcess(process_info.hProcess, &exit_code))
+		exit_code = 130; /* Could not determine exit code? */
+
+	CloseHandle(process_info.hProcess);
+	CloseHandle(process_info.hThread);
 
 	return (int)exit_code;
 }
