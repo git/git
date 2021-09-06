@@ -356,6 +356,11 @@ static int add_worktree(const char *path, const char *refname,
 	if (opts->checkout) {
 		cp.argv = NULL;
 		strvec_clear(&cp.args);
+		/*
+		 * NOTE: reset --hard is okay here, because 'worktree add'
+		 * refuses to work in an extant non-empty directory, so there
+		 * is no risk of deleting untracked files.
+		 */
 		strvec_pushl(&cp.args, "reset", "--hard", "--no-recurse-submodules", NULL);
 		if (opts->quiet)
 			strvec_push(&cp.args, "--quiet");
