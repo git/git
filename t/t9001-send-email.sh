@@ -1533,6 +1533,21 @@ test_expect_success $PREREQ 'sendemail.8bitEncoding works' '
 	test_cmp content-type-decl actual
 '
 
+test_expect_success $PREREQ 'sendemail.8bitEncoding in .git/config overrides --global .gitconfig' '
+	clean_fake_sendmail &&
+	git config sendemail.assume8bitEncoding UTF-8 &&
+	test_when_finished "rm -rf home" &&
+	mkdir home &&
+	git config -f home/.gitconfig sendemail.assume8bitEncoding "bogus too" &&
+	echo bogus |
+	env HOME="$(pwd)/home" DEBUG=1 \
+	git send-email --from=author@example.com --to=nobody@example.com \
+			--smtp-server="$(pwd)/fake.sendmail" \
+			email-using-8bit >stdout &&
+	egrep "Content|MIME" msgtxt1 >actual &&
+	test_cmp content-type-decl actual
+'
+
 test_expect_success $PREREQ '--8bit-encoding overrides sendemail.8bitEncoding' '
 	clean_fake_sendmail &&
 	git config sendemail.assume8bitEncoding "bogus too" &&
