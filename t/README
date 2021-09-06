@@ -753,7 +753,8 @@ Test harness library
 --------------------
 
 There are a handful helper functions defined in the test harness
-library for your script to use.
+library for your script to use. Some of them are listed below;
+see test-lib-functions.sh for the full list and their options.
 
  - test_expect_success [<prereq>] <message> <script>
 
@@ -989,7 +990,7 @@ library for your script to use.
 	EOF
 
 
- - test_pause
+ - test_pause [options]
 
 	This command is useful for writing and debugging tests and must be
 	removed before submitting. It halts the execution of the test and

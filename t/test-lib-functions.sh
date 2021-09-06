@@ -137,9 +137,54 @@ test_tick () {
 # Stop execution and start a shell. This is useful for debugging tests.
 #
 # Be sure to remove all invocations of this command before submitting.
+# WARNING: the shell invoked by this helper does not have the same environment
+# as the one running the tests (shell variables and functions are not
+# available, and the options below further modify the environment). As such,
+# commands copied from a test script might behave differently than when
+# running the test.
+#
+# Usage: test_pause [options]
+#   -t
+#	Use your original TERM instead of test-lib.sh's "dumb".
+#	This usually restores color output in the invoked shell.
+#   -s
+#	Invoke $SHELL instead of $TEST_SHELL_PATH.
+#   -h
+#	Use your original HOME instead of test-lib.sh's "$TRASH_DIRECTORY".
+#	This allows you to use your regular shell environment and Git aliases.
+#	CAUTION: running commands copied from a test script into the paused shell
+#	might result in files in your HOME being overwritten.
+#   -a
+#	Shortcut for -t -s -h
 
 test_pause () {
-	"$TEST_SHELL_PATH" <&6 >&5 2>&7
+	PAUSE_TERM=$TERM &&
+	PAUSE_SHELL=$TEST_SHELL_PATH &&
+	PAUSE_HOME=$HOME &&
+	while test $# != 0
+	do
+		case "$1" in
+		-t)
+			PAUSE_TERM="$USER_TERM"
+			;;
+		-s)
+			PAUSE_SHELL="$SHELL"
+			;;
+		-h)
+			PAUSE_HOME="$USER_HOME"
+			;;
+		-a)
+			PAUSE_TERM="$USER_TERM"
+			PAUSE_SHELL="$SHELL"
+			PAUSE_HOME="$USER_HOME"
+			;;
+		*)
+			break
+			;;
+		esac
+		shift
+	done &&
+	TERM="$PAUSE_TERM" HOME="$PAUSE_HOME" "$PAUSE_SHELL" <&6 >&5 2>&7
 }
 
 # Wrap git with a debugger. Adding this to a command can make it easier
