@@ -291,11 +291,6 @@ test_submodule_removal () {
 	test_status=
 	test "$path_status" = dir && test_status=test_must_fail
 
-	# Actually, while path_status=dir && test_status=test_must_fail
-	# reflect our desired behavior, current behavior is:
-	path_status=missing
-	test_status=
-
 	test_when_finished "git reset --hard HEAD~1" &&
 	test_when_finished "rm -rf .git/modules/my_submodule" &&
 
