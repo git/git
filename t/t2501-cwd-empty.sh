@@ -191,7 +191,7 @@ test_expect_success 'revert fails if cwd needs to be removed' '
 	test_path_is_dir dirORfile
 '
 
-test_expect_failure 'rm does not remove cwd incidentally' '
+test_expect_success 'rm does not remove cwd incidentally' '
 	test_when_finished "git reset --hard" &&
 	git checkout foo/bar/baz &&
 
@@ -205,7 +205,7 @@ test_expect_failure 'rm does not remove cwd incidentally' '
 	test_path_is_dir foo
 '
 
-test_expect_failure 'apply does not remove cwd incidentally' '
+test_expect_success 'apply does not remove cwd incidentally' '
 	test_when_finished "git reset --hard" &&
 	git checkout foo/bar/baz &&
 
