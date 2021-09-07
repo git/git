@@ -67,7 +67,7 @@ test_expect_failure 'reset --hard does not clean cwd incidentally' '
 	test_path_is_dir foo
 '
 
-test_expect_failure 'reset --hard fails if cwd needs to be removed' '
+test_expect_success 'reset --hard fails if cwd needs to be removed' '
 	git checkout foo/bar/baz &&
 	test_when_finished "git clean -fdx" &&
 
