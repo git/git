@@ -909,7 +909,7 @@ static int parse_opt_merge(const struct option *opt, const char *arg, int unset)
 	return 0;
 }
 
-/* -i followed by -p is still explicitly interactive, but -p alone is not */
+/* -i followed by -r is still explicitly interactive, but -r alone is not */
 static int parse_opt_interactive(const struct option *opt, const char *arg,
 				 int unset)
 {
