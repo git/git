@@ -1324,7 +1324,7 @@ test_expect_success 'git stash succeeds despite directory/file change' '
 	)
 '
 
-test_expect_failure 'git stash can pop file -> directory saved changes' '
+test_expect_success 'git stash can pop file -> directory saved changes' '
 	test_create_repo directory_file_switch_v2 &&
 	(
 		cd directory_file_switch_v2 &&
@@ -1344,7 +1344,7 @@ test_expect_failure 'git stash can pop file -> directory saved changes' '
 	)
 '
 
-test_expect_failure 'git stash can pop directory -> file saved changes' '
+test_expect_success 'git stash can pop directory -> file saved changes' '
 	test_create_repo directory_file_switch_v3 &&
 	(
 		cd directory_file_switch_v3 &&
