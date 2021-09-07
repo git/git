@@ -1307,7 +1307,7 @@ test_expect_success 'stash -c stash.useBuiltin=false warning ' '
 	test_must_be_empty err
 '
 
-test_expect_failure 'git stash succeeds despite directory/file change' '
+test_expect_success 'git stash succeeds despite directory/file change' '
 	test_create_repo directory_file_switch_v1 &&
 	(
 		cd directory_file_switch_v1 &&
