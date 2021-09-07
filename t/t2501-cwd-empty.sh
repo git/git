@@ -38,7 +38,7 @@ test_expect_failure 'checkout does not clean cwd incidentally' '
 	test_path_is_dir foo
 '
 
-test_expect_failure 'checkout fails if cwd needs to be removed' '
+test_expect_success 'checkout fails if cwd needs to be removed' '
 	git checkout foo/bar/baz &&
 	test_when_finished "git clean -fdx" &&
 
@@ -95,7 +95,7 @@ test_expect_failure 'merge does not remove cwd incidentally' '
 	test_path_is_dir subdir
 '
 
-test_expect_failure 'merge fails if cwd needs to be removed' '
+test_expect_success 'merge fails if cwd needs to be removed' '
 	git checkout foo/bar/baz &&
 	test_when_finished "git clean -fdx" &&
 
@@ -122,7 +122,7 @@ test_expect_failure 'cherry-pick does not remove cwd incidentally' '
 	test_path_is_dir subdir
 '
 
-test_expect_failure 'cherry-pick fails if cwd needs to be removed' '
+test_expect_success 'cherry-pick fails if cwd needs to be removed' '
 	git checkout foo/bar/baz &&
 	test_when_finished "git clean -fdx" &&
 
@@ -149,7 +149,7 @@ test_expect_failure 'rebase does not remove cwd incidentally' '
 	test_path_is_dir subdir
 '
 
-test_expect_failure 'rebase fails if cwd needs to be removed' '
+test_expect_success 'rebase fails if cwd needs to be removed' '
 	git checkout foo/bar/baz &&
 	test_when_finished "git clean -fdx" &&
 
@@ -176,7 +176,7 @@ test_expect_failure 'revert does not remove cwd incidentally' '
 	test_path_is_dir subdir
 '
 
-test_expect_failure 'revert fails if cwd needs to be removed' '
+test_expect_success 'revert fails if cwd needs to be removed' '
 	git checkout fd_conflict &&
 	git revert HEAD &&
 	test_when_finished "git clean -fdx" &&
