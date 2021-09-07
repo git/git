@@ -218,7 +218,7 @@ test_expect_failure 'apply does not remove cwd incidentally' '
 	test_path_is_dir subdir
 '
 
-test_expect_failure 'clean does not remove cwd incidentally' '
+test_expect_success 'clean does not remove cwd incidentally' '
 	git checkout foo/bar/baz &&
 	test_when_finished "git clean -fdx" &&
 
