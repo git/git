@@ -117,7 +117,7 @@ int cmd_hash_object(int argc, const char **argv, const char *prefix)
 		prefix = setup_git_directory_gently(&nongit);
 
 	if (vpath && prefix)
-		vpath = xstrdup(prefix_filename(prefix, vpath));
+		vpath = prefix_filename(prefix, vpath);
 
 	git_config(git_default_config, NULL);
 
