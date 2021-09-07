@@ -236,7 +236,7 @@ test_expect_success 'clean does not remove cwd incidentally' '
 	test_path_is_dir untracked
 '
 
-test_expect_failure 'stash does not remove cwd incidentally' '
+test_expect_success 'stash does not remove cwd incidentally' '
 	git checkout foo/bar/baz &&
 	test_when_finished "git clean -fdx" &&
 

@@ -1388,7 +1388,8 @@ static int create_stash(int argc, const char **argv, const char *prefix)
 	return ret;
 }
 
-static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int quiet,
+static int do_push_stash(const struct pathspec *ps, const char *stash_msg,
+			 const char *prefix, int quiet,
 			 int keep_index, int patch_mode, int include_untracked)
 {
 	int ret = 0;
@@ -1469,8 +1470,10 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 			struct child_process cp = CHILD_PROCESS_INIT;
 
 			cp.git_cmd = 1;
+			if (prefix)
+				strvec_pushl(&cp.args, "-C", prefix, NULL);
 			strvec_pushl(&cp.args, "clean", "--force",
-				     "--quiet", "-d", NULL);
+				     "--quiet", "-d", ":/", NULL);
 			if (include_untracked == INCLUDE_ALL_FILES)
 				strvec_push(&cp.args, "-x");
 			if (run_command(&cp)) {
@@ -1640,8 +1643,8 @@ static int push_stash(int argc, const char **argv, const char *prefix,
 		die(_("--pathspec-file-nul requires --pathspec-from-file"));
 	}
 
-	return do_push_stash(&ps, stash_msg, quiet, keep_index, patch_mode,
-			     include_untracked);
+	return do_push_stash(&ps, stash_msg, prefix, quiet, keep_index,
+			     patch_mode, include_untracked);
 }
 
 static int save_stash(int argc, const char **argv, const char *prefix)
@@ -1677,7 +1680,7 @@ static int save_stash(int argc, const char **argv, const char *prefix)
 		stash_msg = strbuf_join_argv(&stash_msg_buf, argc, argv, ' ');
 
 	memset(&ps, 0, sizeof(ps));
-	ret = do_push_stash(&ps, stash_msg, quiet, keep_index,
+	ret = do_push_stash(&ps, stash_msg, prefix, quiet, keep_index,
 			    patch_mode, include_untracked);
 
 	strbuf_release(&stash_msg_buf);
