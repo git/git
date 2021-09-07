@@ -48,8 +48,7 @@ static GIT_PATH_FUNC(merge_dir, "rebase-merge")
 enum rebase_type {
 	REBASE_UNSPECIFIED = -1,
 	REBASE_APPLY,
-	REBASE_MERGE,
-	REBASE_PRESERVE_MERGES
+	REBASE_MERGE
 };
 
 enum empty_type {
@@ -571,8 +570,7 @@ int cmd_rebase__interactive(int argc, const char **argv, const char *prefix)
 
 static int is_merge(struct rebase_options *opts)
 {
-	return opts->type == REBASE_MERGE ||
-		opts->type == REBASE_PRESERVE_MERGES;
+	return opts->type == REBASE_MERGE;
 }
 
 static void imply_merge(struct rebase_options *opts, const char *option)
@@ -582,7 +580,6 @@ static void imply_merge(struct rebase_options *opts, const char *option)
 		die(_("%s requires the merge backend"), option);
 		break;
 	case REBASE_MERGE:
-	case REBASE_PRESERVE_MERGES:
 		break;
 	default:
 		opts->type = REBASE_MERGE; /* implied */
@@ -773,17 +770,6 @@ static struct commit *peel_committish(const char *name)
 	return (struct commit *)peel_to_type(name, 0, obj, OBJ_COMMIT);
 }
 
-static void add_var(struct strbuf *buf, const char *name, const char *value)
-{
-	if (!value)
-		strbuf_addf(buf, "unset %s; ", name);
-	else {
-		strbuf_addf(buf, "%s=", name);
-		sq_quote_buf(buf, value);
-		strbuf_addstr(buf, "; ");
-	}
-}
-
 static int move_to_original_branch(struct rebase_options *opts)
 {
 	struct strbuf orig_head_reflog = STRBUF_INIT, head_reflog = STRBUF_INIT;
@@ -940,10 +926,7 @@ static int run_am(struct rebase_options *opts)
 
 static int run_specific_rebase(struct rebase_options *opts, enum action action)
 {
-	const char *argv[] = { NULL, NULL };
-	struct strbuf script_snippet = STRBUF_INIT, buf = STRBUF_INIT;
 	int status;
-	const char *backend, *backend_func;
 
 	if (opts->type == REBASE_MERGE) {
 		/* Run sequencer-based rebase */
@@ -960,87 +943,11 @@ static int run_specific_rebase(struct rebase_options *opts, enum action action)
 		}
 
 		status = run_sequencer_rebase(opts, action);
-		goto finished_rebase;
-	}
-
-	if (opts->type == REBASE_APPLY) {
+	} else if (opts->type == REBASE_APPLY)
 		status = run_am(opts);
-		goto finished_rebase;
-	}
-
-	add_var(&script_snippet, "GIT_DIR", absolute_path(get_git_dir()));
-	add_var(&script_snippet, "state_dir", opts->state_dir);
-
-	add_var(&script_snippet, "upstream_name", opts->upstream_name);
-	add_var(&script_snippet, "upstream", opts->upstream ?
-		oid_to_hex(&opts->upstream->object.oid) : NULL);
-	add_var(&script_snippet, "head_name",
-		opts->head_name ? opts->head_name : "detached HEAD");
-	add_var(&script_snippet, "orig_head", oid_to_hex(&opts->orig_head));
-	add_var(&script_snippet, "onto", opts->onto ?
-		oid_to_hex(&opts->onto->object.oid) : NULL);
-	add_var(&script_snippet, "onto_name", opts->onto_name);
-	add_var(&script_snippet, "revisions", opts->revisions);
-	add_var(&script_snippet, "restrict_revision", opts->restrict_revision ?
-		oid_to_hex(&opts->restrict_revision->object.oid) : NULL);
-	sq_quote_argv_pretty(&buf, opts->git_am_opts.v);
-	add_var(&script_snippet, "git_am_opt", buf.buf);
-	strbuf_release(&buf);
-	add_var(&script_snippet, "verbose",
-		opts->flags & REBASE_VERBOSE ? "t" : "");
-	add_var(&script_snippet, "diffstat",
-		opts->flags & REBASE_DIFFSTAT ? "t" : "");
-	add_var(&script_snippet, "force_rebase",
-		opts->flags & REBASE_FORCE ? "t" : "");
-	if (opts->switch_to)
-		add_var(&script_snippet, "switch_to", opts->switch_to);
-	add_var(&script_snippet, "action", opts->action ? opts->action : "");
-	add_var(&script_snippet, "signoff", opts->signoff ? "--signoff" : "");
-	add_var(&script_snippet, "allow_rerere_autoupdate",
-		opts->allow_rerere_autoupdate ?
-			opts->allow_rerere_autoupdate == RERERE_AUTOUPDATE ?
-			"--rerere-autoupdate" : "--no-rerere-autoupdate" : "");
-	add_var(&script_snippet, "keep_empty", opts->keep_empty ? "yes" : "");
-	add_var(&script_snippet, "autosquash", opts->autosquash ? "t" : "");
-	add_var(&script_snippet, "gpg_sign_opt", opts->gpg_sign_opt);
-	add_var(&script_snippet, "cmd", opts->cmd);
-	add_var(&script_snippet, "allow_empty_message",
-		opts->allow_empty_message ?  "--allow-empty-message" : "");
-	add_var(&script_snippet, "rebase_merges",
-		opts->rebase_merges ? "t" : "");
-	add_var(&script_snippet, "rebase_cousins",
-		opts->rebase_cousins ? "t" : "");
-	add_var(&script_snippet, "strategy", opts->strategy);
-	add_var(&script_snippet, "strategy_opts", opts->strategy_opts);
-	add_var(&script_snippet, "rebase_root", opts->root ? "t" : "");
-	add_var(&script_snippet, "squash_onto",
-		opts->squash_onto ? oid_to_hex(opts->squash_onto) : "");
-	add_var(&script_snippet, "git_format_patch_opt",
-		opts->git_format_patch_opt.buf);
-
-	if (is_merge(opts) &&
-	    !(opts->flags & REBASE_INTERACTIVE_EXPLICIT)) {
-		strbuf_addstr(&script_snippet,
-			      "GIT_SEQUENCE_EDITOR=:; export GIT_SEQUENCE_EDITOR; ");
-		opts->autosquash = 0;
-	}
-
-	switch (opts->type) {
-	case REBASE_PRESERVE_MERGES:
-		backend = "git-rebase--preserve-merges";
-		backend_func = "git_rebase__preserve_merges";
-		break;
-	default:
+	else
 		BUG("Unhandled rebase type %d", opts->type);
-		break;
-	}
 
-	strbuf_addf(&script_snippet,
-		    ". git-sh-setup && . %s && %s", backend, backend_func);
-	argv[0] = script_snippet.buf;
-
-	status = run_command_v_opt(argv, RUN_USING_SHELL);
-finished_rebase:
 	if (opts->dont_finish_rebase)
 		; /* do nothing */
 	else if (opts->type == REBASE_MERGE)
@@ -1057,8 +964,6 @@ finished_rebase:
 		strbuf_release(&dir);
 		die("Nothing to do");
 	}
-
-	strbuf_release(&script_snippet);
 
 	return status ? -1 : 0;
 }
@@ -1313,6 +1218,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	char *squash_onto_name = NULL;
 	int reschedule_failed_exec = -1;
 	int allow_preemptive_ff = 1;
+	int preserve_merges_selected = 0;
 	struct option builtin_rebase_options[] = {
 		OPT_STRING(0, "onto", &options.onto_name,
 			   N_("revision"),
@@ -1377,10 +1283,10 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			N_("let the user edit the list of commits to rebase"),
 			PARSE_OPT_NOARG | PARSE_OPT_NONEG,
 			parse_opt_interactive),
-		OPT_SET_INT_F('p', "preserve-merges", &options.type,
+		OPT_SET_INT_F('p', "preserve-merges", &preserve_merges_selected,
 			      N_("(DEPRECATED) try to recreate merges instead of "
 				 "ignoring them"),
-			      REBASE_PRESERVE_MERGES, PARSE_OPT_HIDDEN),
+			      1, PARSE_OPT_HIDDEN),
 		OPT_RERERE_AUTOUPDATE(&options.allow_rerere_autoupdate),
 		OPT_CALLBACK_F(0, "empty", &options, "{drop,keep,ask}",
 			       N_("how to handle commits that become empty"),
@@ -1448,8 +1354,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		strbuf_reset(&buf);
 		strbuf_addf(&buf, "%s/rewritten", merge_dir());
 		if (is_directory(buf.buf)) {
-			options.type = REBASE_PRESERVE_MERGES;
-			options.flags |= REBASE_INTERACTIVE_EXPLICIT;
+			die("`rebase -p` is no longer supported");
 		} else {
 			strbuf_reset(&buf);
 			strbuf_addf(&buf, "%s/interactive", merge_dir());
@@ -1470,6 +1375,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			     builtin_rebase_options,
 			     builtin_rebase_usage, 0);
 
+	if (preserve_merges_selected)
+		die(_("--preserve-merges was replaced by --rebase-merges"));
+
 	if (action != ACTION_NONE && total_argc != 2) {
 		usage_with_options(builtin_rebase_usage,
 				   builtin_rebase_options);
@@ -1478,10 +1386,6 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	if (argc > 2)
 		usage_with_options(builtin_rebase_usage,
 				   builtin_rebase_options);
-
-	if (options.type == REBASE_PRESERVE_MERGES)
-		warning(_("git rebase --preserve-merges is deprecated. "
-			  "Use --rebase-merges instead."));
 
 	if (keep_base) {
 		if (options.onto_name)
@@ -1728,7 +1632,6 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		case REBASE_APPLY:
 			die(_("--strategy requires --merge or --interactive"));
 		case REBASE_MERGE:
-		case REBASE_PRESERVE_MERGES:
 			/* compatible */
 			break;
 		case REBASE_UNSPECIFIED:
@@ -1780,7 +1683,6 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 	switch (options.type) {
 	case REBASE_MERGE:
-	case REBASE_PRESERVE_MERGES:
 		options.state_dir = merge_dir();
 		break;
 	case REBASE_APPLY:
@@ -1805,26 +1707,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		options.reschedule_failed_exec = reschedule_failed_exec;
 
 	if (options.signoff) {
-		if (options.type == REBASE_PRESERVE_MERGES)
-			die("cannot combine '--signoff' with "
-			    "'--preserve-merges'");
 		strvec_push(&options.git_am_opts, "--signoff");
 		options.flags |= REBASE_FORCE;
-	}
-
-	if (options.type == REBASE_PRESERVE_MERGES) {
-		/*
-		 * Note: incompatibility with --signoff handled in signoff block above
-		 * Note: incompatibility with --interactive is just a strong warning;
-		 *       git-rebase.txt caveats with "unless you know what you are doing"
-		 */
-		if (options.rebase_merges)
-			die(_("cannot combine '--preserve-merges' with "
-			      "'--rebase-merges'"));
-
-		if (options.reschedule_failed_exec)
-			die(_("error: cannot combine '--preserve-merges' with "
-			      "'--reschedule-failed-exec'"));
 	}
 
 	if (!options.root) {
