@@ -151,6 +151,7 @@ struct repository {
 };
 
 extern struct repository *the_repository;
+extern char *the_cwd;
 
 /*
  * Define a custom repository layout. Any field can be NULL, which

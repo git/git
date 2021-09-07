@@ -887,6 +887,7 @@ static const char *setup_explicit_git_dir(const char *gitdirenv,
 		set_git_dir(gitdirenv, 1);
 		if (chdir(worktree))
 			die_errno(_("cannot chdir to '%s'"), worktree);
+		the_cwd = xstrdup(cwd->buf + offset);
 		strbuf_addch(cwd, '/');
 		free(gitfile);
 		return cwd->buf + offset;
@@ -940,6 +941,7 @@ static const char *setup_discovered_git_dir(const char *gitdir,
 	/* Make "offset" point past the '/' (already the case for root dirs) */
 	if (offset != offset_1st_component(cwd->buf))
 		offset++;
+	the_cwd = xstrdup(cwd->buf + offset);
 	/* Add a '/' at the end */
 	strbuf_addch(cwd, '/');
 	return cwd->buf + offset;
