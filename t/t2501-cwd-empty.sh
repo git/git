@@ -121,7 +121,7 @@ test_expect_success 'reset --hard does not clean cwd incidentally' '
 '
 
 test_expect_success 'reset --hard fails if cwd needs to be removed' '
-	test_required_dir_removal failure git reset --hard fd_conflict
+	test_required_dir_removal success git reset --hard fd_conflict
 '
 
 test_expect_success 'merge does not clean cwd incidentally' '
