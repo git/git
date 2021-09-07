@@ -230,8 +230,9 @@ test_incidental_untracked_dir_removal () {
 }
 
 test_expect_success 'clean does not remove cwd incidentally' '
-	test_incidental_untracked_dir_removal failure \
-		git -C .. clean -fd -e warnings . >warnings
+	test_incidental_untracked_dir_removal success \
+		git -C .. clean -fd -e warnings . >warnings &&
+	grep "Refusing to remove current working directory" warnings
 '
 
 test_expect_success 'stash does not remove cwd incidentally' '
