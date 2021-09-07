@@ -1565,30 +1565,26 @@ static int open_or_create_logfile(const char *path, void *cb)
 }
 
 /*
- * Create a reflog for a ref. If force_create = 0, only create the
- * reflog for certain refs (those for which should_autocreate_reflog
- * returns non-zero). Otherwise, create it regardless of the reference
- * name. If the logfile already existed or was created, return 0 and
- * set *logfd to the file descriptor opened for appending to the file.
- * If no logfile exists and we decided not to create one, return 0 and
- * set *logfd to -1. On failure, fill in *err, set *logfd to -1, and
- * return -1.
+ * Create a reflog for a ref. If force_create = 0, only create the reflog for
+ * certain refs (those for which should_autocreate_reflog returns non-zero).
+ * Otherwise, create it regardless of the reference name. On success, return the
+ * filedescriptor. If the log should not be written, return 0 On error, return
+ * -1 and fill in *err.
  */
-static int log_ref_setup(struct files_ref_store *refs,
-			 const char *refname, int force_create,
-			 int *logfd, struct strbuf *err)
+static int log_ref_setup(struct files_ref_store *refs, const char *refname,
+			 int force_create, struct strbuf *err)
 {
 	struct strbuf logfile_sb = STRBUF_INIT;
 	char *logfile;
 
-	*logfd = -1;
+	int logfd = -1;
 	if (!force_create && !should_autocreate_reflog(refname))
 		return 0;
 
 	files_reflog_path(refs, &logfile_sb, refname);
 	logfile = strbuf_detach(&logfile_sb, NULL);
 
-	if (raceproof_create_file(logfile, open_or_create_logfile, logfd)) {
+	if (raceproof_create_file(logfile, open_or_create_logfile, &logfd)) {
 		if (errno == ENOENT)
 			strbuf_addf(err,
 				    "unable to create directory for '%s': "
@@ -1602,11 +1598,11 @@ static int log_ref_setup(struct files_ref_store *refs,
 				    logfile, strerror(errno));
 	}
 
-	if (*logfd >= 0)
+	if (logfd > 0)
 		adjust_shared_perm(logfile);
 
 	free(logfile);
-	return (*logfd < 0) ? -1 : 0;
+	return logfd;
 }
 
 static int files_create_reflog(struct ref_store *ref_store, const char *refname,
@@ -1614,15 +1610,14 @@ static int files_create_reflog(struct ref_store *ref_store, const char *refname,
 {
 	struct files_ref_store *refs =
 		files_downcast(ref_store, REF_STORE_WRITE, "create_reflog");
-	int fd;
+	int fd = log_ref_setup(refs, refname, 1, err);
 
-	if (log_ref_setup(refs, refname, 1, &fd, err))
-		return -1;
-
-	if (fd >= 0)
+	if (fd > 0) {
 		close(fd);
+		return 0;
+	}
 
-	return 0;
+	return fd;
 }
 
 static int log_ref_write_fd(int fd, const struct object_id *old_oid,
@@ -1654,15 +1649,12 @@ static int files_log_ref_write(struct files_ref_store *refs,
 	if (log_all_ref_updates == LOG_REFS_UNSET)
 		log_all_ref_updates = is_bare_repository() ? LOG_REFS_NONE : LOG_REFS_NORMAL;
 
-	result = log_ref_setup(refs, refname,
-			       flags & REF_FORCE_CREATE_REFLOG,
-			       &logfd, err);
+	logfd = log_ref_setup(refs, refname, flags & REF_FORCE_CREATE_REFLOG,
+			      err);
 
-	if (result)
-		return result;
+	if (logfd <= 0)
+		return logfd;
 
-	if (logfd < 0)
-		return 0;
 	result = log_ref_write_fd(logfd, old_oid, new_oid,
 				  git_committer_info(0), msg);
 	if (result) {
