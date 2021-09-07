@@ -1415,7 +1415,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		if (options.ignore_date)
 			strvec_push(&options.git_am_opts, "--ignore-date");
 	} else {
-		/* REBASE_MERGE and PRESERVE_MERGES */
+		/* REBASE_MERGE */
 		if (ignore_whitespace) {
 			string_list_append(&strategy_options,
 					   "ignore-space-change");
