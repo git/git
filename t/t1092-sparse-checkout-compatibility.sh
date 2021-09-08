@@ -47,7 +47,7 @@ test_expect_success 'setup' '
 		git checkout -b base &&
 		for dir in folder1 folder2 deep
 		do
-			git checkout -b update-$dir &&
+			git checkout -b update-$dir base &&
 			echo "updated $dir" >$dir/a &&
 			git commit -a -m "update $dir" || return 1
 		done &&
@@ -647,7 +647,15 @@ test_expect_success 'sparse-index is not expanded' '
 	echo >>sparse-index/extra.txt &&
 	ensure_not_expanded add extra.txt &&
 	echo >>sparse-index/untracked.txt &&
-	ensure_not_expanded add .
+	ensure_not_expanded add . &&
+
+	ensure_not_expanded checkout -f update-deep &&
+	test_config -C sparse-index pull.twohead ort &&
+	(
+		sane_unset GIT_TEST_MERGE_ALGORITHM &&
+		ensure_not_expanded merge -m merge update-folder1 &&
+		ensure_not_expanded merge -m merge update-folder2
+	)
 '
 
 # NEEDSWORK: a sparse-checkout behaves differently from a full checkout
