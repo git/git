@@ -91,6 +91,30 @@ Fixes since v2.33
  * Various bugs in "git rebase -r" have been fixed.
    (merge f2563c9ef3 pw/rebase-r-fixes later to maint).
 
+ * mmap() imitation used to call xmalloc() that dies upon malloc()
+   failure, which has been corrected to just return an error to the
+   caller to be handled.
+   (merge 95b4ff3931 rs/git-mmap-uses-malloc later to maint).
+
+ * "git diff --relative" segfaulted and/or produced incorrect result
+   when there are unmerged paths.
+   (merge 8174627b3d dd/diff-files-unmerged-fix later to maint).
+
+ * The delayed checkout code path in "git checkout" etc. were chatty
+   even when --quiet and/or --no-progress options were given.
+   (merge 7a132c628e mt/quiet-with-delayed-checkout later to maint).
+
+ * "git branch -D <branch>" used to refuse to remove a broken branch
+   ref that points at a missing commit, which has been corrected.
+   (merge 597a977489 rs/branch-allow-deleting-dangling later to maint).
+
+ * Build update for Apple clang.
+   (merge f32c5d3716 cb/makefile-apple-clang later to maint).
+
+ * The parser for the "--nl" option of "git column" has been
+   corrected.
+   (merge c93ca46cf5 sg/column-nl later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 1d9c8daef8 ab/bundle-doc later to maint).
    (merge 81483fe613 en/merge-strategy-docs later to maint).
@@ -100,3 +124,12 @@ Fixes since v2.33
    (merge be6444d1ca fc/completion-updates later to maint).
    (merge ff7b83f562 ti/tcsh-completion-regression-fix later to maint).
    (merge 325b06deda sg/make-fix-ar-invocation later to maint).
+   (merge bd72824c60 me/t5582-cleanup later to maint).
+   (merge f6a5af0f62 ga/send-email-sendmail-cmd later to maint).
+   (merge f58c7468cd ab/ls-remote-packet-trace later to maint).
+   (merge 0160f7e725 ab/rebase-fatal-fatal-fix later to maint).
+   (merge a16eb6b1ff js/maintenance-launchctl-fix later to maint).
+   (merge c21b2511c2 jk/t5323-no-pack-test-fix later to maint).
+   (merge 5146c2f148 mh/credential-leakfix later to maint).
+   (merge 1549577338 dd/t6300-wo-gpg-fix later to maint).
+   (merge 66e905b7dd rs/xopen-reports-open-failures later to maint).
