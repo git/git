@@ -2198,7 +2198,7 @@ test_expect_success $PREREQ 'leading and trailing whitespaces are removed' '
 
 test_expect_success $PREREQ 'test using command name with --sendmail-cmd' '
 	clean_fake_sendmail &&
-	PATH="$(pwd):$PATH" \
+	PATH="$PWD:$PATH" \
 	git send-email \
 		--from="Example <nobody@example.com>" \
 		--to=nobody@example.com \
