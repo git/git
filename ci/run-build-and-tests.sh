@@ -10,6 +10,11 @@ windows*) cmd //c mklink //j t\\.prove "$(cygpath -aw "$cache_dir/.prove")";;
 *) ln -s "$cache_dir/.prove" t/.prove;;
 esac
 
+if test "$jobname" = "pedantic"
+then
+	export DEVOPTS=pedantic
+fi
+
 make
 case "$jobname" in
 linux-gcc)
@@ -36,10 +41,9 @@ linux-clang)
 	export GIT_TEST_DEFAULT_HASH=sha256
 	make test
 	;;
-linux-gcc-4.8)
+linux-gcc-4.8|pedantic)
 	# Don't run the tests; we only care about whether Git can be
-	# built with GCC 4.8, as it errors out on some undesired (C99)
-	# constructs that newer compilers seem to quietly accept.
+	# built with GCC 4.8 or with pedantic
 	;;
 *)
 	make test
