@@ -190,8 +190,6 @@ static int refresh(int verbose, const struct pathspec *pathspec)
 	struct string_list only_match_skip_worktree = STRING_LIST_INIT_NODUP;
 	int flags = REFRESH_IGNORE_SKIP_WORKTREE |
 		    (verbose ? REFRESH_IN_PORCELAIN : REFRESH_QUIET);
-	struct pattern_list pl = { 0 };
-	int sparse_checkout_enabled = !get_sparse_checkout_patterns(&pl);
 
 	seen = xcalloc(pathspec->nr, 1);
 	refresh_index(&the_index, flags, pathspec, seen,
@@ -199,12 +197,9 @@ static int refresh(int verbose, const struct pathspec *pathspec)
 	for (i = 0; i < pathspec->nr; i++) {
 		if (!seen[i]) {
 			const char *path = pathspec->items[i].original;
-			int dtype = DT_REG;
 
 			if (matches_skip_worktree(pathspec, i, &skip_worktree_seen) ||
-			    (sparse_checkout_enabled &&
-			     !path_matches_pattern_list(path, strlen(path), NULL,
-							&dtype, &pl, &the_index))) {
+			    !path_in_sparse_checkout(path, &the_index)) {
 				string_list_append(&only_match_skip_worktree,
 						   pathspec->items[i].original);
 			} else {
