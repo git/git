@@ -1,29 +1,18 @@
 #!/bin/sh
 
-test_description='Tests pack performance using bitmaps'
+test_description='Tests performance using midx bitmaps'
 . ./perf-lib.sh
 . "${TEST_DIRECTORY}/perf/lib-bitmap.sh"
 
 test_perf_large_repo
 
-# note that we do everything through config,
-# since we want to be able to compare bitmap-aware
-# git versus non-bitmap git
-#
-# We intentionally use the deprecated pack.writebitmaps
-# config so that we can test against older versions of git.
-test_expect_success 'setup bitmap config' '
-	git config pack.writebitmaps true
+test_expect_success 'enable multi-pack index' '
+	git config core.multiPackIndex true
 '
 
-# we need to create the tag up front such that it is covered by the repack and
-# thus by generated bitmaps.
-test_expect_success 'create tags' '
-	git tag --message="tag pointing to HEAD" perf-tag HEAD
-'
-
-test_perf 'repack to disk' '
-	git repack -ad
+test_perf 'setup multi-pack index' '
+	git repack -ad &&
+	git multi-pack-index write --bitmap
 '
 
 test_full_bitmap
@@ -33,8 +22,7 @@ test_expect_success 'create partial bitmap state' '
 	cutoff=$(git rev-list HEAD~100 -1) &&
 	orig_tip=$(git rev-parse HEAD) &&
 
-	# now kill off all of the refs and pretend we had
-	# just the one tip
+	# now pretend we have just one tip
 	rm -rf .git/logs .git/refs/* .git/packed-refs &&
 	git update-ref HEAD $cutoff &&
 
@@ -43,6 +31,7 @@ test_expect_success 'create partial bitmap state' '
 	# the new history will be loose, as if it had been pushed
 	# up incrementally and exploded via unpack-objects
 	git repack -Ad &&
+	git multi-pack-index write --bitmap &&
 
 	# and now restore our original tip, as if the pushes
 	# had happened
