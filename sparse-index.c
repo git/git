@@ -181,8 +181,11 @@ int convert_to_sparse(struct index_state *istate)
 	/*
 	 * Silently return if there is a problem with the cache tree update,
 	 * which might just be due to a conflict state in some entry.
+	 *
+	 * This might create new tree objects, so be sure to use
+	 * WRITE_TREE_MISSING_OK.
 	 */
-	if (cache_tree_update(istate, 0))
+	if (cache_tree_update(istate, WRITE_TREE_MISSING_OK))
 		return 0;
 
 	remove_fsmonitor(istate);
