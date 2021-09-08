@@ -34,7 +34,7 @@ int cmd_column(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
-	git_config(platform_core_config, NULL);
+	git_config(git_default_core_config, NULL);
 
 	/* This one is special and must be the first one */
 	if (argc > 1 && starts_with(argv[1], "--command=")) {
