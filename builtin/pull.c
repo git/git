@@ -26,6 +26,7 @@
 #include "wt-status.h"
 #include "commit-reach.h"
 #include "sequencer.h"
+#include "packfile.h"
 
 /**
  * Parses the value of --rebase. If value is a false value, returns
@@ -998,6 +999,7 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 			oidclr(&rebase_fork_point);
 	}
 
+	close_object_store(the_repository->objects);
 	if (run_fetch(repo, refspecs))
 		return 1;
 
