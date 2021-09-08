@@ -404,7 +404,7 @@ static int checkout_worktree(const struct checkout_opts *opts,
 	mem_pool_discard(&ce_mem_pool, should_validate_cache_entries());
 	remove_marked_cache_entries(&the_index, 1);
 	remove_scheduled_dirs();
-	errs |= finish_delayed_checkout(&state, &nr_checkouts);
+	errs |= finish_delayed_checkout(&state, &nr_checkouts, opts->show_progress);
 
 	if (opts->count_checkout_paths) {
 		if (nr_unmerged)
