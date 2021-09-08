@@ -49,6 +49,8 @@ const char *config_scope_name(enum config_scope scope);
 struct git_config_source {
 	unsigned int use_stdin:1;
 	const char *file;
+	/* The repository if blob is not NULL; leave blank for the_repository */
+	struct repository *repo;
 	const char *blob;
 	enum config_scope scope;
 };
@@ -136,6 +138,7 @@ int git_config_from_mem(config_fn_t fn,
 			const char *buf, size_t len,
 			void *data, const struct config_options *opts);
 int git_config_from_blob_oid(config_fn_t fn, const char *name,
+			     struct repository *repo,
 			     const struct object_id *oid, void *data);
 void git_config_push_parameter(const char *text);
 void git_config_push_env(const char *spec);

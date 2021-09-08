@@ -32,6 +32,7 @@
 #include "packfile.h"
 #include "object-store.h"
 #include "promisor-remote.h"
+#include "submodule.h"
 
 /* The maximum size for an object header. */
 #define MAX_HEADER_LEN 32
@@ -1612,6 +1613,10 @@ static int do_oid_object_info_extended(struct repository *r,
 			if (find_pack_entry(r, real, &e))
 				break;
 		}
+
+		if (register_all_submodule_odb_as_alternates())
+			/* We added some alternates; retry */
+			continue;
 
 		/* Check if it is a missing object */
 		if (fetch_if_missing && repo_has_promisor_remote(r) &&

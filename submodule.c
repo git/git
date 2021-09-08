@@ -165,6 +165,8 @@ void stage_updated_gitmodules(struct index_state *istate)
 		die(_("staging updated .gitmodules failed"));
 }
 
+static struct string_list added_submodule_odb_paths = STRING_LIST_INIT_NODUP;
+
 /* TODO: remove this function, use repo_submodule_init instead. */
 int add_submodule_odb(const char *path)
 {
@@ -178,9 +180,30 @@ int add_submodule_odb(const char *path)
 		ret = -1;
 		goto done;
 	}
-	add_to_alternates_memory(objects_directory.buf);
+	string_list_insert(&added_submodule_odb_paths,
+			   strbuf_detach(&objects_directory, NULL));
 done:
 	strbuf_release(&objects_directory);
+	return ret;
+}
+
+void add_submodule_odb_by_path(const char *path)
+{
+	string_list_insert(&added_submodule_odb_paths, xstrdup(path));
+}
+
+int register_all_submodule_odb_as_alternates(void)
+{
+	int i;
+	int ret = added_submodule_odb_paths.nr;
+
+	for (i = 0; i < added_submodule_odb_paths.nr; i++)
+		add_to_alternates_memory(added_submodule_odb_paths.items[i].string);
+	if (ret) {
+		string_list_clear(&added_submodule_odb_paths, 0);
+		if (git_env_bool("GIT_TEST_FATAL_REGISTER_SUBMODULE_ODB", 0))
+			BUG("register_all_submodule_odb_as_alternates() called");
+	}
 	return ret;
 }
 
