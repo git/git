@@ -130,7 +130,7 @@ static int index_has_unmerged_entries(struct index_state *istate)
 int convert_to_sparse(struct index_state *istate)
 {
 	int test_env;
-	if (istate->split_index || istate->sparse_index ||
+	if (istate->split_index || istate->sparse_index || !istate->cache_nr ||
 	    !core_apply_sparse_checkout || !core_sparse_checkout_cone)
 		return 0;
 
@@ -158,10 +158,16 @@ int convert_to_sparse(struct index_state *istate)
 			return 0;
 	}
 
-	if (!istate->sparse_checkout_patterns->use_cone_patterns) {
-		warning(_("attempting to use sparse-index without cone mode"));
-		return -1;
-	}
+	/*
+	 * We need cone-mode patterns to use sparse-index. If a user edits
+	 * their sparse-checkout file manually, then we can detect during
+	 * parsing that they are not actually using cone-mode patterns and
+	 * hence we need to abort this conversion _without error_. Warnings
+	 * already exist in the pattern parsing to inform the user of their
+	 * bad patterns.
+	 */
+	if (!istate->sparse_checkout_patterns->use_cone_patterns)
+		return 0;
 
 	/*
 	 * NEEDSWORK: If we have unmerged entries, then stay full.
