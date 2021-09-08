@@ -167,6 +167,8 @@ typedef int (*config_fn_t)(const char *, const char *,
 
 int git_default_config(const char *, const char *,
 		       const struct config_context *, void *);
+int git_default_core_config(const char *var, const char *value,
+			    const struct config_context *ctx, void *cb);
 
 /**
  * Read a specific file in git-config format.
