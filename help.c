@@ -11,6 +11,7 @@
 #include "version.h"
 #include "refs.h"
 #include "parse-options.h"
+#include "prompt.h"
 
 struct category_description {
 	uint32_t category;
@@ -472,6 +473,7 @@ int is_in_cmdlist(struct cmdnames *c, const char *s)
 static int autocorrect;
 static struct cmdnames aliases;
 
+#define AUTOCORRECT_PROMPT (-3)
 #define AUTOCORRECT_NEVER (-2)
 #define AUTOCORRECT_IMMEDIATELY (-1)
 
@@ -486,6 +488,8 @@ static int git_unknown_cmd_config(const char *var, const char *value, void *cb)
 			autocorrect = AUTOCORRECT_NEVER;
 		} else if (!strcmp(value, "immediate")) {
 			autocorrect = AUTOCORRECT_IMMEDIATELY;
+		} else if (!strcmp(value, "prompt")) {
+			autocorrect = AUTOCORRECT_PROMPT;
 		} else {
 			int v = git_config_int(var, value);
 			autocorrect = (v < 0)
@@ -538,6 +542,12 @@ const char *help_unknown_cmd(const char *cmd)
 	memset(&aliases, 0, sizeof(aliases));
 
 	read_early_config(git_unknown_cmd_config, NULL);
+
+	/*
+	 * Disable autocorrection prompt in a non-interactive session
+	 */
+	if ((autocorrect == AUTOCORRECT_PROMPT) && (!isatty(0) || !isatty(2)))
+		autocorrect = AUTOCORRECT_NEVER;
 
 	if (autocorrect == AUTOCORRECT_NEVER) {
 		fprintf_ln(stderr, _("git: '%s' is not a git command. See 'git --help'."), cmd);
@@ -618,7 +628,16 @@ const char *help_unknown_cmd(const char *cmd)
 				   _("Continuing under the assumption that "
 				     "you meant '%s'."),
 				   assumed);
-		else {
+		else if (autocorrect == AUTOCORRECT_PROMPT) {
+			char *answer;
+			struct strbuf msg = STRBUF_INIT;
+			strbuf_addf(&msg, _("Run '%s' instead? (y/N)"), assumed);
+			answer = git_prompt(msg.buf, PROMPT_ECHO);
+			strbuf_release(&msg);
+			if (!(starts_with(answer, "y") ||
+			      starts_with(answer, "Y")))
+				exit(1);
+		} else {
 			fprintf_ln(stderr,
 				   _("Continuing in %0.1f seconds, "
 				     "assuming that you meant '%s'."),
