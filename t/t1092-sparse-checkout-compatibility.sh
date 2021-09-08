@@ -617,8 +617,17 @@ test_expect_success 'sparse-index is expanded and converted back' '
 ensure_not_expanded () {
 	rm -f trace2.txt &&
 	echo >>sparse-index/untracked.txt &&
-	GIT_TRACE2_EVENT="$(pwd)/trace2.txt" GIT_TRACE2_EVENT_NESTING=10 \
-		git -C sparse-index "$@" &&
+
+	if test "$1" = "!"
+	then
+		shift &&
+		test_must_fail env \
+			GIT_TRACE2_EVENT="$(pwd)/trace2.txt" GIT_TRACE2_EVENT_NESTING=10 \
+			git -C sparse-index "$@" || return 1
+	else
+		GIT_TRACE2_EVENT="$(pwd)/trace2.txt" GIT_TRACE2_EVENT_NESTING=10 \
+			git -C sparse-index "$@" || return 1
+	fi &&
 	test_region ! index ensure_full_index trace2.txt
 }
 
@@ -655,6 +664,23 @@ test_expect_success 'sparse-index is not expanded' '
 		sane_unset GIT_TEST_MERGE_ALGORITHM &&
 		ensure_not_expanded merge -m merge update-folder1 &&
 		ensure_not_expanded merge -m merge update-folder2
+	)
+'
+
+test_expect_success 'sparse-index is not expanded: merge conflict in cone' '
+	init_repos &&
+
+	for side in right left
+	do
+		git -C sparse-index checkout -b expand-$side base &&
+		echo $side >sparse-index/deep/a &&
+		git -C sparse-index commit -a -m "$side" || return 1
+	done &&
+
+	(
+		sane_unset GIT_TEST_MERGE_ALGORITHM &&
+		git -C sparse-index config pull.twohead ort &&
+		ensure_not_expanded ! merge -m merged expand-right
 	)
 '
 
