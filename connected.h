@@ -9,7 +9,7 @@ struct transport;
  * When called after returning the name for the last object, return -1
  * to signal EOF, otherwise return 0.
  */
-typedef int (*oid_iterate_fn)(void *, struct object_id *oid);
+typedef const struct object_id *(*oid_iterate_fn)(void *);
 
 /*
  * Named-arguments struct for check_connected. All arguments are

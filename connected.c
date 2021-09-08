@@ -24,7 +24,7 @@ int check_connected(oid_iterate_fn fn, void *cb_data,
 	struct child_process rev_list = CHILD_PROCESS_INIT;
 	FILE *rev_list_in;
 	struct check_connected_options defaults = CHECK_CONNECTED_INIT;
-	struct object_id oid;
+	const struct object_id *oid;
 	int err = 0;
 	struct packed_git *new_pack = NULL;
 	struct transport *transport;
@@ -34,7 +34,8 @@ int check_connected(oid_iterate_fn fn, void *cb_data,
 		opt = &defaults;
 	transport = opt->transport;
 
-	if (fn(cb_data, &oid)) {
+	oid = fn(cb_data);
+	if (!oid) {
 		if (opt->err_fd)
 			close(opt->err_fd);
 		return err;
@@ -73,7 +74,7 @@ int check_connected(oid_iterate_fn fn, void *cb_data,
 			for (p = get_all_packs(the_repository); p; p = p->next) {
 				if (!p->pack_promisor)
 					continue;
-				if (find_pack_entry_one(oid.hash, p))
+				if (find_pack_entry_one(oid->hash, p))
 					goto promisor_pack_found;
 			}
 			/*
@@ -83,7 +84,7 @@ int check_connected(oid_iterate_fn fn, void *cb_data,
 			goto no_promisor_pack_found;
 promisor_pack_found:
 			;
-		} while (!fn(cb_data, &oid));
+		} while ((oid = fn(cb_data)) != NULL);
 		return 0;
 	}
 
@@ -133,12 +134,12 @@ no_promisor_pack_found:
 		 * are sure the ref is good and not sending it to
 		 * rev-list for verification.
 		 */
-		if (new_pack && find_pack_entry_one(oid.hash, new_pack))
+		if (new_pack && find_pack_entry_one(oid->hash, new_pack))
 			continue;
 
-		if (fprintf(rev_list_in, "%s\n", oid_to_hex(&oid)) < 0)
+		if (fprintf(rev_list_in, "%s\n", oid_to_hex(oid)) < 0)
 			break;
-	} while (!fn(cb_data, &oid));
+	} while ((oid = fn(cb_data)) != NULL);
 
 	if (ferror(rev_list_in) || fflush(rev_list_in)) {
 		if (errno != EPIPE && errno != EINVAL)

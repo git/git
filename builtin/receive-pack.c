@@ -1310,7 +1310,7 @@ static void refuse_unconfigured_deny_delete_current(void)
 	rp_error("%s", _(refuse_unconfigured_deny_delete_current_msg));
 }
 
-static int command_singleton_iterator(void *cb_data, struct object_id *oid);
+static const struct object_id *command_singleton_iterator(void *cb_data);
 static int update_shallow_ref(struct command *cmd, struct shallow_info *si)
 {
 	struct shallow_lock shallow_lock = SHALLOW_LOCK_INIT;
@@ -1735,16 +1735,15 @@ static void check_aliased_updates(struct command *commands)
 	string_list_clear(&ref_list, 0);
 }
 
-static int command_singleton_iterator(void *cb_data, struct object_id *oid)
+static const struct object_id *command_singleton_iterator(void *cb_data)
 {
 	struct command **cmd_list = cb_data;
 	struct command *cmd = *cmd_list;
 
 	if (!cmd || is_null_oid(&cmd->new_oid))
-		return -1; /* end of list */
+		return NULL;
 	*cmd_list = NULL; /* this returns only one */
-	oidcpy(oid, &cmd->new_oid);
-	return 0;
+	return &cmd->new_oid;
 }
 
 static void set_connectivity_errors(struct command *commands,
@@ -1774,7 +1773,7 @@ struct iterate_data {
 	struct shallow_info *si;
 };
 
-static int iterate_receive_command_list(void *cb_data, struct object_id *oid)
+static const struct object_id *iterate_receive_command_list(void *cb_data)
 {
 	struct iterate_data *data = cb_data;
 	struct command **cmd_list = &data->cmds;
@@ -1785,13 +1784,11 @@ static int iterate_receive_command_list(void *cb_data, struct object_id *oid)
 			/* to be checked in update_shallow_ref() */
 			continue;
 		if (!is_null_oid(&cmd->new_oid) && !cmd->skip_update) {
-			oidcpy(oid, &cmd->new_oid);
 			*cmd_list = cmd->next;
-			return 0;
+			return &cmd->new_oid;
 		}
 	}
-	*cmd_list = NULL;
-	return -1; /* end of list */
+	return NULL;
 }
 
 static void reject_updates_to_hidden(struct command *commands)
