@@ -481,14 +481,17 @@ test_expect_success 'checkout and reset (mixed) [sparse]' '
 	test_sparse_match git reset update-folder2
 '
 
-test_expect_success 'merge' '
+test_expect_success 'merge, cherry-pick, and rebase' '
 	init_repos &&
 
-	test_all_match git checkout -b merge update-deep &&
-	test_all_match git merge -m "folder1" update-folder1 &&
-	test_all_match git rev-parse HEAD^{tree} &&
-	test_all_match git merge -m "folder2" update-folder2 &&
-	test_all_match git rev-parse HEAD^{tree}
+	for OPERATION in "merge -m merge" cherry-pick rebase
+	do
+		test_all_match git checkout -B temp update-deep &&
+		test_all_match git $OPERATION update-folder1 &&
+		test_all_match git rev-parse HEAD^{tree} &&
+		test_all_match git $OPERATION update-folder2 &&
+		test_all_match git rev-parse HEAD^{tree} || return 1
+	done
 '
 
 # NEEDSWORK: This test is documenting current behavior, but that
