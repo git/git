@@ -33,19 +33,14 @@ static int convert_to_sparse_rec(struct index_state *istate,
 {
 	int i, can_convert = 1;
 	int start_converted = num_converted;
-	enum pattern_match_result match;
-	int dtype = DT_UNKNOWN;
 	struct strbuf child_path = STRBUF_INIT;
-	struct pattern_list *pl = istate->sparse_checkout_patterns;
 
 	/*
 	 * Is the current path outside of the sparse cone?
 	 * Then check if the region can be replaced by a sparse
 	 * directory entry (everything is sparse and merged).
 	 */
-	match = path_matches_pattern_list(ct_path, ct_pathlen,
-					  NULL, &dtype, pl, istate);
-	if (match != NOT_MATCHED)
+	if (path_in_sparse_checkout(ct_path, istate))
 		can_convert = 0;
 
 	for (i = start; can_convert && i < end; i++) {
@@ -152,11 +147,8 @@ int convert_to_sparse(struct index_state *istate)
 	if (!istate->repo->settings.sparse_index)
 		return 0;
 
-	if (!istate->sparse_checkout_patterns) {
-		istate->sparse_checkout_patterns = xcalloc(1, sizeof(struct pattern_list));
-		if (get_sparse_checkout_patterns(istate->sparse_checkout_patterns) < 0)
-			return 0;
-	}
+	if (init_sparse_checkout_patterns(istate))
+		return 0;
 
 	/*
 	 * We need cone-mode patterns to use sparse-index. If a user edits
