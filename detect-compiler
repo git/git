@@ -13,11 +13,11 @@ get_version_line() {
 }
 
 get_family() {
-	get_version_line | sed 's/^\(.*\) version [0-9][^ ]* .*/\1/'
+	get_version_line | sed 's/^\(.*\) version [0-9].*/\1/'
 }
 
 get_version() {
-	get_version_line | sed 's/^.* version \([0-9][^ ]*\) .*/\1/'
+	get_version_line | sed 's/^.* version \([0-9][^ ]*\).*/\1/'
 }
 
 print_flags() {
@@ -38,10 +38,7 @@ case "$(get_family)" in
 gcc)
 	print_flags gcc
 	;;
-clang)
-	print_flags clang
-	;;
-"FreeBSD clang")
+clang | *" clang")
 	print_flags clang
 	;;
 "Apple LLVM")
