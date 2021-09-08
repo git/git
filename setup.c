@@ -2564,7 +2564,7 @@ int init_db(const char *git_dir, const char *real_git_dir,
 	 * have set up the repository format such that we can evaluate
 	 * includeIf conditions correctly in the case of re-initialization.
 	 */
-	git_config(platform_core_config, NULL);
+	git_config(git_default_core_config, NULL);
 
 	safe_create_dir(git_dir, 0);
 
