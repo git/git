@@ -293,9 +293,7 @@ static void create_tag(const struct object_id *object, const char *object_ref,
 
 		/* write the template message before editing: */
 		path = git_pathdup("TAG_EDITMSG");
-		fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0600);
-		if (fd < 0)
-			die_errno(_("could not create file '%s'"), path);
+		fd = xopen(path, O_CREAT | O_TRUNC | O_WRONLY, 0600);
 
 		if (opt->message_given) {
 			write_or_die(fd, buf->buf, buf->len);
