@@ -671,7 +671,11 @@ const char *repo_logmsg_reencode(struct repository *r,
 	 * If the re-encoding failed, out might be NULL here; in that
 	 * case we just return the commit message verbatim.
 	 */
-	return out ? out : msg;
+	if (!out) {
+		warning("unable to reencode commit to '%s'", output_encoding);
+		return msg;
+	}
+	return out;
 }
 
 static int mailmap_name(const char **email, size_t *email_len,
