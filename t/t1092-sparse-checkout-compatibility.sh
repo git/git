@@ -527,6 +527,38 @@ test_expect_success 'merge with conflict outside cone' '
 	test_all_match git rev-parse HEAD^{tree}
 '
 
+test_expect_success 'cherry-pick/rebase with conflict outside cone' '
+	init_repos &&
+
+	for OPERATION in cherry-pick rebase
+	do
+		test_all_match git checkout -B tip &&
+		test_all_match git reset --hard merge-left &&
+		test_all_match git status --porcelain=v2 &&
+		test_all_match test_must_fail git $OPERATION merge-right &&
+		test_all_match git status --porcelain=v2 &&
+
+		# Resolve the conflict in different ways:
+		# 1. Revert to the base
+		test_all_match git checkout base -- deep/deeper2/a &&
+		test_all_match git status --porcelain=v2 &&
+
+		# 2. Add the file with conflict markers
+		test_all_match git add folder1/a &&
+		test_all_match git status --porcelain=v2 &&
+
+		# 3. Rename the file to another sparse filename and
+		#    accept conflict markers as resolved content.
+		run_on_all mv folder2/a folder2/z &&
+		test_all_match git add folder2 &&
+		test_all_match git status --porcelain=v2 &&
+
+		test_all_match git $OPERATION --continue &&
+		test_all_match git status --porcelain=v2 &&
+		test_all_match git rev-parse HEAD^{tree} || return 1
+	done
+'
+
 test_expect_success 'merge with outside renames' '
 	init_repos &&
 
@@ -665,8 +697,11 @@ test_expect_success 'sparse-index is not expanded' '
 	test_config -C sparse-index pull.twohead ort &&
 	(
 		sane_unset GIT_TEST_MERGE_ALGORITHM &&
-		ensure_not_expanded merge -m merge update-folder1 &&
-		ensure_not_expanded merge -m merge update-folder2
+		for OPERATION in "merge -m merge" cherry-pick rebase
+		do
+			ensure_not_expanded merge -m merge update-folder1 &&
+			ensure_not_expanded merge -m merge update-folder2 || return 1
+		done
 	)
 '
 
