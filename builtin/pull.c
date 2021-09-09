@@ -578,7 +578,7 @@ static int run_fetch(const char *repo, const char **refspecs)
 		strvec_pushv(&args, refspecs);
 	} else if (*refspecs)
 		BUG("refspecs without repo?");
-	ret = run_command_v_opt(args.v, RUN_GIT_CMD);
+	ret = run_command_v_opt(args.v, RUN_GIT_CMD | RUN_CLOSE_OBJECT_STORE);
 	strvec_clear(&args);
 	return ret;
 }
@@ -999,7 +999,6 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 			oidclr(&rebase_fork_point);
 	}
 
-	close_object_store(the_repository->objects);
 	if (run_fetch(repo, refspecs))
 		return 1;
 
