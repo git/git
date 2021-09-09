@@ -495,9 +495,9 @@ void finish_tmp_packfile(struct strbuf *name_buffer,
 				      pack_idx_opts->flags);
 
 	rename_tmp_packfile(name_buffer, pack_tmp_name, "pack");
-	rename_tmp_packfile(name_buffer, idx_tmp_name, "idx");
 	if (rev_tmp_name)
 		rename_tmp_packfile(name_buffer, rev_tmp_name, "rev");
+	rename_tmp_packfile(name_buffer, idx_tmp_name, "idx");
 
 	free((void *)idx_tmp_name);
 }
