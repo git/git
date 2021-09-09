@@ -520,9 +520,6 @@ static void prepare_submodule_repo_env_in_gitdir(struct strvec *out)
 /*
  * Initialize a repository struct for a submodule based on the provided 'path'.
  *
- * Unlike repo_submodule_init, this tolerates submodules not present
- * in .gitmodules. This function exists only to preserve historical behavior,
- *
  * Returns the repository struct on success,
  * NULL when the submodule is not present.
  */
@@ -1404,11 +1401,11 @@ static void fetch_task_release(struct fetch_task *p)
 }
 
 static struct repository *get_submodule_repo_for(struct repository *r,
-						 const struct submodule *sub)
+						 const char *path)
 {
 	struct repository *ret = xmalloc(sizeof(*ret));
 
-	if (repo_submodule_init(ret, r, sub)) {
+	if (repo_submodule_init(ret, r, path, null_oid())) {
 		free(ret);
 		return NULL;
 	}
@@ -1452,7 +1449,7 @@ static int get_next_submodule(struct child_process *cp,
 			continue;
 		}
 
-		task->repo = get_submodule_repo_for(spf->r, task->sub);
+		task->repo = get_submodule_repo_for(spf->r, task->sub->path);
 		if (task->repo) {
 			struct strbuf submodule_prefix = STRBUF_INIT;
 			child_process_init(cp);
