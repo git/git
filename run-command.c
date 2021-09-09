@@ -1891,6 +1891,7 @@ int run_auto_maintenance(int quiet)
 		return 0;
 
 	maint.git_cmd = 1;
+	maint.close_object_store = 1;
 	strvec_pushl(&maint.args, "maintenance", "run", "--auto", NULL);
 	strvec_push(&maint.args, quiet ? "--quiet" : "--no-quiet");
 

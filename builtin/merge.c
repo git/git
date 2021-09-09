@@ -469,7 +469,6 @@ static void finish(struct commit *head_commit,
 			 * We ignore errors in 'gc --auto', since the
 			 * user should see them.
 			 */
-			close_object_store(the_repository->objects);
 			run_auto_maintenance(verbosity < 0);
 		}
 	}
