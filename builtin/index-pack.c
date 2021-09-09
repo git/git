@@ -1527,11 +1527,11 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 
 	rename_tmp_packfile(&final_pack_name, curr_pack_name, &pack_name,
 			    hash, "pack", from_stdin);
-	rename_tmp_packfile(&final_index_name, curr_index_name, &index_name,
-			    hash, "idx", 1);
 	if (curr_rev_index_name)
 		rename_tmp_packfile(&final_rev_index_name, curr_rev_index_name,
 				    &rev_index_name, hash, "rev", 1);
+	rename_tmp_packfile(&final_index_name, curr_index_name, &index_name,
+			    hash, "idx", 1);
 
 	if (do_fsck_object) {
 		struct packed_git *p;
