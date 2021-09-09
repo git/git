@@ -1216,6 +1216,18 @@ test_expect_success 'sparse index is not expanded: blame' '
 	done
 '
 
+test_expect_success 'sparse index is not expanded: update-index' '
+	init_repos &&
+
+	echo "test" >sparse-index/README.md &&
+	echo "test2" >sparse-index/a &&
+	rm -f sparse-index/deep/a &&
+
+	ensure_not_expanded update-index --add README.md &&
+	ensure_not_expanded update-index a &&
+	ensure_not_expanded update-index --remove deep/a
+'
+
 # NEEDSWORK: a sparse-checkout behaves differently from a full checkout
 # in this scenario, but it shouldn't.
 test_expect_success 'reset mixed and checkout orphan' '
