@@ -474,21 +474,28 @@ static void rename_tmp_packfile(struct strbuf *name_prefix, const char *source,
 	strbuf_setlen(name_prefix, name_prefix_len);
 }
 
-void finish_tmp_packfile(struct strbuf *name_buffer,
+void rename_tmp_packfile_idx(struct strbuf *name_buffer,
+			     char **idx_tmp_name)
+{
+	rename_tmp_packfile(name_buffer, *idx_tmp_name, "idx");
+}
+
+void stage_tmp_packfiles(struct strbuf *name_buffer,
 			 const char *pack_tmp_name,
 			 struct pack_idx_entry **written_list,
 			 uint32_t nr_written,
 			 struct pack_idx_option *pack_idx_opts,
-			 unsigned char hash[])
+			 unsigned char hash[],
+			 char **idx_tmp_name)
 {
-	const char *idx_tmp_name, *rev_tmp_name = NULL;
+	const char *rev_tmp_name = NULL;
 
 	if (adjust_shared_perm(pack_tmp_name))
 		die_errno("unable to make temporary pack file readable");
 
-	idx_tmp_name = write_idx_file(NULL, written_list, nr_written,
-				      pack_idx_opts, hash);
-	if (adjust_shared_perm(idx_tmp_name))
+	*idx_tmp_name = (char *)write_idx_file(NULL, written_list, nr_written,
+					       pack_idx_opts, hash);
+	if (adjust_shared_perm(*idx_tmp_name))
 		die_errno("unable to make temporary index file readable");
 
 	rev_tmp_name = write_rev_file(NULL, written_list, nr_written, hash,
@@ -497,9 +504,6 @@ void finish_tmp_packfile(struct strbuf *name_buffer,
 	rename_tmp_packfile(name_buffer, pack_tmp_name, "pack");
 	if (rev_tmp_name)
 		rename_tmp_packfile(name_buffer, rev_tmp_name, "rev");
-	rename_tmp_packfile(name_buffer, idx_tmp_name, "idx");
-
-	free((void *)idx_tmp_name);
 }
 
 void write_promisor_file(const char *promisor_name, struct ref **sought, int nr_sought)
