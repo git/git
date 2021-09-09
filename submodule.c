@@ -1409,19 +1409,8 @@ static struct repository *get_submodule_repo_for(struct repository *r,
 	struct repository *ret = xmalloc(sizeof(*ret));
 
 	if (repo_submodule_init(ret, r, sub)) {
-		/*
-		 * No entry in .gitmodules? Technically not a submodule,
-		 * but historically we supported repositories that happen to be
-		 * in-place where a gitlink is. Keep supporting them.
-		 */
-		struct strbuf gitdir = STRBUF_INIT;
-		strbuf_repo_worktree_path(&gitdir, r, "%s/.git", sub->path);
-		if (repo_init(ret, gitdir.buf, NULL)) {
-			strbuf_release(&gitdir);
-			free(ret);
-			return NULL;
-		}
-		strbuf_release(&gitdir);
+		free(ret);
+		return NULL;
 	}
 
 	return ret;
