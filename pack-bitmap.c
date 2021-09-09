@@ -517,8 +517,7 @@ struct bitmap_index *prepare_bitmap_git(struct repository *r)
 	return NULL;
 }
 
-struct bitmap_index *prepare_midx_bitmap_git(struct repository *r,
-					     struct multi_pack_index *midx)
+struct bitmap_index *prepare_midx_bitmap_git(struct multi_pack_index *midx)
 {
 	struct bitmap_index *bitmap_git = xcalloc(1, sizeof(*bitmap_git));
 

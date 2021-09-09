@@ -44,8 +44,7 @@ typedef int (*show_reachable_fn)(
 struct bitmap_index;
 
 struct bitmap_index *prepare_bitmap_git(struct repository *r);
-struct bitmap_index *prepare_midx_bitmap_git(struct repository *r,
-					     struct multi_pack_index *midx);
+struct bitmap_index *prepare_midx_bitmap_git(struct multi_pack_index *midx);
 void count_bitmap_commit_list(struct bitmap_index *, uint32_t *commits,
 			      uint32_t *trees, uint32_t *blobs, uint32_t *tags);
 void traverse_bitmap_commit_list(struct bitmap_index *,
