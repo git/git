@@ -8,6 +8,7 @@
 #include "string-list.h"
 #include "quote.h"
 #include "config.h"
+#include "packfile.h"
 
 void child_process_init(struct child_process *child)
 {
@@ -740,6 +741,9 @@ fail_pipe:
 
 	fflush(NULL);
 
+	if (cmd->close_object_store)
+		close_object_store(the_repository->objects);
+
 #ifndef GIT_WINDOWS_NATIVE
 {
 	int notify_pipe[2];
@@ -1044,6 +1048,7 @@ int run_command_v_opt_cd_env_tr2(const char **argv, int opt, const char *dir,
 	cmd.use_shell = opt & RUN_USING_SHELL ? 1 : 0;
 	cmd.clean_on_exit = opt & RUN_CLEAN_ON_EXIT ? 1 : 0;
 	cmd.wait_after_clean = opt & RUN_WAIT_AFTER_CLEAN ? 1 : 0;
+	cmd.close_object_store = opt & RUN_CLOSE_OBJECT_STORE ? 1 : 0;
 	cmd.dir = dir;
 	cmd.env = env;
 	cmd.trace2_child_class = tr2_class;
