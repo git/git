@@ -25,7 +25,7 @@ static struct bulk_checkin_state {
 
 static void finish_bulk_checkin(struct bulk_checkin_state *state)
 {
-	struct object_id oid;
+	unsigned char hash[GIT_MAX_RAWSZ];
 	struct strbuf packname = STRBUF_INIT;
 	int i;
 
@@ -37,11 +37,11 @@ static void finish_bulk_checkin(struct bulk_checkin_state *state)
 		unlink(state->pack_tmp_name);
 		goto clear_exit;
 	} else if (state->nr_written == 1) {
-		finalize_hashfile(state->f, oid.hash, CSUM_HASH_IN_STREAM | CSUM_FSYNC | CSUM_CLOSE);
+		finalize_hashfile(state->f, hash, CSUM_HASH_IN_STREAM | CSUM_FSYNC | CSUM_CLOSE);
 	} else {
-		int fd = finalize_hashfile(state->f, oid.hash, 0);
-		fixup_pack_header_footer(fd, oid.hash, state->pack_tmp_name,
-					 state->nr_written, oid.hash,
+		int fd = finalize_hashfile(state->f, hash, 0);
+		fixup_pack_header_footer(fd, hash, state->pack_tmp_name,
+					 state->nr_written, hash,
 					 state->offset);
 		close(fd);
 	}
@@ -49,7 +49,7 @@ static void finish_bulk_checkin(struct bulk_checkin_state *state)
 	strbuf_addf(&packname, "%s/pack/pack-", get_object_directory());
 	finish_tmp_packfile(&packname, state->pack_tmp_name,
 			    state->written, state->nr_written,
-			    &state->pack_idx_opts, oid.hash);
+			    &state->pack_idx_opts, hash);
 	for (i = 0; i < state->nr_written; i++)
 		free(state->written[i]);
 
