@@ -46,7 +46,8 @@ static void finish_bulk_checkin(struct bulk_checkin_state *state)
 		close(fd);
 	}
 
-	strbuf_addf(&packname, "%s/pack/pack-", get_object_directory());
+	strbuf_addf(&packname, "%s/pack/pack-%s.", get_object_directory(),
+		    hash_to_hex(hash));
 	finish_tmp_packfile(&packname, state->pack_tmp_name,
 			    state->written, state->nr_written,
 			    &state->pack_idx_opts, hash);
