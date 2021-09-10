@@ -197,7 +197,7 @@ test_expect_success 'am --abort leaves index stat info alone' '
 	git diff-files --exit-code --quiet
 '
 
-test_expect_failure 'git am --abort return failed exit status when it fails' '
+test_expect_success 'git am --abort return failed exit status when it fails' '
 	test_when_finished "rm -rf file-2/ && git reset --hard && git am --abort" &&
 	git checkout changes &&
 	git format-patch -1 --stdout conflicting >changes.mbox &&
