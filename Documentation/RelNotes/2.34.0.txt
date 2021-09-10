@@ -14,6 +14,26 @@ UI, Workflows & Features
 
  * The userdiff pattern for "java" language has been updated.
 
+ * "git rebase" by default skips changes that are equivalent to
+   commits that are already in the history the branch is rebased onto;
+   give messages when this happens to let the users be aware of
+   skipped commits, and also teach them how to tell "rebase" to keep
+   duplicated changes.
+
+ * The advice message that "git cherry-pick" gives when it asks
+   conflicted replay of a commit to be resolved by the end user has
+   been updated.
+
+ * After "git clone --recurse-submodules", all submodules are cloned
+   but they are not by default recursed into by other commands.  With
+   submodule.stickyRecursiveClone configuration set, submodule.recurse
+   configuration is set to true in a repository created by "clone"
+   with "--recurse-submodules" option.
+
+ * The logic for auto-correction of misspelt subcommands learned to go
+   interactive when the help.autocorrect configuration variable is set
+   to 'prompt'.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -47,6 +67,12 @@ Performance, Internal Implementation, Development Support etc.
  * The revision traversal API has been optimized by taking advantage
    of the commit-graph, when available, to determine if a commit is
    reachable from any of the existing refs.
+
+ * "git fetch --quiet" optimization to avoid useless computation of
+   info that will never be displayed.
+
+ * Callers from older advice_config[] based API has been updated to
+   use the newer advice_if_enabled() and advice_enabled() API.
 
 
 Fixes since v2.33
@@ -115,6 +141,33 @@ Fixes since v2.33
    corrected.
    (merge c93ca46cf5 sg/column-nl later to maint).
 
+ * "git upload-pack" which runs on the other side of "git fetch"
+   forgot to take the ref namespaces into account when handling
+   want-ref requests.
+   (merge 53a66ec37c ka/want-ref-in-namespace later to maint).
+
+ * The sparse-index support can corrupt the index structure by storing
+   a stale and/or uninitialized data, which has been corrected.
+   (merge d9e9b44d7a jh/sparse-index-resize-fix later to maint).
+
+ * Buggy tests could damage repositories outside the throw-away test
+   area we created.  We now by default export GIT_CEILING_DIRECTORIES
+   to limit the damage from such a stray test.
+   (merge 614c3d8f2e sg/set-ceiling-during-tests later to maint).
+
+ * Even when running "git send-email" without its own threaded
+   discussion support, a threading related header in one message is
+   carried over to the subsequent message to result in an unwanted
+   threading, which has been corrected.
+   (merge e082113484 mh/send-email-reset-in-reply-to later to maint).
+
+ * The output from "git fast-export", when its anonymization feature
+   is in use, showed an annotated tag incorrectly.
+   (merge 2f040a9671 tk/fast-export-anonymized-tag-fix later to maint).
+
+ * Doc update plus improved error reporting.
+   (merge 1e93770888 jk/log-warn-on-bogus-encoding later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 1d9c8daef8 ab/bundle-doc later to maint).
    (merge 81483fe613 en/merge-strategy-docs later to maint).
@@ -133,3 +186,11 @@ Fixes since v2.33
    (merge 5146c2f148 mh/credential-leakfix later to maint).
    (merge 1549577338 dd/t6300-wo-gpg-fix later to maint).
    (merge 66e905b7dd rs/xopen-reports-open-failures later to maint).
+   (merge 469888e6a5 es/walken-tutorial-fix later to maint).
+   (merge 88682b016d ba/object-info later to maint).
+   (merge b45c172e51 ab/gc-log-rephrase later to maint).
+   (merge ccdd5d1eb1 ab/mailmap-leakfix later to maint).
+   (merge 6540b71614 cb/remote-ndebug-fix later to maint).
+   (merge e4f8d27585 rs/show-branch-simplify later to maint).
+   (merge e124ecf7f7 rs/archive-use-object-id later to maint).
+   (merge cebead1ebf cb/ci-build-pedantic later to maint).
