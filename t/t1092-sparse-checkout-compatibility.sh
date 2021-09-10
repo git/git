@@ -799,14 +799,14 @@ test_expect_success 'checkout-index with folders' '
 	test_all_match test_must_fail git checkout-index -f -- folder1/
 '
 
-# NEEDSWORK: even in sparse checkouts, checkout-index --all will create all
-# files (even those outside the sparse definition) on disk. However, these files
-# don't appear in the percentage of tracked files in git status.
-test_expect_failure 'checkout-index --all' '
+test_expect_success 'checkout-index --all' '
 	init_repos &&
 
 	test_all_match git checkout-index --all &&
-	test_sparse_match test_path_is_missing folder1
+	test_sparse_match test_path_is_missing folder1 &&
+
+	test_all_match git checkout-index --ignore-skip-worktree-bits --all &&
+	test_all_match test_path_exists folder1
 '
 
 test_expect_success 'clean' '

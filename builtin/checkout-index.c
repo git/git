@@ -7,6 +7,7 @@
 #define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "builtin.h"
 #include "config.h"
+#include "dir.h"
 #include "lockfile.h"
 #include "quote.h"
 #include "cache-tree.h"
@@ -116,7 +117,7 @@ static int checkout_file(const char *name, const char *prefix)
 	return -1;
 }
 
-static int checkout_all(const char *prefix, int prefix_length)
+static int checkout_all(const char *prefix, int prefix_length, int ignore_skip_worktree)
 {
 	int i, errs = 0;
 	struct cache_entry *last_ce = NULL;
@@ -125,6 +126,8 @@ static int checkout_all(const char *prefix, int prefix_length)
 	ensure_full_index(&the_index);
 	for (i = 0; i < active_nr ; i++) {
 		struct cache_entry *ce = active_cache[i];
+		if (!ignore_skip_worktree && ce_skip_worktree(ce))
+			continue;
 		if (ce_stage(ce) != checkout_stage
 		    && (CHECKOUT_ALL != checkout_stage || !ce_stage(ce)))
 			continue;
@@ -176,6 +179,7 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 	int i;
 	struct lock_file lock_file = LOCK_INIT;
 	int all = 0;
+	int ignore_skip_worktree = 0;
 	int read_from_stdin = 0;
 	int prefix_length;
 	int force = 0, quiet = 0, not_new = 0;
@@ -185,6 +189,8 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 	struct option builtin_checkout_index_options[] = {
 		OPT_BOOL('a', "all", &all,
 			N_("check out all files in the index")),
+		OPT_BOOL(0, "ignore-skip-worktree-bits", &ignore_skip_worktree,
+			N_("do not skip files with skip-worktree set")),
 		OPT__FORCE(&force, N_("force overwrite of existing files"), 0),
 		OPT__QUIET(&quiet,
 			N_("no warning for existing files and files not in index")),
@@ -247,6 +253,8 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 
 		if (all)
 			die("git checkout-index: don't mix '--all' and explicit filenames");
+		if (ignore_skip_worktree)
+			die("git checkout-index: don't mix '--ignore-skip-worktree-bits' and explicit filenames");
 		if (read_from_stdin)
 			die("git checkout-index: don't mix '--stdin' and explicit filenames");
 		p = prefix_path(prefix, prefix_length, arg);
@@ -280,7 +288,7 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 	}
 
 	if (all)
-		err |= checkout_all(prefix, prefix_length);
+		err |= checkout_all(prefix, prefix_length, ignore_skip_worktree);
 
 	if (pc_workers > 1)
 		err |= run_parallel_checkout(&state, pc_workers, pc_threshold,
