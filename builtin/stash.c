@@ -313,6 +313,17 @@ static int reset_head(void)
 	return run_command(&cp);
 }
 
+static int is_path_a_directory(const char *path)
+{
+	/*
+	 * This function differs from abspath.c:is_directory() in that
+	 * here we use lstat() instead of stat(); we do not want to
+	 * follow symbolic links here.
+	 */
+	struct stat st;
+	return (!lstat(path, &st) && S_ISDIR(st.st_mode));
+}
+
 static void add_diff_to_buf(struct diff_queue_struct *q,
 			    struct diff_options *options,
 			    void *data)
@@ -320,6 +331,9 @@ static void add_diff_to_buf(struct diff_queue_struct *q,
 	int i;
 
 	for (i = 0; i < q->nr; i++) {
+		if (is_path_a_directory(q->queue[i]->one->path))
+			continue;
+
 		strbuf_addstr(data, q->queue[i]->one->path);
 
 		/* NUL-terminate: will be fed to update-index -z */
