@@ -163,24 +163,21 @@ int finish_delayed_checkout(struct checkout *state, int *nr_checkouts,
 			    int show_progress)
 {
 	int errs = 0;
-	unsigned delayed_object_count;
+	unsigned processed_paths = 0;
 	off_t filtered_bytes = 0;
 	struct string_list_item *filter, *path;
-	struct progress *progress;
+	struct progress *progress = NULL;
 	struct delayed_checkout *dco = state->delayed_checkout;
 
 	if (!state->delayed_checkout)
 		return errs;
 
 	dco->state = CE_RETRY;
-	delayed_object_count = dco->paths.nr;
-	progress = show_progress
-		? start_delayed_progress(_("Filtering content"), delayed_object_count)
-		: NULL;
+	if (show_progress)
+		progress = start_delayed_progress(_("Filtering content"), dco->paths.nr);
 	while (dco->filters.nr > 0) {
 		for_each_string_list_item(filter, &dco->filters) {
 			struct string_list available_paths = STRING_LIST_INIT_NODUP;
-			display_progress(progress, delayed_object_count - dco->paths.nr);
 
 			if (!async_query_available_blobs(filter->string, &available_paths)) {
 				/* Filter reported an error */
@@ -227,6 +224,7 @@ int finish_delayed_checkout(struct checkout *state, int *nr_checkouts,
 				ce = index_file_exists(state->istate, path->string,
 						       strlen(path->string), 0);
 				if (ce) {
+					display_progress(progress, ++processed_paths);
 					errs |= checkout_entry(ce, state, NULL, nr_checkouts);
 					filtered_bytes += ce->ce_stat_data.sd_size;
 					display_throughput(progress, filtered_bytes);
