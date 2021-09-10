@@ -55,10 +55,7 @@ static int path_hashmap_cmp(const void *cmp_data,
 	a = container_of(eptr, const struct path_hashmap_entry, e);
 	b = container_of(entry_or_key, const struct path_hashmap_entry, e);
 
-	if (ignore_case)
-		return strcasecmp(a->path, key ? key : b->path);
-	else
-		return strcmp(a->path, key ? key : b->path);
+	return fspathcmp(a->path, key ? key : b->path);
 }
 
 /*
