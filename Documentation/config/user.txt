@@ -40,4 +40,6 @@ user.signingKey::
 	key (e.g.: "ssh-rsa XXXXXX identifier") or a file which contains it and
 	corresponds to the private key used for signing. The private key
 	needs to be available via ssh-agent. Alternatively it can be set to
-	a file containing a private key directly.
+	a file containing a private key directly. If not set git will call
+	gpg.ssh.defaultKeyCommand (e.g.: "ssh-add -L") and try to use the first
+	key available.
