@@ -156,6 +156,7 @@ int sequencer_remove_state(struct replay_opts *opts);
  */
 #define TODO_LIST_ROOT_WITH_ONTO (1U << 6)
 #define TODO_LIST_REAPPLY_CHERRY_PICKS (1U << 7)
+#define TODO_LIST_WARN_SKIPPED_CHERRY_PICKS (1U << 8)
 
 int sequencer_make_script(struct repository *r, struct strbuf *out, int argc,
 			  const char **argv, unsigned flags);
