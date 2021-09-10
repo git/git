@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git help' [-a|--all [--[no-]verbose]] [-g|--guides]
-	   [-i|--info|-m|--man|-w|--web] [COMMAND|GUIDE]
+	   [[-i|--info] [-m|--man] [-w|--web]] [COMMAND|GUIDE]
 
 DESCRIPTION
 -----------

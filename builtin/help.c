@@ -59,7 +59,8 @@ static struct option builtin_help_options[] = {
 };
 
 static const char * const builtin_help_usage[] = {
-	N_("git help [--all] [--guides] [--man | --web | --info] [<command>]"),
+	N_("git help [-a|--all] [-g|--guides] [--[no-]verbose]]\n"
+	   "         [[-i|--info] [-m|--man] [-w|--web]] [<command>]"),
 	NULL
 };
 
