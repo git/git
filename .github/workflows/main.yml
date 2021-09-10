@@ -259,6 +259,8 @@ jobs:
           image: alpine
         - jobname: Linux32
           image: daald/ubuntu32:xenial
+        - jobname: pedantic
+          image: fedora
     env:
       jobname: ${{matrix.vector.jobname}}
     runs-on: ubuntu-latest
