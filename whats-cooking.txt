@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Sep 2021, #02; Wed, 8)
-X-master-at: e0a2f5cbc585657e757385ad918f167f519cfb96
-X-next-at: be952f7c3b737964aa95523b0a01473c6e35c5c9
+Subject: What's cooking in git.git (Sep 2021, #03; Fri, 10)
+X-master-at: 8b7c11b8668b4e774f81a9f0b4c30144b818f1d1
+X-next-at: 5e29049d33d12c9bf75c9b7214e9d7d19bb2e7fe
 
-What's cooking in git.git (Sep 2021, #02; Wed, 8)
+What's cooking in git.git (Sep 2021, #03; Fri, 10)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -49,255 +49,502 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ab/santize-leak-ci (2021-09-07) 3 commits
- - tests: add a test mode for SANITIZE=leak, run it in CI
- - CI: refactor "if" to "case" statement
- - Makefile: add SANITIZE=leak flag to GIT-BUILD-OPTIONS
+* ab/commit-graph-usage (2021-08-30) 7 commits
+  (merged to 'next' on 2021-09-03 at 2254ea1e58)
+ + commit-graph: show "unexpected subcommand" error
+ + commit-graph: show usage on "commit-graph [write|verify] garbage"
+ + commit-graph: early exit to "usage" on !argc
+ + multi-pack-index: refactor "goto usage" pattern
+ + commit-graph: use parse_options_concat()
+ + commit-graph: remove redundant handling of -h
+ + commit-graph: define common usage with a macro
 
- CI learns to run the leak sanitizer builds.
-
- Will merge to 'next'?
-
-
-* cb/ci-use-upload-artifacts-v1 (2021-08-15) 1 commit
-  (merged to 'next' on 2021-08-24 at afdbb7ee8d)
- + ci: use upload-artifacts v1 for dockerized jobs
-
- Use upload-artifacts v1 (instead of v2) for 32-bit linux, as the
- new version has a blocker bug for that architecture.
+ Fixes on usage message from "git commit-graph".
 
 
-* fc/completion-updates (2021-08-18) 4 commits
-  (merged to 'next' on 2021-08-24 at 593cd75c64)
- + completion: bash: add correct suffix in variables
- + completion: bash: fix for multiple dash commands
- + completion: bash: fix for suboptions with value
- + completion: bash: fix prefix detection in branch.*
+* ab/gc-log-rephrase (2021-09-02) 1 commit
+  (merged to 'next' on 2021-09-03 at 24c51e3df1)
+ + gc: remove trailing dot from "gc.log" line
 
- Command line completion updates.
+ A pathname in an advice message has been made cut-and-paste ready.
 
 
-* jk/commit-edit-fixup-fix (2021-08-15) 1 commit
-  (merged to 'next' on 2021-08-24 at 0c625438c3)
- + commit: restore --edit when combined with --fixup
+* ab/help-autocorrect-prompt (2021-08-14) 1 commit
+  (merged to 'next' on 2021-09-08 at e9e130d3e6)
+ + help.c: help.autocorrect=prompt waits for user action
 
- "git commit --fixup" now works with "--edit" again, after it was
- broken in v2.32.
-
-
-* ps/connectivity-optim (2021-08-09) 5 commits
-  (merged to 'next' on 2021-08-24 at 94a7a04ca4)
- + revision: avoid hitting packfiles when commits are in commit-graph
- + commit-graph: split out function to search commit position
- + revision: stop retrieving reference twice
- + connected: do not sort input revisions
- + revision: separate walk and unsorted flags
-
- The revision traversal API has been optimized by taking advantage
- of the commit-graph, when available, to determine if a commit is
- reachable from any of the existing refs.
+ The logic for auto-correction of misspelt subcommands learned to go
+ interactive when the help.autocorrect configuration variable is set
+ to 'prompt'.
 
 
-* pw/rebase-r-fixes (2021-08-23) 4 commits
-  (merged to 'next' on 2021-08-24 at 81c6aff70a)
- + rebase -r: fix merge -c with a merge strategy
- + rebase -r: don't write .git/MERGE_MSG when fast-forwarding
- + rebase -i: add another reword test
- + rebase -r: make 'merge -c' behave like reword
+* ab/ls-remote-packet-trace (2021-08-24) 1 commit
+  (merged to 'next' on 2021-08-30 at fec2e5a7eb)
+ + ls-remote: set packet_trace_identity(<name>)
 
- Various bugs in "git rebase -r" have been fixed.
+ Debugging aid fix.
 
 
-* pw/rebase-skip-final-fix (2021-08-13) 3 commits
-  (merged to 'next' on 2021-08-24 at 73ec41e9dd)
- + rebase --continue: remove .git/MERGE_MSG
- + rebase --apply: restore some tests
- + t3403: fix commit authorship
+* ab/mailmap-leakfix (2021-08-31) 1 commit
+  (merged to 'next' on 2021-09-03 at 348fe07b87)
+ + mailmap.c: fix a memory leak in free_mailap_{info,entry}()
 
- Checking out all the paths from HEAD during the last conflicted
- step in "git rebase" and continuing would cause the step to be
- skipped (which is expected), but leaves MERGE_MSG file behind in
- $GIT_DIR and confuses the next "git commit", which has been
- corrected.
+ Leakfix.
 
 
-* sg/make-fix-ar-invocation (2021-08-19) 1 commit
-  (merged to 'next' on 2021-08-24 at 9a3df9ec56)
- + Makefile: remove archives before manipulating them with 'ar'
+* ab/rebase-fatal-fatal-fix (2021-08-24) 1 commit
+  (merged to 'next' on 2021-08-30 at 256e1cbc9e)
+ + rebase: emit one "fatal" in "fatal: fatal: <error>"
+
+ Error message fix.
+
+
+* ab/retire-advice-config (2021-08-25) 4 commits
+  (merged to 'next' on 2021-09-03 at 0045df3dbb)
+ + advice: move advice.graftFileDeprecated squashing to commit.[ch]
+ + advice: remove use of global advice_add_embedded_repo
+ + advice: remove read uses of most global `advice_` variables
+ + advice: add enum variants for missing advice variables
+
+ Code clean up to migrate callers from older advice_config[] based
+ API to newer advice_if_enabled() and advice_enabled() API.
+
+
+* ba/object-info (2021-08-31) 1 commit
+  (merged to 'next' on 2021-09-03 at 6d47f59ab4)
+ + protocol-caps.c: fix memory leak in send_info()
+
+ Leakfix.
+
+
+* cb/ci-build-pedantic (2021-08-11) 1 commit
+  (merged to 'next' on 2021-09-08 at c47fb2d7cc)
+ + ci: run a pedantic build as part of the GitHub workflow
+
+ CI update.
+
+
+* cb/makefile-apple-clang (2021-08-06) 3 commits
+  (merged to 'next' on 2021-08-30 at 9fe8f1a9b3)
+ + build: catch clang that identifies itself as "$VENDOR clang"
+ + build: clang version may not be followed by extra words
+ + build: update detect-compiler for newer Xcode version
+
+ Build update for Apple clang.
+
+
+* cb/remote-ndebug-fix (2021-09-02) 1 commit
+  (merged to 'next' on 2021-09-03 at a47f44ca9d)
+ + remote: avoid -Wunused-but-set-variable in gcc with -DNDEBUG
 
  Build fix.
 
 
-* ti/tcsh-completion-regression-fix (2021-08-18) 1 commit
-  (merged to 'next' on 2021-08-24 at 8fa66cf037)
- + completion: tcsh: Fix regression by drop of wrapper functions
+* dd/diff-files-unmerged-fix (2021-08-25) 1 commit
+  (merged to 'next' on 2021-08-30 at 63a1bdddfc)
+ + diff-lib: ignore paths that are outside $cwd if --relative asked
 
- Update to the command line completion (in contrib/) for tcsh.
+ "git diff --relative" segfaulted and/or produced incorrect result
+ when there are unmerged paths.
+
+
+* dd/t6300-wo-gpg-fix (2021-08-25) 2 commits
+  (merged to 'next' on 2021-08-30 at 59f5669dd6)
+ + t6300: check for cat-file exit status code
+ + t6300: don't run cat-file on non-existent object
+
+ Test fix.
+
+
+* es/walken-tutorial-fix (2021-08-30) 1 commit
+  (merged to 'next' on 2021-09-01 at 73719bee8a)
+ + doc: fix syntax error and the format of printf
+
+ Typofix.
+
+
+* ga/send-email-sendmail-cmd (2021-08-24) 1 commit
+  (merged to 'next' on 2021-08-30 at 1bb659c66c)
+ + t9001: PATH must not use Windows-style paths
+
+ Test fix.
+
+
+* gh/gitweb-branch-sort (2021-06-10) 1 commit
+  (merged to 'next' on 2021-09-08 at a51cf7e283)
+ + gitweb: use HEAD as secondary sort key in git_get_heads_list()
+
+ Tie-break branches that point at the same object in the list of
+ branches on GitWeb to show the one pointed at by HEAD early.
+
+
+* jb/midx-revindex-fix (2021-08-23) 1 commit
+ - multi-pack-index: fix *.rev cleanups with --object-dir
+
+ An implementation in "multi-pack-index write" that takes object
+ directory inconsistently used that and the object store of the
+ default repository, causing segfaults and possibly corrupting
+ repositories.
+
+ Discard.  This has been absorbed in another topic.
+ cf. <c0c24993-77e2-51a1-c352-0399c59f1f94@ramsayjones.plus.com>
+
+
+* jh/sparse-index-resize-fix (2021-08-30) 1 commit
+  (merged to 'next' on 2021-09-01 at 5ee2615670)
+ + sparse-index: copy dir_hash in ensure_full_index()
+
+ The sparse-index support can corrupt the index structure by storing
+ a stale and/or uninitialized data, which has been corrected.
+
+
+* jk/log-warn-on-bogus-encoding (2021-08-27) 2 commits
+  (merged to 'next' on 2021-09-08 at 56fe25cc53)
+ + docs: use "character encoding" to refer to commit-object encoding
+ + logmsg_reencode(): warn when iconv() fails
+
+ Doc update plus improved error reporting.
+
+
+* jk/t5323-no-pack-test-fix (2021-08-25) 1 commit
+  (merged to 'next' on 2021-08-30 at 2892635eaf)
+ + t5323: drop mentions of "master"
+
+ Test fix.
+
+
+* js/advise-when-skipping-cherry-picked (2021-08-30) 1 commit
+  (merged to 'next' on 2021-09-01 at bc883fce56)
+ + sequencer: advise if skipping cherry-picked commit
+
+ "git rebase" by default skips changes that are equivalent to
+ commits that are already in the history the branch is rebased onto;
+ give messages when this happens to let the users be aware of
+ skipped commits, and also teach them how to tell "rebase" to keep
+ duplicated changes.
+
+
+* js/maintenance-launchctl-fix (2021-08-24) 2 commits
+  (merged to 'next' on 2021-08-30 at 12a5da47e7)
+ + maintenance: skip bootout/bootstrap when plist is registered
+ + maintenance: create `launchctl` configuration using a lock file
+
+ "git maintenance" scheduler fix for macOS.
+
+
+* ka/want-ref-in-namespace (2021-09-01) 3 commits
+  (merged to 'next' on 2021-09-01 at a1075a92a9)
+ + docs: clarify the interaction of transfer.hideRefs and namespaces
+ + upload-pack.c: treat want-ref relative to namespace
+ + t5730: introduce fetch command helper
+
+ "git upload-pack" which runs on the other side of "git fetch"
+ forgot to take the ref namespaces into account when handling
+ want-ref requests.
+
+
+* me/t5582-cleanup (2021-08-24) 1 commit
+  (merged to 'next' on 2021-08-30 at e92258e72c)
+ + t5582: remove spurious 'cd "$D"' line
+
+ Test fix.
+
+
+* mh/credential-leakfix (2021-08-25) 1 commit
+  (merged to 'next' on 2021-08-30 at be9e67bddc)
+ + credential: fix leak in credential_apply_config()
+
+ Leak fix.
+
+
+* mh/send-email-reset-in-reply-to (2021-08-30) 1 commit
+  (merged to 'next' on 2021-09-03 at 3a60892d9a)
+ + send-email: avoid incorrect header propagation
+
+ Even when running "git send-email" without its own threaded
+ discussion support, a threading related header in one message is
+ carried over to the subsequent message to result in an unwanted
+ threading, which has been corrected.
+
+
+* mk/clone-recurse-submodules (2021-08-30) 1 commit
+  (merged to 'next' on 2021-09-03 at 9787178599)
+ + clone: set submodule.recurse=true if submodule.stickyRecursiveClone enabled
+
+ After "git clone --recurse-submodules", all submodules are cloned
+ but they are not by default recursed into by other commands.  With
+ submodule.stickyRecursiveClone configuration set, submodule.recurse
+ configuration is set to true in a repository created by "clone"
+ with "--recurse-submodules" option.
+
+
+* mt/quiet-with-delayed-checkout (2021-08-26) 1 commit
+  (merged to 'next' on 2021-08-30 at d243498893)
+ + checkout: make delayed checkout respect --quiet and --no-progress
+
+ The delayed checkout code path in "git checkout" etc. were chatty
+ even when --quiet and/or --no-progress options were given.
+
+
+* ps/fetch-omit-formatting-under-quiet (2021-08-30) 1 commit
+  (merged to 'next' on 2021-09-01 at 2440a8a2aa)
+ + fetch: skip formatting updated refs with `--quiet`
+
+ "git fetch --quiet" optimization to avoid useless computation of
+ info that will never be displayed.
+
+
+* ps/ls-refs-strbuf-optim (2021-08-25) 1 commit
+  (merged to 'next' on 2021-08-30 at e4cbc7243a)
+ + ls-refs: reuse buffer when sending refs
+
+ Micro-optimization for the wire protocol driver.
+
+
+* rs/archive-use-object-id (2021-08-27) 1 commit
+  (merged to 'next' on 2021-09-08 at 02899d8aea)
+ + archive: convert queue_directory to struct object_id
+
+ Code cleanup.
+
+
+* rs/branch-allow-deleting-dangling (2021-08-27) 1 commit
+  (merged to 'next' on 2021-08-30 at 35b9d158e8)
+ + branch: allow deleting dangling branches with --force
+
+ "git branch -D <branch>" used to refuse to remove a broken branch
+ ref that points at a missing commit, which has been corrected.
+
+
+* rs/git-mmap-uses-malloc (2021-08-24) 1 commit
+  (merged to 'next' on 2021-08-30 at 6339c8e657)
+ + compat: let git_mmap use malloc(3) directly
+
+ mmap() imitation used to call xmalloc() that dies upon malloc()
+ failure, which has been corrected to just return an error to the
+ caller to be handled.
+
+
+* rs/more-fspathcmp (2021-08-30) 1 commit
+  (merged to 'next' on 2021-09-01 at 3052b89438)
+ + merge-recursive: use fspathcmp() in path_hashmap_cmp()
+
+ Code simplification.
+
+
+* rs/show-branch-simplify (2021-08-27) 1 commit
+  (merged to 'next' on 2021-09-08 at 047750a6fa)
+ + show-branch: simplify rev_is_head()
+
+ Code cleanup.
+
+
+* rs/xopen-reports-open-failures (2021-08-25) 2 commits
+  (merged to 'next' on 2021-08-30 at a8588775c8)
+ + use xopen() to handle fatal open(2) failures
+ + xopen: explicitly report creation failures
+
+ Error diagnostics improvement.
+
+
+* sg/column-nl (2021-08-26) 1 commit
+  (merged to 'next' on 2021-08-30 at a3cb0f4745)
+ + column: fix parsing of the '--nl' option
+
+ The parser for the "--nl" option of "git column" has been
+ corrected.
+
+
+* sg/set-ceiling-during-tests (2021-08-30) 1 commit
+  (merged to 'next' on 2021-09-01 at 5378ce3817)
+ + test-lib: set GIT_CEILING_DIRECTORIES to protect the surrounding repository
+
+ Buggy tests could damage repositories outside the throw-away test
+ area we created.  We now by default export GIT_CEILING_DIRECTORIES
+ to limit the damage from such a stray test.
+
+
+* tb/add-objects-in-unpacked-packs-simplify (2021-08-29) 3 commits
+  (merged to 'next' on 2021-09-01 at 66b0f8564d)
+ + builtin/pack-objects.c: remove duplicate hash lookup
+ + builtin/pack-objects.c: simplify add_objects_in_unpacked_packs()
+ + object-store.h: teach for_each_packed_object to ignore kept packs
+
+ Code simplification with reduced memory usage.
+
+
+* tk/fast-export-anonymized-tag-fix (2021-08-31) 1 commit
+  (merged to 'next' on 2021-09-03 at 15ce1ab44f)
+ + fast-export: fix anonymized tag using original length
+
+ The output from "git fast-export", when its anonymization feature
+ is in use, showed an annotated tag incorrectly.
+
+
+* uk/userdiff-php-enum (2021-08-31) 1 commit
+  (merged to 'next' on 2021-09-03 at 5c9eb654fe)
+ + userdiff: support enum keyword in PHP hunk header
+
+ Update the userdiff pattern for PHP.
+
+
+* zh/cherry-pick-advice (2021-08-23) 1 commit
+  (merged to 'next' on 2021-09-01 at 6ff491cc09)
+ + cherry-pick: use better advice message
+
+ The advice message that "git cherry-pick" gives when it asks
+ conflicted replay of a commit to be resolved by the end user has
+ been updated.
 
 --------------------------------------------------
 [New Topics]
 
-* bs/install-strip (2021-09-05) 1 commit
- - make: add INSTALL_STRIP option variable
+* en/stash-df-fix (2021-09-08) 3 commits
+ - stash: restore untracked files AFTER restoring tracked files
+ - stash: avoid feeding directories to update-index
+ - t3903: document a pair of directory/file bugs
 
- "make INSTALL_STRIP=-s install" allows the installation step to use
- "install -s" to strip the binaries as they get installed.
-
- Will merge to 'next'.
-
-
-* cb/pedantic-build-for-developers (2021-09-03) 3 commits
- - developer: enable pedantic by default
- - win32: allow building with pedantic mode enabled
- - gettext: remove optional non-standard parens in N_() definition
-
- Update the build procedure to use the "-pedantic" build when
- DEVELOPER makefile macro is in effect.
-
- Will merge to 'next'?
+ Fix "git stash" corner case where the tentative change involves
+ changing a directory to a file (or vice versa).
 
 
-* js/scalar (2021-09-03) 15 commits
- - scalar: accept -C and -c options before the subcommand
- - scalar: implement the `version` command
- - scalar: implement the `delete` command
- - scalar: teach 'reconfigure' to optionally handle all registered enlistments
- - scalar: allow reconfiguring an existing enlistment
- - scalar: implement the `run` command
- - scalar: teach 'clone' to support the --single-branch option
- - scalar: implement the `clone` subcommand
- - scalar: implement 'scalar list'
- - scalar: let 'unregister' handle a deleted enlistment directory gracefully
- - scalar: 'unregister' stops background maintenance
- - scalar: 'register' sets recommended config and starts maintenance
- - scalar: create test infrastructure
- - scalar: start documenting the command
- - scalar: create a rudimentary executable
+* js/pull-release-packs-before-fetching (2021-09-08) 2 commits
+ - pull: release packs before fetching
+ - commit-graph: when closing the graph, also release the slab
+ (this branch is used by js/run-command-close-packs.)
 
- Add pieces from "scalar" to contrib/.
+ "git pull" was taught to close open file descriptors to the
+ packfiles before spawning "git fetch" to help auto-gc that may be
+ invoked by it.
 
 
-* ps/update-ref-batch-flush (2021-09-03) 1 commit
- - update-ref: fix streaming of status updates
+* ab/http-drop-old-curl-plus (2021-09-10) 8 commits
+ - http: don't hardcode the value of CURL_SOCKOPT_OK
+ - http: centralize the accounting of libcurl dependencies
+ - http: correct curl version check for CURLOPT_PINNEDPUBLICKEY
+ - http: correct version check for CURL_HTTP_VERSION_2
+ - http: drop support for curl < 7.18.0 (again)
+ - Makefile: drop support for curl < 7.9.8 (again)
+ - INSTALL: mention that we need libcurl 7.19.4 or newer to build
+ - INSTALL: don't mention the "curl" executable at all
 
- "git update-ref --stdin" failed to flush its output as needed,
- which potentially led the conversation to a deadlock.
-
- Will merge to 'next'?
+ Conditional compilation around versions of libcURL has been
+ straightened out.
 
 
-* ab/no-more-check-bindir (2021-09-07) 1 commit
- - Makefile: remove the check_bindir script
+* ds/mergies-with-sparse-index (2021-09-09) 6 commits
+ - sparse-index: integrate with cherry-pick and rebase
+ - sequencer: ensure full index if not ORT strategy
+ - t1092: add cherry-pick, rebase tests
+ - merge-ort: expand only for out-of-cone conflicts
+ - merge: make sparse-aware with ORT
+ - diff: ignore sparse paths in diffstat
+ (this branch uses ds/sparse-index-ignored-files.)
 
- Build simplification.
+ Various mergy operations have been prepared to work efficiently
+ with the sparse index.
 
  Will merge to 'next'.
 
 
-* ab/send-email-config-fix (2021-09-07) 1 commit
- - send-email: fix a "first config key wins" regression in v2.33.0
+* jk/http-backend-handle-proto-header (2021-09-09) 1 commit
+ - http-backend: handle HTTP_GIT_PROTOCOL CGI variable
 
- Regression fix.
-
- Will merge to 'next' and then to 'master'.
-
-
-* ab/tr2-leaks-and-fixes (2021-09-07) 6 commits
- - tr2: log N parent process names on Linux
- - tr2: do compiler enum check in trace2_collect_process_info()
- - tr2: leave the parent list empty upon failure & don't leak memory
- - tr2: stop leaking "thread_name" memory
- - tr2: clarify TRACE2_PROCESS_INFO_EXIT comment under Linux
- - tr2: remove NEEDSWORK comment for "non-procfs" implementations
-
- The tracing of process ancestry information has been enhanced.
+ Taking advantage of the CGI interface, http-backend has been
+ updated to enable protocol v2 automatically when the other side
+ asks for it.
 
  Will merge to 'next'.
 
 
-* bs/doc-bugreport-outdir (2021-09-07) 1 commit
- - Documentation: fix default directory of git bugreport -o
+* js/run-command-close-packs (2021-09-09) 4 commits
+ - Close object store closer to spawning child processes
+ - run_auto_maintenance(): implicitly close the object store
+ - run-command: offer to close the object store before running
+ - run-command: prettify the `RUN_COMMAND_*` flags
+ (this branch uses js/pull-release-packs-before-fetching.)
 
- Docfix.
+ The run-command API has been updated so that the callers can easily
+ ask the file descriptors open for packfiles to be closed immediately
+ before spawning commands that may trigger auto-gc.
 
  Will merge to 'next'.
 
 
-* jc/prefix-filename-allocates (2021-09-07) 1 commit
- - hash-object: prefix_filename() returns allocated memory these days
+* jt/add-submodule-odb-clean-up (2021-09-09) 3 commits
+ - revision: remove "submodule" from opt struct
+ - repository: support unabsorbed in repo_submodule_init
+ - submodule: remove unnecessary unabsorbed fallback
+ (this branch uses jt/grep-wo-submodule-odb-as-alternate.)
 
- Leakfix.
-
- Will merge to 'next'?
-
-
-* kr/doc-webserver-config-for-v2 (2021-09-07) 1 commit
- - Docs: web server must setenv GIT_PROTOCOL for v2
-
- Hints to set GIT_PROTOCOL environment in various CGI environments
- are added to the documentation.
-
- Will merge to 'next'?
+ More code paths that uses the hack to add submodule's object
+ database to the set of alternate object store have been cleaned up.
 
 
-* rs/range-diff-avoid-segfault-with-I (2021-09-07) 1 commit
- - range-diff: avoid segfault with -I
+* jx/ci-l10n (2021-09-09) 1 commit
+ - ci: new github-action for git-l10n code review
 
- "git range-diff -I... <range> <range>" segfaulted, which has been
- corrected.
-
- Will merge to 'next'?
+ CI help for l10n.
 
 
-* so/diff-index-regression-fix (2021-09-07) 1 commit
- - diff-index: restore -c/--cc options handling
+* jk/t5562-racefix (2021-09-09) 1 commit
+ - t5562: use alarm() to interrupt timed child-wait
 
- Recent "diff -m" changes broke "gitk", which has been corrected.
+ Test update.
 
- Will merge to 'next' and then to 'master'.
-
-
-* tb/pack-finalize-ordering (2021-09-07) 2 commits
- - builtin/repack.c: move `.idx` files into place last
- - pack-write.c: rename `.idx` file into place last
-
- The order in which various files that make up a single (conceptual)
- packfile has been reevaluated and straightened up.  This matters in
- correctness, as an incomplete set of files must not be shown to a
- running Git.
-
- Will merge to 'next'?
+ Will merge to 'next'.
 
 
-* ab/reverse-midx-optim (2021-09-07) 1 commit
- - pack-write: skip *.rev work when not writing *.rev
+* rs/no-mode-to-open-when-appending (2021-09-09) 1 commit
+ - refs/files-backend: remove unused open mode parameter
+
+ The "mode" word is useless in a call to open(2) that does not
+ create a new file.  Such a call in the files backend of the ref
+ subsystem has been cleaned up.
+
+ Will merge to 'next'.
 
 
-* ab/sanitize-leak-ci (2021-09-07) 3 commits
- - tests: add a test mode for SANITIZE=leak, run it in CI
- - CI: refactor "if" to "case" statement
- - Makefile: add SANITIZE=leak flag to GIT-BUILD-OPTIONS
+* rs/setup-use-xopen-and-xdup (2021-09-09) 1 commit
+ - setup: use xopen and xdup in sanitize_stdfds
+
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
+* rs/use-xopen-in-index-pack (2021-09-10) 1 commit
+ - index-pack: use xopen in init_thread
 
 --------------------------------------------------
 [Stalled]
 
-* es/config-based-hooks (2021-08-19) 7 commits
+* ab/pack-objects-stdin (2021-07-09) 5 commits
+ - pack-objects.c: make use of REV_INFO_STDIN_LINE_PROCESS
+ - pack-objects.c: do stdin parsing via revision.c's API
+ - revision.[ch]: add a "handle_stdin_line" API
+ - revision.h: refactor "disable_stdin" and "read_from_stdin"
+ - upload-pack: run is_repository_shallow() before setup_revisions()
+
+ Introduce handle_stdin_line callback to revision API and uses it.
+
+ Waiting for reviews.
+
+
+* es/config-based-hooks (2021-09-09) 6 commits
  - hook: allow out-of-repo 'git hook' invocations
  - hook: include hooks from the config
- - hook: allow running non-native hooks
  - hook: introduce "git hook list"
  - hook: allow parallel hook execution
+ - fixup! hook: run a list of hooks instead
  - hook: run a list of hooks instead
- - Merge branch 'ab/config-based-hooks-base' into es/config-based-hooks
  (this branch uses ab/config-based-hooks-base.)
 
  Revamp the hooks subsystem to allow multiple of them to trigger
  upon the same event and control via the configuration variables.
 
- Expecting a reroll
- but ab/config-based-hooks-base needs to be in a better shape first.
- cf. <87v93wflm0.fsf@evledraar.gmail.com>
- cf. <87tuj7xhqo.fsf@evledraar.gmail.com>
+ On hold.
+ This is an interim one that goes with the updated ab/config-based-hooks-base.
 
 
 * jh/builtin-fsmonitor (2021-09-03) 37 commits
@@ -377,7 +624,9 @@ Release tarballs are available at:
  switching to Python-3, too many things are expected to be in UTF-8,
  which broke traditional use cases.
 
- Waiting for reviews.
+ Will discard.
+ Have been stalled for too long.
+ cf. <20210504220153.1d9f0cb2@ado-tr>
 
 
 * tv/p4-fallback-encoding (2021-04-30) 1 commit
@@ -386,7 +635,9 @@ Release tarballs are available at:
  "git p4" learns the fallbackEncoding configuration variable to
  safely accept changeset descriptions that aren't written in UTF-8.
 
- Waiting for reviews.
+ Will discard.
+ Have been stalled for too long.
+ cf. <CAKu1iLUaLuAZWqjNK4tfhhR=YaSt4MdQ+90ZY-JcEh_SeHyYCw@mail.gmail.com>
 
 
 * ab/fsck-unexpected-type (2021-09-07) 22 commits
@@ -421,23 +672,186 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* bs/install-strip (2021-09-05) 1 commit
+  (merged to 'next' on 2021-09-08 at 40cfa71c8d)
+ + make: add INSTALL_STRIP option variable
+
+ "make INSTALL_STRIP=-s install" allows the installation step to use
+ "install -s" to strip the binaries as they get installed.
+
+ Will merge to 'master'.
+
+
+* cb/pedantic-build-for-developers (2021-09-03) 3 commits
+  (merged to 'next' on 2021-09-10 at b8df102019)
+ + developer: enable pedantic by default
+ + win32: allow building with pedantic mode enabled
+ + gettext: remove optional non-standard parens in N_() definition
+
+ Update the build procedure to use the "-pedantic" build when
+ DEVELOPER makefile macro is in effect.
+
+ Will merge to 'master'.
+
+
+* js/scalar (2021-09-08) 15 commits
+ - scalar: accept -C and -c options before the subcommand
+ - scalar: implement the `version` command
+ - scalar: implement the `delete` command
+ - scalar: teach 'reconfigure' to optionally handle all registered enlistments
+ - scalar: allow reconfiguring an existing enlistment
+ - scalar: implement the `run` command
+ - scalar: teach 'clone' to support the --single-branch option
+ - scalar: implement the `clone` subcommand
+ - scalar: implement 'scalar list'
+ - scalar: let 'unregister' handle a deleted enlistment directory gracefully
+ - scalar: 'unregister' stops background maintenance
+ - scalar: 'register' sets recommended config and starts maintenance
+ - scalar: create test infrastructure
+ - scalar: start documenting the command
+ - scalar: create a rudimentary executable
+
+ Add pieces from "scalar" to contrib/.
+
+
+* ps/update-ref-batch-flush (2021-09-03) 1 commit
+  (merged to 'next' on 2021-09-10 at 4ae19a5f34)
+ + update-ref: fix streaming of status updates
+
+ "git update-ref --stdin" failed to flush its output as needed,
+ which potentially led the conversation to a deadlock.
+
+ Will merge to 'master'.
+
+
+* ab/no-more-check-bindir (2021-09-07) 1 commit
+  (merged to 'next' on 2021-09-08 at 4fddb3864f)
+ + Makefile: remove the check_bindir script
+
+ Build simplification.
+
+ Will merge to 'master'.
+
+
+* ab/send-email-config-fix (2021-09-07) 1 commit
+  (merged to 'next' on 2021-09-08 at c2000e9689)
+ + send-email: fix a "first config key wins" regression in v2.33.0
+
+ Regression fix.
+
+ Will merge to 'master'.
+
+
+* ab/tr2-leaks-and-fixes (2021-09-07) 6 commits
+  (merged to 'next' on 2021-09-10 at 14f0dd5580)
+ + tr2: log N parent process names on Linux
+ + tr2: do compiler enum check in trace2_collect_process_info()
+ + tr2: leave the parent list empty upon failure & don't leak memory
+ + tr2: stop leaking "thread_name" memory
+ + tr2: clarify TRACE2_PROCESS_INFO_EXIT comment under Linux
+ + tr2: remove NEEDSWORK comment for "non-procfs" implementations
+
+ The tracing of process ancestry information has been enhanced.
+
+ Will merge to 'master'.
+
+
+* bs/doc-bugreport-outdir (2021-09-07) 1 commit
+  (merged to 'next' on 2021-09-08 at 5ea3df204d)
+ + Documentation: fix default directory of git bugreport -o
+
+ Docfix.
+
+ Will merge to 'master'.
+
+
+* jc/prefix-filename-allocates (2021-09-07) 1 commit
+  (merged to 'next' on 2021-09-10 at a5221ea92e)
+ + hash-object: prefix_filename() returns allocated memory these days
+
+ Leakfix.
+
+ Will merge to 'master'.
+
+
+* kr/doc-webserver-config-for-v2 (2021-09-07) 1 commit
+ - Docs: web server must setenv GIT_PROTOCOL for v2
+
+ Hints to set GIT_PROTOCOL environment in various CGI environments
+ are added to the documentation.
+
+ Will discard.
+
+
+* rs/range-diff-avoid-segfault-with-I (2021-09-07) 1 commit
+  (merged to 'next' on 2021-09-10 at e8bac5f9ea)
+ + range-diff: avoid segfault with -I
+
+ "git range-diff -I... <range> <range>" segfaulted, which has been
+ corrected.
+
+ Will merge to 'master'.
+
+
+* so/diff-index-regression-fix (2021-09-07) 1 commit
+  (merged to 'next' on 2021-09-08 at ca17912ed3)
+ + diff-index: restore -c/--cc options handling
+
+ Recent "diff -m" changes broke "gitk", which has been corrected.
+
+ Will merge to 'master'.
+
+
+* tb/pack-finalize-ordering (2021-09-09) 9 commits
+  (merged to 'next' on 2021-09-10 at 7b39c39e31)
+ + pack-objects: rename .idx files into place after .bitmap files
+ + pack-write: split up finish_tmp_packfile() function
+ + builtin/index-pack.c: move `.idx` files into place last
+ + index-pack: refactor renaming in final()
+ + builtin/repack.c: move `.idx` files into place last
+ + pack-write.c: rename `.idx` files after `*.rev`
+ + pack-write: refactor renaming in finish_tmp_packfile()
+ + bulk-checkin.c: store checksum directly
+ + pack.h: line-wrap the definition of finish_tmp_packfile()
+
+ The order in which various files that make up a single (conceptual)
+ packfile has been reevaluated and straightened up.  This matters in
+ correctness, as an incomplete set of files must not be shown to a
+ running Git.
+
+ Will merge to 'master'.
+
+
+* ab/reverse-midx-optim (2021-09-07) 1 commit
+  (merged to 'next' on 2021-09-08 at 1972c5931b)
+ + pack-write: skip *.rev work when not writing *.rev
+
+ The code that optionally creates the *.rev reverse index file has
+ been optimized to avoid needless computation when it is not writing
+ the file out.
+
+ Will merge to 'master'.
+
+
+* ab/sanitize-leak-ci (2021-09-07) 3 commits
+ - tests: add a test mode for SANITIZE=leak, run it in CI
+ - CI: refactor "if" to "case" statement
+ - Makefile: add SANITIZE=leak flag to GIT-BUILD-OPTIONS
+
+ CI learns to run the leak sanitizer builds.
+
+ Will merge to 'next'?
+
+
 * jc/trivial-threeway-binary-merge (2021-09-05) 1 commit
- - apply: resolve trivial merge without hitting ll-merge with "--3way"
+  (merged to 'next' on 2021-09-08 at d6ba0735d8)
+ + apply: resolve trivial merge without hitting ll-merge with "--3way"
 
  The "git apply -3" code path learned not to bother the lower level
  merge machinery when the three-way merge can be trivially resolved
  without the content level merge.
 
- Will merge to 'next'.
-
-
-* gh/gitweb-branch-sort (2021-06-10) 1 commit
- - gitweb: use HEAD as secondary sort key in git_get_heads_list()
-
- Tie-break branches that point at the same object in the list of
- branches on GitWeb to show the one pointed at by HEAD early.
-
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ms/customizable-ident-expansion (2021-09-01) 1 commit
@@ -448,39 +862,32 @@ Release tarballs are available at:
 
 
 * pb/test-use-user-env (2021-09-07) 3 commits
- - test-lib-functions: keep user's debugger config files and TERM in 'debug'
- - test-lib-functions: optionally keep HOME, TERM and SHELL in 'test_pause'
- - test-lib-functions: use 'TEST_SHELL_PATH' in 'test_pause'
+  (merged to 'next' on 2021-09-08 at 6fa5d96723)
+ + test-lib-functions: keep user's debugger config files and TERM in 'debug'
+ + test-lib-functions: optionally keep HOME, TERM and SHELL in 'test_pause'
+ + test-lib-functions: use 'TEST_SHELL_PATH' in 'test_pause'
 
- Teach test_pause and test_debug to allow using the HOME and TERM
- environment variables the user usually uses.
+ Teach "test_pause" and "debug" helpers to allow using the HOME and
+ TERM environment variables the user usually uses.
 
- Will merge to 'next'?
+ Will merge to 'master'.
 
 
 * js/retire-preserve-merges (2021-09-07) 11 commits
- - sequencer: restrict scope of a formerly public function
- - rebase: remove a no-longer-used function
- - rebase: stop mentioning the -p option in comments
- - rebase: remove obsolete code comment
- - rebase: drop the internal `rebase--interactive` command
- - git-svn: drop support for `--preserve-merges`
- - rebase: drop support for `--preserve-merges`
- - pull: remove support for `--rebase=preserve`
- - tests: stop testing `git rebase --preserve-merges`
- - remote: warn about unhandled branch.<name>.rebase values
- - t5520: do not use `pull.rebase=preserve`
+  (merged to 'next' on 2021-09-10 at f645ffd7a3)
+ + sequencer: restrict scope of a formerly public function
+ + rebase: remove a no-longer-used function
+ + rebase: stop mentioning the -p option in comments
+ + rebase: remove obsolete code comment
+ + rebase: drop the internal `rebase--interactive` command
+ + git-svn: drop support for `--preserve-merges`
+ + rebase: drop support for `--preserve-merges`
+ + pull: remove support for `--rebase=preserve`
+ + tests: stop testing `git rebase --preserve-merges`
+ + remote: warn about unhandled branch.<name>.rebase values
+ + t5520: do not use `pull.rebase=preserve`
 
  The "--preserve-merges" option of "git rebase" has been removed.
-
- Will merge to 'next'?
-
-
-* cb/remote-ndebug-fix (2021-09-02) 1 commit
-  (merged to 'next' on 2021-09-03 at a47f44ca9d)
- + remote: avoid -Wunused-but-set-variable in gcc with -DNDEBUG
-
- Build fix.
 
  Will merge to 'master'.
 
@@ -495,94 +902,8 @@ Release tarballs are available at:
 
  Rewrite of "git bisect" in C continues.
 
-
-* tb/add-objects-in-unpacked-packs-simplify (2021-08-29) 3 commits
-  (merged to 'next' on 2021-09-01 at 66b0f8564d)
- + builtin/pack-objects.c: remove duplicate hash lookup
- + builtin/pack-objects.c: simplify add_objects_in_unpacked_packs()
- + object-store.h: teach for_each_packed_object to ignore kept packs
-
- Code simplification with reduced memory usage.
-
- Will merge to 'master'.
-
-
-* es/walken-tutorial-fix (2021-08-30) 1 commit
-  (merged to 'next' on 2021-09-01 at 73719bee8a)
- + doc: fix syntax error and the format of printf
-
- Typofix.
-
- Will merge to 'master'.
-
-
-* jh/sparse-index-resize-fix (2021-08-30) 1 commit
-  (merged to 'next' on 2021-09-01 at 5ee2615670)
- + sparse-index: copy dir_hash in ensure_full_index()
-
- The sparse-index support can corrupt the index structure by storing
- a stale and/or uninitialized data, which has been corrected.
-
- Will merge to 'master'.
-
-
-* mh/send-email-reset-in-reply-to (2021-08-30) 1 commit
-  (merged to 'next' on 2021-09-03 at 3a60892d9a)
- + send-email: avoid incorrect header propagation
-
- Even when running "git send-email" without its own threaded
- discussion support, a threading related header in one message is
- carried over to the subsequent message to result in an unwanted
- threading, which has been corrected.
-
- Will merge to 'master'.
-
-
-* rs/more-fspathcmp (2021-08-30) 1 commit
-  (merged to 'next' on 2021-09-01 at 3052b89438)
- + merge-recursive: use fspathcmp() in path_hashmap_cmp()
-
- Code simplification.
-
- Will merge to 'master'.
-
-
-* sg/set-ceiling-during-tests (2021-08-30) 1 commit
-  (merged to 'next' on 2021-09-01 at 5378ce3817)
- + test-lib: set GIT_CEILING_DIRECTORIES to protect the surrounding repository
-
- Buggy tests could damage repositories outside the throw-away test
- area we created.  We now by default export GIT_CEILING_DIRECTORIES
- to limit the damage from such a stray test.
-
- Will merge to 'master'.
-
-
-* ab/gc-log-rephrase (2021-09-02) 1 commit
-  (merged to 'next' on 2021-09-03 at 24c51e3df1)
- + gc: remove trailing dot from "gc.log" line
-
- A pathname in an advice message has been made cut-and-paste ready.
-
- Will merge to 'master'.
-
-
-* ab/mailmap-leakfix (2021-08-31) 1 commit
-  (merged to 'next' on 2021-09-03 at 348fe07b87)
- + mailmap.c: fix a memory leak in free_mailap_{info,entry}()
-
- Leakfix.
-
- Will merge to 'master'.
-
-
-* ba/object-info (2021-08-31) 1 commit
-  (merged to 'next' on 2021-09-03 at 6d47f59ab4)
- + protocol-caps.c: fix memory leak in send_info()
-
- Leakfix.
-
- Will merge to 'master'.
+ Expecting a reroll.
+ cf. <xmqqtuj2h7cp.fsf@gitster.g>
 
 
 * en/remerge-diff (2021-08-31) 7 commits
@@ -598,6 +919,8 @@ Release tarballs are available at:
  used to show the difference between mechanical (and possibly
  conflicted) merge results and the recorded resolution.
 
+ What's the status of this one?
+
 
 * sg/test-split-index-fix (2021-09-07) 7 commits
  - read-cache: fix GIT_TEST_SPLIT_INDEX
@@ -612,58 +935,6 @@ Release tarballs are available at:
  Test updates.
 
 
-* tk/fast-export-anonymized-tag-fix (2021-08-31) 1 commit
-  (merged to 'next' on 2021-09-03 at 15ce1ab44f)
- + fast-export: fix anonymized tag using original length
-
- The output from "git fast-export", when its anonymization feature
- is in use, showed an annotated tag incorrectly.
-
- Will merge to 'master'.
-
-
-* uk/userdiff-php-enum (2021-08-31) 1 commit
-  (merged to 'next' on 2021-09-03 at 5c9eb654fe)
- + userdiff: support enum keyword in PHP hunk header
-
- Update the userdiff pattern for PHP.
-
- Will merge to 'master'.
-
-
-* ab/commit-graph-usage (2021-08-30) 7 commits
-  (merged to 'next' on 2021-09-03 at 2254ea1e58)
- + commit-graph: show "unexpected subcommand" error
- + commit-graph: show usage on "commit-graph [write|verify] garbage"
- + commit-graph: early exit to "usage" on !argc
- + multi-pack-index: refactor "goto usage" pattern
- + commit-graph: use parse_options_concat()
- + commit-graph: remove redundant handling of -h
- + commit-graph: define common usage with a macro
-
- Fixes on usage message from "git commit-graph".
-
- Will merge to 'master'.
-
-
-* ab/ls-remote-packet-trace (2021-08-24) 1 commit
-  (merged to 'next' on 2021-08-30 at fec2e5a7eb)
- + ls-remote: set packet_trace_identity(<name>)
-
- Debugging aid fix.
-
- Will merge to 'master'.
-
-
-* ab/rebase-fatal-fatal-fix (2021-08-24) 1 commit
-  (merged to 'next' on 2021-08-30 at 256e1cbc9e)
- + rebase: emit one "fatal" in "fatal: fatal: <error>"
-
- Error message fix.
-
- Will merge to 'master'.
-
-
 * ab/refs-errno-cleanup (2021-08-25) 4 commits
  - refs: make errno output explicit for refs_resolve_ref_unsafe
  - refs: explicitly return failure_errno from parse_loose_ref_contents
@@ -674,173 +945,13 @@ Release tarballs are available at:
  The "remainder" of hn/refs-errno-cleanup topic.
 
 
-* ab/retire-advice-config (2021-08-25) 4 commits
-  (merged to 'next' on 2021-09-03 at 0045df3dbb)
- + advice: move advice.graftFileDeprecated squashing to commit.[ch]
- + advice: remove use of global advice_add_embedded_repo
- + advice: remove read uses of most global `advice_` variables
- + advice: add enum variants for missing advice variables
-
- Code clean up to migrate callers from older advice_config[] based
- API to newer advice_if_enabled() and advice_enabled() API.
-
- Will merge to 'master'.
-
-
-* dd/diff-files-unmerged-fix (2021-08-25) 1 commit
-  (merged to 'next' on 2021-08-30 at 63a1bdddfc)
- + diff-lib: ignore paths that are outside $cwd if --relative asked
-
- "git diff --relative" segfaulted and/or produced incorrect result
- when there are unmerged paths.
-
- Will merge to 'master'.
-
-
-* dd/t6300-wo-gpg-fix (2021-08-25) 2 commits
-  (merged to 'next' on 2021-08-30 at 59f5669dd6)
- + t6300: check for cat-file exit status code
- + t6300: don't run cat-file on non-existent object
-
- Test fix.
-
- Will merge to 'master'.
-
-
-* ga/send-email-sendmail-cmd (2021-08-24) 1 commit
-  (merged to 'next' on 2021-08-30 at 1bb659c66c)
- + t9001: PATH must not use Windows-style paths
-
- Test fix.
-
- Will merge to 'master'.
-
-
-* jb/midx-revindex-fix (2021-08-23) 1 commit
- - multi-pack-index: fix *.rev cleanups with --object-dir
-
- An implementation in "multi-pack-index write" that takes object
- directory inconsistently used that and the object store of the
- default repository, causing segfaults and possibly corrupting
- repositories.
-
- On hold.
- cf. <xmqqo89jbf49.fsf@gitster.g>
-
-
-* jk/t5323-no-pack-test-fix (2021-08-25) 1 commit
-  (merged to 'next' on 2021-08-30 at 2892635eaf)
- + t5323: drop mentions of "master"
-
- Test fix.
-
- Will merge to 'master'.
-
-
-* js/maintenance-launchctl-fix (2021-08-24) 2 commits
-  (merged to 'next' on 2021-08-30 at 12a5da47e7)
- + maintenance: skip bootout/bootstrap when plist is registered
- + maintenance: create `launchctl` configuration using a lock file
-
- "git maintenance" scheduler fix for macOS.
-
- Will merge to 'master'.
-
-
 * jv/pkt-line-batch (2021-09-01) 2 commits
- - upload-pack: use stdio in send_ref callbacks
- - pkt-line: add stdio packet write functions
+  (merged to 'next' on 2021-09-10 at c31d871c9a)
+ + upload-pack: use stdio in send_ref callbacks
+ + pkt-line: add stdio packet write functions
 
  Reduce number of write(2) system calls while sending the
  ref advertisement.
-
- Will merge to 'next'?
-
-
-* me/t5582-cleanup (2021-08-24) 1 commit
-  (merged to 'next' on 2021-08-30 at e92258e72c)
- + t5582: remove spurious 'cd "$D"' line
-
- Test fix.
-
- Will merge to 'master'.
-
-
-* mh/credential-leakfix (2021-08-25) 1 commit
-  (merged to 'next' on 2021-08-30 at be9e67bddc)
- + credential: fix leak in credential_apply_config()
-
- Leak fix.
-
- Will merge to 'master'.
-
-
-* mt/quiet-with-delayed-checkout (2021-08-26) 1 commit
-  (merged to 'next' on 2021-08-30 at d243498893)
- + checkout: make delayed checkout respect --quiet and --no-progress
-
- The delayed checkout code path in "git checkout" etc. were chatty
- even when --quiet and/or --no-progress options were given.
-
- Will merge to 'master'.
-
-
-* ps/fetch-omit-formatting-under-quiet (2021-08-30) 1 commit
-  (merged to 'next' on 2021-09-01 at 2440a8a2aa)
- + fetch: skip formatting updated refs with `--quiet`
-
- "git fetch --quiet" optimization to avoid useless computation of
- info that will never be displayed.
-
- Will merge to 'master'.
-
-
-* ps/ls-refs-strbuf-optim (2021-08-25) 1 commit
-  (merged to 'next' on 2021-08-30 at e4cbc7243a)
- + ls-refs: reuse buffer when sending refs
-
- Micro-optimization for the wire protocol driver.
-
- Will merge to 'master'.
-
-
-* rs/branch-allow-deleting-dangling (2021-08-27) 1 commit
-  (merged to 'next' on 2021-08-30 at 35b9d158e8)
- + branch: allow deleting dangling branches with --force
-
- "git branch -D <branch>" used to refuse to remove a broken branch
- ref that points at a missing commit, which has been corrected.
-
- Will merge to 'master'.
-
-
-* rs/git-mmap-uses-malloc (2021-08-24) 1 commit
-  (merged to 'next' on 2021-08-30 at 6339c8e657)
- + compat: let git_mmap use malloc(3) directly
-
- mmap() imitation used to call xmalloc() that dies upon malloc()
- failure, which has been corrected to just return an error to the
- caller to be handled.
-
- Will merge to 'master'.
-
-
-* rs/xopen-reports-open-failures (2021-08-25) 2 commits
-  (merged to 'next' on 2021-08-30 at a8588775c8)
- + use xopen() to handle fatal open(2) failures
- + xopen: explicitly report creation failures
-
- Error diagnostics improvement.
-
- Will merge to 'master'.
-
-
-* sg/column-nl (2021-08-26) 1 commit
-  (merged to 'next' on 2021-08-30 at a3cb0f4745)
- + column: fix parsing of the '--nl' option
-
- The parser for the "--nl" option of "git column" has been
- corrected.
 
  Will merge to 'master'.
 
@@ -853,119 +964,41 @@ Release tarballs are available at:
 
  Add progress display to "git bundle unbundle".
 
- Will merge to 'next'?
-
-
-* jk/log-warn-on-bogus-encoding (2021-08-27) 2 commits
- - docs: use "character encoding" to refer to commit-object encoding
- - logmsg_reencode(): warn when iconv() fails
-
- Doc update plus improved error reporting.
-
- Will merge to 'next'.
-
-
-* rs/archive-use-object-id (2021-08-27) 1 commit
- - archive: convert queue_directory to struct object_id
-
- Code cleanup.
-
- Will merge to 'next'.
-
-
-* rs/show-branch-simplify (2021-08-27) 1 commit
- - show-branch: simplify rev_is_head()
-
- Code cleanup.
-
  Will merge to 'next'.
 
 
 * lh/systemd-timers (2021-09-07) 3 commits
- - maintenance: add support for systemd timers on Linux
- - maintenance: `git maintenance run` learned `--scheduler=<scheduler>`
- - cache.h: Introduce a generic "xdg_config_home_for(…)" function
+  (merged to 'next' on 2021-09-10 at b27d72031a)
+ + maintenance: add support for systemd timers on Linux
+ + maintenance: `git maintenance run` learned `--scheduler=<scheduler>`
+ + cache.h: Introduce a generic "xdg_config_home_for(…)" function
 
  "git maintenance" scheduler learned to use systemd timers as a
  possible backend.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ps/fetch-optim (2021-09-01) 7 commits
- - fetch: avoid second connectivity check if we already have all objects
- - fetch: merge fetching and consuming refs
- - fetch: refactor fetch refs to be more extendable
- - fetch-pack: optimize loading of refs via commit graph
- - connected: refactor iterator to return next object ID directly
- - fetch: avoid unpacking headers in object existence check
- - fetch: speed up lookup of want refs via commit-graph
+  (merged to 'next' on 2021-09-08 at 99f865125d)
+ + fetch: avoid second connectivity check if we already have all objects
+ + fetch: merge fetching and consuming refs
+ + fetch: refactor fetch refs to be more extendable
+ + fetch-pack: optimize loading of refs via commit graph
+ + connected: refactor iterator to return next object ID directly
+ + fetch: avoid unpacking headers in object existence check
+ + fetch: speed up lookup of want refs via commit-graph
 
  Optimize code that handles large number of refs in the "git fetch"
  code path.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ar/submodule-run-update-procedure (2021-08-24) 1 commit
  - submodule--helper: run update procedures from C
 
  Reimplementation of parts of "git submodule" in C continues.
-
- Will merge to 'next'.
-
-
-* ab/help-autocorrect-prompt (2021-08-14) 1 commit
- - help.c: help.autocorrect=prompt waits for user action
-
- The logic for auto-correction of misspelt subcommands learned to go
- interactive when the help.autocorrect configuration variable is set
- to true.
-
- Will merge to 'next'.
-
-
-* zh/cherry-pick-advice (2021-08-23) 1 commit
-  (merged to 'next' on 2021-09-01 at 6ff491cc09)
- + cherry-pick: use better advice message
-
- The advice message that "git cherry-pick" gives when it asks
- conflicted replay of a commit to be resolved by the end user has
- been updated.
-
- Will merge to 'master'.
-
-
-* mk/clone-recurse-submodules (2021-08-30) 1 commit
-  (merged to 'next' on 2021-09-03 at 9787178599)
- + clone: set submodule.recurse=true if submodule.stickyRecursiveClone enabled
-
- After "git clone --recurse-submodules", all submodules are cloned
- but they are not by default recursed into by other commands.  With
- submodule.stickyRecursiveClone configuration set, submodule.recurse
- configuration is set to true in a repository created by "clone"
- with "--recurse-submodules" option.
-
- Will merge to 'master'.
-
-
-* ka/want-ref-in-namespace (2021-09-01) 3 commits
-  (merged to 'next' on 2021-09-01 at a1075a92a9)
- + docs: clarify the interaction of transfer.hideRefs and namespaces
- + upload-pack.c: treat want-ref relative to namespace
- + t5730: introduce fetch command helper
-
- "git upload-pack" which runs on the other side of "git fetch"
- forgot to take the ref namespaces into account when handling
- want-ref requests.
-
- Will merge to 'master'.
-
-
-* cb/ci-build-pedantic (2021-08-11) 1 commit
- - ci: run a pedantic build as part of the GitHub workflow
-
- CI update.
 
  Will merge to 'next'.
 
@@ -981,44 +1014,33 @@ Release tarballs are available at:
  - sparse-index: silently return when not using cone-mode patterns
  - t7519: rewrite sparse index test
  - Merge branch 'ds/add-with-sparse-index' into ds/sparse-index-ignored-files
- (this branch is used by sg/test-split-index-fix.)
+ (this branch is used by ds/mergies-with-sparse-index and sg/test-split-index-fix.)
 
  In cone mode, the sparse-index codepath learned to remove ignored
  files (like build artifacts) outside the sparse cone, allowing the
  entire directory outside the sparse cone to be removed, which is
  especially useful when the sparse patterns change.
 
- Will merge to 'next'?
+ Will merge to 'next'.
 
 
-* js/advise-when-skipping-cherry-picked (2021-08-30) 1 commit
-  (merged to 'next' on 2021-09-01 at bc883fce56)
- + sequencer: advise if skipping cherry-picked commit
-
- "git rebase" by default skips changes that are equivalent to
- commits that are already in the history the branch is rebased onto;
- give messages when this happens to let the users be aware of
- skipped commits, and also teach them how to tell "rebase" to keep
- duplicated changes.
-
- Will merge to 'master'.
-
-
-* jt/grep-wo-submodule-odb-as-alternate (2021-09-07) 8 commits
- - t7814: show lack of alternate ODB-adding
- - submodule-config: pass repo upon blob config read
- - grep: add repository to OID grep sources
- - grep: allocate subrepos on heap
- - grep: read submodule entry with explicit repo
- - grep: typesafe versions of grep_source_init
- - grep: use submodule-ODB-as-alternate lazy-addition
- - submodule: lazily add submodule ODBs as alternates
+* jt/grep-wo-submodule-odb-as-alternate (2021-09-08) 8 commits
+  (merged to 'next' on 2021-09-08 at 67612d0b7f)
+ + t7814: show lack of alternate ODB-adding
+ + submodule-config: pass repo upon blob config read
+ + grep: add repository to OID grep sources
+ + grep: allocate subrepos on heap
+ + grep: read submodule entry with explicit repo
+ + grep: typesafe versions of grep_source_init
+ + grep: use submodule-ODB-as-alternate lazy-addition
+ + submodule: lazily add submodule ODBs as alternates
+ (this branch is used by jt/add-submodule-odb-clean-up.)
 
  The code to make "git grep" recurse into submodules has been
  updated to migrate away from the "add submodule's object store as
  an alternate object store" mechanism (which is suboptimal).
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ar/submodule-add-more (2021-08-10) 10 commits
@@ -1034,20 +1056,9 @@ Release tarballs are available at:
  - Merge branch 'ar/submodule-add-config' into ar/submodule-add
  (this branch uses ar/submodule-add-config.)
 
- More parts of "git submoudle add" has been rewritten in C.
+ More parts of "git submodule add" has been rewritten in C.
 
  Will merge to 'next'.
-
-
-* cb/makefile-apple-clang (2021-08-06) 3 commits
-  (merged to 'next' on 2021-08-30 at 9fe8f1a9b3)
- + build: catch clang that identifies itself as "$VENDOR clang"
- + build: clang version may not be followed by extra words
- + build: update detect-compiler for newer Xcode version
-
- Build update for Apple clang.
-
- Will merge to 'master'.
 
 
 * ab/lib-subtest (2021-08-05) 11 commits
@@ -1082,14 +1093,15 @@ Release tarballs are available at:
  cf. <20210901050406.GB76263@szeder.dev>
 
 
-* ab/progress-users-adjust-counters (2021-08-25) 2 commits
- - entry: show finer-grained counter in "Filtering content" progress line
- - commit-graph: fix bogus counter in "Scanning merged commits" progress line
+* ab/progress-users-adjust-counters (2021-09-09) 2 commits
+  (merged to 'next' on 2021-09-10 at b50c37aa44)
+ + entry: show finer-grained counter in "Filtering content" progress line
+ + commit-graph: fix bogus counter in "Scanning merged commits" progress line
 
  The code to show progress indicator in a few codepaths did not
  cover between 0-100%, which has been corrected.
 
- Will merge to 'next'?
+ Will merge to 'master'.
 
 
 * ar/submodule-add-config (2021-08-10) 1 commit
@@ -1102,34 +1114,34 @@ Release tarballs are available at:
 
 
 * dt/submodule-diff-fixes (2021-08-31) 3 commits
- - diff --submodule=diff: don't print failure message twice
- - diff --submodule=diff: do not fail on ever-initialied deleted submodules
- - t4060: remove unused variable
+  (merged to 'next' on 2021-09-10 at 21b773f4fe)
+ + diff --submodule=diff: don't print failure message twice
+ + diff --submodule=diff: do not fail on ever-initialied deleted submodules
+ + t4060: remove unused variable
 
  "git diff --submodule=diff" showed failure from run_command() when
  trying to run diff inside a submodule, when the user manually
  removes the submodule directory.
 
- Will merge to 'next'?
- cf. <20210812001332.715876-1-dturner@twosigma.com>
+ Will merge to 'master'.
 
 
-* fs/ssh-signing (2021-08-29) 9 commits
-  (merged to 'next' on 2021-09-03 at eed4e814c0)
- + ssh signing: test that gpg fails for unknown keys
- + ssh signing: tests for logs, tags & push certs
- + ssh signing: duplicate t7510 tests for commits
- + ssh signing: verify signatures using ssh-keygen
- + ssh signing: provide a textual signing_key_id
- + ssh signing: retrieve a default key from ssh-agent
- + ssh signing: add ssh key format and signing code
- + ssh signing: add test prereqs
- + ssh signing: preliminary refactoring and clean-up
+* fs/ssh-signing (2021-09-10) 9 commits
+ - ssh signing: test that gpg fails for unknown keys
+ - ssh signing: tests for logs, tags & push certs
+ - ssh signing: duplicate t7510 tests for commits
+ - ssh signing: verify signatures using ssh-keygen
+ - ssh signing: provide a textual signing_key_id
+ - ssh signing: retrieve a default key from ssh-agent
+ - ssh signing: add ssh key format and signing code
+ - ssh signing: add test prereqs
+ - ssh signing: preliminary refactoring and clean-up
 
  Use ssh public crypto for object and push-cert signing.
 
  On hold.
- cf. <xmqq4kawcmqg.fsf@gitster.g>
+ cf. <pull.1041.v8.git.git.1631304462.gitgitgadget@gmail.com>
+ cf. <532d97e7-8c91-df6a-6d90-70668256f513@gigacodes.de>
 
 
 * cf/fetch-set-upstream-while-detached (2021-07-06) 1 commit
@@ -1151,46 +1163,50 @@ Release tarballs are available at:
 
  Build clean-up for "make tags" and friends.
 
- Will merge to 'next'?
+ Will merge to 'next'.
 
 
-* tb/multi-pack-bitmaps (2021-09-01) 27 commits
- - p5326: perf tests for MIDX bitmaps
- - p5310: extract full and partial bitmap tests
- - midx: respect 'GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP'
- - t7700: update to work with MIDX bitmap test knob
- - t5319: don't write MIDX bitmaps in t5319
- - t5310: disable GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP
- - t0410: disable GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP
- - t5326: test multi-pack bitmap behavior
- - t/helper/test-read-midx.c: add --checksum mode
- - t5310: move some tests to lib-bitmap.sh
- - pack-bitmap: write multi-pack bitmaps
- - pack-bitmap: read multi-pack bitmaps
- - pack-bitmap.c: avoid redundant calls to try_partial_reuse
- - pack-bitmap.c: introduce 'bitmap_is_preferred_refname()'
- - pack-bitmap.c: introduce 'nth_bitmap_object_oid()'
- - pack-bitmap.c: introduce 'bitmap_num_objects()'
- - midx: avoid opening multiple MIDXs when writing
- - midx: close linked MIDXs, avoid leaking memory
- - midx: infer preferred pack when not given one
- - midx: reject empty `--preferred-pack`'s
- - midx: clear auxiliary .rev after replacing the MIDX
- - midx: fix `*.rev` cleanups with `--object-dir`
- - midx: disallow running outside of a repository
- - Documentation: describe MIDX-based bitmaps
- - pack-bitmap-write.c: free existing bitmaps
- - pack-bitmap-write.c: gracefully fail to write non-closed bitmaps
- - pack-bitmap.c: harden 'test_bitmap_walk()' to check type bitmaps
+* tb/multi-pack-bitmaps (2021-09-09) 29 commits
+  (merged to 'next' on 2021-09-10 at 71559ef435)
+ + pack-bitmap: drop bitmap_index argument from try_partial_reuse()
+ + pack-bitmap: drop repository argument from prepare_midx_bitmap_git()
+  (merged to 'next' on 2021-09-08 at f2b7415bd8)
+ + p5326: perf tests for MIDX bitmaps
+ + p5310: extract full and partial bitmap tests
+ + midx: respect 'GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP'
+ + t7700: update to work with MIDX bitmap test knob
+ + t5319: don't write MIDX bitmaps in t5319
+ + t5310: disable GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP
+ + t0410: disable GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP
+ + t5326: test multi-pack bitmap behavior
+ + t/helper/test-read-midx.c: add --checksum mode
+ + t5310: move some tests to lib-bitmap.sh
+ + pack-bitmap: write multi-pack bitmaps
+ + pack-bitmap: read multi-pack bitmaps
+ + pack-bitmap.c: avoid redundant calls to try_partial_reuse
+ + pack-bitmap.c: introduce 'bitmap_is_preferred_refname()'
+ + pack-bitmap.c: introduce 'nth_bitmap_object_oid()'
+ + pack-bitmap.c: introduce 'bitmap_num_objects()'
+ + midx: avoid opening multiple MIDXs when writing
+ + midx: close linked MIDXs, avoid leaking memory
+ + midx: infer preferred pack when not given one
+ + midx: reject empty `--preferred-pack`'s
+ + midx: clear auxiliary .rev after replacing the MIDX
+ + midx: fix `*.rev` cleanups with `--object-dir`
+ + midx: disallow running outside of a repository
+ + Documentation: describe MIDX-based bitmaps
+ + pack-bitmap-write.c: free existing bitmaps
+ + pack-bitmap-write.c: gracefully fail to write non-closed bitmaps
+ + pack-bitmap.c: harden 'test_bitmap_walk()' to check type bitmaps
 
  The reachability bitmap file used to be generated only for a single
  pack, but now we've learned to generate bitmaps for history that
  span across multiple packfiles.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* ab/config-based-hooks-base (2021-08-03) 36 commits
+* ab/config-based-hooks-base (2021-09-09) 36 commits
  - hooks: fix a TOCTOU in "did we run a hook?" heuristic
  - receive-pack: convert receive hooks to hook.h
  - post-update: use hook.h library
@@ -1221,9 +1237,9 @@ Release tarballs are available at:
  - gc: use hook library for pre-auto-gc hook
  - hook: add 'run' subcommand
  - hook-list.h: add a generated list of hooks, like config-list.h
- - hook.c users: use "hook_exists()" insted of "find_hook()"
+ - hook.c users: use "hook_exists()" instead of "find_hook()"
  - hook.c: add a hook_exists() wrapper and use it in bugreport.c
- - hook.[ch]: move find_hook() to this new library
+ - hook.[ch]: move find_hook() from run-command.c to hook.c
  - Makefile: remove an out-of-date comment
  - Makefile: stop hardcoding {command,config}-list.h
  - Makefile: mark "check" target as .PHONY
@@ -1250,31 +1266,7 @@ Release tarballs are available at:
 
  Code clean-up around "git serve".
 
- Will merge to 'next'?
-
-
-* ab/test-tool-cache-cleanup (2021-08-24) 4 commits
- - read-cache perf: add a perf test for refresh_index()
- - test-tool: migrate read-cache-again to parse_options()
- - test-tool: migrate read-cache-perf to parse_options()
- - test-tool: split up test-tool read-cache
-
- Test code shuffling.
-
- Will discard.
- cf. <87tuj7xhqo.fsf@evledraar.gmail.com>
-
-
-* ab/pack-objects-stdin (2021-07-09) 5 commits
- - pack-objects.c: make use of REV_INFO_STDIN_LINE_PROCESS
- - pack-objects.c: do stdin parsing via revision.c's API
- - revision.[ch]: add a "handle_stdin_line" API
- - revision.h: refactor "disable_stdin" and "read_from_stdin"
- - upload-pack: run is_repository_shallow() before setup_revisions()
-
- Introduce handle_stdin_line callback to revision API and uses it.
-
- Waiting for reviews.
+ Will merge to 'next'.
 
 
 * pw/diff-color-moved-fix (2021-08-05) 13 commits
@@ -1297,11 +1289,12 @@ Release tarballs are available at:
  Long-overdue correctness and performance update to "diff
  --color-moved" feature.
 
- Eject for reroll.
+ Expecting a reroll.
  cf. <8bec1a6d-5052-50c3-4100-e6348289d581@gmail.com>
 
 
-* hn/reftable (2021-09-07) 19 commits
+* hn/reftable (2021-09-10) 20 commits
+ - fixup! reftable: implement stack, a mutable database of reftable files.
  - Add "test-tool dump-reftable" command.
  - reftable: add dump utility
  - reftable: implement stack, a mutable database of reftable files.
@@ -1358,36 +1351,6 @@ Release tarballs are available at:
 --------------------------------------------------
 [Discarded]
 
-* zh/cherry-pick-help-is-only-for-sequencer (2021-08-03) 2 commits
- . cherry-pick: use better advice message
- . cherry-pick: fix bug when used with GIT_CHERRY_PICK_HELP
-
- Originally merged to 'next' on 2021-08-04
-
- "git cherry-pick" loses its state file when a stray
- GIT_CHERRY_PICK_HELP environment is present, which has been
- corrected.
-
- Reverted out of 'next' at 1f62d2e1 on 2021-08-11
-
-
-* jk/refs-files-cleanup-cleanup (2021-08-19) 1 commit
- . refs: drop unused "flags" parameter to lock_ref_oid_basic()
-
- Code cleanup.
-
- Obsoleted by updated ab/refs-files-cleanup
-
-
-* ow/clone-bare-origin (2021-08-03) 1 commit
- - clone: Allow combining --bare and --origin
-
- "git clone" did not like to take "--bare" and "--origin=X" at the
- same time; loosen the restriction.
-
- cf. <20210802174944.53745-1-oystwa@gmail.com>
-
-
 * np/blame-ignore-revs-file-may-be-optional (2021-08-09) 1 commit
  - blame: add config `blame.ignoreRevsFileIsOptional`
 
@@ -1403,3 +1366,23 @@ Release tarballs are available at:
  can be used for not just blame.ignoreRevsFile but other filenames.
 
  Queued just as a reminder of the theme.
+
+
+* ab/test-tool-cache-cleanup (2021-08-24) 4 commits
+ - read-cache perf: add a perf test for refresh_index()
+ - test-tool: migrate read-cache-again to parse_options()
+ - test-tool: migrate read-cache-perf to parse_options()
+ - test-tool: split up test-tool read-cache
+
+ Test code shuffling.
+
+ Discarded.
+ cf. <87tuj7xhqo.fsf@evledraar.gmail.com>
+
+ * ow/clone-bare-origin (2021-08-03) 1 commit
+ - clone: Allow combining --bare and --origin
+
+ "git clone" did not like to take "--bare" and "--origin=X" at the
+ same time; loosen the restriction.
+
+ cf. <20210802174944.53745-1-oystwa@gmail.com>
