@@ -191,7 +191,7 @@ static int write_archive_entry(const struct object_id *oid, const char *base,
 	return err;
 }
 
-static void queue_directory(const unsigned char *sha1,
+static void queue_directory(const struct object_id *oid,
 		struct strbuf *base, const char *filename,
 		unsigned mode, struct archiver_context *c)
 {
@@ -203,7 +203,7 @@ static void queue_directory(const unsigned char *sha1,
 	d->mode	   = mode;
 	c->bottom  = d;
 	d->len = xsnprintf(d->path, len, "%.*s%s/", (int)base->len, base->buf, filename);
-	oidread(&d->oid, sha1);
+	oidcpy(&d->oid, oid);
 }
 
 static int write_directory(struct archiver_context *c)
@@ -250,8 +250,7 @@ static int queue_or_write_archive_entry(const struct object_id *oid,
 
 		if (check_attr_export_ignore(check))
 			return 0;
-		queue_directory(oid->hash, base, filename,
-				mode, c);
+		queue_directory(oid, base, filename, mode, c);
 		return READ_TREE_RECURSIVE;
 	}
 
