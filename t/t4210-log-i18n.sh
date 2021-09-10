@@ -131,4 +131,11 @@ do
 	fi
 done
 
+test_expect_success 'log shows warning when conversion fails' '
+	enc=this-encoding-does-not-exist &&
+	git log -1 --encoding=$enc 2>err &&
+	echo "warning: unable to reencode commit to ${SQ}${enc}${SQ}" >expect &&
+	test_cmp expect err
+'
+
 test_done
