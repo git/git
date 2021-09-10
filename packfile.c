@@ -2205,6 +2205,12 @@ int for_each_packed_object(each_packed_object_fn cb, void *data,
 		if ((flags & FOR_EACH_OBJECT_PROMISOR_ONLY) &&
 		    !p->pack_promisor)
 			continue;
+		if ((flags & FOR_EACH_OBJECT_SKIP_IN_CORE_KEPT_PACKS) &&
+		    p->pack_keep_in_core)
+			continue;
+		if ((flags & FOR_EACH_OBJECT_SKIP_ON_DISK_KEPT_PACKS) &&
+		    p->pack_keep)
+			continue;
 		if (open_pack_index(p)) {
 			pack_errors = 1;
 			continue;
