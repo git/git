@@ -894,6 +894,21 @@ for full details.
 	Contains a colon ':' separated list of keys with optional values
 	'key[=value]'.  Presence of unknown keys and values must be
 	ignored.
++
+Note that servers may need to be configured to allow this variable to
+pass over some transports. It will be propagated automatically when
+accessing local repositories (i.e., `file://` or a filesystem path), as
+well as over the `git://` protocol. For git-over-http, it should work
+automatically in most configurations, but see the discussion in
+linkgit:git-http-backend[1]. For git-over-ssh, the ssh server may need
+to be configured to allow clients to pass this variable (e.g., by using
+`AcceptEnv GIT_PROTOCOL` with OpenSSH).
++
+This configuration is optional. If the variable is not propagated, then
+clients will fall back to the original "v0" protocol (but may miss out
+on some performance improvements or features). This variable currently
+only affects clones and fetches; it is not yet used for pushes (but may
+be in the future).
 
 `GIT_OPTIONAL_LOCKS`::
 	If set to `0`, Git will complete any requested operation without
