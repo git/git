@@ -1417,21 +1417,25 @@ static int parse_want_ref(struct packet_writer *writer, const char *line,
 			  struct string_list *wanted_refs,
 			  struct object_array *want_obj)
 {
-	const char *arg;
-	if (skip_prefix(line, "want-ref ", &arg)) {
+	const char *refname_nons;
+	if (skip_prefix(line, "want-ref ", &refname_nons)) {
 		struct object_id oid;
 		struct string_list_item *item;
 		struct object *o;
+		struct strbuf refname = STRBUF_INIT;
 
-		if (read_ref(arg, &oid)) {
-			packet_writer_error(writer, "unknown ref %s", arg);
-			die("unknown ref %s", arg);
+		strbuf_addf(&refname, "%s%s", get_git_namespace(), refname_nons);
+		if (ref_is_hidden(refname_nons, refname.buf) ||
+		    read_ref(refname.buf, &oid)) {
+			packet_writer_error(writer, "unknown ref %s", refname_nons);
+			die("unknown ref %s", refname_nons);
 		}
+		strbuf_release(&refname);
 
-		item = string_list_append(wanted_refs, arg);
+		item = string_list_append(wanted_refs, refname_nons);
 		item->util = oiddup(&oid);
 
-		o = parse_object_or_die(&oid, arg);
+		o = parse_object_or_die(&oid, refname_nons);
 		if (!(o->flags & WANTED)) {
 			o->flags |= WANTED;
 			add_object_array(o, NULL, want_obj);
