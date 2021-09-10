@@ -1144,7 +1144,7 @@ static int write_midx_internal(const char *object_dir,
 		int bitmap_exists;
 		int want_bitmap = flags & MIDX_WRITE_BITMAP;
 
-		bitmap_git = prepare_midx_bitmap_git(the_repository, ctx.m);
+		bitmap_git = prepare_midx_bitmap_git(ctx.m);
 		bitmap_exists = bitmap_git && bitmap_is_midx(bitmap_git);
 		free_bitmap_index(bitmap_git);
 

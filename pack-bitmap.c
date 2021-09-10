@@ -517,8 +517,7 @@ struct bitmap_index *prepare_bitmap_git(struct repository *r)
 	return NULL;
 }
 
-struct bitmap_index *prepare_midx_bitmap_git(struct repository *r,
-					     struct multi_pack_index *midx)
+struct bitmap_index *prepare_midx_bitmap_git(struct multi_pack_index *midx)
 {
 	struct bitmap_index *bitmap_git = xcalloc(1, sizeof(*bitmap_git));
 
@@ -1329,8 +1328,7 @@ cleanup:
  * -1 means "stop trying further objects"; 0 means we may or may not have
  * reused, but you can keep feeding bits.
  */
-static int try_partial_reuse(struct bitmap_index *bitmap_git,
-			     struct packed_git *pack,
+static int try_partial_reuse(struct packed_git *pack,
 			     size_t pos,
 			     struct bitmap *reuse,
 			     struct pack_window **w_curs)
@@ -1477,7 +1475,7 @@ int reuse_partial_packfile_from_bitmap(struct bitmap_index *bitmap_git,
 				break;
 
 			offset += ewah_bit_ctz64(word >> offset);
-			if (try_partial_reuse(bitmap_git, pack, pos + offset,
+			if (try_partial_reuse(pack, pos + offset,
 					      reuse, &w_curs) < 0) {
 				/*
 				 * try_partial_reuse indicated we couldn't reuse
