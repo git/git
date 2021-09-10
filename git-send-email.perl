@@ -1697,7 +1697,6 @@ EOF
 
 $in_reply_to = $initial_in_reply_to;
 $references = $initial_in_reply_to || '';
-$subject = $initial_subject;
 $message_num = 0;
 
 # Prepares the email, prompts the user, sends it out
@@ -1720,6 +1719,7 @@ sub process_file {
 	@xh = ();
 	my $input_format = undef;
 	my @header = ();
+	$subject = $initial_subject;
 	$message = "";
 	$message_num++;
 	# First unfold multiline header fields
@@ -1926,15 +1926,23 @@ sub process_file {
 	}
 
 	# set up for the next message
-	if ($thread && $message_was_sent &&
-		($chain_reply_to || !defined $in_reply_to || length($in_reply_to) == 0 ||
-		$message_num == 1)) {
-		$in_reply_to = $message_id;
-		if (length $references > 0) {
-			$references .= "\n $message_id";
-		} else {
-			$references = "$message_id";
+	if ($thread) {
+		if ($message_was_sent &&
+		  ($chain_reply_to || !defined $in_reply_to || length($in_reply_to) == 0 ||
+		  $message_num == 1)) {
+			$in_reply_to = $message_id;
+			if (length $references > 0) {
+				$references .= "\n $message_id";
+			} else {
+				$references = "$message_id";
+			}
 		}
+	} elsif (!defined $initial_in_reply_to) {
+		# --thread and --in-reply-to manage the "In-Reply-To" header and by
+		# extension the "References" header. If these commands are not used, reset
+		# the header values to their defaults.
+		$in_reply_to = undef;
+		$references = '';
 	}
 	$message_id = undef;
 	$num_sent++;
