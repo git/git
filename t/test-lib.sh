@@ -1711,10 +1711,6 @@ test_lazy_prereq SHA1 '
 	esac
 '
 
-test_lazy_prereq REBASE_P '
-	test -z "$GIT_TEST_SKIP_REBASE_P"
-'
-
 # Ensure that no test accidentally triggers a Git command
 # that runs the actual maintenance scheduler, affecting a user's
 # system permanently.

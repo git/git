@@ -125,7 +125,6 @@
 /git-range-diff
 /git-read-tree
 /git-rebase
-/git-rebase--preserve-merges
 /git-receive-pack
 /git-reflog
 /git-remote

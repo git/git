@@ -318,6 +318,9 @@ static int config_read_branches(const char *key, const char *value, void *cb)
 		 * truth value with >= REBASE_TRUE.
 		 */
 		info->rebase = rebase_parse_value(value);
+		if (info->rebase == REBASE_INVALID)
+			warning(_("unhandled branch.%s.rebase=%s; assuming "
+				  "'true'"), name, value);
 		break;
 	case PUSH_REMOTE:
 		if (info->push_remote_name)

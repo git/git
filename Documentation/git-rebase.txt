@@ -526,28 +526,11 @@ i.e. commits that would be excluded by linkgit:git-log[1]'s
 the `rebase-cousins` mode is turned on, such commits are instead rebased
 onto `<upstream>` (or `<onto>`, if specified).
 +
-The `--rebase-merges` mode is similar in spirit to the deprecated
-`--preserve-merges` but works with interactive rebases,
-where commits can be reordered, inserted and dropped at will.
-+
 It is currently only possible to recreate the merge commits using the
 `ort` merge strategy; different merge strategies can be used only via
 explicit `exec git merge -s <strategy> [...]` commands.
 +
 See also REBASING MERGES and INCOMPATIBLE OPTIONS below.
-
--p::
---preserve-merges::
-	[DEPRECATED: use `--rebase-merges` instead] Recreate merge commits
-	instead of flattening the history by replaying commits a merge commit
-	introduces. Merge conflict resolutions or manual amendments to merge
-	commits are not preserved.
-+
-This uses the `--interactive` machinery internally, but combining it
-with the `--interactive` option explicitly is generally not a good
-idea unless you know what you are doing (see BUGS below).
-+
-See also INCOMPATIBLE OPTIONS below.
 
 -x <cmd>::
 --exec <cmd>::
@@ -580,9 +563,6 @@ See also INCOMPATIBLE OPTIONS below.
 	the root commit(s) on a branch.  When used with --onto, it
 	will skip changes already contained in <newbase> (instead of
 	<upstream>) whereas without --onto it will operate on every change.
-	When used together with both --onto and --preserve-merges,
-	'all' root commits will be rewritten to have <newbase> as parent
-	instead.
 +
 See also INCOMPATIBLE OPTIONS below.
 
@@ -644,7 +624,6 @@ are incompatible with the following options:
  * --allow-empty-message
  * --[no-]autosquash
  * --rebase-merges
- * --preserve-merges
  * --interactive
  * --exec
  * --no-keep-empty
@@ -655,13 +634,6 @@ are incompatible with the following options:
 
 In addition, the following pairs of options are incompatible:
 
- * --preserve-merges and --interactive
- * --preserve-merges and --signoff
- * --preserve-merges and --rebase-merges
- * --preserve-merges and --empty=
- * --preserve-merges and --ignore-whitespace
- * --preserve-merges and --committer-date-is-author-date
- * --preserve-merges and --ignore-date
  * --keep-base and --onto
  * --keep-base and --root
  * --fork-point and --root
@@ -1278,29 +1250,6 @@ CONFIGURATION
 
 include::config/rebase.txt[]
 include::config/sequencer.txt[]
-
-BUGS
-----
-The todo list presented by the deprecated `--preserve-merges --interactive`
-does not represent the topology of the revision graph (use `--rebase-merges`
-instead).  Editing commits and rewording their commit messages should work
-fine, but attempts to reorder commits tend to produce counterintuitive results.
-Use `--rebase-merges` in such scenarios instead.
-
-For example, an attempt to rearrange
-------------
-1 --- 2 --- 3 --- 4 --- 5
-------------
-to
-------------
-1 --- 2 --- 4 --- 3 --- 5
-------------
-by moving the "pick 4" line will result in the following history:
-------------
-	3
-       /
-1 --- 2 --- 4 --- 5
-------------
 
 GIT
 ---

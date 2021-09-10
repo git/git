@@ -48,8 +48,7 @@ static GIT_PATH_FUNC(merge_dir, "rebase-merge")
 enum rebase_type {
 	REBASE_UNSPECIFIED = -1,
 	REBASE_APPLY,
-	REBASE_MERGE,
-	REBASE_PRESERVE_MERGES
+	REBASE_MERGE
 };
 
 enum empty_type {
@@ -163,12 +162,7 @@ enum action {
 	ACTION_ABORT,
 	ACTION_QUIT,
 	ACTION_EDIT_TODO,
-	ACTION_SHOW_CURRENT_PATCH,
-	ACTION_SHORTEN_OIDS,
-	ACTION_EXPAND_OIDS,
-	ACTION_CHECK_TODO_LIST,
-	ACTION_REARRANGE_SQUASH,
-	ACTION_ADD_EXEC
+	ACTION_SHOW_CURRENT_PATCH
 };
 
 static const char *action_names[] = { "undefined",
@@ -178,81 +172,6 @@ static const char *action_names[] = { "undefined",
 				      "quit",
 				      "edit_todo",
 				      "show_current_patch" };
-
-static int add_exec_commands(struct string_list *commands)
-{
-	const char *todo_file = rebase_path_todo();
-	struct todo_list todo_list = TODO_LIST_INIT;
-	int res;
-
-	if (strbuf_read_file(&todo_list.buf, todo_file, 0) < 0)
-		return error_errno(_("could not read '%s'."), todo_file);
-
-	if (todo_list_parse_insn_buffer(the_repository, todo_list.buf.buf,
-					&todo_list)) {
-		todo_list_release(&todo_list);
-		return error(_("unusable todo list: '%s'"), todo_file);
-	}
-
-	todo_list_add_exec_commands(&todo_list, commands);
-	res = todo_list_write_to_file(the_repository, &todo_list,
-				      todo_file, NULL, NULL, -1, 0);
-	todo_list_release(&todo_list);
-
-	if (res)
-		return error_errno(_("could not write '%s'."), todo_file);
-	return 0;
-}
-
-static int rearrange_squash_in_todo_file(void)
-{
-	const char *todo_file = rebase_path_todo();
-	struct todo_list todo_list = TODO_LIST_INIT;
-	int res = 0;
-
-	if (strbuf_read_file(&todo_list.buf, todo_file, 0) < 0)
-		return error_errno(_("could not read '%s'."), todo_file);
-	if (todo_list_parse_insn_buffer(the_repository, todo_list.buf.buf,
-					&todo_list)) {
-		todo_list_release(&todo_list);
-		return error(_("unusable todo list: '%s'"), todo_file);
-	}
-
-	res = todo_list_rearrange_squash(&todo_list);
-	if (!res)
-		res = todo_list_write_to_file(the_repository, &todo_list,
-					      todo_file, NULL, NULL, -1, 0);
-
-	todo_list_release(&todo_list);
-
-	if (res)
-		return error_errno(_("could not write '%s'."), todo_file);
-	return 0;
-}
-
-static int transform_todo_file(unsigned flags)
-{
-	const char *todo_file = rebase_path_todo();
-	struct todo_list todo_list = TODO_LIST_INIT;
-	int res;
-
-	if (strbuf_read_file(&todo_list.buf, todo_file, 0) < 0)
-		return error_errno(_("could not read '%s'."), todo_file);
-
-	if (todo_list_parse_insn_buffer(the_repository, todo_list.buf.buf,
-					&todo_list)) {
-		todo_list_release(&todo_list);
-		return error(_("unusable todo list: '%s'"), todo_file);
-	}
-
-	res = todo_list_write_to_file(the_repository, &todo_list, todo_file,
-				      NULL, NULL, -1, flags);
-	todo_list_release(&todo_list);
-
-	if (res)
-		return error_errno(_("could not write '%s'."), todo_file);
-	return 0;
-}
 
 static int edit_todo_file(unsigned flags)
 {
@@ -403,7 +322,6 @@ static int run_sequencer_rebase(struct rebase_options *opts,
 	flags |= opts->rebase_merges ? TODO_LIST_REBASE_MERGES : 0;
 	flags |= opts->rebase_cousins > 0 ? TODO_LIST_REBASE_COUSINS : 0;
 	flags |= opts->root_with_onto ? TODO_LIST_ROOT_WITH_ONTO : 0;
-	flags |= command == ACTION_SHORTEN_OIDS ? TODO_LIST_SHORTEN_IDS : 0;
 	flags |= opts->reapply_cherry_picks ? TODO_LIST_REAPPLY_CHERRY_PICKS : 0;
 	flags |= opts->flags & REBASE_NO_QUIET ? TODO_LIST_WARN_SKIPPED_CHERRY_PICKS : 0;
 
@@ -439,24 +357,6 @@ static int run_sequencer_rebase(struct rebase_options *opts,
 
 		break;
 	}
-	case ACTION_SHORTEN_OIDS:
-	case ACTION_EXPAND_OIDS:
-		ret = transform_todo_file(flags);
-		break;
-	case ACTION_CHECK_TODO_LIST:
-		ret = check_todo_list_from_file(the_repository);
-		break;
-	case ACTION_REARRANGE_SQUASH:
-		ret = rearrange_squash_in_todo_file();
-		break;
-	case ACTION_ADD_EXEC: {
-		struct string_list commands = STRING_LIST_INIT_DUP;
-
-		split_exec_commands(opts->cmd, &commands);
-		ret = add_exec_commands(&commands);
-		string_list_clear(&commands, 0);
-		break;
-	}
 	default:
 		BUG("invalid command '%d'", command);
 	}
@@ -478,102 +378,9 @@ static int parse_opt_keep_empty(const struct option *opt, const char *arg,
 	return 0;
 }
 
-static const char * const builtin_rebase_interactive_usage[] = {
-	N_("git rebase--interactive [<options>]"),
-	NULL
-};
-
-int cmd_rebase__interactive(int argc, const char **argv, const char *prefix)
-{
-	struct rebase_options opts = REBASE_OPTIONS_INIT;
-	struct object_id squash_onto = *null_oid();
-	enum action command = ACTION_NONE;
-	struct option options[] = {
-		OPT_NEGBIT(0, "ff", &opts.flags, N_("allow fast-forward"),
-			   REBASE_FORCE),
-		OPT_CALLBACK_F('k', "keep-empty", &options, NULL,
-			N_("keep commits which start empty"),
-			PARSE_OPT_NOARG | PARSE_OPT_HIDDEN,
-			parse_opt_keep_empty),
-		OPT_BOOL_F(0, "allow-empty-message", &opts.allow_empty_message,
-			   N_("allow commits with empty messages"),
-			   PARSE_OPT_HIDDEN),
-		OPT_BOOL(0, "rebase-merges", &opts.rebase_merges, N_("rebase merge commits")),
-		OPT_BOOL(0, "rebase-cousins", &opts.rebase_cousins,
-			 N_("keep original branch points of cousins")),
-		OPT_BOOL(0, "autosquash", &opts.autosquash,
-			 N_("move commits that begin with squash!/fixup!")),
-		OPT_BOOL(0, "signoff", &opts.signoff, N_("sign commits")),
-		OPT_BIT('v', "verbose", &opts.flags,
-			N_("display a diffstat of what changed upstream"),
-			REBASE_NO_QUIET | REBASE_VERBOSE | REBASE_DIFFSTAT),
-		OPT_CMDMODE(0, "continue", &command, N_("continue rebase"),
-			    ACTION_CONTINUE),
-		OPT_CMDMODE(0, "skip", &command, N_("skip commit"), ACTION_SKIP),
-		OPT_CMDMODE(0, "edit-todo", &command, N_("edit the todo list"),
-			    ACTION_EDIT_TODO),
-		OPT_CMDMODE(0, "show-current-patch", &command, N_("show the current patch"),
-			    ACTION_SHOW_CURRENT_PATCH),
-		OPT_CMDMODE(0, "shorten-ids", &command,
-			N_("shorten commit ids in the todo list"), ACTION_SHORTEN_OIDS),
-		OPT_CMDMODE(0, "expand-ids", &command,
-			N_("expand commit ids in the todo list"), ACTION_EXPAND_OIDS),
-		OPT_CMDMODE(0, "check-todo-list", &command,
-			N_("check the todo list"), ACTION_CHECK_TODO_LIST),
-		OPT_CMDMODE(0, "rearrange-squash", &command,
-			N_("rearrange fixup/squash lines"), ACTION_REARRANGE_SQUASH),
-		OPT_CMDMODE(0, "add-exec-commands", &command,
-			N_("insert exec commands in todo list"), ACTION_ADD_EXEC),
-		{ OPTION_CALLBACK, 0, "onto", &opts.onto, N_("onto"), N_("onto"),
-		  PARSE_OPT_NONEG, parse_opt_commit, 0 },
-		{ OPTION_CALLBACK, 0, "restrict-revision", &opts.restrict_revision,
-		  N_("restrict-revision"), N_("restrict revision"),
-		  PARSE_OPT_NONEG, parse_opt_commit, 0 },
-		{ OPTION_CALLBACK, 0, "squash-onto", &squash_onto, N_("squash-onto"),
-		  N_("squash onto"), PARSE_OPT_NONEG, parse_opt_object_id, 0 },
-		{ OPTION_CALLBACK, 0, "upstream", &opts.upstream, N_("upstream"),
-		  N_("the upstream commit"), PARSE_OPT_NONEG, parse_opt_commit,
-		  0 },
-		OPT_STRING(0, "head-name", &opts.head_name, N_("head-name"), N_("head name")),
-		{ OPTION_STRING, 'S', "gpg-sign", &opts.gpg_sign_opt, N_("key-id"),
-			N_("GPG-sign commits"),
-			PARSE_OPT_OPTARG, NULL, (intptr_t) "" },
-		OPT_STRING(0, "strategy", &opts.strategy, N_("strategy"),
-			   N_("rebase strategy")),
-		OPT_STRING(0, "strategy-opts", &opts.strategy_opts, N_("strategy-opts"),
-			   N_("strategy options")),
-		OPT_STRING(0, "switch-to", &opts.switch_to, N_("switch-to"),
-			   N_("the branch or commit to checkout")),
-		OPT_STRING(0, "onto-name", &opts.onto_name, N_("onto-name"), N_("onto name")),
-		OPT_STRING(0, "cmd", &opts.cmd, N_("cmd"), N_("the command to run")),
-		OPT_RERERE_AUTOUPDATE(&opts.allow_rerere_autoupdate),
-		OPT_BOOL(0, "reschedule-failed-exec", &opts.reschedule_failed_exec,
-			 N_("automatically re-schedule any `exec` that fails")),
-		OPT_END()
-	};
-
-	opts.rebase_cousins = -1;
-
-	if (argc == 1)
-		usage_with_options(builtin_rebase_interactive_usage, options);
-
-	argc = parse_options(argc, argv, prefix, options,
-			builtin_rebase_interactive_usage, PARSE_OPT_KEEP_ARGV0);
-
-	if (!is_null_oid(&squash_onto))
-		opts.squash_onto = &squash_onto;
-
-	if (opts.rebase_cousins >= 0 && !opts.rebase_merges)
-		warning(_("--[no-]rebase-cousins has no effect without "
-			  "--rebase-merges"));
-
-	return !!run_sequencer_rebase(&opts, command);
-}
-
 static int is_merge(struct rebase_options *opts)
 {
-	return opts->type == REBASE_MERGE ||
-		opts->type == REBASE_PRESERVE_MERGES;
+	return opts->type == REBASE_MERGE;
 }
 
 static void imply_merge(struct rebase_options *opts, const char *option)
@@ -583,7 +390,6 @@ static void imply_merge(struct rebase_options *opts, const char *option)
 		die(_("%s requires the merge backend"), option);
 		break;
 	case REBASE_MERGE:
-	case REBASE_PRESERVE_MERGES:
 		break;
 	default:
 		opts->type = REBASE_MERGE; /* implied */
@@ -774,17 +580,6 @@ static struct commit *peel_committish(const char *name)
 	return (struct commit *)peel_to_type(name, 0, obj, OBJ_COMMIT);
 }
 
-static void add_var(struct strbuf *buf, const char *name, const char *value)
-{
-	if (!value)
-		strbuf_addf(buf, "unset %s; ", name);
-	else {
-		strbuf_addf(buf, "%s=", name);
-		sq_quote_buf(buf, value);
-		strbuf_addstr(buf, "; ");
-	}
-}
-
 static int move_to_original_branch(struct rebase_options *opts)
 {
 	struct strbuf orig_head_reflog = STRBUF_INIT, head_reflog = STRBUF_INIT;
@@ -941,10 +736,7 @@ static int run_am(struct rebase_options *opts)
 
 static int run_specific_rebase(struct rebase_options *opts, enum action action)
 {
-	const char *argv[] = { NULL, NULL };
-	struct strbuf script_snippet = STRBUF_INIT, buf = STRBUF_INIT;
 	int status;
-	const char *backend, *backend_func;
 
 	if (opts->type == REBASE_MERGE) {
 		/* Run sequencer-based rebase */
@@ -961,87 +753,11 @@ static int run_specific_rebase(struct rebase_options *opts, enum action action)
 		}
 
 		status = run_sequencer_rebase(opts, action);
-		goto finished_rebase;
-	}
-
-	if (opts->type == REBASE_APPLY) {
+	} else if (opts->type == REBASE_APPLY)
 		status = run_am(opts);
-		goto finished_rebase;
-	}
-
-	add_var(&script_snippet, "GIT_DIR", absolute_path(get_git_dir()));
-	add_var(&script_snippet, "state_dir", opts->state_dir);
-
-	add_var(&script_snippet, "upstream_name", opts->upstream_name);
-	add_var(&script_snippet, "upstream", opts->upstream ?
-		oid_to_hex(&opts->upstream->object.oid) : NULL);
-	add_var(&script_snippet, "head_name",
-		opts->head_name ? opts->head_name : "detached HEAD");
-	add_var(&script_snippet, "orig_head", oid_to_hex(&opts->orig_head));
-	add_var(&script_snippet, "onto", opts->onto ?
-		oid_to_hex(&opts->onto->object.oid) : NULL);
-	add_var(&script_snippet, "onto_name", opts->onto_name);
-	add_var(&script_snippet, "revisions", opts->revisions);
-	add_var(&script_snippet, "restrict_revision", opts->restrict_revision ?
-		oid_to_hex(&opts->restrict_revision->object.oid) : NULL);
-	sq_quote_argv_pretty(&buf, opts->git_am_opts.v);
-	add_var(&script_snippet, "git_am_opt", buf.buf);
-	strbuf_release(&buf);
-	add_var(&script_snippet, "verbose",
-		opts->flags & REBASE_VERBOSE ? "t" : "");
-	add_var(&script_snippet, "diffstat",
-		opts->flags & REBASE_DIFFSTAT ? "t" : "");
-	add_var(&script_snippet, "force_rebase",
-		opts->flags & REBASE_FORCE ? "t" : "");
-	if (opts->switch_to)
-		add_var(&script_snippet, "switch_to", opts->switch_to);
-	add_var(&script_snippet, "action", opts->action ? opts->action : "");
-	add_var(&script_snippet, "signoff", opts->signoff ? "--signoff" : "");
-	add_var(&script_snippet, "allow_rerere_autoupdate",
-		opts->allow_rerere_autoupdate ?
-			opts->allow_rerere_autoupdate == RERERE_AUTOUPDATE ?
-			"--rerere-autoupdate" : "--no-rerere-autoupdate" : "");
-	add_var(&script_snippet, "keep_empty", opts->keep_empty ? "yes" : "");
-	add_var(&script_snippet, "autosquash", opts->autosquash ? "t" : "");
-	add_var(&script_snippet, "gpg_sign_opt", opts->gpg_sign_opt);
-	add_var(&script_snippet, "cmd", opts->cmd);
-	add_var(&script_snippet, "allow_empty_message",
-		opts->allow_empty_message ?  "--allow-empty-message" : "");
-	add_var(&script_snippet, "rebase_merges",
-		opts->rebase_merges ? "t" : "");
-	add_var(&script_snippet, "rebase_cousins",
-		opts->rebase_cousins ? "t" : "");
-	add_var(&script_snippet, "strategy", opts->strategy);
-	add_var(&script_snippet, "strategy_opts", opts->strategy_opts);
-	add_var(&script_snippet, "rebase_root", opts->root ? "t" : "");
-	add_var(&script_snippet, "squash_onto",
-		opts->squash_onto ? oid_to_hex(opts->squash_onto) : "");
-	add_var(&script_snippet, "git_format_patch_opt",
-		opts->git_format_patch_opt.buf);
-
-	if (is_merge(opts) &&
-	    !(opts->flags & REBASE_INTERACTIVE_EXPLICIT)) {
-		strbuf_addstr(&script_snippet,
-			      "GIT_SEQUENCE_EDITOR=:; export GIT_SEQUENCE_EDITOR; ");
-		opts->autosquash = 0;
-	}
-
-	switch (opts->type) {
-	case REBASE_PRESERVE_MERGES:
-		backend = "git-rebase--preserve-merges";
-		backend_func = "git_rebase__preserve_merges";
-		break;
-	default:
+	else
 		BUG("Unhandled rebase type %d", opts->type);
-		break;
-	}
 
-	strbuf_addf(&script_snippet,
-		    ". git-sh-setup && . %s && %s", backend, backend_func);
-	argv[0] = script_snippet.buf;
-
-	status = run_command_v_opt(argv, RUN_USING_SHELL);
-finished_rebase:
 	if (opts->dont_finish_rebase)
 		; /* do nothing */
 	else if (opts->type == REBASE_MERGE)
@@ -1058,8 +774,6 @@ finished_rebase:
 		strbuf_release(&dir);
 		die("Nothing to do");
 	}
-
-	strbuf_release(&script_snippet);
 
 	return status ? -1 : 0;
 }
@@ -1196,7 +910,7 @@ static int parse_opt_merge(const struct option *opt, const char *arg, int unset)
 	return 0;
 }
 
-/* -i followed by -p is still explicitly interactive, but -p alone is not */
+/* -i followed by -r is still explicitly interactive, but -r alone is not */
 static int parse_opt_interactive(const struct option *opt, const char *arg,
 				 int unset)
 {
@@ -1314,6 +1028,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	char *squash_onto_name = NULL;
 	int reschedule_failed_exec = -1;
 	int allow_preemptive_ff = 1;
+	int preserve_merges_selected = 0;
 	struct option builtin_rebase_options[] = {
 		OPT_STRING(0, "onto", &options.onto_name,
 			   N_("revision"),
@@ -1378,10 +1093,10 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			N_("let the user edit the list of commits to rebase"),
 			PARSE_OPT_NOARG | PARSE_OPT_NONEG,
 			parse_opt_interactive),
-		OPT_SET_INT_F('p', "preserve-merges", &options.type,
+		OPT_SET_INT_F('p', "preserve-merges", &preserve_merges_selected,
 			      N_("(DEPRECATED) try to recreate merges instead of "
 				 "ignoring them"),
-			      REBASE_PRESERVE_MERGES, PARSE_OPT_HIDDEN),
+			      1, PARSE_OPT_HIDDEN),
 		OPT_RERERE_AUTOUPDATE(&options.allow_rerere_autoupdate),
 		OPT_CALLBACK_F(0, "empty", &options, "{drop,keep,ask}",
 			       N_("how to handle commits that become empty"),
@@ -1449,8 +1164,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		strbuf_reset(&buf);
 		strbuf_addf(&buf, "%s/rewritten", merge_dir());
 		if (is_directory(buf.buf)) {
-			options.type = REBASE_PRESERVE_MERGES;
-			options.flags |= REBASE_INTERACTIVE_EXPLICIT;
+			die("`rebase -p` is no longer supported");
 		} else {
 			strbuf_reset(&buf);
 			strbuf_addf(&buf, "%s/interactive", merge_dir());
@@ -1471,6 +1185,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			     builtin_rebase_options,
 			     builtin_rebase_usage, 0);
 
+	if (preserve_merges_selected)
+		die(_("--preserve-merges was replaced by --rebase-merges"));
+
 	if (action != ACTION_NONE && total_argc != 2) {
 		usage_with_options(builtin_rebase_usage,
 				   builtin_rebase_options);
@@ -1479,10 +1196,6 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	if (argc > 2)
 		usage_with_options(builtin_rebase_usage,
 				   builtin_rebase_options);
-
-	if (options.type == REBASE_PRESERVE_MERGES)
-		warning(_("git rebase --preserve-merges is deprecated. "
-			  "Use --rebase-merges instead."));
 
 	if (keep_base) {
 		if (options.onto_name)
@@ -1703,7 +1416,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		if (options.ignore_date)
 			strvec_push(&options.git_am_opts, "--ignore-date");
 	} else {
-		/* REBASE_MERGE and PRESERVE_MERGES */
+		/* REBASE_MERGE */
 		if (ignore_whitespace) {
 			string_list_append(&strategy_options,
 					   "ignore-space-change");
@@ -1729,7 +1442,6 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		case REBASE_APPLY:
 			die(_("--strategy requires --merge or --interactive"));
 		case REBASE_MERGE:
-		case REBASE_PRESERVE_MERGES:
 			/* compatible */
 			break;
 		case REBASE_UNSPECIFIED:
@@ -1781,7 +1493,6 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 	switch (options.type) {
 	case REBASE_MERGE:
-	case REBASE_PRESERVE_MERGES:
 		options.state_dir = merge_dir();
 		break;
 	case REBASE_APPLY:
@@ -1806,26 +1517,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		options.reschedule_failed_exec = reschedule_failed_exec;
 
 	if (options.signoff) {
-		if (options.type == REBASE_PRESERVE_MERGES)
-			die("cannot combine '--signoff' with "
-			    "'--preserve-merges'");
 		strvec_push(&options.git_am_opts, "--signoff");
 		options.flags |= REBASE_FORCE;
-	}
-
-	if (options.type == REBASE_PRESERVE_MERGES) {
-		/*
-		 * Note: incompatibility with --signoff handled in signoff block above
-		 * Note: incompatibility with --interactive is just a strong warning;
-		 *       git-rebase.txt caveats with "unless you know what you are doing"
-		 */
-		if (options.rebase_merges)
-			die(_("cannot combine '--preserve-merges' with "
-			      "'--rebase-merges'"));
-
-		if (options.reschedule_failed_exec)
-			die(_("error: cannot combine '--preserve-merges' with "
-			      "'--reschedule-failed-exec'"));
 	}
 
 	if (!options.root) {

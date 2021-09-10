@@ -198,7 +198,6 @@ jobs:
       shell: bash
       env:
         NO_SVN_TESTS: 1
-        GIT_TEST_SKIP_REBASE_P: 1
       run: ci/run-test-slice.sh ${{matrix.nr}} 10
     - name: ci/print-test-failures.sh
       if: failure()
