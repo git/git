@@ -1163,29 +1163,17 @@ int unpack_object_header(struct packed_git *p,
 
 void mark_bad_packed_object(struct packed_git *p, const struct object_id *oid)
 {
-	unsigned i;
-	const unsigned hashsz = the_hash_algo->rawsz;
-	for (i = 0; i < p->num_bad_objects; i++)
-		if (hasheq(oid->hash, p->bad_object_sha1 + hashsz * i))
-			return;
-	p->bad_object_sha1 = xrealloc(p->bad_object_sha1,
-				      st_mult(GIT_MAX_RAWSZ,
-					      st_add(p->num_bad_objects, 1)));
-	hashcpy(p->bad_object_sha1 + hashsz * p->num_bad_objects, oid->hash);
-	p->num_bad_objects++;
+	oidset_insert(&p->bad_objects, oid);
 }
 
 const struct packed_git *has_packed_and_bad(struct repository *r,
 					    const struct object_id *oid)
 {
 	struct packed_git *p;
-	unsigned i;
 
 	for (p = r->objects->packed_git; p; p = p->next)
-		for (i = 0; i < p->num_bad_objects; i++)
-			if (hasheq(oid->hash,
-				   p->bad_object_sha1 + the_hash_algo->rawsz * i))
-				return p;
+		if (oidset_contains(&p->bad_objects, oid))
+			return p;
 	return NULL;
 }
 
@@ -2016,13 +2004,9 @@ static int fill_pack_entry(const struct object_id *oid,
 {
 	off_t offset;
 
-	if (p->num_bad_objects) {
-		unsigned i;
-		for (i = 0; i < p->num_bad_objects; i++)
-			if (hasheq(oid->hash,
-				   p->bad_object_sha1 + the_hash_algo->rawsz * i))
-				return 0;
-	}
+	if (oidset_size(&p->bad_objects) &&
+	    oidset_contains(&p->bad_objects, oid))
+		return 0;
 
 	offset = find_pack_entry_one(oid->hash, p);
 	if (!offset)

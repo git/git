@@ -307,13 +307,9 @@ int fill_midx_entry(struct repository * r,
 	if (!is_pack_valid(p))
 		return 0;
 
-	if (p->num_bad_objects) {
-		uint32_t i;
-		for (i = 0; i < p->num_bad_objects; i++)
-			if (hasheq(oid->hash,
-				   p->bad_object_sha1 + the_hash_algo->rawsz * i))
-				return 0;
-	}
+	if (oidset_size(&p->bad_objects) &&
+	    oidset_contains(&p->bad_objects, oid))
+		return 0;
 
 	e->offset = nth_midxed_offset(m, pos);
 	e->p = p;
