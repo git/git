@@ -1616,7 +1616,7 @@ static int do_oid_object_info_extended(struct repository *r,
 		return 0;
 	rtype = packed_object_info(r, e.p, e.offset, oi);
 	if (rtype < 0) {
-		mark_bad_packed_object(e.p, real->hash);
+		mark_bad_packed_object(e.p, real);
 		return do_oid_object_info_extended(r, real, oi, 0);
 	} else if (oi->whence == OI_PACKED) {
 		oi->u.packed.offset = e.offset;

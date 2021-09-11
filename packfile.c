@@ -1161,17 +1161,17 @@ int unpack_object_header(struct packed_git *p,
 	return type;
 }
 
-void mark_bad_packed_object(struct packed_git *p, const unsigned char *sha1)
+void mark_bad_packed_object(struct packed_git *p, const struct object_id *oid)
 {
 	unsigned i;
 	const unsigned hashsz = the_hash_algo->rawsz;
 	for (i = 0; i < p->num_bad_objects; i++)
-		if (hasheq(sha1, p->bad_object_sha1 + hashsz * i))
+		if (hasheq(oid->hash, p->bad_object_sha1 + hashsz * i))
 			return;
 	p->bad_object_sha1 = xrealloc(p->bad_object_sha1,
 				      st_mult(GIT_MAX_RAWSZ,
 					      st_add(p->num_bad_objects, 1)));
-	hashcpy(p->bad_object_sha1 + hashsz * p->num_bad_objects, sha1);
+	hashcpy(p->bad_object_sha1 + hashsz * p->num_bad_objects, oid->hash);
 	p->num_bad_objects++;
 }
 
@@ -1272,7 +1272,7 @@ static int retry_bad_packed_offset(struct repository *r,
 	if (offset_to_pack_pos(p, obj_offset, &pos) < 0)
 		return OBJ_BAD;
 	nth_packed_object_id(&oid, p, pack_pos_to_index(p, pos));
-	mark_bad_packed_object(p, oid.hash);
+	mark_bad_packed_object(p, &oid);
 	type = oid_object_info(r, &oid, NULL);
 	if (type <= OBJ_NONE)
 		return OBJ_BAD;
@@ -1722,7 +1722,7 @@ void *unpack_entry(struct repository *r, struct packed_git *p, off_t obj_offset,
 				nth_packed_object_id(&oid, p, index_pos);
 				error("bad packed object CRC for %s",
 				      oid_to_hex(&oid));
-				mark_bad_packed_object(p, oid.hash);
+				mark_bad_packed_object(p, &oid);
 				data = NULL;
 				goto out;
 			}
@@ -1811,7 +1811,7 @@ void *unpack_entry(struct repository *r, struct packed_git *p, off_t obj_offset,
 				      " at offset %"PRIuMAX" from %s",
 				      oid_to_hex(&base_oid), (uintmax_t)obj_offset,
 				      p->pack_name);
-				mark_bad_packed_object(p, base_oid.hash);
+				mark_bad_packed_object(p, &base_oid);
 				base = read_object(r, &base_oid, &type, &base_size);
 				external_base = base;
 			}
