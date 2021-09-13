@@ -8,22 +8,15 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 test_expect_success setup '
-	echo a > a &&
-	git add a &&
-	git commit -m a &&
+	test_commit a a a &&
 	git branch to-rebase &&
 
-	echo b > a &&
-	git commit -a -m b &&
-	echo c > a &&
-	git commit -a -m c &&
+	test_commit b a b &&
+	test_commit c a c &&
 
 	git checkout to-rebase &&
-	echo d > a &&
-	git commit -a -m "merge should fail on this" &&
-	echo e > a &&
-	git commit -a -m "merge should fail on this, too" &&
-	git branch pre-rebase
+	test_commit "merge should fail on this" a d d &&
+	test_commit "merge should fail on this, too" a e pre-rebase
 '
 
 testrebase() {
