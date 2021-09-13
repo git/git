@@ -7,13 +7,7 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
-### Test that we handle space characters properly
-work_dir="$(pwd)/test dir"
-
 test_expect_success setup '
-	mkdir -p "$work_dir" &&
-	cd "$work_dir" &&
-	git init &&
 	echo a > a &&
 	git add a &&
 	git commit -m a &&
@@ -37,7 +31,6 @@ testrebase() {
 	dotest=$2
 
 	test_expect_success "rebase$type --abort" '
-		cd "$work_dir" &&
 		# Clean up the state from the previous one
 		git reset --hard pre-rebase &&
 		test_must_fail git rebase$type main &&
@@ -48,7 +41,6 @@ testrebase() {
 	'
 
 	test_expect_success "rebase$type --abort after --skip" '
-		cd "$work_dir" &&
 		# Clean up the state from the previous one
 		git reset --hard pre-rebase &&
 		test_must_fail git rebase$type main &&
@@ -61,7 +53,6 @@ testrebase() {
 	'
 
 	test_expect_success "rebase$type --abort after --continue" '
-		cd "$work_dir" &&
 		# Clean up the state from the previous one
 		git reset --hard pre-rebase &&
 		test_must_fail git rebase$type main &&
@@ -77,7 +68,6 @@ testrebase() {
 	'
 
 	test_expect_success "rebase$type --abort does not update reflog" '
-		cd "$work_dir" &&
 		# Clean up the state from the previous one
 		git reset --hard pre-rebase &&
 		git reflog show to-rebase > reflog_before &&
@@ -89,7 +79,6 @@ testrebase() {
 	'
 
 	test_expect_success 'rebase --abort can not be used with other options' '
-		cd "$work_dir" &&
 		# Clean up the state from the previous one
 		git reset --hard pre-rebase &&
 		test_must_fail git rebase$type main &&
@@ -103,7 +92,6 @@ testrebase " --apply" .git/rebase-apply
 testrebase " --merge" .git/rebase-merge
 
 test_expect_success 'rebase --apply --quit' '
-	cd "$work_dir" &&
 	# Clean up the state from the previous one
 	git reset --hard pre-rebase &&
 	test_must_fail git rebase --apply main &&
@@ -115,7 +103,6 @@ test_expect_success 'rebase --apply --quit' '
 '
 
 test_expect_success 'rebase --merge --quit' '
-	cd "$work_dir" &&
 	# Clean up the state from the previous one
 	git reset --hard pre-rebase &&
 	test_must_fail git rebase --merge main &&
