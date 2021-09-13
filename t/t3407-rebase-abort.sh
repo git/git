@@ -30,7 +30,7 @@ testrebase() {
 		test_path_is_dir "$state_dir" &&
 		git rebase --abort &&
 		test_cmp_rev to-rebase pre-rebase &&
-		test ! -d "$state_dir"
+		test_path_is_missing "$state_dir"
 	'
 
 	test_expect_success "rebase$type --abort after --skip" '
@@ -42,7 +42,7 @@ testrebase() {
 		test_cmp_rev HEAD main &&
 		git rebase --abort &&
 		test_cmp_rev to-rebase pre-rebase &&
-		test ! -d "$state_dir"
+		test_path_is_missing "$state_dir"
 	'
 
 	test_expect_success "rebase$type --abort after --continue" '
@@ -57,7 +57,7 @@ testrebase() {
 		test_cmp_rev ! HEAD main &&
 		git rebase --abort &&
 		test_cmp_rev to-rebase pre-rebase &&
-		test ! -d "$state_dir"
+		test_path_is_missing "$state_dir"
 	'
 
 	test_expect_success "rebase$type --abort does not update reflog" '
@@ -92,7 +92,7 @@ test_expect_success 'rebase --apply --quit' '
 	head_before=$(git rev-parse HEAD) &&
 	git rebase --quit &&
 	test_cmp_rev HEAD $head_before &&
-	test ! -d .git/rebase-apply
+	test_path_is_missing .git/rebase-apply
 '
 
 test_expect_success 'rebase --merge --quit' '
@@ -103,7 +103,7 @@ test_expect_success 'rebase --merge --quit' '
 	head_before=$(git rev-parse HEAD) &&
 	git rebase --quit &&
 	test_cmp_rev HEAD $head_before &&
-	test ! -d .git/rebase-merge
+	test_path_is_missing .git/rebase-merge
 '
 
 test_done
