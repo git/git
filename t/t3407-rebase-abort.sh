@@ -19,6 +19,13 @@ test_expect_success setup '
 	test_commit "merge should fail on this, too" a e pre-rebase
 '
 
+# Check that HEAD is equal to "pre-rebase" and the current branch is
+# "to-rebase"
+check_head() {
+	test_cmp_rev HEAD pre-rebase &&
+	test "$(git symbolic-ref HEAD)" = refs/heads/to-rebase
+}
+
 testrebase() {
 	type=$1
 	state_dir=$2
@@ -29,7 +36,7 @@ testrebase() {
 		test_must_fail git rebase$type main &&
 		test_path_is_dir "$state_dir" &&
 		git rebase --abort &&
-		test_cmp_rev to-rebase pre-rebase &&
+		check_head &&
 		test_path_is_missing "$state_dir"
 	'
 
@@ -41,7 +48,7 @@ testrebase() {
 		test_must_fail git rebase --skip &&
 		test_cmp_rev HEAD main &&
 		git rebase --abort &&
-		test_cmp_rev to-rebase pre-rebase &&
+		check_head &&
 		test_path_is_missing "$state_dir"
 	'
 
@@ -56,7 +63,7 @@ testrebase() {
 		test_must_fail git rebase --continue &&
 		test_cmp_rev ! HEAD main &&
 		git rebase --abort &&
-		test_cmp_rev to-rebase pre-rebase &&
+		check_head &&
 		test_path_is_missing "$state_dir"
 	'
 
