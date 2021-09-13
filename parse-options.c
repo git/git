@@ -310,19 +310,6 @@ static enum parse_opt_result parse_long_opt(
 again:
 		if (!skip_prefix(arg, long_name, &rest))
 			rest = NULL;
-		if (options->type == OPTION_ARGUMENT) {
-			if (!rest)
-				continue;
-			if (*rest == '=')
-				return error(_("%s takes no value"),
-					     optname(options, flags));
-			if (*rest)
-				continue;
-			if (options->value)
-				*(int *)options->value = options->defval;
-			p->out[p->cpidx++] = arg - 2;
-			return PARSE_OPT_DONE;
-		}
 		if (!rest) {
 			/* abbreviated? */
 			if (!(p->flags & PARSE_OPT_KEEP_UNKNOWN) &&
