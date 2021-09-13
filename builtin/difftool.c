@@ -331,7 +331,8 @@ static int checkout_path(unsigned mode, struct object_id *oid,
 }
 
 static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
-			int argc, const char **argv)
+			int argc, const char **argv,
+			struct child_process *child)
 {
 	char tmpdir[PATH_MAX];
 	struct strbuf info = STRBUF_INIT, lpath = STRBUF_INIT;
@@ -352,7 +353,6 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 	struct index_state wtindex;
 	struct checkout lstate, rstate;
 	int rc, flags = RUN_GIT_CMD, err = 0;
-	struct child_process child = CHILD_PROCESS_INIT;
 	const char *helper_argv[] = { "difftool--helper", NULL, NULL, NULL };
 	struct hashmap wt_modified, tmp_modified;
 	int indices_loaded = 0;
@@ -387,19 +387,19 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 	rdir_len = rdir.len;
 	wtdir_len = wtdir.len;
 
-	child.no_stdin = 1;
-	child.git_cmd = 1;
-	child.use_shell = 0;
-	child.clean_on_exit = 1;
-	child.dir = prefix;
-	child.out = -1;
-	strvec_pushl(&child.args, "diff", "--raw", "--no-abbrev", "-z",
+	child->no_stdin = 1;
+	child->git_cmd = 1;
+	child->use_shell = 0;
+	child->clean_on_exit = 1;
+	child->dir = prefix;
+	child->out = -1;
+	strvec_pushl(&child->args, "diff", "--raw", "--no-abbrev", "-z",
 		     NULL);
 	for (i = 0; i < argc; i++)
-		strvec_push(&child.args, argv[i]);
-	if (start_command(&child))
+		strvec_push(&child->args, argv[i]);
+	if (start_command(child))
 		die("could not obtain raw diff");
-	fp = xfdopen(child.out, "r");
+	fp = xfdopen(child->out, "r");
 
 	/* Build index info for left and right sides of the diff */
 	i = 0;
@@ -525,7 +525,7 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 
 	fclose(fp);
 	fp = NULL;
-	if (finish_command(&child)) {
+	if (finish_command(child)) {
 		ret = error("error occurred running diff --raw");
 		goto finish;
 	}
@@ -719,6 +719,7 @@ int cmd_difftool(int argc, const char **argv, const char *prefix)
 		OPT_ARGUMENT("no-index", &no_index, N_("passed to `diff`")),
 		OPT_END()
 	};
+	struct child_process child = CHILD_PROCESS_INIT;
 
 	git_config(difftool_config, NULL);
 	symlinks = has_symlinks;
@@ -769,6 +770,6 @@ int cmd_difftool(int argc, const char **argv, const char *prefix)
 	 * each file that changed.
 	 */
 	if (dir_diff)
-		return run_dir_diff(extcmd, symlinks, prefix, argc, argv);
+		return run_dir_diff(extcmd, symlinks, prefix, argc, argv, &child);
 	return run_file_diff(prompt, prefix, argc, argv);
 }
