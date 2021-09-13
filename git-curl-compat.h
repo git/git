@@ -20,9 +20,20 @@
  * GIT_CURL_HAVE_X. If multiple similar symbols with the same prefix
  * were defined in the same version we pick one and check for that name.
  *
+ * We may also define a missing CURL_* symbol to its known value, if
+ * doing so is sufficient to add support for it to older versions that
+ * don't have it.
+ *
  * Keep any symbols in date order of when their support was
  * introduced, oldest first, in the official version of cURL library.
  */
+
+/**
+ * CURL_SOCKOPT_OK was added in 7.21.5, released in April 2011.
+ */
+#if LIBCURL_VERSION_NUM < 0x071505
+#define CURL_SOCKOPT_OK 0
+#endif
 
 /**
  * CURLOPT_TCP_KEEPALIVE was added in 7.25.0, released in March 2012.
