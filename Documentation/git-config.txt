@@ -71,6 +71,9 @@ codes are:
 
 On success, the command returns the exit code 0.
 
+A list of all available configuration variables can be obtained using the
+`git help --config` command.
+
 [[OPTIONS]]
 OPTIONS
 -------
