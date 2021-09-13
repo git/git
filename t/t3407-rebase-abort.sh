@@ -21,35 +21,35 @@ test_expect_success setup '
 
 testrebase() {
 	type=$1
-	dotest=$2
+	state_dir=$2
 
 	test_expect_success "rebase$type --abort" '
 		# Clean up the state from the previous one
 		git reset --hard pre-rebase &&
 		test_must_fail git rebase$type main &&
-		test_path_is_dir "$dotest" &&
+		test_path_is_dir "$state_dir" &&
 		git rebase --abort &&
 		test_cmp_rev to-rebase pre-rebase &&
-		test ! -d "$dotest"
+		test ! -d "$state_dir"
 	'
 
 	test_expect_success "rebase$type --abort after --skip" '
 		# Clean up the state from the previous one
 		git reset --hard pre-rebase &&
 		test_must_fail git rebase$type main &&
-		test_path_is_dir "$dotest" &&
+		test_path_is_dir "$state_dir" &&
 		test_must_fail git rebase --skip &&
 		test_cmp_rev HEAD main &&
 		git rebase --abort &&
 		test_cmp_rev to-rebase pre-rebase &&
-		test ! -d "$dotest"
+		test ! -d "$state_dir"
 	'
 
 	test_expect_success "rebase$type --abort after --continue" '
 		# Clean up the state from the previous one
 		git reset --hard pre-rebase &&
 		test_must_fail git rebase$type main &&
-		test_path_is_dir "$dotest" &&
+		test_path_is_dir "$state_dir" &&
 		echo c > a &&
 		echo d >> a &&
 		git add a &&
@@ -57,7 +57,7 @@ testrebase() {
 		test_cmp_rev ! HEAD main &&
 		git rebase --abort &&
 		test_cmp_rev to-rebase pre-rebase &&
-		test ! -d "$dotest"
+		test ! -d "$state_dir"
 	'
 
 	test_expect_success "rebase$type --abort does not update reflog" '
