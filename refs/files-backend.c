@@ -1569,7 +1569,7 @@ static int log_ref_setup(struct files_ref_store *refs,
 			goto error;
 		}
 	} else {
-		*logfd = open(logfile, O_APPEND | O_WRONLY, 0666);
+		*logfd = open(logfile, O_APPEND | O_WRONLY);
 		if (*logfd < 0) {
 			if (errno == ENOENT || errno == EISDIR) {
 				/*
