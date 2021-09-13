@@ -331,7 +331,6 @@ static int checkout_path(unsigned mode, struct object_id *oid,
 }
 
 static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
-			int argc, const char **argv,
 			struct child_process *child)
 {
 	char tmpdir[PATH_MAX];
@@ -393,10 +392,6 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 	child->clean_on_exit = 1;
 	child->dir = prefix;
 	child->out = -1;
-	strvec_pushl(&child->args, "diff", "--raw", "--no-abbrev", "-z",
-		     NULL);
-	for (i = 0; i < argc; i++)
-		strvec_push(&child->args, argv[i]);
 	if (start_command(child))
 		die("could not obtain raw diff");
 	fp = xfdopen(child->out, "r");
@@ -683,7 +678,6 @@ static int run_file_diff(int prompt, const char *prefix,
 		env[2] = "GIT_DIFFTOOL_NO_PROMPT=true";
 
 
-	strvec_push(&args, "diff");
 	for (i = 0; i < argc; i++)
 		strvec_push(&args, argv[i]);
 	return run_command_v_opt_cd_env(args.v, RUN_GIT_CMD, prefix, env);
@@ -769,7 +763,12 @@ int cmd_difftool(int argc, const char **argv, const char *prefix)
 	 * will invoke a separate instance of 'git-difftool--helper' for
 	 * each file that changed.
 	 */
+	strvec_push(&child.args, "diff");
 	if (dir_diff)
-		return run_dir_diff(extcmd, symlinks, prefix, argc, argv, &child);
-	return run_file_diff(prompt, prefix, argc, argv);
+		strvec_pushl(&child.args, "--raw", "--no-abbrev", "-z", NULL);
+	strvec_pushv(&child.args, argv);
+
+	if (dir_diff)
+		return run_dir_diff(extcmd, symlinks, prefix, &child);
+	return run_file_diff(prompt, prefix, child.args.nr, child.args.v);
 }
