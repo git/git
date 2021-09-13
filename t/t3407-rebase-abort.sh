@@ -29,7 +29,7 @@ testrebase() {
 		test_must_fail git rebase$type main &&
 		test_path_is_dir "$dotest" &&
 		git rebase --abort &&
-		test $(git rev-parse to-rebase) = $(git rev-parse pre-rebase) &&
+		test_cmp_rev to-rebase pre-rebase &&
 		test ! -d "$dotest"
 	'
 
@@ -39,9 +39,9 @@ testrebase() {
 		test_must_fail git rebase$type main &&
 		test_path_is_dir "$dotest" &&
 		test_must_fail git rebase --skip &&
-		test $(git rev-parse HEAD) = $(git rev-parse main) &&
+		test_cmp_rev HEAD main &&
 		git rebase --abort &&
-		test $(git rev-parse to-rebase) = $(git rev-parse pre-rebase) &&
+		test_cmp_rev to-rebase pre-rebase &&
 		test ! -d "$dotest"
 	'
 
@@ -54,9 +54,9 @@ testrebase() {
 		echo d >> a &&
 		git add a &&
 		test_must_fail git rebase --continue &&
-		test $(git rev-parse HEAD) != $(git rev-parse main) &&
+		test_cmp_rev ! HEAD main &&
 		git rebase --abort &&
-		test $(git rev-parse to-rebase) = $(git rev-parse pre-rebase) &&
+		test_cmp_rev to-rebase pre-rebase &&
 		test ! -d "$dotest"
 	'
 
@@ -91,7 +91,7 @@ test_expect_success 'rebase --apply --quit' '
 	test_path_is_dir .git/rebase-apply &&
 	head_before=$(git rev-parse HEAD) &&
 	git rebase --quit &&
-	test $(git rev-parse HEAD) = $head_before &&
+	test_cmp_rev HEAD $head_before &&
 	test ! -d .git/rebase-apply
 '
 
@@ -102,7 +102,7 @@ test_expect_success 'rebase --merge --quit' '
 	test_path_is_dir .git/rebase-merge &&
 	head_before=$(git rev-parse HEAD) &&
 	git rebase --quit &&
-	test $(git rev-parse HEAD) = $head_before &&
+	test_cmp_rev HEAD $head_before &&
 	test ! -d .git/rebase-merge
 '
 
