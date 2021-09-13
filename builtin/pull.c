@@ -26,6 +26,7 @@
 #include "wt-status.h"
 #include "commit-reach.h"
 #include "sequencer.h"
+#include "packfile.h"
 
 /**
  * Parses the value of --rebase. If value is a false value, returns
@@ -576,7 +577,7 @@ static int run_fetch(const char *repo, const char **refspecs)
 		strvec_pushv(&args, refspecs);
 	} else if (*refspecs)
 		BUG("refspecs without repo?");
-	ret = run_command_v_opt(args.v, RUN_GIT_CMD);
+	ret = run_command_v_opt(args.v, RUN_GIT_CMD | RUN_CLOSE_OBJECT_STORE);
 	strvec_clear(&args);
 	return ret;
 }

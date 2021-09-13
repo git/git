@@ -2578,10 +2578,9 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 			proc.no_stdin = 1;
 			proc.stdout_to_stderr = 1;
 			proc.err = use_sideband ? -1 : 0;
-			proc.git_cmd = 1;
+			proc.git_cmd = proc.close_object_store = 1;
 			proc.argv = argv_gc_auto;
 
-			close_object_store(the_repository->objects);
 			if (!start_command(&proc)) {
 				if (use_sideband)
 					copy_to_sideband(proc.err, -1, NULL);

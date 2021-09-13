@@ -134,6 +134,14 @@ struct child_process {
 	 */
 	unsigned use_shell:1;
 
+	/**
+	 * Release any open file handles to the object store before running
+	 * the command; This is necessary e.g. when the spawned process may
+	 * want to repack because that would delete `.pack` files (and on
+	 * Windows, you cannot delete files that are still in use).
+	 */
+	unsigned close_object_store:1;
+
 	unsigned stdout_to_stderr:1;
 	unsigned clean_on_exit:1;
 	unsigned wait_after_clean:1;
@@ -233,13 +241,14 @@ int run_hook_ve(const char *const *env, const char *name, va_list args);
  */
 int run_auto_maintenance(int quiet);
 
-#define RUN_COMMAND_NO_STDIN 1
-#define RUN_GIT_CMD	     2	/*If this is to be git sub-command */
-#define RUN_COMMAND_STDOUT_TO_STDERR 4
-#define RUN_SILENT_EXEC_FAILURE 8
-#define RUN_USING_SHELL 16
-#define RUN_CLEAN_ON_EXIT 32
-#define RUN_WAIT_AFTER_CLEAN 64
+#define RUN_COMMAND_NO_STDIN		(1<<0)
+#define RUN_GIT_CMD			(1<<1)
+#define RUN_COMMAND_STDOUT_TO_STDERR	(1<<2)
+#define RUN_SILENT_EXEC_FAILURE		(1<<3)
+#define RUN_USING_SHELL			(1<<4)
+#define RUN_CLEAN_ON_EXIT		(1<<5)
+#define RUN_WAIT_AFTER_CLEAN		(1<<6)
+#define RUN_CLOSE_OBJECT_STORE		(1<<7)
 
 /**
  * Convenience functions that encapsulate a sequence of
