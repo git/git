@@ -4074,6 +4074,21 @@ static int record_conflicted_index_entries(struct merge_options *opt)
 	if (strmap_empty(&opt->priv->conflicted))
 		return 0;
 
+	/*
+	 * We are in a conflicted state. These conflicts might be inside
+	 * sparse-directory entries, so check if any entries are outside
+	 * of the sparse-checkout cone preemptively.
+	 *
+	 * We set original_cache_nr below, but that might change if
+	 * index_name_pos() calls ask for paths within sparse directories.
+	 */
+	strmap_for_each_entry(&opt->priv->conflicted, &iter, e) {
+		if (!path_in_sparse_checkout(e->key, index)) {
+			ensure_full_index(index);
+			break;
+		}
+	}
+
 	/* If any entries have skip_worktree set, we'll have to check 'em out */
 	state.force = 1;
 	state.quiet = 1;
