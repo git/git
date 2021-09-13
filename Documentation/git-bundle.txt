@@ -13,7 +13,7 @@ SYNOPSIS
 		    [--version=<version>] <file> <git-rev-list-args>
 'git bundle' verify [-q | --quiet] <file>
 'git bundle' list-heads <file> [<refname>...]
-'git bundle' unbundle <file> [<refname>...]
+'git bundle' unbundle [--progress] <file> [<refname>...]
 
 DESCRIPTION
 -----------
