@@ -41,6 +41,11 @@ OPTIONS
 <directory>::
 	The repository to sync into.
 
+--http-backend-info-refs::
+	Used by linkgit:git-http-backend[1] to serve up
+	`$GIT_URL/info/refs?service=git-receive-pack` requests. See
+	`--http-backend-info-refs` in linkgit:git-upload-pack[1].
+
 PRE-RECEIVE HOOK
 ----------------
 Before any ref is updated, if $GIT_DIR/hooks/pre-receive file exists

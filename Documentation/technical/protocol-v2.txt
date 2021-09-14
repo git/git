@@ -81,6 +81,9 @@ A v2 server would reply:
 Subsequent requests are then made directly to the service
 `$GIT_URL/git-upload-pack`. (This works the same for git-receive-pack).
 
+Uses the `--http-backend-info-refs` option to
+linkgit:git-upload-pack[1].
+
 Capability Advertisement
 ------------------------
 

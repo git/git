@@ -534,7 +534,7 @@ static void get_info_refs(struct strbuf *hdr, char *arg)
 
 	if (service_name) {
 		const char *argv[] = {NULL /* service name */,
-			"--stateless-rpc", "--advertise-refs",
+			"--http-backend-info-refs",
 			".", NULL};
 		struct rpc_service *svc = select_service(hdr, service_name);
 
