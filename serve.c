@@ -163,7 +163,7 @@ static int is_valid_capability(const char *key)
 	return c && c->advertise(the_repository, NULL);
 }
 
-static int is_command(const char *key, struct protocol_capability **command)
+static int parse_command(const char *key, struct protocol_capability **command)
 {
 	const char *out;
 
@@ -251,7 +251,7 @@ static int process_request(void)
 			BUG("Should have already died when seeing EOF");
 		case PACKET_READ_NORMAL:
 			/* collect request; a sequence of keys and values */
-			if (is_command(reader.line, &command) ||
+			if (parse_command(reader.line, &command) ||
 			    is_valid_capability(reader.line))
 				strvec_push(&keys, reader.line);
 			else
