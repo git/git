@@ -1008,8 +1008,12 @@ static int write_midx_bitmap(char *midx_name, unsigned char *midx_hash,
 	struct pack_idx_entry **index;
 	struct commit **commits = NULL;
 	uint32_t i, commits_nr;
+	uint16_t options = 0;
 	char *bitmap_name = xstrfmt("%s-%s.bitmap", midx_name, hash_to_hex(midx_hash));
 	int ret;
+
+	if (flags & MIDX_WRITE_BITMAP_HASH_CACHE)
+		options |= BITMAP_OPT_HASH_CACHE;
 
 	prepare_midx_packing_data(&pdata, ctx);
 
@@ -1049,7 +1053,7 @@ static int write_midx_bitmap(char *midx_name, unsigned char *midx_hash,
 		goto cleanup;
 
 	bitmap_writer_set_checksum(midx_hash);
-	bitmap_writer_finish(index, pdata.nr_objects, bitmap_name, 0);
+	bitmap_writer_finish(index, pdata.nr_objects, bitmap_name, options);
 
 cleanup:
 	free(index);
