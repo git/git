@@ -57,6 +57,14 @@ static int session_id_advertise(struct repository *r, struct strbuf *value)
 	return 1;
 }
 
+static void session_id_receive(struct repository *r,
+			       const char *client_sid)
+{
+	if (!client_sid)
+		client_sid = "";
+	trace2_data_string("transfer", NULL, "client-sid", client_sid);
+}
+
 struct protocol_capability {
 	/*
 	 * The name of the capability.  The server uses this name when
@@ -121,6 +129,7 @@ static struct protocol_capability capabilities[] = {
 	{
 		.name = "session-id",
 		.advertise = session_id_advertise,
+		.receive = session_id_receive,
 	},
 	{
 		.name = "object-info",
@@ -221,26 +230,6 @@ static int parse_command(const char *key, struct protocol_capability **command)
 	return 0;
 }
 
-static int has_capability(const struct strvec *keys, const char *capability,
-			  const char **value)
-{
-	int i;
-	for (i = 0; i < keys->nr; i++) {
-		const char *out;
-		if (skip_prefix(keys->v[i], capability, &out) &&
-		    (!*out || *out == '=')) {
-			if (value) {
-				if (*out == '=')
-					out++;
-				*value = out;
-			}
-			return 1;
-		}
-	}
-
-	return 0;
-}
-
 enum request_state {
 	PROCESS_REQUEST_KEYS,
 	PROCESS_REQUEST_DONE,
@@ -252,7 +241,6 @@ static int process_request(void)
 	struct packet_reader reader;
 	struct strvec keys = STRVEC_INIT;
 	struct protocol_capability *command = NULL;
-	const char *client_sid;
 
 	packet_reader_init(&reader, 0, NULL, 0,
 			   PACKET_READ_CHOMP_NEWLINE |
@@ -318,9 +306,6 @@ static int process_request(void)
 		die("mismatched object format: server %s; client %s\n",
 		    the_repository->hash_algo->name,
 		    hash_algos[client_hash_algo].name);
-
-	if (has_capability(&keys, "session-id", &client_sid))
-		trace2_data_string("transfer", NULL, "client-sid", client_sid);
 
 	command->command(the_repository, &reader);
 
