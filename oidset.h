@@ -57,7 +57,10 @@ int oidset_remove(struct oidset *set, const struct object_id *oid);
 /**
  * Returns the number of oids in the set.
  */
-int oidset_size(struct oidset *set);
+static inline int oidset_size(const struct oidset *set)
+{
+	return kh_size(&set->set);
+}
 
 /**
  * Remove all entries from the oidset, freeing any resources associated with

@@ -159,8 +159,8 @@ int packed_object_info(struct repository *r,
 		       struct packed_git *pack,
 		       off_t offset, struct object_info *);
 
-void mark_bad_packed_object(struct packed_git *p, const unsigned char *sha1);
-const struct packed_git *has_packed_and_bad(struct repository *r, const unsigned char *sha1);
+void mark_bad_packed_object(struct packed_git *, const struct object_id *);
+const struct packed_git *has_packed_and_bad(struct repository *, const struct object_id *);
 
 #define ON_DISK_KEEP_PACKS 1
 #define IN_CORE_KEEP_PACKS 2
