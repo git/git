@@ -10,6 +10,7 @@
 #include "upload-pack.h"
 
 static int advertise_sid = -1;
+static int client_hash_algo = GIT_HASH_SHA1;
 
 static int always_advertise(struct repository *r,
 			    struct strbuf *value)
@@ -31,6 +32,17 @@ static int object_format_advertise(struct repository *r,
 	if (value)
 		strbuf_addstr(value, r->hash_algo->name);
 	return 1;
+}
+
+static void object_format_receive(struct repository *r,
+				  const char *algo_name)
+{
+	if (!algo_name)
+		die("object-format capability requires an argument");
+
+	client_hash_algo = hash_algo_by_name(algo_name);
+	if (client_hash_algo == GIT_HASH_UNKNOWN)
+		die("unknown object format '%s'", algo_name);
 }
 
 static int session_id_advertise(struct repository *r, struct strbuf *value)
@@ -104,6 +116,7 @@ static struct protocol_capability capabilities[] = {
 	{
 		.name = "object-format",
 		.advertise = object_format_advertise,
+		.receive = object_format_receive,
 	},
 	{
 		.name = "session-id",
@@ -228,22 +241,6 @@ static int has_capability(const struct strvec *keys, const char *capability,
 	return 0;
 }
 
-static void check_algorithm(struct repository *r, struct strvec *keys)
-{
-	int client = GIT_HASH_SHA1, server = hash_algo_by_ptr(r->hash_algo);
-	const char *algo_name;
-
-	if (has_capability(keys, "object-format", &algo_name)) {
-		client = hash_algo_by_name(algo_name);
-		if (client == GIT_HASH_UNKNOWN)
-			die("unknown object format '%s'", algo_name);
-	}
-
-	if (client != server)
-		die("mismatched object format: server %s; client %s\n",
-		    r->hash_algo->name, hash_algos[client].name);
-}
-
 enum request_state {
 	PROCESS_REQUEST_KEYS,
 	PROCESS_REQUEST_DONE,
@@ -317,7 +314,10 @@ static int process_request(void)
 	if (!command)
 		die("no command requested");
 
-	check_algorithm(the_repository, &keys);
+	if (client_hash_algo != hash_algo_by_ptr(the_repository->hash_algo))
+		die("mismatched object format: server %s; client %s\n",
+		    the_repository->hash_algo->name,
+		    hash_algos[client_hash_algo].name);
 
 	if (has_capability(&keys, "session-id", &client_sid))
 		trace2_data_string("transfer", NULL, "client-sid", client_sid);
