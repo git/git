@@ -139,7 +139,7 @@ void protocol_v2_advertise_capabilities(void)
 	strbuf_release(&value);
 }
 
-static struct protocol_capability *get_capability(const char *key)
+static struct protocol_capability *get_capability(const char *key, const char **value)
 {
 	int i;
 
@@ -149,8 +149,16 @@ static struct protocol_capability *get_capability(const char *key)
 	for (i = 0; i < ARRAY_SIZE(capabilities); i++) {
 		struct protocol_capability *c = &capabilities[i];
 		const char *out;
-		if (skip_prefix(key, c->name, &out) && (!*out || *out == '='))
+		if (!skip_prefix(key, c->name, &out))
+			continue;
+		if (!*out) {
+			*value = NULL;
 			return c;
+		}
+		if (*out++ == '=') {
+			*value = out;
+			return c;
+		}
 	}
 
 	return NULL;
@@ -158,7 +166,8 @@ static struct protocol_capability *get_capability(const char *key)
 
 static int is_valid_capability(const char *key)
 {
-	const struct protocol_capability *c = get_capability(key);
+	const char *value;
+	const struct protocol_capability *c = get_capability(key, &value);
 
 	return c && c->advertise(the_repository, NULL);
 }
@@ -168,7 +177,8 @@ static int parse_command(const char *key, struct protocol_capability **command)
 	const char *out;
 
 	if (skip_prefix(key, "command=", &out)) {
-		struct protocol_capability *cmd = get_capability(out);
+		const char *value;
+		struct protocol_capability *cmd = get_capability(out, &value);
 
 		if (*command)
 			die("command '%s' requested after already requesting command '%s'",
