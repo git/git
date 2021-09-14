@@ -1681,9 +1681,7 @@ static int launchctl_remove_plists(void)
 
 static int launchctl_list_contains_plist(const char *name, const char *cmd)
 {
-	int result;
 	struct child_process child = CHILD_PROCESS_INIT;
-	char *uid = launchctl_get_uid();
 
 	strvec_split(&child.args, cmd);
 	strvec_pushl(&child.args, "list", name, NULL);
@@ -1694,12 +1692,8 @@ static int launchctl_list_contains_plist(const char *name, const char *cmd)
 	if (start_command(&child))
 		die(_("failed to start launchctl"));
 
-	result = finish_command(&child);
-
-	free(uid);
-
 	/* Returns failure if 'name' doesn't exist. */
-	return !result;
+	return !finish_command(&child);
 }
 
 static int launchctl_schedule_plist(const char *exec_path, enum schedule_priority schedule)
