@@ -70,6 +70,16 @@ struct protocol_capability {
 	 * This field should be NULL for capabilities which are not commands.
 	 */
 	int (*command)(struct repository *r, struct packet_reader *request);
+
+	/*
+	 * Function called when a client requests the capability as a
+	 * non-command. This may be NULL if the capability does nothing.
+	 *
+	 * For a capability of the form "foo=bar", the value string points to
+	 * the content after the "=" (i.e., "bar"). For simple capabilities
+	 * (just "foo"), it is NULL.
+	 */
+	void (*receive)(struct repository *r, const char *value);
 };
 
 static struct protocol_capability capabilities[] = {
@@ -164,12 +174,17 @@ static struct protocol_capability *get_capability(const char *key, const char **
 	return NULL;
 }
 
-static int is_valid_capability(const char *key)
+static int receive_client_capability(const char *key)
 {
 	const char *value;
 	const struct protocol_capability *c = get_capability(key, &value);
 
-	return c && c->advertise(the_repository, NULL);
+	if (!c || !c->advertise(the_repository, NULL))
+		return 0;
+
+	if (c->receive)
+		c->receive(the_repository, value);
+	return 1;
 }
 
 static int parse_command(const char *key, struct protocol_capability **command)
@@ -262,7 +277,7 @@ static int process_request(void)
 		case PACKET_READ_NORMAL:
 			/* collect request; a sequence of keys and values */
 			if (parse_command(reader.line, &command) ||
-			    is_valid_capability(reader.line))
+			    receive_client_capability(reader.line))
 				strvec_push(&keys, reader.line);
 			else
 				die("unknown capability '%s'", reader.line);
