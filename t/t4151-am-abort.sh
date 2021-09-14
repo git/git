@@ -23,7 +23,13 @@ test_expect_success setup '
 		test_tick &&
 		git commit -a -m $i || return 1
 	done &&
+	git branch changes &&
 	git format-patch --no-numbered initial &&
+	git checkout -b conflicting initial &&
+	echo different >>file-1 &&
+	echo whatever >new-file &&
+	git add file-1 new-file &&
+	git commit -m different &&
 	git checkout -b side initial &&
 	echo local change >file-2-expect
 '
@@ -189,6 +195,39 @@ test_expect_success 'am --abort leaves index stat info alone' '
 	test_must_fail git am 0001-*.patch &&
 	git am --abort &&
 	git diff-files --exit-code --quiet
+'
+
+test_expect_success 'git am --abort return failed exit status when it fails' '
+	test_when_finished "rm -rf file-2/ && git reset --hard && git am --abort" &&
+	git checkout changes &&
+	git format-patch -1 --stdout conflicting >changes.mbox &&
+	test_must_fail git am --3way changes.mbox &&
+
+	git rm file-2 &&
+	mkdir file-2 &&
+	echo precious >file-2/somefile &&
+	test_must_fail git am --abort &&
+	test_path_is_dir file-2/
+'
+
+test_expect_success 'git am --abort cleans relevant files' '
+	git checkout changes &&
+	git format-patch -1 --stdout conflicting >changes.mbox &&
+	test_must_fail git am --3way changes.mbox &&
+
+	test_path_is_file new-file &&
+	echo further changes >>file-1 &&
+	echo change other file >>file-2 &&
+
+	# Abort, and expect the files touched by am to be reverted
+	git am --abort &&
+
+	test_path_is_missing new-file &&
+
+	# Files not involved in am operation are left modified
+	git diff --name-only changes >actual &&
+	test_write_lines file-2 >expect &&
+	test_cmp expect actual
 '
 
 test_done
