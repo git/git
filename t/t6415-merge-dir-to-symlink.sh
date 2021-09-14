@@ -25,7 +25,8 @@ test_expect_success 'checkout does not clobber untracked symlink' '
 	git reset --hard main &&
 	git rm --cached a/b &&
 	git commit -m "untracked symlink remains" &&
-	test_must_fail git checkout start^0
+	test_must_fail git checkout start^0 &&
+	git clean -fd    # Do not leave the untracked symlink in the way
 '
 
 test_expect_success 'a/b-2/c/d is kept when clobbering symlink b' '
@@ -34,7 +35,8 @@ test_expect_success 'a/b-2/c/d is kept when clobbering symlink b' '
 	git rm --cached a/b &&
 	git commit -m "untracked symlink remains" &&
 	git checkout -f start^0 &&
-	test_path_is_file a/b-2/c/d
+	test_path_is_file a/b-2/c/d &&
+	git clean -fd    # Do not leave the untracked symlink in the way
 '
 
 test_expect_success 'checkout should not have deleted a/b-2/c/d' '

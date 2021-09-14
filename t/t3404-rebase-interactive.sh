@@ -297,6 +297,7 @@ test_expect_success 'abort with error when new base cannot be checked out' '
 		output &&
 	test_i18ngrep "file1" output &&
 	test_path_is_missing .git/rebase-merge &&
+	rm file1 &&
 	git reset --hard HEAD^
 '
 
