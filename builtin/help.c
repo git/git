@@ -467,11 +467,14 @@ static void get_html_page_path(struct strbuf *page_path, const char *page)
 	if (!html_path)
 		html_path = to_free = system_path(GIT_HTML_PATH);
 
-	/* Check that we have a git documentation directory. */
+	/*
+	 * Check that the page we're looking for exists.
+	 */
 	if (!strstr(html_path, "://")) {
-		if (stat(mkpath("%s/git.html", html_path), &st)
+		if (stat(mkpath("%s/%s.html", html_path, page), &st)
 		    || !S_ISREG(st.st_mode))
-			die("'%s': not a documentation directory.", html_path);
+			die("'%s/%s.html': documentation file not found.",
+				html_path, page);
 	}
 
 	strbuf_init(page_path, 0);
