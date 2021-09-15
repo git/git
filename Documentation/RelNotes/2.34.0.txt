@@ -74,6 +74,12 @@ Performance, Internal Implementation, Development Support etc.
  * Callers from older advice_config[] based API has been updated to
    use the newer advice_if_enabled() and advice_enabled() API.
 
+ * Teach "test_pause" and "debug" helpers to allow using the HOME and
+   TERM environment variables the user usually uses.
+
+ * "make INSTALL_STRIP=-s install" allows the installation step to use
+   "install -s" to strip the binaries as they get installed.
+
 
 Fixes since v2.33
 -----------------
@@ -168,6 +174,27 @@ Fixes since v2.33
  * Doc update plus improved error reporting.
    (merge 1e93770888 jk/log-warn-on-bogus-encoding later to maint).
 
+ * Recent "diff -m" changes broke "gitk", which has been corrected.
+   (merge 5acffd3473 so/diff-index-regression-fix later to maint).
+
+ * Regression fix.
+   (merge b996f84989 ab/send-email-config-fix later to maint).
+
+ * The "git apply -3" code path learned not to bother the lower level
+   merge machinery when the three-way merge can be trivially resolved
+   without the content level merge.  This fixes a regression caused by
+   recent "-3way first and fall back to direct application" change.
+   (merge 57f183b698 jc/trivial-threeway-binary-merge later to maint).
+
+ * The code that optionally creates the *.rev reverse index file has
+   been optimized to avoid needless computation when it is not writing
+   the file out.
+   (merge 8fe8bae9d2 ab/reverse-midx-optim later to maint).
+
+ * "git range-diff -I... <range> <range>" segfaulted, which has been
+   corrected.
+   (merge 709b3f32d3 rs/range-diff-avoid-segfault-with-I later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 1d9c8daef8 ab/bundle-doc later to maint).
    (merge 81483fe613 en/merge-strategy-docs later to maint).
@@ -194,3 +221,6 @@ Fixes since v2.33
    (merge e4f8d27585 rs/show-branch-simplify later to maint).
    (merge e124ecf7f7 rs/archive-use-object-id later to maint).
    (merge cebead1ebf cb/ci-build-pedantic later to maint).
+   (merge ca0cc98e03 bs/doc-bugreport-outdir later to maint).
+   (merge 72b113e562 ab/no-more-check-bindir later to maint).
+   (merge 92a5d1c9b4 jc/prefix-filename-allocates later to maint).
