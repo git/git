@@ -72,6 +72,27 @@ test_expect_success 'request invalid command' '
 	test_i18ngrep "invalid command" err
 '
 
+test_expect_success 'request capability as command' '
+	test-tool pkt-line pack >in <<-EOF &&
+	command=agent
+	object-format=$(test_oid algo)
+	0000
+	EOF
+	test_must_fail test-tool serve-v2 --stateless-rpc 2>err <in &&
+	grep invalid.command.*agent err
+'
+
+test_expect_success 'request command as capability' '
+	test-tool pkt-line pack >in <<-EOF &&
+	command=ls-refs
+	object-format=$(test_oid algo)
+	fetch
+	0000
+	EOF
+	test_must_fail test-tool serve-v2 --stateless-rpc 2>err <in &&
+	grep unknown.capability err
+'
+
 test_expect_success 'requested command is command=value' '
 	test-tool pkt-line pack >in <<-EOF &&
 	command=ls-refs=whatever

@@ -201,7 +201,7 @@ static int receive_client_capability(const char *key)
 	const char *value;
 	const struct protocol_capability *c = get_capability(key, &value);
 
-	if (!c || !c->advertise(the_repository, NULL))
+	if (!c || c->command || !c->advertise(the_repository, NULL))
 		return 0;
 
 	if (c->receive)
