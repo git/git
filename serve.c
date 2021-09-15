@@ -239,7 +239,7 @@ static int process_request(void)
 {
 	enum request_state state = PROCESS_REQUEST_KEYS;
 	struct packet_reader reader;
-	struct strvec keys = STRVEC_INIT;
+	int seen_capability_or_command = 0;
 	struct protocol_capability *command = NULL;
 
 	packet_reader_init(&reader, 0, NULL, 0,
@@ -260,10 +260,9 @@ static int process_request(void)
 		case PACKET_READ_EOF:
 			BUG("Should have already died when seeing EOF");
 		case PACKET_READ_NORMAL:
-			/* collect request; a sequence of keys and values */
 			if (parse_command(reader.line, &command) ||
 			    receive_client_capability(reader.line))
-				strvec_push(&keys, reader.line);
+				seen_capability_or_command = 1;
 			else
 				die("unknown capability '%s'", reader.line);
 
@@ -275,7 +274,7 @@ static int process_request(void)
 			 * If no command and no keys were given then the client
 			 * wanted to terminate the connection.
 			 */
-			if (!keys.nr)
+			if (!seen_capability_or_command)
 				return 1;
 
 			/*
@@ -309,7 +308,6 @@ static int process_request(void)
 
 	command->command(the_repository, &reader);
 
-	strvec_clear(&keys);
 	return 0;
 }
 
