@@ -118,13 +118,11 @@ for example:
    myuser:$1$BA)@$vbnMJMDym7tA32AamXrm./
 ------
 You can use the 'htpasswd' facility that comes with Apache to make these
-files, but Apache's MD5 crypt method differs from the one used by most C
-library's crypt() function, so don't use the -m option.
+files, but only with the -d option (or -B if your system suports it).
 
-Alternatively you can produce the password with perl's crypt() operator:
------
-   perl -e 'my ($user, $pass) = @ARGV; printf "%s:%s\n", $user, crypt($user, $pass)' $USER password
------
+Preferably use the system specific utility that manages password hash
+creation in your platform (e.g. mkpasswd in Linux, encrypt in OpenBSD or
+pwhash in NetBSD) and paste it in the right location.
 
 Then provide your password via the pserver method, for example:
 ------
