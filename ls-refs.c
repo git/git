@@ -170,6 +170,8 @@ int ls_refs(struct repository *r, struct packet_reader *request)
 		}
 		else if (!strcmp("unborn", arg))
 			data.unborn = allow_unborn;
+		else
+			die(_("unexpected line: '%s'"), arg);
 	}
 
 	if (request->status != PACKET_READ_FLUSH)

@@ -147,6 +147,19 @@ test_expect_success 'basics of ls-refs' '
 	test_cmp expect actual
 '
 
+test_expect_success 'ls-refs complains about unknown options' '
+	test-tool pkt-line pack >in <<-EOF &&
+	command=ls-refs
+	object-format=$(test_oid algo)
+	0001
+	no-such-arg
+	0000
+	EOF
+
+	test_must_fail test-tool serve-v2 --stateless-rpc 2>err <in &&
+	grep unexpected.line.*no-such-arg err
+'
+
 test_expect_success 'basic ref-prefixes' '
 	test-tool pkt-line pack >in <<-EOF &&
 	command=ls-refs
