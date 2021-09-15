@@ -376,7 +376,7 @@ sub read_config {
 			@$target = @values;
 		}
 		else {
-			my $v = $known_keys->{$key}->[0];
+			my $v = $known_keys->{$key}->[-1];
 			next unless defined $v;
 			next if $configured->{$setting}++;
 			$$target = $v;
