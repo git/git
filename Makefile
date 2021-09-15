@@ -3099,8 +3099,7 @@ endif
 		  ln "$$execdir/git-remote-http$X" "$$execdir/$$p" 2>/dev/null || \
 		  ln -s "git-remote-http$X" "$$execdir/$$p" 2>/dev/null || \
 		  cp "$$execdir/git-remote-http$X" "$$execdir/$$p" || exit; } \
-	done && \
-	./check_bindir "z$$bindir" "z$$execdir" "$$bindir/git-add$X"
+	done
 
 .PHONY: install-gitweb install-doc install-man install-man-perl install-html install-info install-pdf
 .PHONY: quick-install-doc quick-install-man quick-install-html
