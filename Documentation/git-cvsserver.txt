@@ -99,7 +99,7 @@ looks like
 
 ------
 
-Only anonymous access is provided by pserve by default. To commit you
+Only anonymous access is provided by pserver by default. To commit you
 will have to create pserver accounts, simply add a gitcvs.authdb
 setting in the config file of the repositories you want the cvsserver
 to allow writes to, for example:
@@ -114,8 +114,9 @@ The format of these files is username followed by the encrypted password,
 for example:
 
 ------
-   myuser:$1Oyx5r9mdGZ2
-   myuser:$1$BA)@$vbnMJMDym7tA32AamXrm./
+   myuser:sqkNi8zPf01HI
+   myuser:$1$9K7FzU28$VfF6EoPYCJEYcVQwATgOP/
+   myuser:$5$.NqmNH1vwfzGpV8B$znZIcumu1tNLATgV2l6e1/mY8RzhUDHMOaVOeL1cxV3
 ------
 You can use the 'htpasswd' facility that comes with Apache to make these
 files, but only with the -d option (or -B if your system suports it).
@@ -126,7 +127,7 @@ pwhash in NetBSD) and paste it in the right location.
 
 Then provide your password via the pserver method, for example:
 ------
-   cvs -d:pserver:someuser:somepassword <at> server/path/repo.git co <HEAD_name>
+   cvs -d:pserver:someuser:somepassword@server:/path/repo.git co <HEAD_name>
 ------
 No special setup is needed for SSH access, other than having Git tools
 in the PATH. If you have clients that do not accept the CVS_SERVER
@@ -136,7 +137,7 @@ Note: Newer CVS versions (>= 1.12.11) also support specifying
 CVS_SERVER directly in CVSROOT like
 
 ------
-cvs -d ":ext;CVS_SERVER=git cvsserver:user@server/path/repo.git" co <HEAD_name>
+   cvs -d ":ext;CVS_SERVER=git cvsserver:user@server/path/repo.git" co <HEAD_name>
 ------
 This has the advantage that it will be saved in your 'CVS/Root' files and
 you don't need to worry about always setting the correct environment
@@ -184,8 +185,8 @@ allowing access over SSH.
 +
 --
 ------
-     export CVSROOT=:ext:user@server:/var/git/project.git
-     export CVS_SERVER="git cvsserver"
+   export CVSROOT=:ext:user@server:/var/git/project.git
+   export CVS_SERVER="git cvsserver"
 ------
 --
 4. For SSH clients that will make commits, make sure their server-side
@@ -201,7 +202,7 @@ allowing access over SSH.
    `project-master` directory:
 +
 ------
-     cvs co -d project-master master
+   cvs co -d project-master master
 ------
 
 [[dbbackend]]
