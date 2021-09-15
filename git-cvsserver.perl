@@ -222,10 +222,11 @@ if ($state->{method} eq 'pserver') {
         open my $passwd, "<", $authdb or die $!;
         while (<$passwd>) {
             if (m{^\Q$user\E:(.*)}) {
-                if (crypt(descramble($password), $1) eq $1) {
+                my $hash = crypt(descramble($password), $1);
+                if (defined $hash and $hash eq $1) {
                     $auth_ok = 1;
                 }
-            };
+            }
         }
         close $passwd;
 

@@ -36,7 +36,12 @@ CVSWORK="$PWD/cvswork"
 CVS_SERVER=git-cvsserver
 export CVSROOT CVS_SERVER
 
-PWDHASH='lac2ItudM3.KM'
+if perl -e 'exit(1) if not defined crypt("", "cv")'
+then
+	PWDHASH='lac2ItudM3.KM'
+else
+	PWDHASH='$2b$10$t8fGvE/a9eLmfOLzsZme2uOa2QtoMYwIxq9wZA6aBKtF1Yb7FJIzi'
+fi
 
 rm -rf "$CVSWORK" "$SERVERDIR"
 test_expect_success 'setup' '
