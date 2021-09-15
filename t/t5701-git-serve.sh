@@ -72,6 +72,16 @@ test_expect_success 'request invalid command' '
 	test_i18ngrep "invalid command" err
 '
 
+test_expect_success 'requested command is command=value' '
+	test-tool pkt-line pack >in <<-EOF &&
+	command=ls-refs=whatever
+	object-format=$(test_oid algo)
+	0000
+	EOF
+	test_must_fail test-tool serve-v2 --stateless-rpc 2>err <in &&
+	grep invalid.command.*ls-refs=whatever err
+'
+
 test_expect_success 'wrong object-format' '
 	test-tool pkt-line pack >in <<-EOF &&
 	command=fetch

@@ -220,7 +220,7 @@ static int parse_command(const char *key, struct protocol_capability **command)
 		if (*command)
 			die("command '%s' requested after already requesting command '%s'",
 			    out, (*command)->name);
-		if (!cmd || !cmd->advertise(the_repository, NULL) || !cmd->command)
+		if (!cmd || !cmd->advertise(the_repository, NULL) || !cmd->command || value)
 			die("invalid command '%s'", out);
 
 		*command = cmd;
