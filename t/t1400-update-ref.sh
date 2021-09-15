@@ -1603,11 +1603,13 @@ test_expect_success PIPE 'transaction flushes status updates' '
 	(git update-ref --stdin <in >out &) &&
 
 	exec 9>in &&
+	exec 8<out &&
 	test_when_finished "exec 9>&-" &&
+	test_when_finished "exec 8<&-" &&
 
 	echo "start" >&9 &&
 	echo "start: ok" >expected &&
-	read line <out &&
+	read line <&8 &&
 	echo "$line" >actual &&
 	test_cmp expected actual &&
 
@@ -1615,7 +1617,7 @@ test_expect_success PIPE 'transaction flushes status updates' '
 
 	echo prepare >&9 &&
 	echo "prepare: ok" >expected &&
-	read line <out &&
+	read line <&8 &&
 	echo "$line" >actual &&
 	test_cmp expected actual &&
 
@@ -1625,7 +1627,7 @@ test_expect_success PIPE 'transaction flushes status updates' '
 
 	echo commit >&9 &&
 	echo "commit: ok" >expected &&
-	read line <out &&
+	read line <&8 &&
 	echo "$line" >actual &&
 	test_cmp expected actual
 '
