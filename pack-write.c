@@ -222,6 +222,9 @@ const char *write_rev_file(const char *rev_name,
 	uint32_t i;
 	const char *ret;
 
+	if (!(flags & WRITE_REV) && !(flags & WRITE_REV_VERIFY))
+		return NULL;
+
 	ALLOC_ARRAY(pack_order, nr_objects);
 	for (i = 0; i < nr_objects; i++)
 		pack_order[i] = i;
