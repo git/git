@@ -213,8 +213,7 @@ int repo_submodule_init(struct repository *subrepo,
 		 * submodule would not have a worktree.
 		 */
 		strbuf_reset(&gitdir);
-		strbuf_repo_git_path(&gitdir, superproject,
-				     "modules/%s", sub->name);
+		submodule_name_to_gitdir(&gitdir, superproject, sub->name);
 
 		if (repo_init(subrepo, gitdir.buf, NULL)) {
 			ret = -1;
