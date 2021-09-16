@@ -445,7 +445,8 @@ When --fork-point is active, 'fork_point' will be used instead of
 ends up being empty, the <upstream> will be used as a fallback.
 +
 If <upstream> is given on the command line, then the default is
-`--no-fork-point`, otherwise the default is `--fork-point`.
+`--no-fork-point`, otherwise the default is `--fork-point`. See also
+`rebase.forkpoint` in linkgit:git-config[1].
 +
 If your branch was based on <upstream> but <upstream> was rewound and
 your branch contains commits which were dropped, this option can be used
