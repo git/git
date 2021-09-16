@@ -41,6 +41,10 @@ OPTIONS
 -------
 --version::
 	Prints the Git suite version that the 'git' program came from.
++
+This option is internaly converted to `git version ...` and accepts
+the same options as the linkgit:git-version[1] command. If `--help` is
+also given, it takes precedence over `--version`.
 
 --help::
 	Prints the synopsis and a list of the most commonly used
