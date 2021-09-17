@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Sep 2021, #04; Mon, 13)
-X-master-at: 8b7c11b8668b4e774f81a9f0b4c30144b818f1d1
-X-next-at: 22d4bfa14b6169731ecee0d0e0a4cb3b00676ae4
+Subject: What's cooking in git.git (Sep 2021, #05; Fri, 17)
+X-master-at: 4c719308ce59dc70e606f910f40801f2c6051b24
+X-next-at: 186eaaae567db501179c0af0bf89b34cbea02c26
 
-What's cooking in git.git (Sep 2021, #04; Mon, 13)
+What's cooking in git.git (Sep 2021, #05; Fri, 17)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,6 +17,10 @@ another topic already in flight" or "this may turn out to be
 useful").  Do not read too much into a topic being in (or not in)
 'seen'.  The ones marked with '.' do not appear in any of the
 integration branches, but I am still holding onto them.
+
+The sixth batch is out.  I've marked quite many topics for 'next'
+but with a question mark in this issue of the report, to which help
+in triaging them would be greatly appreciated as ever.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -47,215 +51,201 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* ab/no-more-check-bindir (2021-09-07) 1 commit
+  (merged to 'next' on 2021-09-08 at 4fddb3864f)
+ + Makefile: remove the check_bindir script
+
+ Build simplification.
+
+
+* ab/reverse-midx-optim (2021-09-07) 1 commit
+  (merged to 'next' on 2021-09-08 at 1972c5931b)
+ + pack-write: skip *.rev work when not writing *.rev
+
+ The code that optionally creates the *.rev reverse index file has
+ been optimized to avoid needless computation when it is not writing
+ the file out.
+
+
+* ab/send-email-config-fix (2021-09-07) 1 commit
+  (merged to 'next' on 2021-09-08 at c2000e9689)
+ + send-email: fix a "first config key wins" regression in v2.33.0
+
+ Regression fix.
+
+
+* bs/doc-bugreport-outdir (2021-09-07) 1 commit
+  (merged to 'next' on 2021-09-08 at 5ea3df204d)
+ + Documentation: fix default directory of git bugreport -o
+
+ Docfix.
+
+
+* bs/install-strip (2021-09-05) 1 commit
+  (merged to 'next' on 2021-09-08 at 40cfa71c8d)
+ + make: add INSTALL_STRIP option variable
+
+ "make INSTALL_STRIP=-s install" allows the installation step to use
+ "install -s" to strip the binaries as they get installed.
+
+
+* jc/prefix-filename-allocates (2021-09-07) 1 commit
+  (merged to 'next' on 2021-09-10 at a5221ea92e)
+ + hash-object: prefix_filename() returns allocated memory these days
+
+ Leakfix.
+
+
+* jc/trivial-threeway-binary-merge (2021-09-05) 1 commit
+  (merged to 'next' on 2021-09-08 at d6ba0735d8)
+ + apply: resolve trivial merge without hitting ll-merge with "--3way"
+
+ The "git apply -3" code path learned not to bother the lower level
+ merge machinery when the three-way merge can be trivially resolved
+ without the content level merge.
+
+
+* pb/test-use-user-env (2021-09-07) 3 commits
+  (merged to 'next' on 2021-09-08 at 6fa5d96723)
+ + test-lib-functions: keep user's debugger config files and TERM in 'debug'
+ + test-lib-functions: optionally keep HOME, TERM and SHELL in 'test_pause'
+ + test-lib-functions: use 'TEST_SHELL_PATH' in 'test_pause'
+
+ Teach "test_pause" and "debug" helpers to allow using the HOME and
+ TERM environment variables the user usually uses.
+
+
+* rs/range-diff-avoid-segfault-with-I (2021-09-07) 1 commit
+  (merged to 'next' on 2021-09-10 at e8bac5f9ea)
+ + range-diff: avoid segfault with -I
+
+ "git range-diff -I... <range> <range>" segfaulted, which has been
+ corrected.
+
+
+* so/diff-index-regression-fix (2021-09-07) 1 commit
+  (merged to 'next' on 2021-09-08 at ca17912ed3)
+ + diff-index: restore -c/--cc options handling
+
+ Recent "diff -m" changes broke "gitk", which has been corrected.
+
+--------------------------------------------------
 [New Topics]
 
-* jk/http-server-protocol-versions (2021-09-10) 5 commits
- - docs/protocol-v2: point readers transport config discussion
- - docs/git: discuss server-side config for GIT_PROTOCOL
- - docs/http-backend: mention v2 protocol
- - http-backend: handle HTTP_GIT_PROTOCOL CGI variable
- - t5551: test v2-to-v0 http protocol fallback
+* jk/reduce-malloc-in-v2-servers (2021-09-15) 12 commits
+  (merged to 'next' on 2021-09-16 at 40cfe41efc)
+ + ls-refs: reject unknown arguments
+ + serve: reject commands used as capabilities
+ + serve: reject bogus v2 "command=ls-refs=foo"
+ + docs/protocol-v2: clarify some ls-refs ref-prefix details
+ + ls-refs: ignore very long ref-prefix counts
+ + serve: drop "keys" strvec
+ + serve: provide "receive" function for session-id capability
+ + serve: provide "receive" function for object-format capability
+ + serve: add "receive" method for v2 capabilities table
+ + serve: return capability "value" from get_capability()
+ + serve: rename is_command() to parse_command()
+ + Merge branch 'ab/serve-cleanup' into jk/reduce-malloc-in-v2-servers
+ (this branch uses ab/serve-cleanup.)
 
- Taking advantage of the CGI interface, http-backend has been
- updated to enable protocol v2 automatically when the other side
- asks for it.
+ Code cleanup to limit memory consumption and tighten protocol
+ message parsing.
 
- Will merge to 'next'.
-
-
-* ab/align-parse-options-help (2021-09-12) 4 commits
- - parse-options: properly align continued usage output
- - git rev-parse --parseopt tests: add more usagestr tests
- - send-pack: properly use parse_options() API for usage string
- - parse-options API users: align usage output in C-strings
-
- When "git cmd -h" shows more than one line of usage text (e.g.
- the cmd subcommand may take sub-sub-command), parse-options API
- learned to align these lines, even across i18n/l10n.
+ Will merge to 'master'.
 
 
-* ab/help-config-vars (2021-09-10) 6 commits
- - fixup! help / completion: make "git help" do the hard work
- - help / completion: make "git help" do the hard work
- - help: correct logic error in combining --all and --config
- - help tests: add test for --config output
- - help: correct usage & behavior of "git help --guides"
- - help: correct the usage string in -h and documentation
+* jt/submodule-name-to-gitdir (2021-09-15) 1 commit
+  (merged to 'next' on 2021-09-16 at c658fbfdb8)
+ + submodule: extract path to submodule gitdir func
 
- Teach "git help -c" into helping the command line completion of
- configuration variables.
+ Code refactoring.
+
+ Will merge to 'master'.
 
 
-* en/am-abort-fix (2021-09-10) 3 commits
- - am: fix incorrect exit status on am fail to abort
- - t4151: add a few am --abort tests
- - git-am.txt: clarify --abort behavior
-
- When "git am --abort" fails to abort correctly, it still exited
- with exit status of 0, which has been corrected.
-
- Will merge to 'next'.
-
-
-* tb/repack-write-midx (2021-09-10) 8 commits
- - builtin/repack.c: pass `--refs-snapshot` when writing bitmaps
- - builtin/repack.c: make largest pack preferred
- - builtin/repack.c: support writing a MIDX while repacking
- - builtin/repack.c: extract showing progress to a variable
- - builtin/repack.c: keep track of existing packs unconditionally
- - midx: preliminary support for `--refs-snapshot`
- - builtin/multi-pack-index.c: support --stdin-packs mode
- - midx: expose 'write_midx_file_only()' publicly
- (this branch uses tb/multi-pack-bitmaps.)
-
- "git repack" has been taught to generate multi-pack reachability
- bitmaps.
-
-
-* ab/gc-remove-unused-call (2021-09-12) 1 commit
- - gc: remove unused launchctl_get_uid() call
-
- Code clean-up.
-
- Will merge to 'next'.
-
-
-* ab/test-tool-run-command-cleanup (2021-09-12) 1 commit
- - test-tool run-command: fix flip-flop init pattern
-
- Code clean-up.
-
- Will merge to 'next'.
-
-
-* ab/unused-script-helpers (2021-09-12) 4 commits
- - test-lib: remove unused $_x40 and $_z40 variables
- - git-bisect: remove unused SHA-1 $x40 shell variable
- - git-sh-setup: remove unused "pull with rebase" message
- - git-submodule: remove unused is_zero_oid() function
-
- Code clean-up.
-
- Will merge to 'next'.
-
-
-* cb/unix-sockets-with-windows (2021-09-12) 3 commits
- - git-compat-util: include declaration for unix sockets
- - credential-cache: check for windows specific errors
- - t0301: fixes for windows compatibility
-
- Adjust credential-cache helper to Windows.
-
- Expecting a reroll.
-
-
-* ds/add-rm-with-sparse-index (2021-09-12) 14 commits
- - advice: update message to suggest '--sparse'
- - mv: refuse to move sparse paths
- - rm: skip sparse paths with missing SKIP_WORKTREE
- - rm: add --sparse option
- - add: update --renormalize to skip sparse paths
- - add: update --chmod to skip sparse paths
- - add: implement the --sparse option
- - add: skip tracked paths outside sparse-checkout cone
- - add: fail when adding an untracked sparse file
- - dir: fix pattern matching on dirs
- - dir: select directories correctly
- - dir: extract directory-matching logic
- - t1092: behavior for adding sparse files
- - t3705: test that 'sparse_entry' is unstaged
- (this branch uses ds/mergies-with-sparse-index and ds/sparse-index-ignored-files.)
-
- "git add", "git mv", and "git rm" have been adjusted to work better
- with the sparse index.
-
-
-* en/tests-cleanup-leftover-untracked (2021-09-12) 1 commit
- - tests: remove leftover untracked files
-
- Test clean-up.
-
- Will merge to 'next'.
-
-
-* jk/strvec-typefix (2021-09-12) 1 commit
- - strvec: use size_t to store nr and alloc
-
- Correct nr and alloc members of strvec struct to be of type size_t.
-
- Will merge to 'next'.
-
-
-* rs/drop-core-compression-vars (2021-09-12) 1 commit
- - compression: drop write-only core_compression_* variables
-
- Code clean-up.
-
- Will merge to 'next'.
-
-
-* rs/packfile-bad-object-list-in-oidset (2021-09-12) 5 commits
- - packfile: use oidset for bad objects
- - packfile: convert has_packed_and_bad() to object_id
- - packfile: convert mark_bad_packed_object() to object_id
- - midx: inline nth_midxed_pack_entry()
- - oidset: make oidset_size() an inline function
-
- Replace a handcrafted data structure used to keep track of bad
- objects in the packfile API by an oidset.
-
- Will merge to 'next'.
-
-
-* tb/midx-write-propagate-namehash (2021-09-12) 4 commits
- - t5326: test propagating hashcache values
- - midx.c: respect 'pack.writeBitmapHashcache' when writing bitmaps
- - pack-bitmap.c: propagate namehash values from existing bitmaps
- - t/helper/test-bitmap.c: add 'dump-hashes' mode
- (this branch uses tb/multi-pack-bitmaps.)
-
- "git multi-pack-bitmap write" learns to propagate the hashcache
- from original bitmap to resulting bitmap.
-
-
-* ab/retire-option-argument (2021-09-12) 4 commits
- - parse-options API: remove OPTION_ARGUMENT feature
- - difftool: use run_command() API in run_file_diff()
- - difftool: prepare "diff" cmdline in cmd_difftool()
- - difftool: prepare "struct child_process" in cmd_difftool()
-
- An oddball OPTION_ARGUMENT feature has been removed from the
- parse-options API.
-
- Will merge to 'next'.
-
-
-* po/git-config-doc-mentions-help-c (2021-09-13) 1 commit
- - doc: config, tell readers of `git help --config`
+* ma/doc-git-version (2021-09-14) 1 commit
+  (merged to 'next' on 2021-09-16 at 54a6a3f8b5)
+ + documentation: add documentation for 'git version'
 
  Doc update.
 
+ Will merge to 'master'.
+
+
+* ma/help-w-check-for-requested-page (2021-09-14) 1 commit
+  (merged to 'next' on 2021-09-16 at 292dd7174d)
+ + help: make sure local html page exists before calling external processes
+
+ The error in "git help no-such-git-command" is handled better.
+
+ Will merge to 'master'.
+
+
+* ns/batched-fsync (2021-09-14) 5 commits
+ - core.fsyncobjectfiles: performance tests for add and stash
+ - update-index: use the bulk-checkin infrastructure
+ - core.fsyncobjectfiles: add windows support for batch mode
+ - core.fsyncobjectfiles: batched disk flushes
+ - bulk-checkin: rename 'state' variable and separate 'plugged' boolean
+
+ The "core.fsyncobjectfiles" configuration variable can now be set
+ to "batch" for improved performance.
+
+ Will merge to 'next'?
+
+
+* cb/plug-leaks-in-alloca-emu-users (2021-09-16) 2 commits
+  (merged to 'next' on 2021-09-16 at 2eecae2de3)
+ + t0000: avoid masking git exit value through pipes
+ + tree-diff: fix leak when not HAVE_ALLOCA_H
+
+ Leakfix.
+
+ Will merge to 'master'.
+
+
+* jh/builtin-fsmonitor-part1 (2021-09-15) 7 commits
+ - t/helper/simple-ipc: convert test-simple-ipc to use start_bg_command
+ - run-command: create start_bg_command
+ - simple-ipc/ipc-win32: add Windows ACL to named pipe
+ - simple-ipc/ipc-win32: add trace2 debugging
+ - simple-ipc: move definition of ipc_active_state outside of ifdef
+ - simple-ipc: preparations for supporting binary messages.
+ - trace2: fix memory leak of thread name
+
+ Built-in fsmonitor (part 1).
+
+
+* kz/revindex-comment-fix (2021-09-15) 1 commit
+  (merged to 'next' on 2021-09-16 at b4797add3a)
+ + pack-revindex.h: correct the time complexity descriptions
+
+ Header comment fix.
+
+ Will merge to 'master'.
+
+
+* cb/cvsserver (2021-09-16) 3 commits
+ - Documentation: cleanup git-cvsserver
+ - git-cvsserver: protect against NULL in crypt(3)
+ - git-cvsserver: use crypt correctly to compare password hashes
+
+ "git cvsserver" had a long-standing bug in its authentication code,
+ which has finally been corrected (it is unclear and is a separate
+ question if anybody is seriously using it, though).
+
  Will merge to 'next'.
 
 
-* pw/rebase-on-a-tag-fix (2021-09-13) 11 commits
- - rebase: dereference tags
- - rebase: use lookup_commit_reference_by_name()
- - rebase: use our standard error return value
- - rebase: remove redundant strbuf
- - t3407: rework rebase --quit tests
- - t3407: strengthen rebase --abort tests
- - t3407: use test_path_is_missing
- - t3407: rename a variable
- - t3407: use test_cmp_rev
- - t3407: use test_commit
- - t3407: run tests in $TEST_DIRECTORY
+* cb/unicode-14 (2021-09-17) 1 commit
+ - unicode: update the width tables to Unicode 14
 
- "git rebase <upstream> <tag>" failed when aborted in the middle, as
- it mistakenly tried to write the tag object instead of peeling it
- to HEAD.
+ The unicode character width table (used for output alignment) has
+ been updated.
 
- Expecting a reroll.
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -288,51 +278,6 @@ Release tarballs are available at:
  This is an interim one that goes with the updated ab/config-based-hooks-base.
 
 
-* jh/builtin-fsmonitor (2021-09-03) 37 commits
- - fixup! fsmonitor--daemon: implement handle_client callback
- - SQUASH??? https://github.com/git/git/runs/3438543601?check_suite_focus=true#step:5:136
- - BANDAID: sparse fixes
- - t7527: test FS event reporing on MacOS WRT case and Unicode
- - fsmonitor: handle shortname for .git
- - t7527: test status with untracked-cache and fsmonitor--daemon
- - fsmonitor: force update index after large responses
- - fsmonitor: enhance existing comments
- - fsmonitor--daemon: use a cookie file to sync with file system
- - fsmonitor--daemon: periodically truncate list of modified files
- - t7527: create test for fsmonitor--daemon
- - t/perf/p7519: add fsmonitor--daemon test cases
- - t/perf: avoid copying builtin fsmonitor files into test repo
- - t/perf/p7519: speed up test using "test-tool touch"
- - t/helper/test-touch: add helper to touch a series of files
- - fsmonitor--daemon: implement handle_client callback
- - fsmonitor-fs-listen-macos: implement FSEvent listener on MacOS
- - fsmonitor-fs-listen-macos: add macos header files for FSEvent
- - fsmonitor-fs-listen-win32: implement FSMonitor backend on Windows
- - fsmonitor--daemon: create token-based changed path cache
- - fsmonitor--daemon: define token-ids
- - fsmonitor--daemon: add pathname classification
- - fsmonitor: do not try to operate on bare repos
- - fsmonitor--daemon: implement 'start' command
- - fsmonitor--daemon: implement 'run' command
- - fsmonitor-fs-listen-macos: stub in backend for MacOS
- - fsmonitor-fs-listen-win32: stub in backend for Windows
- - t/helper/fsmonitor-client: create IPC client to talk to FSMonitor Daemon
- - fsmonitor--daemon: implement 'stop' and 'status' commands
- - fsmonitor--daemon: add a built-in fsmonitor daemon
- - fsmonitor: use IPC to query the builtin FSMonitor daemon
- - fsmonitor: config settings are repository-specific
- - help: include fsmonitor--daemon feature flag in version info
- - fsmonitor-ipc: create client routines for git-fsmonitor--daemon
- - fsmonitor--daemon: update fsmonitor documentation
- - fsmonitor--daemon: man page
- - simple-ipc: preparations for supporting binary messages.
-
- An attempt to write and ship with a watchman equivalent tailored
- for our use.
-
- Expecting a reroll post 2.33 release.
-
-
 * es/superproject-aware-submodules (2021-08-19) 5 commits
  - fixup! introduce submodule.superprojectGitDir record
  - submodule: record superproject gitdir during 'update'
@@ -344,31 +289,6 @@ Release tarballs are available at:
  the superproject it is bound to (RFC).
 
  Looking good.
-
-
-* ao/p4-avoid-decoding (2021-04-12) 2 commits
- - git-p4: do not decode data from perforce by default
- - git-p4: avoid decoding more data from perforce
-
- "git p4" in Python-2 days used to accept a lot more kinds of data
- from Perforce server as uninterrupted byte sequence, but after
- switching to Python-3, too many things are expected to be in UTF-8,
- which broke traditional use cases.
-
- Will discard.
- Have been stalled for too long.
- cf. <20210504220153.1d9f0cb2@ado-tr>
-
-
-* tv/p4-fallback-encoding (2021-04-30) 1 commit
- - git-p4: git-p4.fallbackEncoding to specify non UTF-8 charset
-
- "git p4" learns the fallbackEncoding configuration variable to
- safely accept changeset descriptions that aren't written in UTF-8.
-
- Will discard.
- Have been stalled for too long.
- cf. <CAKu1iLUaLuAZWqjNK4tfhhR=YaSt4MdQ+90ZY-JcEh_SeHyYCw@mail.gmail.com>
 
 
 * ab/fsck-unexpected-type (2021-09-07) 22 commits
@@ -403,6 +323,241 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* jk/http-server-protocol-versions (2021-09-10) 5 commits
+  (merged to 'next' on 2021-09-13 at 9174cd6d37)
+ + docs/protocol-v2: point readers transport config discussion
+ + docs/git: discuss server-side config for GIT_PROTOCOL
+ + docs/http-backend: mention v2 protocol
+ + http-backend: handle HTTP_GIT_PROTOCOL CGI variable
+ + t5551: test v2-to-v0 http protocol fallback
+
+ Taking advantage of the CGI interface, http-backend has been
+ updated to enable protocol v2 automatically when the other side
+ asks for it.
+
+ Will merge to 'master'.
+
+
+* ab/align-parse-options-help (2021-09-12) 4 commits
+ - parse-options: properly align continued usage output
+ - git rev-parse --parseopt tests: add more usagestr tests
+ - send-pack: properly use parse_options() API for usage string
+ - parse-options API users: align usage output in C-strings
+
+ When "git cmd -h" shows more than one line of usage text (e.g.
+ the cmd subcommand may take sub-sub-command), parse-options API
+ learned to align these lines, even across i18n/l10n.
+
+ Will merge to 'next'?
+
+
+* ab/help-config-vars (2021-09-10) 6 commits
+ - fixup! help / completion: make "git help" do the hard work
+ - help / completion: make "git help" do the hard work
+ - help: correct logic error in combining --all and --config
+ - help tests: add test for --config output
+ - help: correct usage & behavior of "git help --guides"
+ - help: correct the usage string in -h and documentation
+
+ Teach "git help -c" into helping the command line completion of
+ configuration variables.
+
+ Will merge to 'next'?
+
+
+* en/am-abort-fix (2021-09-10) 3 commits
+  (merged to 'next' on 2021-09-13 at 11f3d2dc90)
+ + am: fix incorrect exit status on am fail to abort
+ + t4151: add a few am --abort tests
+ + git-am.txt: clarify --abort behavior
+
+ When "git am --abort" fails to abort correctly, it still exited
+ with exit status of 0, which has been corrected.
+
+ Will merge to 'master'.
+
+
+* tb/repack-write-midx (2021-09-16) 8 commits
+ - builtin/repack.c: pass `--refs-snapshot` when writing bitmaps
+ - builtin/repack.c: make largest pack preferred
+ - builtin/repack.c: support writing a MIDX while repacking
+ - builtin/repack.c: extract showing progress to a variable
+ - builtin/repack.c: keep track of existing packs unconditionally
+ - midx: preliminary support for `--refs-snapshot`
+ - builtin/multi-pack-index.c: support `--stdin-packs` mode
+ - midx: expose `write_midx_file_only()` publicly
+ (this branch uses tb/multi-pack-bitmaps.)
+
+ "git repack" has been taught to generate multi-pack reachability
+ bitmaps.
+
+ Will merge to 'next'?
+
+
+* ab/gc-remove-unused-call (2021-09-12) 1 commit
+  (merged to 'next' on 2021-09-13 at 14f69ed198)
+ + gc: remove unused launchctl_get_uid() call
+
+ Code clean-up.
+
+ Will merge to 'master'.
+
+
+* ab/test-tool-run-command-cleanup (2021-09-12) 1 commit
+  (merged to 'next' on 2021-09-13 at 086310d0f4)
+ + test-tool run-command: fix flip-flop init pattern
+
+ Code clean-up.
+
+ Will merge to 'master'.
+
+
+* ab/unused-script-helpers (2021-09-12) 4 commits
+  (merged to 'next' on 2021-09-15 at 14e6b0f26e)
+ + test-lib: remove unused $_x40 and $_z40 variables
+ + git-bisect: remove unused SHA-1 $x40 shell variable
+ + git-sh-setup: remove unused "pull with rebase" message
+ + git-submodule: remove unused is_zero_oid() function
+
+ Code clean-up.
+
+ Will merge to 'master'.
+
+
+* cb/unix-sockets-with-windows (2021-09-14) 3 commits
+  (merged to 'next' on 2021-09-16 at e2921332ef)
+ + git-compat-util: include declaration for unix sockets in windows
+ + credential-cache: check for windows specific errors
+ + t0301: fixes for windows compatibility
+
+ Adjust credential-cache helper to Windows.
+
+ Will merge to 'master'.
+
+
+* ds/add-rm-with-sparse-index (2021-09-12) 14 commits
+ - advice: update message to suggest '--sparse'
+ - mv: refuse to move sparse paths
+ - rm: skip sparse paths with missing SKIP_WORKTREE
+ - rm: add --sparse option
+ - add: update --renormalize to skip sparse paths
+ - add: update --chmod to skip sparse paths
+ - add: implement the --sparse option
+ - add: skip tracked paths outside sparse-checkout cone
+ - add: fail when adding an untracked sparse file
+ - dir: fix pattern matching on dirs
+ - dir: select directories correctly
+ - dir: extract directory-matching logic
+ - t1092: behavior for adding sparse files
+ - t3705: test that 'sparse_entry' is unstaged
+ (this branch uses ds/mergies-with-sparse-index and ds/sparse-index-ignored-files.)
+
+ "git add", "git mv", and "git rm" have been adjusted to avoid
+ updating paths outside of the sparse-checkout definition unless
+ the user specifies a "--sparse" option.
+
+ Will merge to 'next'?
+
+
+* en/tests-cleanup-leftover-untracked (2021-09-12) 1 commit
+  (merged to 'next' on 2021-09-13 at cf38118205)
+ + tests: remove leftover untracked files
+
+ Test clean-up.
+
+ Will merge to 'master'.
+
+
+* jk/strvec-typefix (2021-09-12) 1 commit
+  (merged to 'next' on 2021-09-13 at e07858581d)
+ + strvec: use size_t to store nr and alloc
+
+ Correct nr and alloc members of strvec struct to be of type size_t.
+
+ Will merge to 'master'.
+
+
+* rs/drop-core-compression-vars (2021-09-12) 1 commit
+  (merged to 'next' on 2021-09-13 at 3bd06626c3)
+ + compression: drop write-only core_compression_* variables
+
+ Code clean-up.
+
+ Will merge to 'master'.
+
+
+* rs/packfile-bad-object-list-in-oidset (2021-09-12) 5 commits
+  (merged to 'next' on 2021-09-13 at 80e72f5f97)
+ + packfile: use oidset for bad objects
+ + packfile: convert has_packed_and_bad() to object_id
+ + packfile: convert mark_bad_packed_object() to object_id
+ + midx: inline nth_midxed_pack_entry()
+ + oidset: make oidset_size() an inline function
+
+ Replace a handcrafted data structure used to keep track of bad
+ objects in the packfile API by an oidset.
+
+ Will merge to 'master'.
+
+
+* tb/midx-write-propagate-namehash (2021-09-14) 7 commits
+ - t5326: test propagating hashcache values
+ - p5326: generate pack bitmaps before writing the MIDX bitmap
+ - p5326: don't set core.multiPackIndex unnecessarily
+ - p5326: create missing 'perf-tag' tag
+ - midx.c: respect 'pack.writeBitmapHashcache' when writing bitmaps
+ - pack-bitmap.c: propagate namehash values from existing bitmaps
+ - t/helper/test-bitmap.c: add 'dump-hashes' mode
+ (this branch uses tb/multi-pack-bitmaps.)
+
+ "git multi-pack-index write --bitmap" learns to propagate the
+ hashcache from original bitmap to resulting bitmap.
+
+ Will merge to 'next'?
+
+
+* ab/retire-option-argument (2021-09-12) 4 commits
+  (merged to 'next' on 2021-09-15 at 0bd7ce1161)
+ + parse-options API: remove OPTION_ARGUMENT feature
+ + difftool: use run_command() API in run_file_diff()
+ + difftool: prepare "diff" cmdline in cmd_difftool()
+ + difftool: prepare "struct child_process" in cmd_difftool()
+
+ An oddball OPTION_ARGUMENT feature has been removed from the
+ parse-options API.
+
+ Will merge to 'master'.
+
+
+* po/git-config-doc-mentions-help-c (2021-09-13) 1 commit
+  (merged to 'next' on 2021-09-13 at bddbd5c25d)
+ + doc: config, tell readers of `git help --config`
+
+ Doc update.
+
+ Will merge to 'master'.
+
+
+* pw/rebase-of-a-tag-fix (2021-09-13) 11 commits
+ - rebase: dereference tags
+ - rebase: use lookup_commit_reference_by_name()
+ - rebase: use our standard error return value
+ - rebase: remove redundant strbuf
+ - t3407: rework rebase --quit tests
+ - t3407: strengthen rebase --abort tests
+ - t3407: use test_path_is_missing
+ - t3407: rename a variable
+ - t3407: use test_cmp_rev
+ - t3407: use test_commit
+ - t3407: run tests in $TEST_DIRECTORY
+
+ "git rebase <upstream> <tag>" failed when aborted in the middle, as
+ it mistakenly tried to write the tag object instead of peeling it
+ to HEAD.
+
+ Expecting a reroll.
+
+
 * en/zdiff3 (2021-09-12) 2 commits
  - update documentation for new zdiff3 conflictStyle
  - xdiff: implement a zealous diff3, or "zdiff3"
@@ -418,8 +573,11 @@ Release tarballs are available at:
  Fix "git stash" corner case where the tentative change involves
  changing a directory to a file (or vice versa).
 
+ Will merge to 'next'.
+
 
 * js/pull-release-packs-before-fetching (2021-09-08) 2 commits
+  (merged to 'next' on 2021-09-12 at 05cdcab392)
  + pull: release packs before fetching
  + commit-graph: when closing the graph, also release the slab
  (this branch is used by js/run-command-close-packs.)
@@ -428,22 +586,25 @@ Release tarballs are available at:
  packfiles before spawning "git fetch" to help auto-gc that may be
  invoked by it.
 
+ Will merge to 'master'.
+
 
 * ab/http-drop-old-curl-plus (2021-09-13) 9 commits
- - http: don't hardcode the value of CURL_SOCKOPT_OK
- - http: centralize the accounting of libcurl dependencies
- - http: correct curl version check for CURLOPT_PINNEDPUBLICKEY
- - http: correct version check for CURL_HTTP_VERSION_2
- - http: drop support for curl < 7.18.0 (again)
- - Makefile: drop support for curl < 7.9.8 (again)
- - INSTALL: mention that we need libcurl 7.19.4 or newer to build
- - INSTALL: reword and copy-edit the "libcurl" section
- - INSTALL: don't mention the "curl" executable at all
+  (merged to 'next' on 2021-09-15 at 16aaab36f1)
+ + http: don't hardcode the value of CURL_SOCKOPT_OK
+ + http: centralize the accounting of libcurl dependencies
+ + http: correct curl version check for CURLOPT_PINNEDPUBLICKEY
+ + http: correct version check for CURL_HTTP_VERSION_2
+ + http: drop support for curl < 7.18.0 (again)
+ + Makefile: drop support for curl < 7.9.8 (again)
+ + INSTALL: mention that we need libcurl 7.19.4 or newer to build
+ + INSTALL: reword and copy-edit the "libcurl" section
+ + INSTALL: don't mention the "curl" executable at all
 
  Conditional compilation around versions of libcURL has been
  straightened out.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ds/mergies-with-sparse-index (2021-09-09) 6 commits
@@ -486,11 +647,15 @@ Release tarballs are available at:
  More code paths that uses the hack to add submodule's object
  database to the set of alternate object store have been cleaned up.
 
+ Will merge to 'next'.
+
 
 * jx/ci-l10n (2021-09-09) 1 commit
  - ci: new github-action for git-l10n code review
 
  CI help for l10n.
+
+ Will merge to 'next'.
 
 
 * jk/t5562-racefix (2021-09-09) 1 commit
@@ -523,15 +688,10 @@ Release tarballs are available at:
 
 
 * rs/use-xopen-in-index-pack (2021-09-10) 1 commit
- - index-pack: use xopen in init_thread
+  (merged to 'next' on 2021-09-16 at 186eaaae56)
+ + index-pack: use xopen in init_thread
 
-
-* bs/install-strip (2021-09-05) 1 commit
-  (merged to 'next' on 2021-09-08 at 40cfa71c8d)
- + make: add INSTALL_STRIP option variable
-
- "make INSTALL_STRIP=-s install" allows the installation step to use
- "install -s" to strip the binaries as they get installed.
+ Code clean-up.
 
  Will merge to 'master'.
 
@@ -548,7 +708,7 @@ Release tarballs are available at:
  Will merge to 'master'.
 
 
-* js/scalar (2021-09-08) 15 commits
+* js/scalar (2021-09-14) 15 commits
  - scalar: accept -C and -c options before the subcommand
  - scalar: implement the `version` command
  - scalar: implement the `delete` command
@@ -568,30 +728,14 @@ Release tarballs are available at:
  Add pieces from "scalar" to contrib/.
 
 
-* ps/update-ref-batch-flush (2021-09-03) 1 commit
+* ps/update-ref-batch-flush (2021-09-15) 2 commits
+  (merged to 'next' on 2021-09-15 at 39a69141e3)
+ + t1400: avoid SIGPIPE race condition on fifo
   (merged to 'next' on 2021-09-10 at 4ae19a5f34)
  + update-ref: fix streaming of status updates
 
  "git update-ref --stdin" failed to flush its output as needed,
  which potentially led the conversation to a deadlock.
-
- Will merge to 'master'.
-
-
-* ab/no-more-check-bindir (2021-09-07) 1 commit
-  (merged to 'next' on 2021-09-08 at 4fddb3864f)
- + Makefile: remove the check_bindir script
-
- Build simplification.
-
- Will merge to 'master'.
-
-
-* ab/send-email-config-fix (2021-09-07) 1 commit
-  (merged to 'next' on 2021-09-08 at c2000e9689)
- + send-email: fix a "first config key wins" regression in v2.33.0
-
- Regression fix.
 
  Will merge to 'master'.
 
@@ -606,43 +750,6 @@ Release tarballs are available at:
  + tr2: remove NEEDSWORK comment for "non-procfs" implementations
 
  The tracing of process ancestry information has been enhanced.
-
- Will merge to 'master'.
-
-
-* bs/doc-bugreport-outdir (2021-09-07) 1 commit
-  (merged to 'next' on 2021-09-08 at 5ea3df204d)
- + Documentation: fix default directory of git bugreport -o
-
- Docfix.
-
- Will merge to 'master'.
-
-
-* jc/prefix-filename-allocates (2021-09-07) 1 commit
-  (merged to 'next' on 2021-09-10 at a5221ea92e)
- + hash-object: prefix_filename() returns allocated memory these days
-
- Leakfix.
-
- Will merge to 'master'.
-
-
-* rs/range-diff-avoid-segfault-with-I (2021-09-07) 1 commit
-  (merged to 'next' on 2021-09-10 at e8bac5f9ea)
- + range-diff: avoid segfault with -I
-
- "git range-diff -I... <range> <range>" segfaulted, which has been
- corrected.
-
- Will merge to 'master'.
-
-
-* so/diff-index-regression-fix (2021-09-07) 1 commit
-  (merged to 'next' on 2021-09-08 at ca17912ed3)
- + diff-index: restore -c/--cc options handling
-
- Recent "diff -m" changes broke "gitk", which has been corrected.
 
  Will merge to 'master'.
 
@@ -667,20 +774,8 @@ Release tarballs are available at:
  Will merge to 'master'.
 
 
-* ab/reverse-midx-optim (2021-09-07) 1 commit
-  (merged to 'next' on 2021-09-08 at 1972c5931b)
- + pack-write: skip *.rev work when not writing *.rev
-
- The code that optionally creates the *.rev reverse index file has
- been optimized to avoid needless computation when it is not writing
- the file out.
-
- Will merge to 'master'.
-
-
-* ab/sanitize-leak-ci (2021-09-07) 3 commits
+* ab/sanitize-leak-ci (2021-09-16) 2 commits
  - tests: add a test mode for SANITIZE=leak, run it in CI
- - CI: refactor "if" to "case" statement
  - Makefile: add SANITIZE=leak flag to GIT-BUILD-OPTIONS
 
  CI learns to run the leak sanitizer builds.
@@ -688,34 +783,11 @@ Release tarballs are available at:
  Will merge to 'next'?
 
 
-* jc/trivial-threeway-binary-merge (2021-09-05) 1 commit
-  (merged to 'next' on 2021-09-08 at d6ba0735d8)
- + apply: resolve trivial merge without hitting ll-merge with "--3way"
-
- The "git apply -3" code path learned not to bother the lower level
- merge machinery when the three-way merge can be trivially resolved
- without the content level merge.
-
- Will merge to 'master'.
-
-
 * ms/customizable-ident-expansion (2021-09-01) 1 commit
  - keyword expansion: make "$Id$" string configurable
 
  Instead of "$Id$", user-specified string (like $FreeBSD$) can be
  used as an in-blob placeholder for keyword expansion.
-
-
-* pb/test-use-user-env (2021-09-07) 3 commits
-  (merged to 'next' on 2021-09-08 at 6fa5d96723)
- + test-lib-functions: keep user's debugger config files and TERM in 'debug'
- + test-lib-functions: optionally keep HOME, TERM and SHELL in 'test_pause'
- + test-lib-functions: use 'TEST_SHELL_PATH' in 'test_pause'
-
- Teach "test_pause" and "debug" helpers to allow using the HOME and
- TERM environment variables the user usually uses.
-
- Will merge to 'master'.
 
 
 * js/retire-preserve-merges (2021-09-07) 11 commits
@@ -738,16 +810,17 @@ Release tarballs are available at:
 
 
 * mr/bisect-in-c-4 (2021-09-13) 6 commits
- - bisect--helper: retire `--bisect-next-check` subcommand
- - bisect--helper: reimplement `bisect_run` shell function in C
- - bisect--helper: reimplement `bisect_visualize()` shell function in C
- - run-command: make `exists_in_PATH()` non-static
- - t6030-bisect-porcelain: add test for bisect visualize
- - t6030-bisect-porcelain: add tests to control bisect run exit cases
+  (merged to 'next' on 2021-09-15 at 2af7f048d4)
+ + bisect--helper: retire `--bisect-next-check` subcommand
+ + bisect--helper: reimplement `bisect_run` shell function in C
+ + bisect--helper: reimplement `bisect_visualize()` shell function in C
+ + run-command: make `exists_in_PATH()` non-static
+ + t6030-bisect-porcelain: add test for bisect visualize
+ + t6030-bisect-porcelain: add tests to control bisect run exit cases
 
  Rewrite of "git bisect" in C continues.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * en/remerge-diff (2021-08-31) 7 commits
@@ -763,8 +836,6 @@ Release tarballs are available at:
  used to show the difference between mechanical (and possibly
  conflicted) merge results and the recorded resolution.
 
- What's the status of this one?
-
 
 * sg/test-split-index-fix (2021-09-07) 7 commits
  - read-cache: fix GIT_TEST_SPLIT_INDEX
@@ -777,6 +848,8 @@ Release tarballs are available at:
  (this branch uses ds/sparse-index-ignored-files.)
 
  Test updates.
+
+ Will merge to 'next'?
 
 
 * ab/refs-errno-cleanup (2021-08-25) 4 commits
@@ -1115,6 +1188,7 @@ Release tarballs are available at:
  + transport: use designated initializers
  + transport: rename "fetch" in transport_vtable to "fetch_refs"
  + serve: mark has_capability() as static
+ (this branch is used by jk/reduce-malloc-in-v2-servers.)
 
  Code clean-up around "git serve".
 
@@ -1170,6 +1244,8 @@ Release tarballs are available at:
  The "reftable" backend for the refs API, without integrating into
  the refs subsystem.
 
+ Will merge to 'next'?
+
 
 * ab/refs-files-cleanup (2021-08-25) 13 commits
  - refs/files: remove unused "errno != ENOTDIR" condition
@@ -1189,6 +1265,8 @@ Release tarballs are available at:
 
  Continued work on top of the hn/refs-errno-cleanup topic.
 
+ Will merge to 'next'?
+
 
 * hn/refs-errno-cleanup (2021-08-25) 4 commits
  - refs: make errno output explicit for read_raw_ref_fn
@@ -1200,62 +1278,74 @@ Release tarballs are available at:
  Futz with the way 'errno' is relied on in the refs API to carry the
  failure modes up the callchain.
 
+ Will merge to 'next'?
+
 --------------------------------------------------
 [Discarded]
 
-* np/blame-ignore-revs-file-may-be-optional (2021-08-09) 1 commit
- . blame: add config `blame.ignoreRevsFileIsOptional`
+* ao/p4-avoid-decoding (2021-04-12) 2 commits
+ . git-p4: do not decode data from perforce by default
+ . git-p4: avoid decoding more data from perforce
 
- When the file named by blame.ignoreRevsFile configuration variable
- does not exist, it causes "git blame" to die.  Sometimes, it is
- useful if the files named by configuration variables can be made
- optional (it would allow ~/.gitconfig to give a filename, and make
- it effective only in repositories that have a file with that name).
+ "git p4" in Python-2 days used to accept a lot more kinds of data
+ from Perforce server as uninterrupted byte sequence, but after
+ switching to Python-3, too many things are expected to be in UTF-8,
+ which broke traditional use cases.
 
- This uses an extra variable that marks that the variable is
- optional.  Yet another alternative is being discussed to define
- syntax for "optional" filename values, so that the same mechanism
- can be used for not just blame.ignoreRevsFile but other filenames.
-
- Queued just as a reminder of the theme.
+ Have been stalled for too long.
+ cf. <20210504220153.1d9f0cb2@ado-tr>
 
 
-* ab/test-tool-cache-cleanup (2021-08-24) 4 commits
- . read-cache perf: add a perf test for refresh_index()
- . test-tool: migrate read-cache-again to parse_options()
- . test-tool: migrate read-cache-perf to parse_options()
- . test-tool: split up test-tool read-cache
+* tv/p4-fallback-encoding (2021-04-30) 1 commit
+ . git-p4: git-p4.fallbackEncoding to specify non UTF-8 charset
 
- Test code shuffling.
+ "git p4" learns the fallbackEncoding configuration variable to
+ safely accept changeset descriptions that aren't written in UTF-8.
 
- Discarded.
- cf. <87tuj7xhqo.fsf@evledraar.gmail.com>
-
- * ow/clone-bare-origin (2021-08-03) 1 commit
- . clone: Allow combining --bare and --origin
-
- "git clone" did not like to take "--bare" and "--origin=X" at the
- same time; loosen the restriction.
-
- cf. <20210802174944.53745-1-oystwa@gmail.com>
+ Have been stalled for too long.
+ cf. <CAKu1iLUaLuAZWqjNK4tfhhR=YaSt4MdQ+90ZY-JcEh_SeHyYCw@mail.gmail.com>
 
 
-* jk/http-backend-handle-proto-header (2021-09-09) 1 commit
- . http-backend: handle HTTP_GIT_PROTOCOL CGI variable
+* jh/builtin-fsmonitor (2021-09-03) 37 commits
+ . fixup! fsmonitor--daemon: implement handle_client callback
+ . SQUASH??? https://github.com/git/git/runs/3438543601?check_suite_focus=true#step:5:136
+ . BANDAID: sparse fixes
+ . t7527: test FS event reporing on MacOS WRT case and Unicode
+ . fsmonitor: handle shortname for .git
+ . t7527: test status with untracked-cache and fsmonitor--daemon
+ . fsmonitor: force update index after large responses
+ . fsmonitor: enhance existing comments
+ . fsmonitor--daemon: use a cookie file to sync with file system
+ . fsmonitor--daemon: periodically truncate list of modified files
+ . t7527: create test for fsmonitor--daemon
+ . t/perf/p7519: add fsmonitor--daemon test cases
+ . t/perf: avoid copying builtin fsmonitor files into test repo
+ . t/perf/p7519: speed up test using "test-tool touch"
+ . t/helper/test-touch: add helper to touch a series of files
+ . fsmonitor--daemon: implement handle_client callback
+ . fsmonitor-fs-listen-macos: implement FSEvent listener on MacOS
+ . fsmonitor-fs-listen-macos: add macos header files for FSEvent
+ . fsmonitor-fs-listen-win32: implement FSMonitor backend on Windows
+ . fsmonitor--daemon: create token-based changed path cache
+ . fsmonitor--daemon: define token-ids
+ . fsmonitor--daemon: add pathname classification
+ . fsmonitor: do not try to operate on bare repos
+ . fsmonitor--daemon: implement 'start' command
+ . fsmonitor--daemon: implement 'run' command
+ . fsmonitor-fs-listen-macos: stub in backend for MacOS
+ . fsmonitor-fs-listen-win32: stub in backend for Windows
+ . t/helper/fsmonitor-client: create IPC client to talk to FSMonitor Daemon
+ . fsmonitor--daemon: implement 'stop' and 'status' commands
+ . fsmonitor--daemon: add a built-in fsmonitor daemon
+ . fsmonitor: use IPC to query the builtin FSMonitor daemon
+ . fsmonitor: config settings are repository-specific
+ . help: include fsmonitor--daemon feature flag in version info
+ . fsmonitor-ipc: create client routines for git-fsmonitor--daemon
+ . fsmonitor--daemon: update fsmonitor documentation
+ . fsmonitor--daemon: man page
+ . simple-ipc: preparations for supporting binary messages.
 
- Taking advantage of the CGI interface, http-backend has been
- updated to enable protocol v2 automatically when the other side
- asks for it.
+ An attempt to write and ship with a watchman equivalent tailored
+ for our use.
 
- Discarded.
- The jk/http-server-protocol-versions topic supersedes this.
-
-
-* kr/doc-webserver-config-for-v2 (2021-09-07) 1 commit
- . Docs: web server must setenv GIT_PROTOCOL for v2
-
- Hints to set GIT_PROTOCOL environment in various CGI environments
- are added to the documentation.
-
- Discarded.
- The jk/http-server-protocol-versions topic supersedes this.
+ Will be rerolled in pieces.
