@@ -12,9 +12,16 @@ test_expect_success 'create tags' '
 	git tag --message="tag pointing to HEAD" perf-tag HEAD
 '
 
+test_expect_success 'start with bitmapped pack' '
+	git repack -adb
+'
+
 test_perf 'setup multi-pack index' '
-	git repack -ad &&
 	git multi-pack-index write --bitmap
+'
+
+test_expect_success 'drop pack bitmap' '
+	rm -f .git/objects/pack/pack-*.bitmap
 '
 
 test_full_bitmap
