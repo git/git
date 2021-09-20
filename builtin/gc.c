@@ -663,8 +663,8 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 	gc_before_repack();
 
 	if (!repository_format_precious_objects) {
-		close_object_store(the_repository->objects);
-		if (run_command_v_opt(repack.v, RUN_GIT_CMD))
+		if (run_command_v_opt(repack.v,
+				      RUN_GIT_CMD | RUN_CLOSE_OBJECT_STORE))
 			die(FAILED_RUN, repack.v[0]);
 
 		if (prune_expire) {
@@ -848,7 +848,7 @@ static int run_write_commit_graph(struct maintenance_run_opts *opts)
 {
 	struct child_process child = CHILD_PROCESS_INIT;
 
-	child.git_cmd = 1;
+	child.git_cmd = child.close_object_store = 1;
 	strvec_pushl(&child.args, "commit-graph", "write",
 		     "--split", "--reachable", NULL);
 
@@ -864,7 +864,6 @@ static int maintenance_task_commit_graph(struct maintenance_run_opts *opts)
 	if (!the_repository->settings.core_commit_graph)
 		return 0;
 
-	close_object_store(the_repository->objects);
 	if (run_write_commit_graph(opts)) {
 		error(_("failed to write commit-graph"));
 		return 1;
@@ -913,7 +912,7 @@ static int maintenance_task_gc(struct maintenance_run_opts *opts)
 {
 	struct child_process child = CHILD_PROCESS_INIT;
 
-	child.git_cmd = 1;
+	child.git_cmd = child.close_object_store = 1;
 	strvec_push(&child.args, "gc");
 
 	if (opts->auto_flag)
@@ -923,7 +922,6 @@ static int maintenance_task_gc(struct maintenance_run_opts *opts)
 	else
 		strvec_push(&child.args, "--no-quiet");
 
-	close_object_store(the_repository->objects);
 	return run_command(&child);
 }
 
@@ -1097,13 +1095,11 @@ static int multi_pack_index_expire(struct maintenance_run_opts *opts)
 {
 	struct child_process child = CHILD_PROCESS_INIT;
 
-	child.git_cmd = 1;
+	child.git_cmd = child.close_object_store = 1;
 	strvec_pushl(&child.args, "multi-pack-index", "expire", NULL);
 
 	if (opts->quiet)
 		strvec_push(&child.args, "--no-progress");
-
-	close_object_store(the_repository->objects);
 
 	if (run_command(&child))
 		return error(_("'git multi-pack-index expire' failed"));
@@ -1155,7 +1151,7 @@ static int multi_pack_index_repack(struct maintenance_run_opts *opts)
 {
 	struct child_process child = CHILD_PROCESS_INIT;
 
-	child.git_cmd = 1;
+	child.git_cmd = child.close_object_store = 1;
 	strvec_pushl(&child.args, "multi-pack-index", "repack", NULL);
 
 	if (opts->quiet)
@@ -1163,8 +1159,6 @@ static int multi_pack_index_repack(struct maintenance_run_opts *opts)
 
 	strvec_pushf(&child.args, "--batch-size=%"PRIuMAX,
 				  (uintmax_t)get_auto_pack_size());
-
-	close_object_store(the_repository->objects);
 
 	if (run_command(&child))
 		return error(_("'git multi-pack-index repack' failed"));

@@ -1848,7 +1848,6 @@ next:
 	 */
 	if (!state->rebasing) {
 		am_destroy(state);
-		close_object_store(the_repository->objects);
 		run_auto_maintenance(state->quiet);
 	}
 }
