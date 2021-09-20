@@ -854,13 +854,11 @@ static int update_local_ref(struct ref *ref,
 			    int summary_width)
 {
 	struct commit *current = NULL, *updated;
-	enum object_type type;
 	struct branch *current_branch = branch_get(NULL);
 	const char *pretty_ref = prettify_refname(ref->name);
 	int fast_forward = 0;
 
-	type = oid_object_info(the_repository, &ref->new_oid, NULL);
-	if (type < 0)
+	if (!repo_has_object_file(the_repository, &ref->new_oid))
 		die(_("object %s not found"), oid_to_hex(&ref->new_oid));
 
 	if (oideq(&ref->old_oid, &ref->new_oid)) {
@@ -972,7 +970,7 @@ static int update_local_ref(struct ref *ref,
 	}
 }
 
-static int iterate_ref_map(void *cb_data, struct object_id *oid)
+static const struct object_id *iterate_ref_map(void *cb_data)
 {
 	struct ref **rm = cb_data;
 	struct ref *ref = *rm;
@@ -980,10 +978,9 @@ static int iterate_ref_map(void *cb_data, struct object_id *oid)
 	while (ref && ref->status == REF_STATUS_REJECT_SHALLOW)
 		ref = ref->next;
 	if (!ref)
-		return -1; /* end of the list */
+		return NULL;
 	*rm = ref->next;
-	oidcpy(oid, &ref->old_oid);
-	return 0;
+	return &ref->old_oid;
 }
 
 struct fetch_head {
@@ -1082,7 +1079,6 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 			      int connectivity_checked, struct ref *ref_map)
 {
 	struct fetch_head fetch_head;
-	struct commit *commit;
 	int url_len, i, rc = 0;
 	struct strbuf note = STRBUF_INIT, err = STRBUF_INIT;
 	struct ref_transaction *transaction = NULL;
@@ -1130,6 +1126,7 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 	     want_status <= FETCH_HEAD_IGNORE;
 	     want_status++) {
 		for (rm = ref_map; rm; rm = rm->next) {
+			struct commit *commit = NULL;
 			struct ref *ref = NULL;
 
 			if (rm->status == REF_STATUS_REJECT_SHALLOW) {
@@ -1139,11 +1136,23 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 				continue;
 			}
 
-			commit = lookup_commit_reference_gently(the_repository,
-								&rm->old_oid,
-								1);
-			if (!commit)
-				rm->fetch_head_status = FETCH_HEAD_NOT_FOR_MERGE;
+			/*
+			 * References in "refs/tags/" are often going to point
+			 * to annotated tags, which are not part of the
+			 * commit-graph. We thus only try to look up refs in
+			 * the graph which are not in that namespace to not
+			 * regress performance in repositories with many
+			 * annotated tags.
+			 */
+			if (!starts_with(rm->name, "refs/tags/"))
+				commit = lookup_commit_in_graph(the_repository, &rm->old_oid);
+			if (!commit) {
+				commit = lookup_commit_reference_gently(the_repository,
+									&rm->old_oid,
+									1);
+				if (!commit)
+					rm->fetch_head_status = FETCH_HEAD_NOT_FOR_MERGE;
+			}
 
 			if (rm->fetch_head_status != want_status)
 				continue;
@@ -1289,37 +1298,35 @@ static int check_exist_and_connected(struct ref *ref_map)
 	return check_connected(iterate_ref_map, &rm, &opt);
 }
 
-static int fetch_refs(struct transport *transport, struct ref *ref_map)
+static int fetch_and_consume_refs(struct transport *transport, struct ref *ref_map)
 {
-	int ret = check_exist_and_connected(ref_map);
+	int connectivity_checked = 1;
+	int ret;
+
+	/*
+	 * We don't need to perform a fetch in case we can already satisfy all
+	 * refs.
+	 */
+	ret = check_exist_and_connected(ref_map);
 	if (ret) {
 		trace2_region_enter("fetch", "fetch_refs", the_repository);
 		ret = transport_fetch_refs(transport, ref_map);
 		trace2_region_leave("fetch", "fetch_refs", the_repository);
+		if (ret)
+			goto out;
+		connectivity_checked = transport->smart_options ?
+			transport->smart_options->connectivity_checked : 0;
 	}
-	if (!ret)
-		/*
-		 * Keep the new pack's ".keep" file around to allow the caller
-		 * time to update refs to reference the new objects.
-		 */
-		return 0;
-	transport_unlock_pack(transport);
-	return ret;
-}
 
-/* Update local refs based on the ref values fetched from a remote */
-static int consume_refs(struct transport *transport, struct ref *ref_map)
-{
-	int connectivity_checked = transport->smart_options
-		? transport->smart_options->connectivity_checked : 0;
-	int ret;
 	trace2_region_enter("fetch", "consume_refs", the_repository);
 	ret = store_updated_refs(transport->url,
 				 transport->remote->name,
 				 connectivity_checked,
 				 ref_map);
-	transport_unlock_pack(transport);
 	trace2_region_leave("fetch", "consume_refs", the_repository);
+
+out:
+	transport_unlock_pack(transport);
 	return ret;
 }
 
@@ -1508,8 +1515,7 @@ static void backfill_tags(struct transport *transport, struct ref *ref_map)
 	transport_set_option(transport, TRANS_OPT_FOLLOWTAGS, NULL);
 	transport_set_option(transport, TRANS_OPT_DEPTH, "0");
 	transport_set_option(transport, TRANS_OPT_DEEPEN_RELATIVE, NULL);
-	if (!fetch_refs(transport, ref_map))
-		consume_refs(transport, ref_map);
+	fetch_and_consume_refs(transport, ref_map);
 
 	if (gsecondary) {
 		transport_disconnect(gsecondary);
@@ -1600,7 +1606,7 @@ static int do_fetch(struct transport *transport,
 				   transport->url);
 		}
 	}
-	if (fetch_refs(transport, ref_map) || consume_refs(transport, ref_map)) {
+	if (fetch_and_consume_refs(transport, ref_map)) {
 		free_refs(ref_map);
 		retcode = 1;
 		goto cleanup;

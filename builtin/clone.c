@@ -657,7 +657,7 @@ static void write_followtags(const struct ref *refs, const char *msg)
 	}
 }
 
-static int iterate_ref_map(void *cb_data, struct object_id *oid)
+static const struct object_id *iterate_ref_map(void *cb_data)
 {
 	struct ref **rm = cb_data;
 	struct ref *ref = *rm;
@@ -668,13 +668,11 @@ static int iterate_ref_map(void *cb_data, struct object_id *oid)
 	 */
 	while (ref && !ref->peer_ref)
 		ref = ref->next;
-	/* Returning -1 notes "end of list" to the caller. */
 	if (!ref)
-		return -1;
+		return NULL;
 
-	oidcpy(oid, &ref->old_oid);
 	*rm = ref->next;
-	return 0;
+	return &ref->old_oid;
 }
 
 static void update_remote_refs(const struct ref *refs,
