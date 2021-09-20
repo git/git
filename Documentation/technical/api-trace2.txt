@@ -613,6 +613,46 @@ stopping after the waitpid() and includes OS process creation overhead).
 So this time will be slightly larger than the atexit time reported by
 the child process itself.
 
+`"child_ready"`::
+	This event is generated after the current process has started
+	a background process and released all handles to it.
++
+------------
+{
+	"event":"child_ready",
+	...
+	"child_id":2,
+	"pid":14708,	 # child PID
+	"ready":"ready", # child ready state
+	"t_rel":0.110605 # observed run-time of child process
+}
+------------
++
+Note that the session-id of the child process is not available to
+the current/spawning process, so the child's PID is reported here as
+a hint for post-processing.  (But it is only a hint because the child
+process may be a shell script which doesn't have a session-id.)
++
+This event is generated after the child is started in the background
+and given a little time to boot up and start working.  If the child
+startups normally and while the parent is still waiting, the "ready"
+field will have the value "ready".
+If the child is too slow to start and the parent times out, the field
+will have the value "timeout".
+If the child starts but the parent is unable to probe it, the field
+will have the value "error".
++
+After the parent process emits this event, it will release all of its
+handles to the child process and treat the child as a background
+daemon.  So even if the child does eventually finish booting up,
+the parent will not emit an updated event.
++
+Note that the `t_rel` field contains the observed run time in seconds
+when the parent released the child process into the background.
+The child is assumed to be a long-running daemon process and may
+outlive the parent process.  So the parent's child event times should
+not be compared to the child's atexit times.
+
 `"exec"`::
 	This event is generated before git attempts to `exec()`
 	another command rather than starting a child process.

@@ -394,6 +394,37 @@ void trace2_child_exit_fl(const char *file, int line, struct child_process *cmd,
 						 us_elapsed_child);
 }
 
+void trace2_child_ready_fl(const char *file, int line,
+			   struct child_process *cmd,
+			   const char *ready)
+{
+	struct tr2_tgt *tgt_j;
+	int j;
+	uint64_t us_now;
+	uint64_t us_elapsed_absolute;
+	uint64_t us_elapsed_child;
+
+	if (!trace2_enabled)
+		return;
+
+	us_now = getnanotime() / 1000;
+	us_elapsed_absolute = tr2tls_absolute_elapsed(us_now);
+
+	if (cmd->trace2_child_us_start)
+		us_elapsed_child = us_now - cmd->trace2_child_us_start;
+	else
+		us_elapsed_child = 0;
+
+	for_each_wanted_builtin (j, tgt_j)
+		if (tgt_j->pfn_child_ready_fl)
+			tgt_j->pfn_child_ready_fl(file, line,
+						  us_elapsed_absolute,
+						  cmd->trace2_child_id,
+						  cmd->pid,
+						  ready,
+						  us_elapsed_child);
+}
+
 int trace2_exec_fl(const char *file, int line, const char *exe,
 		   const char **argv)
 {

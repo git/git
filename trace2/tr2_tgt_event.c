@@ -383,6 +383,27 @@ static void fn_child_exit_fl(const char *file, int line,
 	jw_release(&jw);
 }
 
+static void fn_child_ready_fl(const char *file, int line,
+			      uint64_t us_elapsed_absolute, int cid, int pid,
+			      const char *ready, uint64_t us_elapsed_child)
+{
+	const char *event_name = "child_ready";
+	struct json_writer jw = JSON_WRITER_INIT;
+	double t_rel = (double)us_elapsed_child / 1000000.0;
+
+	jw_object_begin(&jw, 0);
+	event_fmt_prepare(event_name, file, line, NULL, &jw);
+	jw_object_intmax(&jw, "child_id", cid);
+	jw_object_intmax(&jw, "pid", pid);
+	jw_object_string(&jw, "ready", ready);
+	jw_object_double(&jw, "t_rel", 6, t_rel);
+	jw_end(&jw);
+
+	tr2_dst_write_line(&tr2dst_event, &jw.json);
+
+	jw_release(&jw);
+}
+
 static void fn_thread_start_fl(const char *file, int line,
 			       uint64_t us_elapsed_absolute)
 {
@@ -610,6 +631,7 @@ struct tr2_tgt tr2_tgt_event = {
 	fn_alias_fl,
 	fn_child_start_fl,
 	fn_child_exit_fl,
+	fn_child_ready_fl,
 	fn_thread_start_fl,
 	fn_thread_exit_fl,
 	fn_exec_fl,
