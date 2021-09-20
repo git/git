@@ -361,7 +361,6 @@ test_expect_success 'typechanged submodule(submodule->blob)' '
 rm -f sm1 &&
 test_create_repo sm1 &&
 head6=$(add_file sm1 foo6 foo7)
-fullhead6=$(cd sm1; git rev-parse --verify HEAD)
 test_expect_success 'nonexistent commit' '
 	git diff-index -p --submodule=diff HEAD >actual &&
 	cat >expected <<-EOF &&
@@ -704,10 +703,26 @@ test_expect_success 'path filter' '
 	diff_cmp expected actual
 '
 
-commit_file sm2
+cat >.gitmodules <<-EOF
+[submodule "sm2"]
+	path = sm2
+	url = bogus_url
+EOF
+git add .gitmodules
+commit_file sm2 .gitmodules
+
 test_expect_success 'given commit' '
 	git diff-index -p --submodule=diff HEAD^ >actual &&
 	cat >expected <<-EOF &&
+	diff --git a/.gitmodules b/.gitmodules
+	new file mode 100644
+	index 1234567..89abcde
+	--- /dev/null
+	+++ b/.gitmodules
+	@@ -0,0 +1,3 @@
+	+[submodule "sm2"]
+	+path = sm2
+	+url = bogus_url
 	Submodule sm1 $head7...0000000 (submodule deleted)
 	Submodule sm2 0000000...$head9 (new submodule)
 	diff --git a/sm2/foo8 b/sm2/foo8
@@ -729,15 +744,21 @@ test_expect_success 'given commit' '
 '
 
 test_expect_success 'setup .git file for sm2' '
-	(cd sm2 &&
-	 REAL="$(pwd)/../.real" &&
-	 mv .git "$REAL" &&
-	 echo "gitdir: $REAL" >.git)
+	git submodule absorbgitdirs sm2
 '
 
 test_expect_success 'diff --submodule=diff with .git file' '
 	git diff --submodule=diff HEAD^ >actual &&
 	cat >expected <<-EOF &&
+	diff --git a/.gitmodules b/.gitmodules
+	new file mode 100644
+	index 1234567..89abcde
+	--- /dev/null
+	+++ b/.gitmodules
+	@@ -0,0 +1,3 @@
+	+[submodule "sm2"]
+	+path = sm2
+	+url = bogus_url
 	Submodule sm1 $head7...0000000 (submodule deleted)
 	Submodule sm2 0000000...$head9 (new submodule)
 	diff --git a/sm2/foo8 b/sm2/foo8
@@ -758,9 +779,67 @@ test_expect_success 'diff --submodule=diff with .git file' '
 	diff_cmp expected actual
 '
 
+mv sm2 sm2-bak
+
+test_expect_success 'deleted submodule with .git file' '
+	git diff-index -p --submodule=diff HEAD >actual &&
+	cat >expected <<-EOF &&
+	Submodule sm1 $head7...0000000 (submodule deleted)
+	Submodule sm2 $head9...0000000 (submodule deleted)
+	diff --git a/sm2/foo8 b/sm2/foo8
+	deleted file mode 100644
+	index 1234567..89abcde
+	--- a/sm2/foo8
+	+++ /dev/null
+	@@ -1 +0,0 @@
+	-foo8
+	diff --git a/sm2/foo9 b/sm2/foo9
+	deleted file mode 100644
+	index 1234567..89abcde
+	--- a/sm2/foo9
+	+++ /dev/null
+	@@ -1 +0,0 @@
+	-foo9
+	EOF
+	diff_cmp expected actual
+'
+
+echo submodule-to-blob>sm2
+
+test_expect_success 'typechanged(submodule->blob) submodule with .git file' '
+	git diff-index -p --submodule=diff HEAD >actual &&
+	cat >expected <<-EOF &&
+	Submodule sm1 $head7...0000000 (submodule deleted)
+	Submodule sm2 $head9...0000000 (submodule deleted)
+	diff --git a/sm2/foo8 b/sm2/foo8
+	deleted file mode 100644
+	index 1234567..89abcde
+	--- a/sm2/foo8
+	+++ /dev/null
+	@@ -1 +0,0 @@
+	-foo8
+	diff --git a/sm2/foo9 b/sm2/foo9
+	deleted file mode 100644
+	index 1234567..89abcde
+	--- a/sm2/foo9
+	+++ /dev/null
+	@@ -1 +0,0 @@
+	-foo9
+	diff --git a/sm2 b/sm2
+	new file mode 100644
+	index 1234567..89abcde
+	--- /dev/null
+	+++ b/sm2
+	@@ -0,0 +1 @@
+	+submodule-to-blob
+	EOF
+	diff_cmp expected actual
+'
+
+rm sm2
+mv sm2-bak sm2
+
 test_expect_success 'setup nested submodule' '
-	git submodule add -f ./sm2 &&
-	git commit -a -m "add sm2" &&
 	git -C sm2 submodule add ../sm2 nested &&
 	git -C sm2 commit -a -m "nested sub" &&
 	head10=$(git -C sm2 rev-parse --short --verify HEAD)
@@ -791,6 +870,7 @@ test_expect_success 'diff --submodule=diff with moved nested submodule HEAD' '
 
 test_expect_success 'diff --submodule=diff recurses into nested submodules' '
 	cat >expected <<-EOF &&
+	Submodule sm1 $head7...0000000 (submodule deleted)
 	Submodule sm2 contains modified content
 	Submodule sm2 $head9..$head10:
 	diff --git a/sm2/.gitmodules b/sm2/.gitmodules
@@ -829,5 +909,68 @@ test_expect_success 'diff --submodule=diff recurses into nested submodules' '
 	test_must_be_empty err &&
 	diff_cmp expected actual
 '
+
+(cd sm2; commit_file nested)
+commit_file sm2
+head12=$(cd sm2; git rev-parse --short --verify HEAD)
+
+mv sm2 sm2-bak
+
+test_expect_success 'diff --submodule=diff recurses into deleted nested submodules' '
+	cat >expected <<-EOF &&
+	Submodule sm1 $head7...0000000 (submodule deleted)
+	Submodule sm2 $head12...0000000 (submodule deleted)
+	diff --git a/sm2/.gitmodules b/sm2/.gitmodules
+	deleted file mode 100644
+	index 3a816b8..0000000
+	--- a/sm2/.gitmodules
+	+++ /dev/null
+	@@ -1,3 +0,0 @@
+	-[submodule "nested"]
+	-	path = nested
+	-	url = ../sm2
+	diff --git a/sm2/foo8 b/sm2/foo8
+	deleted file mode 100644
+	index db9916b..0000000
+	--- a/sm2/foo8
+	+++ /dev/null
+	@@ -1 +0,0 @@
+	-foo8
+	diff --git a/sm2/foo9 b/sm2/foo9
+	deleted file mode 100644
+	index 9c3b4f6..0000000
+	--- a/sm2/foo9
+	+++ /dev/null
+	@@ -1 +0,0 @@
+	-foo9
+	Submodule nested $head11...0000000 (submodule deleted)
+	diff --git a/sm2/nested/file b/sm2/nested/file
+	deleted file mode 100644
+	index ca281f5..0000000
+	--- a/sm2/nested/file
+	+++ /dev/null
+	@@ -1 +0,0 @@
+	-nested content
+	diff --git a/sm2/nested/foo8 b/sm2/nested/foo8
+	deleted file mode 100644
+	index db9916b..0000000
+	--- a/sm2/nested/foo8
+	+++ /dev/null
+	@@ -1 +0,0 @@
+	-foo8
+	diff --git a/sm2/nested/foo9 b/sm2/nested/foo9
+	deleted file mode 100644
+	index 9c3b4f6..0000000
+	--- a/sm2/nested/foo9
+	+++ /dev/null
+	@@ -1 +0,0 @@
+	-foo9
+	EOF
+	git diff --submodule=diff >actual 2>err &&
+	test_must_be_empty err &&
+	diff_cmp expected actual
+'
+
+mv sm2-bak sm2
 
 test_done

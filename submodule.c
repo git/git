@@ -720,8 +720,20 @@ void show_submodule_inline_diff(struct diff_options *o, const char *path,
 		strvec_push(&cp.args, oid_to_hex(new_oid));
 
 	prepare_submodule_repo_env(&cp.env_array);
-	if (start_command(&cp))
+
+	if (!is_directory(path)) {
+		/* fall back to absorbed git dir, if any */
+		if (!sub)
+			goto done;
+		cp.dir = sub->gitdir;
+		strvec_push(&cp.env_array, GIT_DIR_ENVIRONMENT "=.");
+		strvec_push(&cp.env_array, GIT_WORK_TREE_ENVIRONMENT "=.");
+	}
+
+	if (start_command(&cp)) {
 		diff_emit_submodule_error(o, "(diff failed)\n");
+		goto done;
+	}
 
 	while (strbuf_getwholeline_fd(&sb, cp.out, '\n') != EOF)
 		diff_emit_submodule_pipethrough(o, sb.buf, sb.len);
