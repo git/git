@@ -243,6 +243,43 @@ void packet_write(int fd_out, const char *buf, size_t size)
 		die("%s", err.buf);
 }
 
+void packet_fwrite(FILE *f, const char *buf, size_t size)
+{
+	size_t packet_size;
+	char header[4];
+
+	if (size > LARGE_PACKET_DATA_MAX)
+		die(_("packet write failed - data exceeds max packet size"));
+
+	packet_trace(buf, size, 1);
+	packet_size = size + 4;
+
+	set_packet_header(header, packet_size);
+	fwrite_or_die(f, header, 4);
+	fwrite_or_die(f, buf, size);
+}
+
+void packet_fwrite_fmt(FILE *fh, const char *fmt, ...)
+{
+       static struct strbuf buf = STRBUF_INIT;
+       va_list args;
+
+       strbuf_reset(&buf);
+
+       va_start(args, fmt);
+       format_packet(&buf, "", fmt, args);
+       va_end(args);
+
+       fwrite_or_die(fh, buf.buf, buf.len);
+}
+
+void packet_fflush(FILE *f)
+{
+	packet_trace("0000", 4, 1);
+	fwrite_or_die(f, "0000", 4);
+	fflush_or_die(f);
+}
+
 void packet_buf_write(struct strbuf *buf, const char *fmt, ...)
 {
 	va_list args;
