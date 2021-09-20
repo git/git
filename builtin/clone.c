@@ -1340,6 +1340,9 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 			our_head_points_at = remote_head_points_at;
 	}
 	else {
+		const char *branch;
+		char *ref;
+
 		if (option_branch)
 			die(_("Remote branch %s not found in upstream %s"),
 					option_branch, remote_name);
@@ -1350,24 +1353,22 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		remote_head_points_at = NULL;
 		remote_head = NULL;
 		option_no_checkout = 1;
-		if (!option_bare) {
-			const char *branch;
-			char *ref;
 
-			if (transport_ls_refs_options.unborn_head_target &&
-			    skip_prefix(transport_ls_refs_options.unborn_head_target,
-					"refs/heads/", &branch)) {
-				ref = transport_ls_refs_options.unborn_head_target;
-				transport_ls_refs_options.unborn_head_target = NULL;
-				create_symref("HEAD", ref, reflog_msg.buf);
-			} else {
-				branch = git_default_branch_name(0);
-				ref = xstrfmt("refs/heads/%s", branch);
-			}
-
-			install_branch_config(0, branch, remote_name, ref);
-			free(ref);
+		if (transport_ls_refs_options.unborn_head_target &&
+		    skip_prefix(transport_ls_refs_options.unborn_head_target,
+				"refs/heads/", &branch)) {
+			ref = transport_ls_refs_options.unborn_head_target;
+			transport_ls_refs_options.unborn_head_target = NULL;
+			create_symref("HEAD", ref, reflog_msg.buf);
+		} else {
+			branch = git_default_branch_name(0);
+			ref = xstrfmt("refs/heads/%s", branch);
 		}
+
+		if (!option_bare)
+			install_branch_config(0, branch, remote_name, ref);
+
+		free(ref);
 	}
 
 	write_refspec_config(src_ref_prefix, our_head_points_at,
