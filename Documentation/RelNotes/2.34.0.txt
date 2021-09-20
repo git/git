@@ -34,6 +34,20 @@ UI, Workflows & Features
    interactive when the help.autocorrect configuration variable is set
    to 'prompt'.
 
+ * "git maintenance" scheduler learned to use systemd timers as a
+   possible backend.
+
+ * "git diff --submodule=diff" showed failure from run_command() when
+   trying to run diff inside a submodule, when the user manually
+   removes the submodule directory.
+
+ * "git bundle unbundle" learned to show progress display.
+
+ * In cone mode, the sparse-index code path learned to remove ignored
+   files (like build artifacts) outside the sparse cone, allowing the
+   entire directory outside the sparse cone to be removed, which is
+   especially useful when the sparse patterns change.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -79,6 +93,31 @@ Performance, Internal Implementation, Development Support etc.
 
  * "make INSTALL_STRIP=-s install" allows the installation step to use
    "install -s" to strip the binaries as they get installed.
+
+ * Code that handles large number of refs in the "git fetch" code
+   path has been optimized.
+
+ * The reachability bitmap file used to be generated only for a single
+   pack, but now we've learned to generate bitmaps for history that
+   span across multiple packfiles.
+
+ * The code to make "git grep" recurse into submodules has been
+   updated to migrate away from the "add submodule's object store as
+   an alternate object store" mechanism (which is suboptimal).
+
+ * The tracing of process ancestry information has been enhanced.
+
+ * Reduce number of write(2) system calls while sending the
+   ref advertisement.
+
+ * Update the build procedure to use the "-pedantic" build when
+   DEVELOPER makefile macro is in effect.
+
+ * Large part of "git submodule add" gets rewritten in C.
+
+ * The run-command API has been updated so that the callers can easily
+   ask the file descriptors open for packfiles to be closed immediately
+   before spawning commands that may trigger auto-gc.
 
 
 Fixes since v2.33
@@ -195,6 +234,17 @@ Fixes since v2.33
    corrected.
    (merge 709b3f32d3 rs/range-diff-avoid-segfault-with-I later to maint).
 
+ * The order in which various files that make up a single (conceptual)
+   packfile has been reevaluated and straightened up.  This matters in
+   correctness, as an incomplete set of files must not be shown to a
+   running Git.
+   (merge 4bc1fd6e39 tb/pack-finalize-ordering later to maint).
+
+ * The "mode" word is useless in a call to open(2) that does not
+   create a new file.  Such a call in the files backend of the ref
+   subsystem has been cleaned up.
+   (merge 35cf94eaf6 rs/no-mode-to-open-when-appending later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 1d9c8daef8 ab/bundle-doc later to maint).
    (merge 81483fe613 en/merge-strategy-docs later to maint).
@@ -224,3 +274,5 @@ Fixes since v2.33
    (merge ca0cc98e03 bs/doc-bugreport-outdir later to maint).
    (merge 72b113e562 ab/no-more-check-bindir later to maint).
    (merge 92a5d1c9b4 jc/prefix-filename-allocates later to maint).
+   (merge d9a65b6c0a rs/setup-use-xopen-and-xdup later to maint).
+   (merge e8f55568de jk/t5562-racefix later to maint).
