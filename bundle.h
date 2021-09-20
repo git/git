@@ -26,9 +26,19 @@ int create_bundle(struct repository *r, const char *path,
 		  int argc, const char **argv, struct strvec *pack_options,
 		  int version);
 int verify_bundle(struct repository *r, struct bundle_header *header, int verbose);
-#define BUNDLE_VERBOSE 1
+
+/**
+ * Unbundle after reading the header with read_bundle_header().
+ *
+ * We'll invoke "git index-pack --stdin --fix-thin" for you on the
+ * provided `bundle_fd` from read_bundle_header().
+ *
+ * Provide "extra_index_pack_args" to pass any extra arguments
+ * (e.g. "-v" for verbose/progress), NULL otherwise. The provided
+ * "extra_index_pack_args" (if any) will be strvec_clear()'d for you.
+ */
 int unbundle(struct repository *r, struct bundle_header *header,
-	     int bundle_fd, int flags);
+	     int bundle_fd, struct strvec *extra_index_pack_args);
 int list_bundle_refs(struct bundle_header *header,
 		int argc, const char **argv);
 
