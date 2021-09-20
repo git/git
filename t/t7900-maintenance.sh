@@ -20,6 +20,18 @@ test_xmllint () {
 	fi
 }
 
+test_lazy_prereq SYSTEMD_ANALYZE '
+	systemd-analyze --help >out &&
+	grep verify out
+'
+
+test_systemd_analyze_verify () {
+	if test_have_prereq SYSTEMD_ANALYZE
+	then
+		systemd-analyze verify "$@"
+	fi
+}
+
 test_expect_success 'help text' '
 	test_expect_code 129 git maintenance -h 2>err &&
 	test_i18ngrep "usage: git maintenance <subcommand>" err &&
@@ -492,8 +504,21 @@ test_expect_success !MINGW 'register and unregister with regex metacharacters' '
 		maintenance.repo "$(pwd)/$META"
 '
 
+test_expect_success 'start --scheduler=<scheduler>' '
+	test_expect_code 129 git maintenance start --scheduler=foo 2>err &&
+	test_i18ngrep "unrecognized --scheduler argument" err &&
+
+	test_expect_code 129 git maintenance start --no-scheduler 2>err &&
+	test_i18ngrep "unknown option" err &&
+
+	test_expect_code 128 \
+		env GIT_TEST_MAINT_SCHEDULER="launchctl:true,schtasks:true" \
+		git maintenance start --scheduler=crontab 2>err &&
+	test_i18ngrep "fatal: crontab scheduler is not available" err
+'
+
 test_expect_success 'start from empty cron table' '
-	GIT_TEST_MAINT_SCHEDULER="crontab:test-tool crontab cron.txt" git maintenance start &&
+	GIT_TEST_MAINT_SCHEDULER="crontab:test-tool crontab cron.txt" git maintenance start --scheduler=crontab &&
 
 	# start registers the repo
 	git config --get --global --fixed-value maintenance.repo "$(pwd)" &&
@@ -516,7 +541,7 @@ test_expect_success 'stop from existing schedule' '
 
 test_expect_success 'start preserves existing schedule' '
 	echo "Important information!" >cron.txt &&
-	GIT_TEST_MAINT_SCHEDULER="crontab:test-tool crontab cron.txt" git maintenance start &&
+	GIT_TEST_MAINT_SCHEDULER="crontab:test-tool crontab cron.txt" git maintenance start --scheduler=crontab &&
 	grep "Important information!" cron.txt
 '
 
@@ -545,7 +570,7 @@ test_expect_success 'start and stop macOS maintenance' '
 	EOF
 
 	rm -f args &&
-	GIT_TEST_MAINT_SCHEDULER=launchctl:./print-args git maintenance start &&
+	GIT_TEST_MAINT_SCHEDULER=launchctl:./print-args git maintenance start --scheduler=launchctl &&
 
 	# start registers the repo
 	git config --get --global --fixed-value maintenance.repo "$(pwd)" &&
@@ -584,11 +609,11 @@ test_expect_success 'start and stop macOS maintenance' '
 
 test_expect_success 'use launchctl list to prevent extra work' '
 	# ensure we are registered
-	GIT_TEST_MAINT_SCHEDULER=launchctl:./print-args git maintenance start &&
+	GIT_TEST_MAINT_SCHEDULER=launchctl:./print-args git maintenance start --scheduler=launchctl &&
 
 	# do it again on a fresh args file
 	rm -f args &&
-	GIT_TEST_MAINT_SCHEDULER=launchctl:./print-args git maintenance start &&
+	GIT_TEST_MAINT_SCHEDULER=launchctl:./print-args git maintenance start --scheduler=launchctl &&
 
 	ls "$HOME/Library/LaunchAgents" >actual &&
 	cat >expect <<-\EOF &&
@@ -613,7 +638,7 @@ test_expect_success 'start and stop Windows maintenance' '
 	EOF
 
 	rm -f args &&
-	GIT_TEST_MAINT_SCHEDULER="schtasks:./print-args" git maintenance start &&
+	GIT_TEST_MAINT_SCHEDULER="schtasks:./print-args" git maintenance start --scheduler=schtasks &&
 
 	# start registers the repo
 	git config --get --global --fixed-value maintenance.repo "$(pwd)" &&
@@ -633,6 +658,83 @@ test_expect_success 'start and stop Windows maintenance' '
 
 	printf "/delete /tn Git Maintenance (%s) /f\n" \
 		hourly daily weekly >expect &&
+	test_cmp expect args
+'
+
+test_expect_success 'start and stop Linux/systemd maintenance' '
+	write_script print-args <<-\EOF &&
+	printf "%s\n" "$*" >>args
+	EOF
+
+	XDG_CONFIG_HOME="$PWD" &&
+	export XDG_CONFIG_HOME &&
+	rm -f args &&
+	GIT_TEST_MAINT_SCHEDULER="systemctl:./print-args" git maintenance start --scheduler=systemd-timer &&
+
+	# start registers the repo
+	git config --get --global --fixed-value maintenance.repo "$(pwd)" &&
+
+	test_systemd_analyze_verify "systemd/user/git-maintenance@.service" &&
+
+	printf -- "--user enable --now git-maintenance@%s.timer\n" hourly daily weekly >expect &&
+	test_cmp expect args &&
+
+	rm -f args &&
+	GIT_TEST_MAINT_SCHEDULER="systemctl:./print-args" git maintenance stop &&
+
+	# stop does not unregister the repo
+	git config --get --global --fixed-value maintenance.repo "$(pwd)" &&
+
+	test_path_is_missing "systemd/user/git-maintenance@.timer" &&
+	test_path_is_missing "systemd/user/git-maintenance@.service" &&
+
+	printf -- "--user disable --now git-maintenance@%s.timer\n" hourly daily weekly >expect &&
+	test_cmp expect args
+'
+
+test_expect_success 'start and stop when several schedulers are available' '
+	write_script print-args <<-\EOF &&
+	printf "%s\n" "$*" | sed "s:gui/[0-9][0-9]*:gui/[UID]:; s:\(schtasks /create .* /xml\).*:\1:;" >>args
+	EOF
+
+	rm -f args &&
+	GIT_TEST_MAINT_SCHEDULER="systemctl:./print-args systemctl,launchctl:./print-args launchctl,schtasks:./print-args schtasks" git maintenance start --scheduler=systemd-timer &&
+	printf "launchctl bootout gui/[UID] $pfx/Library/LaunchAgents/org.git-scm.git.%s.plist\n" \
+		hourly daily weekly >expect &&
+	printf "schtasks /delete /tn Git Maintenance (%s) /f\n" \
+		hourly daily weekly >>expect &&
+	printf -- "systemctl --user enable --now git-maintenance@%s.timer\n" hourly daily weekly >>expect &&
+	test_cmp expect args &&
+
+	rm -f args &&
+	GIT_TEST_MAINT_SCHEDULER="systemctl:./print-args systemctl,launchctl:./print-args launchctl,schtasks:./print-args schtasks" git maintenance start --scheduler=launchctl &&
+	printf -- "systemctl --user disable --now git-maintenance@%s.timer\n" hourly daily weekly >expect &&
+	printf "schtasks /delete /tn Git Maintenance (%s) /f\n" \
+		hourly daily weekly >>expect &&
+	for frequency in hourly daily weekly
+	do
+		PLIST="$pfx/Library/LaunchAgents/org.git-scm.git.$frequency.plist" &&
+		echo "launchctl bootout gui/[UID] $PLIST" >>expect &&
+		echo "launchctl bootstrap gui/[UID] $PLIST" >>expect || return 1
+	done &&
+	test_cmp expect args &&
+
+	rm -f args &&
+	GIT_TEST_MAINT_SCHEDULER="systemctl:./print-args systemctl,launchctl:./print-args launchctl,schtasks:./print-args schtasks" git maintenance start --scheduler=schtasks &&
+	printf -- "systemctl --user disable --now git-maintenance@%s.timer\n" hourly daily weekly >expect &&
+	printf "launchctl bootout gui/[UID] $pfx/Library/LaunchAgents/org.git-scm.git.%s.plist\n" \
+		hourly daily weekly >>expect &&
+	printf "schtasks /create /tn Git Maintenance (%s) /f /xml\n" \
+		hourly daily weekly >>expect &&
+	test_cmp expect args &&
+
+	rm -f args &&
+	GIT_TEST_MAINT_SCHEDULER="systemctl:./print-args systemctl,launchctl:./print-args launchctl,schtasks:./print-args schtasks" git maintenance stop &&
+	printf -- "systemctl --user disable --now git-maintenance@%s.timer\n" hourly daily weekly >expect &&
+	printf "launchctl bootout gui/[UID] $pfx/Library/LaunchAgents/org.git-scm.git.%s.plist\n" \
+		hourly daily weekly >>expect &&
+	printf "schtasks /delete /tn Git Maintenance (%s) /f\n" \
+		hourly daily weekly >>expect &&
 	test_cmp expect args
 '
 
