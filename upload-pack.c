@@ -1214,7 +1214,7 @@ static int send_ref(const char *refname, const struct object_id *oid,
 				     " allow-tip-sha1-in-want" : "",
 			     (data->allow_uor & ALLOW_REACHABLE_SHA1) ?
 				     " allow-reachable-sha1-in-want" : "",
-			     data->stateless_rpc ? " no-done" : "",
+			     data->no_done ? " no-done" : "",
 			     symref_info.buf,
 			     data->allow_filter ? " filter" : "",
 			     session_id.buf,
@@ -1329,7 +1329,8 @@ static int upload_pack_config(const char *var, const char *value, void *cb_data)
 	return parse_hide_refs_config(var, value, "uploadpack");
 }
 
-void upload_pack(struct upload_pack_options *options)
+void upload_pack(const int advertise_refs, const int stateless_rpc,
+		 const int timeout)
 {
 	struct packet_reader reader;
 	struct upload_pack_data data;
@@ -1338,14 +1339,17 @@ void upload_pack(struct upload_pack_options *options)
 
 	git_config(upload_pack_config, &data);
 
-	data.stateless_rpc = options->stateless_rpc;
-	data.daemon_mode = options->daemon_mode;
-	data.timeout = options->timeout;
+	data.stateless_rpc = stateless_rpc;
+	data.timeout = timeout;
+	if (data.timeout)
+		data.daemon_mode = 1;
 
 	head_ref_namespaced(find_symref, &data.symref);
 
-	if (options->advertise_refs || !data.stateless_rpc) {
+	if (advertise_refs || !data.stateless_rpc) {
 		reset_timeout(data.timeout);
+		if (advertise_refs)
+			data.no_done = 1;
 		head_ref_namespaced(send_ref, &data);
 		for_each_namespaced_ref(send_ref, &data);
 		/*
@@ -1360,7 +1364,7 @@ void upload_pack(struct upload_pack_options *options)
 		for_each_namespaced_ref(check_ref, NULL);
 	}
 
-	if (!options->advertise_refs) {
+	if (!advertise_refs) {
 		packet_reader_init(&reader, 0, NULL, 0,
 				   PACKET_READ_CHOMP_NEWLINE |
 				   PACKET_READ_DIE_ON_ERR_PACKET);
@@ -1664,8 +1668,7 @@ enum fetch_state {
 	FETCH_DONE,
 };
 
-int upload_pack_v2(struct repository *r, struct strvec *keys,
-		   struct packet_reader *request)
+int upload_pack_v2(struct repository *r, struct packet_reader *request)
 {
 	enum fetch_state state = FETCH_PROCESS_ARGS;
 	struct upload_pack_data data;

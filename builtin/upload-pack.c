@@ -16,16 +16,18 @@ int cmd_upload_pack(int argc, const char **argv, const char *prefix)
 {
 	const char *dir;
 	int strict = 0;
-	struct upload_pack_options opts = { 0 };
-	struct serve_options serve_opts = SERVE_OPTIONS_INIT;
+	int advertise_refs = 0;
+	int stateless_rpc = 0;
+	int timeout = 0;
 	struct option options[] = {
-		OPT_BOOL(0, "stateless-rpc", &opts.stateless_rpc,
+		OPT_BOOL(0, "stateless-rpc", &stateless_rpc,
 			 N_("quit after a single request/response exchange")),
-		OPT_BOOL(0, "advertise-refs", &opts.advertise_refs,
-			 N_("exit immediately after initial ref advertisement")),
+		OPT_HIDDEN_BOOL(0, "http-backend-info-refs", &advertise_refs,
+				N_("serve up the info/refs for git-http-backend")),
+		OPT_ALIAS(0, "advertise-refs", "http-backend-info-refs"),
 		OPT_BOOL(0, "strict", &strict,
 			 N_("do not try <directory>/.git/ if <directory> is no Git directory")),
-		OPT_INTEGER(0, "timeout", &opts.timeout,
+		OPT_INTEGER(0, "timeout", &timeout,
 			    N_("interrupt transfer after <n> seconds of inactivity")),
 		OPT_END()
 	};
@@ -38,9 +40,6 @@ int cmd_upload_pack(int argc, const char **argv, const char *prefix)
 	if (argc != 1)
 		usage_with_options(upload_pack_usage, options);
 
-	if (opts.timeout)
-		opts.daemon_mode = 1;
-
 	setup_path();
 
 	dir = argv[0];
@@ -50,21 +49,22 @@ int cmd_upload_pack(int argc, const char **argv, const char *prefix)
 
 	switch (determine_protocol_version_server()) {
 	case protocol_v2:
-		serve_opts.advertise_capabilities = opts.advertise_refs;
-		serve_opts.stateless_rpc = opts.stateless_rpc;
-		serve(&serve_opts);
+		if (advertise_refs)
+			protocol_v2_advertise_capabilities();
+		else
+			protocol_v2_serve_loop(stateless_rpc);
 		break;
 	case protocol_v1:
 		/*
 		 * v1 is just the original protocol with a version string,
 		 * so just fall through after writing the version string.
 		 */
-		if (opts.advertise_refs || !opts.stateless_rpc)
+		if (advertise_refs || !stateless_rpc)
 			packet_write_fmt(1, "version 1\n");
 
 		/* fallthrough */
 	case protocol_v0:
-		upload_pack(&opts);
+		upload_pack(advertise_refs, stateless_rpc, timeout);
 		break;
 	case protocol_unknown_version:
 		BUG("unknown protocol version");

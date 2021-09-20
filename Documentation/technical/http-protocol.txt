@@ -225,6 +225,9 @@ The client may send Extra Parameters (see
 Documentation/technical/pack-protocol.txt) as a colon-separated string
 in the Git-Protocol HTTP header.
 
+Uses the `--http-backend-info-refs` option to
+linkgit:git-upload-pack[1].
+
 Dumb Server Response
 ^^^^^^^^^^^^^^^^^^^^
 Dumb servers MUST respond with the dumb server reply format.
