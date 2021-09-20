@@ -201,6 +201,34 @@ test_expect_success 'write midx with twelve packs' '
 
 compare_results_with_midx "twelve packs"
 
+test_expect_success 'multi-pack-index *.rev cleanup with --object-dir' '
+	git init repo &&
+	git clone -s repo alternate &&
+
+	test_when_finished "rm -rf repo alternate" &&
+
+	(
+		cd repo &&
+		test_commit base &&
+		git repack -d
+	) &&
+
+	ours="alternate/.git/objects/pack/multi-pack-index-123.rev" &&
+	theirs="repo/.git/objects/pack/multi-pack-index-abc.rev" &&
+	touch "$ours" "$theirs" &&
+
+	(
+		cd alternate &&
+		git multi-pack-index --object-dir ../repo/.git/objects write
+	) &&
+
+	# writing a midx in "repo" should not remove the .rev file in the
+	# alternate
+	test_path_is_file repo/.git/objects/pack/multi-pack-index &&
+	test_path_is_file $ours &&
+	test_path_is_missing $theirs
+'
+
 test_expect_success 'warn on improper hash version' '
 	git init --object-format=sha1 sha1 &&
 	(
@@ -274,6 +302,23 @@ test_expect_success 'midx picks objects from preferred pack' '
 		grep ^$b out >actual &&
 
 		test_cmp expect actual
+	)
+'
+
+test_expect_success 'preferred packs must be non-empty' '
+	test_when_finished rm -rf preferred.git &&
+	git init preferred.git &&
+	(
+		cd preferred.git &&
+
+		test_commit base &&
+		git repack -ad &&
+
+		empty="$(git pack-objects $objdir/pack/pack </dev/null)" &&
+
+		test_must_fail git multi-pack-index write \
+			--preferred-pack=pack-$empty.pack 2>err &&
+		grep "with no objects" err
 	)
 '
 
@@ -487,7 +532,8 @@ test_expect_success 'repack preserves multi-pack-index when creating packs' '
 compare_results_with_midx "after repack"
 
 test_expect_success 'multi-pack-index and pack-bitmap' '
-	git -c repack.writeBitmaps=true repack -ad &&
+	GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=0 \
+		git -c repack.writeBitmaps=true repack -ad &&
 	git multi-pack-index write &&
 	git rev-list --test-bitmap HEAD
 '
@@ -537,7 +583,15 @@ test_expect_success 'force some 64-bit offsets with pack-objects' '
 	idx64=objects64/pack/test-64-$pack64.idx &&
 	chmod u+w $idx64 &&
 	corrupt_data $idx64 $(test_oid idxoff) "\02" &&
-	midx64=$(git multi-pack-index --object-dir=objects64 write) &&
+	# objects64 is not a real repository, but can serve as an alternate
+	# anyway so we can write a MIDX into it
+	git init repo &&
+	test_when_finished "rm -fr repo" &&
+	(
+		cd repo &&
+		( cd ../objects64 && pwd ) >.git/objects/info/alternates &&
+		midx64=$(git multi-pack-index --object-dir=../objects64 write)
+	) &&
 	midx_read_expect 1 63 5 objects64 " large-offsets"
 '
 
@@ -840,6 +894,11 @@ test_expect_success 'load reverse index when missing .idx, .pack' '
 test_expect_success 'usage shown without sub-command' '
 	test_expect_code 129 git multi-pack-index 2>err &&
 	! test_i18ngrep "unrecognized subcommand" err
+'
+
+test_expect_success 'complains when run outside of a repository' '
+	nongit test_must_fail git multi-pack-index write 2>err &&
+	grep "not a git repository" err
 '
 
 test_done

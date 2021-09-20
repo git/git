@@ -48,7 +48,7 @@ void bitmap_writer_show_progress(int show)
 }
 
 /**
- * Build the initial type index for the packfile
+ * Build the initial type index for the packfile or multi-pack-index
  */
 void bitmap_writer_build_type_index(struct packing_data *to_pack,
 				    struct pack_idx_entry **index,
@@ -125,15 +125,20 @@ static inline void push_bitmapped_commit(struct commit *commit)
 	writer.selected_nr++;
 }
 
-static uint32_t find_object_pos(const struct object_id *oid)
+static uint32_t find_object_pos(const struct object_id *oid, int *found)
 {
 	struct object_entry *entry = packlist_find(writer.to_pack, oid);
 
 	if (!entry) {
-		die("Failed to write bitmap index. Packfile doesn't have full closure "
+		if (found)
+			*found = 0;
+		warning("Failed to write bitmap index. Packfile doesn't have full closure "
 			"(object %s is missing)", oid_to_hex(oid));
+		return 0;
 	}
 
+	if (found)
+		*found = 1;
 	return oe_in_pack_pos(writer.to_pack, entry);
 }
 
@@ -331,9 +336,10 @@ static void bitmap_builder_clear(struct bitmap_builder *bb)
 	bb->commits_nr = bb->commits_alloc = 0;
 }
 
-static void fill_bitmap_tree(struct bitmap *bitmap,
-			     struct tree *tree)
+static int fill_bitmap_tree(struct bitmap *bitmap,
+			    struct tree *tree)
 {
+	int found;
 	uint32_t pos;
 	struct tree_desc desc;
 	struct name_entry entry;
@@ -342,9 +348,11 @@ static void fill_bitmap_tree(struct bitmap *bitmap,
 	 * If our bit is already set, then there is nothing to do. Both this
 	 * tree and all of its children will be set.
 	 */
-	pos = find_object_pos(&tree->object.oid);
+	pos = find_object_pos(&tree->object.oid, &found);
+	if (!found)
+		return -1;
 	if (bitmap_get(bitmap, pos))
-		return;
+		return 0;
 	bitmap_set(bitmap, pos);
 
 	if (parse_tree(tree) < 0)
@@ -355,11 +363,15 @@ static void fill_bitmap_tree(struct bitmap *bitmap,
 	while (tree_entry(&desc, &entry)) {
 		switch (object_type(entry.mode)) {
 		case OBJ_TREE:
-			fill_bitmap_tree(bitmap,
-					 lookup_tree(the_repository, &entry.oid));
+			if (fill_bitmap_tree(bitmap,
+					     lookup_tree(the_repository, &entry.oid)) < 0)
+				return -1;
 			break;
 		case OBJ_BLOB:
-			bitmap_set(bitmap, find_object_pos(&entry.oid));
+			pos = find_object_pos(&entry.oid, &found);
+			if (!found)
+				return -1;
+			bitmap_set(bitmap, pos);
 			break;
 		default:
 			/* Gitlink, etc; not reachable */
@@ -368,15 +380,18 @@ static void fill_bitmap_tree(struct bitmap *bitmap,
 	}
 
 	free_tree_buffer(tree);
+	return 0;
 }
 
-static void fill_bitmap_commit(struct bb_commit *ent,
-			       struct commit *commit,
-			       struct prio_queue *queue,
-			       struct prio_queue *tree_queue,
-			       struct bitmap_index *old_bitmap,
-			       const uint32_t *mapping)
+static int fill_bitmap_commit(struct bb_commit *ent,
+			      struct commit *commit,
+			      struct prio_queue *queue,
+			      struct prio_queue *tree_queue,
+			      struct bitmap_index *old_bitmap,
+			      const uint32_t *mapping)
 {
+	int found;
+	uint32_t pos;
 	if (!ent->bitmap)
 		ent->bitmap = bitmap_new();
 
@@ -401,11 +416,16 @@ static void fill_bitmap_commit(struct bb_commit *ent,
 		 * Mark ourselves and queue our tree. The commit
 		 * walk ensures we cover all parents.
 		 */
-		bitmap_set(ent->bitmap, find_object_pos(&c->object.oid));
+		pos = find_object_pos(&c->object.oid, &found);
+		if (!found)
+			return -1;
+		bitmap_set(ent->bitmap, pos);
 		prio_queue_put(tree_queue, get_commit_tree(c));
 
 		for (p = c->parents; p; p = p->next) {
-			int pos = find_object_pos(&p->item->object.oid);
+			pos = find_object_pos(&p->item->object.oid, &found);
+			if (!found)
+				return -1;
 			if (!bitmap_get(ent->bitmap, pos)) {
 				bitmap_set(ent->bitmap, pos);
 				prio_queue_put(queue, p->item);
@@ -413,8 +433,12 @@ static void fill_bitmap_commit(struct bb_commit *ent,
 		}
 	}
 
-	while (tree_queue->nr)
-		fill_bitmap_tree(ent->bitmap, prio_queue_get(tree_queue));
+	while (tree_queue->nr) {
+		if (fill_bitmap_tree(ent->bitmap,
+				     prio_queue_get(tree_queue)) < 0)
+			return -1;
+	}
+	return 0;
 }
 
 static void store_selected(struct bb_commit *ent, struct commit *commit)
@@ -432,7 +456,7 @@ static void store_selected(struct bb_commit *ent, struct commit *commit)
 	kh_value(writer.bitmaps, hash_pos) = stored;
 }
 
-void bitmap_writer_build(struct packing_data *to_pack)
+int bitmap_writer_build(struct packing_data *to_pack)
 {
 	struct bitmap_builder bb;
 	size_t i;
@@ -441,6 +465,7 @@ void bitmap_writer_build(struct packing_data *to_pack)
 	struct prio_queue tree_queue = { NULL };
 	struct bitmap_index *old_bitmap;
 	uint32_t *mapping;
+	int closed = 1; /* until proven otherwise */
 
 	writer.bitmaps = kh_init_oid_map();
 	writer.to_pack = to_pack;
@@ -463,8 +488,11 @@ void bitmap_writer_build(struct packing_data *to_pack)
 		struct commit *child;
 		int reused = 0;
 
-		fill_bitmap_commit(ent, commit, &queue, &tree_queue,
-				   old_bitmap, mapping);
+		if (fill_bitmap_commit(ent, commit, &queue, &tree_queue,
+				       old_bitmap, mapping) < 0) {
+			closed = 0;
+			break;
+		}
 
 		if (ent->selected) {
 			store_selected(ent, commit);
@@ -492,6 +520,7 @@ void bitmap_writer_build(struct packing_data *to_pack)
 	clear_prio_queue(&queue);
 	clear_prio_queue(&tree_queue);
 	bitmap_builder_clear(&bb);
+	free_bitmap_index(old_bitmap);
 	free(mapping);
 
 	trace2_region_leave("pack-bitmap-write", "building_bitmaps_total",
@@ -499,7 +528,9 @@ void bitmap_writer_build(struct packing_data *to_pack)
 
 	stop_progress(&writer.progress);
 
-	compute_xor_offsets();
+	if (closed)
+		compute_xor_offsets();
+	return closed ? 0 : -1;
 }
 
 /**

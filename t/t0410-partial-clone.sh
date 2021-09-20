@@ -4,6 +4,9 @@ test_description='partial clone'
 
 . ./test-lib.sh
 
+# missing promisor objects cause repacks which write bitmaps to fail
+GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=0
+
 delete_object () {
 	rm $1/.git/objects/$(echo $2 | sed -e 's|^..|&/|')
 }
@@ -536,7 +539,13 @@ test_expect_success 'gc does not repack promisor objects if there are none' '
 repack_and_check () {
 	rm -rf repo2 &&
 	cp -r repo repo2 &&
-	git -C repo2 repack $1 -d &&
+	if test x"$1" = "x--must-fail"
+	then
+		shift
+		test_must_fail git -C repo2 repack $1 -d
+	else
+		git -C repo2 repack $1 -d
+	fi &&
 	git -C repo2 fsck &&
 
 	git -C repo2 cat-file -e $2 &&
@@ -561,6 +570,7 @@ test_expect_success 'repack -d does not irreversibly delete promisor objects' '
 	printf "$THREE\n" | pack_as_from_promisor &&
 	delete_object repo "$ONE" &&
 
+	repack_and_check --must-fail -ab "$TWO" "$THREE" &&
 	repack_and_check -a "$TWO" "$THREE" &&
 	repack_and_check -A "$TWO" "$THREE" &&
 	repack_and_check -l "$TWO" "$THREE"
