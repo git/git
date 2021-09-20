@@ -178,6 +178,8 @@ default.   You can use `--no-utf8` to override this.
 
 --abort::
 	Restore the original branch and abort the patching operation.
+	Revert contents of files involved in the am operation to their
+	pre-am state.
 
 --quit::
 	Abort the patching operation but keep HEAD and the index
