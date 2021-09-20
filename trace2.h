@@ -350,7 +350,7 @@ void trace2_def_repo_fl(const char *file, int line, struct repository *repo);
  * being started, such as "read_recursive" or "do_read_index".
  *
  * The `repo` field, if set, will be used to get the "repo-id", so that
- * recursive oerations can be attributed to the correct repository.
+ * recursive operations can be attributed to the correct repository.
  */
 void trace2_region_enter_fl(const char *file, int line, const char *category,
 			    const char *label, const struct repository *repo, ...);
