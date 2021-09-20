@@ -37,7 +37,7 @@ struct proc_addr {
 #define INIT_PROC_ADDR(function) \
 	(function = get_proc_addr(&proc_addr_##function))
 
-static inline void *get_proc_addr(struct proc_addr *proc)
+static inline FARPROC get_proc_addr(struct proc_addr *proc)
 {
 	/* only do this once */
 	if (!proc->initialized) {

@@ -1,13 +1,20 @@
+ifndef COMPILER_FEATURES
+COMPILER_FEATURES := $(shell ./detect-compiler $(CC))
+endif
+
 ifeq ($(filter no-error,$(DEVOPTS)),)
 DEVELOPER_CFLAGS += -Werror
 SPARSE_FLAGS += -Wsparse-error
 endif
-ifneq ($(filter pedantic,$(DEVOPTS)),)
-DEVELOPER_CFLAGS += -pedantic
-# don't warn for each N_ use
-DEVELOPER_CFLAGS += -DUSE_PARENS_AROUND_GETTEXT_N=0
-endif
 DEVELOPER_CFLAGS += -Wall
+ifeq ($(filter no-pedantic,$(DEVOPTS)),)
+DEVELOPER_CFLAGS += -pedantic
+DEVELOPER_CFLAGS += -Wpedantic
+ifneq ($(filter gcc5,$(COMPILER_FEATURES)),)
+DEVELOPER_CFLAGS += -Wno-pedantic-ms-format
+DEVELOPER_CFLAGS += -Wno-incompatible-pointer-types
+endif
+endif
 DEVELOPER_CFLAGS += -Wdeclaration-after-statement
 DEVELOPER_CFLAGS += -Wformat-security
 DEVELOPER_CFLAGS += -Wold-style-definition
@@ -17,10 +24,6 @@ DEVELOPER_CFLAGS += -Wstrict-prototypes
 DEVELOPER_CFLAGS += -Wunused
 DEVELOPER_CFLAGS += -Wvla
 DEVELOPER_CFLAGS += -fno-common
-
-ifndef COMPILER_FEATURES
-COMPILER_FEATURES := $(shell ./detect-compiler $(CC))
-endif
 
 ifneq ($(filter clang4,$(COMPILER_FEATURES)),)
 DEVELOPER_CFLAGS += -Wtautological-constant-out-of-range-compare

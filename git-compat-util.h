@@ -1253,10 +1253,6 @@ int warn_on_fopen_errors(const char *path);
  */
 int open_nofollow(const char *path, int flags);
 
-#if !defined(USE_PARENS_AROUND_GETTEXT_N) && defined(__GNUC__)
-#define USE_PARENS_AROUND_GETTEXT_N 1
-#endif
-
 #ifndef SHELL_PATH
 # define SHELL_PATH "/bin/sh"
 #endif
