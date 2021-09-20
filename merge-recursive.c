@@ -3747,6 +3747,9 @@ int merge_recursive(struct merge_options *opt,
 	assert(opt->ancestor == NULL ||
 	       !strcmp(opt->ancestor, "constructed merge base"));
 
+	prepare_repo_settings(opt->repo);
+	opt->repo->settings.command_requires_full_index = 1;
+
 	if (merge_start(opt, repo_get_commit_tree(opt->repo, h1)))
 		return -1;
 	clean = merge_recursive_internal(opt, h1, h2, merge_bases, result);

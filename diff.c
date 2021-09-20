@@ -26,6 +26,7 @@
 #include "parse-options.h"
 #include "help.h"
 #include "promisor-remote.h"
+#include "dir.h"
 
 #ifdef NO_FAST_WORKING_DIRECTORY
 #define FAST_WORKING_DIRECTORY 0
@@ -3905,6 +3906,13 @@ static int reuse_worktree_file(struct index_state *istate,
 	 * makes the optimization not worthwhile.
 	 */
 	if (!want_file && would_convert_to_git(istate, name))
+		return 0;
+
+	/*
+	 * If this path does not match our sparse-checkout definition,
+	 * then the file will not be in the working directory.
+	 */
+	if (!path_in_sparse_checkout(name, istate))
 		return 0;
 
 	len = strlen(name);
