@@ -1423,11 +1423,9 @@ const char *resolve_gitdir_gently(const char *suspect, int *return_error_code)
 /* if any standard file descriptor is missing open it to /dev/null */
 void sanitize_stdfds(void)
 {
-	int fd = open("/dev/null", O_RDWR, 0);
-	while (fd != -1 && fd < 2)
-		fd = dup(fd);
-	if (fd == -1)
-		die_errno(_("open /dev/null or dup failed"));
+	int fd = xopen("/dev/null", O_RDWR);
+	while (fd < 2)
+		fd = xdup(fd);
 	if (fd > 2)
 		close(fd);
 }
