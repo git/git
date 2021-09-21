@@ -403,6 +403,8 @@ apply_results:
 	 *     information and that we should consider everything
 	 *     invalid.  We call this a trivial response.
 	 */
+	trace2_region_enter("fsmonitor", "apply_results", istate->repo);
+
 	if (query_success && query_result.buf[bol] != '/') {
 		/*
 		 * Mark all pathnames returned by the monitor as dirty.
@@ -431,6 +433,9 @@ apply_results:
 		if (count > fsmonitor_force_update_threshold)
 			istate->cache_changed |= FSMONITOR_CHANGED;
 
+		trace2_data_intmax("fsmonitor", istate->repo, "apply_count",
+				   count);
+
 	} else {
 		/*
 		 * We received a trivial response, so invalidate everything.
@@ -458,6 +463,8 @@ apply_results:
 		if (istate->untracked)
 			istate->untracked->use_fsmonitor = 0;
 	}
+	trace2_region_leave("fsmonitor", "apply_results", istate->repo);
+
 	strbuf_release(&query_result);
 
 	/* Now that we've updated istate, save the last_update_token */
