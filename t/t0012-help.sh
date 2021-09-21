@@ -34,6 +34,10 @@ test_expect_success 'basic help commands' '
 	git help -a >/dev/null
 '
 
+test_expect_success 'invalid usage' '
+	test_expect_code 129 git help -g add
+'
+
 test_expect_success "works for commands and guides by default" '
 	configure_help &&
 	git help status &&

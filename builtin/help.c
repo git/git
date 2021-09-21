@@ -59,8 +59,9 @@ static struct option builtin_help_options[] = {
 };
 
 static const char * const builtin_help_usage[] = {
-	N_("git help [-a|--all] [-g|--guides] [--[no-]verbose]]\n"
+	N_("git help [-a|--all] [--[no-]verbose]]\n"
 	   "         [[-i|--info] [-m|--man] [-w|--web]] [<command>]"),
+	N_("git help [-g|--guides]"),
 	NULL
 };
 
@@ -552,6 +553,11 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 			builtin_help_usage, 0);
 	parsed_help_format = help_format;
 
+	/* Options that take no further arguments */
+	if (argc && show_guides)
+		usage_msg_opt(_("--guides cannot be combined with other options"),
+			      builtin_help_usage, builtin_help_options);
+
 	if (show_all) {
 		git_config(git_help_config, NULL);
 		if (verbose) {
@@ -582,9 +588,6 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 
 	if (show_all || show_guides) {
 		printf("%s\n", _(git_more_info_string));
-		/*
-		* We're done. Ignore any remaining args
-		*/
 		return 0;
 	}
 
