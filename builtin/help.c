@@ -34,27 +34,36 @@ enum help_format {
 	HELP_FORMAT_WEB
 };
 
-static const char *html_path;
+static enum help_action {
+	HELP_ACTION_ALL = 1,
+	HELP_ACTION_GUIDES,
+	HELP_ACTION_CONFIG,
+	HELP_ACTION_CONFIG_FOR_COMPLETION,
+} cmd_mode;
 
-static int show_all = 0;
-static int show_guides = 0;
-static int show_config;
+static const char *html_path;
 static int verbose = 1;
 static unsigned int colopts;
 static enum help_format help_format = HELP_FORMAT_NONE;
 static int exclude_guides;
 static struct option builtin_help_options[] = {
-	OPT_BOOL('a', "all", &show_all, N_("print all available commands")),
+	OPT_CMDMODE('a', "all", &cmd_mode, N_("print all available commands"),
+		    HELP_ACTION_ALL),
 	OPT_HIDDEN_BOOL(0, "exclude-guides", &exclude_guides, N_("exclude guides")),
-	OPT_BOOL('g', "guides", &show_guides, N_("print list of useful guides")),
-	OPT_BOOL('c', "config", &show_config, N_("print all configuration variable names")),
-	OPT_SET_INT_F(0, "config-for-completion", &show_config, "", 2, PARSE_OPT_HIDDEN),
 	OPT_SET_INT('m', "man", &help_format, N_("show man page"), HELP_FORMAT_MAN),
 	OPT_SET_INT('w', "web", &help_format, N_("show manual in web browser"),
 			HELP_FORMAT_WEB),
 	OPT_SET_INT('i', "info", &help_format, N_("show info page"),
 			HELP_FORMAT_INFO),
 	OPT__VERBOSE(&verbose, N_("print command description")),
+
+	OPT_CMDMODE('g', "guides", &cmd_mode, N_("print list of useful guides"),
+		    HELP_ACTION_GUIDES),
+	OPT_CMDMODE('c', "config", &cmd_mode, N_("print all configuration variable names"),
+		    HELP_ACTION_CONFIG),
+	OPT_CMDMODE_F(0, "config-for-completion", &cmd_mode, "",
+		    HELP_ACTION_CONFIG_FOR_COMPLETION, PARSE_OPT_HIDDEN),
+
 	OPT_END(),
 };
 
@@ -544,6 +553,13 @@ static const char *check_git_cmd(const char* cmd)
 	return cmd;
 }
 
+static void no_extra_argc(int argc)
+{
+	if (argc)
+		usage_msg_opt(_("this option doesn't take any other arguments"),
+			      builtin_help_usage, builtin_help_options);
+}
+
 int cmd_help(int argc, const char **argv, const char *prefix)
 {
 	int nongit;
@@ -554,28 +570,8 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 			builtin_help_usage, 0);
 	parsed_help_format = help_format;
 
-	/* Incompatible options */
-	if (show_all && show_config)
-		usage_msg_opt(_("--config and --all cannot be combined"),
-			      builtin_help_usage, builtin_help_options);
-
-	if (show_all && show_guides)
-		usage_msg_opt(_("--config and --guides cannot be combined"),
-			      builtin_help_usage, builtin_help_options);
-
-	if (show_config && show_guides)
-		usage_msg_opt(_("--config and --guides cannot be combined"),
-			      builtin_help_usage, builtin_help_options);
-
-	/* Options that take no further arguments */
-	if (argc && show_config)
-		usage_msg_opt(_("--config cannot be combined with command or guide names"),
-			      builtin_help_usage, builtin_help_options);
-	if (argc && show_guides)
-		usage_msg_opt(_("--guides cannot be combined with command or guide names"),
-			      builtin_help_usage, builtin_help_options);
-
-	if (show_all) {
+	switch (cmd_mode) {
+	case HELP_ACTION_ALL:
 		git_config(git_help_config, NULL);
 		if (verbose) {
 			setup_pager();
@@ -585,25 +581,20 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 		printf(_("usage: %s%s"), _(git_usage_string), "\n\n");
 		load_command_list("git-", &main_cmds, &other_cmds);
 		list_commands(colopts, &main_cmds, &other_cmds);
-	}
-
-	if (show_guides)
+		printf("%s\n", _(git_more_info_string));
+		break;
+	case HELP_ACTION_GUIDES:
+		no_extra_argc(argc);
 		list_guides_help();
-
-	if (show_all || show_guides) {
 		printf("%s\n", _(git_more_info_string));
 		return 0;
-	}
-
-	if (show_config) {
-		int for_human = show_config == 1;
-
-		if (!for_human) {
-			list_config_help(for_human);
-			return 0;
-		}
+	case HELP_ACTION_CONFIG_FOR_COMPLETION:
+		list_config_help(0);
+		return 0;
+	case HELP_ACTION_CONFIG:
+		no_extra_argc(argc);
 		setup_pager();
-		list_config_help(for_human);
+		list_config_help(1);
 		printf("\n%s\n", _("'git help config' for more information"));
 		return 0;
 	}
