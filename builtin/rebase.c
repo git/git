@@ -1905,13 +1905,15 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			die_if_checked_out(buf.buf, 1);
 			options.head_name = xstrdup(buf.buf);
 		/* If not is it a valid ref (branch or commit)? */
-		} else if (!get_oid(branch_name, &options.orig_head) &&
-			   lookup_commit_reference(the_repository,
-						   &options.orig_head))
+		} else {
+			struct commit *commit =
+				lookup_commit_reference_by_name(branch_name);
+			if (!commit)
+				die(_("no such branch/commit '%s'"),
+				    branch_name);
+			oidcpy(&options.orig_head, &commit->object.oid);
 			options.head_name = NULL;
-		else
-			die(_("no such branch/commit '%s'"),
-			    branch_name);
+		}
 	} else if (argc == 0) {
 		/* Do not need to switch branches, we are already on it. */
 		options.head_name =
