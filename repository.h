@@ -31,6 +31,8 @@ struct repo_settings {
 	int commit_graph_read_changed_paths;
 	int gc_write_commit_graph;
 	int fetch_write_commit_graph;
+	int command_requires_full_index;
+	int sparse_index;
 
 	int index_version;
 	enum untracked_cache_setting core_untracked_cache;
@@ -39,9 +41,6 @@ struct repo_settings {
 	enum fetch_negotiation_setting fetch_negotiation_algorithm;
 
 	int core_multi_pack_index;
-
-	unsigned command_requires_full_index:1,
-		 sparse_index:1;
 };
 
 struct repository {

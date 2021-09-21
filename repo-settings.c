@@ -45,6 +45,7 @@ void prepare_repo_settings(struct repository *r)
 	repo_cfg_bool(r, "fetch.writecommitgraph", &r->settings.fetch_write_commit_graph, 0);
 	repo_cfg_bool(r, "pack.usesparse", &r->settings.pack_use_sparse, 1);
 	repo_cfg_bool(r, "core.multipackindex", &r->settings.core_multi_pack_index, 1);
+	repo_cfg_bool(r, "index.sparse", &r->settings.sparse_index, 0);
 
 	/*
 	 * The GIT_TEST_MULTI_PACK_INDEX variable is special in that
@@ -90,11 +91,4 @@ void prepare_repo_settings(struct repository *r)
 	 * removed.
 	 */
 	r->settings.command_requires_full_index = 1;
-
-	/*
-	 * Initialize this as off.
-	 */
-	r->settings.sparse_index = 0;
-	if (!repo_config_get_bool(r, "index.sparse", &value) && value)
-		r->settings.sparse_index = 1;
 }
