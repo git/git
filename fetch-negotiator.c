@@ -19,8 +19,10 @@ void fetch_negotiator_init(struct repository *r,
 		return;
 
 	case FETCH_NEGOTIATION_DEFAULT:
-	default:
 		default_negotiator_init(negotiator);
 		return;
+	case FETCH_NEGOTIATION_NONE:
+	case FETCH_NEGOTIATION_UNSET:
+		BUG("FETCH_NEGOTIATION_{NONE,UNSET} used outside of prepare_repo_settings()!");
 	}
 }
