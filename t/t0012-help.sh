@@ -42,7 +42,8 @@ test_expect_success 'invalid usage' '
 	test_expect_code 129 git help -a -g &&
 
 	test_expect_code 129 git help -g -c &&
-	test_expect_code 0 git help --config-for-completion add
+	test_expect_code 129 git help --config-for-completion add &&
+	test_expect_code 129 git help --config-sections-for-completion add
 '
 
 test_expect_success "works for commands and guides by default" '
@@ -106,9 +107,19 @@ test_expect_success 'git help --config-for-completion' '
 	     sort -u >human.munged &&
 
 	git help --config-for-completion >vars &&
-	sort -u <vars >vars.new &&
-	mv vars.new vars &&
 	test_cmp human.munged vars
+'
+
+test_expect_success 'git help --config-sections-for-completion' '
+	git help -c >human &&
+	grep -E \
+	     -e "^[^.]+\.[^.]+$" \
+	     -e "^[^.]+\.[^.]+\.[^.]+$" human |
+	     sed -e "s/\..*//" |
+	     sort -u >human.munged &&
+
+	git help --config-sections-for-completion >sections &&
+	test_cmp human.munged sections
 '
 
 test_expect_success 'generate builtin list' '

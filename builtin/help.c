@@ -34,11 +34,18 @@ enum help_format {
 	HELP_FORMAT_WEB
 };
 
+enum show_config_type {
+	SHOW_CONFIG_HUMAN,
+	SHOW_CONFIG_VARS,
+	SHOW_CONFIG_SECTIONS,
+};
+
 static enum help_action {
 	HELP_ACTION_ALL = 1,
 	HELP_ACTION_GUIDES,
 	HELP_ACTION_CONFIG,
 	HELP_ACTION_CONFIG_FOR_COMPLETION,
+	HELP_ACTION_CONFIG_SECTIONS_FOR_COMPLETION,
 } cmd_mode;
 
 static const char *html_path;
@@ -63,6 +70,8 @@ static struct option builtin_help_options[] = {
 		    HELP_ACTION_CONFIG),
 	OPT_CMDMODE_F(0, "config-for-completion", &cmd_mode, "",
 		    HELP_ACTION_CONFIG_FOR_COMPLETION, PARSE_OPT_HIDDEN),
+	OPT_CMDMODE_F(0, "config-sections-for-completion", &cmd_mode, "",
+		    HELP_ACTION_CONFIG_SECTIONS_FOR_COMPLETION, PARSE_OPT_HIDDEN),
 
 	OPT_END(),
 };
@@ -82,7 +91,7 @@ struct slot_expansion {
 	int found;
 };
 
-static void list_config_help(int for_human)
+static void list_config_help(enum show_config_type type)
 {
 	struct slot_expansion slot_expansions[] = {
 		{ "advice", "*", list_config_advices },
@@ -100,6 +109,8 @@ static void list_config_help(int for_human)
 	const char **p;
 	struct slot_expansion *e;
 	struct string_list keys = STRING_LIST_INIT_DUP;
+	struct string_list keys_uniq = STRING_LIST_INIT_DUP;
+	struct string_list_item *item;
 	int i;
 
 	for (p = config_name_list; *p; p++) {
@@ -130,34 +141,46 @@ static void list_config_help(int for_human)
 	for (i = 0; i < keys.nr; i++) {
 		const char *var = keys.items[i].string;
 		const char *wildcard, *tag, *cut;
+		const char *dot = NULL;
+		struct strbuf sb = STRBUF_INIT;
 
-		if (for_human) {
+		switch (type) {
+		case SHOW_CONFIG_HUMAN:
 			puts(var);
 			continue;
+		case SHOW_CONFIG_SECTIONS:
+			dot = strchr(var, '.');
+			break;
+		case SHOW_CONFIG_VARS:
+			break;
 		}
-
 		wildcard = strchr(var, '*');
 		tag = strchr(var, '<');
 
-		if (!wildcard && !tag) {
-			puts(var);
+		if (!dot && !wildcard && !tag) {
+			string_list_append(&keys_uniq, var);
 			continue;
 		}
 
-		if (wildcard && !tag)
+		if (dot)
+			cut = dot;
+		else if (wildcard && !tag)
 			cut = wildcard;
 		else if (!wildcard && tag)
 			cut = tag;
 		else
 			cut = wildcard < tag ? wildcard : tag;
 
-		/*
-		 * We may produce duplicates, but that's up to
-		 * git-completion.bash to handle
-		 */
-		printf("%.*s\n", (int)(cut - var), var);
+		strbuf_add(&sb, var, cut - var);
+		string_list_append(&keys_uniq, sb.buf);
+		strbuf_release(&sb);
+
 	}
 	string_list_clear(&keys, 0);
+	string_list_remove_duplicates(&keys_uniq, 0);
+	for_each_string_list_item(item, &keys_uniq)
+		puts(item->string);
+	string_list_clear(&keys_uniq, 0);
 }
 
 static enum help_format parse_help_format(const char *format)
@@ -589,12 +612,17 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 		printf("%s\n", _(git_more_info_string));
 		return 0;
 	case HELP_ACTION_CONFIG_FOR_COMPLETION:
-		list_config_help(0);
+		no_extra_argc(argc);
+		list_config_help(SHOW_CONFIG_VARS);
+		return 0;
+	case HELP_ACTION_CONFIG_SECTIONS_FOR_COMPLETION:
+		no_extra_argc(argc);
+		list_config_help(SHOW_CONFIG_SECTIONS);
 		return 0;
 	case HELP_ACTION_CONFIG:
 		no_extra_argc(argc);
 		setup_pager();
-		list_config_help(1);
+		list_config_help(SHOW_CONFIG_HUMAN);
 		printf("\n%s\n", _("'git help config' for more information"));
 		return 0;
 	}
