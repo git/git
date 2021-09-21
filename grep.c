@@ -1616,7 +1616,7 @@ static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int colle
 	bol = gs->buf;
 	left = gs->size;
 	while (left) {
-		char *eol, ch;
+		char *eol;
 		int hit;
 		ssize_t cno;
 		ssize_t col = -1, icol = -1;
@@ -1637,14 +1637,11 @@ static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int colle
 		    && look_ahead(opt, &left, &lno, &bol))
 			break;
 		eol = end_of_line(bol, &left);
-		ch = *eol;
-		*eol = 0;
 
 		if ((ctx == GREP_CONTEXT_HEAD) && (eol == bol))
 			ctx = GREP_CONTEXT_BODY;
 
 		hit = match_line(opt, bol, eol, &col, &icol, ctx, collect_hits);
-		*eol = ch;
 
 		if (collect_hits)
 			goto next_line;
