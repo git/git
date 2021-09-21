@@ -922,20 +922,16 @@ static int patmatch(struct grep_pat *p, char *line, char *eol,
 	return hit;
 }
 
-static int strip_timestamp(char *bol, char **eol_p)
+static void strip_timestamp(char *bol, char **eol_p)
 {
 	char *eol = *eol_p;
-	int ch;
 
 	while (bol < --eol) {
 		if (*eol != '>')
 			continue;
 		*eol_p = ++eol;
-		ch = *eol;
-		*eol = '\0';
-		return ch;
+		break;
 	}
-	return 0;
 }
 
 static struct {
@@ -952,7 +948,6 @@ static int match_one_pattern(struct grep_pat *p, char *bol, char *eol,
 			     regmatch_t *pmatch, int eflags)
 {
 	int hit = 0;
-	int saved_ch = 0;
 	const char *start = bol;
 
 	if ((p->token != GREP_PATTERN) &&
@@ -971,7 +966,7 @@ static int match_one_pattern(struct grep_pat *p, char *bol, char *eol,
 		switch (p->field) {
 		case GREP_HEADER_AUTHOR:
 		case GREP_HEADER_COMMITTER:
-			saved_ch = strip_timestamp(bol, &eol);
+			strip_timestamp(bol, &eol);
 			break;
 		default:
 			break;
@@ -1021,8 +1016,6 @@ static int match_one_pattern(struct grep_pat *p, char *bol, char *eol,
 				goto again;
 		}
 	}
-	if (p->token == GREP_PATTERN_HEAD && saved_ch)
-		*eol = saved_ch;
 	if (hit) {
 		pmatch[0].rm_so += bol - start;
 		pmatch[0].rm_eo += bol - start;
