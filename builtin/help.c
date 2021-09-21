@@ -559,6 +559,10 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 		usage_msg_opt(_("--config and --all cannot be combined"),
 			      builtin_help_usage, builtin_help_options);
 
+	if (show_all && show_guides)
+		usage_msg_opt(_("--config and --guides cannot be combined"),
+			      builtin_help_usage, builtin_help_options);
+
 	if (show_config && show_guides)
 		usage_msg_opt(_("--config and --guides cannot be combined"),
 			      builtin_help_usage, builtin_help_options);
