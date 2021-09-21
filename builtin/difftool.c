@@ -410,9 +410,9 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 		const char *src_path, *dst_path;
 
 		if (starts_with(info.buf, "::"))
-			die(N_("combined diff formats('-c' and '--cc') are "
+			die(N_("combined diff formats ('-c' and '--cc') are "
 			       "not supported in\n"
-			       "directory diff mode('-d' and '--dir-diff')."));
+			       "directory diff mode ('-d' and '--dir-diff')."));
 
 		if (parse_index_info(info.buf, &lmode, &rmode, &loid, &roid,
 				     &status))
@@ -713,7 +713,7 @@ int cmd_difftool(int argc, const char **argv, const char *prefix)
 			    "`--tool`")),
 		OPT_BOOL(0, "trust-exit-code", &trust_exit_code,
 			 N_("make 'git-difftool' exit when an invoked diff "
-			    "tool returns a non - zero exit code")),
+			    "tool returns a non-zero exit code")),
 		OPT_STRING('x', "extcmd", &extcmd, N_("command"),
 			   N_("specify a custom command for viewing diffs")),
 		OPT_ARGUMENT("no-index", &no_index, N_("passed to `diff`")),
