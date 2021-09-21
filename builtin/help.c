@@ -62,6 +62,7 @@ static const char * const builtin_help_usage[] = {
 	N_("git help [-a|--all] [--[no-]verbose]]\n"
 	   "         [[-i|--info] [-m|--man] [-w|--web]] [<command>]"),
 	N_("git help [-g|--guides]"),
+	N_("git help [-c|--config]"),
 	NULL
 };
 
@@ -553,9 +554,21 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 			builtin_help_usage, 0);
 	parsed_help_format = help_format;
 
+	/* Incompatible options */
+	if (show_all && show_config)
+		usage_msg_opt(_("--config and --all cannot be combined"),
+			      builtin_help_usage, builtin_help_options);
+
+	if (show_config && show_guides)
+		usage_msg_opt(_("--config and --guides cannot be combined"),
+			      builtin_help_usage, builtin_help_options);
+
 	/* Options that take no further arguments */
+	if (argc && show_config)
+		usage_msg_opt(_("--config cannot be combined with command or guide names"),
+			      builtin_help_usage, builtin_help_options);
 	if (argc && show_guides)
-		usage_msg_opt(_("--guides cannot be combined with other options"),
+		usage_msg_opt(_("--guides cannot be combined with command or guide names"),
 			      builtin_help_usage, builtin_help_options);
 
 	if (show_all) {
@@ -570,6 +583,14 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 		list_commands(colopts, &main_cmds, &other_cmds);
 	}
 
+	if (show_guides)
+		list_guides_help();
+
+	if (show_all || show_guides) {
+		printf("%s\n", _(git_more_info_string));
+		return 0;
+	}
+
 	if (show_config) {
 		int for_human = show_config == 1;
 
@@ -580,14 +601,6 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 		setup_pager();
 		list_config_help(for_human);
 		printf("\n%s\n", _("'git help config' for more information"));
-		return 0;
-	}
-
-	if (show_guides)
-		list_guides_help();
-
-	if (show_all || show_guides) {
-		printf("%s\n", _(git_more_info_string));
 		return 0;
 	}
 

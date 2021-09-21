@@ -11,6 +11,7 @@ SYNOPSIS
 'git help' [-a|--all [--[no-]verbose]]
 	   [[-i|--info] [-m|--man] [-w|--web]] [COMMAND|GUIDE]
 'git help' [-g|--guides]
+'git help' [-c|--config]
 
 DESCRIPTION
 -----------
