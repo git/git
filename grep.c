@@ -867,7 +867,7 @@ void free_grep_patterns(struct grep_opt *opt)
 	free_pattern_expr(opt->pattern_expression);
 }
 
-static char *end_of_line(char *cp, unsigned long *left)
+static const char *end_of_line(const char *cp, unsigned long *left)
 {
 	unsigned long l = *left;
 	while (l && *cp != '\n') {
@@ -908,7 +908,8 @@ static void show_name(struct grep_opt *opt, const char *name)
 	opt->output(opt, opt->null_following_name ? "\0" : "\n", 1);
 }
 
-static int patmatch(struct grep_pat *p, char *line, char *eol,
+static int patmatch(struct grep_pat *p,
+		    const char *line, const char *eol,
 		    regmatch_t *match, int eflags)
 {
 	int hit;
@@ -922,9 +923,9 @@ static int patmatch(struct grep_pat *p, char *line, char *eol,
 	return hit;
 }
 
-static void strip_timestamp(char *bol, char **eol_p)
+static void strip_timestamp(const char *bol, const char **eol_p)
 {
-	char *eol = *eol_p;
+	const char *eol = *eol_p;
 
 	while (bol < --eol) {
 		if (*eol != '>')
@@ -943,7 +944,8 @@ static struct {
 	{ "reflog ", 7 },
 };
 
-static int match_one_pattern(struct grep_pat *p, char *bol, char *eol,
+static int match_one_pattern(struct grep_pat *p,
+			     const char *bol, const char *eol,
 			     enum grep_context ctx,
 			     regmatch_t *pmatch, int eflags)
 {
@@ -1023,8 +1025,9 @@ static int match_one_pattern(struct grep_pat *p, char *bol, char *eol,
 	return hit;
 }
 
-static int match_expr_eval(struct grep_opt *opt, struct grep_expr *x, char *bol,
-			   char *eol, enum grep_context ctx, ssize_t *col,
+static int match_expr_eval(struct grep_opt *opt, struct grep_expr *x,
+			   const char *bol, const char *eol,
+			   enum grep_context ctx, ssize_t *col,
 			   ssize_t *icol, int collect_hits)
 {
 	int h = 0;
@@ -1091,7 +1094,8 @@ static int match_expr_eval(struct grep_opt *opt, struct grep_expr *x, char *bol,
 	return h;
 }
 
-static int match_expr(struct grep_opt *opt, char *bol, char *eol,
+static int match_expr(struct grep_opt *opt,
+		      const char *bol, const char *eol,
 		      enum grep_context ctx, ssize_t *col,
 		      ssize_t *icol, int collect_hits)
 {
@@ -1099,7 +1103,8 @@ static int match_expr(struct grep_opt *opt, char *bol, char *eol,
 	return match_expr_eval(opt, x, bol, eol, ctx, col, icol, collect_hits);
 }
 
-static int match_line(struct grep_opt *opt, char *bol, char *eol,
+static int match_line(struct grep_opt *opt,
+		      const char *bol, const char *eol,
 		      ssize_t *col, ssize_t *icol,
 		      enum grep_context ctx, int collect_hits)
 {
@@ -1131,7 +1136,8 @@ static int match_line(struct grep_opt *opt, char *bol, char *eol,
 	return hit;
 }
 
-static int match_next_pattern(struct grep_pat *p, char *bol, char *eol,
+static int match_next_pattern(struct grep_pat *p,
+			      const char *bol, const char *eol,
 			      enum grep_context ctx,
 			      regmatch_t *pmatch, int eflags)
 {
@@ -1152,7 +1158,8 @@ static int match_next_pattern(struct grep_pat *p, char *bol, char *eol,
 	return 1;
 }
 
-static int next_match(struct grep_opt *opt, char *bol, char *eol,
+static int next_match(struct grep_opt *opt,
+		      const char *bol, const char *eol,
 		      enum grep_context ctx, regmatch_t *pmatch, int eflags)
 {
 	struct grep_pat *p;
@@ -1208,7 +1215,8 @@ static void show_line_header(struct grep_opt *opt, const char *name,
 	}
 }
 
-static void show_line(struct grep_opt *opt, char *bol, char *eol,
+static void show_line(struct grep_opt *opt,
+		      const char *bol, const char *eol,
 		      const char *name, unsigned lno, ssize_t cno, char sign)
 {
 	int rest = eol - bol;
@@ -1297,7 +1305,8 @@ static inline void grep_attr_unlock(void)
 		pthread_mutex_unlock(&grep_attr_mutex);
 }
 
-static int match_funcname(struct grep_opt *opt, struct grep_source *gs, char *bol, char *eol)
+static int match_funcname(struct grep_opt *opt, struct grep_source *gs,
+			  const char *bol, const char *eol)
 {
 	xdemitconf_t *xecfg = opt->priv;
 	if (xecfg && !xecfg->find_func) {
@@ -1324,10 +1333,10 @@ static int match_funcname(struct grep_opt *opt, struct grep_source *gs, char *bo
 }
 
 static void show_funcname_line(struct grep_opt *opt, struct grep_source *gs,
-			       char *bol, unsigned lno)
+			       const char *bol, unsigned lno)
 {
 	while (bol > gs->buf) {
-		char *eol = --bol;
+		const char *eol = --bol;
 
 		while (bol > gs->buf && bol[-1] != '\n')
 			bol--;
@@ -1346,7 +1355,7 @@ static void show_funcname_line(struct grep_opt *opt, struct grep_source *gs,
 static int is_empty_line(const char *bol, const char *eol);
 
 static void show_pre_context(struct grep_opt *opt, struct grep_source *gs,
-			     char *bol, char *end, unsigned lno)
+			     const char *bol, const char *end, unsigned lno)
 {
 	unsigned cur = lno, from = 1, funcname_lno = 0, orig_from;
 	int funcname_needed = !!opt->funcname, comment_needed = 0;
@@ -1366,8 +1375,8 @@ static void show_pre_context(struct grep_opt *opt, struct grep_source *gs,
 
 	/* Rewind. */
 	while (bol > gs->buf && cur > from) {
-		char *next_bol = bol;
-		char *eol = --bol;
+		const char *next_bol = bol;
+		const char *eol = --bol;
 
 		while (bol > gs->buf && bol[-1] != '\n')
 			bol--;
@@ -1398,7 +1407,7 @@ static void show_pre_context(struct grep_opt *opt, struct grep_source *gs,
 
 	/* Back forward. */
 	while (cur < lno) {
-		char *eol = bol, sign = (cur == funcname_lno) ? '=' : '-';
+		const char *eol = bol, sign = (cur == funcname_lno) ? '=' : '-';
 
 		while (*eol != '\n')
 			eol++;
@@ -1426,12 +1435,12 @@ static int should_lookahead(struct grep_opt *opt)
 static int look_ahead(struct grep_opt *opt,
 		      unsigned long *left_p,
 		      unsigned *lno_p,
-		      char **bol_p)
+		      const char **bol_p)
 {
 	unsigned lno = *lno_p;
-	char *bol = *bol_p;
+	const char *bol = *bol_p;
 	struct grep_pat *p;
-	char *sp, *last_bol;
+	const char *sp, *last_bol;
 	regoff_t earliest = -1;
 
 	for (p = opt->pattern_list; p; p = p->next) {
@@ -1533,8 +1542,8 @@ static int is_empty_line(const char *bol, const char *eol)
 
 static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int collect_hits)
 {
-	char *bol;
-	char *peek_bol = NULL;
+	const char *bol;
+	const char *peek_bol = NULL;
 	unsigned long left;
 	unsigned lno = 1;
 	unsigned last_hit = 0;
@@ -1616,7 +1625,7 @@ static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int colle
 	bol = gs->buf;
 	left = gs->size;
 	while (left) {
-		char *eol;
+		const char *eol;
 		int hit;
 		ssize_t cno;
 		ssize_t col = -1, icol = -1;
@@ -1700,7 +1709,7 @@ static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int colle
 		}
 		if (show_function && (!peek_bol || peek_bol < bol)) {
 			unsigned long peek_left = left;
-			char *peek_eol = eol;
+			const char *peek_eol = eol;
 
 			/*
 			 * Trailing empty lines are not interesting.
