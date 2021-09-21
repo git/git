@@ -7,7 +7,6 @@
 #include "exec-cmd.h"
 #include "parse-options.h"
 #include "run-command.h"
-#include "column.h"
 #include "config-list.h"
 #include "help.h"
 #include "alias.h"
@@ -50,7 +49,6 @@ static enum help_action {
 
 static const char *html_path;
 static int verbose = 1;
-static unsigned int colopts;
 static enum help_format help_format = HELP_FORMAT_NONE;
 static int exclude_guides;
 static struct option builtin_help_options[] = {
@@ -384,8 +382,6 @@ static int add_man_viewer_info(const char *var, const char *value)
 
 static int git_help_config(const char *var, const char *value, void *cb)
 {
-	if (starts_with(var, "column."))
-		return git_column_config(var, value, "help", &colopts);
 	if (!strcmp(var, "help.format")) {
 		if (!value)
 			return config_error_nonbool(var);
@@ -595,7 +591,6 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 
 	switch (cmd_mode) {
 	case HELP_ACTION_ALL:
-		git_config(git_help_config, NULL);
 		if (verbose) {
 			setup_pager();
 			list_all_cmds_help();
@@ -603,7 +598,7 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 		}
 		printf(_("usage: %s%s"), _(git_usage_string), "\n\n");
 		load_command_list("git-", &main_cmds, &other_cmds);
-		list_commands(colopts, &main_cmds, &other_cmds);
+		list_commands(&main_cmds, &other_cmds);
 		printf("%s\n", _(git_more_info_string));
 		break;
 	case HELP_ACTION_GUIDES:
