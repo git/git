@@ -1239,7 +1239,6 @@ static void show_line(struct grep_opt *opt, char *bol, char *eol,
 	if (opt->color || opt->only_matching) {
 		regmatch_t match;
 		enum grep_context ctx = GREP_CONTEXT_BODY;
-		int ch = *eol;
 		int eflags = 0;
 
 		if (opt->color) {
@@ -1254,7 +1253,6 @@ static void show_line(struct grep_opt *opt, char *bol, char *eol,
 			else if (sign == '=')
 				line_color = opt->colors[GREP_COLOR_FUNCTION];
 		}
-		*eol = '\0';
 		while (next_match(opt, bol, eol, ctx, &match, eflags)) {
 			if (match.rm_so == match.rm_eo)
 				break;
@@ -1272,7 +1270,6 @@ static void show_line(struct grep_opt *opt, char *bol, char *eol,
 			rest -= match.rm_eo;
 			eflags = REG_NOTBOL;
 		}
-		*eol = ch;
 	}
 	if (!opt->only_matching) {
 		output_color(opt, bol, rest, line_color);
