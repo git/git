@@ -189,7 +189,7 @@ void append_grep_pattern(struct grep_opt *opt, const char *pat, const char *orig
 void append_header_grep_pattern(struct grep_opt *, enum grep_header_field, const char *);
 void compile_grep_patterns(struct grep_opt *opt);
 void free_grep_patterns(struct grep_opt *opt);
-int grep_buffer(struct grep_opt *opt, char *buf, unsigned long size);
+int grep_buffer(struct grep_opt *opt, const char *buf, unsigned long size);
 
 struct grep_source {
 	char *name;
@@ -202,7 +202,7 @@ struct grep_source {
 	void *identifier;
 	struct repository *repo; /* if GREP_SOURCE_OID */
 
-	char *buf;
+	const char *buf;
 	unsigned long size;
 
 	char *path; /* for attribute lookups */

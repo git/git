@@ -1821,7 +1821,8 @@ int grep_source(struct grep_opt *opt, struct grep_source *gs)
 	return grep_source_1(opt, gs, 0);
 }
 
-static void grep_source_init_buf(struct grep_source *gs, char *buf,
+static void grep_source_init_buf(struct grep_source *gs,
+				 const char *buf,
 				 unsigned long size)
 {
 	gs->type = GREP_SOURCE_BUF;
@@ -1833,7 +1834,7 @@ static void grep_source_init_buf(struct grep_source *gs, char *buf,
 	gs->identifier = NULL;
 }
 
-int grep_buffer(struct grep_opt *opt, char *buf, unsigned long size)
+int grep_buffer(struct grep_opt *opt, const char *buf, unsigned long size)
 {
 	struct grep_source gs;
 	int r;
@@ -1885,7 +1886,9 @@ void grep_source_clear_data(struct grep_source *gs)
 	switch (gs->type) {
 	case GREP_SOURCE_FILE:
 	case GREP_SOURCE_OID:
-		FREE_AND_NULL(gs->buf);
+		/* these types own the buffer */
+		free((char *)gs->buf);
+		gs->buf = NULL;
 		gs->size = 0;
 		break;
 	case GREP_SOURCE_BUF:
