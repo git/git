@@ -1952,9 +1952,13 @@ static void tweak_untracked_cache(struct index_state *istate)
 		add_untracked_cache(istate);
 		break;
 	case UNTRACKED_CACHE_KEEP:
+		/*
+		 * Either an explicit "core.untrackedCache=keep", the
+		 * default if "core.untrackedCache" isn't configured,
+		 * or a fallback on an unknown "core.untrackedCache"
+		 * value.
+		 */
 		break;
-	case UNTRACKED_CACHE_UNSET:
-		BUG("UNTRACKED_CACHE_UNSET used outside of prepare_repo_settings()!");
 	}
 }
 
