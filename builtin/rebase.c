@@ -763,17 +763,6 @@ static int finish_rebase(struct rebase_options *opts)
 	return ret;
 }
 
-static struct commit *peel_committish(const char *name)
-{
-	struct object *obj;
-	struct object_id oid;
-
-	if (get_oid(name, &oid))
-		return NULL;
-	obj = parse_object(the_repository, &oid);
-	return (struct commit *)peel_to_type(name, 0, obj, OBJ_COMMIT);
-}
-
 static void add_var(struct strbuf *buf, const char *name, const char *value)
 {
 	if (!value)
@@ -1846,7 +1835,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			if (!strcmp(options.upstream_name, "-"))
 				options.upstream_name = "@{-1}";
 		}
-		options.upstream = peel_committish(options.upstream_name);
+		options.upstream =
+			lookup_commit_reference_by_name(options.upstream_name);
 		if (!options.upstream)
 			die(_("invalid upstream '%s'"), options.upstream_name);
 		options.upstream_arg = options.upstream_name;
@@ -1889,7 +1879,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		options.onto = lookup_commit_or_die(&merge_base,
 						    options.onto_name);
 	} else {
-		options.onto = peel_committish(options.onto_name);
+		options.onto =
+			lookup_commit_reference_by_name(options.onto_name);
 		if (!options.onto)
 			die(_("Does not point to a valid commit '%s'"),
 				options.onto_name);
