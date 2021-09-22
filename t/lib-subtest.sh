@@ -79,22 +79,16 @@ run_sub_test_lib_test_err () {
 
 check_sub_test_lib_test () {
 	name="$1" # stdin is the expected output from the test
-	(
-		cd "$name" &&
-		test_must_be_empty err &&
-		sed -e 's/^> //' -e 's/Z$//' >expect &&
-		test_cmp expect out
-	)
+	test_must_be_empty "$name"/err &&
+	sed -e 's/^> //' -e 's/Z$//' >"$name"/expect &&
+	test_cmp "$name/"expect "$name"/out
 }
 
 check_sub_test_lib_test_err () {
 	name="$1" # stdin is the expected output from the test
 	# expected error output is in descriptor 3
-	(
-		cd "$name" &&
-		sed -e 's/^> //' -e 's/Z$//' >expect.out &&
-		test_cmp expect.out out &&
-		sed -e 's/^> //' -e 's/Z$//' <&3 >expect.err &&
-		test_cmp expect.err err
-	)
+	sed -e 's/^> //' -e 's/Z$//' >"$name"/expect.out &&
+	test_cmp "$name"/expect.out "$name"/out &&
+	sed -e 's/^> //' -e 's/Z$//' <&3 >"$name"/expect.err &&
+	test_cmp "$name"/expect.err "$name"/err
 }
