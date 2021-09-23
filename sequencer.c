@@ -4254,6 +4254,27 @@ static int stopped_at_head(struct repository *r)
 
 }
 
+static int reread_todo_if_changed(struct repository *r,
+				  struct todo_list *todo_list,
+				  struct replay_opts *opts)
+{
+	struct stat st;
+
+	if (stat(get_todo_path(opts), &st)) {
+		return error_errno(_("could not stat '%s'"),
+				   get_todo_path(opts));
+	} else if (match_stat_data(&todo_list->stat, &st)) {
+		/* Reread the todo file if it has changed. */
+		todo_list_release(todo_list);
+		if (read_populate_todo(r, todo_list, opts))
+			return -1; /* message was printed */
+		/* `current` will be incremented on return */
+		todo_list->current = -1;
+	}
+
+	return 0;
+}
+
 static const char rescheduled_advice[] =
 N_("Could not execute the todo command\n"
 "\n"
@@ -4433,20 +4454,9 @@ static int pick_commits(struct repository *r,
 							item->commit,
 							arg, item->arg_len,
 							opts, res, 0);
-		} else if (is_rebase_i(opts) && check_todo && !res) {
-			struct stat st;
-
-			if (stat(get_todo_path(opts), &st)) {
-				res = error_errno(_("could not stat '%s'"),
-						  get_todo_path(opts));
-			} else if (match_stat_data(&todo_list->stat, &st)) {
-				/* Reread the todo file if it has changed. */
-				todo_list_release(todo_list);
-				if (read_populate_todo(r, todo_list, opts))
-					res = -1; /* message was printed */
-				/* `current` will be incremented below */
-				todo_list->current = -1;
-			}
+		} else if (is_rebase_i(opts) && check_todo && !res &&
+			   reread_todo_if_changed(r, todo_list, opts)) {
+			return -1;
 		}
 
 		todo_list->current++;
