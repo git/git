@@ -1642,7 +1642,7 @@ static int do_oid_object_info_extended(struct repository *r,
 		return 0;
 	rtype = packed_object_info(r, e.p, e.offset, oi);
 	if (rtype < 0) {
-		mark_bad_packed_object(e.p, real->hash);
+		mark_bad_packed_object(e.p, real);
 		return do_oid_object_info_extended(r, real, oi, 0);
 	} else if (oi->whence == OI_PACKED) {
 		oi->u.packed.offset = e.offset;
@@ -1751,7 +1751,7 @@ void *read_object_file_extended(struct repository *r,
 		die(_("loose object %s (stored in %s) is corrupt"),
 		    oid_to_hex(repl), path);
 
-	if ((p = has_packed_and_bad(r, repl->hash)) != NULL)
+	if ((p = has_packed_and_bad(r, repl)) != NULL)
 		die(_("packed object %s (stored in %s) is corrupt"),
 		    oid_to_hex(repl), p->pack_name);
 	obj_read_unlock();

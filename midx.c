@@ -283,13 +283,17 @@ uint32_t nth_midxed_pack_int_id(struct multi_pack_index *m, uint32_t pos)
 			(off_t)pos * MIDX_CHUNK_OFFSET_WIDTH);
 }
 
-static int nth_midxed_pack_entry(struct repository *r,
-				 struct multi_pack_index *m,
-				 struct pack_entry *e,
-				 uint32_t pos)
+int fill_midx_entry(struct repository * r,
+		    const struct object_id *oid,
+		    struct pack_entry *e,
+		    struct multi_pack_index *m)
 {
+	uint32_t pos;
 	uint32_t pack_int_id;
 	struct packed_git *p;
+
+	if (!bsearch_midx(oid, m, &pos))
+		return 0;
 
 	if (pos >= m->num_objects)
 		return 0;
@@ -310,33 +314,14 @@ static int nth_midxed_pack_entry(struct repository *r,
 	if (!is_pack_valid(p))
 		return 0;
 
-	if (p->num_bad_objects) {
-		uint32_t i;
-		struct object_id oid;
-		nth_midxed_object_oid(&oid, m, pos);
-		for (i = 0; i < p->num_bad_objects; i++)
-			if (hasheq(oid.hash,
-				   p->bad_object_sha1 + the_hash_algo->rawsz * i))
-				return 0;
-	}
+	if (oidset_size(&p->bad_objects) &&
+	    oidset_contains(&p->bad_objects, oid))
+		return 0;
 
 	e->offset = nth_midxed_offset(m, pos);
 	e->p = p;
 
 	return 1;
-}
-
-int fill_midx_entry(struct repository * r,
-		    const struct object_id *oid,
-		    struct pack_entry *e,
-		    struct multi_pack_index *m)
-{
-	uint32_t pos;
-
-	if (!bsearch_midx(oid, m, &pos))
-		return 0;
-
-	return nth_midxed_pack_entry(r, m, e, pos);
 }
 
 /* Match "foo.idx" against either "foo.pack" _or_ "foo.idx". */
