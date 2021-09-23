@@ -73,6 +73,22 @@ test_expect_success 'git help -g' '
 	test_i18ngrep "^   tutorial   " help.output
 '
 
+test_expect_success 'git help fails for non-existing html pages' '
+	configure_help &&
+	mkdir html-empty &&
+	test_must_fail git -c help.htmlpath=html-empty help status &&
+	test_must_be_empty test-browser.log
+'
+
+test_expect_success 'git help succeeds without git.html' '
+	configure_help &&
+	mkdir html-with-docs &&
+	touch html-with-docs/git-status.html &&
+	git -c help.htmlpath=html-with-docs help status &&
+	echo "html-with-docs/git-status.html" >expect &&
+	test_cmp expect test-browser.log
+'
+
 test_expect_success 'generate builtin list' '
 	git --list-cmds=builtins >builtins
 '
