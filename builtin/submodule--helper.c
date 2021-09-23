@@ -1668,10 +1668,13 @@ static int add_possible_reference_from_superproject(
 	 * standard layout with .git/(modules/<name>)+/objects
 	 */
 	if (strip_suffix(odb->path, "/objects", &len)) {
+		struct repository alternate;
 		char *sm_alternate;
 		struct strbuf sb = STRBUF_INIT;
 		struct strbuf err = STRBUF_INIT;
 		strbuf_add(&sb, odb->path, len);
+
+		repo_init(&alternate, sb.buf, NULL);
 
 		/*
 		 * We need to end the new path with '/' to mark it as a dir,
@@ -1679,7 +1682,10 @@ static int add_possible_reference_from_superproject(
 		 * as the last part of a missing submodule reference would
 		 * be taken as a file name.
 		 */
-		strbuf_addf(&sb, "/modules/%s/", sas->submodule_name);
+		strbuf_reset(&sb);
+		submodule_name_to_gitdir(&sb, &alternate, sas->submodule_name);
+		strbuf_addch(&sb, '/');
+		repo_clear(&alternate);
 
 		sm_alternate = compute_alternate_path(sb.buf, &err);
 		if (sm_alternate) {
@@ -1749,7 +1755,7 @@ static int clone_submodule(struct module_clone_data *clone_data)
 	struct strbuf sb = STRBUF_INIT;
 	struct child_process cp = CHILD_PROCESS_INIT;
 
-	strbuf_addf(&sb, "%s/modules/%s", get_git_dir(), clone_data->name);
+	submodule_name_to_gitdir(&sb, the_repository, clone_data->name);
 	sm_gitdir = absolute_pathdup(sb.buf);
 	strbuf_reset(&sb);
 

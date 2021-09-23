@@ -1859,14 +1859,16 @@ out:
 
 void submodule_unset_core_worktree(const struct submodule *sub)
 {
-	char *config_path = xstrfmt("%s/modules/%s/config",
-				    get_git_dir(), sub->name);
+	struct strbuf config_path = STRBUF_INIT;
 
-	if (git_config_set_in_file_gently(config_path, "core.worktree", NULL))
+	submodule_name_to_gitdir(&config_path, the_repository, sub->name);
+	strbuf_addstr(&config_path, "/config");
+
+	if (git_config_set_in_file_gently(config_path.buf, "core.worktree", NULL))
 		warning(_("Could not unset core.worktree setting in submodule '%s'"),
 			  sub->path);
 
-	free(config_path);
+	strbuf_release(&config_path);
 }
 
 static const char *get_super_prefix_or_empty(void)
@@ -1962,20 +1964,22 @@ int submodule_move_head(const char *path,
 				absorb_git_dir_into_superproject(path,
 					ABSORB_GITDIR_RECURSE_SUBMODULES);
 		} else {
-			char *gitdir = xstrfmt("%s/modules/%s",
-				    get_git_dir(), sub->name);
-			connect_work_tree_and_git_dir(path, gitdir, 0);
-			free(gitdir);
+			struct strbuf gitdir = STRBUF_INIT;
+			submodule_name_to_gitdir(&gitdir, the_repository,
+						 sub->name);
+			connect_work_tree_and_git_dir(path, gitdir.buf, 0);
+			strbuf_release(&gitdir);
 
 			/* make sure the index is clean as well */
 			submodule_reset_index(path);
 		}
 
 		if (old_head && (flags & SUBMODULE_MOVE_HEAD_FORCE)) {
-			char *gitdir = xstrfmt("%s/modules/%s",
-				    get_git_dir(), sub->name);
-			connect_work_tree_and_git_dir(path, gitdir, 1);
-			free(gitdir);
+			struct strbuf gitdir = STRBUF_INIT;
+			submodule_name_to_gitdir(&gitdir, the_repository,
+						 sub->name);
+			connect_work_tree_and_git_dir(path, gitdir.buf, 1);
+			strbuf_release(&gitdir);
 		}
 	}
 
@@ -2090,7 +2094,7 @@ int validate_submodule_git_dir(char *git_dir, const char *submodule_name)
 static void relocate_single_git_dir_into_superproject(const char *path)
 {
 	char *old_git_dir = NULL, *real_old_git_dir = NULL, *real_new_git_dir = NULL;
-	char *new_git_dir;
+	struct strbuf new_gitdir = STRBUF_INIT;
 	const struct submodule *sub;
 
 	if (submodule_uses_worktrees(path))
@@ -2108,14 +2112,13 @@ static void relocate_single_git_dir_into_superproject(const char *path)
 	if (!sub)
 		die(_("could not lookup name for submodule '%s'"), path);
 
-	new_git_dir = git_pathdup("modules/%s", sub->name);
-	if (validate_submodule_git_dir(new_git_dir, sub->name) < 0)
+	submodule_name_to_gitdir(&new_gitdir, the_repository, sub->name);
+	if (validate_submodule_git_dir(new_gitdir.buf, sub->name) < 0)
 		die(_("refusing to move '%s' into an existing git dir"),
 		    real_old_git_dir);
-	if (safe_create_leading_directories_const(new_git_dir) < 0)
-		die(_("could not create directory '%s'"), new_git_dir);
-	real_new_git_dir = real_pathdup(new_git_dir, 1);
-	free(new_git_dir);
+	if (safe_create_leading_directories_const(new_gitdir.buf) < 0)
+		die(_("could not create directory '%s'"), new_gitdir.buf);
+	real_new_git_dir = real_pathdup(new_gitdir.buf, 1);
 
 	fprintf(stderr, _("Migrating git directory of '%s%s' from\n'%s' to\n'%s'\n"),
 		get_super_prefix_or_empty(), path,
@@ -2126,6 +2129,7 @@ static void relocate_single_git_dir_into_superproject(const char *path)
 	free(old_git_dir);
 	free(real_old_git_dir);
 	free(real_new_git_dir);
+	strbuf_release(&new_gitdir);
 }
 
 /*
@@ -2145,6 +2149,7 @@ void absorb_git_dir_into_superproject(const char *path,
 	/* Not populated? */
 	if (!sub_git_dir) {
 		const struct submodule *sub;
+		struct strbuf sub_gitdir = STRBUF_INIT;
 
 		if (err_code == READ_GITFILE_ERR_STAT_FAILED) {
 			/* unpopulated as expected */
@@ -2166,8 +2171,9 @@ void absorb_git_dir_into_superproject(const char *path,
 		sub = submodule_from_path(the_repository, null_oid(), path);
 		if (!sub)
 			die(_("could not lookup name for submodule '%s'"), path);
-		connect_work_tree_and_git_dir(path,
-			git_path("modules/%s", sub->name), 0);
+		submodule_name_to_gitdir(&sub_gitdir, the_repository, sub->name);
+		connect_work_tree_and_git_dir(path, sub_gitdir.buf, 0);
+		strbuf_release(&sub_gitdir);
 	} else {
 		/* Is it already absorbed into the superprojects git dir? */
 		char *real_sub_git_dir = real_pathdup(sub_git_dir, 1);
@@ -2318,9 +2324,36 @@ int submodule_to_gitdir(struct strbuf *buf, const char *submodule)
 			goto cleanup;
 		}
 		strbuf_reset(buf);
-		strbuf_git_path(buf, "%s/%s", "modules", sub->name);
+		submodule_name_to_gitdir(buf, the_repository, sub->name);
 	}
 
 cleanup:
 	return ret;
+}
+
+void submodule_name_to_gitdir(struct strbuf *buf, struct repository *r,
+			      const char *submodule_name)
+{
+	/*
+	 * NEEDSWORK: The current way of mapping a submodule's name to
+	 * its location in .git/modules/ has problems with some naming
+	 * schemes. For example, if a submodule is named "foo" and
+	 * another is named "foo/bar" (whether present in the same
+	 * superproject commit or not - the problem will arise if both
+	 * superproject commits have been checked out at any point in
+	 * time), or if two submodule names only have different cases in
+	 * a case-insensitive filesystem.
+	 *
+	 * There are several solutions, including encoding the path in
+	 * some way, introducing a submodule.<name>.gitdir config in
+	 * .git/config (not .gitmodules) that allows overriding what the
+	 * gitdir of a submodule would be (and teach Git, upon noticing
+	 * a clash, to automatically determine a non-clashing name and
+	 * to write such a config), or introducing a
+	 * submodule.<name>.gitdir config in .gitmodules that repo
+	 * administrators can explicitly set. Nothing has been decided,
+	 * so for now, just append the name at the end of the path.
+	 */
+	strbuf_repo_git_path(buf, r, "modules/");
+	strbuf_addstr(buf, submodule_name);
 }

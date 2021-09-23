@@ -133,6 +133,13 @@ int push_unpushed_submodules(struct repository *r,
 int submodule_to_gitdir(struct strbuf *buf, const char *submodule);
 
 /*
+ * Given a submodule name, create a path to where the submodule's gitdir lives
+ * inside of the provided repository's 'modules' directory.
+ */
+void submodule_name_to_gitdir(struct strbuf *buf, struct repository *r,
+			      const char *submodule_name);
+
+/*
  * Make sure that no submodule's git dir is nested in a sibling submodule's.
  */
 int validate_submodule_git_dir(char *git_dir, const char *submodule_name);
