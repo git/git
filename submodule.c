@@ -525,9 +525,6 @@ static void prepare_submodule_repo_env_in_gitdir(struct strvec *out)
 /*
  * Initialize a repository struct for a submodule based on the provided 'path'.
  *
- * Unlike repo_submodule_init, this tolerates submodules not present
- * in .gitmodules. This function exists only to preserve historical behavior,
- *
  * Returns the repository struct on success,
  * NULL when the submodule is not present.
  */
@@ -1421,24 +1418,13 @@ static void fetch_task_release(struct fetch_task *p)
 }
 
 static struct repository *get_submodule_repo_for(struct repository *r,
-						 const struct submodule *sub)
+						 const char *path)
 {
 	struct repository *ret = xmalloc(sizeof(*ret));
 
-	if (repo_submodule_init(ret, r, sub)) {
-		/*
-		 * No entry in .gitmodules? Technically not a submodule,
-		 * but historically we supported repositories that happen to be
-		 * in-place where a gitlink is. Keep supporting them.
-		 */
-		struct strbuf gitdir = STRBUF_INIT;
-		strbuf_repo_worktree_path(&gitdir, r, "%s/.git", sub->path);
-		if (repo_init(ret, gitdir.buf, NULL)) {
-			strbuf_release(&gitdir);
-			free(ret);
-			return NULL;
-		}
-		strbuf_release(&gitdir);
+	if (repo_submodule_init(ret, r, path, null_oid())) {
+		free(ret);
+		return NULL;
 	}
 
 	return ret;
@@ -1480,7 +1466,7 @@ static int get_next_submodule(struct child_process *cp,
 			continue;
 		}
 
-		task->repo = get_submodule_repo_for(spf->r, task->sub);
+		task->repo = get_submodule_repo_for(spf->r, task->sub->path);
 		if (task->repo) {
 			struct strbuf submodule_prefix = STRBUF_INIT;
 			child_process_init(cp);

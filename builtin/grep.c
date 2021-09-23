@@ -433,17 +433,14 @@ static int grep_submodule(struct grep_opt *opt,
 {
 	struct repository *subrepo;
 	struct repository *superproject = opt->repo;
-	const struct submodule *sub;
 	struct grep_opt subopt;
 	int hit = 0;
-
-	sub = submodule_from_path(superproject, null_oid(), path);
 
 	if (!is_submodule_active(superproject, path))
 		return 0;
 
 	subrepo = xmalloc(sizeof(*subrepo));
-	if (repo_submodule_init(subrepo, superproject, sub)) {
+	if (repo_submodule_init(subrepo, superproject, path, null_oid())) {
 		free(subrepo);
 		return 0;
 	}
