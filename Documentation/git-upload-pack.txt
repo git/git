@@ -48,6 +48,14 @@ OPTIONS
 <directory>::
 	The repository to sync from.
 
+ENVIRONMENT
+-----------
+
+`GIT_PROTOCOL`::
+	Internal variable used for handshaking the wire protocol. Server
+	admins may need to configure some transports to allow this
+	variable to be passed. See the discussion in linkgit:git[1].
+
 SEE ALSO
 --------
 linkgit:gitnamespaces[7]

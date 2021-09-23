@@ -42,7 +42,8 @@ Initial Client Request
 In general a client can request to speak protocol v2 by sending
 `version=2` through the respective side-channel for the transport being
 used which inevitably sets `GIT_PROTOCOL`.  More information can be
-found in `pack-protocol.txt` and `http-protocol.txt`.  In all cases the
+found in `pack-protocol.txt` and `http-protocol.txt`, as well as the
+`GIT_PROTOCOL` definition in `git.txt`. In all cases the
 response from the server is the capability advertisement.
 
 Git Transport
@@ -58,6 +59,8 @@ SSH and File Transport
 
 When using either the ssh:// or file:// transport, the GIT_PROTOCOL
 environment variable must be set explicitly to include "version=2".
+The server may need to be configured to allow this environment variable
+to pass.
 
 HTTP Transport
 ~~~~~~~~~~~~~~
@@ -83,6 +86,9 @@ Subsequent requests are then made directly to the service
 
 Uses the `--http-backend-info-refs` option to
 linkgit:git-upload-pack[1].
+
+The server may need to be configured to pass this header's contents via
+the `GIT_PROTOCOL` variable. See the discussion in `git-http-backend.txt`.
 
 Capability Advertisement
 ------------------------

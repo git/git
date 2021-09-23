@@ -739,6 +739,7 @@ static int bad_request(struct strbuf *hdr, const struct service_cmd *c)
 int cmd_main(int argc, const char **argv)
 {
 	char *method = getenv("REQUEST_METHOD");
+	const char *proto_header;
 	char *dir;
 	struct service_cmd *cmd = NULL;
 	char *cmd_arg = NULL;
@@ -789,6 +790,9 @@ int cmd_main(int argc, const char **argv)
 	http_config();
 	max_request_buffer = git_env_ulong("GIT_HTTP_MAX_REQUEST_BUFFER",
 					   max_request_buffer);
+	proto_header = getenv("HTTP_GIT_PROTOCOL");
+	if (proto_header)
+		setenv(GIT_PROTOCOL_ENVIRONMENT, proto_header, 0);
 
 	cmd->imp(&hdr, cmd_arg);
 	return 0;
