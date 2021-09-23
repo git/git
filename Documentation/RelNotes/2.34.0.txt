@@ -48,6 +48,14 @@ UI, Workflows & Features
    entire directory outside the sparse cone to be removed, which is
    especially useful when the sparse patterns change.
 
+ * Taking advantage of the CGI interface, http-backend has been
+   updated to enable protocol v2 automatically when the other side
+   asks for it.
+
+ * The credential-cache helper has been adjusted to Windows.
+
+ * The error in "git help no-such-git-command" is handled better.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -118,6 +126,9 @@ Performance, Internal Implementation, Development Support etc.
  * The run-command API has been updated so that the callers can easily
    ask the file descriptors open for packfiles to be closed immediately
    before spawning commands that may trigger auto-gc.
+
+ * An oddball OPTION_ARGUMENT feature has been removed from the
+   parse-options API.
 
 
 Fixes since v2.33
@@ -245,6 +256,17 @@ Fixes since v2.33
    subsystem has been cleaned up.
    (merge 35cf94eaf6 rs/no-mode-to-open-when-appending later to maint).
 
+ * "git update-ref --stdin" failed to flush its output as needed,
+   which potentially led the conversation to a deadlock.
+   (merge 7c1200745b ps/update-ref-batch-flush later to maint).
+
+ * When "git am --abort" fails to abort correctly, it still exited
+   with exit status of 0, which has been corrected.
+   (merge c5ead19ea2 en/am-abort-fix later to maint).
+
+ * Correct nr and alloc members of strvec struct to be of type size_t.
+   (merge 8d133a4653 jk/strvec-typefix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 1d9c8daef8 ab/bundle-doc later to maint).
    (merge 81483fe613 en/merge-strategy-docs later to maint).
@@ -276,3 +298,8 @@ Fixes since v2.33
    (merge 92a5d1c9b4 jc/prefix-filename-allocates later to maint).
    (merge d9a65b6c0a rs/setup-use-xopen-and-xdup later to maint).
    (merge e8f55568de jk/t5562-racefix later to maint).
+   (merge 8f0f110156 rs/drop-core-compression-vars later to maint).
+   (merge b6d8887d3d ma/doc-git-version later to maint).
+   (merge 66c0c44df6 cb/plug-leaks-in-alloca-emu-users later to maint).
+   (merge afb32e8101 kz/revindex-comment-fix later to maint).
+   (merge ae578de926 po/git-config-doc-mentions-help-c later to maint).
