@@ -211,9 +211,9 @@ static char *locate_in_PATH(const char *file)
 	return NULL;
 }
 
-static int exists_in_PATH(const char *file)
+int exists_in_PATH(const char *command)
 {
-	char *r = locate_in_PATH(file);
+	char *r = locate_in_PATH(command);
 	int found = r != NULL;
 	free(r);
 	return found;
