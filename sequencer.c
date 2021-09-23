@@ -2671,18 +2671,12 @@ static int read_populate_todo(struct repository *r,
 			      struct todo_list *todo_list,
 			      struct replay_opts *opts)
 {
-	struct stat st;
 	const char *todo_file = get_todo_path(opts);
 	int res;
 
 	strbuf_reset(&todo_list->buf);
 	if (strbuf_read_file_or_whine(&todo_list->buf, todo_file) < 0)
 		return -1;
-
-	res = stat(todo_file, &st);
-	if (res)
-		return error(_("could not stat '%s'"), todo_file);
-	fill_stat_data(&todo_list->stat, &st);
 
 	res = todo_list_parse_insn_buffer(r, todo_list->buf.buf, todo_list);
 	if (res) {
@@ -4258,12 +4252,14 @@ static int reread_todo_if_changed(struct repository *r,
 				  struct todo_list *todo_list,
 				  struct replay_opts *opts)
 {
-	struct stat st;
+	int offset;
+	struct strbuf buf = STRBUF_INIT;
 
-	if (stat(get_todo_path(opts), &st)) {
-		return error_errno(_("could not stat '%s'"),
-				   get_todo_path(opts));
-	} else if (match_stat_data(&todo_list->stat, &st)) {
+	if (strbuf_read_file_or_whine(&buf, get_todo_path(opts)) < 0)
+		return -1;
+	offset = get_item_line_offset(todo_list, todo_list->current + 1);
+	if (buf.len != todo_list->buf.len - offset ||
+	    memcmp(buf.buf, todo_list->buf.buf + offset, buf.len)) {
 		/* Reread the todo file if it has changed. */
 		todo_list_release(todo_list);
 		if (read_populate_todo(r, todo_list, opts))
@@ -4271,6 +4267,7 @@ static int reread_todo_if_changed(struct repository *r,
 		/* `current` will be incremented on return */
 		todo_list->current = -1;
 	}
+	strbuf_release(&buf);
 
 	return 0;
 }
