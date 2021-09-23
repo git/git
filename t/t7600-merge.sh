@@ -717,6 +717,7 @@ test_expect_success 'failed fast-forward merge with --autostash' '
 	git reset --hard c0 &&
 	git merge-file file file.orig file.5 &&
 	cp file.5 other &&
+	test_when_finished "rm other" &&
 	test_must_fail git merge --autostash c1 2>err &&
 	test_i18ngrep "Applied autostash." err &&
 	test_cmp file.5 file
