@@ -995,14 +995,6 @@ extern int core_apply_sparse_checkout;
 extern int core_sparse_checkout_cone;
 
 /*
- * Include broken refs in all ref iterations, which will
- * generally choke dangerous operations rather than letting
- * them silently proceed without taking the broken ref into
- * account.
- */
-extern int ref_paranoia;
-
-/*
  * Returns the boolean value of $GIT_OPTIONAL_LOCKS (or the default value).
  */
 int use_optional_locks(void);
