@@ -2100,8 +2100,7 @@ static int filter_pattern_match(struct ref_filter *filter, const char *refname)
  */
 static int for_each_fullref_in_pattern(struct ref_filter *filter,
 				       each_ref_fn cb,
-				       void *cb_data,
-				       int broken)
+				       void *cb_data)
 {
 	if (!filter->match_as_path) {
 		/*
@@ -2109,7 +2108,7 @@ static int for_each_fullref_in_pattern(struct ref_filter *filter,
 		 * prefixes like "refs/heads/" etc. are stripped off,
 		 * so we have to look at everything:
 		 */
-		return for_each_fullref_in("", cb, cb_data, broken);
+		return for_each_fullref_in("", cb, cb_data);
 	}
 
 	if (filter->ignore_case) {
@@ -2118,16 +2117,16 @@ static int for_each_fullref_in_pattern(struct ref_filter *filter,
 		 * so just return everything and let the caller
 		 * sort it out.
 		 */
-		return for_each_fullref_in("", cb, cb_data, broken);
+		return for_each_fullref_in("", cb, cb_data);
 	}
 
 	if (!filter->name_patterns[0]) {
 		/* no patterns; we have to look at everything */
-		return for_each_fullref_in("", cb, cb_data, broken);
+		return for_each_fullref_in("", cb, cb_data);
 	}
 
 	return for_each_fullref_in_prefixes(NULL, filter->name_patterns,
-					    cb, cb_data, broken);
+					    cb, cb_data);
 }
 
 /*
@@ -2425,13 +2424,13 @@ int filter_refs(struct ref_array *array, struct ref_filter *filter, unsigned int
 		 * of filter_ref_kind().
 		 */
 		if (filter->kind == FILTER_REFS_BRANCHES)
-			ret = for_each_fullref_in("refs/heads/", ref_filter_handler, &ref_cbdata, 0);
+			ret = for_each_fullref_in("refs/heads/", ref_filter_handler, &ref_cbdata);
 		else if (filter->kind == FILTER_REFS_REMOTES)
-			ret = for_each_fullref_in("refs/remotes/", ref_filter_handler, &ref_cbdata, 0);
+			ret = for_each_fullref_in("refs/remotes/", ref_filter_handler, &ref_cbdata);
 		else if (filter->kind == FILTER_REFS_TAGS)
-			ret = for_each_fullref_in("refs/tags/", ref_filter_handler, &ref_cbdata, 0);
+			ret = for_each_fullref_in("refs/tags/", ref_filter_handler, &ref_cbdata);
 		else if (filter->kind & FILTER_REFS_ALL)
-			ret = for_each_fullref_in_pattern(filter, ref_filter_handler, &ref_cbdata, 0);
+			ret = for_each_fullref_in_pattern(filter, ref_filter_handler, &ref_cbdata);
 		if (!ret && (filter->kind & FILTER_REFS_DETACHED_HEAD))
 			head_ref(ref_filter_handler, &ref_cbdata);
 	}
