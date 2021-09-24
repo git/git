@@ -11,12 +11,15 @@ test_expect_success 'setup' "
 	git commit -m files &&
 
 	cat >sparse_error_header <<-EOF &&
-	The following pathspecs didn't match any eligible path, but they do match index
-	entries outside the current sparse checkout:
+	The following paths and/or pathspecs matched paths that exist
+	outside of your sparse-checkout definition, so will not be
+	updated in the index:
 	EOF
 
 	cat >sparse_hint <<-EOF
-	hint: Disable or modify the sparsity rules if you intend to update such entries.
+	hint: If you intend to update such entries, try one of the following:
+	hint: * Use the --sparse option.
+	hint: * Disable or modify the sparsity rules.
 	hint: Disable this message with \"git config advice.updateSparsePath false\"
 	EOF
 "
