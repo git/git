@@ -1413,7 +1413,8 @@ int head_ref(each_ref_fn fn, void *cb_data)
 
 struct ref_iterator *refs_ref_iterator_begin(
 		struct ref_store *refs,
-		const char *prefix, int trim, int flags)
+		const char *prefix, int trim,
+		enum do_for_each_ref_flags flags)
 {
 	struct ref_iterator *iter;
 
@@ -1479,7 +1480,8 @@ static int do_for_each_ref_helper(struct repository *r,
 }
 
 static int do_for_each_ref(struct ref_store *refs, const char *prefix,
-			   each_ref_fn fn, int trim, int flags, void *cb_data)
+			   each_ref_fn fn, int trim,
+			   enum do_for_each_ref_flags flags, void *cb_data)
 {
 	struct ref_iterator *iter;
 	struct do_for_each_ref_help hp = { fn, cb_data };
@@ -1516,7 +1518,7 @@ int for_each_ref_in(const char *prefix, each_ref_fn fn, void *cb_data)
 
 int for_each_fullref_in(const char *prefix, each_ref_fn fn, void *cb_data, unsigned int broken)
 {
-	unsigned int flag = 0;
+	enum do_for_each_ref_flags flag = 0;
 
 	if (broken)
 		flag = DO_FOR_EACH_INCLUDE_BROKEN;
@@ -1528,7 +1530,7 @@ int refs_for_each_fullref_in(struct ref_store *refs, const char *prefix,
 			     each_ref_fn fn, void *cb_data,
 			     unsigned int broken)
 {
-	unsigned int flag = 0;
+	enum do_for_each_ref_flags flag = 0;
 
 	if (broken)
 		flag = DO_FOR_EACH_INCLUDE_BROKEN;
