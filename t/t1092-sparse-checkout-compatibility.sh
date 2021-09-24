@@ -301,8 +301,6 @@ test_expect_success 'add, commit, checkout' '
 	test_all_match git checkout -
 '
 
-# NEEDSWORK: This documents current behavior, but is not a desirable
-# behavior (untracked files are handled differently than tracked).
 test_expect_success 'add outside sparse cone' '
 	init_repos &&
 
@@ -312,7 +310,9 @@ test_expect_success 'add outside sparse cone' '
 	test_sparse_match test_must_fail git add folder1/a &&
 	grep "Disable or modify the sparsity rules" sparse-checkout-err &&
 	test_sparse_unstaged folder1/a &&
-	test_sparse_match git add folder1/newfile
+	test_sparse_match test_must_fail git add folder1/newfile &&
+	grep "Disable or modify the sparsity rules" sparse-checkout-err &&
+	test_sparse_unstaged folder1/newfile
 '
 
 test_expect_success 'commit including unstaged changes' '
@@ -343,7 +343,11 @@ test_expect_success 'commit including unstaged changes' '
 	test_all_match git status --porcelain=v2
 '
 
-test_expect_success 'status/add: outside sparse cone' '
+# NEEDSWORK: Now that 'git add folder1/new' fails, the changes being
+# attempted here fail for the sparse-checkout and sparse-index repos.
+# We must enable a way for adding files outside the sparse-checkout
+# done, even if it is by an optional flag.
+test_expect_failure 'status/add: outside sparse cone' '
 	init_repos &&
 
 	# folder1 is at HEAD, but outside the sparse cone
@@ -368,10 +372,11 @@ test_expect_success 'status/add: outside sparse cone' '
 	test_sparse_match test_must_fail git add --refresh folder1/a &&
 	grep "Disable or modify the sparsity rules" sparse-checkout-err &&
 	test_sparse_unstaged folder1/a &&
+	test_sparse_match test_must_fail git add folder1/new &&
+	grep "Disable or modify the sparsity rules" sparse-checkout-err &&
+	test_sparse_unstaged folder1/new &&
 
-	# NEEDSWORK: Adding a newly-tracked file outside the cone succeeds
-	test_sparse_match git add folder1/new &&
-
+	# NEEDSWORK: behavior begins to deviate here.
 	test_all_match git add . &&
 	test_all_match git status --porcelain=v2 &&
 	test_all_match git commit -m folder1/new &&
@@ -527,7 +532,7 @@ test_expect_success 'merge, cherry-pick, and rebase' '
 # Right now, users might be using this flow to work through conflicts,
 # so any solution should present advice to users who try this sequence
 # of commands to follow whatever new method we create.
-test_expect_success 'merge with conflict outside cone' '
+test_expect_failure 'merge with conflict outside cone' '
 	init_repos &&
 
 	test_all_match git checkout -b merge-tip merge-left &&
@@ -541,12 +546,18 @@ test_expect_success 'merge with conflict outside cone' '
 	test_all_match git status --porcelain=v2 &&
 
 	# 2. Add the file with conflict markers
+	# NEEDSWORK: Even though the merge conflict removed the
+	# SKIP_WORKTREE bit from the index entry for folder1/a, we should
+	# warn that this is a problematic add.
 	test_all_match git add folder1/a &&
 	test_all_match git status --porcelain=v2 &&
 
 	# 3. Rename the file to another sparse filename and
 	#    accept conflict markers as resolved content.
 	run_on_all mv folder2/a folder2/z &&
+	# NEEDSWORK: This mode now fails, because folder2/z is
+	# outside of the sparse-checkout cone and does not match an
+	# existing index entry with the SKIP_WORKTREE bit cleared.
 	test_all_match git add folder2 &&
 	test_all_match git status --porcelain=v2 &&
 
@@ -555,7 +566,7 @@ test_expect_success 'merge with conflict outside cone' '
 	test_all_match git rev-parse HEAD^{tree}
 '
 
-test_expect_success 'cherry-pick/rebase with conflict outside cone' '
+test_expect_failure 'cherry-pick/rebase with conflict outside cone' '
 	init_repos &&
 
 	for OPERATION in cherry-pick rebase
@@ -572,11 +583,17 @@ test_expect_success 'cherry-pick/rebase with conflict outside cone' '
 		test_all_match git status --porcelain=v2 &&
 
 		# 2. Add the file with conflict markers
+		# NEEDSWORK: Even though the merge conflict removed the
+		# SKIP_WORKTREE bit from the index entry for folder1/a, we should
+		# warn that this is a problematic add.
 		test_all_match git add folder1/a &&
 		test_all_match git status --porcelain=v2 &&
 
 		# 3. Rename the file to another sparse filename and
 		#    accept conflict markers as resolved content.
+		# NEEDSWORK: This mode now fails, because folder2/z is
+		# outside of the sparse-checkout cone and does not match an
+		# existing index entry with the SKIP_WORKTREE bit cleared.
 		run_on_all mv folder2/a folder2/z &&
 		test_all_match git add folder2 &&
 		test_all_match git status --porcelain=v2 &&
@@ -654,6 +671,7 @@ test_expect_success 'clean' '
 test_expect_success 'submodule handling' '
 	init_repos &&
 
+	test_sparse_match git sparse-checkout add modules &&
 	test_all_match mkdir modules &&
 	test_all_match touch modules/a &&
 	test_all_match git add modules &&
@@ -663,6 +681,7 @@ test_expect_success 'submodule handling' '
 	test_all_match git commit -m "add submodule" &&
 
 	# having a submodule prevents "modules" from collapse
+	test_sparse_match git sparse-checkout set deep/deeper1 &&
 	test-tool -C sparse-index read-cache --table >cache &&
 	grep "100644 blob .*	modules/a" cache &&
 	grep "160000 commit $(git -C initial-repo rev-parse HEAD)	modules/sub" cache
