@@ -37,9 +37,13 @@ done
 test_expect_success 'recursive rm does not remove sparse entries' '
 	git reset --hard &&
 	git sparse-checkout set sub/dir &&
-	git rm -r sub &&
+	test_must_fail git rm -r sub &&
+	git rm --sparse -r sub &&
 	git status --porcelain -uno >actual &&
-	echo "D  sub/dir/e" >expected &&
+	cat >expected <<-\EOF &&
+	D  sub/d
+	D  sub/dir/e
+	EOF
 	test_cmp expected actual
 '
 
@@ -85,6 +89,17 @@ test_expect_success 'do not warn about sparse entries with --ignore-unmatch' '
 	git rm --ignore-unmatch b 2>stderr &&
 	test_must_be_empty stderr &&
 	git ls-files --error-unmatch b
+'
+
+test_expect_success 'refuse to rm a non-skip-worktree path outside sparse cone' '
+	git reset --hard &&
+	git sparse-checkout set a &&
+	git update-index --no-skip-worktree b &&
+	test_must_fail git rm b 2>stderr &&
+	test_cmp b_error_and_hint stderr &&
+	git rm --sparse b 2>stderr &&
+	test_must_be_empty stderr &&
+	test_path_is_missing b
 '
 
 test_done

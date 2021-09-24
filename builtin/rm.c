@@ -301,7 +301,9 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 	for (i = 0; i < active_nr; i++) {
 		const struct cache_entry *ce = active_cache[i];
 
-		if (!include_sparse && ce_skip_worktree(ce))
+		if (!include_sparse &&
+		    (ce_skip_worktree(ce) ||
+		     !path_in_sparse_checkout(ce->name, &the_index)))
 			continue;
 		if (!ce_path_match(&the_index, ce, &pathspec, seen))
 			continue;
