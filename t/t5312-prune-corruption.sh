@@ -18,18 +18,23 @@ test_expect_success 'disable reflogs' '
 	git reflog expire --expire=all --all
 '
 
+create_bogus_ref () {
+	test_when_finished 'rm -f .git/refs/heads/bogus..name' &&
+	echo $bogus >.git/refs/heads/bogus..name
+}
+
 test_expect_success 'create history reachable only from a bogus-named ref' '
 	test_tick && git commit --allow-empty -m main &&
 	base=$(git rev-parse HEAD) &&
 	test_tick && git commit --allow-empty -m bogus &&
 	bogus=$(git rev-parse HEAD) &&
 	git cat-file commit $bogus >saved &&
-	echo $bogus >.git/refs/heads/bogus..name &&
 	git reset --hard HEAD^
 '
 
 test_expect_success 'pruning does not drop bogus object' '
 	test_when_finished "git hash-object -w -t commit saved" &&
+	create_bogus_ref &&
 	test_might_fail git prune --expire=now &&
 	git cat-file -e $bogus
 '
@@ -42,15 +47,11 @@ test_expect_success 'put bogus object into pack' '
 '
 
 test_expect_success 'destructive repack keeps packed object' '
+	create_bogus_ref &&
 	test_might_fail git repack -Ad --unpack-unreachable=now &&
 	git cat-file -e $bogus &&
 	test_might_fail git repack -ad &&
 	git cat-file -e $bogus
-'
-
-# subsequent tests will have different corruptions
-test_expect_success 'clean up bogus ref' '
-	rm .git/refs/heads/bogus..name
 '
 
 # We create two new objects here, "one" and "two". Our
