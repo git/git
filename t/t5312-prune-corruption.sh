@@ -7,6 +7,9 @@ if we see, for example, a ref with a bogus name, it is OK either to
 bail out or to proceed using it as a reachable tip, but it is _not_
 OK to proceed as if it did not exist. Otherwise we might silently
 delete objects that cannot be recovered.
+
+Note that we do assert command failure in these cases, because that is
+what currently happens. If that changes, these tests should be revisited.
 '
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
@@ -35,7 +38,7 @@ test_expect_success 'create history reachable only from a bogus-named ref' '
 test_expect_success 'pruning does not drop bogus object' '
 	test_when_finished "git hash-object -w -t commit saved" &&
 	create_bogus_ref &&
-	test_might_fail git prune --expire=now &&
+	test_must_fail git prune --expire=now &&
 	git cat-file -e $bogus
 '
 
@@ -53,9 +56,9 @@ test_expect_success 'non-destructive repack ignores bogus name' '
 
 test_expect_success 'destructive repack keeps packed object' '
 	create_bogus_ref &&
-	test_might_fail git repack -Ad --unpack-unreachable=now &&
+	test_must_fail git repack -Ad --unpack-unreachable=now &&
 	git cat-file -e $bogus &&
-	test_might_fail git repack -ad &&
+	test_must_fail git repack -ad &&
 	git cat-file -e $bogus
 '
 
@@ -83,7 +86,7 @@ test_expect_success 'create history with missing tip commit' '
 
 test_expect_success 'pruning with a corrupted tip does not drop history' '
 	test_when_finished "git hash-object -w -t commit saved" &&
-	test_might_fail git prune --expire=now &&
+	test_must_fail git prune --expire=now &&
 	git cat-file -e $recoverable
 '
 
