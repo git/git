@@ -46,6 +46,11 @@ test_expect_success 'put bogus object into pack' '
 	git cat-file -e $bogus
 '
 
+test_expect_success 'non-destructive repack ignores bogus name' '
+	create_bogus_ref &&
+	git repack -adk
+'
+
 test_expect_success 'destructive repack keeps packed object' '
 	create_bogus_ref &&
 	test_might_fail git repack -Ad --unpack-unreachable=now &&
