@@ -187,6 +187,16 @@ test_sparse_match () {
 	test_cmp sparse-checkout-err sparse-index-err
 }
 
+test_sparse_unstaged () {
+	file=$1 &&
+	for repo in sparse-checkout sparse-index
+	do
+		# Skip "unmerged" paths
+		git -C $repo diff --staged --diff-filter=u -- "$file" >diff &&
+		test_must_be_empty diff || return 1
+	done
+}
+
 test_expect_success 'sparse-index contents' '
 	init_repos &&
 
@@ -291,6 +301,20 @@ test_expect_success 'add, commit, checkout' '
 	test_all_match git checkout -
 '
 
+# NEEDSWORK: This documents current behavior, but is not a desirable
+# behavior (untracked files are handled differently than tracked).
+test_expect_success 'add outside sparse cone' '
+	init_repos &&
+
+	run_on_sparse mkdir folder1 &&
+	run_on_sparse ../edit-contents folder1/a &&
+	run_on_sparse ../edit-contents folder1/newfile &&
+	test_sparse_match test_must_fail git add folder1/a &&
+	grep "Disable or modify the sparsity rules" sparse-checkout-err &&
+	test_sparse_unstaged folder1/a &&
+	test_sparse_match git add folder1/newfile
+'
+
 test_expect_success 'commit including unstaged changes' '
 	init_repos &&
 
@@ -339,7 +363,11 @@ test_expect_success 'status/add: outside sparse cone' '
 
 	# Adding the path outside of the sparse-checkout cone should fail.
 	test_sparse_match test_must_fail git add folder1/a &&
+	grep "Disable or modify the sparsity rules" sparse-checkout-err &&
+	test_sparse_unstaged folder1/a &&
 	test_sparse_match test_must_fail git add --refresh folder1/a &&
+	grep "Disable or modify the sparsity rules" sparse-checkout-err &&
+	test_sparse_unstaged folder1/a &&
 
 	# NEEDSWORK: Adding a newly-tracked file outside the cone succeeds
 	test_sparse_match git add folder1/new &&
