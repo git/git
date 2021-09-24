@@ -167,7 +167,13 @@ test_expect_success 'git add fails outside of sparse-checkout definition' '
 
 	git update-index --no-skip-worktree sparse_entry &&
 	test_must_fail git add sparse_entry &&
-	test_sparse_entry_unstaged
+	test_sparse_entry_unstaged &&
+
+	# Avoid munging CRLFs to avoid an error message
+	git -c core.autocrlf=input add --sparse sparse_entry 2>stderr &&
+	test_must_be_empty stderr &&
+	test-tool read-cache --table >actual &&
+	grep "^100644 blob.*sparse_entry\$" actual
 '
 
 test_expect_success 'add obeys advice.updateSparsePath' '
@@ -176,6 +182,15 @@ test_expect_success 'add obeys advice.updateSparsePath' '
 	test_sparse_entry_unstaged &&
 	test_cmp sparse_entry_error stderr
 
+'
+
+test_expect_success 'add allows sparse entries with --sparse' '
+	git sparse-checkout set a &&
+	echo modified >sparse_entry &&
+	test_must_fail git add sparse_entry &&
+	test_sparse_entry_unchanged &&
+	git add --sparse sparse_entry 2>stderr &&
+	test_must_be_empty stderr
 '
 
 test_done
