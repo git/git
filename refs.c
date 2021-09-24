@@ -1420,7 +1420,7 @@ struct ref_iterator *refs_ref_iterator_begin(
 
 	if (!(flags & DO_FOR_EACH_INCLUDE_BROKEN)) {
 		if (ref_paranoia < 0)
-			ref_paranoia = git_env_bool("GIT_REF_PARANOIA", 0);
+			ref_paranoia = git_env_bool("GIT_REF_PARANOIA", 1);
 		if (ref_paranoia) {
 			flags |= DO_FOR_EACH_INCLUDE_BROKEN;
 			flags |= DO_FOR_EACH_OMIT_DANGLING_SYMREFS;

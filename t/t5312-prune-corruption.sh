@@ -49,10 +49,16 @@ test_expect_success 'put bogus object into pack' '
 	git cat-file -e $bogus
 '
 
-test_expect_success 'non-destructive repack ignores bogus name' '
+test_expect_success 'non-destructive repack bails on bogus ref' '
 	create_bogus_ref &&
-	git repack -adk
+	test_must_fail git repack -adk
 '
+
+test_expect_success 'GIT_REF_PARANOIA=0 overrides safety' '
+	create_bogus_ref &&
+	GIT_REF_PARANOIA=0 git repack -adk
+'
+
 
 test_expect_success 'destructive repack keeps packed object' '
 	create_bogus_ref &&

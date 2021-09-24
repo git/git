@@ -707,20 +707,21 @@ test_expect_success 'pushing valid refs triggers post-receive and post-update ho
 
 test_expect_success 'deleting dangling ref triggers hooks with correct args' '
 	mk_test_with_hooks testrepo heads/branch &&
+	orig=$(git -C testrepo rev-parse refs/heads/branch) &&
 	rm -f testrepo/.git/objects/??/* &&
 	git push testrepo :refs/heads/branch &&
 	(
 		cd testrepo/.git &&
 		cat >pre-receive.expect <<-EOF &&
-		$ZERO_OID $ZERO_OID refs/heads/branch
+		$orig $ZERO_OID refs/heads/branch
 		EOF
 
 		cat >update.expect <<-EOF &&
-		refs/heads/branch $ZERO_OID $ZERO_OID
+		refs/heads/branch $orig $ZERO_OID
 		EOF
 
 		cat >post-receive.expect <<-EOF &&
-		$ZERO_OID $ZERO_OID refs/heads/branch
+		$orig $ZERO_OID refs/heads/branch
 		EOF
 
 		cat >post-update.expect <<-EOF &&
