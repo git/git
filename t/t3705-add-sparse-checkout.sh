@@ -158,6 +158,18 @@ test_expect_success 'do not warn when pathspec matches dense entries' '
 	git ls-files --error-unmatch dense_entry
 '
 
+test_expect_success 'git add fails outside of sparse-checkout definition' '
+	test_when_finished git sparse-checkout disable &&
+	test_commit a &&
+	git sparse-checkout init &&
+	git sparse-checkout set a &&
+	echo >>sparse_entry &&
+
+	git update-index --no-skip-worktree sparse_entry &&
+	test_must_fail git add sparse_entry &&
+	test_sparse_entry_unstaged
+'
+
 test_expect_success 'add obeys advice.updateSparsePath' '
 	setup_sparse_entry &&
 	test_must_fail git -c advice.updateSparsePath=false add sparse_entry 2>stderr &&

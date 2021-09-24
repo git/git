@@ -546,10 +546,9 @@ test_expect_failure 'merge with conflict outside cone' '
 	test_all_match git status --porcelain=v2 &&
 
 	# 2. Add the file with conflict markers
-	# NEEDSWORK: Even though the merge conflict removed the
-	# SKIP_WORKTREE bit from the index entry for folder1/a, we should
-	# warn that this is a problematic add.
-	test_all_match git add folder1/a &&
+	test_sparse_match test_must_fail git add folder1/a &&
+	grep "Disable or modify the sparsity rules" sparse-checkout-err &&
+	test_sparse_unstaged folder1/a &&
 	test_all_match git status --porcelain=v2 &&
 
 	# 3. Rename the file to another sparse filename and
@@ -558,7 +557,9 @@ test_expect_failure 'merge with conflict outside cone' '
 	# NEEDSWORK: This mode now fails, because folder2/z is
 	# outside of the sparse-checkout cone and does not match an
 	# existing index entry with the SKIP_WORKTREE bit cleared.
-	test_all_match git add folder2 &&
+	test_sparse_match test_must_fail git add folder2 &&
+	grep "Disable or modify the sparsity rules" sparse-checkout-err &&
+	test_sparse_unstaged folder2/z &&
 	test_all_match git status --porcelain=v2 &&
 
 	test_all_match git merge --continue &&
@@ -586,7 +587,9 @@ test_expect_failure 'cherry-pick/rebase with conflict outside cone' '
 		# NEEDSWORK: Even though the merge conflict removed the
 		# SKIP_WORKTREE bit from the index entry for folder1/a, we should
 		# warn that this is a problematic add.
-		test_all_match git add folder1/a &&
+		test_sparse_match test_must_fail git add folder1/a &&
+		grep "Disable or modify the sparsity rules" sparse-checkout-err &&
+		test_sparse_unstaged folder1/a &&
 		test_all_match git status --porcelain=v2 &&
 
 		# 3. Rename the file to another sparse filename and
@@ -595,7 +598,9 @@ test_expect_failure 'cherry-pick/rebase with conflict outside cone' '
 		# outside of the sparse-checkout cone and does not match an
 		# existing index entry with the SKIP_WORKTREE bit cleared.
 		run_on_all mv folder2/a folder2/z &&
-		test_all_match git add folder2 &&
+		test_sparse_match test_must_fail git add folder2 &&
+		grep "Disable or modify the sparsity rules" sparse-checkout-err &&
+		test_sparse_unstaged folder2/z &&
 		test_all_match git status --porcelain=v2 &&
 
 		test_all_match git $OPERATION --continue &&
