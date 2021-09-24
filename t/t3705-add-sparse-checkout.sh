@@ -172,6 +172,9 @@ test_expect_success 'git add fails outside of sparse-checkout definition' '
 	test_must_fail git add --chmod=+x sparse_entry &&
 	test_sparse_entry_unstaged &&
 
+	test_must_fail git add --renormalize sparse_entry &&
+	test_sparse_entry_unstaged &&
+
 	# Avoid munging CRLFs to avoid an error message
 	git -c core.autocrlf=input add --sparse sparse_entry 2>stderr &&
 	test_must_be_empty stderr &&
@@ -181,7 +184,14 @@ test_expect_success 'git add fails outside of sparse-checkout definition' '
 	git add --sparse --chmod=+x sparse_entry 2>stderr &&
 	test_must_be_empty stderr &&
 	test-tool read-cache --table >actual &&
-	grep "^100755 blob.*sparse_entry\$" actual
+	grep "^100755 blob.*sparse_entry\$" actual &&
+
+	git reset &&
+
+	# This will print a message over stderr on Windows.
+	git add --sparse --renormalize sparse_entry &&
+	git status --porcelain >actual &&
+	grep "^M  sparse_entry\$" actual
 '
 
 test_expect_success 'add obeys advice.updateSparsePath' '
