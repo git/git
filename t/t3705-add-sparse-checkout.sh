@@ -19,6 +19,7 @@ setup_sparse_entry () {
 	fi &&
 	git add sparse_entry &&
 	git update-index --skip-worktree sparse_entry &&
+	git commit --allow-empty -m "ensure sparse_entry exists at HEAD" &&
 	SPARSE_ENTRY_BLOB=$(git rev-parse :sparse_entry)
 }
 
@@ -34,6 +35,11 @@ setup_gitignore () {
 	*
 	!/sparse_entry
 	EOF
+}
+
+test_sparse_entry_unstaged () {
+	git diff --staged -- sparse_entry >diff &&
+	test_must_be_empty diff
 }
 
 test_expect_success 'setup' "
@@ -55,6 +61,7 @@ test_expect_success 'git add does not remove sparse entries' '
 	setup_sparse_entry &&
 	rm sparse_entry &&
 	test_must_fail git add sparse_entry 2>stderr &&
+	test_sparse_entry_unstaged &&
 	test_cmp error_and_hint stderr &&
 	test_sparse_entry_unchanged
 '
@@ -73,6 +80,7 @@ test_expect_success 'git add . does not remove sparse entries' '
 	rm sparse_entry &&
 	setup_gitignore &&
 	test_must_fail git add . 2>stderr &&
+	test_sparse_entry_unstaged &&
 
 	cat sparse_error_header >expect &&
 	echo . >>expect &&
@@ -88,6 +96,7 @@ do
 		setup_sparse_entry &&
 		echo modified >sparse_entry &&
 		test_must_fail git add $opt sparse_entry 2>stderr &&
+		test_sparse_entry_unstaged &&
 		test_cmp error_and_hint stderr &&
 		test_sparse_entry_unchanged
 	'
@@ -98,6 +107,7 @@ test_expect_success 'git add --refresh does not update sparse entries' '
 	git ls-files --debug sparse_entry | grep mtime >before &&
 	test-tool chmtime -60 sparse_entry &&
 	test_must_fail git add --refresh sparse_entry 2>stderr &&
+	test_sparse_entry_unstaged &&
 	test_cmp error_and_hint stderr &&
 	git ls-files --debug sparse_entry | grep mtime >after &&
 	test_cmp before after
@@ -106,6 +116,7 @@ test_expect_success 'git add --refresh does not update sparse entries' '
 test_expect_success 'git add --chmod does not update sparse entries' '
 	setup_sparse_entry &&
 	test_must_fail git add --chmod=+x sparse_entry 2>stderr &&
+	test_sparse_entry_unstaged &&
 	test_cmp error_and_hint stderr &&
 	test_sparse_entry_unchanged &&
 	! test -x sparse_entry
@@ -116,6 +127,7 @@ test_expect_success 'git add --renormalize does not update sparse entries' '
 	setup_sparse_entry "LINEONE\r\nLINETWO\r\n" &&
 	echo "sparse_entry text=auto" >.gitattributes &&
 	test_must_fail git add --renormalize sparse_entry 2>stderr &&
+	test_sparse_entry_unstaged &&
 	test_cmp error_and_hint stderr &&
 	test_sparse_entry_unchanged
 '
@@ -124,6 +136,7 @@ test_expect_success 'git add --dry-run --ignore-missing warn on sparse path' '
 	setup_sparse_entry &&
 	rm sparse_entry &&
 	test_must_fail git add --dry-run --ignore-missing sparse_entry 2>stderr &&
+	test_sparse_entry_unstaged &&
 	test_cmp error_and_hint stderr &&
 	test_sparse_entry_unchanged
 '
@@ -148,6 +161,7 @@ test_expect_success 'do not warn when pathspec matches dense entries' '
 test_expect_success 'add obeys advice.updateSparsePath' '
 	setup_sparse_entry &&
 	test_must_fail git -c advice.updateSparsePath=false add sparse_entry 2>stderr &&
+	test_sparse_entry_unstaged &&
 	test_cmp sparse_entry_error stderr
 
 '
