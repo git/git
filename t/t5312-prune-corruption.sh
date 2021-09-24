@@ -31,21 +31,21 @@ test_expect_success 'create history reachable only from a bogus-named ref' '
 test_expect_success 'pruning does not drop bogus object' '
 	test_when_finished "git hash-object -w -t commit saved" &&
 	test_might_fail git prune --expire=now &&
-	verbose git cat-file -e $bogus
+	git cat-file -e $bogus
 '
 
 test_expect_success 'put bogus object into pack' '
 	git tag reachable $bogus &&
 	git repack -ad &&
 	git tag -d reachable &&
-	verbose git cat-file -e $bogus
+	git cat-file -e $bogus
 '
 
 test_expect_success 'destructive repack keeps packed object' '
 	test_might_fail git repack -Ad --unpack-unreachable=now &&
-	verbose git cat-file -e $bogus &&
+	git cat-file -e $bogus &&
 	test_might_fail git repack -ad &&
-	verbose git cat-file -e $bogus
+	git cat-file -e $bogus
 '
 
 # subsequent tests will have different corruptions
@@ -78,7 +78,7 @@ test_expect_success 'create history with missing tip commit' '
 test_expect_success 'pruning with a corrupted tip does not drop history' '
 	test_when_finished "git hash-object -w -t commit saved" &&
 	test_might_fail git prune --expire=now &&
-	verbose git cat-file -e $recoverable
+	git cat-file -e $recoverable
 '
 
 test_expect_success 'pack-refs does not silently delete broken loose ref' '
