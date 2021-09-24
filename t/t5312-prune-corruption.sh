@@ -62,6 +62,13 @@ test_expect_success 'destructive repack keeps packed object' '
 	git cat-file -e $bogus
 '
 
+test_expect_success 'destructive repack not confused by dangling symref' '
+	test_when_finished "git symbolic-ref -d refs/heads/dangling" &&
+	git symbolic-ref refs/heads/dangling refs/heads/does-not-exist &&
+	git repack -ad &&
+	test_must_fail git cat-file -e $bogus
+'
+
 # We create two new objects here, "one" and "two". Our
 # main branch points to "two", which is deleted,
 # corrupting the repository. But we'd like to make sure
