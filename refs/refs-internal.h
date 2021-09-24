@@ -249,6 +249,14 @@ int refs_rename_ref_available(struct ref_store *refs,
 #define DO_FOR_EACH_INCLUDE_BROKEN 0x01
 
 /*
+ * Only include per-worktree refs in a do_for_each_ref*() iteration.
+ * Normally this will be used with a files ref_store, since that's
+ * where all reference backends will presumably store their
+ * per-worktree refs.
+ */
+#define DO_FOR_EACH_PER_WORKTREE_ONLY 0x02
+
+/*
  * Reference iterators
  *
  * A reference iterator encapsulates the state of an in-progress
@@ -497,14 +505,6 @@ extern struct ref_iterator *current_ref_iter;
 int do_for_each_repo_ref_iterator(struct repository *r,
 				  struct ref_iterator *iter,
 				  each_repo_ref_fn fn, void *cb_data);
-
-/*
- * Only include per-worktree refs in a do_for_each_ref*() iteration.
- * Normally this will be used with a files ref_store, since that's
- * where all reference backends will presumably store their
- * per-worktree refs.
- */
-#define DO_FOR_EACH_PER_WORKTREE_ONLY 0x02
 
 struct ref_store;
 
