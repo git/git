@@ -744,6 +744,11 @@ static int files_ref_iterator_advance(struct ref_iterator *ref_iterator)
 		    ref_type(iter->iter0->refname) != REF_TYPE_PER_WORKTREE)
 			continue;
 
+		if ((iter->flags & DO_FOR_EACH_OMIT_DANGLING_SYMREFS) &&
+		    (iter->iter0->flags & REF_ISSYMREF) &&
+		    (iter->iter0->flags & REF_ISBROKEN))
+			continue;
+
 		if (!(iter->flags & DO_FOR_EACH_INCLUDE_BROKEN) &&
 		    !ref_resolves_to_object(iter->iter0->refname,
 					    iter->iter0->oid,
