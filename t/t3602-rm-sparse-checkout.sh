@@ -43,6 +43,18 @@ test_expect_success 'recursive rm does not remove sparse entries' '
 	test_cmp expected actual
 '
 
+test_expect_success 'recursive rm --sparse removes sparse entries' '
+	git reset --hard &&
+	git sparse-checkout set "sub/dir" &&
+	git rm --sparse -r sub &&
+	git status --porcelain -uno >actual &&
+	cat >expected <<-\EOF &&
+	D  sub/d
+	D  sub/dir/e
+	EOF
+	test_cmp expected actual
+'
+
 test_expect_success 'rm obeys advice.updateSparsePath' '
 	git reset --hard &&
 	git sparse-checkout set a &&
