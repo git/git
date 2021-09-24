@@ -277,7 +277,7 @@ test_expect_success 'incremental-repack task' '
 
 	# Delete refs that have not been repacked in these packs.
 	git for-each-ref --format="delete %(refname)" \
-		refs/prefetch refs/tags >refs &&
+		refs/prefetch refs/tags refs/remotes >refs &&
 	git update-ref --stdin <refs &&
 
 	# Replace the object directory with this pack layout.
@@ -285,6 +285,10 @@ test_expect_success 'incremental-repack task' '
 	rm -f $packDir/loose-* &&
 	ls $packDir/*.pack >packs-before &&
 	test_line_count = 3 packs-before &&
+
+	# make sure we do not have any broken refs that were
+	# missed in the deletion above
+	git for-each-ref &&
 
 	# the job repacks the two into a new pack, but does not
 	# delete the old ones.
