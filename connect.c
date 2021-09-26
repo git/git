@@ -555,6 +555,8 @@ const char *parse_feature_value(const char *feature_list, const char *feature, i
 			if (!*value || isspace(*value)) {
 				if (lenp)
 					*lenp = 0;
+				if (offset)
+					*offset = found + len - feature_list;
 				return value;
 			}
 			/* feature with a value (e.g., "agent=git/1.2.3") */
