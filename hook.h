@@ -8,4 +8,9 @@
  */
 const char *find_hook(const char *name);
 
+/**
+ * A boolean version of find_hook()
+ */
+int hook_exists(const char *hookname);
+
 #endif
