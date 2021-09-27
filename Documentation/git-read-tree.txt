@@ -10,8 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git read-tree' [[-m [--trivial] [--aggressive] | --reset | --prefix=<prefix>]
-		[-u [--exclude-per-directory=<gitignore>] | -i]]
-		[--index-output=<file>] [--no-sparse-checkout]
+		[-u | -i]] [--index-output=<file>] [--no-sparse-checkout]
 		(--empty | <tree-ish1> [<tree-ish2> [<tree-ish3>]])
 
 
@@ -87,21 +86,6 @@ OPTIONS
 	of the named tree-ish under the directory at `<prefix>`.
 	The command will refuse to overwrite entries that already
 	existed in the original index file.
-
---exclude-per-directory=<gitignore>::
-	When running the command with `-u` and `-m` options, the
-	merge result may need to overwrite paths that are not
-	tracked in the current branch.  The command usually
-	refuses to proceed with the merge to avoid losing such a
-	path.  However this safety valve sometimes gets in the
-	way.  For example, it often happens that the other
-	branch added a file that used to be a generated file in
-	your branch, and the safety valve triggers when you try
-	to switch to that branch after you ran `make` but before
-	running `make clean` to remove the generated file.  This
-	option tells the command to read per-directory exclude
-	file (usually '.gitignore') and allows such an untracked
-	but explicitly ignored file to be overwritten.
 
 --index-output=<file>::
 	Instead of writing the results out to `$GIT_INDEX_FILE`,
