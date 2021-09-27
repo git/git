@@ -1920,8 +1920,7 @@ static int fast_forward_to(struct tree *head, struct tree *remote, int reset)
 	opts.merge = 1;
 	opts.reset = reset;
 	if (!reset)
-		/* FIXME: Default should be to remove ignored files */
-		opts.preserve_ignored = 1;
+		opts.preserve_ignored = 0; /* FIXME: !overwrite_ignore */
 	opts.fn = twoway_merge;
 	init_tree_desc(&t[0], head->buffer, head->size);
 	init_tree_desc(&t[1], remote->buffer, remote->size);
