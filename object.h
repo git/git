@@ -55,7 +55,7 @@ struct object_array {
 	} *objects;
 };
 
-#define OBJECT_ARRAY_INIT { 0, 0, NULL }
+#define OBJECT_ARRAY_INIT { 0 }
 
 /*
  * object flag allocation:

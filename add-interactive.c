@@ -102,8 +102,12 @@ struct prefix_item_list {
 	int *selected; /* for multi-selections */
 	size_t min_length, max_length;
 };
-#define PREFIX_ITEM_LIST_INIT \
-	{ STRING_LIST_INIT_DUP, STRING_LIST_INIT_NODUP, NULL, 1, 4 }
+#define PREFIX_ITEM_LIST_INIT { \
+	.items = STRING_LIST_INIT_DUP, \
+	.sorted = STRING_LIST_INIT_NODUP, \
+	.min_length = 1, \
+	.max_length = 4, \
+}
 
 static void prefix_item_list_clear(struct prefix_item_list *list)
 {

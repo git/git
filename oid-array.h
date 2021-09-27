@@ -56,7 +56,7 @@ struct oid_array {
 	int sorted;
 };
 
-#define OID_ARRAY_INIT { NULL, 0, 0, 0 }
+#define OID_ARRAY_INIT { 0 }
 
 /**
  * Add an item to the set. The object ID will be placed at the end of the array

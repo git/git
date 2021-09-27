@@ -262,7 +262,9 @@ struct transport_ls_refs_options {
 	 */
 	char *unborn_head_target;
 };
-#define TRANSPORT_LS_REFS_OPTIONS_INIT { STRVEC_INIT }
+#define TRANSPORT_LS_REFS_OPTIONS_INIT { \
+	.ref_prefixes = STRVEC_INIT, \
+}
 
 /*
  * Retrieve refs from a remote.
