@@ -633,7 +633,7 @@ static struct {
 	 */
 };
 
-#define REF_FORMATTING_STATE_INIT  { 0, NULL }
+#define REF_FORMATTING_STATE_INIT  { 0 }
 
 struct ref_formatting_stack {
 	struct ref_formatting_stack *prev;

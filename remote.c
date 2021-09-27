@@ -2403,7 +2403,7 @@ struct reflog_commit_array {
 	size_t nr, alloc;
 };
 
-#define REFLOG_COMMIT_ARRAY_INIT { NULL, 0, 0 }
+#define REFLOG_COMMIT_ARRAY_INIT { 0 }
 
 /* Append a commit to the array. */
 static void append_commit(struct reflog_commit_array *arr,
