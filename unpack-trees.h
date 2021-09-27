@@ -49,6 +49,7 @@ struct unpack_trees_options {
 	unsigned int reset,
 		     merge,
 		     update,
+		     preserve_ignored,
 		     clone,
 		     index_only,
 		     nontrivial_merge,

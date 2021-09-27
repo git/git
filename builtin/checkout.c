@@ -648,6 +648,7 @@ static int reset_tree(struct tree *tree, const struct checkout_opts *o,
 	opts.skip_unmerged = !worktree;
 	opts.reset = 1;
 	opts.merge = 1;
+	opts.preserve_ignored = 0;
 	opts.fn = oneway_merge;
 	opts.verbose_update = o->show_progress;
 	opts.src_index = &the_index;
@@ -746,11 +747,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 				       new_branch_info->commit ?
 				       &new_branch_info->commit->object.oid :
 				       &new_branch_info->oid, NULL);
-		if (opts->overwrite_ignore) {
-			topts.dir = xcalloc(1, sizeof(*topts.dir));
-			topts.dir->flags |= DIR_SHOW_IGNORED;
-			setup_standard_excludes(topts.dir);
-		}
+		topts.preserve_ignored = !opts->overwrite_ignore;
 		tree = parse_tree_indirect(old_branch_info->commit ?
 					   &old_branch_info->commit->object.oid :
 					   the_hash_algo->empty_tree);
@@ -760,10 +757,6 @@ static int merge_working_tree(const struct checkout_opts *opts,
 		init_tree_desc(&trees[1], tree->buffer, tree->size);
 
 		ret = unpack_trees(2, trees, &topts);
-		if (topts.dir) {
-			dir_clear(topts.dir);
-			FREE_AND_NULL(topts.dir);
-		}
 		clear_unpack_trees_porcelain(&topts);
 		if (ret == -1) {
 			/*

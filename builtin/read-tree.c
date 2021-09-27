@@ -201,11 +201,9 @@ int cmd_read_tree(int argc, const char **argv, const char *cmd_prefix)
 	if ((opts.update || opts.index_only) && !opts.merge)
 		die("%s is meaningless without -m, --reset, or --prefix",
 		    opts.update ? "-u" : "-i");
-	if (opts.update && !opts.reset) {
-		CALLOC_ARRAY(opts.dir, 1);
-		opts.dir->flags |= DIR_SHOW_IGNORED;
-		setup_standard_excludes(opts.dir);
-	}
+	if (opts.update && !opts.reset)
+		opts.preserve_ignored = 0;
+	/* otherwise, opts.preserve_ignored is irrelevant */
 	if (opts.merge && !opts.index_only)
 		setup_work_tree();
 
@@ -244,11 +242,6 @@ int cmd_read_tree(int argc, const char **argv, const char *cmd_prefix)
 	}
 	if (unpack_trees(nr_trees, t, &opts))
 		return 128;
-
-	if (opts.dir) {
-		dir_clear(opts.dir);
-		FREE_AND_NULL(opts.dir);
-	}
 
 	if (opts.debug_unpack || opts.dry_run)
 		return 0; /* do not write the index out */

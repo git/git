@@ -411,9 +411,7 @@ static int unpack_trees_start(struct merge_options *opt,
 	else {
 		opt->priv->unpack_opts.update = 1;
 		/* FIXME: should only do this if !overwrite_ignore */
-		CALLOC_ARRAY(opt->priv->unpack_opts.dir, 1);
-		opt->priv->unpack_opts.dir->flags |= DIR_SHOW_IGNORED;
-		setup_standard_excludes(opt->priv->unpack_opts.dir);
+		opt->priv->unpack_opts.preserve_ignored = 0;
 	}
 	opt->priv->unpack_opts.merge = 1;
 	opt->priv->unpack_opts.head_idx = 2;
@@ -428,10 +426,6 @@ static int unpack_trees_start(struct merge_options *opt,
 	init_tree_desc_from_tree(t+2, merge);
 
 	rc = unpack_trees(3, t, &opt->priv->unpack_opts);
-	if (opt->priv->unpack_opts.dir) {
-		dir_clear(opt->priv->unpack_opts.dir);
-		FREE_AND_NULL(opt->priv->unpack_opts.dir);
-	}
 	cache_tree_free(&opt->repo->index->cache_tree);
 
 	/*

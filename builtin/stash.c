@@ -258,6 +258,9 @@ static int reset_tree(struct object_id *i_tree, int update, int reset)
 	opts.merge = 1;
 	opts.reset = reset;
 	opts.update = update;
+	if (update && !reset)
+		/* FIXME: Default should be to remove ignored files */
+		opts.preserve_ignored = 1;
 	opts.fn = oneway_merge;
 
 	if (unpack_trees(nr_trees, t, &opts))

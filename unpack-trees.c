@@ -1705,6 +1705,12 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		ensure_full_index(o->dst_index);
 	}
 
+	if (!o->preserve_ignored) {
+		CALLOC_ARRAY(o->dir, 1);
+		o->dir->flags |= DIR_SHOW_IGNORED;
+		setup_standard_excludes(o->dir);
+	}
+
 	if (!core_apply_sparse_checkout || !o->update)
 		o->skip_sparse_checkout = 1;
 	if (!o->skip_sparse_checkout && !o->pl) {
@@ -1866,6 +1872,10 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 done:
 	if (free_pattern_list)
 		clear_pattern_list(&pl);
+	if (o->dir) {
+		dir_clear(o->dir);
+		FREE_AND_NULL(o->dir);
+	}
 	trace2_region_leave("unpack_trees", "unpack_trees", the_repository);
 	trace_performance_leave("unpack_trees");
 	return ret;
