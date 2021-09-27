@@ -1647,8 +1647,9 @@ struct submodule_alternate_setup {
 	} error_mode;
 	struct string_list *reference;
 };
-#define SUBMODULE_ALTERNATE_SETUP_INIT { NULL, \
-	SUBMODULE_ALTERNATE_ERROR_IGNORE, NULL }
+#define SUBMODULE_ALTERNATE_SETUP_INIT { \
+	.error_mode = SUBMODULE_ALTERNATE_ERROR_IGNORE, \
+}
 
 static const char alternate_error_advice[] = N_(
 "An alternate computed from a superproject's alternate is invalid.\n"
