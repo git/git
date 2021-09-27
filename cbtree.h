@@ -37,11 +37,12 @@ enum cb_next {
 	CB_BREAK = 1
 };
 
-#define CBTREE_INIT { .root = NULL }
+#define CBTREE_INIT { 0 }
 
 static inline void cb_init(struct cb_tree *t)
 {
-	t->root = NULL;
+	struct cb_tree blank = CBTREE_INIT;
+	memcpy(t, &blank, sizeof(*t));
 }
 
 struct cb_node *cb_lookup(struct cb_tree *, const uint8_t *k, size_t klen);
