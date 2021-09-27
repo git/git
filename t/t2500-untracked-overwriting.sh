@@ -197,7 +197,7 @@ test_expect_failure 'git stash and untracked files' '
 	)
 '
 
-test_expect_failure 'git am --abort and untracked dir vs. unmerged file' '
+test_expect_success 'git am --abort and untracked dir vs. unmerged file' '
 	test_setup_sequencing am_abort_and_untracked &&
 	(
 		cd sequencing_am_abort_and_untracked &&
