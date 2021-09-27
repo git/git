@@ -67,7 +67,6 @@ struct unpack_trees_options {
 		     dry_run;
 	const char *prefix;
 	int cache_bottom;
-	struct dir_struct *dir;
 	struct pathspec *pathspec;
 	merge_fn_t fn;
 	const char *msgs[NB_UNPACK_TREES_WARNING_TYPES];
@@ -89,6 +88,7 @@ struct unpack_trees_options {
 	struct index_state result;
 
 	struct pattern_list *pl; /* for internal use */
+	struct dir_struct *dir; /* for internal use only */
 	struct checkout_metadata meta;
 };
 
