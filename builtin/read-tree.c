@@ -250,6 +250,11 @@ int cmd_read_tree(int argc, const char **argv, const char *cmd_prefix)
 	if (unpack_trees(nr_trees, t, &opts))
 		return 128;
 
+	if (opts.dir) {
+		dir_clear(opts.dir);
+		FREE_AND_NULL(opts.dir);
+	}
+
 	if (opts.debug_unpack || opts.dry_run)
 		return 0; /* do not write the index out */
 
