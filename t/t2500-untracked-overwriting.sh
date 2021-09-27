@@ -92,7 +92,7 @@ test_setup_checkout_m () {
 	)
 }
 
-test_expect_failure 'checkout -m does not nuke untracked file' '
+test_expect_success 'checkout -m does not nuke untracked file' '
 	test_setup_checkout_m &&
 	(
 		cd checkout &&
@@ -138,7 +138,7 @@ test_setup_sequencing () {
 	)
 }
 
-test_expect_failure 'git rebase --abort and untracked files' '
+test_expect_success 'git rebase --abort and untracked files' '
 	test_setup_sequencing rebase_abort_and_untracked &&
 	(
 		cd sequencing_rebase_abort_and_untracked &&
@@ -155,7 +155,7 @@ test_expect_failure 'git rebase --abort and untracked files' '
 	)
 '
 
-test_expect_failure 'git rebase fast forwarding and untracked files' '
+test_expect_success 'git rebase fast forwarding and untracked files' '
 	test_setup_sequencing rebase_fast_forward_and_untracked &&
 	(
 		cd sequencing_rebase_fast_forward_and_untracked &&

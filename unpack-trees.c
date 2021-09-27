@@ -1694,6 +1694,9 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 	int free_pattern_list = 0;
 	struct dir_struct dir = DIR_INIT;
 
+	if (o->reset == UNPACK_RESET_INVALID)
+		BUG("o->reset had a value of 1; should be UNPACK_TREES_*_UNTRACKED");
+
 	if (len > MAX_UNPACK_TREES)
 		die("unpack_trees takes at most %d trees", MAX_UNPACK_TREES);
 	if (o->dir)
@@ -1707,6 +1710,10 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		ensure_full_index(o->src_index);
 		ensure_full_index(o->dst_index);
 	}
+
+	if (o->reset == UNPACK_RESET_OVERWRITE_UNTRACKED &&
+	    o->preserve_ignored)
+		BUG("UNPACK_RESET_OVERWRITE_UNTRACKED incompatible with preserved ignored files");
 
 	if (!o->preserve_ignored) {
 		o->dir = &dir;
@@ -2231,7 +2238,8 @@ static int verify_absent_1(const struct cache_entry *ce,
 	int len;
 	struct stat st;
 
-	if (o->index_only || o->reset || !o->update)
+	if (o->index_only || !o->update ||
+	    o->reset == UNPACK_RESET_OVERWRITE_UNTRACKED)
 		return 0;
 
 	len = check_leading_path(ce->name, ce_namelen(ce), 0);

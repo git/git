@@ -256,9 +256,9 @@ static int reset_tree(struct object_id *i_tree, int update, int reset)
 	opts.src_index = &the_index;
 	opts.dst_index = &the_index;
 	opts.merge = 1;
-	opts.reset = reset;
+	opts.reset = reset ? UNPACK_RESET_PROTECT_UNTRACKED : 0;
 	opts.update = update;
-	if (update && !reset)
+	if (update)
 		opts.preserve_ignored = 0; /* FIXME: !overwrite_ignore */
 	opts.fn = oneway_merge;
 

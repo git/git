@@ -1918,9 +1918,8 @@ static int fast_forward_to(struct tree *head, struct tree *remote, int reset)
 	opts.dst_index = &the_index;
 	opts.update = 1;
 	opts.merge = 1;
-	opts.reset = reset;
-	if (!reset)
-		opts.preserve_ignored = 0; /* FIXME: !overwrite_ignore */
+	opts.reset = reset ? UNPACK_RESET_PROTECT_UNTRACKED : 0;
+	opts.preserve_ignored = 0; /* FIXME: !overwrite_ignore */
 	opts.fn = twoway_merge;
 	init_tree_desc(&t[0], head->buffer, head->size);
 	init_tree_desc(&t[1], remote->buffer, remote->size);

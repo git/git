@@ -45,9 +45,15 @@ void setup_unpack_trees_porcelain(struct unpack_trees_options *opts,
  */
 void clear_unpack_trees_porcelain(struct unpack_trees_options *opts);
 
+enum unpack_trees_reset_type {
+	UNPACK_RESET_NONE = 0,    /* traditional "false" value; still valid */
+	UNPACK_RESET_INVALID = 1, /* "true" no longer valid; use below values */
+	UNPACK_RESET_PROTECT_UNTRACKED,
+	UNPACK_RESET_OVERWRITE_UNTRACKED
+};
+
 struct unpack_trees_options {
-	unsigned int reset,
-		     merge,
+	unsigned int merge,
 		     update,
 		     preserve_ignored,
 		     clone,
@@ -65,6 +71,7 @@ struct unpack_trees_options {
 		     exiting_early,
 		     show_all_errors,
 		     dry_run;
+	enum unpack_trees_reset_type reset;
 	const char *prefix;
 	int cache_bottom;
 	struct pathspec *pathspec;

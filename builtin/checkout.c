@@ -646,9 +646,10 @@ static int reset_tree(struct tree *tree, const struct checkout_opts *o,
 	opts.head_idx = -1;
 	opts.update = worktree;
 	opts.skip_unmerged = !worktree;
-	opts.reset = 1;
+	opts.reset = o->force ? UNPACK_RESET_OVERWRITE_UNTRACKED :
+				UNPACK_RESET_PROTECT_UNTRACKED;
+	opts.preserve_ignored = (!o->force && !o->overwrite_ignore);
 	opts.merge = 1;
-	opts.preserve_ignored = 0;
 	opts.fn = oneway_merge;
 	opts.verbose_update = o->show_progress;
 	opts.src_index = &the_index;
