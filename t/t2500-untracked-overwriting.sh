@@ -218,7 +218,7 @@ test_expect_success 'git am --abort and untracked dir vs. unmerged file' '
 	)
 '
 
-test_expect_failure 'git am --skip and untracked dir vs deleted file' '
+test_expect_success 'git am --skip and untracked dir vs deleted file' '
 	test_setup_sequencing am_skip_and_untracked &&
 	(
 		cd sequencing_am_skip_and_untracked &&
