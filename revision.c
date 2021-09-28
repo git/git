@@ -2563,8 +2563,7 @@ static int for_each_good_bisect_ref(struct ref_store *refs, each_ref_fn fn, void
 	return for_each_bisect_ref(refs, fn, cb_data, term_good);
 }
 
-static int handle_revision_pseudo_opt(const char *submodule,
-				      struct rev_info *revs,
+static int handle_revision_pseudo_opt(struct rev_info *revs,
 				      const char **argv, int *flags)
 {
 	const char *arg = argv[0];
@@ -2572,7 +2571,7 @@ static int handle_revision_pseudo_opt(const char *submodule,
 	struct ref_store *refs;
 	int argcount;
 
-	if (submodule) {
+	if (revs->repo != the_repository) {
 		/*
 		 * We need some something like get_submodule_worktrees()
 		 * before we can go through all worktrees of a submodule,
@@ -2581,9 +2580,8 @@ static int handle_revision_pseudo_opt(const char *submodule,
 		 */
 		if (!revs->single_worktree)
 			BUG("--single-worktree cannot be used together with submodule");
-		refs = get_submodule_ref_store(submodule);
-	} else
-		refs = get_main_ref_store(revs->repo);
+	}
+	refs = get_main_ref_store(revs->repo);
 
 	/*
 	 * NOTE!
@@ -2707,11 +2705,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 {
 	int i, flags, left, seen_dashdash, revarg_opt;
 	struct strvec prune_data = STRVEC_INIT;
-	const char *submodule = NULL;
 	int seen_end_of_options = 0;
-
-	if (opt)
-		submodule = opt->submodule;
 
 	/* First, search for "--" */
 	if (opt && opt->assume_dashdash) {
@@ -2741,7 +2735,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 		if (!seen_end_of_options && *arg == '-') {
 			int opts;
 
-			opts = handle_revision_pseudo_opt(submodule,
+			opts = handle_revision_pseudo_opt(
 						revs, argv + i,
 						&flags);
 			if (opts > 0) {

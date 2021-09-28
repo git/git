@@ -172,15 +172,18 @@ void initialize_the_repository(void);
 int repo_init(struct repository *r, const char *gitdir, const char *worktree);
 
 /*
- * Initialize the repository 'subrepo' as the submodule given by the
- * struct submodule 'sub' in parent repository 'superproject'.
- * Return 0 upon success and a non-zero value upon failure, which may happen
- * if the submodule is not found, or 'sub' is NULL.
+ * Initialize the repository 'subrepo' as the submodule at the given path. If
+ * the submodule's gitdir cannot be found at <path>/.git, this function calls
+ * submodule_from_path() to try to find it. treeish_name is only used if
+ * submodule_from_path() needs to be called; see its documentation for more
+ * information.
+ * Return 0 upon success and a non-zero value upon failure.
  */
-struct submodule;
+struct object_id;
 int repo_submodule_init(struct repository *subrepo,
 			struct repository *superproject,
-			const struct submodule *sub);
+			const char *path,
+			const struct object_id *treeish_name);
 void repo_clear(struct repository *repo);
 
 /*
