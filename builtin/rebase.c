@@ -568,17 +568,6 @@ static int finish_rebase(struct rebase_options *opts)
 	return ret;
 }
 
-static struct commit *peel_committish(const char *name)
-{
-	struct object *obj;
-	struct object_id oid;
-
-	if (get_oid(name, &oid))
-		return NULL;
-	obj = parse_object(the_repository, &oid);
-	return (struct commit *)peel_to_type(name, 0, obj, OBJ_COMMIT);
-}
-
 static int move_to_original_branch(struct rebase_options *opts)
 {
 	struct strbuf orig_head_reflog = STRBUF_INIT, head_reflog = STRBUF_INIT;
@@ -1290,7 +1279,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			die(_("could not move back to %s"),
 			    oid_to_hex(&options.orig_head));
 		remove_branch_state(the_repository, 0);
-		ret = !!finish_rebase(&options);
+		ret = finish_rebase(&options);
 		goto cleanup;
 	}
 	case ACTION_QUIT: {
@@ -1299,11 +1288,11 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			struct replay_opts replay = REPLAY_OPTS_INIT;
 
 			replay.action = REPLAY_INTERACTIVE_REBASE;
-			ret = !!sequencer_remove_state(&replay);
+			ret = sequencer_remove_state(&replay);
 		} else {
 			strbuf_reset(&buf);
 			strbuf_addstr(&buf, options.state_dir);
-			ret = !!remove_dir_recursively(&buf, 0);
+			ret = remove_dir_recursively(&buf, 0);
 			if (ret)
 				error(_("could not remove '%s'"),
 				       options.state_dir);
@@ -1541,7 +1530,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			if (!strcmp(options.upstream_name, "-"))
 				options.upstream_name = "@{-1}";
 		}
-		options.upstream = peel_committish(options.upstream_name);
+		options.upstream =
+			lookup_commit_reference_by_name(options.upstream_name);
 		if (!options.upstream)
 			die(_("invalid upstream '%s'"), options.upstream_name);
 		options.upstream_arg = options.upstream_name;
@@ -1584,7 +1574,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		options.onto = lookup_commit_or_die(&merge_base,
 						    options.onto_name);
 	} else {
-		options.onto = peel_committish(options.onto_name);
+		options.onto =
+			lookup_commit_reference_by_name(options.onto_name);
 		if (!options.onto)
 			die(_("Does not point to a valid commit '%s'"),
 				options.onto_name);
@@ -1609,13 +1600,15 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			die_if_checked_out(buf.buf, 1);
 			options.head_name = xstrdup(buf.buf);
 		/* If not is it a valid ref (branch or commit)? */
-		} else if (!get_oid(branch_name, &options.orig_head) &&
-			   lookup_commit_reference(the_repository,
-						   &options.orig_head))
+		} else {
+			struct commit *commit =
+				lookup_commit_reference_by_name(branch_name);
+			if (!commit)
+				die(_("no such branch/commit '%s'"),
+				    branch_name);
+			oidcpy(&options.orig_head, &commit->object.oid);
 			options.head_name = NULL;
-		else
-			die(_("no such branch/commit '%s'"),
-			    branch_name);
+		}
 	} else if (argc == 0) {
 		/* Do not need to switch branches, we are already on it. */
 		options.head_name =
@@ -1655,7 +1648,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 	if (require_clean_work_tree(the_repository, "rebase",
 				    _("Please commit or stash them."), 1, 1)) {
-		ret = 1;
+		ret = -1;
 		goto cleanup;
 	}
 
@@ -1690,7 +1683,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 					       RESET_HEAD_RUN_POST_CHECKOUT_HOOK,
 					       NULL, buf.buf,
 					       DEFAULT_REFLOG_ACTION) < 0) {
-					ret = !!error(_("could not switch to "
+					ret = error(_("could not switch to "
 							"%s"),
 						      options.switch_to);
 					goto cleanup;
@@ -1705,7 +1698,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			else
 				printf(_("Current branch %s is up to date.\n"),
 				       branch_name);
-			ret = !!finish_rebase(&options);
+			ret = finish_rebase(&options);
 			goto cleanup;
 		} else if (!(options.flags & REBASE_NO_QUIET))
 			; /* be quiet */
@@ -1783,7 +1776,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			   RESET_HEAD_REFS_ONLY, "HEAD", msg.buf,
 			   DEFAULT_REFLOG_ACTION);
 		strbuf_release(&msg);
-		ret = !!finish_rebase(&options);
+		ret = finish_rebase(&options);
 		goto cleanup;
 	}
 
@@ -1797,7 +1790,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	options.revisions = revisions.buf;
 
 run_rebase:
-	ret = !!run_specific_rebase(&options, action);
+	ret = run_specific_rebase(&options, action);
 
 cleanup:
 	strbuf_release(&buf);
@@ -1808,5 +1801,5 @@ cleanup:
 	free(options.strategy);
 	strbuf_release(&options.git_format_patch_opt);
 	free(squash_onto_name);
-	return ret;
+	return !!ret;
 }
