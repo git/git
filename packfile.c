@@ -339,6 +339,7 @@ void close_pack(struct packed_git *p)
 	close_pack_fd(p);
 	close_pack_index(p);
 	close_pack_revindex(p);
+	oidset_clear(&p->bad_objects);
 }
 
 void close_object_store(struct raw_object_store *o)
