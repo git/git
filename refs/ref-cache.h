@@ -169,8 +169,7 @@ struct ref_dir *get_ref_dir(struct ref_entry *entry);
  * "refs/heads/") or "" for the top-level directory.
  */
 struct ref_entry *create_dir_entry(struct ref_cache *cache,
-				   const char *dirname, size_t len,
-				   int incomplete);
+				   const char *dirname, size_t len);
 
 struct ref_entry *create_ref_entry(const char *refname,
 				   const struct object_id *oid, int flag);
