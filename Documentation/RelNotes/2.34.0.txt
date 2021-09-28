@@ -56,6 +56,9 @@ UI, Workflows & Features
 
  * The error in "git help no-such-git-command" is handled better.
 
+ * The unicode character width table (used for output alignment) has
+   been updated.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -303,3 +306,5 @@ Fixes since v2.33
    (merge 66c0c44df6 cb/plug-leaks-in-alloca-emu-users later to maint).
    (merge afb32e8101 kz/revindex-comment-fix later to maint).
    (merge ae578de926 po/git-config-doc-mentions-help-c later to maint).
+   (merge 187fc8b8b6 cb/unicode-14 later to maint).
+   (merge 3584cff71c en/typofixes later to maint).
