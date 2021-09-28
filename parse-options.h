@@ -33,6 +33,7 @@ enum parse_opt_flags {
 	PARSE_OPT_KEEP_UNKNOWN = 1 << 3,
 	PARSE_OPT_NO_INTERNAL_HELP = 1 << 4,
 	PARSE_OPT_ONE_SHOT = 1 << 5,
+	PARSE_OPT_SHELL_EVAL = 1 << 6,
 };
 
 enum parse_opt_option_flags {
@@ -44,7 +45,6 @@ enum parse_opt_option_flags {
 	PARSE_OPT_NODASH = 1 << 5,
 	PARSE_OPT_LITERAL_ARGHELP = 1 << 6,
 	PARSE_OPT_FROM_ALIAS = 1 << 7,
-	PARSE_OPT_SHELL_EVAL = 1 << 8,
 	PARSE_OPT_NOCOMPLETE = 1 << 9,
 	PARSE_OPT_COMP_ARG = 1 << 10,
 	PARSE_OPT_CMDMODE = 1 << 11,
