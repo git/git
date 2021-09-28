@@ -199,7 +199,11 @@ ls-refs takes in the following arguments:
 	Show peeled tags.
     ref-prefix <prefix>
 	When specified, only references having a prefix matching one of
-	the provided prefixes are displayed.
+	the provided prefixes are displayed. Multiple instances may be
+	given, in which case references matching any prefix will be
+	shown. Note that this is purely for optimization; a server MAY
+	show refs not matching the prefix if it chooses, and clients
+	should filter the result themselves.
 
 If the 'unborn' feature is advertised the following argument can be
 included in the client's request.
