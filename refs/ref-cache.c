@@ -144,30 +144,19 @@ int search_ref_dir(struct ref_dir *dir, const char *refname, size_t len)
 /*
  * Search for a directory entry directly within dir (without
  * recursing).  Sort dir if necessary.  subdirname must be a directory
- * name (i.e., end in '/').  If mkdir is set, then create the
- * directory if it is missing; otherwise, return NULL if the desired
+ * name (i.e., end in '/'). Returns NULL if the desired
  * directory cannot be found.  dir must already be complete.
  */
 static struct ref_dir *search_for_subdir(struct ref_dir *dir,
-					 const char *subdirname, size_t len,
-					 int mkdir)
+					 const char *subdirname, size_t len)
 {
 	int entry_index = search_ref_dir(dir, subdirname, len);
 	struct ref_entry *entry;
-	if (entry_index == -1) {
-		if (!mkdir)
-			return NULL;
-		/*
-		 * Since dir is complete, the absence of a subdir
-		 * means that the subdir really doesn't exist;
-		 * therefore, create an empty record for it but mark
-		 * the record complete.
-		 */
-		entry = create_dir_entry(dir->cache, subdirname, len, 0);
-		add_entry_to_dir(dir, entry);
-	} else {
-		entry = dir->entries[entry_index];
-	}
+
+	if (entry_index == -1)
+		return NULL;
+
+	entry = dir->entries[entry_index];
 	return get_ref_dir(entry);
 }
 
@@ -176,18 +165,17 @@ static struct ref_dir *search_for_subdir(struct ref_dir *dir,
  * tree that should hold refname. If refname is a directory name
  * (i.e., it ends in '/'), then return that ref_dir itself. dir must
  * represent the top-level directory and must already be complete.
- * Sort ref_dirs and recurse into subdirectories as necessary. If
- * mkdir is set, then create any missing directories; otherwise,
+ * Sort ref_dirs and recurse into subdirectories as necessary. Will
  * return NULL if the desired directory cannot be found.
  */
 static struct ref_dir *find_containing_dir(struct ref_dir *dir,
-					   const char *refname, int mkdir)
+					   const char *refname)
 {
 	const char *slash;
 	for (slash = strchr(refname, '/'); slash; slash = strchr(slash + 1, '/')) {
 		size_t dirnamelen = slash - refname + 1;
 		struct ref_dir *subdir;
-		subdir = search_for_subdir(dir, refname, dirnamelen, mkdir);
+		subdir = search_for_subdir(dir, refname, dirnamelen);
 		if (!subdir) {
 			dir = NULL;
 			break;
@@ -202,7 +190,7 @@ struct ref_entry *find_ref_entry(struct ref_dir *dir, const char *refname)
 {
 	int entry_index;
 	struct ref_entry *entry;
-	dir = find_containing_dir(dir, refname, 0);
+	dir = find_containing_dir(dir, refname);
 	if (!dir)
 		return NULL;
 	entry_index = search_ref_dir(dir, refname, strlen(refname));
@@ -478,7 +466,7 @@ struct ref_iterator *cache_ref_iterator_begin(struct ref_cache *cache,
 
 	dir = get_ref_dir(cache->root);
 	if (prefix && *prefix)
-		dir = find_containing_dir(dir, prefix, 0);
+		dir = find_containing_dir(dir, prefix);
 	if (!dir)
 		/* There's nothing to iterate over. */
 		return empty_ref_iterator_begin();
