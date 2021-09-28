@@ -212,15 +212,6 @@ struct ref_entry *find_ref_entry(struct ref_dir *dir, const char *refname)
 	return (entry->flag & REF_DIR) ? NULL : entry;
 }
 
-int add_ref_entry(struct ref_dir *dir, struct ref_entry *ref)
-{
-	dir = find_containing_dir(dir, ref->name, 1);
-	if (!dir)
-		return -1;
-	add_entry_to_dir(dir, ref);
-	return 0;
-}
-
 /*
  * Emit a warning and return true iff ref1 and ref2 have the same name
  * and the same oid. Die if they have the same name but different

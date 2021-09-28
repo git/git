@@ -200,13 +200,6 @@ void free_ref_cache(struct ref_cache *cache);
 void add_entry_to_dir(struct ref_dir *dir, struct ref_entry *entry);
 
 /*
- * Add a ref_entry to the ref_dir (unsorted), recursing into
- * subdirectories as necessary.  dir must represent the top-level
- * directory.  Return 0 on success.
- */
-int add_ref_entry(struct ref_dir *dir, struct ref_entry *ref);
-
-/*
  * Find the value entry with the given name in dir, sorting ref_dirs
  * and recursing into subdirectories as necessary.  If the name is not
  * found or it corresponds to a directory entry, return NULL.
