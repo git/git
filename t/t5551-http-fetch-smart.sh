@@ -558,4 +558,13 @@ test_expect_success 'http auth forgets bogus credentials' '
 	expect_askpass both user@host
 '
 
+test_expect_success 'client falls back from v2 to v0 to match server' '
+	GIT_TRACE_PACKET=$PWD/trace \
+	GIT_TEST_PROTOCOL_VERSION=2 \
+	git clone $HTTPD_URL/smart_v0/repo.git repo-v0 &&
+	# check for v0; there the HEAD symref is communicated in the capability
+	# line; v2 uses a different syntax on each ref advertisement line
+	grep symref=HEAD:refs/heads/ trace
+'
+
 test_done

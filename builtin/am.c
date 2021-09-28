@@ -2105,7 +2105,8 @@ static void am_abort(struct am_state *state)
 	if (!has_orig_head)
 		oidcpy(&orig_head, the_hash_algo->empty_tree);
 
-	clean_index(&curr_head, &orig_head);
+	if (clean_index(&curr_head, &orig_head))
+		die(_("failed to clean index"));
 
 	if (has_orig_head)
 		update_ref("am --abort", "HEAD", &orig_head,

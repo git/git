@@ -21,7 +21,9 @@
 		ALLOC_ARRAY((x), nr); \
 } while(0)
 #define FAST_ARRAY_FREE(x, nr) do { \
-	if ((nr) > 2) \
+	if ((nr) <= 2) \
+		xalloca_free((x)); \
+	else \
 		free((x)); \
 } while(0)
 

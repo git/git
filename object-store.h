@@ -10,6 +10,7 @@
 #include "khash.h"
 #include "dir.h"
 #include "oidtree.h"
+#include "oidset.h"
 
 struct object_directory {
 	struct object_directory *next;
@@ -76,9 +77,8 @@ struct packed_git {
 	const void *index_data;
 	size_t index_size;
 	uint32_t num_objects;
-	uint32_t num_bad_objects;
 	uint32_t crc_offset;
-	unsigned char *bad_object_sha1;
+	struct oidset bad_objects;
 	int index_version;
 	time_t mtime;
 	int pack_fd;

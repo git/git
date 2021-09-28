@@ -188,9 +188,7 @@ static void init_thread(void)
 	pthread_key_create(&key, NULL);
 	CALLOC_ARRAY(thread_data, nr_threads);
 	for (i = 0; i < nr_threads; i++) {
-		thread_data[i].pack_fd = open(curr_pack, O_RDONLY);
-		if (thread_data[i].pack_fd == -1)
-			die_errno(_("unable to open %s"), curr_pack);
+		thread_data[i].pack_fd = xopen(curr_pack, O_RDONLY);
 	}
 
 	threads_active = 1;

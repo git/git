@@ -245,8 +245,36 @@ int refs_rename_ref_available(struct ref_store *refs,
 /* We allow "recursive" symbolic refs. Only within reason, though */
 #define SYMREF_MAXDEPTH 5
 
-/* Include broken references in a do_for_each_ref*() iteration: */
-#define DO_FOR_EACH_INCLUDE_BROKEN 0x01
+/*
+ * These flags are passed to refs_ref_iterator_begin() (and do_for_each_ref(),
+ * which feeds it).
+ */
+enum do_for_each_ref_flags {
+	/*
+	 * Include broken references in a do_for_each_ref*() iteration, which
+	 * would normally be omitted. This includes both refs that point to
+	 * missing objects (a true repository corruption), ones with illegal
+	 * names (which we prefer not to expose to callers), as well as
+	 * dangling symbolic refs (i.e., those that point to a non-existent
+	 * ref; this is not a corruption, but as they have no valid oid, we
+	 * omit them from normal iteration results).
+	 */
+	DO_FOR_EACH_INCLUDE_BROKEN = (1 << 0),
+
+	/*
+	 * Only include per-worktree refs in a do_for_each_ref*() iteration.
+	 * Normally this will be used with a files ref_store, since that's
+	 * where all reference backends will presumably store their
+	 * per-worktree refs.
+	 */
+	DO_FOR_EACH_PER_WORKTREE_ONLY = (1 << 1),
+
+	/*
+	 * Omit dangling symrefs from output; this only has an effect with
+	 * INCLUDE_BROKEN, since they are otherwise not included at all.
+	 */
+	DO_FOR_EACH_OMIT_DANGLING_SYMREFS = (1 << 2),
+};
 
 /*
  * Reference iterators
@@ -349,16 +377,12 @@ int is_empty_ref_iterator(struct ref_iterator *ref_iterator);
  * Return an iterator that goes over each reference in `refs` for
  * which the refname begins with prefix. If trim is non-zero, then
  * trim that many characters off the beginning of each refname.
- * The output is ordered by refname. The following flags are supported:
- *
- * DO_FOR_EACH_INCLUDE_BROKEN: include broken references in
- *         the iteration.
- *
- * DO_FOR_EACH_PER_WORKTREE_ONLY: only produce REF_TYPE_PER_WORKTREE refs.
+ * The output is ordered by refname.
  */
 struct ref_iterator *refs_ref_iterator_begin(
 		struct ref_store *refs,
-		const char *prefix, int trim, int flags);
+		const char *prefix, int trim,
+		enum do_for_each_ref_flags flags);
 
 /*
  * A callback function used to instruct merge_ref_iterator how to
@@ -446,10 +470,8 @@ void base_ref_iterator_free(struct ref_iterator *iter);
 /*
  * backend-specific implementation of ref_iterator_advance. For symrefs, the
  * function should set REF_ISSYMREF, and it should also dereference the symref
- * to provide the OID referent. If DO_FOR_EACH_INCLUDE_BROKEN is set, symrefs
- * with non-existent referents and refs pointing to non-existent object names
- * should also be returned. If DO_FOR_EACH_PER_WORKTREE_ONLY, only
- * REF_TYPE_PER_WORKTREE refs should be returned.
+ * to provide the OID referent. It should respect do_for_each_ref_flags
+ * that were passed to refs_ref_iterator_begin().
  */
 typedef int ref_iterator_advance_fn(struct ref_iterator *ref_iterator);
 
@@ -497,14 +519,6 @@ extern struct ref_iterator *current_ref_iter;
 int do_for_each_repo_ref_iterator(struct repository *r,
 				  struct ref_iterator *iter,
 				  each_repo_ref_fn fn, void *cb_data);
-
-/*
- * Only include per-worktree refs in a do_for_each_ref*() iteration.
- * Normally this will be used with a files ref_store, since that's
- * where all reference backends will presumably store their
- * per-worktree refs.
- */
-#define DO_FOR_EACH_PER_WORKTREE_ONLY 0x02
 
 struct ref_store;
 

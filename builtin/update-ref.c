@@ -302,6 +302,12 @@ static void parse_cmd_verify(struct ref_transaction *transaction,
 	strbuf_release(&err);
 }
 
+static void report_ok(const char *command)
+{
+	fprintf(stdout, "%s: ok\n", command);
+	fflush(stdout);
+}
+
 static void parse_cmd_option(struct ref_transaction *transaction,
 			     const char *next, const char *end)
 {
@@ -317,7 +323,7 @@ static void parse_cmd_start(struct ref_transaction *transaction,
 {
 	if (*next != line_termination)
 		die("start: extra input: %s", next);
-	puts("start: ok");
+	report_ok("start");
 }
 
 static void parse_cmd_prepare(struct ref_transaction *transaction,
@@ -328,7 +334,7 @@ static void parse_cmd_prepare(struct ref_transaction *transaction,
 		die("prepare: extra input: %s", next);
 	if (ref_transaction_prepare(transaction, &error))
 		die("prepare: %s", error.buf);
-	puts("prepare: ok");
+	report_ok("prepare");
 }
 
 static void parse_cmd_abort(struct ref_transaction *transaction,
@@ -339,7 +345,7 @@ static void parse_cmd_abort(struct ref_transaction *transaction,
 		die("abort: extra input: %s", next);
 	if (ref_transaction_abort(transaction, &error))
 		die("abort: %s", error.buf);
-	puts("abort: ok");
+	report_ok("abort");
 }
 
 static void parse_cmd_commit(struct ref_transaction *transaction,
@@ -350,7 +356,7 @@ static void parse_cmd_commit(struct ref_transaction *transaction,
 		die("commit: extra input: %s", next);
 	if (ref_transaction_commit(transaction, &error))
 		die("commit: %s", error.buf);
-	puts("commit: ok");
+	report_ok("commit");
 	ref_transaction_free(transaction);
 }
 
