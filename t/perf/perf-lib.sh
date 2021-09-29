@@ -74,7 +74,7 @@ test_perf_copy_repo_contents () {
 	for stuff in "$1"/*
 	do
 		case "$stuff" in
-		*/objects|*/hooks|*/config|*/commondir|*/gitdir|*/worktrees|*/fsmonitor--daemon*)
+		*/objects|*/hooks|*/config|*/commondir|*/gitdir|*/worktrees)
 			;;
 		*)
 			cp -R "$stuff" "$repo/.git/" || exit 1
