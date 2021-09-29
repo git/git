@@ -123,6 +123,101 @@ test_expect_success 'implicit daemon stop (rename .git)' '
 	test_must_fail git -C test_implicit_2 fsmonitor--daemon status
 '
 
+# File systems on Windows may or may not have shortnames.
+# This is a volume-specific setting on modern systems.
+# "C:/" drives are required to have them enabled.  Other
+# hard drives default to disabled.
+#
+# This is a crude test to see if shortnames are enabled
+# on the volume containing the test directory.  It is
+# crude, but it does not require elevation like `fsutil`.
+#
+test_lazy_prereq SHORTNAMES '
+	mkdir .foo &&
+	test -d "FOO~1"
+'
+
+# Here we assume that the shortname of ".git" is "GIT~1".
+test_expect_success MINGW,SHORTNAMES 'implicit daemon stop (rename GIT~1)' '
+	test_when_finished "stop_daemon_delete_repo test_implicit_1s" &&
+
+	git init test_implicit_1s &&
+
+	start_daemon test_implicit_1s &&
+
+	# renaming the .git directory will implicitly stop the daemon.
+	# this moves {.git, GIT~1} to {.gitxyz, GITXYZ~1}.
+	# the rename-from FS Event will contain the shortname.
+	#
+	mv test_implicit_1s/GIT~1 test_implicit_1s/.gitxyz &&
+
+	sleep 1 &&
+	# put it back so that our status will not crawl out to our
+	# parent directory.
+	# this moves {.gitxyz, GITXYZ~1} to {.git, GIT~1}.
+	mv test_implicit_1s/.gitxyz test_implicit_1s/.git &&
+
+	test_must_fail git -C test_implicit_1s fsmonitor--daemon status
+'
+
+# Here we first create a file with LONGNAME of "GIT~1" before
+# we create the repo.  This will cause the shortname of ".git"
+# to be "GIT~2".
+test_expect_success MINGW,SHORTNAMES 'implicit daemon stop (rename GIT~2)' '
+	test_when_finished "stop_daemon_delete_repo test_implicit_1s2" &&
+
+	mkdir test_implicit_1s2 &&
+	echo HELLO >test_implicit_1s2/GIT~1 &&
+	git init test_implicit_1s2 &&
+
+	test_path_is_file test_implicit_1s2/GIT~1 &&
+	test_path_is_dir  test_implicit_1s2/GIT~2 &&
+
+	start_daemon test_implicit_1s2 &&
+
+	# renaming the .git directory will implicitly stop the daemon.
+	# the rename-from FS Event will contain the shortname.
+	#
+	mv test_implicit_1s2/GIT~2 test_implicit_1s2/.gitxyz &&
+
+	sleep 1 &&
+	# put it back so that our status will not crawl out to our
+	# parent directory.
+	mv test_implicit_1s2/.gitxyz test_implicit_1s2/.git &&
+
+	test_must_fail git -C test_implicit_1s2 fsmonitor--daemon status
+'
+
+# Confirm that MacOS hides all of the Unicode normalization and/or
+# case folding from the FS events.  That is, are the pathnames in the
+# FS events reported using the spelling on the disk or in the spelling
+# used by the other process.
+#
+# Note that we assume that the filesystem is set to case insensitive.
+#
+# NEEDSWORK: APFS handles Unicode and Unicode normalization
+# differently than HFS+.  I only have an APFS partition, so
+# more testing here would be helpful.
+#
+
+# Rename .git using alternate spelling and confirm that the daemon
+# sees the event using the correct spelling and shutdown.
+test_expect_success UTF8_NFD_TO_NFC 'MacOS event spelling (rename .GIT)' '
+	test_when_finished "stop_daemon_delete_repo test_apfs" &&
+
+	git init test_apfs &&
+	start_daemon test_apfs &&
+
+	test_path_is_dir test_apfs/.git &&
+	test_path_is_dir test_apfs/.GIT &&
+
+	mv test_apfs/.GIT test_apfs/.FOO &&
+	sleep 1 &&
+	mv test_apfs/.FOO test_apfs/.git &&
+
+	test_must_fail git -C test_apfs fsmonitor--daemon status
+'
+
 test_expect_success 'cannot start multiple daemons' '
 	test_when_finished "stop_daemon_delete_repo test_multiple" &&
 
@@ -602,6 +697,29 @@ do
 			'
 		fi
 	done
+done
+
+# Test Unicode UTF-8 characters in the pathname of the working
+# directory.  Use of "*A()" routines rather than "*W()" routines
+# on Windows can sometimes lead to odd failures.
+#
+u1=$(printf "u_c3_a6__\xC3\xA6")
+u2=$(printf "u_e2_99_ab__\xE2\x99\xAB")
+u_values="$u1 $u2"
+for u in $u_values
+do
+	test_expect_success "Unicode path: $u" '
+		test_when_finished "stop_daemon_delete_repo $u" &&
+
+		git init "$u" &&
+		echo 1 >"$u"/file1 &&
+		git -C "$u" add file1 &&
+		git -C "$u" config core.useBuiltinFSMonitor true &&
+
+		start_daemon "$u" &&
+		git -C "$u" status >actual &&
+		grep "new file:   file1" actual
+	'
 done
 
 test_done
