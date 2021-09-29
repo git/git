@@ -2400,9 +2400,21 @@ int read_index_from(struct index_state *istate, const char *path,
 	base_path = xstrfmt("%s/sharedindex.%s", gitdir, base_oid_hex);
 	trace2_region_enter_printf("index", "shared/do_read_index",
 				   the_repository, "%s", base_path);
-	ret = do_read_index(split_index->base, base_path, 1);
+	ret = do_read_index(split_index->base, base_path, 0);
 	trace2_region_leave_printf("index", "shared/do_read_index",
 				   the_repository, "%s", base_path);
+	if (!ret) {
+		char *path_copy = xstrdup(path);
+		const char *base_path2 = xstrfmt("%s/sharedindex.%s",
+						 dirname(path_copy),
+						 base_oid_hex);
+		free(path_copy);
+		trace2_region_enter_printf("index", "shared/do_read_index",
+					   the_repository, "%s", base_path2);
+		ret = do_read_index(split_index->base, base_path2, 1);
+		trace2_region_leave_printf("index", "shared/do_read_index",
+					   the_repository, "%s", base_path2);
+	}
 	if (!oideq(&split_index->base_oid, &split_index->base->oid))
 		die(_("broken index, expect %s in %s, got %s"),
 		    base_oid_hex, base_path,
@@ -2821,11 +2833,8 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 		}
 	}
 
-	if (!istate->version) {
+	if (!istate->version)
 		istate->version = get_index_format_default(the_repository);
-		if (git_env_bool("GIT_TEST_SPLIT_INDEX", 0))
-			init_split_index(istate);
-	}
 
 	/* demote version 3 to version 2 when the latter suffices */
 	if (istate->version == 3 || istate->version == 2)
@@ -3252,7 +3261,7 @@ static int too_many_not_shared_entries(struct index_state *istate)
 int write_locked_index(struct index_state *istate, struct lock_file *lock,
 		       unsigned flags)
 {
-	int new_shared_index, ret;
+	int new_shared_index, ret, test_split_index_env;
 	struct split_index *si = istate->split_index;
 
 	if (git_env_bool("GIT_TEST_CHECK_CACHE_TREE", 0))
@@ -3267,7 +3276,10 @@ int write_locked_index(struct index_state *istate, struct lock_file *lock,
 	if (istate->fsmonitor_last_update)
 		fill_fsmonitor_bitmap(istate);
 
-	if (!si || alternate_index_output ||
+	test_split_index_env = git_env_bool("GIT_TEST_SPLIT_INDEX", 0);
+
+	if ((!si && !test_split_index_env) ||
+	    alternate_index_output ||
 	    (istate->cache_changed & ~EXTMASK)) {
 		if (si)
 			oidclr(&si->base_oid);
@@ -3275,10 +3287,15 @@ int write_locked_index(struct index_state *istate, struct lock_file *lock,
 		goto out;
 	}
 
-	if (git_env_bool("GIT_TEST_SPLIT_INDEX", 0)) {
-		int v = si->base_oid.hash[0];
-		if ((v & 15) < 6)
+	if (test_split_index_env) {
+		if (!si) {
+			si = init_split_index(istate);
 			istate->cache_changed |= SPLIT_INDEX_ORDERED;
+		} else {
+			int v = si->base_oid.hash[0];
+			if ((v & 15) < 6)
+				istate->cache_changed |= SPLIT_INDEX_ORDERED;
+		}
 	}
 	if (too_many_not_shared_entries(istate))
 		istate->cache_changed |= SPLIT_INDEX_ORDERED;

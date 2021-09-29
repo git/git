@@ -206,16 +206,21 @@ test_expect_success 'sparse-checkout disable' '
 '
 
 test_expect_success 'sparse-index enabled and disabled' '
-	git -C repo sparse-checkout init --cone --sparse-index &&
-	test_cmp_config -C repo true index.sparse &&
-	test-tool -C repo read-cache --table >cache &&
-	grep " tree " cache &&
+	(
+		sane_unset GIT_TEST_SPLIT_INDEX &&
+		git -C repo update-index --no-split-index &&
 
-	git -C repo sparse-checkout disable &&
-	test-tool -C repo read-cache --table >cache &&
-	! grep " tree " cache &&
-	git -C repo config --list >config &&
-	! grep index.sparse config
+		git -C repo sparse-checkout init --cone --sparse-index &&
+		test_cmp_config -C repo true index.sparse &&
+		test-tool -C repo read-cache --table >cache &&
+		grep " tree " cache &&
+
+		git -C repo sparse-checkout disable &&
+		test-tool -C repo read-cache --table >cache &&
+		! grep " tree " cache &&
+		git -C repo config --list >config &&
+		! grep index.sparse config
+	)
 '
 
 test_expect_success 'cone mode: init and set' '
