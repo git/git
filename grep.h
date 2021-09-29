@@ -191,6 +191,15 @@ void compile_grep_patterns(struct grep_opt *opt);
 void free_grep_patterns(struct grep_opt *opt);
 int grep_buffer(struct grep_opt *opt, const char *buf, unsigned long size);
 
+/* The field parameter is only used to filter header patterns
+ * (where appropriate). If filtering isn't desirable
+ * GREP_HEADER_FIELD_MAX should be supplied.
+ */
+int grep_next_match(struct grep_opt *opt,
+		    const char *bol, const char *eol,
+		    enum grep_context ctx, regmatch_t *pmatch,
+		    enum grep_header_field field, int eflags);
+
 struct grep_source {
 	char *name;
 
