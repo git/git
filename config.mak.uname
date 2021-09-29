@@ -423,7 +423,6 @@ ifeq ($(uname_S),Windows)
 	#
 	#   SNPRINTF_RETURNS_BOGUS = YesPlease
 	FSMONITOR_DAEMON_BACKEND = win32
-	FSMONITOR_OS_SETTINGS = win32
 	NO_SVN_TESTS = YesPlease
 	RUNTIME_PREFIX = YesPlease
 	HAVE_WPGMPTR = YesWeDo
@@ -612,7 +611,6 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_MKDTEMP = YesPlease
 	NO_SVN_TESTS = YesPlease
 	FSMONITOR_DAEMON_BACKEND = win32
-	FSMONITOR_OS_SETTINGS = win32
 	RUNTIME_PREFIX = YesPlease
 	HAVE_WPGMPTR = YesWeDo
 	NO_ST_BLOCKS_IN_STRUCT_STAT = YesPlease

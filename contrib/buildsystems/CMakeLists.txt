@@ -300,11 +300,6 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 	list(APPEND compat_SOURCES compat/fsmonitor/fsm-listen-darwin.c)
 endif()
 
-if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-	add_compile_definitions(HAVE_FSMONITOR_OS_SETTINGS)
-	list(APPEND compat_SOURCES compat/fsmonitor/fsm-settings-win32.c)
-endif()
-
 set(EXE_EXTENSION ${CMAKE_EXECUTABLE_SUFFIX})
 
 #header checks
