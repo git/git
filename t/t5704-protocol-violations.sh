@@ -32,4 +32,19 @@ test_expect_success 'extra delim packet in v2 fetch args' '
 	test_i18ngrep "expected flush after fetch arguments" err
 '
 
+test_expect_success 'bogus symref in v0 capabilities' '
+	test_commit foo &&
+	oid=$(git rev-parse HEAD) &&
+	dst=refs/heads/foo &&
+	{
+		printf "%s HEAD\0symref object-format=%s symref=HEAD:%s\n" \
+			"$oid" "$GIT_DEFAULT_HASH" "$dst" |
+			test-tool pkt-line pack-raw-stdin &&
+		printf "0000"
+	} >input &&
+	git ls-remote --symref --upload-pack="cat input; read junk;:" . >actual &&
+	printf "ref: %s\tHEAD\n%s\tHEAD\n" "$dst" "$oid" >expect &&
+	test_cmp expect actual
+'
+
 test_done
