@@ -190,6 +190,10 @@ this "roll-up", without respect to their reachability. This is subject
 to change in the future. This option (implying a drastically different
 repack mode) is not guaranteed to work with all other combinations of
 option to `git repack`.
++
+When writing a multi-pack bitmap, `git repack` selects the largest resulting
+pack as the preferred pack for object selection by the MIDX (see
+linkgit:git-multi-pack-index[1]).
 
 -m::
 --write-midx::

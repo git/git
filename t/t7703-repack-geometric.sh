@@ -180,4 +180,26 @@ test_expect_success '--geometric ignores kept packs' '
 	)
 '
 
+test_expect_success '--geometric chooses largest MIDX preferred pack' '
+	git init geometric &&
+	test_when_finished "rm -fr geometric" &&
+	(
+		cd geometric &&
+
+		# These packs already form a geometric progression.
+		test_commit_bulk --start=1 1 && # 3 objects
+		test_commit_bulk --start=2 2 && # 6 objects
+		ls $objdir/pack/pack-*.idx >before &&
+		test_commit_bulk --start=4 4 && # 12 objects
+		ls $objdir/pack/pack-*.idx >after &&
+
+		git repack --geometric 2 -dbm &&
+
+		comm -3 before after | xargs -n 1 basename >expect &&
+		test-tool read-midx --preferred-pack $objdir >actual &&
+
+		test_cmp expect actual
+	)
+'
+
 test_done

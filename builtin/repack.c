@@ -423,6 +423,25 @@ static void split_pack_geometry(struct pack_geometry *geometry, int factor)
 	geometry->split = split;
 }
 
+static struct packed_git *get_largest_active_pack(struct pack_geometry *geometry)
+{
+	if (!geometry) {
+		/*
+		 * No geometry means either an all-into-one repack (in which
+		 * case there is only one pack left and it is the largest) or an
+		 * incremental one.
+		 *
+		 * If repacking incrementally, then we could check the size of
+		 * all packs to determine which should be preferred, but leave
+		 * this for later.
+		 */
+		return NULL;
+	}
+	if (geometry->split == geometry->pack_nr)
+		return NULL;
+	return geometry->pack[geometry->pack_nr - 1];
+}
+
 static void clear_pack_geometry(struct pack_geometry *geometry)
 {
 	if (!geometry)
@@ -468,10 +487,12 @@ static void midx_included_packs(struct string_list *include,
 }
 
 static int write_midx_included_packs(struct string_list *include,
+				     struct pack_geometry *geometry,
 				     int show_progress, int write_bitmaps)
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	struct string_list_item *item;
+	struct packed_git *largest = get_largest_active_pack(geometry);
 	FILE *in;
 	int ret;
 
@@ -491,6 +512,10 @@ static int write_midx_included_packs(struct string_list *include,
 
 	if (write_bitmaps)
 		strvec_push(&cmd.args, "--bitmap");
+
+	if (largest)
+		strvec_pushf(&cmd.args, "--preferred-pack=%s",
+			     pack_basename(largest));
 
 	ret = start_command(&cmd);
 	if (ret)
@@ -783,7 +808,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		midx_included_packs(&include, &existing_nonkept_packs,
 				    &existing_kept_packs, &names, geometry);
 
-		ret = write_midx_included_packs(&include,
+		ret = write_midx_included_packs(&include, geometry,
 						show_progress, write_bitmaps > 0);
 
 		string_list_clear(&include, 0);
