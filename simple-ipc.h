@@ -5,13 +5,6 @@
  * See Documentation/technical/api-simple-ipc.txt
  */
 
-#ifdef SUPPORTS_SIMPLE_IPC
-#include "pkt-line.h"
-
-/*
- * Simple IPC Client Side API.
- */
-
 enum ipc_active_state {
 	/*
 	 * The pipe/socket exists and the daemon is waiting for connections.
@@ -42,6 +35,13 @@ enum ipc_active_state {
 
 	IPC_STATE__OTHER_ERROR,
 };
+
+#ifdef SUPPORTS_SIMPLE_IPC
+#include "pkt-line.h"
+
+/*
+ * Simple IPC Client Side API.
+ */
 
 struct ipc_client_connect_options {
 	/*
@@ -107,7 +107,8 @@ void ipc_client_close_connection(struct ipc_client_connection *connection);
  */
 int ipc_client_send_command_to_connection(
 	struct ipc_client_connection *connection,
-	const char *message, struct strbuf *answer);
+	const char *message, size_t message_len,
+	struct strbuf *answer);
 
 /*
  * Used by the client to synchronously connect and send and receive a
@@ -119,7 +120,8 @@ int ipc_client_send_command_to_connection(
  */
 int ipc_client_send_command(const char *path,
 			    const struct ipc_client_connect_options *options,
-			    const char *message, struct strbuf *answer);
+			    const char *message, size_t message_len,
+			    struct strbuf *answer);
 
 /*
  * Simple IPC Server Side API.
@@ -144,6 +146,7 @@ typedef int (ipc_server_reply_cb)(struct ipc_server_reply_data *,
  */
 typedef int (ipc_server_application_cb)(void *application_data,
 					const char *request,
+					size_t request_len,
 					ipc_server_reply_cb *reply_cb,
 					struct ipc_server_reply_data *reply_data);
 
