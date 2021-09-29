@@ -434,6 +434,76 @@ static void clear_pack_geometry(struct pack_geometry *geometry)
 	geometry->split = 0;
 }
 
+static void midx_included_packs(struct string_list *include,
+				struct string_list *existing_nonkept_packs,
+				struct string_list *existing_kept_packs,
+				struct string_list *names,
+				struct pack_geometry *geometry)
+{
+	struct string_list_item *item;
+
+	for_each_string_list_item(item, existing_kept_packs)
+		string_list_insert(include, xstrfmt("%s.idx", item->string));
+	for_each_string_list_item(item, names)
+		string_list_insert(include, xstrfmt("pack-%s.idx", item->string));
+	if (geometry) {
+		struct strbuf buf = STRBUF_INIT;
+		uint32_t i;
+		for (i = geometry->split; i < geometry->pack_nr; i++) {
+			struct packed_git *p = geometry->pack[i];
+
+			strbuf_addstr(&buf, pack_basename(p));
+			strbuf_strip_suffix(&buf, ".pack");
+			strbuf_addstr(&buf, ".idx");
+
+			string_list_insert(include, strbuf_detach(&buf, NULL));
+		}
+	} else {
+		for_each_string_list_item(item, existing_nonkept_packs) {
+			if (item->util)
+				continue;
+			string_list_insert(include, xstrfmt("%s.idx", item->string));
+		}
+	}
+}
+
+static int write_midx_included_packs(struct string_list *include,
+				     int show_progress, int write_bitmaps)
+{
+	struct child_process cmd = CHILD_PROCESS_INIT;
+	struct string_list_item *item;
+	FILE *in;
+	int ret;
+
+	if (!include->nr)
+		return 0;
+
+	cmd.in = -1;
+	cmd.git_cmd = 1;
+
+	strvec_push(&cmd.args, "multi-pack-index");
+	strvec_pushl(&cmd.args, "write", "--stdin-packs", NULL);
+
+	if (show_progress)
+		strvec_push(&cmd.args, "--progress");
+	else
+		strvec_push(&cmd.args, "--no-progress");
+
+	if (write_bitmaps)
+		strvec_push(&cmd.args, "--bitmap");
+
+	ret = start_command(&cmd);
+	if (ret)
+		return ret;
+
+	in = xfdopen(cmd.in, "w");
+	for_each_string_list_item(item, include)
+		fprintf(in, "%s\n", item->string);
+	fclose(in);
+
+	return finish_command(&cmd);
+}
+
 int cmd_repack(int argc, const char **argv, const char *prefix)
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
@@ -457,6 +527,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	int no_update_server_info = 0;
 	struct pack_objects_args po_args = {NULL};
 	int geometric_factor = 0;
+	int write_midx = 0;
 
 	struct option builtin_repack_options[] = {
 		OPT_BIT('a', NULL, &pack_everything,
@@ -499,6 +570,8 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 				N_("do not repack this pack")),
 		OPT_INTEGER('g', "geometric", &geometric_factor,
 			    N_("find a geometric progression with factor <N>")),
+		OPT_BOOL('m', "write-midx", &write_midx,
+			   N_("write a multi-pack index of the resulting packs")),
 		OPT_END()
 	};
 
@@ -515,8 +588,8 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		die(_("--keep-unreachable and -A are incompatible"));
 
 	if (write_bitmaps < 0) {
-		if (!(pack_everything & ALL_INTO_ONE) ||
-		    !is_bare_repository())
+		if (!write_midx &&
+		    (!(pack_everything & ALL_INTO_ONE) || !is_bare_repository()))
 			write_bitmaps = 0;
 	} else if (write_bitmaps &&
 		   git_env_bool(GIT_TEST_MULTI_PACK_INDEX, 0) &&
@@ -526,7 +599,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	if (pack_kept_objects < 0)
 		pack_kept_objects = write_bitmaps > 0;
 
-	if (write_bitmaps && !(pack_everything & ALL_INTO_ONE))
+	if (write_bitmaps && !(pack_everything & ALL_INTO_ONE) && !write_midx)
 		die(_(incremental_bitmap_conflict_error));
 
 	if (geometric_factor) {
@@ -568,10 +641,12 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	}
 	if (has_promisor_remote())
 		strvec_push(&cmd.args, "--exclude-promisor-objects");
-	if (write_bitmaps > 0)
-		strvec_push(&cmd.args, "--write-bitmap-index");
-	else if (write_bitmaps < 0)
-		strvec_push(&cmd.args, "--write-bitmap-index-quiet");
+	if (!write_midx) {
+		if (write_bitmaps > 0)
+			strvec_push(&cmd.args, "--write-bitmap-index");
+		else if (write_bitmaps < 0)
+			strvec_push(&cmd.args, "--write-bitmap-index-quiet");
+	}
 	if (use_delta_islands)
 		strvec_push(&cmd.args, "--delta-islands");
 
@@ -684,22 +759,47 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	}
 	/* End of pack replacement. */
 
+	if (delete_redundant && pack_everything & ALL_INTO_ONE) {
+		const int hexsz = the_hash_algo->hexsz;
+		string_list_sort(&names);
+		for_each_string_list_item(item, &existing_nonkept_packs) {
+			char *sha1;
+			size_t len = strlen(item->string);
+			if (len < hexsz)
+				continue;
+			sha1 = item->string + len - hexsz;
+			/*
+			 * Mark this pack for deletion, which ensures that this
+			 * pack won't be included in a MIDX (if `--write-midx`
+			 * was given) and that we will actually delete this pack
+			 * (if `-d` was given).
+			 */
+			item->util = (void*)(intptr_t)!string_list_has_string(&names, sha1);
+		}
+	}
+
+	if (write_midx) {
+		struct string_list include = STRING_LIST_INIT_NODUP;
+		midx_included_packs(&include, &existing_nonkept_packs,
+				    &existing_kept_packs, &names, geometry);
+
+		ret = write_midx_included_packs(&include,
+						show_progress, write_bitmaps > 0);
+
+		string_list_clear(&include, 0);
+
+		if (ret)
+			return ret;
+	}
+
 	reprepare_packed_git(the_repository);
 
 	if (delete_redundant) {
 		int opts = 0;
-		if (pack_everything & ALL_INTO_ONE) {
-			const int hexsz = the_hash_algo->hexsz;
-			string_list_sort(&names);
-			for_each_string_list_item(item, &existing_nonkept_packs) {
-				char *sha1;
-				size_t len = strlen(item->string);
-				if (len < hexsz)
-					continue;
-				sha1 = item->string + len - hexsz;
-				if (!string_list_has_string(&names, sha1))
-					remove_redundant_pack(packdir, item->string);
-			}
+		for_each_string_list_item(item, &existing_nonkept_packs) {
+			if (!item->util)
+				continue;
+			remove_redundant_pack(packdir, item->string);
 		}
 
 		if (geometry) {
