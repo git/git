@@ -94,12 +94,14 @@ static void remove_pack_on_signal(int signo)
 }
 
 /*
- * Adds all packs hex strings to the fname list, which do not
- * have a corresponding .keep file. These packs are not to
- * be kept if we are going to pack everything into one file.
+ * Adds all packs hex strings to either fname_list or fname_kept_list
+ * based on whether each pack has a corresponding .keep file or not.
+ * Packs without a .keep file are not to be kept if we are going to
+ * pack everything into one file.
  */
-static void get_non_kept_pack_filenames(struct string_list *fname_list,
-					const struct string_list *extra_keep)
+static void collect_pack_filenames(struct string_list *fname_list,
+				   struct string_list *fname_kept_list,
+				   const struct string_list *extra_keep)
 {
 	DIR *dir;
 	struct dirent *e;
@@ -112,21 +114,20 @@ static void get_non_kept_pack_filenames(struct string_list *fname_list,
 		size_t len;
 		int i;
 
-		for (i = 0; i < extra_keep->nr; i++)
-			if (!fspathcmp(e->d_name, extra_keep->items[i].string))
-				break;
-		if (extra_keep->nr > 0 && i < extra_keep->nr)
-			continue;
-
 		if (!strip_suffix(e->d_name, ".pack", &len))
 			continue;
 
+		for (i = 0; i < extra_keep->nr; i++)
+			if (!fspathcmp(e->d_name, extra_keep->items[i].string))
+				break;
+
 		fname = xmemdupz(e->d_name, len);
 
-		if (!file_exists(mkpath("%s/%s.keep", packdir, fname)))
-			string_list_append_nodup(fname_list, fname);
+		if ((extra_keep->nr > 0 && i < extra_keep->nr) ||
+		    (file_exists(mkpath("%s/%s.keep", packdir, fname))))
+			string_list_append_nodup(fname_kept_list, fname);
 		else
-			free(fname);
+			string_list_append_nodup(fname_list, fname);
 	}
 	closedir(dir);
 }
@@ -440,6 +441,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	struct string_list names = STRING_LIST_INIT_DUP;
 	struct string_list rollback = STRING_LIST_INIT_NODUP;
 	struct string_list existing_packs = STRING_LIST_INIT_DUP;
+	struct string_list existing_kept_packs = STRING_LIST_INIT_DUP;
 	struct pack_geometry *geometry = NULL;
 	struct strbuf line = STRBUF_INIT;
 	int i, ext, ret;
@@ -572,9 +574,10 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	if (use_delta_islands)
 		strvec_push(&cmd.args, "--delta-islands");
 
-	if (pack_everything & ALL_INTO_ONE) {
-		get_non_kept_pack_filenames(&existing_packs, &keep_pack_list);
+	collect_pack_filenames(&existing_packs, &existing_kept_packs,
+			       &keep_pack_list);
 
+	if (pack_everything & ALL_INTO_ONE) {
 		repack_promisor_objects(&po_args, &names);
 
 		if (existing_packs.nr && delete_redundant) {
@@ -683,17 +686,19 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	reprepare_packed_git(the_repository);
 
 	if (delete_redundant) {
-		const int hexsz = the_hash_algo->hexsz;
 		int opts = 0;
-		string_list_sort(&names);
-		for_each_string_list_item(item, &existing_packs) {
-			char *sha1;
-			size_t len = strlen(item->string);
-			if (len < hexsz)
-				continue;
-			sha1 = item->string + len - hexsz;
-			if (!string_list_has_string(&names, sha1))
-				remove_redundant_pack(packdir, item->string);
+		if (pack_everything & ALL_INTO_ONE) {
+			const int hexsz = the_hash_algo->hexsz;
+			string_list_sort(&names);
+			for_each_string_list_item(item, &existing_packs) {
+				char *sha1;
+				size_t len = strlen(item->string);
+				if (len < hexsz)
+					continue;
+				sha1 = item->string + len - hexsz;
+				if (!string_list_has_string(&names, sha1))
+					remove_redundant_pack(packdir, item->string);
+			}
 		}
 
 		if (geometry) {
@@ -739,6 +744,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	string_list_clear(&names, 0);
 	string_list_clear(&rollback, 0);
 	string_list_clear(&existing_packs, 0);
+	string_list_clear(&existing_kept_packs, 0);
 	clear_pack_geometry(geometry);
 	strbuf_release(&line);
 
