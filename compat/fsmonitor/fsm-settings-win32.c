@@ -130,8 +130,8 @@ static int check_remote_protocol(wchar_t *wpath)
 static enum fsmonitor_reason check_remote(struct repository *r)
 {
 	int ret;
-	wchar_t wpath[MAX_PATH];
-	wchar_t wfullpath[MAX_PATH];
+	wchar_t wpath[MAX_LONG_PATH];
+	wchar_t wfullpath[MAX_LONG_PATH];
 	size_t wlen;
 	UINT driveType;
 
@@ -139,7 +139,7 @@ static enum fsmonitor_reason check_remote(struct repository *r)
 	 * Do everything in wide chars because the drive letter might be
 	 * a multi-byte sequence.  See win32_has_dos_drive_prefix().
 	 */
-	if (xutftowcs_path(wpath, r->worktree) < 0)
+	if (xutftowcs_long_path(wpath, r->worktree) < 0)
 		return FSMONITOR_REASON_ERROR;
 
 	/*
@@ -157,7 +157,7 @@ static enum fsmonitor_reason check_remote(struct repository *r)
 	 * slashes to backslashes.  This is essential to get GetDriveTypeW()
 	 * correctly handle some UNC "\\server\share\..." paths.
 	 */
-	if (!GetFullPathNameW(wpath, MAX_PATH, wfullpath, NULL))
+	if (!GetFullPathNameW(wpath, MAX_LONG_PATH, wfullpath, NULL))
 		return FSMONITOR_REASON_ERROR;
 
 	driveType = GetDriveTypeW(wfullpath);
