@@ -94,12 +94,12 @@ static void remove_pack_on_signal(int signo)
 }
 
 /*
- * Adds all packs hex strings to either fname_list or fname_kept_list
- * based on whether each pack has a corresponding .keep file or not.
- * Packs without a .keep file are not to be kept if we are going to
- * pack everything into one file.
+ * Adds all packs hex strings to either fname_nonkept_list or
+ * fname_kept_list based on whether each pack has a corresponding
+ * .keep file or not.  Packs without a .keep file are not to be kept
+ * if we are going to pack everything into one file.
  */
-static void collect_pack_filenames(struct string_list *fname_list,
+static void collect_pack_filenames(struct string_list *fname_nonkept_list,
 				   struct string_list *fname_kept_list,
 				   const struct string_list *extra_keep)
 {
@@ -127,7 +127,7 @@ static void collect_pack_filenames(struct string_list *fname_list,
 		    (file_exists(mkpath("%s/%s.keep", packdir, fname))))
 			string_list_append_nodup(fname_kept_list, fname);
 		else
-			string_list_append_nodup(fname_list, fname);
+			string_list_append_nodup(fname_nonkept_list, fname);
 	}
 	closedir(dir);
 }
@@ -440,7 +440,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	struct string_list_item *item;
 	struct string_list names = STRING_LIST_INIT_DUP;
 	struct string_list rollback = STRING_LIST_INIT_NODUP;
-	struct string_list existing_packs = STRING_LIST_INIT_DUP;
+	struct string_list existing_nonkept_packs = STRING_LIST_INIT_DUP;
 	struct string_list existing_kept_packs = STRING_LIST_INIT_DUP;
 	struct pack_geometry *geometry = NULL;
 	struct strbuf line = STRBUF_INIT;
@@ -574,13 +574,13 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	if (use_delta_islands)
 		strvec_push(&cmd.args, "--delta-islands");
 
-	collect_pack_filenames(&existing_packs, &existing_kept_packs,
+	collect_pack_filenames(&existing_nonkept_packs, &existing_kept_packs,
 			       &keep_pack_list);
 
 	if (pack_everything & ALL_INTO_ONE) {
 		repack_promisor_objects(&po_args, &names);
 
-		if (existing_packs.nr && delete_redundant) {
+		if (existing_nonkept_packs.nr && delete_redundant) {
 			for_each_string_list_item(item, &names) {
 				strvec_pushf(&cmd.args, "--keep-pack=%s-%s.pack",
 					     packtmp_name, item->string);
@@ -690,7 +690,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		if (pack_everything & ALL_INTO_ONE) {
 			const int hexsz = the_hash_algo->hexsz;
 			string_list_sort(&names);
-			for_each_string_list_item(item, &existing_packs) {
+			for_each_string_list_item(item, &existing_nonkept_packs) {
 				char *sha1;
 				size_t len = strlen(item->string);
 				if (len < hexsz)
@@ -743,7 +743,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 
 	string_list_clear(&names, 0);
 	string_list_clear(&rollback, 0);
-	string_list_clear(&existing_packs, 0);
+	string_list_clear(&existing_nonkept_packs, 0);
 	string_list_clear(&existing_kept_packs, 0);
 	clear_pack_geometry(geometry);
 	strbuf_release(&line);
