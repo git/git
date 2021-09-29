@@ -49,9 +49,6 @@ static enum ipc_active_state get_active_state(wchar_t *pipe_path)
 	if (GetLastError() == ERROR_FILE_NOT_FOUND)
 		return IPC_STATE__PATH_NOT_FOUND;
 
-	trace2_data_intmax("ipc-debug", NULL, "getstate/waitpipe/gle",
-			   (intmax_t)GetLastError());
-
 	return IPC_STATE__OTHER_ERROR;
 }
 
@@ -115,11 +112,6 @@ static enum ipc_active_state connect_to_server(
 				if (GetLastError() == ERROR_SEM_TIMEOUT)
 					return IPC_STATE__NOT_LISTENING;
 
-				gle = GetLastError();
-				trace2_data_intmax("ipc-debug", NULL,
-						   "connect/waitpipe/gle",
-						   (intmax_t)gle);
-
 				return IPC_STATE__OTHER_ERROR;
 			}
 
@@ -141,31 +133,17 @@ static enum ipc_active_state connect_to_server(
 			break; /* try again */
 
 		default:
-			trace2_data_intmax("ipc-debug", NULL,
-					   "connect/createfile/gle",
-					   (intmax_t)gle);
-
 			return IPC_STATE__OTHER_ERROR;
 		}
 	}
 
 	if (!SetNamedPipeHandleState(hPipe, &mode, NULL, NULL)) {
-		gle = GetLastError();
-		trace2_data_intmax("ipc-debug", NULL,
-				   "connect/setpipestate/gle",
-				   (intmax_t)gle);
-
 		CloseHandle(hPipe);
 		return IPC_STATE__OTHER_ERROR;
 	}
 
 	*pfd = _open_osfhandle((intptr_t)hPipe, O_RDWR|O_BINARY);
 	if (*pfd < 0) {
-		gle = GetLastError();
-		trace2_data_intmax("ipc-debug", NULL,
-				   "connect/openosfhandle/gle",
-				   (intmax_t)gle);
-
 		CloseHandle(hPipe);
 		return IPC_STATE__OTHER_ERROR;
 	}
@@ -230,8 +208,7 @@ void ipc_client_close_connection(struct ipc_client_connection *connection)
 
 int ipc_client_send_command_to_connection(
 	struct ipc_client_connection *connection,
-	const char *message, size_t message_len,
-	struct strbuf *answer)
+	const char *message, struct strbuf *answer)
 {
 	int ret = 0;
 
@@ -239,7 +216,7 @@ int ipc_client_send_command_to_connection(
 
 	trace2_region_enter("ipc-client", "send-command", NULL);
 
-	if (write_packetized_from_buf_no_flush(message, message_len,
+	if (write_packetized_from_buf_no_flush(message, strlen(message),
 					       connection->fd) < 0 ||
 	    packet_flush_gently(connection->fd) < 0) {
 		ret = error(_("could not send IPC command"));
@@ -262,8 +239,7 @@ done:
 
 int ipc_client_send_command(const char *path,
 			    const struct ipc_client_connect_options *options,
-			    const char *message, size_t message_len,
-			    struct strbuf *response)
+			    const char *message, struct strbuf *response)
 {
 	int ret = -1;
 	enum ipc_active_state state;
@@ -274,9 +250,7 @@ int ipc_client_send_command(const char *path,
 	if (state != IPC_STATE__LISTENING)
 		return ret;
 
-	ret = ipc_client_send_command_to_connection(connection,
-						    message, message_len,
-						    response);
+	ret = ipc_client_send_command_to_connection(connection, message, response);
 
 	ipc_client_close_connection(connection);
 
@@ -484,7 +458,7 @@ static int do_io(struct ipc_server_thread_data *server_thread_data)
 	if (ret >= 0) {
 		ret = server_thread_data->server_data->application_cb(
 			server_thread_data->server_data->application_data,
-			buf.buf, buf.len, do_io_reply_callback, &reply_data);
+			buf.buf, do_io_reply_callback, &reply_data);
 
 		packet_flush_gently(reply_data.fd);
 
