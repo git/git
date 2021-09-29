@@ -2,7 +2,6 @@
 #include "config.h"
 #include "repository.h"
 #include "midx.h"
-#include "compat/fsmonitor/fsm-listen.h"
 
 #define UPDATE_DEFAULT_BOOL(s,v) do { if (s == -1) { s = v; } } while(0)
 

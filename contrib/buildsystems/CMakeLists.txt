@@ -292,11 +292,6 @@ else()
 	endif()
 endif()
 
-if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-	add_compile_definitions(HAVE_FSMONITOR_DAEMON_BACKEND)
-	list(APPEND compat_SOURCES compat/fsmonitor/fsm-listen-win32.c)
-endif()
-
 set(EXE_EXTENSION ${CMAKE_EXECUTABLE_SUFFIX})
 
 #header checks
