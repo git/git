@@ -733,7 +733,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		unsigned flags = 0;
 		if (git_env_bool(GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP, 0))
 			flags |= MIDX_WRITE_BITMAP | MIDX_WRITE_REV_INDEX;
-		write_midx_file(get_object_directory(), NULL, flags);
+		write_midx_file(get_object_directory(), NULL, NULL, flags);
 	}
 
 	string_list_clear(&names, 0);

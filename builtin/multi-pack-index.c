@@ -7,7 +7,8 @@
 #include "object-store.h"
 
 #define BUILTIN_MIDX_WRITE_USAGE \
-	N_("git multi-pack-index [<options>] write [--preferred-pack=<pack>]")
+	N_("git multi-pack-index [<options>] write [--preferred-pack=<pack>]" \
+	   "[--refs-snapshot=<path>]")
 
 #define BUILTIN_MIDX_VERIFY_USAGE \
 	N_("git multi-pack-index [<options>] verify")
@@ -45,6 +46,7 @@ static char const * const builtin_multi_pack_index_usage[] = {
 static struct opts_multi_pack_index {
 	const char *object_dir;
 	const char *preferred_pack;
+	const char *refs_snapshot;
 	unsigned long batch_size;
 	unsigned flags;
 	int stdin_packs;
@@ -83,6 +85,8 @@ static int cmd_multi_pack_index_write(int argc, const char **argv)
 			MIDX_WRITE_BITMAP | MIDX_WRITE_REV_INDEX),
 		OPT_BOOL(0, "stdin-packs", &opts.stdin_packs,
 			 N_("write multi-pack index containing only given indexes")),
+		OPT_FILENAME(0, "refs-snapshot", &opts.refs_snapshot,
+			     N_("refs snapshot for selecting bitmap commits")),
 		OPT_END(),
 	};
 
@@ -106,7 +110,8 @@ static int cmd_multi_pack_index_write(int argc, const char **argv)
 		read_packs_from_stdin(&packs);
 
 		ret = write_midx_file_only(opts.object_dir, &packs,
-					   opts.preferred_pack, opts.flags);
+					   opts.preferred_pack,
+					   opts.refs_snapshot, opts.flags);
 
 		string_list_clear(&packs, 0);
 
@@ -114,7 +119,7 @@ static int cmd_multi_pack_index_write(int argc, const char **argv)
 
 	}
 	return write_midx_file(opts.object_dir, opts.preferred_pack,
-			       opts.flags);
+			       opts.refs_snapshot, opts.flags);
 }
 
 static int cmd_multi_pack_index_verify(int argc, const char **argv)

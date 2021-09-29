@@ -49,6 +49,21 @@ write::
 	--stdin-packs::
 		Write a multi-pack index containing only the set of
 		line-delimited pack index basenames provided over stdin.
+
+	--refs-snapshot=<path>::
+		With `--bitmap`, optionally specify a file which
+		contains a "refs snapshot" taken prior to repacking.
++
+A reference snapshot is composed of line-delimited OIDs corresponding to
+the reference tips, usually taken by `git repack` prior to generating a
+new pack. A line may optionally start with a `+` character to indicate
+that the reference which corresponds to that OID is "preferred" (see
+linkgit:git-config[1]'s `pack.preferBitmapTips`.)
++
+The file given at `<path>` is expected to be readable, and can contain
+duplicates. (If a given OID is given more than once, it is marked as
+preferred if at least one instance of it begins with the special `+`
+marker).
 --
 
 verify::
