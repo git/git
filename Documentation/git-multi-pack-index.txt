@@ -45,6 +45,10 @@ write::
 
 	--[no-]bitmap::
 		Control whether or not a multi-pack bitmap is written.
+
+	--stdin-packs::
+		Write a multi-pack index containing only the set of
+		line-delimited pack index basenames provided over stdin.
 --
 
 verify::

@@ -168,6 +168,21 @@ test_expect_success 'write midx with two packs' '
 
 compare_results_with_midx "two packs"
 
+test_expect_success 'write midx with --stdin-packs' '
+	rm -fr $objdir/pack/multi-pack-index &&
+
+	idx="$(find $objdir/pack -name "test-2-*.idx")" &&
+	basename "$idx" >in &&
+
+	git multi-pack-index write --stdin-packs <in &&
+
+	test-tool read-midx $objdir | grep "\.idx$" >packs &&
+
+	test_cmp packs in
+'
+
+compare_results_with_midx "mixed mode (one pack + extra)"
+
 test_expect_success 'write progress off for redirected stderr' '
 	git multi-pack-index --object-dir=$objdir write 2>err &&
 	test_line_count = 0 err

@@ -47,6 +47,7 @@ static struct opts_multi_pack_index {
 	const char *preferred_pack;
 	unsigned long batch_size;
 	unsigned flags;
+	int stdin_packs;
 } opts;
 
 static struct option common_opts[] = {
@@ -61,6 +62,16 @@ static struct option *add_common_options(struct option *prev)
 	return parse_options_concat(common_opts, prev);
 }
 
+static void read_packs_from_stdin(struct string_list *to)
+{
+	struct strbuf buf = STRBUF_INIT;
+	while (strbuf_getline(&buf, stdin) != EOF)
+		string_list_append(to, buf.buf);
+	string_list_sort(to);
+
+	strbuf_release(&buf);
+}
+
 static int cmd_multi_pack_index_write(int argc, const char **argv)
 {
 	struct option *options;
@@ -70,6 +81,8 @@ static int cmd_multi_pack_index_write(int argc, const char **argv)
 			   N_("pack for reuse when computing a multi-pack bitmap")),
 		OPT_BIT(0, "bitmap", &opts.flags, N_("write multi-pack bitmap"),
 			MIDX_WRITE_BITMAP | MIDX_WRITE_REV_INDEX),
+		OPT_BOOL(0, "stdin-packs", &opts.stdin_packs,
+			 N_("write multi-pack index containing only given indexes")),
 		OPT_END(),
 	};
 
@@ -86,6 +99,20 @@ static int cmd_multi_pack_index_write(int argc, const char **argv)
 
 	FREE_AND_NULL(options);
 
+	if (opts.stdin_packs) {
+		struct string_list packs = STRING_LIST_INIT_DUP;
+		int ret;
+
+		read_packs_from_stdin(&packs);
+
+		ret = write_midx_file_only(opts.object_dir, &packs,
+					   opts.preferred_pack, opts.flags);
+
+		string_list_clear(&packs, 0);
+
+		return ret;
+
+	}
 	return write_midx_file(opts.object_dir, opts.preferred_pack,
 			       opts.flags);
 }
