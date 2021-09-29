@@ -283,4 +283,34 @@ test_expect_success 'pack.preferBitmapTips' '
 	)
 '
 
+test_expect_success 'hash-cache values are propagated from pack bitmaps' '
+	rm -fr repo &&
+	git init repo &&
+	test_when_finished "rm -fr repo" &&
+	(
+		cd repo &&
+
+		test_commit base &&
+		test_commit base2 &&
+		git repack -adb &&
+
+		test-tool bitmap dump-hashes >pack.raw &&
+		test_file_not_empty pack.raw &&
+		sort pack.raw >pack.hashes &&
+
+		test_commit new &&
+		git repack &&
+		git multi-pack-index write --bitmap &&
+
+		test-tool bitmap dump-hashes >midx.raw &&
+		sort midx.raw >midx.hashes &&
+
+		# ensure that every namehash in the pack bitmap can be found in
+		# the midx bitmap (i.e., that there are no oid-namehash pairs
+		# unique to the pack bitmap).
+		comm -23 pack.hashes midx.hashes >dropped.hashes &&
+		test_must_be_empty dropped.hashes
+	)
+'
+
 test_done
