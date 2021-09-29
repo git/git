@@ -351,25 +351,9 @@ void refresh_fsmonitor(struct index_state *istate)
 	}
 
 apply_results:
-	/*
-	 * The response from FSMonitor (excluding the header token) is
-	 * either:
-	 *
-	 * [a] a (possibly empty) list of NUL delimited relative
-	 *     pathnames of changed paths.  This list can contain
-	 *     files and directories.  Directories have a trailing
-	 *     slash.
-	 *
-	 * [b] a single '/' to indicate the provider had no
-	 *     information and that we should consider everything
-	 *     invalid.  We call this a trivial response.
-	 */
+	/* a fsmonitor process can return '/' to indicate all entries are invalid */
 	if (query_success && query_result.buf[bol] != '/') {
-		/*
-		 * Mark all pathnames returned by the monitor as dirty.
-		 *
-		 * This updates both the cache-entries and the untracked-cache.
-		 */
+		/* Mark all entries returned by the monitor as dirty */
 		buf = query_result.buf;
 		for (i = bol; i < query_result.len; i++) {
 			if (buf[i] != '\0')
@@ -384,15 +368,11 @@ apply_results:
 		if (istate->untracked)
 			istate->untracked->use_fsmonitor = 1;
 	} else {
-		/*
-		 * We received a trivial response, so invalidate everything.
-		 *
-		 * We only want to run the post index changed hook if
-		 * we've actually changed entries, so keep track if we
-		 * actually changed entries or not.
-		 */
-		int is_cache_changed = 0;
 
+		/* We only want to run the post index changed hook if we've actually changed entries, so keep track
+		 * if we actually changed entries or not */
+		int is_cache_changed = 0;
+		/* Mark all entries invalid */
 		for (i = 0; i < istate->cache_nr; i++) {
 			if (istate->cache[i]->ce_flags & CE_FSMONITOR_VALID) {
 				is_cache_changed = 1;
@@ -400,10 +380,7 @@ apply_results:
 			}
 		}
 
-		/*
-		 * If we're going to check every file, ensure we save
-		 * the results.
-		 */
+		/* If we're going to check every file, ensure we save the results */
 		if (is_cache_changed)
 			istate->cache_changed |= FSMONITOR_CHANGED;
 
