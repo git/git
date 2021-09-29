@@ -26,8 +26,6 @@ void prepare_repo_settings(struct repository *r)
 	UPDATE_DEFAULT_BOOL(r->settings.commit_graph_read_changed_paths, 1);
 	UPDATE_DEFAULT_BOOL(r->settings.gc_write_commit_graph, 1);
 
-	r->settings.fsmonitor = NULL; /* lazy loaded */
-
 	if (!repo_config_get_int(r, "index.version", &value))
 		r->settings.index_version = value;
 	if (!repo_config_get_maybe_bool(r, "core.untrackedcache", &value)) {
