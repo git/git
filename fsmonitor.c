@@ -199,25 +199,24 @@ static void fsmonitor_refresh_callback(struct index_state *istate, char *name)
 {
 	int i, len = strlen(name);
 	if (name[len - 1] == '/') {
-
-		/*
-		 * TODO We should binary search to find the first path with
-		 * TODO this directory prefix.  Then linearly update entries
-		 * TODO while the prefix matches.  Taking care to search without
-		 * TODO the trailing slash -- because '/' sorts after a few
-		 * TODO interesting special chars, like '.' and ' '.
-		 */
+		const char *rel;
+		int pos = index_name_pos(istate, name, len);
+		if (pos < 0)
+			pos = -pos - 1;
 
 		/* Mark all entries for the folder invalid */
-		for (i = 0; i < istate->cache_nr; i++) {
-			if (istate->cache[i]->ce_flags & CE_FSMONITOR_VALID &&
-			    starts_with(istate->cache[i]->name, name))
+		for (i = pos; i < istate->cache_nr; i++) {
+			if (!starts_with(istate->cache[i]->name, name))
+				break;
+			/* Only mark the immediate children in the folder */
+			rel = istate->cache[i]->name + len;
+			if (!strchr(rel, '/'))
 				istate->cache[i]->ce_flags &= ~CE_FSMONITOR_VALID;
 		}
 		/* Need to remove the / from the path for the untracked cache */
 		name[len - 1] = '\0';
 	} else {
-		int pos = index_name_pos(istate, name, strlen(name));
+		int pos = index_name_pos(istate, name, len);
 
 		if (pos >= 0) {
 			struct cache_entry *ce = istate->cache[pos];
@@ -403,6 +402,8 @@ apply_results:
 	 *     information and that we should consider everything
 	 *     invalid.  We call this a trivial response.
 	 */
+	trace2_region_enter("fsmonitor", "apply_results", istate->repo);
+
 	if (query_success && query_result.buf[bol] != '/') {
 		/*
 		 * Mark all pathnames returned by the monitor as dirty.
@@ -431,6 +432,9 @@ apply_results:
 		if (count > fsmonitor_force_update_threshold)
 			istate->cache_changed |= FSMONITOR_CHANGED;
 
+		trace2_data_intmax("fsmonitor", istate->repo, "apply_count",
+				   count);
+
 	} else {
 		/*
 		 * We received a trivial response, so invalidate everything.
@@ -458,6 +462,8 @@ apply_results:
 		if (istate->untracked)
 			istate->untracked->use_fsmonitor = 0;
 	}
+	trace2_region_leave("fsmonitor", "apply_results", istate->repo);
+
 	strbuf_release(&query_result);
 
 	/* Now that we've updated istate, save the last_update_token */
