@@ -11,6 +11,10 @@ uname_R := $(shell sh -c 'uname -r 2>/dev/null || echo not')
 uname_P := $(shell sh -c 'uname -p 2>/dev/null || echo not')
 uname_V := $(shell sh -c 'uname -v 2>/dev/null || echo not')
 
+ifneq ($(findstring MINGW,$(uname_S)),)
+	uname_S := MINGW
+endif
+
 ifdef MSVC
 	# avoid the MingW and Cygwin configuration sections
 	uname_S := Windows
@@ -588,7 +592,7 @@ ifeq ($(uname_S),NONSTOP_KERNEL)
 	SANE_TOOL_PATH = /usr/coreutils/bin:/usr/local/bin
 	SHELL_PATH = /usr/coreutils/bin/bash
 endif
-ifneq (,$(findstring MINGW,$(uname_S)))
+ifeq ($(uname_S),MINGW)
 	pathsep = ;
 	HAVE_ALLOCA_H = YesPlease
 	NO_PREAD = YesPlease
