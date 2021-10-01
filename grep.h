@@ -207,7 +207,6 @@ void grep_source_load_driver(struct grep_source *gs,
 int grep_source(struct grep_opt *opt, struct grep_source *gs);
 
 struct grep_opt *grep_opt_dup(const struct grep_opt *opt);
-int grep_threads_ok(const struct grep_opt *opt);
 
 /*
  * Mutex used around access to the attributes machinery if
