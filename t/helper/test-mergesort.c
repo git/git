@@ -23,7 +23,7 @@ static int compare_strings(const void *a, const void *b)
 	return strcmp(x->text, y->text);
 }
 
-int cmd__mergesort(int argc, const char **argv)
+static int sort_stdin(void)
 {
 	struct line *line, *p = NULL, *lines = NULL;
 	struct strbuf sb = STRBUF_INIT;
@@ -48,4 +48,11 @@ int cmd__mergesort(int argc, const char **argv)
 		lines = lines->next;
 	}
 	return 0;
+}
+
+int cmd__mergesort(int argc, const char **argv)
+{
+	if (argc == 2 && !strcmp(argv[1], "sort"))
+		return sort_stdin();
+	usage("test-tool mergesort sort");
 }
