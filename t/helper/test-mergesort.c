@@ -98,6 +98,16 @@ static struct dist {
 	DIST(shuffle),
 };
 
+static const struct dist *get_dist_by_name(const char *name)
+{
+	int i;
+	for (i = 0; i < ARRAY_SIZE(dist); i++) {
+	       if (!strcmp(dist[i].name, name))
+		       return &dist[i];
+	}
+	return NULL;
+}
+
 static void mode_copy(int *arr, int n)
 {
 	/* nothing */
@@ -153,6 +163,41 @@ static struct mode {
 	MODE(sort),
 	MODE(dither),
 };
+
+static const struct mode *get_mode_by_name(const char *name)
+{
+	int i;
+	for (i = 0; i < ARRAY_SIZE(mode); i++) {
+	       if (!strcmp(mode[i].name, name))
+		       return &mode[i];
+	}
+	return NULL;
+}
+
+static int generate(int argc, const char **argv)
+{
+	const struct dist *dist = NULL;
+	const struct mode *mode = NULL;
+	int i, n, m, *arr;
+
+	if (argc != 4)
+		return 1;
+
+	dist = get_dist_by_name(argv[0]);
+	mode = get_mode_by_name(argv[1]);
+	n = strtol(argv[2], NULL, 10);
+	m = strtol(argv[3], NULL, 10);
+	if (!dist || !mode)
+		return 1;
+
+	ALLOC_ARRAY(arr, n);
+	dist->fn(arr, n, m);
+	mode->fn(arr, n);
+	for (i = 0; i < n; i++)
+		printf("%08x\n", arr[i]);
+	free(arr);
+	return 0;
+}
 
 static struct stats {
 	int get_next, set_next, compare;
@@ -278,11 +323,24 @@ static int run_tests(int argc, const char **argv)
 
 int cmd__mergesort(int argc, const char **argv)
 {
+	int i;
+	const char *sep;
+
+	if (argc == 6 && !strcmp(argv[1], "generate"))
+		return generate(argc - 2, argv + 2);
 	if (argc == 2 && !strcmp(argv[1], "sort"))
 		return sort_stdin();
 	if (argc > 1 && !strcmp(argv[1], "test"))
 		return run_tests(argc - 2, argv + 2);
-	fprintf(stderr, "usage: test-tool mergesort sort\n");
+	fprintf(stderr, "usage: test-tool mergesort generate <distribution> <mode> <n> <m>\n");
+	fprintf(stderr, "   or: test-tool mergesort sort\n");
 	fprintf(stderr, "   or: test-tool mergesort test [<n>...]\n");
+	fprintf(stderr, "\n");
+	for (i = 0, sep = "distributions: "; i < ARRAY_SIZE(dist); i++, sep = ", ")
+		fprintf(stderr, "%s%s", sep, dist[i].name);
+	fprintf(stderr, "\n");
+	for (i = 0, sep = "modes: "; i < ARRAY_SIZE(mode); i++, sep = ", ")
+		fprintf(stderr, "%s%s", sep, mode[i].name);
+	fprintf(stderr, "\n");
 	return 129;
 }
