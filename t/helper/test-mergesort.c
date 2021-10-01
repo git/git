@@ -178,6 +178,33 @@ static void mode_unriffle(int *arr, int n)
 	free(tmp);
 }
 
+static unsigned int prev_pow2(unsigned int n)
+{
+	unsigned int pow2 = 1;
+	while (pow2 * 2 < n)
+		pow2 *= 2;
+	return pow2;
+}
+
+static void unriffle_recursively_skewed(int *arr, int n, int *tmp)
+{
+	if (n > 1) {
+		int pow2 = prev_pow2(n);
+		int rest = n - pow2;
+		unriffle(arr + pow2 - rest, rest * 2, tmp);
+		unriffle_recursively_skewed(arr, pow2, tmp);
+		unriffle_recursively_skewed(arr + pow2, rest, tmp);
+	}
+}
+
+static void mode_unriffle_skewed(int *arr, int n)
+{
+	int *tmp;
+	ALLOC_ARRAY(tmp, n);
+	unriffle_recursively_skewed(arr, n, tmp);
+	free(tmp);
+}
+
 #define MODE(name) { #name, mode_##name }
 
 static struct mode {
@@ -191,6 +218,7 @@ static struct mode {
 	MODE(sort),
 	MODE(dither),
 	MODE(unriffle),
+	MODE(unriffle_skewed),
 };
 
 static const struct mode *get_mode_by_name(const char *name)
