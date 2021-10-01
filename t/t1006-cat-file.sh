@@ -315,36 +315,39 @@ test_expect_success '%(deltabase) reports packed delta bases' '
 	}
 '
 
-bogus_type="bogus"
-bogus_content="bogus"
-bogus_size=$(strlen "$bogus_content")
-bogus_sha1=$(echo_without_newline "$bogus_content" | git hash-object -t $bogus_type --literally -w --stdin)
+test_expect_success 'setup bogus data' '
+	bogus_short_type="bogus" &&
+	bogus_short_content="bogus" &&
+	bogus_short_size=$(strlen "$bogus_short_content") &&
+	bogus_short_sha1=$(echo_without_newline "$bogus_short_content" | git hash-object -t $bogus_short_type --literally -w --stdin) &&
+
+	bogus_long_type="abcdefghijklmnopqrstuvwxyz1234679" &&
+	bogus_long_content="bogus" &&
+	bogus_long_size=$(strlen "$bogus_long_content") &&
+	bogus_long_sha1=$(echo_without_newline "$bogus_long_content" | git hash-object -t $bogus_long_type --literally -w --stdin)
+'
 
 test_expect_success "Type of broken object is correct" '
-	echo $bogus_type >expect &&
-	git cat-file -t --allow-unknown-type $bogus_sha1 >actual &&
+	echo $bogus_short_type >expect &&
+	git cat-file -t --allow-unknown-type $bogus_short_sha1 >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success "Size of broken object is correct" '
-	echo $bogus_size >expect &&
-	git cat-file -s --allow-unknown-type $bogus_sha1 >actual &&
+	echo $bogus_short_size >expect &&
+	git cat-file -s --allow-unknown-type $bogus_short_sha1 >actual &&
 	test_cmp expect actual
 '
-bogus_type="abcdefghijklmnopqrstuvwxyz1234679"
-bogus_content="bogus"
-bogus_size=$(strlen "$bogus_content")
-bogus_sha1=$(echo_without_newline "$bogus_content" | git hash-object -t $bogus_type --literally -w --stdin)
 
 test_expect_success "Type of broken object is correct when type is large" '
-	echo $bogus_type >expect &&
-	git cat-file -t --allow-unknown-type $bogus_sha1 >actual &&
+	echo $bogus_long_type >expect &&
+	git cat-file -t --allow-unknown-type $bogus_long_sha1 >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success "Size of large broken object is correct when type is large" '
-	echo $bogus_size >expect &&
-	git cat-file -s --allow-unknown-type $bogus_sha1 >actual &&
+	echo $bogus_long_size >expect &&
+	git cat-file -s --allow-unknown-type $bogus_long_sha1 >actual &&
 	test_cmp expect actual
 '
 
