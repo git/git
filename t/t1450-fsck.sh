@@ -85,11 +85,10 @@ test_expect_success 'object with hash and type mismatch' '
 		cmt=$(echo bogus | git commit-tree $tree) &&
 		git update-ref refs/heads/bogus $cmt &&
 
-		cat >expect <<-\EOF &&
-		fatal: invalid object type
-		EOF
-		test_must_fail git fsck 2>actual &&
-		test_cmp expect actual
+
+		test_must_fail git fsck 2>out &&
+		grep "^error: hash mismatch for " out &&
+		grep "^error: $oid: object is of unknown type '"'"'garbage'"'"'" out
 	)
 '
 
@@ -910,19 +909,20 @@ test_expect_success 'detect corrupt index file in fsck' '
 	test_i18ngrep "bad index file" errors
 '
 
-test_expect_success 'fsck hard errors on an invalid object type' '
+test_expect_success 'fsck error and recovery on invalid object type' '
 	git init --bare garbage-type &&
 	(
 		cd garbage-type &&
 
-		git hash-object --stdin -w -t garbage --literally </dev/null &&
+		garbage_blob=$(git hash-object --stdin -w -t garbage --literally </dev/null) &&
 
 		cat >err.expect <<-\EOF &&
 		fatal: invalid object type
 		EOF
 		test_must_fail git fsck >out 2>err &&
-		test_cmp err.expect err &&
-		test_must_be_empty out
+		grep -e "^error" -e "^fatal" err >errors &&
+		test_line_count = 1 errors &&
+		grep "$garbage_blob: object is of unknown type '"'"'garbage'"'"':" err
 	)
 '
 
