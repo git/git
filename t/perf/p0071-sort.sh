@@ -38,4 +38,15 @@ do
 	"
 done
 
+for file in unsorted sorted reversed
+do
+	test_perf "llist_mergesort() $file" "
+		test-tool mergesort sort <$file >actual
+	"
+
+	test_expect_success "llist_mergesort() $file sorts like sort(1)" "
+		test_cmp_bin sorted actual
+	"
+done
+
 test_done
