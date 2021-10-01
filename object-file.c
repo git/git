@@ -1239,7 +1239,7 @@ int unpack_loose_header(git_zstream *stream,
 					       buffer, bufsiz);
 
 	if (status < Z_OK)
-		return status;
+		return -1;
 
 	/* Make sure we have the terminating NUL */
 	if (!memchr(buffer, '\0', stream->next_out - (unsigned char *)buffer))
