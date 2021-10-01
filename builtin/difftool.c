@@ -320,6 +320,31 @@ static int checkout_path(unsigned mode, struct object_id *oid,
 	return ret;
 }
 
+static void write_file_in_directory(struct strbuf *dir, size_t dir_len,
+			const char *path, const char *content)
+{
+	add_path(dir, dir_len, path);
+	ensure_leading_directories(dir->buf);
+	unlink(dir->buf);
+	write_file(dir->buf, "%s", content);
+}
+
+/* Write the file contents for the left and right sides of the difftool
+ * dir-diff representation for submodules and symlinks. Symlinks and submodules
+ * are written as regular text files so that external diff tools can diff them
+ * as text files, resulting in behavior that is analogous to to what "git diff"
+ * displays for symlink and submodule diffs.
+ */
+static void write_standin_files(struct pair_entry *entry,
+			struct strbuf *ldir, size_t ldir_len,
+			struct strbuf *rdir, size_t rdir_len)
+{
+	if (*entry->left)
+		write_file_in_directory(ldir, ldir_len, entry->path, entry->left);
+	if (*entry->right)
+		write_file_in_directory(rdir, rdir_len, entry->path, entry->right);
+}
+
 static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 			struct child_process *child)
 {
@@ -529,16 +554,7 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 	 */
 	hashmap_for_each_entry(&submodules, &iter, entry,
 				entry /* member name */) {
-		if (*entry->left) {
-			add_path(&ldir, ldir_len, entry->path);
-			ensure_leading_directories(ldir.buf);
-			write_file(ldir.buf, "%s", entry->left);
-		}
-		if (*entry->right) {
-			add_path(&rdir, rdir_len, entry->path);
-			ensure_leading_directories(rdir.buf);
-			write_file(rdir.buf, "%s", entry->right);
-		}
+		write_standin_files(entry, &ldir, ldir_len, &rdir, rdir_len);
 	}
 
 	/*
@@ -548,18 +564,8 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 	 */
 	hashmap_for_each_entry(&symlinks2, &iter, entry,
 				entry /* member name */) {
-		if (*entry->left) {
-			add_path(&ldir, ldir_len, entry->path);
-			ensure_leading_directories(ldir.buf);
-			unlink(ldir.buf);
-			write_file(ldir.buf, "%s", entry->left);
-		}
-		if (*entry->right) {
-			add_path(&rdir, rdir_len, entry->path);
-			ensure_leading_directories(rdir.buf);
-			unlink(rdir.buf);
-			write_file(rdir.buf, "%s", entry->right);
-		}
+
+		write_standin_files(entry, &ldir, ldir_len, &rdir, rdir_len);
 	}
 
 	strbuf_release(&buf);
