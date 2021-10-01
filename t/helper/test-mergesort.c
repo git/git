@@ -150,6 +150,34 @@ static void mode_dither(int *arr, int n)
 		arr[i] += i % 5;
 }
 
+static void unriffle(int *arr, int n, int *tmp)
+{
+	int i, j;
+	COPY_ARRAY(tmp, arr, n);
+	for (i = j = 0; i < n; i += 2)
+		arr[j++] = tmp[i];
+	for (i = 1; i < n; i += 2)
+		arr[j++] = tmp[i];
+}
+
+static void unriffle_recursively(int *arr, int n, int *tmp)
+{
+	if (n > 1) {
+		int half = n / 2;
+		unriffle(arr, n, tmp);
+		unriffle_recursively(arr, half, tmp);
+		unriffle_recursively(arr + half, n - half, tmp);
+	}
+}
+
+static void mode_unriffle(int *arr, int n)
+{
+	int *tmp;
+	ALLOC_ARRAY(tmp, n);
+	unriffle_recursively(arr, n, tmp);
+	free(tmp);
+}
+
 #define MODE(name) { #name, mode_##name }
 
 static struct mode {
@@ -162,6 +190,7 @@ static struct mode {
 	MODE(reverse_2nd_half),
 	MODE(sort),
 	MODE(dither),
+	MODE(unriffle),
 };
 
 static const struct mode *get_mode_by_name(const char *name)
