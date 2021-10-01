@@ -93,6 +93,19 @@ include::blame-options.txt[]
 	is used for a caret to mark the boundary commit.
 
 
+THE DEFAULT FORMAT
+------------------
+
+When neither `--porcelain` nor `--incremental` option is specified,
+`git blame` will output annotation for each line with:
+
+- abbreviated object name for the commit the line came from;
+- author ident (by default author name and date, unless `-s` or `-e`
+  is specified); and
+- line number
+
+before the line contents.
+
 THE PORCELAIN FORMAT
 --------------------
 
