@@ -330,4 +330,46 @@ test_expect_success 'cleans up MIDX when appropriate' '
 	)
 '
 
+test_expect_success '--write-midx with preferred bitmap tips' '
+	git init midx-preferred-tips &&
+	test_when_finished "rm -fr midx-preferred-tips" &&
+	(
+		cd midx-preferred-tips &&
+
+		test_commit_bulk --message="%s" 103 &&
+
+		git log --format="%H" >commits.raw &&
+		sort <commits.raw >commits &&
+
+		git log --format="create refs/tags/%s/%s %H" HEAD >refs &&
+		git update-ref --stdin <refs &&
+
+		git repack --write-midx --write-bitmap-index &&
+		test_path_is_file $midx &&
+		test_path_is_file $midx-$(midx_checksum $objdir).bitmap &&
+
+		test-tool bitmap list-commits | sort >bitmaps &&
+		comm -13 bitmaps commits >before &&
+		test_line_count = 1 before &&
+
+		rm -fr $midx-$(midx_checksum $objdir).bitmap &&
+		rm -fr $midx-$(midx_checksum $objdir).rev &&
+		rm -fr $midx &&
+
+		# instead of constructing the snapshot ourselves (c.f., the test
+		# "write a bitmap with --refs-snapshot (preferred tips)" in
+		# t5326), mark the missing commit as preferred by adding it to
+		# the pack.preferBitmapTips configuration.
+		git for-each-ref --format="%(refname:rstrip=1)" \
+			--points-at="$(cat before)" >missing &&
+		git config pack.preferBitmapTips "$(cat missing)" &&
+		git repack --write-midx --write-bitmap-index &&
+
+		test-tool bitmap list-commits | sort >bitmaps &&
+		comm -13 bitmaps commits >after &&
+
+		! test_cmp before after
+	)
+'
+
 test_done
