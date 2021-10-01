@@ -1311,16 +1311,19 @@ int git_open_cloexec(const char *name, int flags);
  *
  * - ULHR_OK on success
  * - ULHR_BAD on error
+ * - ULHR_TOO_LONG if the header was too long
  *
  * It will only parse up to MAX_HEADER_LEN bytes unless an optional
  * "hdrbuf" argument is non-NULL. This is intended for use with
  * OBJECT_INFO_ALLOW_UNKNOWN_TYPE to extract the bad type for (error)
  * reporting. The full header will be extracted to "hdrbuf" for use
- * with parse_loose_header().
+ * with parse_loose_header(), ULHR_TOO_LONG will still be returned
+ * from this function to indicate that the header was too long.
  */
 enum unpack_loose_header_result {
 	ULHR_OK,
 	ULHR_BAD,
+	ULHR_TOO_LONG,
 };
 enum unpack_loose_header_result unpack_loose_header(git_zstream *stream,
 						    unsigned char *map,

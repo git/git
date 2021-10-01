@@ -356,12 +356,12 @@ do
 			if test "$arg2" = "-p"
 			then
 				cat >expect <<-EOF
-				error: unable to unpack $bogus_long_sha1 header
+				error: header for $bogus_long_sha1 too long, exceeds 32 bytes
 				fatal: Not a valid object name $bogus_long_sha1
 				EOF
 			else
 				cat >expect <<-EOF
-				error: unable to unpack $bogus_long_sha1 header
+				error: header for $bogus_long_sha1 too long, exceeds 32 bytes
 				fatal: git cat-file: could not get object info
 				EOF
 			fi &&

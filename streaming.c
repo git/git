@@ -235,6 +235,7 @@ static int open_istream_loose(struct git_istream *st, struct repository *r,
 	case ULHR_OK:
 		break;
 	case ULHR_BAD:
+	case ULHR_TOO_LONG:
 		goto error;
 	}
 	if (parse_loose_header(st->u.loose.hdr, &oi, 0) < 0)
