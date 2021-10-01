@@ -28,9 +28,7 @@ int cmd__mergesort(int argc, const char **argv)
 	struct line *line, *p = NULL, *lines = NULL;
 	struct strbuf sb = STRBUF_INIT;
 
-	for (;;) {
-		if (strbuf_getwholeline(&sb, stdin, '\n'))
-			break;
+	while (!strbuf_getline(&sb, stdin)) {
 		line = xmalloc(sizeof(struct line));
 		line->text = strbuf_detach(&sb, NULL);
 		if (p) {
@@ -46,7 +44,7 @@ int cmd__mergesort(int argc, const char **argv)
 	lines = llist_mergesort(lines, get_next, set_next, compare_strings);
 
 	while (lines) {
-		printf("%s", lines->text);
+		puts(lines->text);
 		lines = lines->next;
 	}
 	return 0;
