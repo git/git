@@ -54,6 +54,7 @@ test_expect_success 'object with hash mismatch' '
 		cd hash-mismatch &&
 
 		oid=$(echo blob | git hash-object -w --stdin) &&
+		oldoid=$oid &&
 		old=$(test_oid_to_path "$oid") &&
 		new=$(dirname $old)/$(test_oid ff_2) &&
 		oid="$(dirname $new)$(basename $new)" &&
@@ -65,7 +66,7 @@ test_expect_success 'object with hash mismatch' '
 		git update-ref refs/heads/bogus $cmt &&
 
 		test_must_fail git fsck 2>out &&
-		grep "$oid.*corrupt" out
+		grep "$oldoid: hash-path mismatch, found at: .*$new" out
 	)
 '
 
@@ -75,6 +76,7 @@ test_expect_success 'object with hash and type mismatch' '
 		cd hash-type-mismatch &&
 
 		oid=$(echo blob | git hash-object -w --stdin -t garbage --literally) &&
+		oldoid=$oid &&
 		old=$(test_oid_to_path "$oid") &&
 		new=$(dirname $old)/$(test_oid ff_2) &&
 		oid="$(dirname $new)$(basename $new)" &&
@@ -87,8 +89,8 @@ test_expect_success 'object with hash and type mismatch' '
 
 
 		test_must_fail git fsck 2>out &&
-		grep "^error: hash mismatch for " out &&
-		grep "^error: $oid: object is of unknown type '"'"'garbage'"'"'" out
+		grep "^error: $oldoid: hash-path mismatch, found at: .*$new" out &&
+		grep "^error: $oldoid: object is of unknown type '"'"'garbage'"'"'" out
 	)
 '
 

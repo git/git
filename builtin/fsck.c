@@ -607,6 +607,7 @@ static int fsck_loose(const struct object_id *oid, const char *path, void *data)
 	void *contents;
 	int eaten;
 	struct object_info oi = OBJECT_INFO_INIT;
+	struct object_id real_oid = *null_oid();
 	int err = 0;
 
 	strbuf_reset(&cb_data->obj_type);
@@ -614,12 +615,18 @@ static int fsck_loose(const struct object_id *oid, const char *path, void *data)
 	oi.sizep = &size;
 	oi.typep = &type;
 
-	if (read_loose_object(path, oid, &contents, &oi) < 0)
-		err = error(_("%s: object corrupt or missing: %s"),
-			    oid_to_hex(oid), path);
+	if (read_loose_object(path, oid, &real_oid, &contents, &oi) < 0) {
+		if (contents && !oideq(&real_oid, oid))
+			err = error(_("%s: hash-path mismatch, found at: %s"),
+				    oid_to_hex(&real_oid), path);
+		else
+			err = error(_("%s: object corrupt or missing: %s"),
+				    oid_to_hex(oid), path);
+	}
 	if (type != OBJ_NONE && type < 0)
 		err = error(_("%s: object is of unknown type '%s': %s"),
-			    oid_to_hex(oid), cb_data->obj_type.buf, path);
+			    oid_to_hex(&real_oid), cb_data->obj_type.buf,
+			    path);
 	if (err < 0) {
 		errors_found |= ERROR_OBJECT;
 		return 0; /* keep checking other objects */

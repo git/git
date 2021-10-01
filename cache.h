@@ -1344,7 +1344,8 @@ struct object_info;
 int parse_loose_header(const char *hdr, struct object_info *oi);
 
 int check_object_signature(struct repository *r, const struct object_id *oid,
-			   void *buf, unsigned long size, const char *type);
+			   void *buf, unsigned long size, const char *type,
+			   struct object_id *real_oidp);
 
 int finalize_object_file(const char *tmpfile, const char *filename);
 
