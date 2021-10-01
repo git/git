@@ -1324,8 +1324,7 @@ static void *unpack_loose_rest(git_zstream *stream,
  * too permissive for what we want to check. So do an anal
  * object header parse by hand.
  */
-int parse_loose_header(const char *hdr, struct object_info *oi,
-		       unsigned int flags)
+int parse_loose_header(const char *hdr, struct object_info *oi)
 {
 	const char *type_buf = hdr;
 	unsigned long size;
@@ -1347,15 +1346,6 @@ int parse_loose_header(const char *hdr, struct object_info *oi,
 	type = type_from_string_gently(type_buf, type_len, 1);
 	if (oi->type_name)
 		strbuf_add(oi->type_name, type_buf, type_len);
-	/*
-	 * Set type to 0 if its an unknown object and
-	 * we're obtaining the type using '--allow-unknown-type'
-	 * option.
-	 */
-	if ((flags & OBJECT_INFO_ALLOW_UNKNOWN_TYPE) && (type < 0))
-		type = 0;
-	else if (type < 0)
-		die(_("invalid object type"));
 	if (oi->typep)
 		*oi->typep = type;
 
@@ -1382,7 +1372,14 @@ int parse_loose_header(const char *hdr, struct object_info *oi,
 	/*
 	 * The length must be followed by a zero byte
 	 */
-	return *hdr ? -1 : type;
+	if (*hdr)
+		return -1;
+
+	/*
+	 * The format is valid, but the type may still be bogus. The
+	 * Caller needs to check its oi->typep.
+	 */
+	return 0;
 }
 
 static int loose_object_info(struct repository *r,
@@ -1396,6 +1393,7 @@ static int loose_object_info(struct repository *r,
 	char hdr[MAX_HEADER_LEN];
 	struct strbuf hdrbuf = STRBUF_INIT;
 	unsigned long size_scratch;
+	enum object_type type_scratch;
 	int allow_unknown = flags & OBJECT_INFO_ALLOW_UNKNOWN_TYPE;
 
 	if (oi->delta_base_oid)
@@ -1427,6 +1425,8 @@ static int loose_object_info(struct repository *r,
 
 	if (!oi->sizep)
 		oi->sizep = &size_scratch;
+	if (!oi->typep)
+		oi->typep = &type_scratch;
 
 	if (oi->disk_sizep)
 		*oi->disk_sizep = mapsize;
@@ -1434,6 +1434,18 @@ static int loose_object_info(struct repository *r,
 	switch (unpack_loose_header(&stream, map, mapsize, hdr, sizeof(hdr),
 				    allow_unknown ? &hdrbuf : NULL)) {
 	case ULHR_OK:
+		if (parse_loose_header(hdrbuf.len ? hdrbuf.buf : hdr, oi) < 0)
+			status = error(_("unable to parse %s header"), oid_to_hex(oid));
+		else if (!allow_unknown && *oi->typep < 0)
+			die(_("invalid object type"));
+
+		if (!oi->contentp)
+			break;
+		*oi->contentp = unpack_loose_rest(&stream, hdr, *oi->sizep, oid);
+		if (*oi->contentp)
+			goto cleanup;
+
+		status = -1;
 		break;
 	case ULHR_BAD:
 		status = error(_("unable to unpack %s header"),
@@ -1445,31 +1457,16 @@ static int loose_object_info(struct repository *r,
 		break;
 	}
 
-	if (status < 0) {
-		/* Do nothing */
-	} else if (hdrbuf.len) {
-		if ((status = parse_loose_header(hdrbuf.buf, oi, flags)) < 0)
-			status = error(_("unable to parse %s header with --allow-unknown-type"),
-				       oid_to_hex(oid));
-	} else if ((status = parse_loose_header(hdr, oi, flags)) < 0)
-		status = error(_("unable to parse %s header"), oid_to_hex(oid));
-
-	if (status >= 0 && oi->contentp) {
-		*oi->contentp = unpack_loose_rest(&stream, hdr,
-						  *oi->sizep, oid);
-		if (!*oi->contentp) {
-			git_inflate_end(&stream);
-			status = -1;
-		}
-	} else
-		git_inflate_end(&stream);
-
+	git_inflate_end(&stream);
+cleanup:
 	munmap(map, mapsize);
 	if (oi->sizep == &size_scratch)
 		oi->sizep = NULL;
 	strbuf_release(&hdrbuf);
+	if (oi->typep == &type_scratch)
+		oi->typep = NULL;
 	oi->whence = OI_LOOSE;
-	return (status < 0) ? status : 0;
+	return status;
 }
 
 int obj_read_use_lock = 0;
@@ -2533,6 +2530,7 @@ int read_loose_object(const char *path,
 	git_zstream stream;
 	char hdr[MAX_HEADER_LEN];
 	struct object_info oi = OBJECT_INFO_INIT;
+	oi.typep = type;
 	oi.sizep = size;
 
 	*contents = NULL;
@@ -2549,12 +2547,13 @@ int read_loose_object(const char *path,
 		goto out;
 	}
 
-	*type = parse_loose_header(hdr, &oi, 0);
-	if (*type < 0) {
+	if (parse_loose_header(hdr, &oi) < 0) {
 		error(_("unable to parse header of %s"), path);
 		git_inflate_end(&stream);
 		goto out;
 	}
+	if (*type < 0)
+		die(_("invalid object type"));
 
 	if (*type == OBJ_BLOB && *size > big_file_threshold) {
 		if (check_stream_oid(&stream, hdr, *size, path, expected_oid) < 0)
