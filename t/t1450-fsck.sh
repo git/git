@@ -865,4 +865,20 @@ test_expect_success 'detect corrupt index file in fsck' '
 	test_i18ngrep "bad index file" errors
 '
 
+test_expect_success 'fsck hard errors on an invalid object type' '
+	git init --bare garbage-type &&
+	(
+		cd garbage-type &&
+
+		git hash-object --stdin -w -t garbage --literally </dev/null &&
+
+		cat >err.expect <<-\EOF &&
+		fatal: invalid object type
+		EOF
+		test_must_fail git fsck >out 2>err &&
+		test_cmp err.expect err &&
+		test_must_be_empty out
+	)
+'
+
 test_done
