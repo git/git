@@ -74,7 +74,28 @@ void prepare_repo_settings(struct repository *r)
 
 	if (!repo_config_get_bool(r, "feature.experimental", &value) && value) {
 		UPDATE_DEFAULT_BOOL(r->settings.fetch_negotiation_algorithm, FETCH_NEGOTIATION_SKIPPING);
-		if (feature_many_files && fsmonitor_ipc__is_supported())
+
+		/*
+		 * Force enable the builtin FSMonitor (unless the repo
+		 * is incompatible or they've already selected it or
+		 * the hook version).  But only if they haven't
+		 * explicitly turned it off -- so only if our config
+		 * value is UNSET.
+		 *
+		 * lookup_fsmonitor_settings() and check_for_ipc() do
+		 * not distinguish between explicitly set FALSE and
+		 * UNSET, so we re-test for an UNSET config key here.
+		 *
+		 * I'm not sure I want to fix fsmonitor-settings.c to
+		 * have more than one _DISABLED state since our usage
+		 * here is only to support this experimental period
+		 * (and I don't want to overload the _reason field
+		 * because it describes incompabilities).
+		 */
+		if (feature_many_files &&
+		    fsmonitor_ipc__is_supported()  &&
+		    fsm_settings__get_mode(r) == FSMONITOR_MODE_DISABLED &&
+		    repo_config_get_bool(r, "core.usebuiltinfsmonitor", &value))
 			fsm_settings__set_ipc(r);
 	}
 

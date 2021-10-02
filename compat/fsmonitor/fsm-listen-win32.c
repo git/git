@@ -25,6 +25,9 @@ struct one_watch
 	DWORD count;
 
 	struct strbuf path;
+	wchar_t wpath_longname[MAX_LONG_PATH + 1];
+	DWORD wpath_longname_len;
+
 	HANDLE hDir;
 	HANDLE hEvent;
 	OVERLAPPED overlapped;
@@ -34,9 +37,24 @@ struct one_watch
 	 * need to later call GetOverlappedResult() and possibly CancelIoEx().
 	 */
 	BOOL is_active;
+
+	/*
+	 * Are shortnames enabled on the containing drive?  This is
+	 * always true for "C:/" drives and usually never true for
+	 * other drives.
+	 *
+	 * We only set this for the worktree because we only need to
+	 * convert shortname paths to longname paths for items we send
+	 * to clients.  (We don't care about shortname expansion for
+	 * paths inside a GITDIR because we never send them to
+	 * clients.)
+	 */
+	BOOL has_shortnames;
+	BOOL has_tilda;
+	wchar_t dotgit_shortname[16]; /* for 8.3 name */
 };
 
-struct fsmonitor_daemon_backend_data
+struct fsm_listen_data
 {
 	struct one_watch *watch_worktree;
 	struct one_watch *watch_gitdir;
@@ -48,22 +66,21 @@ struct fsmonitor_daemon_backend_data
 #define LISTENER_HAVE_DATA_WORKTREE 1
 #define LISTENER_HAVE_DATA_GITDIR 2
 	int nr_listener_handles;
-
-	struct strbuf dot_git_shortname;
 };
 
 /*
- * Convert the WCHAR path from the notification into UTF8 and
- * then normalize it.
+ * Convert the WCHAR path from the event into UTF8 and normalize it.
+ *
+ * `wpath_len` is in WCHARS not bytes.
  */
-static int normalize_path_in_utf8(FILE_NOTIFY_INFORMATION *info,
+static int normalize_path_in_utf8(wchar_t *wpath, DWORD wpath_len,
 				  struct strbuf *normalized_path)
 {
 	int reserve;
 	int len = 0;
 
 	strbuf_reset(normalized_path);
-	if (!info->FileNameLength)
+	if (!wpath_len)
 		goto normalize;
 
 	/*
@@ -72,12 +89,12 @@ static int normalize_path_in_utf8(FILE_NOTIFY_INFORMATION *info,
 	 * sequence of 2 UTF8 characters.  That should let us
 	 * avoid ERROR_INSUFFICIENT_BUFFER 99.9+% of the time.
 	 */
-	reserve = info->FileNameLength + 1;
+	reserve = 2 * wpath_len + 1;
 	strbuf_grow(normalized_path, reserve);
 
 	for (;;) {
-		len = WideCharToMultiByte(CP_UTF8, 0, info->FileName,
-					  info->FileNameLength / sizeof(WCHAR),
+		len = WideCharToMultiByte(CP_UTF8, 0,
+					  wpath, wpath_len,
 					  normalized_path->buf,
 					  strbuf_avail(normalized_path) - 1,
 					  NULL, NULL);
@@ -85,9 +102,7 @@ static int normalize_path_in_utf8(FILE_NOTIFY_INFORMATION *info,
 			goto normalize;
 		if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
 			error("[GLE %ld] could not convert path to UTF-8: '%.*ls'",
-			      GetLastError(),
-			      (int)(info->FileNameLength / sizeof(WCHAR)),
-			      info->FileName);
+			      GetLastError(), (int)wpath_len, wpath);
 			return -1;
 		}
 
@@ -100,9 +115,151 @@ normalize:
 	return strbuf_normalize_path(normalized_path);
 }
 
+/*
+ * See if the worktree root directory has shortnames enabled.
+ * This will help us decide if we need to do an expensive shortname
+ * to longname conversion on every notification event.
+ *
+ * We do not want to create a file to test this, so we assume that the
+ * root directory contains a ".git" file or directory.  (Out caller
+ * only calls us for the worktree root, so this should be fine.)
+ *
+ * Remember the spelling of the shortname for ".git" if it exists.
+ */
+static void check_for_shortnames(struct one_watch *watch)
+{
+	wchar_t buf_in[MAX_LONG_PATH + 1];
+	wchar_t buf_out[MAX_LONG_PATH + 1];
+	wchar_t *last_slash = NULL;
+	wchar_t *last_bslash = NULL;
+	wchar_t *last;
+
+	/* build L"<wt-root-path>/.git" */
+	wcscpy(buf_in, watch->wpath_longname);
+	wcscpy(buf_in + watch->wpath_longname_len, L".git");
+
+	if (!GetShortPathNameW(buf_in, buf_out, MAX_LONG_PATH))
+		return;
+
+	last_slash = wcsrchr(buf_out, L'/');
+	last_bslash = wcsrchr(buf_out, L'\\');
+	if (last_slash > last_bslash)
+		last = last_slash + 1;
+	else if (last_bslash)
+		last = last_bslash + 1;
+	else
+		last = buf_out;
+
+	if (!wcscmp(last, L".git"))
+		return;
+
+	watch->has_shortnames = 1;
+	wcsncpy(watch->dotgit_shortname, last,
+		ARRAY_SIZE(watch->dotgit_shortname));
+
+	/*
+	 * The shortname for ".git" is usually of the form "GIT~1", so
+	 * we should be able to avoid shortname to longname mapping on
+	 * every notification event if the source string does not
+	 * contain a "~".
+	 *
+	 * However, the documentation for GetLongPathNameW() says
+	 * that there are filesystems that don't follow that pattern
+	 * and warns against this optimization.
+	 *
+	 * Lets test this.
+	 */
+	if (wcschr(watch->dotgit_shortname, L'~'))
+		watch->has_tilda = 1;
+}
+
+enum get_relative_result {
+	GRR_NO_CONVERSION_NEEDED,
+	GRR_HAVE_CONVERSION,
+	GRR_SHUTDOWN,
+};
+
+/*
+ * Info notification paths are relative to the root of the watch.
+ * If our CWD is still at the root, then we can use relative paths
+ * to convert from shortnames to longnames.  If our process has a
+ * different CWD, then we need to construct an absolute path, do
+ * the conversion, and then return the root-relative portion.
+ *
+ * We use the longname form of the root as our basis and assume that
+ * it already has a trailing slash.
+ *
+ * `wpath_len` is in WCHARS not bytes.
+ */
+static enum get_relative_result get_relative_longname(
+	struct one_watch *watch,
+	const wchar_t *wpath, DWORD wpath_len,
+	wchar_t *wpath_longname)
+{
+	wchar_t buf_in[2 * MAX_LONG_PATH + 1];
+	wchar_t buf_out[MAX_LONG_PATH + 1];
+	DWORD root_len;
+
+	/* Build L"<wt-root-path>/<event-rel-path>" */
+	root_len = watch->wpath_longname_len;
+	wcsncpy(buf_in, watch->wpath_longname, root_len);
+	wcsncpy(buf_in + root_len, wpath, wpath_len);
+	buf_in[root_len + wpath_len] = 0;
+
+	/*
+	 * We don't actually know if the source pathname is a
+	 * shortname or a longname.  This routine allows either to be
+	 * given as input.
+	 */
+	if (!GetLongPathNameW(buf_in, buf_out, MAX_LONG_PATH)) {
+		/*
+		 * The shortname to longname conversion can fail for
+		 * various reasons, for example if the file has been
+		 * deleted.  (That is, if we just received a
+		 * delete-file notification event and the file is
+		 * already gone, we can't ask the file system to
+		 * lookup the longname for it.  Likewise, for moves
+		 * and renames where we are given the old name.)
+		 *
+		 * NEEDSWORK: Since deleting or moving a file or
+		 * directory by shortname is rather obscure, I'm going
+		 * ignore the failure and ask the caller to report the
+		 * original relative path.  This seemds kinder than
+		 * failing here and forcing a resync.
+		 */
+		return GRR_NO_CONVERSION_NEEDED;
+	}
+
+	if (!wcscmp(buf_in, buf_out)) {
+		/*
+		 * The path does not have a shortname alias.
+		 */
+		return GRR_NO_CONVERSION_NEEDED;
+	}
+
+	if (wcsncmp(buf_in, buf_out, root_len)) {
+		/*
+		 * The spelling of the root directory portion of the computed
+		 * longname has changed.  This should not happen.  Basically,
+		 * it means that we don't know where (without recomputing the
+		 * longname of just the root directory) to split out the
+		 * relative path.  Since this should not happen, I'm just
+		 * going to let this fail and force a shutdown (because all
+		 * subsequent events are probably going to see the same
+		 * mismatch).
+		 */
+		return GRR_SHUTDOWN;
+	}
+
+	/* Return the worktree root-relative portion of the longname. */
+
+	wcscpy(wpath_longname, buf_out + root_len);
+	return GRR_HAVE_CONVERSION;
+}
+
 void fsm_listen__stop_async(struct fsmonitor_daemon_state *state)
 {
-	SetEvent(state->backend_data->hListener[LISTENER_SHUTDOWN]);
+	SetEvent(state->listen_data->hListener[LISTENER_SHUTDOWN]);
 }
 
 static struct one_watch *create_watch(struct fsmonitor_daemon_state *state,
@@ -113,7 +270,9 @@ static struct one_watch *create_watch(struct fsmonitor_daemon_state *state,
 	DWORD share_mode =
 		FILE_SHARE_WRITE | FILE_SHARE_READ | FILE_SHARE_DELETE;
 	HANDLE hDir;
-	wchar_t wpath[MAX_LONG_PATH];
+	DWORD len_longname;
+	wchar_t wpath[MAX_LONG_PATH + 1];
+	wchar_t wpath_longname[MAX_LONG_PATH + 1];
 
 	if (xutftowcs_long_path(wpath, path) < 0) {
 		error(_("could not convert to wide characters: '%s'"), path);
@@ -130,12 +289,29 @@ static struct one_watch *create_watch(struct fsmonitor_daemon_state *state,
 		return NULL;
 	}
 
+	if (!GetLongPathNameW(wpath, wpath_longname, MAX_LONG_PATH)) {
+		error(_("[GLE %ld] could not get longname of '%s'"),
+		      GetLastError(), path);
+		CloseHandle(hDir);
+		return NULL;
+	}
+
+	len_longname = wcslen(wpath_longname);
+	if (wpath_longname[len_longname - 1] != L'/' &&
+	    wpath_longname[len_longname - 1] != L'\\') {
+		wpath_longname[len_longname++] = L'/';
+		wpath_longname[len_longname] = 0;
+	}
+
 	CALLOC_ARRAY(watch, 1);
 
 	watch->buf_len = sizeof(watch->buffer); /* assume full MAX_RDCW_BUF */
 
 	strbuf_init(&watch->path, 0);
 	strbuf_addstr(&watch->path, path);
+
+	wcscpy(watch->wpath_longname, wpath_longname);
+	watch->wpath_longname_len = len_longname;
 
 	watch->hDir = hDir;
 	watch->hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
@@ -157,7 +333,7 @@ static void destroy_watch(struct one_watch *watch)
 	free(watch);
 }
 
-static int start_rdcw_watch(struct fsmonitor_daemon_backend_data *data,
+static int start_rdcw_watch(struct fsm_listen_data *data,
 			    struct one_watch *watch)
 {
 	DWORD dwNotifyFilter =
@@ -222,12 +398,22 @@ static int recv_rdcw_watch(struct one_watch *watch)
 	}
 
 	/*
-	 * NEEDSWORK: If an external <gitdir> is deleted, the above
-	 * returns an error.  I'm not sure that there's anything that
-	 * we can do here other than failing -- the <worktree>/.git
-	 * link file would be broken anyway.  We might try to check
-	 * for that and return a better error message, but I'm not
-	 * sure it is worth it.
+	 * GetOverlappedResult() fails if the watched directory is
+	 * deleted while we were waiting for an overlapped IO to
+	 * complete.  The documentation did not list specific errors,
+	 * but I observed ERROR_ACCESS_DENIED (0x05) errors during
+	 * testing.
+	 *
+	 * Note that we only get notificaiton events for events
+	 * *within* the directory, not *on* the directory itself.
+	 * (These might be properies of the parent directory, for
+	 * example).
+	 *
+	 * NEEDSWORK: We might try to check for the deleted directory
+	 * case and return a better error message, but I'm not sure it
+	 * is worth it.
+	 *
+	 * Shutdown if we get any error.
 	 */
 
 	error("GetOverlappedResult failed on '%s' [GLE %ld]",
@@ -265,11 +451,11 @@ static void cancel_rdcw_watch(struct one_watch *watch)
  * Return 1 if we should shutdown.
  */
 static int process_1_worktree_event(
-	FILE_NOTIFY_INFORMATION *info,
 	struct string_list *cookie_list,
 	struct fsmonitor_batch **batch,
 	const struct strbuf *path,
-	enum fsmonitor_path_type t)
+	enum fsmonitor_path_type t,
+	DWORD info_action)
 {
 	const char *slash;
 
@@ -289,8 +475,8 @@ static int process_1_worktree_event(
 
 	case IS_DOT_GIT:
 		/* "<worktree>/.git" was deleted (or renamed away) */
-		if ((info->Action == FILE_ACTION_REMOVED) ||
-		    (info->Action == FILE_ACTION_RENAMED_OLD_NAME)) {
+		if ((info_action == FILE_ACTION_REMOVED) ||
+		    (info_action == FILE_ACTION_RENAMED_OLD_NAME)) {
 			trace2_data_string("fsmonitor", NULL,
 					   "fsm-listen/dotgit",
 					   "removed");
@@ -326,12 +512,13 @@ static int process_1_worktree_event(
  */
 static int process_worktree_events(struct fsmonitor_daemon_state *state)
 {
-	struct fsmonitor_daemon_backend_data *data = state->backend_data;
+	struct fsm_listen_data *data = state->listen_data;
 	struct one_watch *watch = data->watch_worktree;
 	struct strbuf path = STRBUF_INIT;
 	struct string_list cookie_list = STRING_LIST_INIT_DUP;
 	struct fsmonitor_batch *batch = NULL;
 	const char *p = watch->buffer;
+	wchar_t wpath_longname[MAX_LONG_PATH + 1];
 
 	/*
 	 * If the kernel gets more events than will fit in the kernel
@@ -339,6 +526,10 @@ static int process_worktree_events(struct fsmonitor_daemon_state *state)
 	 * returns a count of zero.
 	 *
 	 * Yes, the call returns WITHOUT error and with length zero.
+	 * This is the documented behavior.  (My testing has confirmed
+	 * that it also sets the last error to ERROR_NOTIFY_ENUM_DIR,
+	 * but we do not rely on that since the function did not
+	 * return an error and it is not documented.)
 	 *
 	 * (The "overflow" case is not ambiguous with the "no data" case
 	 * because we did an INFINITE wait.)
@@ -360,52 +551,62 @@ static int process_worktree_events(struct fsmonitor_daemon_state *state)
 	 */
 	for (;;) {
 		FILE_NOTIFY_INFORMATION *info = (void *)p;
+		wchar_t *wpath = info->FileName;
+		DWORD wpath_len = info->FileNameLength / sizeof(WCHAR);
 		enum fsmonitor_path_type t;
+		enum get_relative_result grr;
 
-		strbuf_reset(&path);
-		if (normalize_path_in_utf8(info, &path) == -1)
+		if (watch->has_shortnames) {
+			if (!wcscmp(wpath, watch->dotgit_shortname)) {
+				/*
+				 * This event exactly matches the
+				 * spelling of the shortname of
+				 * ".git", so we can skip some steps.
+				 *
+				 * (This case is odd because the user
+				 * can "rm -rf GIT~1" and we cannot
+				 * use the filesystem to map it back
+				 * to ".git".)
+				 */
+				strbuf_reset(&path);
+				strbuf_addstr(&path, ".git");
+				t = IS_DOT_GIT;
+				goto process_it;
+			}
+
+			if (watch->has_tilda && !wcschr(wpath, L'~')) {
+				/*
+				 * Shortnames on this filesystem have tildas
+				 * and the notification path does not have
+				 * one, so we assume that it is a longname.
+				 */
+				goto normalize_it;
+			}
+
+			grr = get_relative_longname(watch, wpath, wpath_len,
+						    wpath_longname);
+			switch (grr) {
+			case GRR_NO_CONVERSION_NEEDED: /* use info buffer as is */
+				break;
+			case GRR_HAVE_CONVERSION:
+				wpath = wpath_longname;
+				wpath_len = wcslen(wpath);
+				break;
+			default:
+			case GRR_SHUTDOWN:
+				goto force_shutdown;
+			}
+		}
+
+normalize_it:
+		if (normalize_path_in_utf8(wpath, wpath_len, &path) == -1)
 			goto skip_this_path;
 
 		t = fsmonitor_classify_path_workdir_relative(path.buf);
 
-		if (process_1_worktree_event(info, &cookie_list, &batch,
-					     &path, t))
-			goto force_shutdown;
-
-		/*
-		 * NEEDSWORK: If `path` contains a shortname (that is,
-		 * if any component within it is a shortname), we
-		 * should expand it to a longname (See
-		 * `GetLongPathNameW()`) and re-normalize, classify,
-		 * and process it because our client is probably
-		 * expecting "normal" paths.
-		 *
-		 * HOWEVER, if our process has called `chdir()` to get
-		 * us out of the root of the worktree (so that the
-		 * root directory is not busy), then we have to be
-		 * careful to convert the paths in the INFO array
-		 * (which are relative to the directory of the RDCW
-		 * watch and not the CWD) into absolute paths before
-		 * calling GetLongPathNameW() and then convert the
-		 * computed value back to a RDCW-relative pathname
-		 * (which is what we and the client expect).
-		 *
-		 * FOR NOW, just handle case (1) exactly so that we
-		 * shutdown properly when ".git" is deleted via the
-		 * shortname alias.
-		 *
-		 * We might see case (2) events for cookie files, but
-		 * we can ignore them.
-		 *
-		 * FOR LATER, handle case (3) where the worktree
-		 * events contain shortnames.  We should convert
-		 * them to longnames to avoid confusing the client.
-		 */
-		if (data->dot_git_shortname.len &&
-		    !strcmp(path.buf, data->dot_git_shortname.buf) &&
-		    process_1_worktree_event(info, &cookie_list, &batch,
-					     &data->dot_git_shortname,
-					     IS_DOT_GIT))
+process_it:
+		if (process_1_worktree_event(&cookie_list, &batch, &path, t,
+					     info->Action))
 			goto force_shutdown;
 
 skip_this_path:
@@ -421,7 +622,7 @@ skip_this_path:
 	return LISTENER_HAVE_DATA_WORKTREE;
 
 force_shutdown:
-	fsmonitor_batch__pop(batch);
+	fsmonitor_batch__free_list(batch);
 	string_list_clear(&cookie_list, 0);
 	strbuf_release(&path);
 	return LISTENER_SHUTDOWN;
@@ -435,10 +636,13 @@ force_shutdown:
  * Note that we DO NOT get filesystem events on the external <gitdir>
  * itself (it is not inside something that we are watching).  In particular,
  * we do not get an event if the external <gitdir> is deleted.
+ *
+ * Also, we do not care about shortnames within the external <gitdir>, since
+ * we never send these paths to clients.
  */
 static int process_gitdir_events(struct fsmonitor_daemon_state *state)
 {
-	struct fsmonitor_daemon_backend_data *data = state->backend_data;
+	struct fsm_listen_data *data = state->listen_data;
 	struct one_watch *watch = data->watch_gitdir;
 	struct strbuf path = STRBUF_INIT;
 	struct string_list cookie_list = STRING_LIST_INIT_DUP;
@@ -456,8 +660,10 @@ static int process_gitdir_events(struct fsmonitor_daemon_state *state)
 		const char *slash;
 		enum fsmonitor_path_type t;
 
-		strbuf_reset(&path);
-		if (normalize_path_in_utf8(info, &path) == -1)
+		if (normalize_path_in_utf8(
+			    info->FileName,
+			    info->FileNameLength / sizeof(WCHAR),
+			    &path) == -1)
 			goto skip_this_path;
 
 		t = fsmonitor_classify_path_gitdir_relative(path.buf);
@@ -480,14 +686,6 @@ static int process_gitdir_events(struct fsmonitor_daemon_state *state)
 			    t, path.buf);
 		}
 
-		/*
-		 * WRT shortnames, this external gitdir will not see
-		 * case (1) nor case (3) events.
-		 *
-		 * We might see case (2) events for cookie files, but
-		 * we can ignore them.
-		 */
-
 skip_this_path:
 		if (!info->NextEntryOffset)
 			break;
@@ -502,11 +700,11 @@ skip_this_path:
 
 void fsm_listen__loop(struct fsmonitor_daemon_state *state)
 {
-	struct fsmonitor_daemon_backend_data *data = state->backend_data;
+	struct fsm_listen_data *data = state->listen_data;
 	DWORD dwWait;
 	int result;
 
-	state->error_code = 0;
+	state->listen_error_code = 0;
 
 	if (start_rdcw_watch(data, data->watch_worktree) == -1)
 		goto force_error_stop;
@@ -571,7 +769,7 @@ void fsm_listen__loop(struct fsmonitor_daemon_state *state)
 	}
 
 force_error_stop:
-	state->error_code = -1;
+	state->listen_error_code = -1;
 
 force_shutdown:
 	/*
@@ -588,8 +786,7 @@ clean_shutdown:
 
 int fsm_listen__ctor(struct fsmonitor_daemon_state *state)
 {
-	struct fsmonitor_daemon_backend_data *data;
-	char shortname[16]; /* a padded 8.3 buffer */
+	struct fsm_listen_data *data;
 
 	CALLOC_ARRAY(data, 1);
 
@@ -599,6 +796,8 @@ int fsm_listen__ctor(struct fsmonitor_daemon_state *state)
 					    state->path_worktree_watch.buf);
 	if (!data->watch_worktree)
 		goto failed;
+
+	check_for_shortnames(data->watch_worktree);
 
 	if (state->nr_paths_watching > 1) {
 		data->watch_gitdir = create_watch(state,
@@ -620,53 +819,7 @@ int fsm_listen__ctor(struct fsmonitor_daemon_state *state)
 		data->nr_listener_handles++;
 	}
 
-	/*
-	 * NEEDSWORK: Properly handle 8.3 shortnames.  RDCW events can
-	 * contain a shortname (if another application uses a
-	 * shortname in a system call).  We care about aliasing and
-	 * the use of shortnames for:
-	 *
-	 * (1) ".git",
-	 *     -- if an external process deletes ".git" using "GIT~1",
-	 *        we need to catch that and shutdown.
-	 *
-	 * (2) our cookie files,
-	 *     -- if an external process deletes one of our cookie
-	 *        files using a shortname, we will get a shortname
-	 *        event for it.  However, we should have already
-	 *        gotten a longname event for it when we created the
-	 *        cookie, so we can safely discard the shortname
-	 *        events for cookie files.
-	 *
-	 * (3) the spelling of modified files that we report to clients.
-	 *     -- we need to report the longname to the client because
-	 *        that is what they are expecting.  Presumably, the
-	 *        client is going to lookup the paths that we report
-	 *        in their index and untracked-cache, so we should
-	 *        normalize the data for them.  (Technically, they
-	 *        could adapt, so we could relax this maybe.)
-	 *
-	 * FOR NOW, while our CWD is at the root of the worktree we
-	 * can easily get the spelling of the shortname of ".git" (if
-	 * the volume has shortnames enabled).  For most worktrees
-	 * this value will be "GIT~1", but we don't want to assume
-	 * that.
-	 *
-	 * Capture this so that we can handle (1).
-	 *
-	 * We leave (3) for a future effort.
-	 */
-	strbuf_init(&data->dot_git_shortname, 0);
-	GetShortPathNameA(".git", shortname, sizeof(shortname));
-	if (!strcmp(".git", shortname))
-		trace_printf_key(&trace_fsmonitor, "No shortname for '.git'");
-	else {
-		trace_printf_key(&trace_fsmonitor,
-				 "Shortname of '.git' is '%s'", shortname);
-		strbuf_addstr(&data->dot_git_shortname, shortname);
-	}
-
-	state->backend_data = data;
+	state->listen_data = data;
 	return 0;
 
 failed:
@@ -679,16 +832,16 @@ failed:
 
 void fsm_listen__dtor(struct fsmonitor_daemon_state *state)
 {
-	struct fsmonitor_daemon_backend_data *data;
+	struct fsm_listen_data *data;
 
-	if (!state || !state->backend_data)
+	if (!state || !state->listen_data)
 		return;
 
-	data = state->backend_data;
+	data = state->listen_data;
 
 	CloseHandle(data->hEventShutdown);
 	destroy_watch(data->watch_worktree);
 	destroy_watch(data->watch_gitdir);
 
-	FREE_AND_NULL(state->backend_data);
+	FREE_AND_NULL(state->listen_data);
 }

@@ -1,6 +1,8 @@
 #ifndef FSMONITOR_IPC_H
 #define FSMONITOR_IPC_H
 
+#include "simple-ipc.h"
+
 /*
  * Returns true if built-in file system monitor daemon is defined
  * for this platform.
@@ -25,8 +27,6 @@ enum ipc_active_state fsmonitor_ipc__get_state(void);
 /*
  * Connect to a `git-fsmonitor--daemon` process via simple-ipc
  * and ask for the set of changed files since the given token.
- *
- * This DOES NOT use the hook interface.
  *
  * Spawn a daemon process in the background if necessary.
  *

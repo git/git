@@ -5,13 +5,6 @@
  * See Documentation/technical/api-simple-ipc.txt
  */
 
-#ifdef SUPPORTS_SIMPLE_IPC
-#include "pkt-line.h"
-
-/*
- * Simple IPC Client Side API.
- */
-
 enum ipc_active_state {
 	/*
 	 * The pipe/socket exists and the daemon is waiting for connections.
@@ -42,6 +35,13 @@ enum ipc_active_state {
 
 	IPC_STATE__OTHER_ERROR,
 };
+
+#ifdef SUPPORTS_SIMPLE_IPC
+#include "pkt-line.h"
+
+/*
+ * Simple IPC Client Side API.
+ */
 
 struct ipc_client_connect_options {
 	/*

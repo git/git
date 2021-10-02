@@ -108,7 +108,7 @@ static enum fsmonitor_reason is_remote(struct repository *r)
 
 	driveType = GetDriveTypeW(wfullpath);
 	trace_printf_key(&trace_fsmonitor,
-			 "DriveType '%s' L'%S' (%u)",
+			 "DriveType '%s' L'%ls' (%u)",
 			 r->worktree, wfullpath, driveType);
 
 	if (driveType == DRIVE_REMOTE) {

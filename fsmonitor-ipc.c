@@ -66,9 +66,6 @@ try_again:
 		goto done;
 
 	case IPC_STATE__NOT_LISTENING:
-		ret = error(_("fsmonitor_ipc__send_query: daemon not available"));
-		goto done;
-
 	case IPC_STATE__PATH_NOT_FOUND:
 		if (tried_to_spawn)
 			goto done;
