@@ -3,6 +3,8 @@
 Git - fast, scalable, distributed revision control system
 =========================================================
 
+<a href="https://git-scm.com/" rel="noopener" target="_blank"><img alt="Git-Scm Logo" src="https://git-scm.com/images/logo@2x.png" align="right" /></a>
+
 Git is a fast, scalable, distributed revision control system with an
 unusually rich command set that provides both high-level operations
 and full access to internals.
