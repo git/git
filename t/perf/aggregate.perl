@@ -17,8 +17,8 @@ sub get_times {
 		my $rt = ((defined $1 ? $1 : 0.0)*60+$2)*60+$3;
 		return ($rt, $4, $5);
 	# size
-	} elsif ($line =~ /^\d+$/) {
-		return $&;
+	} elsif ($line =~ /^\s*(\d+)$/) {
+		return $1;
 	} else {
 		die "bad input line: $line";
 	}
