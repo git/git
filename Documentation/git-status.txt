@@ -207,6 +207,7 @@ show tracked paths:
 
 * ' ' = unmodified
 * 'M' = modified
+* 'T' = file type changed (regular file, symbolic link or submodule)
 * 'A' = added
 * 'D' = deleted
 * 'R' = renamed
@@ -217,14 +218,16 @@ show tracked paths:
 X          Y     Meaning
 -------------------------------------------------
 	 [AMD]   not updated
-M        [ MD]   updated in index
-A        [ MD]   added to index
+M        [ MTD]  updated in index
+T        [ MTD]  type changed in index
+A        [ MTD]  added to index
 D                deleted from index
-R        [ MD]   renamed in index
-C        [ MD]   copied in index
-[MARC]           index and work tree matches
-[ MARC]     M    work tree changed since index
-[ MARC]     D    deleted in work tree
+R        [ MTD]  renamed in index
+C        [ MTD]  copied in index
+[MTARC]          index and work tree matches
+[ MTARC]    M    work tree changed since index
+[ MTARC]    T    type changed in work tree since index
+[ MTARC]    D    deleted in work tree
 	    R    renamed in work tree
 	    C    copied in work tree
 -------------------------------------------------
