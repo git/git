@@ -270,6 +270,36 @@ Fixes since v2.33
  * Correct nr and alloc members of strvec struct to be of type size_t.
    (merge 8d133a4653 jk/strvec-typefix later to maint).
 
+ * "git stash", where the tentative change involves changing a
+   directory to a file (or vice versa), was confused, which has been
+   corrected.
+   (merge bee8691f19 en/stash-df-fix later to maint).
+
+ * "git clone" from a repository whose HEAD is unborn into a bare
+   repository didn't follow the branch name the other side used, which
+   is corrected.
+   (merge 6b58df54cf jk/clone-unborn-head-in-bare later to maint).
+
+ * "git cvsserver" had a long-standing bug in its authentication code,
+   which has finally been corrected (it is unclear and is a separate
+   question if anybody is seriously using it, though).
+   (merge 4b81f690f6 cb/cvsserver later to maint).
+
+ * "git difftool --dir-diff" mishandled symbolic links.
+   (merge 5bafb3576a da/difftool-dir-diff-symlink-fix later to maint).
+
+ * Sensitive data in the HTTP trace were supposed to be redacted, but
+   we failed to do so in HTTP/2 requests.
+   (merge b66c77a64e jk/http-redact-fix later to maint).
+
+ * "make clean" has been updated to remove leftover .depend/
+   directories, even when it is not told to use them to compute header
+   dependencies.
+   (merge f0a74bcb03 ab/make-clean-depend-dirs later to maint).
+
+ * Protocol v0 clients can get stuck parsing a malformed feature line.
+   (merge 44d2aec6e8 ah/connect-parse-feature-v0-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 1d9c8daef8 ab/bundle-doc later to maint).
    (merge 81483fe613 en/merge-strategy-docs later to maint).
@@ -308,3 +338,7 @@ Fixes since v2.33
    (merge ae578de926 po/git-config-doc-mentions-help-c later to maint).
    (merge 187fc8b8b6 cb/unicode-14 later to maint).
    (merge 3584cff71c en/typofixes later to maint).
+   (merge f188160be9 ab/bundle-remove-verbose-option later to maint).
+   (merge 8c6b4332b4 rs/close-pack-leakfix later to maint).
+   (merge 51b04c05b7 bs/difftool-msg-tweak later to maint).
+   (merge dd20e4a6db ab/make-compdb-fix later to maint).
