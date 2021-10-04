@@ -11,16 +11,42 @@ test_expect_success 'setup' '
 	git cat-file --batch >unsorted
 '
 
-test_perf 'sort(1)' '
-	sort <unsorted >expect
+test_perf 'sort(1) unsorted' '
+	sort <unsorted >sorted
 '
 
-test_perf 'string_list_sort()' '
-	test-tool string-list sort <unsorted >actual
+test_expect_success 'reverse' '
+	sort -r <unsorted >reversed
 '
 
-test_expect_success 'string_list_sort() sorts like sort(1)' '
-	test_cmp_bin expect actual
-'
+for file in sorted reversed
+do
+	test_perf "sort(1) $file" "
+		sort <$file >actual
+	"
+done
+
+for file in unsorted sorted reversed
+do
+
+	test_perf "string_list_sort() $file" "
+		test-tool string-list sort <$file >actual
+	"
+
+	test_expect_success "string_list_sort() $file sorts like sort(1)" "
+		test_cmp_bin sorted actual
+	"
+done
+
+for file in unsorted sorted reversed
+do
+	test_perf "llist_mergesort() $file" "
+		test-tool mergesort sort <$file >actual
+	"
+
+	test_expect_success "llist_mergesort() $file sorts like sort(1)" "
+		test_cmp_bin sorted actual
+	"
+done
 
 test_done
