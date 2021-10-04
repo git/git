@@ -832,8 +832,6 @@ int reflog_expire(const char *refname,
 		  reflog_expiry_cleanup_fn cleanup_fn,
 		  void *policy_cb_data);
 
-int ref_storage_backend_exists(const char *name);
-
 struct ref_store *get_main_ref_store(struct repository *r);
 
 /**
