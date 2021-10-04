@@ -211,7 +211,7 @@ show tracked paths:
 * 'A' = added
 * 'D' = deleted
 * 'R' = renamed
-* 'C' = copied
+* 'C' = copied (if config option status.renames is set to "copies")
 * 'U' = updated but unmerged
 
 ....
