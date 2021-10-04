@@ -1853,8 +1853,18 @@ int hash_object_file(const struct git_hash_algo *algo, const void *buf,
 static void close_loose_object(int fd)
 {
 	if (!the_repository->objects->odb->will_destroy) {
-		if (fsync_object_files)
+		switch (fsync_object_files) {
+		case FSYNC_OBJECT_FILES_OFF:
+			break;
+		case FSYNC_OBJECT_FILES_ON:
 			fsync_or_die(fd, "loose object file");
+			break;
+		case FSYNC_OBJECT_FILES_BATCH:
+			fsync_loose_object_bulk_checkin(fd);
+			break;
+		default:
+			BUG("Invalid fsync_object_files mode.");
+		}
 	}
 
 	if (close(fd) != 0)
