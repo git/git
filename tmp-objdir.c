@@ -11,6 +11,7 @@
 struct tmp_objdir {
 	struct strbuf path;
 	struct strvec env;
+	struct object_directory *prev_odb;
 };
 
 /*
@@ -38,6 +39,9 @@ static int tmp_objdir_destroy_1(struct tmp_objdir *t, int on_signal)
 	if (t == the_tmp_objdir)
 		the_tmp_objdir = NULL;
 
+	if (!on_signal && t->prev_odb)
+		restore_primary_odb(t->prev_odb, t->path.buf);
+
 	/*
 	 * This may use malloc via strbuf_grow(), but we should
 	 * have pre-grown t->path sufficiently so that this
@@ -52,6 +56,7 @@ static int tmp_objdir_destroy_1(struct tmp_objdir *t, int on_signal)
 	 */
 	if (!on_signal)
 		tmp_objdir_free(t);
+
 	return err;
 }
 
@@ -121,7 +126,7 @@ static int setup_tmp_objdir(const char *root)
 	return ret;
 }
 
-struct tmp_objdir *tmp_objdir_create(void)
+struct tmp_objdir *tmp_objdir_create(const char *prefix)
 {
 	static int installed_handlers;
 	struct tmp_objdir *t;
@@ -129,11 +134,16 @@ struct tmp_objdir *tmp_objdir_create(void)
 	if (the_tmp_objdir)
 		BUG("only one tmp_objdir can be used at a time");
 
-	t = xmalloc(sizeof(*t));
+	t = xcalloc(1, sizeof(*t));
 	strbuf_init(&t->path, 0);
 	strvec_init(&t->env);
 
-	strbuf_addf(&t->path, "%s/incoming-XXXXXX", get_object_directory());
+	/*
+	 * Use a string starting with tmp_ so that the builtin/prune.c code
+	 * can recognize any stale objdirs left behind by a crash and delete
+	 * them.
+	 */
+	strbuf_addf(&t->path, "%s/tmp_objdir-%s-XXXXXX", get_object_directory(), prefix);
 
 	/*
 	 * Grow the strbuf beyond any filename we expect to be placed in it.
@@ -269,6 +279,13 @@ int tmp_objdir_migrate(struct tmp_objdir *t)
 	if (!t)
 		return 0;
 
+	if (t->prev_odb) {
+		if (the_repository->objects->odb->will_destroy)
+			BUG("migrating an ODB that was marked for destruction");
+		restore_primary_odb(t->prev_odb, t->path.buf);
+		t->prev_odb = NULL;
+	}
+
 	strbuf_addbuf(&src, &t->path);
 	strbuf_addstr(&dst, get_object_directory());
 
@@ -291,4 +308,11 @@ const char **tmp_objdir_env(const struct tmp_objdir *t)
 void tmp_objdir_add_as_alternate(const struct tmp_objdir *t)
 {
 	add_to_alternates_memory(t->path.buf);
+}
+
+void tmp_objdir_replace_primary_odb(struct tmp_objdir *t, int will_destroy)
+{
+	if (t->prev_odb)
+		BUG("the primary object database is already replaced");
+	t->prev_odb = set_temporary_primary_odb(t->path.buf, will_destroy);
 }
