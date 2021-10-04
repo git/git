@@ -170,7 +170,7 @@ test_expect_success 'for-each-ref emits warnings for broken names' '
 	! grep -e "badname" output &&
 	! grep -e "broken\.\.\.symref" output &&
 	test_i18ngrep "ignoring ref with broken name refs/heads/broken\.\.\.ref" error &&
-	test_i18ngrep "ignoring broken ref refs/heads/badname" error &&
+	test_i18ngrep ! "ignoring broken ref refs/heads/badname" error &&
 	test_i18ngrep "ignoring ref with broken name refs/heads/broken\.\.\.symref" error
 '
 
