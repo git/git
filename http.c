@@ -1489,6 +1489,10 @@ static int handle_curl_result(struct slot_results *results)
 		 */
 		credential_reject(&cert_auth);
 		return HTTP_NOAUTH;
+#ifdef GIT_CURL_HAVE_CURLE_SSL_PINNEDPUBKEYNOTMATCH
+	} else if (results->curl_result == CURLE_SSL_PINNEDPUBKEYNOTMATCH) {
+		return HTTP_NOMATCHPUBLICKEY;
+#endif
 	} else if (missing_target(results))
 		return HTTP_MISSING_TARGET;
 	else if (results->http_code == 401) {

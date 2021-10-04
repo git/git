@@ -154,6 +154,7 @@ struct http_get_options {
 #define HTTP_START_FAILED	3
 #define HTTP_REAUTH	4
 #define HTTP_NOAUTH	5
+#define HTTP_NOMATCHPUBLICKEY	6
 
 /*
  * Requests a URL and stores the result in a strbuf.
