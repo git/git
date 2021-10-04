@@ -21,8 +21,7 @@ test_xmllint () {
 }
 
 test_lazy_prereq SYSTEMD_ANALYZE '
-	systemd-analyze --help >out &&
-	grep verify out
+	systemd-analyze verify /lib/systemd/system/basic.target
 '
 
 test_systemd_analyze_verify () {
