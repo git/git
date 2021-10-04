@@ -65,11 +65,7 @@ struct ipc_client_connect_options {
 	unsigned int uds_disallow_chdir:1;
 };
 
-#define IPC_CLIENT_CONNECT_OPTIONS_INIT { \
-	.wait_if_busy = 0, \
-	.wait_if_not_found = 0, \
-	.uds_disallow_chdir = 0, \
-}
+#define IPC_CLIENT_CONNECT_OPTIONS_INIT { 0 }
 
 /*
  * Determine if a server is listening on this named pipe or socket using

@@ -37,7 +37,9 @@ struct submodule_update_strategy {
 	enum submodule_update_type type;
 	const char *command;
 };
-#define SUBMODULE_UPDATE_STRATEGY_INIT {SM_UPDATE_UNSPECIFIED, NULL}
+#define SUBMODULE_UPDATE_STRATEGY_INIT { \
+	.type = SM_UPDATE_UNSPECIFIED, \
+}
 
 int is_gitmodules_unmerged(struct index_state *istate);
 int is_writing_gitmodules_ok(void);
