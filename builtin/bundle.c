@@ -39,8 +39,6 @@ static const char * const builtin_bundle_unbundle_usage[] = {
   NULL
 };
 
-static int verbose;
-
 static int parse_options_cmd_bundle(int argc,
 		const char **argv,
 		const char* prefix,
@@ -197,7 +195,6 @@ cleanup:
 int cmd_bundle(int argc, const char **argv, const char *prefix)
 {
 	struct option options[] = {
-		OPT__VERBOSE(&verbose, N_("be verbose; must be placed before a subcommand")),
 		OPT_END()
 	};
 	int result;
