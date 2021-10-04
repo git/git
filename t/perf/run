@@ -74,7 +74,7 @@ set_git_test_installed () {
 	mydir=$1
 
 	mydir_abs=$(cd $mydir && pwd)
-	mydir_abs_wrappers="$mydir_abs_wrappers/bin-wrappers"
+	mydir_abs_wrappers="$mydir_abs/bin-wrappers"
 	if test -d "$mydir_abs_wrappers"
 	then
 		GIT_TEST_INSTALLED=$mydir_abs_wrappers
