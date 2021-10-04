@@ -225,8 +225,8 @@ C        [ MD]   copied in index
 [MARC]           index and work tree matches
 [ MARC]     M    work tree changed since index
 [ MARC]     D    deleted in work tree
-[ D]        R    renamed in work tree
-[ D]        C    copied in work tree
+	    R    renamed in work tree
+	    C    copied in work tree
 -------------------------------------------------
 D           D    unmerged, both deleted
 A           U    unmerged, added by us
