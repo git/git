@@ -230,6 +230,7 @@ test_perf_ () {
 		test_ok_ "$1"
 	fi
 	"$TEST_DIRECTORY"/perf/min_time.perl test_time.* >"$base".result
+	rm test_time.*
 }
 
 test_perf () {
