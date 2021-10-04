@@ -5,6 +5,7 @@
 
 test_description='Test string list functionality'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_split () {
