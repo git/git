@@ -471,6 +471,64 @@ test_expect_success '--rebase-merges with strategies' '
 	test_cmp expect G.t
 '
 
+test_expect_success '--rebase-merges with conflicting special branch names handled' '
+	git checkout --detach E &&
+	git merge -m "Merge branch F into ${SQ}branch-point${SQ}" F &&
+	m1=$(git rev-parse --short HEAD) &&
+
+	git checkout --detach E &&
+	git merge -m "Merge branch F into ${SQ}onto${SQ}" F &&
+	m2=$(git rev-parse --short HEAD) &&
+
+	git checkout --detach E &&
+	git merge -m "Merge branch F into ${SQ}index.lock${SQ}" F &&
+	m3=$(git rev-parse --short HEAD) &&
+
+	git checkout -b special-names H &&
+	git merge -m "Merge branch ${SQ}branch-point${SQ} into H" "${m1}" &&
+	m1m=$(git rev-parse --short HEAD) &&
+	git merge -m "Merge branch ${SQ}onto${SQ} into H" "${m2}" &&
+	m2m=$(git rev-parse --short HEAD) &&
+	git merge -m "Merge branch ${SQ}index.lock${SQ} into H" "${m3}" &&
+	m3m=$(git rev-parse --short HEAD) &&
+
+	cat >expect <<-EOF &&
+	label onto
+
+	reset $a # A
+	pick $b B
+	label E
+
+	reset $c # C
+	pick $d D
+	merge -C $e E # E
+	label branch-point-2
+	merge -C $m1 $f # Merge branch F into '\''branch-point'\''
+	label branch-point
+
+	reset branch-point-2 # E
+	merge -C $m2 $f # Merge branch F into '\''onto'\''
+	label onto-2
+
+	reset branch-point-2 # E
+	merge -C $m3 $f # Merge branch F into '\''index.lock'\''
+	label index-lock
+
+	reset branch-point-2 # E
+	merge -C $h onto # H
+	merge -C $m1m branch-point # Merge branch '\''branch-point'\'' into H
+	merge -C $m2m onto-2 # Merge branch '\''onto'\'' into H
+	merge -C $m3m index-lock # Merge branch '\''index.lock'\'' into H
+
+	EOF
+
+	cp expect script-from-scratch &&
+	test_config sequence.editor \""$PWD"/replace-editor.sh\" &&
+	git rebase --rebase-merges --force-rebase -i G &&
+	grep -v "^#" .git/ORIGINAL-TODO >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success '--rebase-merges with commit that can generate bad characters for filename' '
 	git checkout -b colon-in-label E &&
 	git merge -m "colon: this should work" G &&
