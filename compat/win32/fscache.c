@@ -38,6 +38,8 @@ static struct trace_key trace_fscache = TRACE_KEY_INIT(FSCACHE);
  * An entry in the file system cache. Used for both entire directory listings
  * and file entries.
  */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
 struct fsentry {
 	struct hashmap_entry ent;
 	mode_t st_mode;
@@ -70,6 +72,7 @@ struct fsentry {
 	 */
 	struct dirent dirent;
 };
+#pragma GCC diagnostic pop
 
 struct heap_fsentry {
 	struct fsentry ent;
