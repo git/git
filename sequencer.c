@@ -5014,6 +5014,15 @@ static const char *set_oid_label(struct label_state *state,
 	return string_entry->string;
 }
 
+/*
+ * Check whether the label name given by `label` is already in use.
+ * Returns 1 if the label is present in `label_state.labels`, 0 otherwise.
+ */
+static int is_label_used(const struct label_state *state, const char *label)
+{
+	return !!hashmap_get_from_hash(&state->labels, strihash(label), label);
+}
+
 static const char *label_oid(struct object_id *oid, const char *label,
 			     struct label_state *state)
 {
@@ -5051,15 +5060,14 @@ static const char *label_oid(struct object_id *oid, const char *label,
 		 * We may need to extend the abbreviated hash so that there is
 		 * no conflicting label.
 		 */
-		if (hashmap_get_from_hash(&state->labels, strihash(p), p)) {
+		if (is_label_used(state, p)) {
 			size_t i = strlen(p) + 1;
 
 			oid_to_hex_r(p, oid);
 			for (; i < the_hash_algo->hexsz; i++) {
 				char save = p[i];
 				p[i] = '\0';
-				if (!hashmap_get_from_hash(&state->labels,
-							   strihash(p), p))
+				if (!is_label_used(state, p))
 					break;
 				p[i] = save;
 			}
@@ -5110,8 +5118,7 @@ static const char *label_oid(struct object_id *oid, const char *label,
 		if ((buf->len == the_hash_algo->hexsz &&
 		     !get_oid_hex(label, &dummy)) ||
 		    (buf->len == 1 && *label == '#') ||
-		    hashmap_get_from_hash(&state->labels,
-					  strihash(label), label)) {
+		    is_label_used(state, label)) {
 			/*
 			 * If the label already exists, or if the label is a
 			 * valid full OID, or the label is a '#' (which we use
@@ -5123,9 +5130,7 @@ static const char *label_oid(struct object_id *oid, const char *label,
 			for (i = 2; ; i++) {
 				strbuf_setlen(buf, len);
 				strbuf_addf(buf, "-%d", i);
-				if (!hashmap_get_from_hash(&state->labels,
-							   strihash(buf->buf),
-							   buf->buf))
+				if (!is_label_used(state, buf->buf))
 					break;
 			}
 
