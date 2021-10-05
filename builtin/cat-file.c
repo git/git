@@ -529,6 +529,8 @@ static int batch_objects(struct batch_options *opt)
 		if (has_promisor_remote())
 			warning("This repository uses promisor remotes. Some objects may not be loaded.");
 
+		read_replace_refs = 0;
+
 		cb.opt = opt;
 		cb.expand = &data;
 		cb.scratch = &output;

@@ -617,4 +617,70 @@ test_expect_success 'cat-file --batch="batman" with --batch-all-objects will wor
 	cmp expect actual
 '
 
+test_expect_success 'set up replacement object' '
+	orig=$(git rev-parse HEAD) &&
+	git cat-file commit $orig >orig &&
+	{
+		cat orig &&
+		echo extra
+	} >fake &&
+	fake=$(git hash-object -t commit -w fake) &&
+	orig_size=$(git cat-file -s $orig) &&
+	fake_size=$(git cat-file -s $fake) &&
+	git replace $orig $fake
+'
+
+test_expect_success 'cat-file --batch respects replace objects' '
+	git cat-file --batch >actual <<-EOF &&
+	$orig
+	EOF
+	{
+		echo "$orig commit $fake_size" &&
+		cat fake &&
+		echo
+	} >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'cat-file --batch-check respects replace objects' '
+	git cat-file --batch-check >actual <<-EOF &&
+	$orig
+	EOF
+	echo "$orig commit $fake_size" >expect &&
+	test_cmp expect actual
+'
+
+# Pull the entry for object with oid "$1" out of the output of
+# "cat-file --batch", including its object content (which requires
+# parsing and reading a set amount of bytes, hence perl).
+extract_batch_output () {
+    perl -ne '
+	BEGIN { $oid = shift }
+	if (/^$oid \S+ (\d+)$/) {
+	    print;
+	    read STDIN, my $buf, $1;
+	    print $buf;
+	    print "\n";
+	}
+    ' "$@"
+}
+
+test_expect_success 'cat-file --batch-all-objects --batch ignores replace' '
+	git cat-file --batch-all-objects --batch >actual.raw &&
+	extract_batch_output $orig <actual.raw >actual &&
+	{
+		echo "$orig commit $orig_size" &&
+		cat orig &&
+		echo
+	} >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'cat-file --batch-all-objects --batch-check ignores replace' '
+	git cat-file --batch-all-objects --batch-check >actual.raw &&
+	grep ^$orig actual.raw >actual &&
+	echo "$orig commit $orig_size" >expect &&
+	test_cmp expect actual
+'
+
 test_done
