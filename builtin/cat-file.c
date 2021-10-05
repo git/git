@@ -470,7 +470,9 @@ static int batch_unordered_object(const struct object_id *oid, void *vdata)
 	if (oidset_insert(data->seen, oid))
 		return 0;
 
-	return batch_object_cb(oid, data);
+	oidcpy(&data->expand->oid, oid);
+	batch_object_write(NULL, data->scratch, data->opt, data->expand);
+	return 0;
 }
 
 static int batch_unordered_loose(const struct object_id *oid,
