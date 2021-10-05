@@ -1518,7 +1518,16 @@ static void receive_wanted_refs(struct packet_reader *reader,
 static void receive_packfile_uris(struct packet_reader *reader,
 				  struct string_list *uris)
 {
+	int original_options;
 	process_section_header(reader, "packfile-uris", 0);
+	/*
+	 * In some setups, packfile-uris act as bearer tokens,
+	 * redact them by default.
+	 */
+	original_options = reader->options;
+	if (git_env_bool("GIT_TRACE_REDACT", 1))
+		reader->options |= PACKET_READ_REDACT_ON_TRACE;
+
 	while (packet_reader_read(reader) == PACKET_READ_NORMAL) {
 		if (reader->pktlen < the_hash_algo->hexsz ||
 		    reader->line[the_hash_algo->hexsz] != ' ')
@@ -1526,6 +1535,8 @@ static void receive_packfile_uris(struct packet_reader *reader,
 
 		string_list_append(uris, reader->line);
 	}
+	reader->options = original_options;
+
 	if (reader->status != PACKET_READ_DELIM)
 		die("expected DELIM");
 }

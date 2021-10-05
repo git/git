@@ -443,7 +443,10 @@ enum packet_read_status packet_read_with_status(int fd, char **src_buffer,
 		len--;
 
 	buffer[len] = 0;
-	packet_trace(buffer, len, 0);
+	if (options & PACKET_READ_REDACT_ON_TRACE)
+		packet_trace("<redacted>", 10, 0);
+	else
+		packet_trace(buffer, len, 0);
 
 	if ((options & PACKET_READ_DIE_ON_ERR_PACKET) &&
 	    starts_with(buffer, "ERR "))
