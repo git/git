@@ -331,6 +331,11 @@ test_expect_success "Size of broken object is correct" '
 	git cat-file -s --allow-unknown-type $bogus_sha1 >actual &&
 	test_cmp expect actual
 '
+
+test_expect_success 'clean up broken object' '
+	rm .git/objects/$(test_oid_to_path $bogus_sha1)
+'
+
 bogus_type="abcdefghijklmnopqrstuvwxyz1234679"
 bogus_content="bogus"
 bogus_size=$(strlen "$bogus_content")
@@ -346,6 +351,10 @@ test_expect_success "Size of large broken object is correct when type is large" 
 	echo $bogus_size >expect &&
 	git cat-file -s --allow-unknown-type $bogus_sha1 >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'clean up broken object' '
+	rm .git/objects/$(test_oid_to_path $bogus_sha1)
 '
 
 # Tests for git cat-file --follow-symlinks
