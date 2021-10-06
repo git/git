@@ -59,6 +59,9 @@ UI, Workflows & Features
  * The unicode character width table (used for output alignment) has
    been updated.
 
+ * The ref iteration code used to optionally allow dangling refs to be
+   shown, which has been tightened up.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -132,6 +135,11 @@ Performance, Internal Implementation, Development Support etc.
 
  * An oddball OPTION_ARGUMENT feature has been removed from the
    parse-options API.
+
+ * The mergesort implementation used to sort linked list has been
+   optimized.
+
+ * Remove external declaration of functions that no longer exist.
 
 
 Fixes since v2.33
@@ -342,3 +350,4 @@ Fixes since v2.33
    (merge 8c6b4332b4 rs/close-pack-leakfix later to maint).
    (merge 51b04c05b7 bs/difftool-msg-tweak later to maint).
    (merge dd20e4a6db ab/make-compdb-fix later to maint).
+   (merge 6ffb990dc4 os/status-docfix later to maint).
