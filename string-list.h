@@ -104,11 +104,6 @@ struct string_list {
 void string_list_init_nodup(struct string_list *list);
 void string_list_init_dup(struct string_list *list);
 
-/**
- * TODO remove: For compatibility with any in-flight older API users
- */
-void string_list_init(struct string_list *list, int strdup_strings);
-
 /** Callback function type for for_each_string_list */
 typedef int (*string_list_each_func_t)(struct string_list_item *, void *);
 
