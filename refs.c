@@ -33,11 +33,6 @@ static struct ref_storage_be *find_ref_storage_backend(const char *name)
 	return NULL;
 }
 
-int ref_storage_backend_exists(const char *name)
-{
-	return find_ref_storage_backend(name) != NULL;
-}
-
 /*
  * How to handle various characters in refnames:
  * 0: An acceptable character for refs
