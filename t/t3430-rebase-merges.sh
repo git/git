@@ -565,6 +565,94 @@ test_expect_success '--rebase-merges with branch with slashes preserved' '
 	test_cmp expect actual
 '
 
+test_expect_success '--rebase-merges with conflicting slashes handled' '
+	git checkout -b bug E &&
+	git merge -m "Merge branch F into ${SQ}bug${SQ}" F &&
+	m1=$(git rev-parse --short HEAD) &&
+
+	git checkout -b conflicting-slashes H &&
+	git merge -m "Merge branch ${SQ}bug${SQ} into H" bug &&
+	m1m=$(git rev-parse --short HEAD) &&
+	git branch -D bug &&
+
+	git checkout -b bug/some-bug E &&
+	git merge -m "Merge branch F into ${SQ}bug/some-bug${SQ}" F &&
+	m2=$(git rev-parse --short HEAD) &&
+
+	git checkout conflicting-slashes &&
+	git merge -m "Merge branch ${SQ}bug/some-bug${SQ} into H" bug/some-bug &&
+	m2m=$(git rev-parse --short HEAD) &&
+
+	git checkout -b foo/bar E &&
+	git merge -m "Merge branch F into ${SQ}foo/bar${SQ}" F &&
+	m3=$(git rev-parse --short HEAD) &&
+
+	git checkout -b foo/qux E &&
+	git merge -m "Merge branch F into ${SQ}foo/qux${SQ}" F &&
+	m4=$(git rev-parse --short HEAD) &&
+
+	git checkout conflicting-slashes &&
+	git merge -m "Merge branch ${SQ}foo/bar${SQ} into H" foo/bar &&
+	m3m=$(git rev-parse --short HEAD) &&
+
+	git merge -m "Merge branch ${SQ}foo/qux${SQ} into H" foo/qux &&
+	m4m=$(git rev-parse --short HEAD) &&
+
+	git branch -D foo/bar foo/qux &&
+	git checkout -b foo E &&
+	git merge -m "Merge branch F into ${SQ}foo${SQ}" F &&
+	m5=$(git rev-parse --short HEAD) &&
+	git checkout conflicting-slashes &&
+	git merge -m "Merge branch ${SQ}foo${SQ} into H" foo &&
+	m5m=$(git rev-parse --short HEAD) &&
+
+	cat >expect <<-EOF &&
+	label onto
+
+	reset $a # A
+	pick $b B
+	label E
+
+	reset $c # C
+	pick $d D
+	merge -C $e E # E
+	label branch-point
+	merge -C $m1 $f # Merge branch F into '\''bug'\''
+	label bug
+
+	reset branch-point # E
+	merge -C $m2 $f # Merge branch F into '\''bug/some-bug'\''
+	label bug-some-bug
+
+	reset branch-point # E
+	merge -C $m3 $f # Merge branch F into '\''foo/bar'\''
+	label foo/bar
+
+	reset branch-point # E
+	merge -C $m4 $f # Merge branch F into '\''foo/qux'\''
+	label foo/qux
+
+	reset branch-point # E
+	merge -C $m5 $f # Merge branch F into '\''foo'\''
+	label foo-2
+
+	reset branch-point # E
+	merge -C $h onto # H
+	merge -C $m1m bug # Merge branch '\''bug'\'' into H
+	merge -C $m2m bug-some-bug # Merge branch '\''bug/some-bug'\'' into H
+	merge -C $m3m foo/bar # Merge branch '\''foo/bar'\'' into H
+	merge -C $m4m foo/qux # Merge branch '\''foo/qux'\'' into H
+	merge -C $m5m foo-2 # Merge branch '\''foo'\'' into H
+
+	EOF
+
+	cp expect script-from-scratch &&
+	test_config sequence.editor \""$PWD"/replace-editor.sh\" &&
+	git rebase --rebase-merges --force-rebase -i G &&
+	grep -v "^#" .git/ORIGINAL-TODO >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success '--rebase-merges with commit that can generate bad characters for filename' '
 	git checkout -b colon-in-label E &&
 	git merge -m "colon: this should work" G &&
