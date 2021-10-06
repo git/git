@@ -4980,6 +4980,19 @@ struct label_state {
 };
 
 /*
+ * Add `label` to the set of in-use label names (`label_state.labels`).
+ *
+ * No validation of the label name is performed.
+ */
+static void add_label(struct label_state *state, const char *label)
+{
+	struct labels_entry *labels_entry;
+	FLEX_ALLOC_STR(labels_entry, label, label);
+	hashmap_entry_init(&labels_entry->entry, strihash(label));
+	hashmap_add(&state->labels, &labels_entry->entry);
+}
+
+/*
  * Sets the label for the given oid (`label_state.commit2label`) and adds
  * the label to the `label_state.labels` map.
  *
@@ -4990,12 +5003,9 @@ struct label_state {
 static const char *set_oid_label(struct label_state *state,
 				 const struct object_id *oid, const char *label)
 {
-	struct labels_entry *labels_entry;
 	struct string_entry *string_entry;
 
-	FLEX_ALLOC_STR(labels_entry, label, label);
-	hashmap_entry_init(&labels_entry->entry, strihash(label));
-	hashmap_add(&state->labels, &labels_entry->entry);
+	add_label(state, label);
 
 	FLEX_ALLOC_STR(string_entry, string, label);
 	oidcpy(&string_entry->entry.oid, oid);
