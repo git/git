@@ -13,18 +13,15 @@ struct submodule_cache;
 struct promisor_remote_config;
 
 enum untracked_cache_setting {
-	UNTRACKED_CACHE_UNSET = -1,
-	UNTRACKED_CACHE_REMOVE = 0,
-	UNTRACKED_CACHE_KEEP = 1,
-	UNTRACKED_CACHE_WRITE = 2
+	UNTRACKED_CACHE_KEEP,
+	UNTRACKED_CACHE_REMOVE,
+	UNTRACKED_CACHE_WRITE,
 };
 
 enum fetch_negotiation_setting {
-	FETCH_NEGOTIATION_UNSET = -1,
-	FETCH_NEGOTIATION_NONE = 0,
-	FETCH_NEGOTIATION_DEFAULT = 1,
-	FETCH_NEGOTIATION_SKIPPING = 2,
-	FETCH_NEGOTIATION_NOOP = 3,
+	FETCH_NEGOTIATION_DEFAULT,
+	FETCH_NEGOTIATION_SKIPPING,
+	FETCH_NEGOTIATION_NOOP,
 };
 
 struct repo_settings {
@@ -34,6 +31,8 @@ struct repo_settings {
 	int commit_graph_read_changed_paths;
 	int gc_write_commit_graph;
 	int fetch_write_commit_graph;
+	int command_requires_full_index;
+	int sparse_index;
 
 	int index_version;
 	enum untracked_cache_setting core_untracked_cache;
@@ -42,9 +41,6 @@ struct repo_settings {
 	enum fetch_negotiation_setting fetch_negotiation_algorithm;
 
 	int core_multi_pack_index;
-
-	unsigned command_requires_full_index:1,
-		 sparse_index:1;
 };
 
 struct repository {
