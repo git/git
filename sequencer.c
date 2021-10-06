@@ -5014,13 +5014,21 @@ static const char *set_oid_label(struct label_state *state,
 	return string_entry->string;
 }
 
+static const struct labels_entry *
+get_label_entry(const struct label_state *state, const char *label)
+{
+	struct hashmap_entry *hme =
+		hashmap_get_from_hash(&state->labels, strihash(label), label);
+	return container_of_or_null(hme, const struct labels_entry, entry);
+}
+
 /*
  * Check whether the label name given by `label` is already in use.
  * Returns 1 if the label is present in `label_state.labels`, 0 otherwise.
  */
 static int is_label_used(const struct label_state *state, const char *label)
 {
-	return !!hashmap_get_from_hash(&state->labels, strihash(label), label);
+	return !!get_label_entry(state, label);
 }
 
 static const char *label_oid(struct object_id *oid, const char *label,
