@@ -36,7 +36,9 @@ Design Details
   directory of an alternate. It refers only to packfiles in that
   same directory.
 
-- The core.multiPackIndex config setting must be on to consume MIDX files.
+- The core.multiPackIndex config setting must be on (which is the
+  default) to consume MIDX files.  Setting it to `false` prevents
+  Git from reading a MIDX file, even if one exists.
 
 - The file format includes parameters for the object ID hash
   function, so a future change of hash algorithm does not require
