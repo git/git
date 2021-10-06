@@ -72,6 +72,12 @@ For more details, see the 'pathspec' entry in linkgit:gitglossary[7].
 --ignore-unmatch::
 	Exit with a zero status even if no files matched.
 
+--sparse::
+	Allow updating index entries outside of the sparse-checkout cone.
+	Normally, `git rm` refuses to update index entries whose paths do
+	not fit within the sparse-checkout cone. See
+	linkgit:git-sparse-checkout[1] for more.
+
 -q::
 --quiet::
 	`git rm` normally outputs one line (in the form of an `rm` command)

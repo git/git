@@ -237,6 +237,7 @@ static int check_local_mod(struct object_id *head, int index_only)
 
 static int show_only = 0, force = 0, index_only = 0, recursive = 0, quiet = 0;
 static int ignore_unmatch = 0, pathspec_file_nul;
+static int include_sparse;
 static char *pathspec_from_file;
 
 static struct option builtin_rm_options[] = {
@@ -247,6 +248,7 @@ static struct option builtin_rm_options[] = {
 	OPT_BOOL('r', NULL,             &recursive,  N_("allow recursive removal")),
 	OPT_BOOL( 0 , "ignore-unmatch", &ignore_unmatch,
 				N_("exit with a zero status even if nothing matched")),
+	OPT_BOOL(0, "sparse", &include_sparse, N_("allow updating entries outside of the sparse-checkout cone")),
 	OPT_PATHSPEC_FROM_FILE(&pathspec_from_file),
 	OPT_PATHSPEC_FILE_NUL(&pathspec_file_nul),
 	OPT_END(),
@@ -298,7 +300,10 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 	ensure_full_index(&the_index);
 	for (i = 0; i < active_nr; i++) {
 		const struct cache_entry *ce = active_cache[i];
-		if (ce_skip_worktree(ce))
+
+		if (!include_sparse &&
+		    (ce_skip_worktree(ce) ||
+		     !path_in_sparse_checkout(ce->name, &the_index)))
 			continue;
 		if (!ce_path_match(&the_index, ce, &pathspec, seen))
 			continue;
@@ -322,7 +327,8 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 				seen_any = 1;
 			else if (ignore_unmatch)
 				continue;
-			else if (matches_skip_worktree(&pathspec, i, &skip_worktree_seen))
+			else if (!include_sparse &&
+				 matches_skip_worktree(&pathspec, i, &skip_worktree_seen))
 				string_list_append(&only_match_skip_worktree, original);
 			else
 				die(_("pathspec '%s' did not match any files"), original);
