@@ -1029,22 +1029,42 @@ kidding - be patient!)
 [[v2-git-send-email]]
 === Sending v2
 
-Skip ahead to <<reviewing,Responding to Reviews>> for information on how to
-handle comments from reviewers. Continue this section when your topic branch is
-shaped the way you want it to look for your patchset v2.
+This section will focus on how to send a v2 of your patchset. To learn what
+should go into v2, skip ahead to <<reviewing,Responding to Reviews>> for
+information on how to handle comments from reviewers.
 
-When you're ready with the next iteration of your patch, the process is fairly
-similar.
-
-First, generate your v2 patches again:
+We'll reuse our `psuh` topic branch for v2. Before we make any changes, we'll
+mark the tip of our v1 branch for easy reference:
 
 ----
-$ git format-patch -v2 --cover-letter -o psuh/ master..psuh
+$ git checkout psuh
+$ git branch psuh-v1
 ----
 
-This will add your v2 patches, all named like `v2-000n-my-commit-subject.patch`,
-to the `psuh/` directory. You may notice that they are sitting alongside the v1
-patches; that's fine, but be careful when you are ready to send them.
+Refine your patch series by using `git rebase -i` to adjust commits based upon
+reviewer comments. Once the patch series is ready for submission, generate your
+patches again, but with some new flags:
+
+----
+$ git format-patch -v2 --cover-letter -o psuh/ --range-diff master..psuh-v1 master..
+----
+
+The `--range-diff master..psuh-v1` parameter tells `format-patch` to include a
+range-diff between `psuh-v1` and `psuh` in the cover letter (see
+linkgit:git-range-diff[1]). This helps tell reviewers about the differences
+between your v1 and v2 patches.
+
+The `-v2` parameter tells `format-patch` to output your patches
+as version "2". For instance, you may notice that your v2 patches are
+all named like `v2-000n-my-commit-subject.patch`. `-v2` will also format
+your patches by prefixing them with "[PATCH v2]" instead of "[PATCH]",
+and your range-diff will be prefaced with "Range-diff against v1".
+
+Afer you run this command, `format-patch` will output the patches to the `psuh/`
+directory, alongside the v1 patches. Using a single directory makes it easy to
+refer to the old v1 patches while proofreading the v2 patches, but you will need
+to be careful to send out only the v2 patches. We will use a pattern like
+"psuh/v2-*.patch" (not "psuh/*.patch", which would match v1 and v2 patches).
 
 Edit your cover letter again. Now is a good time to mention what's different
 between your last version and now, if it's something significant. You do not
@@ -1082,7 +1102,7 @@ to the command:
 ----
 $ git send-email --to=target@example.com
 		 --in-reply-to="<foo.12345.author@example.com>"
-		 psuh/v2*
+		 psuh/v2-*.patch
 ----
 
 [[single-patch]]
