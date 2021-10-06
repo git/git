@@ -409,8 +409,11 @@ static int unpack_trees_start(struct merge_options *opt,
 	memset(&opt->priv->unpack_opts, 0, sizeof(opt->priv->unpack_opts));
 	if (opt->priv->call_depth)
 		opt->priv->unpack_opts.index_only = 1;
-	else
+	else {
 		opt->priv->unpack_opts.update = 1;
+		/* FIXME: should only do this if !overwrite_ignore */
+		opt->priv->unpack_opts.preserve_ignored = 0;
+	}
 	opt->priv->unpack_opts.merge = 1;
 	opt->priv->unpack_opts.head_idx = 2;
 	opt->priv->unpack_opts.fn = threeway_merge;
