@@ -4979,10 +4979,34 @@ struct label_state {
 	struct strbuf buf;
 };
 
+/*
+ * Sets the label for the given oid (`label_state.commit2label`) and adds
+ * the label to the `label_state.labels` map.
+ *
+ * No validation is performed.
+ *
+ * Returns the copy of `label` retained by the `string_entry` itself.
+ */
+static const char *set_oid_label(struct label_state *state,
+				 const struct object_id *oid, const char *label)
+{
+	struct labels_entry *labels_entry;
+	struct string_entry *string_entry;
+
+	FLEX_ALLOC_STR(labels_entry, label, label);
+	hashmap_entry_init(&labels_entry->entry, strihash(label));
+	hashmap_add(&state->labels, &labels_entry->entry);
+
+	FLEX_ALLOC_STR(string_entry, string, label);
+	oidcpy(&string_entry->entry.oid, oid);
+	oidmap_put(&state->commit2label, string_entry);
+
+	return string_entry->string;
+}
+
 static const char *label_oid(struct object_id *oid, const char *label,
 			     struct label_state *state)
 {
-	struct labels_entry *labels_entry;
 	struct string_entry *string_entry;
 	struct object_id dummy;
 	int i;
@@ -5099,15 +5123,7 @@ static const char *label_oid(struct object_id *oid, const char *label,
 		}
 	}
 
-	FLEX_ALLOC_STR(labels_entry, label, label);
-	hashmap_entry_init(&labels_entry->entry, strihash(label));
-	hashmap_add(&state->labels, &labels_entry->entry);
-
-	FLEX_ALLOC_STR(string_entry, string, label);
-	oidcpy(&string_entry->entry.oid, oid);
-	oidmap_put(&state->commit2label, string_entry);
-
-	return string_entry->string;
+	return set_oid_label(state, oid, label);
 }
 
 static int make_script_with_merges(struct pretty_print_context *pp,
@@ -5140,15 +5156,8 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 	strbuf_init(&state.buf, 32);
 
 	if (revs->cmdline.nr && (revs->cmdline.rev[0].flags & BOTTOM)) {
-		struct labels_entry *onto_label_entry;
 		struct object_id *oid = &revs->cmdline.rev[0].item->oid;
-		FLEX_ALLOC_STR(entry, string, "onto");
-		oidcpy(&entry->entry.oid, oid);
-		oidmap_put(&state.commit2label, entry);
-
-		FLEX_ALLOC_STR(onto_label_entry, label, "onto");
-		hashmap_entry_init(&onto_label_entry->entry, strihash("onto"));
-		hashmap_add(&state.labels, &onto_label_entry->entry);
+		set_oid_label(&state, oid, "onto");
 	}
 
 	/*
