@@ -116,7 +116,6 @@ struct todo_list {
 	struct todo_item *items;
 	int nr, alloc, current;
 	int done_nr, total_nr;
-	struct stat_data stat;
 };
 
 #define TODO_LIST_INIT { STRBUF_INIT }
