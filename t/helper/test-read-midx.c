@@ -3,6 +3,7 @@
 #include "midx.h"
 #include "repository.h"
 #include "object-store.h"
+#include "pack-bitmap.h"
 
 static int read_midx_file(const char *object_dir, int show_objects)
 {
@@ -72,14 +73,36 @@ static int read_midx_checksum(const char *object_dir)
 	return 0;
 }
 
+static int read_midx_preferred_pack(const char *object_dir)
+{
+	struct multi_pack_index *midx = NULL;
+	struct bitmap_index *bitmap = NULL;
+
+	setup_git_directory();
+
+	midx = load_multi_pack_index(object_dir, 1);
+	if (!midx)
+		return 1;
+
+	bitmap = prepare_bitmap_git(the_repository);
+	if (!(bitmap && bitmap_is_midx(bitmap)))
+		return 1;
+
+
+	printf("%s\n", midx->pack_names[midx_preferred_pack(bitmap)]);
+	return 0;
+}
+
 int cmd__read_midx(int argc, const char **argv)
 {
 	if (!(argc == 2 || argc == 3))
-		usage("read-midx [--show-objects|--checksum] <object-dir>");
+		usage("read-midx [--show-objects|--checksum|--preferred-pack] <object-dir>");
 
 	if (!strcmp(argv[1], "--show-objects"))
 		return read_midx_file(argv[2], 1);
 	else if (!strcmp(argv[1], "--checksum"))
 		return read_midx_checksum(argv[2]);
+	else if (!strcmp(argv[1], "--preferred-pack"))
+		return read_midx_preferred_pack(argv[2]);
 	return read_midx_file(argv[1], 0);
 }

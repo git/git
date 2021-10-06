@@ -9,7 +9,7 @@ git-repack - Pack unpacked objects in a repository
 SYNOPSIS
 --------
 [verse]
-'git repack' [-a] [-A] [-d] [-f] [-F] [-l] [-n] [-q] [-b] [--window=<n>] [--depth=<n>] [--threads=<n>] [--keep-pack=<pack-name>]
+'git repack' [-a] [-A] [-d] [-f] [-F] [-l] [-n] [-q] [-b] [-m] [--window=<n>] [--depth=<n>] [--threads=<n>] [--keep-pack=<pack-name>] [--write-midx]
 
 DESCRIPTION
 -----------
@@ -128,10 +128,11 @@ depth is 4095.
 -b::
 --write-bitmap-index::
 	Write a reachability bitmap index as part of the repack. This
-	only makes sense when used with `-a` or `-A`, as the bitmaps
+	only makes sense when used with `-a`, `-A` or `-m`, as the bitmaps
 	must be able to refer to all reachable objects. This option
-	overrides the setting of `repack.writeBitmaps`.  This option
-	has no effect if multiple packfiles are created.
+	overrides the setting of `repack.writeBitmaps`. This option
+	has no effect if multiple packfiles are created, unless writing a
+	MIDX (in which case a multi-pack bitmap is created).
 
 --pack-kept-objects::
 	Include objects in `.keep` files when repacking.  Note that we
@@ -189,6 +190,15 @@ this "roll-up", without respect to their reachability. This is subject
 to change in the future. This option (implying a drastically different
 repack mode) is not guaranteed to work with all other combinations of
 option to `git repack`.
++
+When writing a multi-pack bitmap, `git repack` selects the largest resulting
+pack as the preferred pack for object selection by the MIDX (see
+linkgit:git-multi-pack-index[1]).
+
+-m::
+--write-midx::
+	Write a multi-pack index (see linkgit:git-multi-pack-index[1])
+	containing the non-redundant packs.
 
 CONFIGURATION
 -------------
