@@ -2766,7 +2766,6 @@ static int push_check(int argc, const char **argv, const char *prefix)
 
 static int ensure_core_worktree(int argc, const char **argv, const char *prefix)
 {
-	const struct submodule *sub;
 	const char *path;
 	const char *cw;
 	struct repository subrepo;
@@ -2776,11 +2775,7 @@ static int ensure_core_worktree(int argc, const char **argv, const char *prefix)
 
 	path = argv[1];
 
-	sub = submodule_from_path(the_repository, null_oid(), path);
-	if (!sub)
-		BUG("We could get the submodule handle before?");
-
-	if (repo_submodule_init(&subrepo, the_repository, sub))
+	if (repo_submodule_init(&subrepo, the_repository, path, null_oid()))
 		die(_("could not get a repository handle for submodule '%s'"), path);
 
 	if (!repo_config_get_string_tmp(&subrepo, "core.worktree", &cw)) {

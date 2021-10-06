@@ -190,19 +190,15 @@ error:
 
 int repo_submodule_init(struct repository *subrepo,
 			struct repository *superproject,
-			const struct submodule *sub)
+			const char *path,
+			const struct object_id *treeish_name)
 {
 	struct strbuf gitdir = STRBUF_INIT;
 	struct strbuf worktree = STRBUF_INIT;
 	int ret = 0;
 
-	if (!sub) {
-		ret = -1;
-		goto out;
-	}
-
-	strbuf_repo_worktree_path(&gitdir, superproject, "%s/.git", sub->path);
-	strbuf_repo_worktree_path(&worktree, superproject, "%s", sub->path);
+	strbuf_repo_worktree_path(&gitdir, superproject, "%s/.git", path);
+	strbuf_repo_worktree_path(&worktree, superproject, "%s", path);
 
 	if (repo_init(subrepo, gitdir.buf, worktree.buf)) {
 		/*
@@ -212,6 +208,13 @@ int repo_submodule_init(struct repository *subrepo,
 		 * in the superproject's 'modules' directory.  In this case the
 		 * submodule would not have a worktree.
 		 */
+		const struct submodule *sub =
+			submodule_from_path(superproject, treeish_name, path);
+		if (!sub) {
+			ret = -1;
+			goto out;
+		}
+
 		strbuf_reset(&gitdir);
 		submodule_name_to_gitdir(&gitdir, superproject, sub->name);
 
@@ -224,7 +227,7 @@ int repo_submodule_init(struct repository *subrepo,
 	subrepo->submodule_prefix = xstrfmt("%s%s/",
 					    superproject->submodule_prefix ?
 					    superproject->submodule_prefix :
-					    "", sub->path);
+					    "", path);
 
 out:
 	strbuf_release(&gitdir);
