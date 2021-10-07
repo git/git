@@ -844,6 +844,19 @@ struct cache_entry *make_empty_transient_cache_entry(size_t len)
 	return xcalloc(1, cache_entry_size(len));
 }
 
+enum verify_path_result {
+	PATH_OK,
+	PATH_INVALID,
+	PATH_DIR_WITH_SEP,
+};
+
+static enum verify_path_result verify_path_internal(const char *, unsigned);
+
+int verify_path(const char *path, unsigned mode)
+{
+	return verify_path_internal(path, mode) != PATH_INVALID;
+}
+
 struct cache_entry *make_cache_entry(struct index_state *istate,
 				     unsigned int mode,
 				     const struct object_id *oid,
@@ -985,60 +998,62 @@ static int verify_dotfile(const char *rest, unsigned mode)
 	return 1;
 }
 
-int verify_path(const char *path, unsigned mode)
+static enum verify_path_result verify_path_internal(const char *path,
+						    unsigned mode)
 {
 	char c = 0;
 
 	if (has_dos_drive_prefix(path))
-		return 0;
+		return PATH_INVALID;
 
 	if (!is_valid_path(path))
-		return 0;
+		return PATH_INVALID;
 
 	goto inside;
 	for (;;) {
 		if (!c)
-			return 1;
+			return PATH_OK;
 		if (is_dir_sep(c)) {
 inside:
 			if (protect_hfs) {
 
 				if (is_hfs_dotgit(path))
-					return 0;
+					return PATH_INVALID;
 				if (S_ISLNK(mode)) {
 					if (is_hfs_dotgitmodules(path))
-						return 0;
+						return PATH_INVALID;
 				}
 			}
 			if (protect_ntfs) {
 #ifdef GIT_WINDOWS_NATIVE
 				if (c == '\\')
-					return 0;
+					return PATH_INVALID;
 #endif
 				if (is_ntfs_dotgit(path))
-					return 0;
+					return PATH_INVALID;
 				if (S_ISLNK(mode)) {
 					if (is_ntfs_dotgitmodules(path))
-						return 0;
+						return PATH_INVALID;
 				}
 			}
 
 			c = *path++;
 			if ((c == '.' && !verify_dotfile(path, mode)) ||
 			    is_dir_sep(c))
-				return 0;
+				return PATH_INVALID;
 			/*
 			 * allow terminating directory separators for
 			 * sparse directory entries.
 			 */
 			if (c == '\0')
-				return S_ISDIR(mode);
+				return S_ISDIR(mode) ? PATH_DIR_WITH_SEP :
+						       PATH_INVALID;
 		} else if (c == '\\' && protect_ntfs) {
 			if (is_ntfs_dotgit(path))
-				return 0;
+				return PATH_INVALID;
 			if (S_ISLNK(mode)) {
 				if (is_ntfs_dotgitmodules(path))
-					return 0;
+					return PATH_INVALID;
 			}
 		}
 
