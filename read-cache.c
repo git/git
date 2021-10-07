@@ -854,7 +854,7 @@ static enum verify_path_result verify_path_internal(const char *, unsigned);
 
 int verify_path(const char *path, unsigned mode)
 {
-	return verify_path_internal(path, mode) != PATH_INVALID;
+	return verify_path_internal(path, mode) == PATH_OK;
 }
 
 struct cache_entry *make_cache_entry(struct index_state *istate,
@@ -867,7 +867,7 @@ struct cache_entry *make_cache_entry(struct index_state *istate,
 	struct cache_entry *ce, *ret;
 	int len;
 
-	if (!verify_path(path, mode)) {
+	if (verify_path_internal(path, mode) == PATH_INVALID) {
 		error(_("invalid path '%s'"), path);
 		return NULL;
 	}
@@ -1356,7 +1356,7 @@ static int add_index_entry_with_check(struct index_state *istate, struct cache_e
 
 	if (!ok_to_add)
 		return -1;
-	if (!verify_path(ce->name, ce->ce_mode))
+	if (verify_path_internal(ce->name, ce->ce_mode) == PATH_INVALID)
 		return error(_("invalid path '%s'"), ce->name);
 
 	if (!skip_df_check &&

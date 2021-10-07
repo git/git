@@ -405,7 +405,7 @@ test_expect_success 'stash show --include-untracked errors on duplicate files' '
 	test_i18ngrep "worktree and untracked commit have duplicate entries: tracked" err
 '
 
-test_expect_failure 'stash -u ignores sub-repository' '
+test_expect_success 'stash -u ignores sub-repository' '
 	test_when_finished "rm -rf sub-repo" &&
 	git init sub-repo &&
 	git stash -u
