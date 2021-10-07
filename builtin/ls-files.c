@@ -781,6 +781,7 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 		ret = 1;
 	}
 
+	string_list_clear(&exclude_list, 0);
 	dir_clear(&dir);
 	free(max_prefix);
 	return ret;
