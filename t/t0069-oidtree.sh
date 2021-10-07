@@ -1,6 +1,7 @@
 #!/bin/sh
 
 test_description='basic tests for the oidtree implementation'
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 maxhexsz=$(test_oid hexsz)
