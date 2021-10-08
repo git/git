@@ -539,7 +539,8 @@ struct ref_store;
  * should call base_ref_store_init() to initialize the shared part of
  * the ref_store and to record the ref_store for later lookup.
  */
-typedef struct ref_store *ref_store_init_fn(const char *gitdir,
+typedef struct ref_store *ref_store_init_fn(struct repository *repo,
+					    const char *gitdir,
 					    unsigned int flags);
 
 typedef int ref_init_db_fn(struct ref_store *refs, struct strbuf *err);
@@ -697,7 +698,12 @@ struct ref_store {
 	/* The backend describing this ref_store's storage scheme: */
 	const struct ref_storage_be *be;
 
-	/* The gitdir that this ref_store applies to: */
+	struct repository *repo;
+
+	/*
+	 * The gitdir that this ref_store applies to. Note that this is not
+	 * necessarily repo->gitdir if the repo has multiple worktrees.
+	 */
 	char *gitdir;
 };
 
