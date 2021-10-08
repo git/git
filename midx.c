@@ -1696,7 +1696,7 @@ int expire_midx_packs(struct repository *r, const char *object_dir, unsigned fla
 {
 	uint32_t i, *count, result = 0;
 	struct string_list packs_to_drop = STRING_LIST_INIT_DUP;
-	struct multi_pack_index *m = load_multi_pack_index(object_dir, 1);
+	struct multi_pack_index *m = lookup_multi_pack_index(r, object_dir);
 	struct progress *progress = NULL;
 
 	if (!m)
@@ -1741,12 +1741,11 @@ int expire_midx_packs(struct repository *r, const char *object_dir, unsigned fla
 
 	free(count);
 
-	if (packs_to_drop.nr) {
+	if (packs_to_drop.nr)
 		result = write_midx_internal(object_dir, NULL, &packs_to_drop, NULL, NULL, flags);
-		m = NULL;
-	}
 
 	string_list_clear(&packs_to_drop, 0);
+
 	return result;
 }
 
