@@ -609,6 +609,7 @@ static int err(struct merge_options *opt, const char *err, ...)
 
 static void format_commit(struct strbuf *sb,
 			  int indent,
+			  struct repository *repo,
 			  struct commit *commit)
 {
 	struct merge_remote_desc *desc;
@@ -622,7 +623,7 @@ static void format_commit(struct strbuf *sb,
 		return;
 	}
 
-	format_commit_message(commit, "%h %s", sb, &ctx);
+	repo_format_commit_message(repo, commit, "%h %s", sb, &ctx);
 	strbuf_addch(sb, '\n');
 }
 
@@ -1578,17 +1579,6 @@ static int merge_submodule(struct merge_options *opt,
 	if (is_null_oid(b))
 		return 0;
 
-	/*
-	 * NEEDSWORK: Remove this when all submodule object accesses are
-	 * through explicitly specified repositores.
-	 */
-	if (add_submodule_odb(path)) {
-		path_msg(opt, path, 0,
-			 _("Failed to merge submodule %s (not checked out)"),
-			 path);
-		return 0;
-	}
-
 	if (repo_submodule_init(&subrepo, opt->repo, path, null_oid())) {
 		path_msg(opt, path, 0,
 				_("Failed to merge submodule %s (not checked out)"),
@@ -1653,7 +1643,7 @@ static int merge_submodule(struct merge_options *opt,
 		break;
 
 	case 1:
-		format_commit(&sb, 4,
+		format_commit(&sb, 4, &subrepo,
 			      (struct commit *)merges.objects[0].item);
 		path_msg(opt, path, 0,
 			 _("Failed to merge submodule %s, but a possible merge "
@@ -1670,7 +1660,7 @@ static int merge_submodule(struct merge_options *opt,
 		break;
 	default:
 		for (i = 0; i < merges.nr; i++)
-			format_commit(&sb, 4,
+			format_commit(&sb, 4, &subrepo,
 				      (struct commit *)merges.objects[i].item);
 		path_msg(opt, path, 0,
 			 _("Failed to merge submodule %s, but multiple "

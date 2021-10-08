@@ -334,7 +334,9 @@ static void output(struct merge_options *opt, int v, const char *fmt, ...)
 		flush_output(opt);
 }
 
-static void output_commit_title(struct merge_options *opt, struct commit *commit)
+static void repo_output_commit_title(struct merge_options *opt,
+				     struct repository *repo,
+				     struct commit *commit)
 {
 	struct merge_remote_desc *desc;
 
@@ -343,21 +345,27 @@ static void output_commit_title(struct merge_options *opt, struct commit *commit
 	if (desc)
 		strbuf_addf(&opt->obuf, "virtual %s\n", desc->name);
 	else {
-		strbuf_add_unique_abbrev(&opt->obuf, &commit->object.oid,
-					 DEFAULT_ABBREV);
+		strbuf_repo_add_unique_abbrev(&opt->obuf, repo,
+					      &commit->object.oid,
+					      DEFAULT_ABBREV);
 		strbuf_addch(&opt->obuf, ' ');
-		if (parse_commit(commit) != 0)
+		if (repo_parse_commit(repo, commit) != 0)
 			strbuf_addstr(&opt->obuf, _("(bad commit)\n"));
 		else {
 			const char *title;
-			const char *msg = get_commit_buffer(commit, NULL);
+			const char *msg = repo_get_commit_buffer(repo, commit, NULL);
 			int len = find_commit_subject(msg, &title);
 			if (len)
 				strbuf_addf(&opt->obuf, "%.*s\n", len, title);
-			unuse_commit_buffer(commit, msg);
+			repo_unuse_commit_buffer(repo, commit, msg);
 		}
 	}
 	flush_output(opt);
+}
+
+static void output_commit_title(struct merge_options *opt, struct commit *commit)
+{
+	repo_output_commit_title(opt, the_repository, commit);
 }
 
 static int add_cacheinfo(struct merge_options *opt,
@@ -1149,14 +1157,14 @@ static int find_first_merges(struct repository *repo,
 	return result->nr;
 }
 
-static void print_commit(struct commit *commit)
+static void print_commit(struct repository *repo, struct commit *commit)
 {
 	struct strbuf sb = STRBUF_INIT;
 	struct pretty_print_context ctx = {0};
 	ctx.date_mode.type = DATE_NORMAL;
 	/* FIXME: Merge this with output_commit_title() */
 	assert(!merge_remote_util(commit));
-	format_commit_message(commit, " %h: %m %s", &sb, &ctx);
+	repo_format_commit_message(repo, commit, " %h: %m %s", &sb, &ctx);
 	fprintf(stderr, "%s\n", sb.buf);
 	strbuf_release(&sb);
 }
@@ -1196,15 +1204,6 @@ static int merge_submodule(struct merge_options *opt,
 	if (is_null_oid(b))
 		return 0;
 
-	/*
-	 * NEEDSWORK: Remove this when all submodule object accesses are
-	 * through explicitly specified repositores.
-	 */
-	if (add_submodule_odb(path)) {
-		output(opt, 1, _("Failed to merge submodule %s (not checked out)"), path);
-		return 0;
-	}
-
 	if (repo_submodule_init(&subrepo, opt->repo, path, null_oid())) {
 		output(opt, 1, _("Failed to merge submodule %s (not checked out)"), path);
 		return 0;
@@ -1229,7 +1228,7 @@ static int merge_submodule(struct merge_options *opt,
 		oidcpy(result, b);
 		if (show(opt, 3)) {
 			output(opt, 3, _("Fast-forwarding submodule %s to the following commit:"), path);
-			output_commit_title(opt, commit_b);
+			repo_output_commit_title(opt, &subrepo, commit_b);
 		} else if (show(opt, 2))
 			output(opt, 2, _("Fast-forwarding submodule %s"), path);
 		else
@@ -1242,7 +1241,7 @@ static int merge_submodule(struct merge_options *opt,
 		oidcpy(result, a);
 		if (show(opt, 3)) {
 			output(opt, 3, _("Fast-forwarding submodule %s to the following commit:"), path);
-			output_commit_title(opt, commit_a);
+			repo_output_commit_title(opt, &subrepo, commit_a);
 		} else if (show(opt, 2))
 			output(opt, 2, _("Fast-forwarding submodule %s"), path);
 		else
@@ -1274,7 +1273,7 @@ static int merge_submodule(struct merge_options *opt,
 	case 1:
 		output(opt, 1, _("Failed to merge submodule %s (not fast-forward)"), path);
 		output(opt, 2, _("Found a possible merge resolution for the submodule:\n"));
-		print_commit((struct commit *) merges.objects[0].item);
+		print_commit(&subrepo, (struct commit *) merges.objects[0].item);
 		output(opt, 2, _(
 		       "If this is correct simply add it to the index "
 		       "for example\n"
@@ -1287,7 +1286,7 @@ static int merge_submodule(struct merge_options *opt,
 	default:
 		output(opt, 1, _("Failed to merge submodule %s (multiple merges found)"), path);
 		for (i = 0; i < merges.nr; i++)
-			print_commit((struct commit *) merges.objects[i].item);
+			print_commit(&subrepo, (struct commit *) merges.objects[i].item);
 	}
 
 	object_array_clear(&merges);
