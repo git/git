@@ -1,19 +1,16 @@
 Foo():x(0&&1){}
 cout<<"Hello World!\n"<<endl;
 1 -1e10 0xabcdef 'x'
-[a] a->b a.b
-!a ~a a++ a-- a*b a&b
-a*b a/b a%b
-a+b a-b
-a<<b a>>b
-a<b a<=b a>b a>=b
-a==b a!=b
-a&b
-a^b
-a|b
-a&&b
+[a] b->v d.e
+!a ~b c++ d-- e*f g&h
+a*b c/d e%f
+a+b c-d
+a<<b c>>d
+a<b c<=d e>f g>=h
+a==b c!=d
+a^b c|d e&&f
 a||b
-a?b:z
-a=b a+=b a-=b a*=b a/=b a%=b a<<=b a>>=b a&=b a^=b a|=b
-a,y
+a?b
+a=b c+=d e-=f g*=h i/=j k%=l m<<=n o>>=p q&=r s^=t u|=v
+a,b
 a::b
