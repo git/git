@@ -778,6 +778,7 @@ struct packed_ref_iterator {
 	struct object_id oid, peeled;
 	struct strbuf refname_buf;
 
+	struct repository *repo;
 	unsigned int flags;
 };
 
@@ -866,8 +867,8 @@ static int packed_ref_iterator_advance(struct ref_iterator *ref_iterator)
 			continue;
 
 		if (!(iter->flags & DO_FOR_EACH_INCLUDE_BROKEN) &&
-		    !ref_resolves_to_object(iter->base.refname, &iter->oid,
-					    iter->flags))
+		    !ref_resolves_to_object(iter->base.refname, iter->repo,
+					    &iter->oid, iter->flags))
 			continue;
 
 		return ITER_OK;
@@ -956,6 +957,7 @@ static struct ref_iterator *packed_ref_iterator_begin(
 
 	iter->base.oid = &iter->oid;
 
+	iter->repo = ref_store->repo;
 	iter->flags = flags;
 
 	if (prefix && *prefix)
