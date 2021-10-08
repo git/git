@@ -1861,7 +1861,7 @@ int midx_repack(struct repository *r, const char *object_dir, size_t batch_size,
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	FILE *cmd_in;
 	struct strbuf base_name = STRBUF_INIT;
-	struct multi_pack_index *m = load_multi_pack_index(object_dir, 1);
+	struct multi_pack_index *m = lookup_multi_pack_index(r, object_dir);
 
 	/*
 	 * When updating the default for these configuration
@@ -1933,11 +1933,8 @@ int midx_repack(struct repository *r, const char *object_dir, size_t batch_size,
 	}
 
 	result = write_midx_internal(object_dir, NULL, NULL, NULL, NULL, flags);
-	m = NULL;
 
 cleanup:
-	if (m)
-		close_midx(m);
 	free(include_pack);
 	return result;
 }
