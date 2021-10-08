@@ -2,6 +2,12 @@
 #include "cache.h"
 #include "mergesort.h"
 
+static uint32_t minstd_rand(uint32_t *state)
+{
+	*state = (uint64_t)*state * 48271 % 2147483647;
+	return *state;
+}
+
 struct line {
 	char *text;
 	struct line *next;
@@ -60,8 +66,9 @@ static void dist_sawtooth(int *arr, int n, int m)
 static void dist_rand(int *arr, int n, int m)
 {
 	int i;
+	uint32_t seed = 1;
 	for (i = 0; i < n; i++)
-		arr[i] = rand() % m;
+		arr[i] = minstd_rand(&seed) % m;
 }
 
 static void dist_stagger(int *arr, int n, int m)
@@ -81,8 +88,9 @@ static void dist_plateau(int *arr, int n, int m)
 static void dist_shuffle(int *arr, int n, int m)
 {
 	int i, j, k;
+	uint32_t seed = 1;
 	for (i = j = 0, k = 1; i < n; i++)
-		arr[i] = (rand() % m) ? (j += 2) : (k += 2);
+		arr[i] = minstd_rand(&seed) % m ? (j += 2) : (k += 2);
 }
 
 #define DIST(name) { #name, dist_##name }
