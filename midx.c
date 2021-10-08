@@ -1107,6 +1107,22 @@ cleanup:
 	return ret;
 }
 
+static struct multi_pack_index *lookup_multi_pack_index(struct repository *r,
+							const char *object_dir)
+{
+	struct multi_pack_index *cur;
+
+	/* Ensure the given object_dir is local, or a known alternate. */
+	find_odb(r, object_dir);
+
+	for (cur = get_multi_pack_index(r); cur; cur = cur->next) {
+		if (!strcmp(object_dir, cur->object_dir))
+			return cur;
+	}
+
+	return NULL;
+}
+
 static int write_midx_internal(const char *object_dir,
 			       struct string_list *packs_to_include,
 			       struct string_list *packs_to_drop,
@@ -1120,14 +1136,10 @@ static int write_midx_internal(const char *object_dir,
 	struct hashfile *f = NULL;
 	struct lock_file lk;
 	struct write_midx_context ctx = { 0 };
-	struct multi_pack_index *cur;
 	int pack_name_concat_len = 0;
 	int dropped_packs = 0;
 	int result = 0;
 	struct chunkfile *cf;
-
-	/* Ensure the given object_dir is local, or a known alternate. */
-	find_odb(the_repository, object_dir);
 
 	midx_name = get_midx_filename(object_dir);
 	if (safe_create_leading_directories(midx_name))
@@ -1140,12 +1152,7 @@ static int write_midx_internal(const char *object_dir,
 		 * packs to include, since all packs and objects are copied
 		 * blindly from an existing MIDX if one is present.
 		 */
-		for (cur = get_multi_pack_index(the_repository); cur; cur = cur->next) {
-			if (!strcmp(object_dir, cur->object_dir)) {
-				ctx.m = cur;
-				break;
-			}
-		}
+		ctx.m = lookup_multi_pack_index(the_repository, object_dir);
 	}
 
 	if (ctx.m && !midx_checksum_valid(ctx.m)) {
