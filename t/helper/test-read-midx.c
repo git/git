@@ -85,11 +85,15 @@ static int read_midx_preferred_pack(const char *object_dir)
 		return 1;
 
 	bitmap = prepare_bitmap_git(the_repository);
-	if (!(bitmap && bitmap_is_midx(bitmap)))
+	if (!bitmap)
 		return 1;
-
+	if (!bitmap_is_midx(bitmap)) {
+		free_bitmap_index(bitmap);
+		return 1;
+	}
 
 	printf("%s\n", midx->pack_names[midx_preferred_pack(bitmap)]);
+	free_bitmap_index(bitmap);
 	return 0;
 }
 
