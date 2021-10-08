@@ -1,6 +1,20 @@
-Foo():x(0&&1){}
+Foo():x(0&&1){ foo0( x.find); }
 cout<<"Hello World!\n"<<endl;
 1 -1e10 0xabcdef 'x'
+// long double
+3.141592653e-10l
+// float
+120E5f
+// hex
+0xdeadbeaf+8ULL
+// octal
+01234567
+// binary
+0b1000+e1
+// expression
+1.5-e+2+f
+// another one
+str.e+65
 [a] b->v d.e
 !a ~b c++ d-- e*f g&h
 a*b c/d e%f
