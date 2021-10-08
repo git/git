@@ -1423,7 +1423,8 @@ static int write_midx_internal(const char *object_dir,
 	if (ctx.m)
 		close_object_store(the_repository->objects);
 
-	commit_lock_file(&lk);
+	if (commit_lock_file(&lk) < 0)
+		die_errno(_("could not write multi-pack-index"));
 
 	clear_midx_files_ext(object_dir, ".bitmap", midx_hash);
 	clear_midx_files_ext(object_dir, ".rev", midx_hash);
