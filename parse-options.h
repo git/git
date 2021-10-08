@@ -134,7 +134,7 @@ struct option {
 	const char *argh;
 	const char *help;
 
-	int flags;
+	enum parse_opt_option_flags flags;
 	parse_opt_cb *callback;
 	intptr_t defval;
 	parse_opt_ll_cb *ll_callback;
