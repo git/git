@@ -22,6 +22,21 @@ int optbug(const struct option *opt, const char *reason)
 	return error("BUG: switch '%c' %s", opt->short_name, reason);
 }
 
+const char *optname(const struct option *opt, int flags)
+{
+	static struct strbuf sb = STRBUF_INIT;
+
+	strbuf_reset(&sb);
+	if (flags & OPT_SHORT)
+		strbuf_addf(&sb, "switch `%c'", opt->short_name);
+	else if (flags & OPT_UNSET)
+		strbuf_addf(&sb, "option `no-%s'", opt->long_name);
+	else
+		strbuf_addf(&sb, "option `%s'", opt->long_name);
+
+	return sb.buf;
+}
+
 static enum parse_opt_result get_arg(struct parse_opt_ctx_t *p,
 				     const struct option *opt,
 				     int flags, const char **arg)
@@ -1005,19 +1020,4 @@ void NORETURN usage_msg_opt(const char *msg,
 {
 	fprintf(stderr, "fatal: %s\n\n", msg);
 	usage_with_options(usagestr, options);
-}
-
-const char *optname(const struct option *opt, int flags)
-{
-	static struct strbuf sb = STRBUF_INIT;
-
-	strbuf_reset(&sb);
-	if (flags & OPT_SHORT)
-		strbuf_addf(&sb, "switch `%c'", opt->short_name);
-	else if (flags & OPT_UNSET)
-		strbuf_addf(&sb, "option `no-%s'", opt->long_name);
-	else
-		strbuf_addf(&sb, "option `%s'", opt->long_name);
-
-	return sb.buf;
 }
