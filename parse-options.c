@@ -699,13 +699,14 @@ static void free_preprocessed_options(struct option *options)
 	free(options);
 }
 
-static int usage_with_options_internal(struct parse_opt_ctx_t *,
-				       const char * const *,
-				       const struct option *, int, int);
+static enum parse_opt_result usage_with_options_internal(struct parse_opt_ctx_t *,
+							 const char * const *,
+							 const struct option *,
+							 int, int);
 
-int parse_options_step(struct parse_opt_ctx_t *ctx,
-		       const struct option *options,
-		       const char * const usagestr[])
+enum parse_opt_result parse_options_step(struct parse_opt_ctx_t *ctx,
+					 const struct option *options,
+					 const char * const usagestr[])
 {
 	int internal_help = !(ctx->flags & PARSE_OPT_NO_INTERNAL_HELP);
 
@@ -839,10 +840,11 @@ int parse_options_end(struct parse_opt_ctx_t *ctx)
 	return ctx->cpidx + ctx->argc;
 }
 
-int parse_options(int argc, const char **argv, const char *prefix,
-		  const struct option *options,
-		  const char * const usagestr[],
-		  enum parse_opt_flags flags)
+enum parse_opt_result parse_options(int argc, const char **argv,
+				    const char *prefix,
+				    const struct option *options,
+				    const char * const usagestr[],
+				    enum parse_opt_flags flags)
 {
 	struct parse_opt_ctx_t ctx;
 	struct option *real_options;
@@ -900,9 +902,10 @@ static int usage_argh(const struct option *opts, FILE *outfile)
 #define USAGE_OPTS_WIDTH 24
 #define USAGE_GAP         2
 
-static int usage_with_options_internal(struct parse_opt_ctx_t *ctx,
-				       const char * const *usagestr,
-				       const struct option *opts, int full, int err)
+static enum parse_opt_result usage_with_options_internal(struct parse_opt_ctx_t *ctx,
+							 const char * const *usagestr,
+							 const struct option *opts,
+							 int full, int err)
 {
 	FILE *outfile = err ? stderr : stdout;
 	int need_newline;
