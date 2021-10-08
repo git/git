@@ -11,7 +11,7 @@ static int disallow_abbreviated_options;
 #define OPT_SHORT 1
 #define OPT_UNSET 2
 
-int optbug(const struct option *opt, const char *reason)
+static int optbug(const struct option *opt, const char *reason)
 {
 	if (opt->long_name) {
 		if (opt->short_name)
@@ -22,7 +22,7 @@ int optbug(const struct option *opt, const char *reason)
 	return error("BUG: switch '%c' %s", opt->short_name, reason);
 }
 
-const char *optname(const struct option *opt, int flags)
+static const char *optname(const struct option *opt, int flags)
 {
 	static struct strbuf sb = STRBUF_INIT;
 

@@ -224,9 +224,6 @@ NORETURN void usage_msg_opt(const char *msg,
 			    const char * const *usagestr,
 			    const struct option *options);
 
-int optbug(const struct option *opt, const char *reason);
-const char *optname(const struct option *opt, int flags);
-
 /*
  * Use these assertions for callbacks that expect to be called with NONEG and
  * NOARG respectively, and do not otherwise handle the "unset" and "arg"
