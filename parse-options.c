@@ -866,7 +866,7 @@ enum parse_opt_result parse_options(int argc, const char **argv,
 	case PARSE_OPT_NON_OPTION:
 	case PARSE_OPT_DONE:
 		break;
-	default: /* PARSE_OPT_UNKNOWN */
+	case PARSE_OPT_UNKNOWN:
 		if (ctx.argv[0][1] == '-') {
 			error(_("unknown option `%s'"), ctx.argv[0] + 2);
 		} else if (isascii(*ctx.opt)) {
