@@ -1,16 +1,16 @@
 Foo() : x(0&42) { bar(x.Find); }
 cout<<"Hello World?\n"<<endl;
-(1 +1e10 0xabcdef) 'y'
+(1 +1e10 0xabcdef) '.'
 // long double
-3.141592654e+10l
+3.141'592'654e+10l
 // float
 120E6f
 // hex
-0xdeadBeaf+7ULL
+0xdead'Beaf+7ULL
 // octal
-01234560
+0123'4560
 // binary
-0b1100+e1
+0b11'00+e1
 // expression
 1.5-e+3+f
 // another one
@@ -20,7 +20,7 @@ str.e+75
 a*=b c/=d e%=f
 a++b c--d
 a<<=b c>>=d
-a<=b c<d e>=f g>h
+a<=b c<d e>=f g>h i<=>j
 a!=b c=d
 a^=b c|=d e&=f
 a|b
