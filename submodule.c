@@ -1318,9 +1318,11 @@ struct submodule_parallel_fetch {
 
 	struct strbuf submodules_with_errors;
 };
-#define SPF_INIT {0, STRVEC_INIT, NULL, NULL, 0, 0, 0, 0, \
-		  STRING_LIST_INIT_DUP, \
-		  NULL, 0, 0, STRBUF_INIT}
+#define SPF_INIT { \
+	.args = STRVEC_INIT, \
+	.changed_submodule_names = STRING_LIST_INIT_DUP, \
+	.submodules_with_errors = STRBUF_INIT, \
+}
 
 static int get_fetch_recurse_config(const struct submodule *submodule,
 				    struct submodule_parallel_fetch *spf)

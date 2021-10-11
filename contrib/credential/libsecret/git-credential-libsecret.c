@@ -41,7 +41,7 @@ struct credential {
 	char *password;
 };
 
-#define CREDENTIAL_INIT { NULL, NULL, 0, NULL, NULL, NULL }
+#define CREDENTIAL_INIT { 0 }
 
 typedef int (*credential_op_cb)(struct credential *);
 

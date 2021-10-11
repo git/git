@@ -16,7 +16,7 @@ struct checkout {
 		 clone:1,
 		 refresh_cache:1;
 };
-#define CHECKOUT_INIT { NULL, "" }
+#define CHECKOUT_INIT { .base_dir = "" }
 
 #define TEMPORARY_FILENAME_LENGTH 25
 /*

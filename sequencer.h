@@ -118,7 +118,9 @@ struct todo_list {
 	int done_nr, total_nr;
 };
 
-#define TODO_LIST_INIT { STRBUF_INIT }
+#define TODO_LIST_INIT { \
+	.buf = STRBUF_INIT, \
+}
 
 int todo_list_parse_insn_buffer(struct repository *r, char *buf,
 				struct todo_list *todo_list);

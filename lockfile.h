@@ -121,7 +121,7 @@ struct lock_file {
 	struct tempfile *tempfile;
 };
 
-#define LOCK_INIT { NULL }
+#define LOCK_INIT { 0 }
 
 /* String appended to a filename to derive the lockfile name: */
 #define LOCK_SUFFIX ".lock"
