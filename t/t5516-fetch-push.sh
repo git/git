@@ -662,10 +662,10 @@ test_expect_success 'push does not update local refs on failure' '
 
 test_expect_success 'allow deleting an invalid remote ref' '
 
-	mk_test testrepo heads/main &&
+	mk_test testrepo heads/branch &&
 	rm -f testrepo/.git/objects/??/* &&
-	git push testrepo :refs/heads/main &&
-	(cd testrepo && test_must_fail git rev-parse --verify refs/heads/main)
+	git push testrepo :refs/heads/branch &&
+	(cd testrepo && test_must_fail git rev-parse --verify refs/heads/branch)
 
 '
 
@@ -706,25 +706,26 @@ test_expect_success 'pushing valid refs triggers post-receive and post-update ho
 '
 
 test_expect_success 'deleting dangling ref triggers hooks with correct args' '
-	mk_test_with_hooks testrepo heads/main &&
+	mk_test_with_hooks testrepo heads/branch &&
+	orig=$(git -C testrepo rev-parse refs/heads/branch) &&
 	rm -f testrepo/.git/objects/??/* &&
-	git push testrepo :refs/heads/main &&
+	git push testrepo :refs/heads/branch &&
 	(
 		cd testrepo/.git &&
 		cat >pre-receive.expect <<-EOF &&
-		$ZERO_OID $ZERO_OID refs/heads/main
+		$orig $ZERO_OID refs/heads/branch
 		EOF
 
 		cat >update.expect <<-EOF &&
-		refs/heads/main $ZERO_OID $ZERO_OID
+		refs/heads/branch $orig $ZERO_OID
 		EOF
 
 		cat >post-receive.expect <<-EOF &&
-		$ZERO_OID $ZERO_OID refs/heads/main
+		$orig $ZERO_OID refs/heads/branch
 		EOF
 
 		cat >post-update.expect <<-EOF &&
-		refs/heads/main
+		refs/heads/branch
 		EOF
 
 		test_cmp pre-receive.expect pre-receive.actual &&
