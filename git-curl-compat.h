@@ -67,10 +67,11 @@
 
 /**
  * CURLOPT_PINNEDPUBLICKEY was added in 7.39.0, released in November
- * 2014.
+ * 2014. CURLE_SSL_PINNEDPUBKEYNOTMATCH was added in that same version.
  */
 #if LIBCURL_VERSION_NUM >= 0x072c00
 #define GIT_CURL_HAVE_CURLOPT_PINNEDPUBLICKEY 1
+#define GIT_CURL_HAVE_CURLE_SSL_PINNEDPUBKEYNOTMATCH 1
 #endif
 
 /**
