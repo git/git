@@ -141,6 +141,11 @@ Performance, Internal Implementation, Development Support etc.
 
  * Remove external declaration of functions that no longer exist.
 
+ * "git multi-pack-index write --bitmap" learns to propagate the
+   hashcache from original bitmap to resulting bitmap.
+
+ * CI learns to run the leak sanitizer builds.
+
 
 Fixes since v2.33
 -----------------
@@ -351,3 +356,5 @@ Fixes since v2.33
    (merge 51b04c05b7 bs/difftool-msg-tweak later to maint).
    (merge dd20e4a6db ab/make-compdb-fix later to maint).
    (merge 6ffb990dc4 os/status-docfix later to maint).
+   (merge 100c2da2d3 rs/p3400-lose-tac later to maint).
+   (merge 76f3b69896 tb/aggregate-ignore-leading-whitespaces later to maint).
