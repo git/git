@@ -3,6 +3,8 @@
 Git - fast, scalable, distributed revision control system
 =========================================================
 
+<img src="gitweb/static/git-logo-readme.png" style="float: right;" width="250"/>
+
 Git is a fast, scalable, distributed revision control system with an
 unusually rich command set that provides both high-level operations
 and full access to internals.
