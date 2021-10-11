@@ -399,41 +399,45 @@ check_sparse_index_behavior () {
 }
 
 test_expect_success 'status succeeds with sparse index' '
-	git clone . full &&
-	git clone --sparse . sparse &&
-	git -C sparse sparse-checkout init --cone --sparse-index &&
-	git -C sparse sparse-checkout set dir1 dir2 &&
+	(
+		sane_unset GIT_TEST_SPLIT_INDEX &&
 
-	write_script .git/hooks/fsmonitor-test <<-\EOF &&
-		printf "last_update_token\0"
-	EOF
-	git -C full config core.fsmonitor ../.git/hooks/fsmonitor-test &&
-	git -C sparse config core.fsmonitor ../.git/hooks/fsmonitor-test &&
-	check_sparse_index_behavior ! &&
+		git clone . full &&
+		git clone --sparse . sparse &&
+		git -C sparse sparse-checkout init --cone --sparse-index &&
+		git -C sparse sparse-checkout set dir1 dir2 &&
 
-	write_script .git/hooks/fsmonitor-test <<-\EOF &&
-		printf "last_update_token\0"
-		printf "dir1/modified\0"
-	EOF
-	check_sparse_index_behavior ! &&
+		write_script .git/hooks/fsmonitor-test <<-\EOF &&
+			printf "last_update_token\0"
+		EOF
+		git -C full config core.fsmonitor ../.git/hooks/fsmonitor-test &&
+		git -C sparse config core.fsmonitor ../.git/hooks/fsmonitor-test &&
+		check_sparse_index_behavior ! &&
 
-	git -C sparse sparse-checkout add dir1a &&
+		write_script .git/hooks/fsmonitor-test <<-\EOF &&
+			printf "last_update_token\0"
+			printf "dir1/modified\0"
+		EOF
+		check_sparse_index_behavior ! &&
 
-	for repo in full sparse
-	do
-		cp -r $repo/dir1 $repo/dir1a &&
-		git -C $repo add dir1a &&
-		git -C $repo commit -m "add dir1a" || return 1
-	done &&
-	git -C sparse sparse-checkout set dir1 dir2 &&
+		git -C sparse sparse-checkout add dir1a &&
 
-	# This one modifies outside the sparse-checkout definition
-	# and hence we expect to expand the sparse-index.
-	write_script .git/hooks/fsmonitor-test <<-\EOF &&
-		printf "last_update_token\0"
-		printf "dir1a/modified\0"
-	EOF
-	check_sparse_index_behavior
+		for repo in full sparse
+		do
+			cp -r $repo/dir1 $repo/dir1a &&
+			git -C $repo add dir1a &&
+			git -C $repo commit -m "add dir1a" || return 1
+		done &&
+		git -C sparse sparse-checkout set dir1 dir2 &&
+
+		# This one modifies outside the sparse-checkout definition
+		# and hence we expect to expand the sparse-index.
+		write_script .git/hooks/fsmonitor-test <<-\EOF &&
+			printf "last_update_token\0"
+			printf "dir1a/modified\0"
+		EOF
+		check_sparse_index_behavior
+	)
 '
 
 test_done
