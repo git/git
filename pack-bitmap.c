@@ -1742,6 +1742,33 @@ int test_bitmap_commits(struct repository *r)
 	return 0;
 }
 
+int test_bitmap_hashes(struct repository *r)
+{
+	struct bitmap_index *bitmap_git = prepare_bitmap_git(r);
+	struct object_id oid;
+	uint32_t i, index_pos;
+
+	if (!bitmap_git->hashes)
+		goto cleanup;
+
+	for (i = 0; i < bitmap_num_objects(bitmap_git); i++) {
+		if (bitmap_is_midx(bitmap_git))
+			index_pos = pack_pos_to_midx(bitmap_git->midx, i);
+		else
+			index_pos = pack_pos_to_index(bitmap_git->pack, i);
+
+		nth_bitmap_object_oid(bitmap_git, &oid, index_pos);
+
+		printf("%s %"PRIu32"\n",
+		       oid_to_hex(&oid), get_be32(bitmap_git->hashes + index_pos));
+	}
+
+cleanup:
+	free_bitmap_index(bitmap_git);
+
+	return 0;
+}
+
 int rebuild_bitmap(const uint32_t *reposition,
 		   struct ewah_bitmap *source,
 		   struct bitmap *dest)
@@ -1791,18 +1818,20 @@ uint32_t *create_bitmap_mapping(struct bitmap_index *bitmap_git,
 	for (i = 0; i < num_objects; ++i) {
 		struct object_id oid;
 		struct object_entry *oe;
+		uint32_t index_pos;
 
 		if (bitmap_is_midx(bitmap_git))
-			nth_midxed_object_oid(&oid,
-					      bitmap_git->midx,
-					      pack_pos_to_midx(bitmap_git->midx, i));
+			index_pos = pack_pos_to_midx(bitmap_git->midx, i);
 		else
-			nth_packed_object_id(&oid, bitmap_git->pack,
-					     pack_pos_to_index(bitmap_git->pack, i));
+			index_pos = pack_pos_to_index(bitmap_git->pack, i);
+		nth_bitmap_object_oid(bitmap_git, &oid, index_pos);
 		oe = packlist_find(mapping, &oid);
 
-		if (oe)
+		if (oe) {
 			reposition[i] = oe_in_pack_pos(mapping, oe) + 1;
+			if (bitmap_git->hashes && !oe->hash)
+				oe->hash = get_be32(bitmap_git->hashes + index_pos);
+		}
 	}
 
 	return reposition;
