@@ -453,6 +453,13 @@ run_dir_diff_test 'difftool --dir-diff' '
 	grep "^file$" output
 '
 
+run_dir_diff_test 'difftool --dir-diff avoids repeated slashes in TMPDIR' '
+	TMPDIR="${TMPDIR:-/tmp}////" \
+		git difftool --dir-diff $symlinks --extcmd echo branch >output &&
+	grep -v // output >actual &&
+	test_line_count = 1 actual
+'
+
 run_dir_diff_test 'difftool --dir-diff ignores --prompt' '
 	git difftool --dir-diff $symlinks --prompt --extcmd ls branch >output &&
 	grep "^sub$" output &&
