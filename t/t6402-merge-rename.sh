@@ -103,7 +103,7 @@ test_expect_success 'setup' '
 test_expect_success 'pull renaming branch into unrenaming one' \
 '
 	git show-branch &&
-	test_expect_code 1 git pull . white &&
+	test_expect_code 1 git pull --no-rebase . white &&
 	git ls-files -s &&
 	test_stdout_line_count = 3 git ls-files -u B &&
 	test_stdout_line_count = 1 git ls-files -s N &&
@@ -119,7 +119,7 @@ test_expect_success 'pull renaming branch into another renaming one' \
 	rm -f B &&
 	git reset --hard &&
 	git checkout red &&
-	test_expect_code 1 git pull . white &&
+	test_expect_code 1 git pull --no-rebase . white &&
 	test_stdout_line_count = 3 git ls-files -u B &&
 	test_stdout_line_count = 1 git ls-files -s N &&
 	sed -ne "/^g/{
@@ -133,7 +133,7 @@ test_expect_success 'pull unrenaming branch into renaming one' \
 '
 	git reset --hard &&
 	git show-branch &&
-	test_expect_code 1 git pull . main &&
+	test_expect_code 1 git pull --no-rebase . main &&
 	test_stdout_line_count = 3 git ls-files -u B &&
 	test_stdout_line_count = 1 git ls-files -s N &&
 	sed -ne "/^g/{
@@ -147,7 +147,7 @@ test_expect_success 'pull conflicting renames' \
 '
 	git reset --hard &&
 	git show-branch &&
-	test_expect_code 1 git pull . blue &&
+	test_expect_code 1 git pull --no-rebase . blue &&
 	test_stdout_line_count = 1 git ls-files -u A &&
 	test_stdout_line_count = 1 git ls-files -u B &&
 	test_stdout_line_count = 1 git ls-files -u C &&
@@ -163,7 +163,7 @@ test_expect_success 'interference with untracked working tree file' '
 	git reset --hard &&
 	git show-branch &&
 	echo >A this file should not matter &&
-	test_expect_code 1 git pull . white &&
+	test_expect_code 1 git pull --no-rebase . white &&
 	test_path_is_file A
 '
 
@@ -173,7 +173,7 @@ test_expect_success 'interference with untracked working tree file' '
 	git show-branch &&
 	rm -f A &&
 	echo >A this file should not matter &&
-	test_expect_code 1 git pull . red &&
+	test_expect_code 1 git pull --no-rebase . red &&
 	test_path_is_file A
 '
 
@@ -183,7 +183,7 @@ test_expect_success 'interference with untracked working tree file' '
 	git checkout -f main &&
 	git tag -f anchor &&
 	git show-branch &&
-	git pull . yellow &&
+	git pull --no-rebase . yellow &&
 	test_path_is_missing M &&
 	git reset --hard anchor
 '
@@ -210,7 +210,7 @@ test_expect_success 'updated working tree file should prevent the merge' '
 	echo >>M one line addition &&
 	cat M >M.saved &&
 	git update-index M &&
-	test_expect_code 128 git pull . yellow &&
+	test_expect_code 128 git pull --no-rebase . yellow &&
 	test_cmp M M.saved &&
 	rm -f M.saved
 '
@@ -222,7 +222,7 @@ test_expect_success 'interference with untracked working tree file' '
 	git tag -f anchor &&
 	git show-branch &&
 	echo >M this file should not matter &&
-	git pull . main &&
+	git pull --no-rebase . main &&
 	test_path_is_file M &&
 	! {
 		git ls-files -s |
