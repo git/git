@@ -14,6 +14,11 @@ Note: Visual Studio also has the option of opening `CMakeLists.txt`
 directly; Using this option, Visual Studio will not find the source code,
 though, therefore the `File>Open>Folder...` option is preferred.
 
+Visual Studio does not produce a .sln solution file nor the .vcxproj files
+that may be required by VS extension tools.
+
+To generate the .sln/.vcxproj files run CMake manually, as described below.
+
 Instructions to run CMake manually:
 
     mkdir -p contrib/buildsystems/out
@@ -22,7 +27,7 @@ Instructions to run CMake manually:
 
 This will build the git binaries in contrib/buildsystems/out
 directory (our top-level .gitignore file knows to ignore contents of
-this directory).
+this directory). The project .sln and .vcxproj files are also generated.
 
 Possible build configurations(-DCMAKE_BUILD_TYPE) with corresponding
 compiler flags
@@ -35,16 +40,15 @@ empty(default) :
 NOTE: -DCMAKE_BUILD_TYPE is optional. For multi-config generators like Visual Studio
 this option is ignored
 
-This process generates a Makefile(Linux/*BSD/MacOS) , Visual Studio solution(Windows) by default.
+This process generates a Makefile(Linux/*BSD/MacOS), Visual Studio solution(Windows) by default.
 Run `make` to build Git on Linux/*BSD/MacOS.
 Open git.sln on Windows and build Git.
 
-NOTE: By default CMake uses Makefile as the build tool on Linux and Visual Studio in Windows,
-to use another tool say `ninja` add this to the command line when configuring.
-`-G Ninja`
-
 NOTE: By default CMake will install vcpkg locally to your source tree on configuration,
 to avoid this, add `-DNO_VCPKG=TRUE` to the command line when configuring.
+
+The Visual Studio default generator changed in v16.6 from its Visual Studio
+implemenation to `Ninja` This required changes to many CMake scripts.
 
 ]]
 cmake_minimum_required(VERSION 3.14)
@@ -59,13 +63,27 @@ endif()
 
 if(NOT DEFINED CMAKE_EXPORT_COMPILE_COMMANDS)
 	set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
+	message("settting CMAKE_EXPORT_COMPILE_COMMANDS: ${CMAKE_EXPORT_COMPILE_COMMANDS}")
 endif()
 
 if(USE_VCPKG)
 	set(VCPKG_DIR "${CMAKE_SOURCE_DIR}/compat/vcbuild/vcpkg")
+	message("WIN32: ${WIN32}") # show its underlying text values
+	message("VCPKG_DIR: ${VCPKG_DIR}")
+	message("VCPKG_ARCH: ${VCPKG_ARCH}") # maybe unset
+	message("MSVC: ${MSVC}")
+	message("CMAKE_GENERATOR: ${CMAKE_GENERATOR}")
+	message("CMAKE_CXX_COMPILER_ID: ${CMAKE_CXX_COMPILER_ID}")
+	message("CMAKE_GENERATOR_PLATFORM: ${CMAKE_GENERATOR_PLATFORM}")
+	message("CMAKE_EXPORT_COMPILE_COMMANDS: ${CMAKE_EXPORT_COMPILE_COMMANDS}")
+	message("ENV(CMAKE_EXPORT_COMPILE_COMMANDS): $ENV{CMAKE_EXPORT_COMPILE_COMMANDS}")
 	if(NOT EXISTS ${VCPKG_DIR})
 		message("Initializing vcpkg and building the Git's dependencies (this will take a while...)")
 		execute_process(COMMAND ${CMAKE_SOURCE_DIR}/compat/vcbuild/vcpkg_install.bat ${VCPKG_ARCH})
+	endif()
+	if(NOT EXISTS ${VCPKG_ARCH})
+		message("VCPKG_ARCH: unset, using 'x64-windows'")
+		set(VCPKG_ARCH "x64-windows") # default from vcpkg_install.bat
 	endif()
 	list(APPEND CMAKE_PREFIX_PATH "${VCPKG_DIR}/installed/${VCPKG_ARCH}")
 
