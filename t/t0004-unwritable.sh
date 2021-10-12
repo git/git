@@ -37,7 +37,7 @@ test_expect_success POSIXPERM,SANITY 'commit should notice unwritable repository
 '
 
 test_lazy_prereq COMMIT_OUT 'test -e "$TRASH_DIRECTORY"/out.commit'
-test_expect_failure COMMIT_OUT 'commit output on unwritable repository' '
+test_expect_success COMMIT_OUT 'commit output on unwritable repository' '
 	cat >expect <<-\EOF &&
 	error: insufficient permission for adding an object to repository database .git/objects
 	error: Error building trees
