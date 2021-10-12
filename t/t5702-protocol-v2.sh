@@ -237,6 +237,19 @@ test_expect_success '...but not if explicitly forbidden by config' '
 	! grep "refs/heads/mydefaultbranch" file_empty_child/.git/HEAD
 '
 
+test_expect_success 'bare clone propagates empty default branch' '
+	test_when_finished "rm -rf file_empty_parent file_empty_child.git" &&
+
+	GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME= \
+	git -c init.defaultBranch=mydefaultbranch init file_empty_parent &&
+
+	GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME= \
+	git -c init.defaultBranch=main -c protocol.version=2 \
+		clone --bare \
+		"file://$(pwd)/file_empty_parent" file_empty_child.git &&
+	grep "refs/heads/mydefaultbranch" file_empty_child.git/HEAD
+'
+
 test_expect_success 'fetch with file:// using protocol v2' '
 	test_when_finished "rm -f log" &&
 
