@@ -3468,6 +3468,21 @@ static int load_preimage(struct apply_state *state,
 	return 0;
 }
 
+static int resolve_to(struct image *image, const struct object_id *result_id)
+{
+	unsigned long size;
+	enum object_type type;
+
+	clear_image(image);
+
+	image->buf = read_object_file(result_id, &type, &size);
+	if (!image->buf || type != OBJ_BLOB)
+		die("unable to read blob object %s", oid_to_hex(result_id));
+	image->len = size;
+
+	return 0;
+}
+
 static int three_way_merge(struct apply_state *state,
 			   struct image *image,
 			   char *path,
@@ -3478,6 +3493,12 @@ static int three_way_merge(struct apply_state *state,
 	mmfile_t base_file, our_file, their_file;
 	mmbuffer_t result = { NULL };
 	int status;
+
+	/* resolve trivial cases first */
+	if (oideq(base, ours))
+		return resolve_to(image, theirs);
+	else if (oideq(base, theirs) || oideq(ours, theirs))
+		return resolve_to(image, ours);
 
 	read_mmblob(&base_file, base);
 	read_mmblob(&our_file, ours);
