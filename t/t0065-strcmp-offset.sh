@@ -2,6 +2,7 @@
 
 test_description='Test strcmp_offset functionality'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 while read s1 s2 expect
