@@ -1214,6 +1214,19 @@ test_expect_success '--negotiation-tip understands abbreviated SHA-1' '
 	check_negotiation_tip
 '
 
+test_expect_success '--negotiation-tip rejects missing OIDs' '
+	setup_negotiation_tip server server 0 &&
+	test_must_fail git -C client fetch \
+		--negotiation-tip=alpha_1 \
+		--negotiation-tip=$(test_oid zero) \
+		origin alpha_s beta_s 2>err &&
+	cat >fatal-expect <<-EOF &&
+	fatal: the object $(test_oid zero) does not exist
+EOF
+	grep fatal: err >fatal-actual &&
+	test_cmp fatal-expect fatal-actual
+'
+
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
 
