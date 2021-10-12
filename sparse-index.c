@@ -283,6 +283,7 @@ void ensure_full_index(struct index_state *istate)
 
 	/* Copy back into original index. */
 	memcpy(&istate->name_hash, &full->name_hash, sizeof(full->name_hash));
+	memcpy(&istate->dir_hash, &full->dir_hash, sizeof(full->dir_hash));
 	istate->sparse_index = 0;
 	free(istate->cache);
 	istate->cache = full->cache;
