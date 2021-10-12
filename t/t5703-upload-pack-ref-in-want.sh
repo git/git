@@ -40,6 +40,30 @@ write_command () {
 	fi
 }
 
+# Write a complete fetch command to stdout, suitable for use with `test-tool
+# pkt-line`. "want-ref", "want", and "have" lines are read from stdin.
+#
+# Examples:
+#
+# write_fetch_command <<-EOF
+# want-ref refs/heads/main
+# have $(git rev-parse a)
+# EOF
+#
+# write_fetch_command <<-EOF
+# want $(git rev-parse b)
+# have $(git rev-parse a)
+# EOF
+#
+write_fetch_command () {
+	write_command fetch &&
+	echo "0001" &&
+	echo "no-progress" &&
+	cat &&
+	echo "done" &&
+	echo "0000"
+}
+
 # c(o/foo) d(o/bar)
 #        \ /
 #         b   e(baz)  f(main)
@@ -77,15 +101,11 @@ test_expect_success 'config controls ref-in-want advertisement' '
 '
 
 test_expect_success 'invalid want-ref line' '
-	test-tool pkt-line pack >in <<-EOF &&
-	$(write_command fetch)
-	0001
-	no-progress
+	write_fetch_command >pkt <<-EOF &&
 	want-ref refs/heads/non-existent
-	done
-	0000
 	EOF
 
+	test-tool pkt-line pack <pkt >in &&
 	test_must_fail test-tool serve-v2 --stateless-rpc 2>out <in &&
 	grep "unknown ref" out
 '
@@ -97,16 +117,11 @@ test_expect_success 'basic want-ref' '
 	EOF
 	git rev-parse f >expected_commits &&
 
-	oid=$(git rev-parse a) &&
-	test-tool pkt-line pack >in <<-EOF &&
-	$(write_command fetch)
-	0001
-	no-progress
+	write_fetch_command >pkt <<-EOF &&
 	want-ref refs/heads/main
-	have $oid
-	done
-	0000
+	have $(git rev-parse a)
 	EOF
+	test-tool pkt-line pack <pkt >in &&
 
 	test-tool serve-v2 --stateless-rpc >out <in &&
 	check_output
@@ -121,17 +136,12 @@ test_expect_success 'multiple want-ref lines' '
 	EOF
 	git rev-parse c d >expected_commits &&
 
-	oid=$(git rev-parse b) &&
-	test-tool pkt-line pack >in <<-EOF &&
-	$(write_command fetch)
-	0001
-	no-progress
+	write_fetch_command >pkt <<-EOF &&
 	want-ref refs/heads/o/foo
 	want-ref refs/heads/o/bar
-	have $oid
-	done
-	0000
+	have $(git rev-parse b)
 	EOF
+	test-tool pkt-line pack <pkt >in &&
 
 	test-tool serve-v2 --stateless-rpc >out <in &&
 	check_output
@@ -144,16 +154,12 @@ test_expect_success 'mix want and want-ref' '
 	EOF
 	git rev-parse e f >expected_commits &&
 
-	test-tool pkt-line pack >in <<-EOF &&
-	$(write_command fetch)
-	0001
-	no-progress
+	write_fetch_command >pkt <<-EOF &&
 	want-ref refs/heads/main
 	want $(git rev-parse e)
 	have $(git rev-parse a)
-	done
-	0000
 	EOF
+	test-tool pkt-line pack <pkt >in &&
 
 	test-tool serve-v2 --stateless-rpc >out <in &&
 	check_output
@@ -166,16 +172,11 @@ test_expect_success 'want-ref with ref we already have commit for' '
 	EOF
 	>expected_commits &&
 
-	oid=$(git rev-parse c) &&
-	test-tool pkt-line pack >in <<-EOF &&
-	$(write_command fetch)
-	0001
-	no-progress
+	write_fetch_command >pkt <<-EOF &&
 	want-ref refs/heads/o/foo
-	have $oid
-	done
-	0000
+	have $(git rev-parse c)
 	EOF
+	test-tool pkt-line pack <pkt >in &&
 
 	test-tool serve-v2 --stateless-rpc >out <in &&
 	check_output
@@ -297,6 +298,141 @@ test_expect_success 'fetching with wildcard that matches multiple refs' '
 	grep "want-ref refs/heads/o/foo" log &&
 	grep "want-ref refs/heads/o/bar" log
 '
+
+REPO="$(pwd)/repo-ns"
+
+test_expect_success 'setup namespaced repo' '
+	(
+		git init -b main "$REPO" &&
+		cd "$REPO" &&
+		test_commit a &&
+		test_commit b &&
+		git checkout a &&
+		test_commit c &&
+		git checkout a &&
+		test_commit d &&
+		git update-ref refs/heads/ns-no b &&
+		git update-ref refs/namespaces/ns/refs/heads/ns-yes c &&
+		git update-ref refs/namespaces/ns/refs/heads/hidden d
+	) &&
+	git -C "$REPO" config uploadpack.allowRefInWant true
+'
+
+test_expect_success 'with namespace: want-ref is considered relative to namespace' '
+	wanted_ref=refs/heads/ns-yes &&
+
+	oid=$(git -C "$REPO" rev-parse "refs/namespaces/ns/$wanted_ref") &&
+	cat >expected_refs <<-EOF &&
+	$oid $wanted_ref
+	EOF
+	cat >expected_commits <<-EOF &&
+	$oid
+	$(git -C "$REPO" rev-parse a)
+	EOF
+
+	write_fetch_command >pkt <<-EOF &&
+	want-ref $wanted_ref
+	EOF
+	test-tool pkt-line pack <pkt >in &&
+
+	GIT_NAMESPACE=ns test-tool -C "$REPO" serve-v2 --stateless-rpc >out <in &&
+	check_output
+'
+
+test_expect_success 'with namespace: want-ref outside namespace is unknown' '
+	wanted_ref=refs/heads/ns-no &&
+
+	write_fetch_command >pkt <<-EOF &&
+	want-ref $wanted_ref
+	EOF
+	test-tool pkt-line pack <pkt >in &&
+
+	test_must_fail env GIT_NAMESPACE=ns \
+		test-tool -C "$REPO" serve-v2 --stateless-rpc >out <in &&
+	grep "unknown ref" out
+'
+
+# Cross-check refs/heads/ns-no indeed exists
+test_expect_success 'without namespace: want-ref outside namespace succeeds' '
+	wanted_ref=refs/heads/ns-no &&
+
+	oid=$(git -C "$REPO" rev-parse $wanted_ref) &&
+	cat >expected_refs <<-EOF &&
+	$oid $wanted_ref
+	EOF
+	cat >expected_commits <<-EOF &&
+	$oid
+	$(git -C "$REPO" rev-parse a)
+	EOF
+
+	write_fetch_command >pkt <<-EOF &&
+	want-ref $wanted_ref
+	EOF
+	test-tool pkt-line pack <pkt >in &&
+
+	test-tool -C "$REPO" serve-v2 --stateless-rpc >out <in &&
+	check_output
+'
+
+test_expect_success 'with namespace: hideRefs is matched, relative to namespace' '
+	wanted_ref=refs/heads/hidden &&
+	git -C "$REPO" config transfer.hideRefs $wanted_ref &&
+
+	write_fetch_command >pkt <<-EOF &&
+	want-ref $wanted_ref
+	EOF
+	test-tool pkt-line pack <pkt >in &&
+
+	test_must_fail env GIT_NAMESPACE=ns \
+		test-tool -C "$REPO" serve-v2 --stateless-rpc >out <in &&
+	grep "unknown ref" out
+'
+
+# Cross-check refs/heads/hidden indeed exists
+test_expect_success 'with namespace: want-ref succeeds if hideRefs is removed' '
+	wanted_ref=refs/heads/hidden &&
+	git -C "$REPO" config --unset transfer.hideRefs $wanted_ref &&
+
+	oid=$(git -C "$REPO" rev-parse "refs/namespaces/ns/$wanted_ref") &&
+	cat >expected_refs <<-EOF &&
+	$oid $wanted_ref
+	EOF
+	cat >expected_commits <<-EOF &&
+	$oid
+	$(git -C "$REPO" rev-parse a)
+	EOF
+
+	write_fetch_command >pkt <<-EOF &&
+	want-ref $wanted_ref
+	EOF
+	test-tool pkt-line pack <pkt >in &&
+
+	GIT_NAMESPACE=ns test-tool -C "$REPO" serve-v2 --stateless-rpc >out <in &&
+	check_output
+'
+
+test_expect_success 'without namespace: relative hideRefs does not match' '
+	wanted_ref=refs/namespaces/ns/refs/heads/hidden &&
+	git -C "$REPO" config transfer.hideRefs refs/heads/hidden &&
+
+	oid=$(git -C "$REPO" rev-parse $wanted_ref) &&
+	cat >expected_refs <<-EOF &&
+	$oid $wanted_ref
+	EOF
+	cat >expected_commits <<-EOF &&
+	$oid
+	$(git -C "$REPO" rev-parse a)
+	EOF
+
+	write_fetch_command >pkt <<-EOF &&
+	want-ref $wanted_ref
+	EOF
+	test-tool pkt-line pack <pkt >in &&
+
+	test-tool -C "$REPO" serve-v2 --stateless-rpc >out <in &&
+	check_output
+'
+
 
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
