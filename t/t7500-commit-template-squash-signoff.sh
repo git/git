@@ -270,7 +270,7 @@ EOF
 
 test_expect_success 'commit --fixup provides correct one-line commit message' '
 	commit_for_rebase_autosquash_setup &&
-	git commit --fixup HEAD~1 &&
+	EDITOR="echo ignored >>" git commit --fixup HEAD~1 &&
 	commit_msg_is "fixup! target message subject line"
 '
 
@@ -281,6 +281,13 @@ test_expect_success 'commit --fixup -m"something" -m"extra"' '
 
 extra"
 '
+test_expect_success 'commit --fixup --edit' '
+	commit_for_rebase_autosquash_setup &&
+	EDITOR="printf \"something\nextra\" >>" git commit --fixup HEAD~1 --edit &&
+	commit_msg_is "fixup! target message subject linesomething
+extra"
+'
+
 get_commit_msg () {
 	rev="$1" &&
 	git log -1 --pretty=format:"%B" "$rev"
