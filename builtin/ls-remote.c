@@ -84,6 +84,8 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 			     PARSE_OPT_STOP_AT_NON_OPTION);
 	dest = argv[0];
 
+	packet_trace_identity("ls-remote");
+
 	UNLEAK(sorting);
 
 	if (argc > 1) {
