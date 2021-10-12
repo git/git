@@ -172,19 +172,39 @@ test_expect_success 'failed `merge <branch>` does not crash' '
 	grep "^Merge branch ${SQ}G${SQ}$" .git/rebase-merge/message
 '
 
-test_expect_success 'fast-forward merge -c still rewords' '
-	git checkout -b fast-forward-merge-c H &&
+test_expect_success 'merge -c commits before rewording and reloads todo-list' '
+	cat >script-from-scratch <<-\EOF &&
+	merge -c E B
+	merge -c H G
+	EOF
+
+	git checkout -b merge-c H &&
 	(
-		set_fake_editor &&
-		FAKE_COMMIT_MESSAGE=edited \
-			GIT_SEQUENCE_EDITOR="echo merge -c H G >" \
-			git rebase -ir @^
+		set_reword_editor &&
+		GIT_SEQUENCE_EDITOR="\"$PWD/replace-editor.sh\"" \
+			git rebase -i -r D
 	) &&
-	echo edited >expected &&
-	git log --pretty=format:%B -1 >actual &&
-	test_cmp expected actual
+	check_reworded_commits E H
 '
 
+test_expect_success 'merge -c rewords when a strategy is given' '
+	git checkout -b merge-c-with-strategy H &&
+	write_script git-merge-override <<-\EOF &&
+	echo overridden$1 >G.t
+	git add G.t
+	EOF
+
+	PATH="$PWD:$PATH" \
+	GIT_SEQUENCE_EDITOR="echo merge -c H G >" \
+	GIT_EDITOR="echo edited >>" \
+		git rebase --no-ff -ir -s override -Xxopt E &&
+	test_write_lines overridden--xopt >expect &&
+	test_cmp expect G.t &&
+	test_write_lines H "" edited "" >expect &&
+	git log --format=%B -1 >actual &&
+	test_cmp expect actual
+
+'
 test_expect_success 'with a branch tip that was cherry-picked already' '
 	git checkout -b already-upstream main &&
 	base="$(git rev-parse --verify HEAD)" &&
