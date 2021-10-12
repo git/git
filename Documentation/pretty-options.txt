@@ -33,14 +33,16 @@ people using 80-column terminals.
 	used together.
 
 --encoding=<encoding>::
-	The commit objects record the encoding used for the log message
+	Commit objects record the character encoding used for the log message
 	in their encoding header; this option can be used to tell the
 	command to re-code the commit log message in the encoding
 	preferred by the user.  For non plumbing commands this
 	defaults to UTF-8. Note that if an object claims to be encoded
 	in `X` and we are outputting in `X`, we will output the object
 	verbatim; this means that invalid sequences in the original
-	commit may be copied to the output.
+	commit may be copied to the output. Likewise, if iconv(3) fails
+	to convert the commit, we will output the original object
+	verbatim, along with a warning.
 
 --expand-tabs=<n>::
 --expand-tabs::
