@@ -6,7 +6,7 @@ typedef void (*diff_merges_setup_func_t)(struct rev_info *);
 static void set_separate(struct rev_info *revs);
 
 static diff_merges_setup_func_t set_to_default = set_separate;
-static int suppress_parsing;
+static int suppress_m_parsing;
 
 static void suppress(struct rev_info *revs)
 {
@@ -91,9 +91,9 @@ int diff_merges_config(const char *value)
 	return 0;
 }
 
-void diff_merges_suppress_options_parsing(void)
+void diff_merges_suppress_m_parsing(void)
 {
-	suppress_parsing = 1;
+	suppress_m_parsing = 1;
 }
 
 int diff_merges_parse_opts(struct rev_info *revs, const char **argv)
@@ -102,10 +102,7 @@ int diff_merges_parse_opts(struct rev_info *revs, const char **argv)
 	const char *optarg;
 	const char *arg = argv[0];
 
-	if (suppress_parsing)
-		return 0;
-
-	if (!strcmp(arg, "-m")) {
+	if (!suppress_m_parsing && !strcmp(arg, "-m")) {
 		set_to_default(revs);
 	} else if (!strcmp(arg, "-c")) {
 		set_combined(revs);
@@ -153,9 +150,6 @@ void diff_merges_set_dense_combined_if_unset(struct rev_info *revs)
 
 void diff_merges_setup_revs(struct rev_info *revs)
 {
-	if (suppress_parsing)
-		return;
-
 	if (revs->combine_merges == 0)
 		revs->dense_combined_merges = 0;
 	if (revs->separate_merges == 0)
