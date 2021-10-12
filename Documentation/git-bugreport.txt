@@ -40,8 +40,8 @@ OPTIONS
 -------
 -o <path>::
 --output-directory <path>::
-	Place the resulting bug report file in `<path>` instead of the root of
-	the Git repository.
+	Place the resulting bug report file in `<path>` instead of the current
+	directory.
 
 -s <format>::
 --suffix <format>::
