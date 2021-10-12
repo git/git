@@ -4065,7 +4065,7 @@ static int record_conflicted_index_entries(struct merge_options *opt)
 	state.istate = index;
 	original_cache_nr = index->cache_nr;
 
-	/* Put every entry from paths into plist, then sort */
+	/* Append every entry from conflicted into index, then sort */
 	strmap_for_each_entry(&opt->priv->conflicted, &iter, e) {
 		const char *path = e->key;
 		struct conflict_info *ci = e->value;
