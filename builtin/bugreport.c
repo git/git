@@ -171,10 +171,7 @@ int cmd_bugreport(int argc, const char **argv, const char *prefix)
 	get_populated_hooks(&buffer, !startup_info->have_repository);
 
 	/* fopen doesn't offer us an O_EXCL alternative, except with glibc. */
-	report = open(report_path.buf, O_CREAT | O_EXCL | O_WRONLY, 0666);
-
-	if (report < 0)
-		die(_("couldn't create a new file at '%s'"), report_path.buf);
+	report = xopen(report_path.buf, O_CREAT | O_EXCL | O_WRONLY, 0666);
 
 	if (write_in_full(report, buffer.buf, buffer.len) < 0)
 		die_errno(_("unable to write to %s"), report_path.buf);
