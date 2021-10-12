@@ -1322,9 +1322,50 @@ int async_with_fork(void)
 #endif
 }
 
+static inline const char *platform_name(void)
+{
+	static const char *platform = NULL;
+#ifndef GIT_WINDOWS_NATIVE
+	static struct utsname un = { 0 };
+#endif
+	if (platform != NULL)
+		return platform;
+
+#ifndef GIT_WINDOWS_NATIVE
+	if (uname(&un) == 0) {
+		for (size_t s = 0; un.sysname[s] != 0; s++)
+			un.sysname[s] = tolower(un.sysname[s]);
+		platform = un.sysname;
+	}
+#else
+    platform = "windows";
+#endif
+
+    return platform;
+}
+
+static const char *find_native_hook(const char *name)
+{
+	char native_name[64] = "";
+	const char *platform = NULL;
+	if (name == NULL || strstr(name, "_") != NULL)
+		return NULL;
+
+	platform = platform_name();
+	if (platform == NULL)
+		return NULL;
+
+	if (snprintf(native_name, sizeof(native_name) - 1, "%s_%s", name, platform) >= sizeof(native_name) - 1)
+		return NULL;
+	return find_hook(native_name);
+}
+
 const char *find_hook(const char *name)
 {
+	const char *native_hook = find_native_hook(name);
 	static struct strbuf path = STRBUF_INIT;
+	if (native_hook != NULL)
+		return native_hook;
 
 	strbuf_reset(&path);
 	strbuf_git_path(&path, "hooks/%s", name);
