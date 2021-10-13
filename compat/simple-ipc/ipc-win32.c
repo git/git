@@ -3,6 +3,8 @@
 #include "strbuf.h"
 #include "pkt-line.h"
 #include "thread-utils.h"
+#include "accctrl.h"
+#include "aclapi.h"
 
 #ifndef SUPPORTS_SIMPLE_IPC
 /*
@@ -48,6 +50,9 @@ static enum ipc_active_state get_active_state(wchar_t *pipe_path)
 
 	if (GetLastError() == ERROR_FILE_NOT_FOUND)
 		return IPC_STATE__PATH_NOT_FOUND;
+
+	trace2_data_intmax("ipc-debug", NULL, "getstate/waitpipe/gle",
+			   (intmax_t)GetLastError());
 
 	return IPC_STATE__OTHER_ERROR;
 }
@@ -109,8 +114,14 @@ static enum ipc_active_state connect_to_server(
 			t_start_ms = (DWORD)(getnanotime() / 1000000);
 
 			if (!WaitNamedPipeW(wpath, timeout_ms)) {
-				if (GetLastError() == ERROR_SEM_TIMEOUT)
+				DWORD gleWait = GetLastError();
+
+				if (gleWait == ERROR_SEM_TIMEOUT)
 					return IPC_STATE__NOT_LISTENING;
+
+				trace2_data_intmax("ipc-debug", NULL,
+						   "connect/waitpipe/gle",
+						   (intmax_t)gleWait);
 
 				return IPC_STATE__OTHER_ERROR;
 			}
@@ -133,17 +144,31 @@ static enum ipc_active_state connect_to_server(
 			break; /* try again */
 
 		default:
+			trace2_data_intmax("ipc-debug", NULL,
+					   "connect/createfile/gle",
+					   (intmax_t)gle);
+
 			return IPC_STATE__OTHER_ERROR;
 		}
 	}
 
 	if (!SetNamedPipeHandleState(hPipe, &mode, NULL, NULL)) {
+		gle = GetLastError();
+		trace2_data_intmax("ipc-debug", NULL,
+				   "connect/setpipestate/gle",
+				   (intmax_t)gle);
+
 		CloseHandle(hPipe);
 		return IPC_STATE__OTHER_ERROR;
 	}
 
 	*pfd = _open_osfhandle((intptr_t)hPipe, O_RDWR|O_BINARY);
 	if (*pfd < 0) {
+		gle = GetLastError();
+		trace2_data_intmax("ipc-debug", NULL,
+				   "connect/openosfhandle/gle",
+				   (intmax_t)gle);
+
 		CloseHandle(hPipe);
 		return IPC_STATE__OTHER_ERROR;
 	}
@@ -208,7 +233,8 @@ void ipc_client_close_connection(struct ipc_client_connection *connection)
 
 int ipc_client_send_command_to_connection(
 	struct ipc_client_connection *connection,
-	const char *message, struct strbuf *answer)
+	const char *message, size_t message_len,
+	struct strbuf *answer)
 {
 	int ret = 0;
 
@@ -216,7 +242,7 @@ int ipc_client_send_command_to_connection(
 
 	trace2_region_enter("ipc-client", "send-command", NULL);
 
-	if (write_packetized_from_buf_no_flush(message, strlen(message),
+	if (write_packetized_from_buf_no_flush(message, message_len,
 					       connection->fd) < 0 ||
 	    packet_flush_gently(connection->fd) < 0) {
 		ret = error(_("could not send IPC command"));
@@ -239,7 +265,8 @@ done:
 
 int ipc_client_send_command(const char *path,
 			    const struct ipc_client_connect_options *options,
-			    const char *message, struct strbuf *response)
+			    const char *message, size_t message_len,
+			    struct strbuf *response)
 {
 	int ret = -1;
 	enum ipc_active_state state;
@@ -250,7 +277,9 @@ int ipc_client_send_command(const char *path,
 	if (state != IPC_STATE__LISTENING)
 		return ret;
 
-	ret = ipc_client_send_command_to_connection(connection, message, response);
+	ret = ipc_client_send_command_to_connection(connection,
+						    message, message_len,
+						    response);
 
 	ipc_client_close_connection(connection);
 
@@ -458,7 +487,7 @@ static int do_io(struct ipc_server_thread_data *server_thread_data)
 	if (ret >= 0) {
 		ret = server_thread_data->server_data->application_cb(
 			server_thread_data->server_data->application_data,
-			buf.buf, do_io_reply_callback, &reply_data);
+			buf.buf, buf.len, do_io_reply_callback, &reply_data);
 
 		packet_flush_gently(reply_data.fd);
 
@@ -565,11 +594,132 @@ finished:
 	return NULL;
 }
 
+/*
+ * We need to build a Windows "SECURITY_ATTRIBUTES" object and use it
+ * to apply an ACL when we create the initial instance of the Named
+ * Pipe.  The construction is somewhat involved and consists of
+ * several sequential steps and intermediate objects.
+ *
+ * We use this structure to hold these intermediate pointers so that
+ * we can free them as a group.  (It is unclear from the docs whether
+ * some of these intermediate pointers can be freed before we are
+ * finished using the "lpSA" member.)
+ */
+struct my_sa_data
+{
+	PSID pEveryoneSID;
+	PACL pACL;
+	PSECURITY_DESCRIPTOR pSD;
+	LPSECURITY_ATTRIBUTES lpSA;
+};
+
+static void init_sa(struct my_sa_data *d)
+{
+	memset(d, 0, sizeof(*d));
+}
+
+static void release_sa(struct my_sa_data *d)
+{
+	if (d->pEveryoneSID)
+		FreeSid(d->pEveryoneSID);
+	if (d->pACL)
+		LocalFree(d->pACL);
+	if (d->pSD)
+		LocalFree(d->pSD);
+	if (d->lpSA)
+		LocalFree(d->lpSA);
+
+	memset(d, 0, sizeof(*d));
+}
+
+/*
+ * Create SECURITY_ATTRIBUTES to apply to the initial named pipe.  The
+ * creator of the first server instance gets to set the ACLs on it.
+ *
+ * We allow the well-known group `EVERYONE` to have read+write access
+ * to the named pipe so that clients can send queries to the daemon
+ * and receive the response.
+ *
+ * Normally, this is not necessary since the daemon is usually
+ * automatically started by a foreground command like `git status`,
+ * but in those cases where an elevated Git command started the daemon
+ * (such that the daemon itself runs with elevation), we need to add
+ * the ACL so that non-elevated commands can write to it.
+ *
+ * The following document was helpful:
+ * https://docs.microsoft.com/en-us/windows/win32/secauthz/creating-a-security-descriptor-for-a-new-object-in-c--
+ *
+ * Returns d->lpSA set to a SA or NULL.
+ */
+static LPSECURITY_ATTRIBUTES get_sa(struct my_sa_data *d)
+{
+	SID_IDENTIFIER_AUTHORITY sid_auth_world = SECURITY_WORLD_SID_AUTHORITY;
+#define NR_EA (1)
+	EXPLICIT_ACCESS ea[NR_EA];
+	DWORD dwResult;
+
+	if (!AllocateAndInitializeSid(&sid_auth_world, 1,
+				      SECURITY_WORLD_RID, 0,0,0,0,0,0,0,
+				      &d->pEveryoneSID)) {
+		DWORD gle = GetLastError();
+		trace2_data_intmax("ipc-debug", NULL, "alloc-world-sid/gle",
+				   (intmax_t)gle);
+		goto fail;
+	}
+
+	memset(ea, 0, NR_EA * sizeof(EXPLICIT_ACCESS));
+
+	ea[0].grfAccessPermissions = GENERIC_READ | GENERIC_WRITE;
+	ea[0].grfAccessMode = SET_ACCESS;
+	ea[0].grfInheritance = NO_INHERITANCE;
+	ea[0].Trustee.MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
+	ea[0].Trustee.TrusteeForm = TRUSTEE_IS_SID;
+	ea[0].Trustee.TrusteeType = TRUSTEE_IS_WELL_KNOWN_GROUP;
+	ea[0].Trustee.ptstrName = (LPTSTR)d->pEveryoneSID;
+
+	dwResult = SetEntriesInAcl(NR_EA, ea, NULL, &d->pACL);
+	if (dwResult != ERROR_SUCCESS) {
+		DWORD gle = GetLastError();
+		trace2_data_intmax("ipc-debug", NULL, "set-acl-entry/gle",
+				   (intmax_t)gle);
+		trace2_data_intmax("ipc-debug", NULL, "set-acl-entry/dw",
+				   (intmax_t)dwResult);
+		goto fail;
+	}
+
+	d->pSD = (PSECURITY_DESCRIPTOR)LocalAlloc(
+		LPTR, SECURITY_DESCRIPTOR_MIN_LENGTH);
+	if (!InitializeSecurityDescriptor(d->pSD, SECURITY_DESCRIPTOR_REVISION)) {
+		DWORD gle = GetLastError();
+		trace2_data_intmax("ipc-debug", NULL, "init-sd/gle", (intmax_t)gle);
+		goto fail;
+	}
+
+	if (!SetSecurityDescriptorDacl(d->pSD, TRUE, d->pACL, FALSE)) {
+		DWORD gle = GetLastError();
+		trace2_data_intmax("ipc-debug", NULL, "set-sd-dacl/gle", (intmax_t)gle);
+		goto fail;
+	}
+
+	d->lpSA = (LPSECURITY_ATTRIBUTES)LocalAlloc(LPTR, sizeof(SECURITY_ATTRIBUTES));
+	d->lpSA->nLength = sizeof(SECURITY_ATTRIBUTES);
+	d->lpSA->lpSecurityDescriptor = d->pSD;
+	d->lpSA->bInheritHandle = FALSE;
+
+	return d->lpSA;
+
+fail:
+	release_sa(d);
+	return NULL;
+}
+
 static HANDLE create_new_pipe(wchar_t *wpath, int is_first)
 {
 	HANDLE hPipe;
 	DWORD dwOpenMode, dwPipeMode;
-	LPSECURITY_ATTRIBUTES lpsa = NULL;
+	struct my_sa_data my_sa_data;
+
+	init_sa(&my_sa_data);
 
 	dwOpenMode = PIPE_ACCESS_INBOUND | PIPE_ACCESS_OUTBOUND |
 		FILE_FLAG_OVERLAPPED;
@@ -585,20 +735,15 @@ static HANDLE create_new_pipe(wchar_t *wpath, int is_first)
 		 * set the ACL / Security Attributes on the named
 		 * pipe; subsequent instances inherit and cannot
 		 * change them.
-		 *
-		 * TODO Should we allow the application layer to
-		 * specify security attributes, such as `LocalService`
-		 * or `LocalSystem`, when we create the named pipe?
-		 * This question is probably not important when the
-		 * daemon is started by a foreground user process and
-		 * only needs to talk to the current user, but may be
-		 * if the daemon is run via the Control Panel as a
-		 * System Service.
 		 */
+		get_sa(&my_sa_data);
 	}
 
 	hPipe = CreateNamedPipeW(wpath, dwOpenMode, dwPipeMode,
-				 PIPE_UNLIMITED_INSTANCES, 1024, 1024, 0, lpsa);
+				 PIPE_UNLIMITED_INSTANCES, 1024, 1024, 0,
+				 my_sa_data.lpSA);
+
+	release_sa(&my_sa_data);
 
 	return hPipe;
 }

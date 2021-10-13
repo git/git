@@ -254,6 +254,31 @@ void trace2_child_exit_fl(const char *file, int line, struct child_process *cmd,
 	trace2_child_exit_fl(__FILE__, __LINE__, (cmd), (code))
 
 /**
+ * Emits a "child_ready" message containing the "child-id" and a flag
+ * indicating whether the child was considered "ready" when we
+ * released it.
+ *
+ * This function should be called after starting a daemon process in
+ * the background (and after giving it sufficient time to boot
+ * up) to indicate that we no longer control or own it.
+ *
+ * The "ready" argument should contain one of { "ready", "timeout",
+ * "error" } to indicate the state of the running daemon when we
+ * released it.
+ *
+ * If the daemon process fails to start or it exits or is terminated
+ * while we are still waiting for it, the caller should emit a
+ * regular "child_exit" to report the normal process exit information.
+ *
+ */
+void trace2_child_ready_fl(const char *file, int line,
+			   struct child_process *cmd,
+			   const char *ready);
+
+#define trace2_child_ready(cmd, ready) \
+	trace2_child_ready_fl(__FILE__, __LINE__, (cmd), (ready))
+
+/**
  * Emit an 'exec' event prior to calling one of exec(), execv(),
  * execvp(), and etc.  On Unix-derived systems, this will be the
  * last event emitted for the current process, unless the exec
