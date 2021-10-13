@@ -293,9 +293,21 @@ void load_command_list(const char *prefix,
 	exclude_cmds(other_cmds, main_cmds);
 }
 
-void list_commands(unsigned int colopts,
-		   struct cmdnames *main_cmds, struct cmdnames *other_cmds)
+static int get_colopts(const char *var, const char *value, void *data)
 {
+	unsigned int *colopts = data;
+
+	if (starts_with(var, "column."))
+		return git_column_config(var, value, "help", colopts);
+
+	return 0;
+}
+
+void list_commands(struct cmdnames *main_cmds, struct cmdnames *other_cmds)
+{
+	unsigned int colopts = 0;
+	git_config(get_colopts, &colopts);
+
 	if (main_cmds->cnt) {
 		const char *exec_path = git_exec_path();
 		printf_ln(_("available git commands in '%s'"), exec_path);

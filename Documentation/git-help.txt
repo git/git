@@ -8,8 +8,10 @@ git-help - Display help information about Git
 SYNOPSIS
 --------
 [verse]
-'git help' [-a|--all [--[no-]verbose]] [-g|--guides]
-	   [-i|--info|-m|--man|-w|--web] [COMMAND|GUIDE]
+'git help' [-a|--all [--[no-]verbose]]
+	   [[-i|--info] [-m|--man] [-w|--web]] [COMMAND|GUIDE]
+'git help' [-g|--guides]
+'git help' [-c|--config]
 
 DESCRIPTION
 -----------
@@ -58,8 +60,7 @@ OPTIONS
 
 -g::
 --guides::
-	Prints a list of the Git concept guides on the standard output. This
-	option overrides any given command or guide name.
+	Prints a list of the Git concept guides on the standard output.
 
 -i::
 --info::
