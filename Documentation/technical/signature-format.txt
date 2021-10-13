@@ -13,6 +13,22 @@ Signatures always begin with `-----BEGIN PGP SIGNATURE-----`
 and end with `-----END PGP SIGNATURE-----`, unless gpg is told to
 produce RFC1991 signatures which use `MESSAGE` instead of `SIGNATURE`.
 
+Signatures sometimes appear as a part of the normal payload
+(e.g. a signed tag has the signature block appended after the payload
+that the signature applies to), and sometimes appear in the value of
+an object header (e.g. a merge commit that merged a signed tag would
+have the entire tag contents on its "mergetag" header).  In the case
+of the latter, the usual multi-line formatting rule for object
+headers applies.  I.e. the second and subsequent lines are prefixed
+with a SP to signal that the line is continued from the previous
+line.
+
+This is even true for an originally empty line.  In the following
+examples, the end of line that ends with a whitespace letter is
+highlighted with a `$` sign; if you are trying to recreate these
+example by hand, do not cut and paste them---they are there
+primarily to highlight extra whitespace at the end of some lines.
+
 The signed payload and the way the signature is embedded depends
 on the type of the object resp. transaction.
 
@@ -78,7 +94,7 @@ author A U Thor <author@example.com> 1465981137 +0000
 committer C O Mitter <committer@example.com> 1465981137 +0000
 gpgsig -----BEGIN PGP SIGNATURE-----
  Version: GnuPG v1
-
+ $
  iQEcBAABAgAGBQJXYRjRAAoJEGEJLoW3InGJ3IwIAIY4SA6GxY3BjL60YyvsJPh/
  HRCJwH+w7wt3Yc/9/bW2F+gF72kdHOOs2jfv+OZhq0q4OAN6fvVSczISY/82LpS7
  DVdMQj2/YcHDT4xrDNBnXnviDO9G7am/9OE77kEbXrp7QPxvhjkicHNwy2rEflAA
@@ -128,13 +144,13 @@ mergetag object 04b871796dc0420f8e7561a895b52484b701d51a
  type commit
  tag signedtag
  tagger C O Mitter <committer@example.com> 1465981006 +0000
-
+ $
  signed tag
-
+ $
  signed tag message body
  -----BEGIN PGP SIGNATURE-----
  Version: GnuPG v1
-
+ $
  iQEcBAABAgAGBQJXYRhOAAoJEGEJLoW3InGJklkIAIcnhL7RwEb/+QeX9enkXhxn
  rxfdqrvWd1K80sl2TOt8Bg/NYwrUBw/RWJ+sg/hhHp4WtvE1HDGHlkEz3y11Lkuh
  8tSxS3qKTxXUGozyPGuE90sJfExhZlW4knIQ1wt/yWqM+33E9pN4hzPqLwyrdods
