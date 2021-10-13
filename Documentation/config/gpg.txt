@@ -52,9 +52,7 @@ gpg.ssh.allowedSignersFile::
 SSH has no concept of trust levels like gpg does. To be able to differentiate
 between valid signatures and trusted signatures the trust level of a signature
 verification is set to `fully` when the public key is present in the allowedSignersFile.
-Therefore to only mark fully trusted keys as verified set gpg.minTrustLevel to `fully`.
-Otherwise valid but untrusted signatures will still verify but show no principal
-name of the signer.
+Otherwise the trust level is `undefined` and git verify-commit/tag will fail.
 +
 This file can be set to a location outside of the repository and every developer
 maintains their own trust store. A central repository server could generate this
