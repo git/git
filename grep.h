@@ -128,9 +128,9 @@ struct grep_opt {
 	 * instead.
 	 *
 	 * This is potentially the cause of at least one bug - "git grep"
-	 * ignoring the textconv attributes from submodules. See [1] for more
-	 * information.
-	 * [1] https://lore.kernel.org/git/CAHd-oW5iEQarYVxEXoTG-ua2zdoybTrSjCBKtO0YT292fm0NQQ@mail.gmail.com/
+	 * using the textconv attributes from the superproject on the
+	 * submodules. See the failing "git grep --textconv" tests in
+	 * t7814-grep-recurse-submodules.sh for more information.
 	 */
 	struct repository *repo;
 
