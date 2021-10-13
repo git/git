@@ -91,7 +91,7 @@ do
 		git checkout -q $commit -- .
 		git rerere
 	fi
-	git reset -q --hard
+	git reset -q --hard  # Might nuke untracked files...
 done
 
 if test -z "$branch"
