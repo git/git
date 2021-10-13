@@ -44,16 +44,19 @@ void mem_pool_init(struct mem_pool *pool, size_t initial_size)
 	if (initial_size > 0)
 		mem_pool_alloc_block(pool, initial_size, NULL);
 
-	trace_printf_key(&trace_mem_pool, "mem_pool (%p): init (%"PRIuMAX") initial size\n",
-		pool, (uintmax_t)initial_size);
+	trace_printf_key(&trace_mem_pool,
+		"mem_pool (%p): init (%"PRIuMAX") initial size\n",
+		(void *)pool, (uintmax_t)initial_size);
 }
 
 void mem_pool_discard(struct mem_pool *pool, int invalidate_memory)
 {
 	struct mp_block *block, *block_to_free;
 
-	trace_printf_key(&trace_mem_pool, "mem_pool (%p): discard (%"PRIuMAX") unused\n",
-		pool, (uintmax_t)(pool->mp_block->end - pool->mp_block->next_free));
+	trace_printf_key(&trace_mem_pool,
+		"mem_pool (%p): discard (%"PRIuMAX") unused\n",
+		(void *)pool,
+		(uintmax_t)(pool->mp_block->end - pool->mp_block->next_free));
 	block = pool->mp_block;
 	while (block)
 	{

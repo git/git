@@ -1,11 +1,14 @@
 #include "../../git-compat-util.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
 typedef struct dirent_DIR {
 	struct DIR base_dir;  /* extend base struct DIR */
 	HANDLE dd_handle;     /* FindFirstFile handle */
 	int dd_stat;          /* 0-based index */
 	struct dirent dd_dir; /* includes d_type */
 } dirent_DIR;
+#pragma GCC diagnostic pop
 
 DIR *(*opendir)(const char *dirname) = dirent_opendir;
 
