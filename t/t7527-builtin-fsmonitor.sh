@@ -261,6 +261,16 @@ test_expect_success 'setup' '
 	trace*
 	EOF
 
+	mkdir -p T1/T2/T3/T4 &&
+	echo 1 >T1/F1 &&
+	echo 1 >T1/T2/F1 &&
+	echo 1 >T1/T2/T3/F1 &&
+	echo 1 >T1/T2/T3/T4/F1 &&
+	echo 2 >T1/F2 &&
+	echo 2 >T1/T2/F2 &&
+	echo 2 >T1/T2/T3/F2 &&
+	echo 2 >T1/T2/T3/T4/F2 &&
+
 	git -c core.useBuiltinFSMonitor= add . &&
 	test_tick &&
 	git -c core.useBuiltinFSMonitor= commit -m initial &&
@@ -352,6 +362,19 @@ verify_status() {
 	echo HELLO AFTER &&
 	cat .git/trace &&
 	echo HELLO AFTER
+}
+
+move_directory_contents_deeper() {
+	mkdir T1/_new_
+	mv T1/[A-Z]* T1/_new_
+}
+
+move_directory_up() {
+	mv T1/T2/T3 T1
+}
+
+move_directory() {
+	mv T1/T2/T3 T1/T2/NewT3
 }
 
 # The next few test cases confirm that our fsmonitor daemon sees each type
@@ -622,8 +645,8 @@ test_expect_success 'Matrix: setup for untracked-cache,fsmonitor matrix' '
 '
 
 matrix_clean_up_repo () {
-	git reset --hard HEAD
 	git clean -fd
+	git reset --hard HEAD
 }
 
 matrix_try () {
@@ -687,6 +710,22 @@ do
 		matrix_try $uc_val $fsm_val rename_files
 		matrix_try $uc_val $fsm_val file_to_directory
 		matrix_try $uc_val $fsm_val directory_to_file
+
+		# NEEDSWORK: On Windows the untracked-cache is buggy when FSMonitor
+		# is DISABLED.  Turn off a few test that cause it problems until
+		# we can debug it.
+		#
+		try_moves="true"
+		test_have_prereq UNTRACKED_CACHE,WINDOWS && \
+			test $uc_val = true && \
+			test $fsm_val = false && \
+			try_moves="false"
+		if test $try_moves = true
+		then
+			matrix_try $uc_val $fsm_val move_directory_contents_deeper
+			matrix_try $uc_val $fsm_val move_directory_up
+			matrix_try $uc_val $fsm_val move_directory
+		fi
 
 		if test $fsm_val = true
 		then
