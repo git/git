@@ -740,9 +740,9 @@ sub wildo_flush_topic {
 sub wildo_match {
 	# NEEDSWORK: unify with Reintegrate::annotate_merge
 	if (/^Will (?:\S+ ){0,2}(fast-track|hold|keep|merge|drop|discard|cook|kick|defer|eject|be re-?rolled|wait)[,. ]/ ||
-	    /^Not urgent/ || /^Not ready/ || /^Waiting for / ||
+	    /^Not urgent/ || /^Not ready/ || /^Waiting for / || /^Under discussion/ ||
 	    /^Can wait in / || /^Still / || /^Stuck / || /^On hold/ ||
-	    /^Needs? / || /^Expecting / || /^May want to /) {
+	    /^Needs? / || /^Expecting / || /^May want to / || /^Under review/) {
 		return 1;
 	}
 	if (/^I think this is ready for /) {
