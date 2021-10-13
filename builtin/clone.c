@@ -990,7 +990,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	struct transport_ls_refs_options transport_ls_refs_options =
 		TRANSPORT_LS_REFS_OPTIONS_INIT;
 
-	git_config(platform_core_config, NULL);
+	git_config(git_default_core_config, NULL);
 
 	packet_trace_identity("clone");
 
