@@ -51,8 +51,8 @@ test_expect_success 'create commits and repack' '
 '
 
 graph_git_two_modes() {
-	git -c core.commitGraph=true $1 >output
-	git -c core.commitGraph=false $1 >expect
+	git -c core.commitGraph=true $1 >output &&
+	git -c core.commitGraph=false $1 >expect &&
 	test_cmp expect output
 }
 
