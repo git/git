@@ -589,11 +589,15 @@ USER_TERM="$TERM"
 TERM=dumb
 export TERM USER_TERM
 
-error () {
-	say_color error "error: $*"
+_error_exit () {
 	finalize_junit_xml
 	GIT_EXIT_OK=t
 	exit 1
+}
+
+error () {
+	say_color error "error: $*"
+	_error_exit
 }
 
 BUG () {
@@ -720,7 +724,7 @@ test_failure_ () {
 	say_color error "not ok $test_count - $1"
 	shift
 	printf '%s\n' "$*" | sed -e 's/^/#	/'
-	test "$immediate" = "" || { finalize_junit_xml; GIT_EXIT_OK=t; exit 1; }
+	test "$immediate" = "" || _error_exit
 }
 
 test_known_broken_ok_ () {
