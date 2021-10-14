@@ -463,11 +463,8 @@ GIT_TEST_FATAL_REGISTER_SUBMODULE_ODB=<boolean>, when true, makes
 registering submodule ODBs as alternates a fatal action. Support for
 this environment variable can be removed once the migration to
 explicitly providing repositories when accessing submodule objects is
-complete (in which case we might want to replace this with a trace2
-call so that users can make it visible if accessing submodule objects
-without an explicit repository still happens) or needs to be abandoned
-for whatever reason (in which case the migrated codepaths still retain
-their performance benefits).
+complete or needs to be abandoned for whatever reason (in which case the
+migrated codepaths still retain their performance benefits).
 
 Naming Tests
 ------------
