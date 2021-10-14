@@ -366,6 +366,7 @@ test_expect_success 'replace-objects invalidates commit-graph' '
 		git commit-graph write --reachable &&
 		test_path_is_file .git/objects/info/commit-graph &&
 		git replace HEAD~1 HEAD~2 &&
+		graph_git_two_modes "commit-graph verify" &&
 		git -c core.commitGraph=false log >expect &&
 		git -c core.commitGraph=true log >actual &&
 		test_cmp expect actual &&

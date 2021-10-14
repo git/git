@@ -267,7 +267,6 @@ static int graph_write(int argc, const char **argv)
 	    git_env_bool(GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS, 0))
 		flags |= COMMIT_GRAPH_WRITE_BLOOM_FILTERS;
 
-	read_replace_refs = 0;
 	odb = find_odb(the_repository, opts.obj_dir);
 
 	if (opts.reachable) {
@@ -328,6 +327,7 @@ int cmd_commit_graph(int argc, const char **argv, const char *prefix)
 			     builtin_commit_graph_usage,
 			     PARSE_OPT_STOP_AT_NON_OPTION);
 
+	read_replace_refs = 0;
 	save_commit_buffer = 0;
 
 	if (argc > 0) {
