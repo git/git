@@ -252,22 +252,6 @@ void packet_buf_write(struct strbuf *buf, const char *fmt, ...)
 	va_end(args);
 }
 
-void packet_buf_write_len(struct strbuf *buf, const char *data, size_t len)
-{
-	size_t orig_len, n;
-
-	orig_len = buf->len;
-	strbuf_addstr(buf, "0000");
-	strbuf_add(buf, data, len);
-	n = buf->len - orig_len;
-
-	if (n > LARGE_PACKET_MAX)
-		die(_("protocol error: impossibly long line"));
-
-	set_packet_header(&buf->buf[orig_len], n);
-	packet_trace(data, len, 1);
-}
-
 int write_packetized_from_fd_no_flush(int fd_in, int fd_out)
 {
 	char *buf = xmalloc(LARGE_PACKET_DATA_MAX);
