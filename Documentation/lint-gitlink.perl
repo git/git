@@ -5,11 +5,12 @@ use warnings;
 
 # Parse arguments, a simple state machine for input like:
 #
-# howto/*.txt config/*.txt --section=1 git.txt git-add.txt [...] --to-lint git-add.txt a-file.txt [...]
+# <file-to-check.txt> <valid-files-to-link-to> --section=1 git.txt git-add.txt [...] --to-lint git-add.txt a-file.txt [...]
 my %TXT;
 my %SECTION;
 my $section;
 my $lint_these = 0;
+my $to_check = shift @ARGV;
 for my $arg (@ARGV) {
 	if (my ($sec) = $arg =~ /^--section=(\d+)$/s) {
 		$section = $sec;
@@ -36,7 +37,8 @@ sub report {
 }
 
 @ARGV = sort values %TXT;
-die "BUG: Nothing to process!" unless @ARGV;
+die "BUG: No list of valid linkgit:* files given" unless @ARGV;
+@ARGV = $to_check;
 while (<>) {
 	my $line = $_;
 	while ($line =~ m/linkgit:((.*?)\[(\d)\])/g) {
