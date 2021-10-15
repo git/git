@@ -1,3 +1,5 @@
+. "$TEST_DIRECTORY"/lib-diff-data.sh
+
 :
 
 sanitize_diff_raw='/^:/s/ '"\($OID_REGEX\)"' '"\($OID_REGEX\)"' \([A-Z]\)[0-9]*	/ \1 \2 \3#	/'
