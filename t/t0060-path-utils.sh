@@ -525,6 +525,32 @@ test_expect_success MINGW 'is_valid_path() on Windows' '
 		"PRN./abc"
 '
 
+test_lazy_prereq RUNTIME_PREFIX '
+	test true = "$RUNTIME_PREFIX"
+'
+
+test_lazy_prereq CAN_EXEC_IN_PWD '
+	cp "$GIT_EXEC_PATH"/git$X ./ &&
+	./git rev-parse
+'
+
+test_expect_success RUNTIME_PREFIX,CAN_EXEC_IN_PWD 'RUNTIME_PREFIX works' '
+	mkdir -p pretend/bin pretend/libexec/git-core &&
+	echo "echo HERE" | write_script pretend/libexec/git-core/git-here &&
+	cp "$GIT_EXEC_PATH"/git$X pretend/bin/ &&
+	GIT_EXEC_PATH= ./pretend/bin/git here >actual &&
+	echo HERE >expect &&
+	test_cmp expect actual'
+
+test_expect_success RUNTIME_PREFIX,CAN_EXEC_IN_PWD '%(prefix)/ works' '
+	mkdir -p pretend/bin &&
+	cp "$GIT_EXEC_PATH"/git$X pretend/bin/ &&
+	git config yes.path "%(prefix)/yes" &&
+	GIT_EXEC_PATH= ./pretend/bin/git config --path yes.path >actual &&
+	echo "$(pwd)/pretend/yes" >expect &&
+	test_cmp expect actual
+'
+
 test_expect_success MINGW 'MSYSTEM/PATH is adjusted if necessary' '
 	mkdir -p "$HOME"/bin pretend/mingw64/bin \
 		pretend/mingw64/libexec/git-core pretend/usr/bin &&
@@ -542,24 +568,6 @@ test_expect_success MINGW 'MSYSTEM/PATH is adjusted if necessary' '
 		pretend/mingw64/bin/git.exe test-bin2 >>actual
 	) &&
 	test_write_lines MSYSTEM=$MSYSTEM mingw64 usr >expect &&
-	test_cmp expect actual
-'
-
-test_lazy_prereq RUNTIME_PREFIX '
-	test true = "$RUNTIME_PREFIX"
-'
-
-test_lazy_prereq CAN_EXEC_IN_PWD '
-	cp "$GIT_EXEC_PATH"/git$X ./ &&
-	./git rev-parse
-'
-
-test_expect_success RUNTIME_PREFIX,CAN_EXEC_IN_PWD 'RUNTIME_PREFIX works' '
-	mkdir -p pretend/git pretend/libexec/git-core &&
-	echo "echo HERE" | write_script pretend/libexec/git-core/git-here &&
-	cp "$GIT_EXEC_PATH"/git$X pretend/git/ &&
-	GIT_EXEC_PATH= ./pretend/git/git here >actual &&
-	echo HERE >expect &&
 	test_cmp expect actual
 '
 

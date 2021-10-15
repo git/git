@@ -1253,7 +1253,9 @@ typedef int create_file_fn(const char *path, void *cb);
 int raceproof_create_file(const char *path, create_file_fn fn, void *cb);
 
 int mkdir_in_gitdir(const char *path);
-char *expand_user_path(const char *path, int real_home);
+char *interpolate_path(const char *path, int real_home);
+/* NEEDSWORK: remove this synonym once in-flight topics have migrated */
+#define expand_user_path interpolate_path
 const char *enter_repo(const char *path, int strict);
 static inline int is_absolute_path(const char *path)
 {
