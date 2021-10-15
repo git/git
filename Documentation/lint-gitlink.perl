@@ -30,8 +30,8 @@ sub report {
 	my ($pos, $line, $target, $msg) = @_;
 	substr($line, $pos) = "' <-- HERE";
 	$line =~ s/^\s+//;
-	print "$ARGV:$.: error: $target: $msg, shown with 'HERE' below:\n";
-	print "$ARGV:$.:\t'$line\n";
+	print STDERR "$ARGV:$.: error: $target: $msg, shown with 'HERE' below:\n";
+	print STDERR "$ARGV:$.:\t'$line\n";
 	$exit_code = 1;
 }
 
