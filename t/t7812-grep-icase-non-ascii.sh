@@ -53,6 +53,54 @@ test_expect_success REGEX_LOCALE 'pickaxe -i on non-ascii' '
 	test_cmp expected actual
 '
 
+test_expect_success GETTEXT_LOCALE,PCRE 'log --author with an ascii pattern on UTF-8 data' '
+	cat >expected <<-\EOF &&
+	Author: <BOLD;RED>À Ú Thor<RESET> <author@example.com>
+	EOF
+	test_write_lines "forth" >file4 &&
+	git add file4 &&
+	git commit --author="À Ú Thor <author@example.com>" -m sécond &&
+	git log -1 --color=always --perl-regexp --author=".*Thor" >log &&
+	grep Author log >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success GETTEXT_LOCALE,PCRE 'log --committer with an ascii pattern on ISO-8859-1 data' '
+	cat >expected <<-\EOF &&
+	Commit:     Ç<BOLD;RED> O Mîtter <committer@example.com><RESET>
+	EOF
+	test_write_lines "fifth" >file5 &&
+	git add file5 &&
+	GIT_COMMITTER_NAME="Ç O Mîtter" &&
+	GIT_COMMITTER_EMAIL="committer@example.com" &&
+	git -c i18n.commitEncoding=latin1 commit -m thïrd &&
+	git -c i18n.logOutputEncoding=latin1 log -1 --pretty=fuller --color=always --perl-regexp --committer=" O.*" >log &&
+	grep Commit: log >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success GETTEXT_LOCALE,PCRE 'log --grep with an ascii pattern on UTF-8 data' '
+	cat >expected <<-\EOF &&
+	    sé<BOLD;RED>con<RESET>d
+	EOF
+	git log -1 --color=always --perl-regexp --grep="con" >log &&
+	grep con log >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success GETTEXT_LOCALE,PCRE 'log --grep with an ascii pattern on ISO-8859-1 data' '
+	cat >expected <<-\EOF &&
+	    <BOLD;RED>thïrd<RESET>
+	EOF
+	git -c i18n.logOutputEncoding=latin1 log -1 --color=always --perl-regexp --grep="th.*rd" >log &&
+	grep "th.*rd" log >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	test_cmp expected actual
+'
+
 test_expect_success GETTEXT_LOCALE,LIBPCRE2 'PCRE v2: setup invalid UTF-8 data' '
 	printf "\\200\\n" >invalid-0x80 &&
 	echo "ævar" >expected &&
