@@ -2096,8 +2096,11 @@ static int run_transaction_hook(struct ref_transaction *transaction,
 			    update->refname);
 
 		if (write_in_full(proc.in, buf.buf, buf.len) < 0) {
-			if (errno != EPIPE)
+			if (errno != EPIPE) {
+				/* Don't leak errno outside this API */
+				errno = 0;
 				ret = -1;
+			}
 			break;
 		}
 	}
