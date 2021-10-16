@@ -1001,7 +1001,7 @@ static int create_reflock(const char *path, void *cb)
  * Locks a ref returning the lock on success and NULL on failure.
  */
 static struct ref_lock *lock_ref_oid_basic(struct files_ref_store *refs,
-					   const char *refname, int *type,
+					   const char *refname,
 					   struct strbuf *err)
 {
 	struct strbuf ref_file = STRBUF_INIT;
@@ -1013,16 +1013,6 @@ static struct ref_lock *lock_ref_oid_basic(struct files_ref_store *refs,
 	CALLOC_ARRAY(lock, 1);
 
 	files_ref_path(refs, &ref_file, refname);
-	if (!refs_resolve_ref_unsafe(&refs->base, refname,
-				     RESOLVE_REF_NO_RECURSE,
-				     &lock->old_oid, type)) {
-		if (!refs_verify_refname_available(&refs->base, refname,
-						   NULL, NULL, err))
-			strbuf_addf(err, "unable to resolve reference '%s': %s",
-				    refname, strerror(errno));
-
-		goto error_return;
-	}
 
 	/*
 	 * If the ref did not exist and we are creating it, make sure
@@ -1364,14 +1354,14 @@ static int commit_ref_update(struct files_ref_store *refs,
 			     struct strbuf *err);
 
 /*
- * Check whether an attempt to rename old_refname to new_refname would
- * cause a D/F conflict with any existing reference (other than
- * possibly old_refname). If there would be a conflict, emit an error
+ * Emit a better error message than lockfile.c's
+ * unable_to_lock_message() would in case there is a D/F conflict with
+ * another existing reference. If there would be a conflict, emit an error
  * message and return false; otherwise, return true.
  *
  * Note that this function is not safe against all races with other
- * processes (though rename_ref() catches some races that might get by
- * this check).
+ * processes, and that's not its job. We'll emit a more verbose error on D/f
+ * conflicts if we get past it into lock_ref_oid_basic().
  */
 static int refs_rename_ref_available(struct ref_store *refs,
 			      const char *old_refname,
@@ -1492,7 +1482,7 @@ static int files_copy_or_rename_ref(struct ref_store *ref_store,
 
 	logmoved = log;
 
-	lock = lock_ref_oid_basic(refs, newrefname, NULL, &err);
+	lock = lock_ref_oid_basic(refs, newrefname, &err);
 	if (!lock) {
 		if (copy)
 			error("unable to copy '%s' to '%s': %s", oldrefname, newrefname, err.buf);
@@ -1514,7 +1504,7 @@ static int files_copy_or_rename_ref(struct ref_store *ref_store,
 	goto out;
 
  rollback:
-	lock = lock_ref_oid_basic(refs, oldrefname, NULL, &err);
+	lock = lock_ref_oid_basic(refs, oldrefname, &err);
 	if (!lock) {
 		error("unable to lock %s for rollback: %s", oldrefname, err.buf);
 		strbuf_release(&err);
@@ -1921,7 +1911,7 @@ static int files_create_symref(struct ref_store *ref_store,
 	struct ref_lock *lock;
 	int ret;
 
-	lock = lock_ref_oid_basic(refs, refname, NULL, &err);
+	lock = lock_ref_oid_basic(refs, refname, &err);
 	if (!lock) {
 		error("%s", err.buf);
 		strbuf_release(&err);
@@ -3125,7 +3115,6 @@ static int files_reflog_expire(struct ref_store *ref_store,
 	struct strbuf log_file_sb = STRBUF_INIT;
 	char *log_file;
 	int status = 0;
-	int type;
 	struct strbuf err = STRBUF_INIT;
 	const struct object_id *oid;
 
@@ -3139,7 +3128,7 @@ static int files_reflog_expire(struct ref_store *ref_store,
 	 * reference itself, plus we might need to update the
 	 * reference if --updateref was specified:
 	 */
-	lock = lock_ref_oid_basic(refs, refname, &type, &err);
+	lock = lock_ref_oid_basic(refs, refname, &err);
 	if (!lock) {
 		error("cannot lock ref '%s': %s", refname, err.buf);
 		strbuf_release(&err);
@@ -3201,9 +3190,20 @@ static int files_reflog_expire(struct ref_store *ref_store,
 		 * a reference if there are no remaining reflog
 		 * entries.
 		 */
-		int update = (flags & EXPIRE_REFLOGS_UPDATE_REF) &&
-			!(type & REF_ISSYMREF) &&
-			!is_null_oid(&cb.last_kept_oid);
+		int update = 0;
+
+		if ((flags & EXPIRE_REFLOGS_UPDATE_REF) &&
+		    !is_null_oid(&cb.last_kept_oid)) {
+			int ignore_errno;
+			int type;
+			const char *ref;
+
+			ref = refs_werrres_ref_unsafe(&refs->base, refname,
+						      RESOLVE_REF_NO_RECURSE,
+						      NULL, &type,
+						      &ignore_errno);
+			update = !!(ref && !(type & REF_ISSYMREF));
+		}
 
 		if (close_lock_file_gently(&reflog_lock)) {
 			status |= error("couldn't write %s: %s", log_file,
