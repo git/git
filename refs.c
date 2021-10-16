@@ -268,9 +268,10 @@ char *refs_resolve_refdup(struct ref_store *refs,
 			  struct object_id *oid, int *flags)
 {
 	const char *result;
+	int ignore_errno;
 
-	result = refs_resolve_ref_unsafe(refs, refname, resolve_flags,
-					 oid, flags);
+	result = refs_werrres_ref_unsafe(refs, refname, resolve_flags,
+					 oid, flags, &ignore_errno);
 	return xstrdup_or_null(result);
 }
 
