@@ -563,16 +563,17 @@ int other_head_refs(each_ref_fn fn, void *cb_data)
 		struct worktree *wt = *p;
 		struct object_id oid;
 		int flag;
+		int ignore_errno;
 
 		if (wt->is_current)
 			continue;
 
 		strbuf_reset(&refname);
 		strbuf_worktree_ref(wt, &refname, "HEAD");
-		if (!refs_read_ref_full(get_main_ref_store(the_repository),
-					refname.buf,
-					RESOLVE_REF_READING,
-					&oid, &flag))
+		if (refs_werrres_ref_unsafe(get_main_ref_store(the_repository),
+					    refname.buf,
+					    RESOLVE_REF_READING,
+					    &oid, &flag, &ignore_errno))
 			ret = fn(refname.buf, &oid, flag, cb_data);
 		if (ret)
 			break;
