@@ -281,7 +281,7 @@ static void loose_fill_ref_dir(struct ref_store *ref_store,
 							  refname.len));
 		} else {
 			int ignore_errno;
-			if (!refs_werrres_ref_unsafe(&refs->base,
+			if (!refs_resolve_ref_unsafe(&refs->base,
 						     refname.buf,
 						     RESOLVE_REF_READING,
 						     &oid, &flag, &ignore_errno)) {
@@ -1034,7 +1034,7 @@ static struct ref_lock *lock_ref_oid_basic(struct files_ref_store *refs,
 		goto error_return;
 	}
 
-	if (!refs_werrres_ref_unsafe(&refs->base, lock->ref_name, 0,
+	if (!refs_resolve_ref_unsafe(&refs->base, lock->ref_name, 0,
 				     &lock->old_oid, NULL, &ignore_errno))
 		oidclr(&lock->old_oid);
 	goto out;
@@ -1410,7 +1410,7 @@ static int files_copy_or_rename_ref(struct ref_store *ref_store,
 		goto out;
 	}
 
-	if (!refs_werrres_ref_unsafe(&refs->base, oldrefname,
+	if (!refs_resolve_ref_unsafe(&refs->base, oldrefname,
 				     RESOLVE_REF_READING | RESOLVE_REF_NO_RECURSE,
 				     &orig_oid, &flag, &ignore_errno)) {
 		ret = error("refname %s not found", oldrefname);
@@ -1456,7 +1456,7 @@ static int files_copy_or_rename_ref(struct ref_store *ref_store,
 	 * the safety anyway; we want to delete the reference whatever
 	 * its current value.
 	 */
-	if (!copy && refs_werrres_ref_unsafe(&refs->base, newrefname,
+	if (!copy && refs_resolve_ref_unsafe(&refs->base, newrefname,
 					     RESOLVE_REF_READING | RESOLVE_REF_NO_RECURSE,
 					     NULL, NULL, &ignore_errno) &&
 	    refs_delete_ref(&refs->base, NULL, newrefname,
@@ -1825,7 +1825,7 @@ static int commit_ref_update(struct files_ref_store *refs,
 		const char *head_ref;
 		int ignore_errno;
 
-		head_ref = refs_werrres_ref_unsafe(&refs->base, "HEAD",
+		head_ref = refs_resolve_ref_unsafe(&refs->base, "HEAD",
 						   RESOLVE_REF_READING,
 						   NULL, &head_flag,
 						   &ignore_errno);
@@ -1875,7 +1875,7 @@ static void update_symref_reflog(struct files_ref_store *refs,
 	int ignore_errno;
 
 	if (logmsg &&
-	    refs_werrres_ref_unsafe(&refs->base, target,
+	    refs_resolve_ref_unsafe(&refs->base, target,
 				    RESOLVE_REF_READING, &new_oid, NULL,
 				    &ignore_errno) &&
 	    files_log_ref_write(refs, refname, &lock->old_oid,
@@ -2163,7 +2163,7 @@ static int files_reflog_iterator_advance(struct ref_iterator *ref_iterator)
 		if (ends_with(diter->basename, ".lock"))
 			continue;
 
-		if (!refs_werrres_ref_unsafe(iter->ref_store,
+		if (!refs_resolve_ref_unsafe(iter->ref_store,
 					     diter->relative_path, 0,
 					     &iter->oid, &flags,
 					     &ignore_errno)) {
@@ -2511,7 +2511,7 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 			 * to record and possibly check old_oid:
 			 */
 			int ignore_errno;
-			if (!refs_werrres_ref_unsafe(&refs->base,
+			if (!refs_resolve_ref_unsafe(&refs->base,
 						     referent.buf, 0,
 						     &lock->old_oid, NULL,
 						     &ignore_errno)) {
@@ -3209,7 +3209,7 @@ static int files_reflog_expire(struct ref_store *ref_store,
 			int type;
 			const char *ref;
 
-			ref = refs_werrres_ref_unsafe(&refs->base, refname,
+			ref = refs_resolve_ref_unsafe(&refs->base, refname,
 						      RESOLVE_REF_NO_RECURSE,
 						      NULL, &type,
 						      &ignore_errno);

@@ -125,7 +125,7 @@ static int cmd_resolve_ref(struct ref_store *refs, const char **argv)
 	const char *ref;
 	int ignore_errno;
 
-	ref = refs_werrres_ref_unsafe(refs, refname, resolve_flags,
+	ref = refs_resolve_ref_unsafe(refs, refname, resolve_flags,
 				      &oid, &flags, &ignore_errno);
 	printf("%s %s 0x%x\n", oid_to_hex(&oid), ref ? ref : "(null)", flags);
 	return ref ? 0 : 1;

@@ -68,8 +68,6 @@ struct worktree;
 #define RESOLVE_REF_NO_RECURSE 0x02
 #define RESOLVE_REF_ALLOW_BAD_NAME 0x04
 
-#define refs_werrres_ref_unsafe(refs, refname, resolve_flags, oid, flags, failure_errno) \
-	refs_resolve_ref_unsafe(refs, refname, resolve_flags, oid, flags, failure_errno)
 const char *refs_resolve_ref_unsafe(struct ref_store *refs,
 				    const char *refname,
 				    int resolve_flags,

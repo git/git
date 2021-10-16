@@ -30,7 +30,7 @@ static void add_head_info(struct worktree *wt)
 	const char *target;
 	int ignore_errno;
 
-	target = refs_werrres_ref_unsafe(get_worktree_ref_store(wt),
+	target = refs_resolve_ref_unsafe(get_worktree_ref_store(wt),
 					 "HEAD",
 					 0,
 					 &wt->head_oid, &flags,
@@ -437,7 +437,7 @@ const struct worktree *find_shared_symref(const char *symref,
 		}
 
 		refs = get_worktree_ref_store(wt);
-		symref_target = refs_werrres_ref_unsafe(refs, symref, 0,
+		symref_target = refs_resolve_ref_unsafe(refs, symref, 0,
 							NULL, &flags,
 							&ignore_errno);
 		if ((flags & REF_ISSYMREF) &&
@@ -574,7 +574,7 @@ int other_head_refs(each_ref_fn fn, void *cb_data)
 
 		strbuf_reset(&refname);
 		strbuf_worktree_ref(wt, &refname, "HEAD");
-		if (refs_werrres_ref_unsafe(get_main_ref_store(the_repository),
+		if (refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
 					    refname.buf,
 					    RESOLVE_REF_READING,
 					    &oid, &flag, &ignore_errno))

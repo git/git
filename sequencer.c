@@ -1334,7 +1334,7 @@ void print_commit_summary(struct repository *r,
 	diff_setup_done(&rev.diffopt);
 
 	refs = get_main_ref_store(the_repository);
-	head = refs_werrres_ref_unsafe(refs, "HEAD", 0, NULL, NULL,
+	head = refs_resolve_ref_unsafe(refs, "HEAD", 0, NULL, NULL,
 				       &resolve_errno);
 	if (!head) {
 		errno = resolve_errno;
