@@ -280,10 +280,11 @@ static void loose_fill_ref_dir(struct ref_store *ref_store,
 					 create_dir_entry(dir->cache, refname.buf,
 							  refname.len));
 		} else {
-			if (!refs_resolve_ref_unsafe(&refs->base,
+			int ignore_errno;
+			if (!refs_werrres_ref_unsafe(&refs->base,
 						     refname.buf,
 						     RESOLVE_REF_READING,
-						     &oid, &flag)) {
+						     &oid, &flag, &ignore_errno)) {
 				oidclr(&oid);
 				flag |= REF_ISBROKEN;
 			} else if (is_null_oid(&oid)) {
