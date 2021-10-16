@@ -12,6 +12,18 @@ struct string_list_item;
 struct worktree;
 
 /*
+ * Callers should not inspect "errno" on failure, but rather pass in a
+ * "failure_errno" parameter, on failure the "errno" will indicate the
+ * type of failure encountered, but not necessarily one that came from
+ * a syscall. We might have faked it up.
+ */
+const char *refs_werrres_ref_unsafe(struct ref_store *refs,
+				    const char *refname,
+				    int resolve_flags,
+				    struct object_id *oid,
+				    int *flags, int *failure_errno);
+
+/*
  * Resolve a reference, recursively following symbolic refererences.
  *
  * Return the name of the non-symbolic reference that ultimately pointed
