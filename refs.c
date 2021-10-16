@@ -1791,14 +1791,15 @@ int resolve_gitlink_ref(const char *submodule, const char *refname,
 {
 	struct ref_store *refs;
 	int flags;
+	int ignore_errno;
 
 	refs = get_submodule_ref_store(submodule);
 
 	if (!refs)
 		return -1;
 
-	if (!refs_resolve_ref_unsafe(refs, refname, 0, oid, &flags) ||
-	    is_null_oid(oid))
+	if (!refs_werrres_ref_unsafe(refs, refname, 0, oid, &flags,
+				     &ignore_errno) || is_null_oid(oid))
 		return -1;
 	return 0;
 }
