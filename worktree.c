@@ -28,11 +28,13 @@ static void add_head_info(struct worktree *wt)
 {
 	int flags;
 	const char *target;
+	int ignore_errno;
 
-	target = refs_resolve_ref_unsafe(get_worktree_ref_store(wt),
+	target = refs_werrres_ref_unsafe(get_worktree_ref_store(wt),
 					 "HEAD",
 					 0,
-					 &wt->head_oid, &flags);
+					 &wt->head_oid, &flags,
+					 &ignore_errno);
 	if (!target)
 		return;
 
