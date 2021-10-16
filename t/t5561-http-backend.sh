@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='test git-http-backend'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-httpd.sh
 
@@ -39,9 +42,9 @@ POST() {
 
 grep '^[^#]' >exp <<EOF
 
-###  refs/heads/master
+###  refs/heads/main
 ###
-GET  /smart/repo.git/refs/heads/master HTTP/1.1 404 -
+GET  /smart/repo.git/refs/heads/main HTTP/1.1 404 -
 
 ###  getanyfile default
 ###

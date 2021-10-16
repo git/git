@@ -5,12 +5,6 @@ test_description='adding and checking out large blobs'
 
 . ./test-lib.sh
 
-# This should be moved to test-lib.sh together with the
-# copy in t0021 after both topics have graduated to 'master'.
-file_size () {
-	test-tool path-utils file-size "$1"
-}
-
 test_expect_success setup '
 	# clone does not allow us to pass core.bigfilethreshold to
 	# new repos, so set core.bigfilethreshold globally
@@ -29,7 +23,7 @@ do
 	test_expect_success "add with $config" '
 		test_when_finished "rm -f .git/objects/pack/pack-*.* .git/index" &&
 		git $config add large1 &&
-		sz=$(file_size .git/objects/pack/pack-*.pack) &&
+		sz=$(test_file_size .git/objects/pack/pack-*.pack) &&
 		case "$expect" in
 		small) test "$sz" -le 100000 ;;
 		large) test "$sz" -ge 100000 ;;
@@ -64,7 +58,7 @@ test_expect_success 'add a large file or two' '
 	test $count = 1 &&
 	cnt=$(git show-index <"$idx" | wc -l) &&
 	test $cnt = 2 &&
-	for l in .git/objects/??/??????????????????????????????????????
+	for l in .git/objects/$OIDPATH_REGEX
 	do
 		test_path_is_file "$l" || continue
 		bad=t
@@ -177,7 +171,8 @@ test_expect_success 'git-show a large file' '
 
 test_expect_success 'index-pack' '
 	git clone file://"$(pwd)"/.git foo &&
-	GIT_DIR=non-existent git index-pack --strict --verify foo/.git/objects/pack/*.pack
+	GIT_DIR=non-existent git index-pack --object-format=$(test_oid algo) \
+		--strict --verify foo/.git/objects/pack/*.pack
 '
 
 test_expect_success 'repack' '

@@ -34,7 +34,7 @@ save_good_tree () {
 # successfully before (e.g. because the branch got rebased, changing only
 # the commit messages).
 skip_good_tree () {
-	if test "$TRAVIS_DEBUG_MODE" = true
+	if test "$TRAVIS_DEBUG_MODE" = true || test true = "$GITHUB_ACTIONS"
 	then
 		return
 	fi
@@ -78,6 +78,9 @@ check_unignored_build_artifacts ()
 		false
 	}
 }
+
+# GitHub Action doesn't set TERM, which is required by tput
+export TERM=${TERM:-dumb}
 
 # Clear MAKEFLAGS that may come from the outside world.
 export MAKEFLAGS=
@@ -136,8 +139,28 @@ then
 	MAKEFLAGS="$MAKEFLAGS --jobs=10"
 	test windows_nt != "$CI_OS_NAME" ||
 	GIT_TEST_OPTS="--no-chain-lint --no-bin-wrappers $GIT_TEST_OPTS"
+elif test true = "$GITHUB_ACTIONS"
+then
+	CI_TYPE=github-actions
+	CI_BRANCH="$GITHUB_REF"
+	CI_COMMIT="$GITHUB_SHA"
+	CI_OS_NAME="$(echo "$RUNNER_OS" | tr A-Z a-z)"
+	test macos != "$CI_OS_NAME" || CI_OS_NAME=osx
+	CI_REPO_SLUG="$GITHUB_REPOSITORY"
+	CI_JOB_ID="$GITHUB_RUN_ID"
+	CC="${CC:-gcc}"
+	DONT_SKIP_TAGS=t
+
+	cache_dir="$HOME/none"
+
+	export GIT_PROVE_OPTS="--timer --jobs 10"
+	export GIT_TEST_OPTS="--verbose-log -x"
+	MAKEFLAGS="$MAKEFLAGS --jobs=10"
+	test windows != "$CI_OS_NAME" ||
+	GIT_TEST_OPTS="--no-chain-lint --no-bin-wrappers $GIT_TEST_OPTS"
 else
 	echo "Could not identify CI type" >&2
+	env >&2
 	exit 1
 fi
 
@@ -145,6 +168,7 @@ good_trees_file="$cache_dir/good-trees"
 
 mkdir -p "$cache_dir"
 
+test -n "${DONT_SKIP_TAGS-}" ||
 skip_branch_tip_with_tag
 skip_good_tree
 
@@ -156,12 +180,16 @@ fi
 export DEVELOPER=1
 export DEFAULT_TEST_TARGET=prove
 export GIT_TEST_CLONE_2GB=true
+export SKIP_DASHED_BUILT_INS=YesPlease
 
 case "$jobname" in
-linux-clang|linux-gcc)
+linux-clang|linux-gcc|linux-leaks)
 	if [ "$jobname" = linux-gcc ]
 	then
 		export CC=gcc-8
+		MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=/usr/bin/python3"
+	else
+		MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=/usr/bin/python2"
 	fi
 
 	export GIT_TEST_HTTPD=true
@@ -182,6 +210,9 @@ osx-clang|osx-gcc)
 	if [ "$jobname" = osx-gcc ]
 	then
 		export CC=gcc-9
+		MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=$(which python3)"
+	else
+		MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=$(which python2)"
 	fi
 
 	# t9810 occasionally fails on Travis CI OS X
@@ -189,8 +220,23 @@ osx-clang|osx-gcc)
 	# Travis CI OS X
 	export GIT_SKIP_TESTS="t9810 t9816"
 	;;
-GIT_TEST_GETTEXT_POISON)
-	export GIT_TEST_GETTEXT_POISON=true
+linux-gcc-default)
+	;;
+Linux32)
+	CC=gcc
+	;;
+linux-musl)
+	CC=gcc
+	MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=/usr/bin/python3 USE_LIBPCRE2=Yes"
+	MAKEFLAGS="$MAKEFLAGS NO_REGEX=Yes ICONV_OMITS_BOM=Yes"
+	MAKEFLAGS="$MAKEFLAGS GIT_TEST_UTF8_LOCALE=C.UTF-8"
+	;;
+esac
+
+case "$jobname" in
+linux-leaks)
+	export SANITIZE=leak
+	export GIT_TEST_PASSING_SANITIZE_LEAK=true
 	;;
 esac
 

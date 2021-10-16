@@ -497,7 +497,7 @@ static int match_alpha(const char *date, struct tm *tm, int *offset)
 	return skip_alpha(date);
 }
 
-static int is_date(int year, int month, int day, struct tm *now_tm, time_t now, struct tm *tm)
+static int set_date(int year, int month, int day, struct tm *now_tm, time_t now, struct tm *tm)
 {
 	if (month > 0 && month < 13 && day > 0 && day < 32) {
 		struct tm check = *tm;
@@ -518,9 +518,9 @@ static int is_date(int year, int month, int day, struct tm *now_tm, time_t now, 
 		else if (year < 38)
 			r->tm_year = year + 100;
 		else
-			return 0;
+			return -1;
 		if (!now_tm)
-			return 1;
+			return 0;
 
 		specified = tm_to_time_t(r);
 
@@ -529,14 +529,33 @@ static int is_date(int year, int month, int day, struct tm *now_tm, time_t now, 
 		 * sure it is not later than ten days from now...
 		 */
 		if ((specified != -1) && (now + 10*24*3600 < specified))
-			return 0;
+			return -1;
 		tm->tm_mon = r->tm_mon;
 		tm->tm_mday = r->tm_mday;
 		if (year != -1)
 			tm->tm_year = r->tm_year;
-		return 1;
+		return 0;
 	}
-	return 0;
+	return -1;
+}
+
+static int set_time(long hour, long minute, long second, struct tm *tm)
+{
+	/* We accept 61st second because of leap second */
+	if (0 <= hour && hour <= 24 &&
+	    0 <= minute && minute < 60 &&
+	    0 <= second && second <= 60) {
+		tm->tm_hour = hour;
+		tm->tm_min = minute;
+		tm->tm_sec = second;
+		return 0;
+	}
+	return -1;
+}
+
+static int is_date_known(struct tm *tm)
+{
+	return tm->tm_year != -1 && tm->tm_mon != -1 && tm->tm_mday != -1;
 }
 
 static int match_multi_number(timestamp_t num, char c, const char *date,
@@ -556,10 +575,14 @@ static int match_multi_number(timestamp_t num, char c, const char *date,
 	case ':':
 		if (num3 < 0)
 			num3 = 0;
-		if (num < 25 && num2 >= 0 && num2 < 60 && num3 >= 0 && num3 <= 60) {
-			tm->tm_hour = num;
-			tm->tm_min = num2;
-			tm->tm_sec = num3;
+		if (set_time(num, num2, num3, tm) == 0) {
+			/*
+			 * If %H:%M:%S was just parsed followed by: .<num4>
+			 * Consider (& discard) it as fractional second
+			 * if %Y%m%d is parsed before.
+			 */
+			if (*end == '.' && isdigit(end[1]) && is_date_known(tm))
+				strtol(end + 1, &end, 10);
 			break;
 		}
 		return 0;
@@ -575,10 +598,10 @@ static int match_multi_number(timestamp_t num, char c, const char *date,
 
 		if (num > 70) {
 			/* yyyy-mm-dd? */
-			if (is_date(num, num2, num3, NULL, now, tm))
+			if (set_date(num, num2, num3, NULL, now, tm) == 0)
 				break;
 			/* yyyy-dd-mm? */
-			if (is_date(num, num3, num2, NULL, now, tm))
+			if (set_date(num, num3, num2, NULL, now, tm) == 0)
 				break;
 		}
 		/* Our eastern European friends say dd.mm.yy[yy]
@@ -586,14 +609,14 @@ static int match_multi_number(timestamp_t num, char c, const char *date,
 		 * mm/dd/yy[yy] form only when separator is not '.'
 		 */
 		if (c != '.' &&
-		    is_date(num3, num, num2, refuse_future, now, tm))
+		    set_date(num3, num, num2, refuse_future, now, tm) == 0)
 			break;
 		/* European dd.mm.yy[yy] or funny US dd/mm/yy[yy] */
-		if (is_date(num3, num2, num, refuse_future, now, tm))
+		if (set_date(num3, num2, num, refuse_future, now, tm) == 0)
 			break;
 		/* Funny European mm.dd.yy */
 		if (c == '.' &&
-		    is_date(num3, num, num2, refuse_future, now, tm))
+		    set_date(num3, num, num2, refuse_future, now, tm) == 0)
 			break;
 		return 0;
 	}
@@ -663,6 +686,20 @@ static int match_digit(const char *date, struct tm *tm, int *offset, int *tm_gmt
 	do {
 		n++;
 	} while (isdigit(date[n]));
+
+	/* 8 digits, compact style of ISO-8601's date: YYYYmmDD */
+	/* 6 digits, compact style of ISO-8601's time: HHMMSS */
+	if (n == 8 || n == 6) {
+		unsigned int num1 = num / 10000;
+		unsigned int num2 = (num % 10000) / 100;
+		unsigned int num3 = num % 100;
+		if (n == 8)
+			set_date(num1, num2, num3, NULL, time(NULL), tm);
+		else if (n == 6 && set_time(num1, num2, num3, tm) == 0 &&
+			 *end == '.' && isdigit(end[1]))
+			strtoul(end + 1, &end, 10);
+		return end - date;
+	}
 
 	/* Four-digit year or a timezone? */
 	if (n == 4) {
@@ -871,7 +908,7 @@ int parse_expiry_date(const char *date, timestamp_t *timestamp)
 		/*
 		 * We take over "now" here, which usually translates
 		 * to the current timestamp.  This is because the user
-		 * really means to expire everything she has done in
+		 * really means to expire everything that was done in
 		 * the past, and by definition reflogs are the record
 		 * of the past, and there is nothing from the future
 		 * to be kept.

@@ -123,10 +123,10 @@ test_expect_success 'NUL separation with --stat' '
 	stat1_part=$(git diff-tree --no-commit-id --stat --root HEAD^) &&
 	printf "add bar\n$stat0_part\n\0$(commit_msg)\n$stat1_part\n" >expected &&
 	git log -z --stat --pretty="format:%s" >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
-test_expect_failure C_LOCALE_OUTPUT 'NUL termination with --stat' '
+test_expect_failure 'NUL termination with --stat' '
 	stat0_part=$(git diff --stat HEAD^ HEAD) &&
 	stat1_part=$(git diff-tree --no-commit-id --stat --root HEAD^) &&
 	printf "add bar\n$stat0_part\n\0$(commit_msg)\n$stat1_part\n0" >expected &&
@@ -525,17 +525,22 @@ test_expect_success 'strbuf_utf8_replace() not producing NUL' '
 	! grep Q actual
 '
 
-# ISO strict date format
-test_expect_success 'ISO and ISO-strict date formats display the same values' '
-	git log --format=%ai%n%ci |
-	sed -e "s/ /T/; s/ //; s/..\$/:&/" >expected &&
+# --date=[XXX] and corresponding %a[X] %c[X] format equivalency
+test_expect_success '--date=iso-strict %ad%cd is the same as %aI%cI' '
+	git log --format=%ad%n%cd --date=iso-strict >expected &&
 	git log --format=%aI%n%cI >actual &&
 	test_cmp expected actual
 '
 
-test_expect_success 'short date' '
+test_expect_success '--date=short %ad%cd is the same as %as%cs' '
 	git log --format=%ad%n%cd --date=short >expected &&
 	git log --format=%as%n%cs >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success '--date=human %ad%cd is the same as %ah%ch' '
+	git log --format=%ad%n%cd --date=human >expected &&
+	git log --format=%ah%n%ch >actual &&
 	test_cmp expected actual
 '
 
@@ -602,6 +607,12 @@ test_expect_success 'pretty format %(trailers) shows trailers' '
 		cat trailers &&
 		echo
 	} >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'pretty format %(trailers:) enables no options' '
+	git log --no-walk --pretty="%(trailers:)" >actual &&
+	# "expect" the same as the test above
 	test_cmp expect actual
 '
 
@@ -709,19 +720,101 @@ test_expect_success '%(trailers:key) without value is error' '
 	test_cmp expect actual
 '
 
+test_expect_success '%(trailers:keyonly) shows only keys' '
+	git log --no-walk --pretty="format:%(trailers:keyonly)" >actual &&
+	test_write_lines \
+		"Signed-off-by" \
+		"Acked-by" \
+		"[ v2 updated patch description ]" \
+		"Signed-off-by" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '%(trailers:key=foo,keyonly) shows only key' '
+	git log --no-walk --pretty="format:%(trailers:key=Acked-by,keyonly)" >actual &&
+	echo "Acked-by" >expect &&
+	test_cmp expect actual
+'
+
 test_expect_success '%(trailers:key=foo,valueonly) shows only value' '
 	git log --no-walk --pretty="format:%(trailers:key=Acked-by,valueonly)" >actual &&
 	echo "A U Thor <author@example.com>" >expect &&
 	test_cmp expect actual
 '
 
-test_expect_success 'pretty format %(trailers:separator) changes separator' '
-	git log --no-walk --pretty=format:"X%(trailers:separator=%x00,unfold)X" >actual &&
-	printf "XSigned-off-by: A U Thor <author@example.com>\0Acked-by: A U Thor <author@example.com>\0[ v2 updated patch description ]\0Signed-off-by: A U Thor <author@example.com>X" >expect &&
+test_expect_success '%(trailers:valueonly) shows only values' '
+	git log --no-walk --pretty="format:%(trailers:valueonly)" >actual &&
+	test_write_lines \
+		"A U Thor <author@example.com>" \
+		"A U Thor <author@example.com>" \
+		"[ v2 updated patch description ]" \
+		"A U Thor" \
+		"  <author@example.com>" >expect &&
 	test_cmp expect actual
 '
 
-test_expect_success 'pretty format %(trailers) combining separator/key/valueonly' '
+test_expect_success '%(trailers:key=foo,keyonly,valueonly) shows nothing' '
+	git log --no-walk --pretty="format:%(trailers:key=Acked-by,keyonly,valueonly)" >actual &&
+	echo >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'pretty format %(trailers:separator) changes separator' '
+	git log --no-walk --pretty=format:"X%(trailers:separator=%x00)X" >actual &&
+	(
+		printf "XSigned-off-by: A U Thor <author@example.com>\0" &&
+		printf "Acked-by: A U Thor <author@example.com>\0" &&
+		printf "[ v2 updated patch description ]\0" &&
+		printf "Signed-off-by: A U Thor\n  <author@example.com>X"
+	) >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'pretty format %(trailers:separator=X,unfold) changes separator' '
+	git log --no-walk --pretty=format:"X%(trailers:separator=%x00,unfold)X" >actual &&
+	(
+		printf "XSigned-off-by: A U Thor <author@example.com>\0" &&
+		printf "Acked-by: A U Thor <author@example.com>\0" &&
+		printf "[ v2 updated patch description ]\0" &&
+		printf "Signed-off-by: A U Thor <author@example.com>X"
+	) >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'pretty format %(trailers:key_value_separator) changes key-value separator' '
+	git log --no-walk --pretty=format:"X%(trailers:key_value_separator=%x00)X" >actual &&
+	(
+		printf "XSigned-off-by\0A U Thor <author@example.com>\n" &&
+		printf "Acked-by\0A U Thor <author@example.com>\n" &&
+		printf "[ v2 updated patch description ]\n" &&
+		printf "Signed-off-by\0A U Thor\n  <author@example.com>\nX"
+	) >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'pretty format %(trailers:key_value_separator,unfold) changes key-value separator' '
+	git log --no-walk --pretty=format:"X%(trailers:key_value_separator=%x00,unfold)X" >actual &&
+	(
+		printf "XSigned-off-by\0A U Thor <author@example.com>\n" &&
+		printf "Acked-by\0A U Thor <author@example.com>\n" &&
+		printf "[ v2 updated patch description ]\n" &&
+		printf "Signed-off-by\0A U Thor <author@example.com>\nX"
+	) >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'pretty format %(trailers:separator,key_value_separator) changes both separators' '
+	git log --no-walk --pretty=format:"%(trailers:separator=%x00,key_value_separator=%x00%x00,unfold)" >actual &&
+	(
+		printf "Signed-off-by\0\0A U Thor <author@example.com>\0" &&
+		printf "Acked-by\0\0A U Thor <author@example.com>\0" &&
+		printf "[ v2 updated patch description ]\0" &&
+		printf "Signed-off-by\0\0A U Thor <author@example.com>"
+	) >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'pretty format %(trailers) combining separator/key/keyonly/valueonly' '
 	git commit --allow-empty -F - <<-\EOF &&
 	Important fix
 
@@ -748,6 +841,13 @@ test_expect_success 'pretty format %(trailers) combining separator/key/valueonly
 		"Does not close any tickets" \
 		"Another fix #567, #890" \
 		"Important fix #1234" >expect &&
+	test_cmp expect actual &&
+
+	git log --pretty="%s% (trailers:separator=%x2c%x20,key=Closes,keyonly)" HEAD~3.. >actual &&
+	test_write_lines \
+		"Does not close any tickets" \
+		"Another fix Closes, Closes" \
+		"Important fix Closes" >expect &&
 	test_cmp expect actual
 '
 
@@ -864,6 +964,41 @@ test_expect_success 'log --pretty=reference does not output reflog info' '
 test_expect_success 'log --pretty=reference is colored appropriately' '
 	git log --color=always --pretty="tformat:%C(auto)%h (%s, %as)" >expect &&
 	git log --color=always --pretty=reference >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '%(describe) vs git describe' '
+	git log --format="%H" | while read hash
+	do
+		if desc=$(git describe $hash)
+		then
+			: >expect-contains-good
+		else
+			: >expect-contains-bad
+		fi &&
+		echo "$hash $desc"
+	done >expect &&
+	test_path_exists expect-contains-good &&
+	test_path_exists expect-contains-bad &&
+
+	git log --format="%H %(describe)" >actual 2>err &&
+	test_cmp expect actual &&
+	test_must_be_empty err
+'
+
+test_expect_success '%(describe:match=...) vs git describe --match ...' '
+	test_when_finished "git tag -d tag-match" &&
+	git tag -a -m tagged tag-match &&
+	git describe --match "*-match" >expect &&
+	git log -1 --format="%(describe:match=*-match)" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '%(describe:exclude=...) vs git describe --exclude ...' '
+	test_when_finished "git tag -d tag-exclude" &&
+	git tag -a -m tagged tag-exclude &&
+	git describe --exclude "*-exclude" >expect &&
+	git log -1 --format="%(describe:exclude=*-exclude)" >actual &&
 	test_cmp expect actual
 '
 

@@ -34,4 +34,22 @@ test_expect_success 'check for a bug in the regex routines' '
 	test-tool regex --bug
 '
 
+test_expect_success 'incomplete sideband messages are reassembled' '
+	test-tool pkt-line send-split-sideband >split-sideband &&
+	test-tool pkt-line receive-sideband <split-sideband 2>err &&
+	grep "Hello, world" err
+'
+
+test_expect_success 'eof on sideband message is reported' '
+	printf 1234 >input &&
+	test-tool pkt-line receive-sideband <input 2>err &&
+	test_i18ngrep "unexpected disconnect" err
+'
+
+test_expect_success 'missing sideband designator is reported' '
+	printf 0004 >input &&
+	test-tool pkt-line receive-sideband <input 2>err &&
+	test_i18ngrep "missing sideband" err
+'
+
 test_done

@@ -7,12 +7,15 @@ test_description='rebase with changing encoding
 
 Initial setup:
 
-1 - 2              master
+1 - 2              main
  \
   3 - 4            first
    \
     5 - 6          second
 '
+
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -41,7 +44,7 @@ test_expect_success 'rebase --rebase-merges update encoding eucJP to UTF-8' '
 	git config i18n.commitencoding eucJP &&
 	git merge -F "$TEST_DIRECTORY/t3434/eucJP.txt" second &&
 	git config i18n.commitencoding UTF-8 &&
-	git rebase --rebase-merges master &&
+	git rebase --rebase-merges main &&
 	compare_msg eucJP.txt eucJP UTF-8
 '
 
@@ -50,7 +53,7 @@ test_expect_success 'rebase --rebase-merges update encoding eucJP to ISO-2022-JP
 	git config i18n.commitencoding eucJP &&
 	git merge -F "$TEST_DIRECTORY/t3434/eucJP.txt" second &&
 	git config i18n.commitencoding ISO-2022-JP &&
-	git rebase --rebase-merges master &&
+	git rebase --rebase-merges main &&
 	compare_msg eucJP.txt eucJP ISO-2022-JP
 '
 
@@ -66,7 +69,7 @@ test_rebase_continue_update_encode () {
 		git config i18n.commitencoding $old &&
 		git commit -F "$TEST_DIRECTORY/t3434/$msgfile" &&
 		git config i18n.commitencoding $new &&
-		test_must_fail git rebase -m master &&
+		test_must_fail git rebase -m main &&
 		test -f .git/rebase-merge/message &&
 		git stripspace <.git/rebase-merge/message >two.t &&
 		git add two.t &&

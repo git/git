@@ -4,7 +4,7 @@ test_description='git rev-list trivial path optimization test
 
    d/z1
    b0                             b1
-   o------------------------*----o master
+   o------------------------*----o main
   /                        /
  o---------o----o----o----o side
  a0        c0   c1   a1   c2
@@ -12,6 +12,9 @@ test_description='git rev-list trivial path optimization test
  d/z0
 
 '
+
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -55,18 +58,18 @@ test_expect_success 'further setup' '
 	git add c &&
 	test_tick &&
 	git commit -m "Side makes yet another irrelevant commit" &&
-	git checkout master &&
+	git checkout main &&
 	echo Another >b &&
 	echo Munged >d/z &&
 	git add b d/z &&
 	test_tick &&
-	git commit -m "Master touches b" &&
-	git tag master_b0 &&
+	git commit -m "Main touches b" &&
+	git tag main_b0 &&
 	git merge side &&
 	echo Touched >b &&
 	git add b &&
 	test_tick &&
-	git commit -m "Master touches b again"
+	git commit -m "Main touches b again"
 '
 
 test_expect_success 'path optimization 2' '
@@ -76,13 +79,13 @@ test_expect_success 'path optimization 2' '
 '
 
 test_expect_success 'pathspec with leading path' '
-	git rev-parse master^ master_b0 side_c0 initial >expected &&
+	git rev-parse main^ main_b0 side_c0 initial >expected &&
 	git rev-list HEAD -- d >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'pathspec with glob (1)' '
-	git rev-parse master^ master_b0 side_c0 initial >expected &&
+	git rev-parse main^ main_b0 side_c0 initial >expected &&
 	git rev-list HEAD -- "d/*" >actual &&
 	test_cmp expected actual
 '

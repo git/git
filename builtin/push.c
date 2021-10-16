@@ -61,26 +61,27 @@ static struct refspec rs = REFSPEC_INIT_PUSH;
 
 static struct string_list push_options_config = STRING_LIST_INIT_DUP;
 
-static const char *map_refspec(const char *ref,
-			       struct remote *remote, struct ref *local_refs)
+static void refspec_append_mapped(struct refspec *refspec, const char *ref,
+				  struct remote *remote, struct ref *local_refs)
 {
 	const char *branch_name;
 	struct ref *matched = NULL;
 
 	/* Does "ref" uniquely name our ref? */
-	if (count_refspec_match(ref, local_refs, &matched) != 1)
-		return ref;
+	if (count_refspec_match(ref, local_refs, &matched) != 1) {
+		refspec_append(refspec, ref);
+		return;
+	}
 
 	if (remote->push.nr) {
 		struct refspec_item query;
 		memset(&query, 0, sizeof(struct refspec_item));
 		query.src = matched->name;
 		if (!query_refspecs(&remote->push, &query) && query.dst) {
-			struct strbuf buf = STRBUF_INIT;
-			strbuf_addf(&buf, "%s%s:%s",
-				    query.force ? "+" : "",
-				    query.src, query.dst);
-			return strbuf_detach(&buf, NULL);
+			refspec_appendf(refspec, "%s%s:%s",
+					query.force ? "+" : "",
+					query.src, query.dst);
+			return;
 		}
 	}
 
@@ -88,14 +89,13 @@ static const char *map_refspec(const char *ref,
 	    skip_prefix(matched->name, "refs/heads/", &branch_name)) {
 		struct branch *branch = branch_get(branch_name);
 		if (branch->merge_nr == 1 && branch->merge[0]->src) {
-			struct strbuf buf = STRBUF_INIT;
-			strbuf_addf(&buf, "%s:%s",
-				    ref, branch->merge[0]->src);
-			return strbuf_detach(&buf, NULL);
+			refspec_appendf(refspec, "%s:%s",
+					ref, branch->merge[0]->src);
+			return;
 		}
 	}
 
-	return ref;
+	refspec_append(refspec, ref);
 }
 
 static void set_refspecs(const char **refs, int nr, const char *repo)
@@ -107,30 +107,26 @@ static void set_refspecs(const char **refs, int nr, const char *repo)
 	for (i = 0; i < nr; i++) {
 		const char *ref = refs[i];
 		if (!strcmp("tag", ref)) {
-			struct strbuf tagref = STRBUF_INIT;
 			if (nr <= ++i)
 				die(_("tag shorthand without <tag>"));
 			ref = refs[i];
 			if (deleterefs)
-				strbuf_addf(&tagref, ":refs/tags/%s", ref);
+				refspec_appendf(&rs, ":refs/tags/%s", ref);
 			else
-				strbuf_addf(&tagref, "refs/tags/%s", ref);
-			ref = strbuf_detach(&tagref, NULL);
+				refspec_appendf(&rs, "refs/tags/%s", ref);
 		} else if (deleterefs) {
-			struct strbuf delref = STRBUF_INIT;
-			if (strchr(ref, ':'))
+			if (strchr(ref, ':') || !*ref)
 				die(_("--delete only accepts plain target ref names"));
-			strbuf_addf(&delref, ":%s", ref);
-			ref = strbuf_detach(&delref, NULL);
+			refspec_appendf(&rs, ":%s", ref);
 		} else if (!strchr(ref, ':')) {
 			if (!remote) {
 				/* lazily grab remote and local_refs */
 				remote = remote_get(repo);
 				local_refs = get_local_heads();
 			}
-			ref = map_refspec(ref, remote, local_refs);
-		}
-		refspec_append(&rs, ref);
+			refspec_append_mapped(&rs, ref, remote, local_refs);
+		} else
+			refspec_append(&rs, ref);
 	}
 }
 
@@ -189,88 +185,73 @@ static const char message_detached_head_die[] =
 	   "\n"
 	   "    git push %s HEAD:<name-of-remote-branch>\n");
 
-static void setup_push_upstream(struct remote *remote, struct branch *branch,
-				int triangular, int simple)
+static const char *get_upstream_ref(struct branch *branch, const char *remote_name)
 {
-	struct strbuf refspec = STRBUF_INIT;
-
-	if (!branch)
-		die(_(message_detached_head_die), remote->name);
 	if (!branch->merge_nr || !branch->merge || !branch->remote_name)
 		die(_("The current branch %s has no upstream branch.\n"
 		    "To push the current branch and set the remote as upstream, use\n"
 		    "\n"
 		    "    git push --set-upstream %s %s\n"),
 		    branch->name,
-		    remote->name,
+		    remote_name,
 		    branch->name);
 	if (branch->merge_nr != 1)
 		die(_("The current branch %s has multiple upstream branches, "
 		    "refusing to push."), branch->name);
-	if (triangular)
-		die(_("You are pushing to remote '%s', which is not the upstream of\n"
-		      "your current branch '%s', without telling me what to push\n"
-		      "to update which remote branch."),
-		    remote->name, branch->name);
 
-	if (simple) {
-		/* Additional safety */
-		if (strcmp(branch->refname, branch->merge[0]->src))
-			die_push_simple(branch, remote);
-	}
-
-	strbuf_addf(&refspec, "%s:%s", branch->refname, branch->merge[0]->src);
-	refspec_append(&rs, refspec.buf);
-}
-
-static void setup_push_current(struct remote *remote, struct branch *branch)
-{
-	struct strbuf refspec = STRBUF_INIT;
-
-	if (!branch)
-		die(_(message_detached_head_die), remote->name);
-	strbuf_addf(&refspec, "%s:%s", branch->refname, branch->refname);
-	refspec_append(&rs, refspec.buf);
-}
-
-static int is_workflow_triangular(struct remote *remote)
-{
-	struct remote *fetch_remote = remote_get(NULL);
-	return (fetch_remote && fetch_remote != remote);
+	return branch->merge[0]->src;
 }
 
 static void setup_default_push_refspecs(struct remote *remote)
 {
-	struct branch *branch = branch_get(NULL);
-	int triangular = is_workflow_triangular(remote);
+	struct branch *branch;
+	const char *dst;
+	int same_remote;
 
 	switch (push_default) {
-	default:
 	case PUSH_DEFAULT_MATCHING:
 		refspec_append(&rs, ":");
-		break;
-
-	case PUSH_DEFAULT_UNSPECIFIED:
-	case PUSH_DEFAULT_SIMPLE:
-		if (triangular)
-			setup_push_current(remote, branch);
-		else
-			setup_push_upstream(remote, branch, triangular, 1);
-		break;
-
-	case PUSH_DEFAULT_UPSTREAM:
-		setup_push_upstream(remote, branch, triangular, 0);
-		break;
-
-	case PUSH_DEFAULT_CURRENT:
-		setup_push_current(remote, branch);
-		break;
+		return;
 
 	case PUSH_DEFAULT_NOTHING:
 		die(_("You didn't specify any refspecs to push, and "
 		    "push.default is \"nothing\"."));
+		return;
+	default:
 		break;
 	}
+
+	branch = branch_get(NULL);
+	if (!branch)
+		die(_(message_detached_head_die), remote->name);
+
+	dst = branch->refname;
+	same_remote = !strcmp(remote->name, remote_for_branch(branch, NULL));
+
+	switch (push_default) {
+	default:
+	case PUSH_DEFAULT_UNSPECIFIED:
+	case PUSH_DEFAULT_SIMPLE:
+		if (!same_remote)
+			break;
+		if (strcmp(branch->refname, get_upstream_ref(branch, remote->name)))
+			die_push_simple(branch, remote);
+		break;
+
+	case PUSH_DEFAULT_UPSTREAM:
+		if (!same_remote)
+			die(_("You are pushing to remote '%s', which is not the upstream of\n"
+			      "your current branch '%s', without telling me what to push\n"
+			      "to update which remote branch."),
+			    remote->name, branch->name);
+		dst = get_upstream_ref(branch, remote->name);
+		break;
+
+	case PUSH_DEFAULT_CURRENT:
+		break;
+	}
+
+	refspec_appendf(&rs, "%s:%s", branch->refname, dst);
 }
 
 static const char message_advice_pull_before_push[] =
@@ -300,39 +281,52 @@ static const char message_advice_ref_needs_force[] =
 	   "or update a remote ref to make it point at a non-commit object,\n"
 	   "without using the '--force' option.\n");
 
+static const char message_advice_ref_needs_update[] =
+	N_("Updates were rejected because the tip of the remote-tracking\n"
+	   "branch has been updated since the last checkout. You may want\n"
+	   "to integrate those changes locally (e.g., 'git pull ...')\n"
+	   "before forcing an update.\n");
+
 static void advise_pull_before_push(void)
 {
-	if (!advice_push_non_ff_current || !advice_push_update_rejected)
+	if (!advice_enabled(ADVICE_PUSH_NON_FF_CURRENT) || !advice_enabled(ADVICE_PUSH_UPDATE_REJECTED))
 		return;
 	advise(_(message_advice_pull_before_push));
 }
 
 static void advise_checkout_pull_push(void)
 {
-	if (!advice_push_non_ff_matching || !advice_push_update_rejected)
+	if (!advice_enabled(ADVICE_PUSH_NON_FF_MATCHING) || !advice_enabled(ADVICE_PUSH_UPDATE_REJECTED))
 		return;
 	advise(_(message_advice_checkout_pull_push));
 }
 
 static void advise_ref_already_exists(void)
 {
-	if (!advice_push_already_exists || !advice_push_update_rejected)
+	if (!advice_enabled(ADVICE_PUSH_ALREADY_EXISTS) || !advice_enabled(ADVICE_PUSH_UPDATE_REJECTED))
 		return;
 	advise(_(message_advice_ref_already_exists));
 }
 
 static void advise_ref_fetch_first(void)
 {
-	if (!advice_push_fetch_first || !advice_push_update_rejected)
+	if (!advice_enabled(ADVICE_PUSH_FETCH_FIRST) || !advice_enabled(ADVICE_PUSH_UPDATE_REJECTED))
 		return;
 	advise(_(message_advice_ref_fetch_first));
 }
 
 static void advise_ref_needs_force(void)
 {
-	if (!advice_push_needs_force || !advice_push_update_rejected)
+	if (!advice_enabled(ADVICE_PUSH_NEEDS_FORCE) || !advice_enabled(ADVICE_PUSH_UPDATE_REJECTED))
 		return;
 	advise(_(message_advice_ref_needs_force));
+}
+
+static void advise_ref_needs_update(void)
+{
+	if (!advice_enabled(ADVICE_PUSH_REF_NEEDS_UPDATE) || !advice_enabled(ADVICE_PUSH_UPDATE_REJECTED))
+		return;
+	advise(_(message_advice_ref_needs_update));
 }
 
 static int push_with_options(struct transport *transport, struct refspec *rs,
@@ -340,6 +334,7 @@ static int push_with_options(struct transport *transport, struct refspec *rs,
 {
 	int err;
 	unsigned int reject_reasons;
+	char *anon_url = transport_anonymize_url(transport->url);
 
 	transport_set_verbosity(transport, verbosity, progress);
 	transport->family = family;
@@ -357,18 +352,19 @@ static int push_with_options(struct transport *transport, struct refspec *rs,
 	}
 
 	if (verbosity > 0)
-		fprintf(stderr, _("Pushing to %s\n"), transport->url);
+		fprintf(stderr, _("Pushing to %s\n"), anon_url);
 	trace2_region_enter("push", "transport_push", the_repository);
 	err = transport_push(the_repository, transport,
 			     rs, flags, &reject_reasons);
 	trace2_region_leave("push", "transport_push", the_repository);
 	if (err != 0) {
 		fprintf(stderr, "%s", push_get_color(PUSH_COLOR_ERROR));
-		error(_("failed to push some refs to '%s'"), transport->url);
+		error(_("failed to push some refs to '%s'"), anon_url);
 		fprintf(stderr, "%s", push_get_color(PUSH_COLOR_RESET));
 	}
 
 	err |= transport_disconnect(transport);
+	free(anon_url);
 	if (!err)
 		return 0;
 
@@ -382,12 +378,14 @@ static int push_with_options(struct transport *transport, struct refspec *rs,
 		advise_ref_fetch_first();
 	} else if (reject_reasons & REJECT_NEEDS_FORCE) {
 		advise_ref_needs_force();
+	} else if (reject_reasons & REJECT_REF_NEEDS_UPDATE) {
+		advise_ref_needs_update();
 	}
 
 	return 1;
 }
 
-static int do_push(const char *repo, int flags,
+static int do_push(int flags,
 		   const struct string_list *push_options,
 		   struct remote *remote)
 {
@@ -434,10 +432,8 @@ static int option_parse_recurse_submodules(const struct option *opt,
 
 	if (unset)
 		*recurse_submodules = RECURSE_SUBMODULES_OFF;
-	else if (arg)
-		*recurse_submodules = parse_push_recurse_submodules_arg(opt->long_name, arg);
 	else
-		die("%s missing parameter", opt->long_name);
+		*recurse_submodules = parse_push_recurse_submodules_arg(opt->long_name, arg);
 
 	return 0;
 }
@@ -520,6 +516,12 @@ static int git_push_config(const char *k, const char *v, void *cb)
 		if (!v)
 			return config_error_nonbool(k);
 		return color_parse(v, push_colors[slot]);
+	} else if (!strcmp(k, "push.useforceifincludes")) {
+		if (git_config_bool(k, v))
+			*flags |= TRANSPORT_PUSH_FORCE_IF_INCLUDES;
+		else
+			*flags &= ~TRANSPORT_PUSH_FORCE_IF_INCLUDES;
+		return 0;
 	}
 
 	return git_default_config(k, v, NULL);
@@ -548,13 +550,14 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		OPT_BIT('n' , "dry-run", &flags, N_("dry run"), TRANSPORT_PUSH_DRY_RUN),
 		OPT_BIT( 0,  "porcelain", &flags, N_("machine-readable output"), TRANSPORT_PUSH_PORCELAIN),
 		OPT_BIT('f', "force", &flags, N_("force updates"), TRANSPORT_PUSH_FORCE),
-		{ OPTION_CALLBACK,
-		  0, CAS_OPT_NAME, &cas, N_("<refname>:<expect>"),
-		  N_("require old value of ref to be at this value"),
-		  PARSE_OPT_OPTARG | PARSE_OPT_LITERAL_ARGHELP, parseopt_push_cas_option },
-		{ OPTION_CALLBACK, 0, "recurse-submodules", &recurse_submodules, "(check|on-demand|no)",
-			N_("control recursive pushing of submodules"),
-			PARSE_OPT_OPTARG, option_parse_recurse_submodules },
+		OPT_CALLBACK_F(0, CAS_OPT_NAME, &cas, N_("<refname>:<expect>"),
+			       N_("require old value of ref to be at this value"),
+			       PARSE_OPT_OPTARG | PARSE_OPT_LITERAL_ARGHELP, parseopt_push_cas_option),
+		OPT_BIT(0, TRANS_OPT_FORCE_IF_INCLUDES, &flags,
+			N_("require remote updates to be integrated locally"),
+			TRANSPORT_PUSH_FORCE_IF_INCLUDES),
+		OPT_CALLBACK(0, "recurse-submodules", &recurse_submodules, "(check|on-demand|no)",
+			     N_("control recursive pushing of submodules"), option_parse_recurse_submodules),
 		OPT_BOOL_F( 0 , "thin", &thin, N_("use thin pack"), PARSE_OPT_NOCOMPLETE),
 		OPT_STRING( 0 , "receive-pack", &receivepack, "receive-pack", N_("receive pack program")),
 		OPT_STRING( 0 , "exec", &receivepack, "receive-pack", N_("receive pack program")),
@@ -566,9 +569,8 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		OPT_BIT(0, "no-verify", &flags, N_("bypass pre-push hook"), TRANSPORT_PUSH_NO_HOOK),
 		OPT_BIT(0, "follow-tags", &flags, N_("push missing but relevant tags"),
 			TRANSPORT_PUSH_FOLLOW_TAGS),
-		{ OPTION_CALLBACK,
-		  0, "signed", &push_cert, "(yes|no|if-asked)", N_("GPG sign the push"),
-		  PARSE_OPT_OPTARG, option_parse_push_signed },
+		OPT_CALLBACK_F(0, "signed", &push_cert, "(yes|no|if-asked)", N_("GPG sign the push"),
+				PARSE_OPT_OPTARG, option_parse_push_signed),
 		OPT_BIT(0, "atomic", &flags, N_("request atomic transaction on remote side"), TRANSPORT_PUSH_ATOMIC),
 		OPT_STRING_LIST('o', "push-option", &push_options_cmdline, N_("server-specific"), N_("option to transmit")),
 		OPT_SET_INT('4', "ipv4", &family, N_("use IPv4 addresses only"),
@@ -638,11 +640,14 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 	if ((flags & TRANSPORT_PUSH_ALL) && (flags & TRANSPORT_PUSH_MIRROR))
 		die(_("--all and --mirror are incompatible"));
 
+	if (!is_empty_cas(&cas) && (flags & TRANSPORT_PUSH_FORCE_IF_INCLUDES))
+		cas.use_force_if_includes = 1;
+
 	for_each_string_list_item(item, push_options)
 		if (strchr(item->string, '\n'))
 			die(_("push options must not have new line characters"));
 
-	rc = do_push(repo, flags, push_options, remote);
+	rc = do_push(flags, push_options, remote);
 	string_list_clear(&push_options_cmdline, 0);
 	string_list_clear(&push_options_config, 0);
 	if (rc == -1)

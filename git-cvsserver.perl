@@ -222,10 +222,11 @@ if ($state->{method} eq 'pserver') {
         open my $passwd, "<", $authdb or die $!;
         while (<$passwd>) {
             if (m{^\Q$user\E:(.*)}) {
-                if (crypt($user, descramble($password)) eq $1) {
+                my $hash = crypt(descramble($password), $1);
+                if (defined $hash and $hash eq $1) {
                     $auth_ok = 1;
                 }
-            };
+            }
         }
         close $passwd;
 
@@ -365,7 +366,7 @@ sub req_Root
     }
     foreach my $line ( @gitvars )
     {
-        next unless ( $line =~ /^(gitcvs)\.(?:(ext|pserver)\.)?([\w-]+)=(.*)$/ );
+        next unless ( $line =~ /^(gitcvs|extensions)\.(?:(ext|pserver)\.)?([\w-]+)=(.*)$/ );
         unless ($2) {
             $cfg->{$1}{$3} = $4;
         } else {
@@ -391,6 +392,9 @@ sub req_Root
     } else {
         $log->nofile();
     }
+
+    $state->{rawsz} = ($cfg->{'extensions'}{'objectformat'} || 'sha1') eq 'sha256' ? 32 : 20;
+    $state->{hexsz} = $state->{rawsz} * 2;
 
     return 1;
 }
@@ -1581,7 +1585,7 @@ sub req_ci
 
             $parenthash = safe_pipe_capture('git', 'show-ref', '-s', $branchRef);
             chomp $parenthash;
-            if ($parenthash !~ /^[0-9a-f]{40}$/)
+            if ($parenthash !~ /^[0-9a-f]{$state->{hexsz}}$/)
             {
                 if ( defined($stickyInfo) && defined($stickyInfo->{tag}) )
                 {
@@ -1708,7 +1712,7 @@ sub req_ci
     chomp($commithash);
     $log->info("Commit hash : $commithash");
 
-    unless ( $commithash =~ /[a-zA-Z0-9]{40}/ )
+    unless ( $commithash =~ /[a-zA-Z0-9]{$state->{hexsz}}/ )
     {
         $log->warn("Commit failed (Invalid commit hash)");
         print "error 1 Commit failed (unknown reason)\n";
@@ -2146,7 +2150,7 @@ sub req_diff
                    ( $meta2->{revision} or "workingcopy" ));
 
         # TODO: Use --label instead of -L because -L is no longer
-        #  documented and may go away someday.  Not sure if there there are
+        #  documented and may go away someday.  Not sure if there are
         #  versions that only support -L, which would make this change risky?
         #  http://osdir.com/ml/bug-gnu-utils-gnu/2010-12/msg00060.html
         #    ("man diff" should actually document the best migration strategy,
@@ -2375,7 +2379,7 @@ sub req_annotate
         print "E ***************\n";
         while ( <ANNOTATE> )
         {
-            if (m/^([a-zA-Z0-9]{40})\t\([^\)]*\)(.*)$/i)
+            if (m/^([a-zA-Z0-9]{$state->{hexsz}})\t\([^\)]*\)(.*)$/i)
             {
                 my $commithash = $1;
                 my $data = $2;
@@ -2852,7 +2856,7 @@ sub transmitfile
         return;
     }
 
-    die "Need filehash" unless ( defined ( $filehash ) and $filehash =~ /^[a-zA-Z0-9]{40}$/ );
+    die "Need filehash" unless ( defined ( $filehash ) and $filehash =~ /^[a-zA-Z0-9]{$state->{hexsz}}$/ );
 
     my $type = safe_pipe_capture('git', 'cat-file', '-t', $filehash);
     chomp $type;
@@ -3042,7 +3046,7 @@ sub ensureWorkTree
 
     my $ver = safe_pipe_capture('git', 'show-ref', '-s', "refs/heads/$state->{module}");
     chomp $ver;
-    if ($ver !~ /^[0-9a-f]{40}$/)
+    if ($ver !~ /^[0-9a-f]{$state->{hexsz}}$/)
     {
         $log->warn("Error from git show-ref -s refs/head$state->{module}");
         print "error 1 cannot find the current HEAD of module";
@@ -3281,7 +3285,7 @@ sub open_blob_or_die
     }
     elsif( $srcType eq "sha1" )
     {
-        unless ( defined ( $name ) and $name =~ /^[a-zA-Z0-9]{40}$/ )
+        unless ( defined ( $name ) and $name =~ /^[a-zA-Z0-9]{$state->{hexsz}}$/ )
         {
             $log->warn("Need filehash");
             die "Need filehash\n";
@@ -3817,7 +3821,7 @@ sub update
     chomp $commitsha1;
 
     my $commitinfo = ::safe_pipe_capture('git', 'cat-file', 'commit', $self->{module});
-    unless ( $commitinfo =~ /tree\s+[a-zA-Z0-9]{40}/ )
+    unless ( $commitinfo =~ /tree\s+[a-zA-Z0-9]{$state->{hexsz}}/ )
     {
         die("Invalid module '$self->{module}'");
     }
@@ -3957,7 +3961,7 @@ sub update
             while ( <FILELIST> )
             {
 		chomp;
-                unless ( /^:\d{6}\s+([0-7]{6})\s+[a-f0-9]{40}\s+([a-f0-9]{40})\s+(\w)$/o )
+                unless ( /^:\d{6}\s+([0-7]{6})\s+[a-f0-9]{$state->{hexsz}}\s+([a-f0-9]{$state->{hexsz}})\s+(\w)$/o )
                 {
                     die("Couldn't process git-diff-tree line : $_");
                 }
@@ -4625,11 +4629,11 @@ sub getmeta
             $db_query->execute($filename, $intRev);
             $meta = $db_query->fetchrow_hashref;
         }
-        elsif ( $revision =~ /^2\.1\.1\.2000(\.[1-3][0-9][0-9]){20}$/ )
+        elsif ( $revision =~ /^2\.1\.1\.2000(\.[1-3][0-9][0-9]){$state->{rawsz}}$/ )
         {
             my ($commitHash)=($revision=~/^2\.1\.1\.2000(.*)$/);
             $commitHash=~s/\.([0-9]+)/sprintf("%02x",$1-100)/eg;
-            if($commitHash=~/^[0-9a-f]{40}$/)
+            if($commitHash=~/^[0-9a-f]{$state->{hexsz}}$/)
             {
                 return $self->getMetaFromCommithash($filename,$commitHash);
             }
@@ -4639,7 +4643,7 @@ sub getmeta
             $log->warning("failed get $revision with commithash=$commitHash");
             undef $revision;
         }
-        elsif ( $revision =~ /^[0-9a-f]{40}$/ )
+        elsif ( $revision =~ /^[0-9a-f]{$state->{hexsz}}$/ )
         {
             # Try DB first.  This is mostly only useful for req_annotate(),
             # which only calls this for stuff that should already be in
@@ -4658,7 +4662,7 @@ sub getmeta
             if(! $meta)
             {
                 my($revCommit)=$self->lookupCommitRef($revision);
-                if($revCommit=~/^[0-9a-f]{40}$/)
+                if($revCommit=~/^[0-9a-f]{$state->{hexsz}}$/)
                 {
                     return $self->getMetaFromCommithash($filename,$revCommit);
                 }
@@ -4672,7 +4676,7 @@ sub getmeta
         else
         {
             my($revCommit)=$self->lookupCommitRef($revision);
-            if($revCommit=~/^[0-9a-f]{40}$/)
+            if($revCommit=~/^[0-9a-f]{$state->{hexsz}}$/)
             {
                 return $self->getMetaFromCommithash($filename,$revCommit);
             }
@@ -4767,7 +4771,7 @@ sub getMetaFromCommithash
 
     my($fileHash) = ::safe_pipe_capture("git","rev-parse","$revCommit:$filename");
     chomp $fileHash;
-    if(!($fileHash=~/^[0-9a-f]{40}$/))
+    if(!($fileHash=~/^[0-9a-f]{$state->{hexsz}}$/))
     {
         die "Invalid fileHash '$fileHash' looking up"
                     ." '$revCommit:$filename'\n";
@@ -4863,7 +4867,7 @@ sub lookupCommitRef
     $commitHash = ::safe_pipe_capture("git","rev-parse","--verify","--quiet",
 				      $self->unescapeRefName($ref));
     $commitHash=~s/\s*$//;
-    if(!($commitHash=~/^[0-9a-f]{40}$/))
+    if(!($commitHash=~/^[0-9a-f]{$state->{hexsz}}$/))
     {
         $commitHash=undef;
     }
@@ -4909,7 +4913,7 @@ sub commitmessage
     my $commithash = shift;
     my $tablename = $self->tablename("commitmsgs");
 
-    die("Need commithash") unless ( defined($commithash) and $commithash =~ /^[a-zA-Z0-9]{40}$/ );
+    die("Need commithash") unless ( defined($commithash) and $commithash =~ /^[a-zA-Z0-9]{$state->{hexsz}}$/ );
 
     my $db_query;
     $db_query = $self->{dbh}->prepare_cached("SELECT value FROM $tablename WHERE key=?",{},1);

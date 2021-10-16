@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='checkout from unborn branch'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -11,7 +14,7 @@ test_expect_success 'setup' '
 	 git add file &&
 	 git commit -m base
 	) &&
-	git fetch parent master:origin
+	git fetch parent main:origin
 '
 
 test_expect_success 'checkout from unborn preserves untracked files' '

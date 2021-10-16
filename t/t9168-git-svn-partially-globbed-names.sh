@@ -49,7 +49,7 @@ test_expect_success 'test refspec prefixed globbing' '
 			 "tags/t_*/src/a:refs/remotes/tags/t_*" &&
 	git svn multi-fetch &&
 	git log --pretty=oneline refs/remotes/tags/t_end >actual &&
-	sed -e "s/^.\{41\}//" actual >output.end &&
+	cut -d" " -f2- actual >output.end &&
 	test_cmp expect.end output.end &&
 	test "$(git rev-parse refs/remotes/tags/t_end~1)" = \
 		"$(git rev-parse refs/remotes/branches/b_start)" &&
@@ -87,7 +87,7 @@ test_expect_success 'test left-hand-side only prefixed globbing' '
 	test $(git rev-parse refs/remotes/two/tags/t_end~3) = \
 	     $(git rev-parse refs/remotes/two/branches/b_start) &&
 	git log --pretty=oneline refs/remotes/two/tags/t_end >actual &&
-	sed -e "s/^.\{41\}//" actual >output.two &&
+	cut -d" " -f2- actual >output.two &&
 	test_cmp expect.two output.two
 	'
 
@@ -129,7 +129,7 @@ test_expect_success 'test prefixed globs match just prefix' '
 	test $(git rev-parse refs/remotes/three/tags/t_~1) = \
 	     $(git rev-parse refs/remotes/three/branches/b_) &&
 	git log --pretty=oneline refs/remotes/three/tags/t_ >actual &&
-	sed -e "s/^.\{41\}//" actual >output.three &&
+	cut -d" " -f2- actual >output.three &&
 	test_cmp expect.three output.three
 	'
 
@@ -199,7 +199,7 @@ test_expect_success 'test globbing in the middle of the word' '
 	test $(git rev-parse refs/remotes/five/tags/fghij~1) = \
 	     $(git rev-parse refs/remotes/five/branches/abcde) &&
 	git log --pretty=oneline refs/remotes/five/tags/fghij >actual &&
-	sed -e "s/^.\{41\}//" actual >output.five &&
+	cut -d" " -f2- actual >output.five &&
 	test_cmp expect.five output.five
 	'
 

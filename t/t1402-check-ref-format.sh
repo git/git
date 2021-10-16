@@ -134,18 +134,18 @@ valid_ref !MINGW "$ref" '--refspec-pattern --allow-onelevel --normalize'
 test_expect_success "check-ref-format --branch @{-1}" '
 	T=$(git write-tree) &&
 	sha1=$(echo A | git commit-tree $T) &&
-	git update-ref refs/heads/master $sha1 &&
-	git update-ref refs/remotes/origin/master $sha1 &&
-	git checkout master &&
-	git checkout origin/master &&
-	git checkout master &&
+	git update-ref refs/heads/main $sha1 &&
+	git update-ref refs/remotes/origin/main $sha1 &&
+	git checkout main &&
+	git checkout origin/main &&
+	git checkout main &&
 	refname=$(git check-ref-format --branch @{-1}) &&
 	test "$refname" = "$sha1" &&
 	refname2=$(git check-ref-format --branch @{-2}) &&
-	test "$refname2" = master'
+	test "$refname2" = main'
 
-test_expect_success 'check-ref-format --branch -naster' '
-	test_must_fail git check-ref-format --branch -naster >actual &&
+test_expect_success 'check-ref-format --branch -nain' '
+	test_must_fail git check-ref-format --branch -nain >actual &&
 	test_must_be_empty actual
 '
 
@@ -154,11 +154,11 @@ test_expect_success 'check-ref-format --branch from subdir' '
 
 	T=$(git write-tree) &&
 	sha1=$(echo A | git commit-tree $T) &&
-	git update-ref refs/heads/master $sha1 &&
-	git update-ref refs/remotes/origin/master $sha1 &&
-	git checkout master &&
-	git checkout origin/master &&
-	git checkout master &&
+	git update-ref refs/heads/main $sha1 &&
+	git update-ref refs/remotes/origin/main $sha1 &&
+	git checkout main &&
+	git checkout origin/main &&
+	git checkout main &&
 	refname=$(
 		cd subdir &&
 		git check-ref-format --branch @{-1}
@@ -171,9 +171,9 @@ test_expect_success 'check-ref-format --branch @{-1} from non-repo' '
 	test_must_be_empty actual
 '
 
-test_expect_success 'check-ref-format --branch master from non-repo' '
-	echo master >expect &&
-	nongit git check-ref-format --branch master >actual &&
+test_expect_success 'check-ref-format --branch main from non-repo' '
+	echo main >expect &&
+	nongit git check-ref-format --branch main >actual &&
 	test_cmp expect actual
 '
 

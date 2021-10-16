@@ -95,9 +95,7 @@ static int create_file(const char *path)
 {
 	int fd;
 	path = get_mtime_path(path);
-	fd = open(path, O_CREAT | O_RDWR, 0644);
-	if (fd < 0)
-		die_errno(_("failed to create file %s"), path);
+	fd = xopen(path, O_CREAT | O_RDWR, 0644);
 	return fd;
 }
 
@@ -745,6 +743,8 @@ static int do_reupdate(int ac, const char **av,
 		 */
 		has_head = 0;
  redo:
+	/* TODO: audit for interaction with sparse-index. */
+	ensure_full_index(&the_index);
 	for (pos = 0; pos < active_nr; pos++) {
 		const struct cache_entry *ce = active_cache[pos];
 		struct cache_entry *old = NULL;
@@ -985,14 +985,14 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 		OPT_BIT(0, "unmerged", &refresh_args.flags,
 			N_("refresh even if index contains unmerged entries"),
 			REFRESH_UNMERGED),
-		{OPTION_CALLBACK, 0, "refresh", &refresh_args, NULL,
+		OPT_CALLBACK_F(0, "refresh", &refresh_args, NULL,
 			N_("refresh stat information"),
 			PARSE_OPT_NOARG | PARSE_OPT_NONEG,
-			refresh_callback},
-		{OPTION_CALLBACK, 0, "really-refresh", &refresh_args, NULL,
+			refresh_callback),
+		OPT_CALLBACK_F(0, "really-refresh", &refresh_args, NULL,
 			N_("like --refresh, but ignore assume-unchanged setting"),
 			PARSE_OPT_NOARG | PARSE_OPT_NONEG,
-			really_refresh_callback},
+			really_refresh_callback),
 		{OPTION_LOWLEVEL_CALLBACK, 0, "cacheinfo", NULL,
 			N_("<mode>,<object>,<path>"),
 			N_("add the specified entry to the index"),
@@ -1000,10 +1000,10 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 			PARSE_OPT_NONEG | PARSE_OPT_LITERAL_ARGHELP,
 			NULL, 0,
 			cacheinfo_callback},
-		{OPTION_CALLBACK, 0, "chmod", &set_executable_bit, "(+|-)x",
+		OPT_CALLBACK_F(0, "chmod", &set_executable_bit, "(+|-)x",
 			N_("override the executable bit of the listed files"),
 			PARSE_OPT_NONEG,
-			chmod_callback},
+			chmod_callback),
 		{OPTION_SET_INT, 0, "assume-unchanged", &mark_valid_only, NULL,
 			N_("mark files as \"not changing\""),
 			PARSE_OPT_NOARG | PARSE_OPT_NONEG, NULL, MARK_FLAG},
@@ -1045,10 +1045,10 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 			REFRESH_IGNORE_MISSING),
 		OPT_SET_INT(0, "verbose", &verbose,
 			N_("report actions to standard output"), 1),
-		{OPTION_CALLBACK, 0, "clear-resolve-undo", NULL, NULL,
+		OPT_CALLBACK_F(0, "clear-resolve-undo", NULL, NULL,
 			N_("(for porcelains) forget saved unresolved conflicts"),
 			PARSE_OPT_NOARG | PARSE_OPT_NONEG,
-			resolve_undo_clear_callback},
+			resolve_undo_clear_callback),
 		OPT_INTEGER(0, "index-version", &preferred_index_format,
 			N_("write index in this format")),
 		OPT_BOOL(0, "split-index", &split_index,

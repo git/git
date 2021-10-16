@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='Test reflog display routines'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -167,7 +170,7 @@ test_expect_success 'git log -g -p shows diffs vs. parents' '
 '
 
 test_expect_success 'reflog exists works' '
-	git reflog exists refs/heads/master &&
+	git reflog exists refs/heads/main &&
 	! git reflog exists refs/heads/nonexistent
 '
 

@@ -1,7 +1,7 @@
 #ifndef SUBMODULE_H
 #define SUBMODULE_H
 
-struct argv_array;
+struct strvec;
 struct cache_entry;
 struct diff_options;
 struct index_state;
@@ -37,9 +37,11 @@ struct submodule_update_strategy {
 	enum submodule_update_type type;
 	const char *command;
 };
-#define SUBMODULE_UPDATE_STRATEGY_INIT {SM_UPDATE_UNSPECIFIED, NULL}
+#define SUBMODULE_UPDATE_STRATEGY_INIT { \
+	.type = SM_UPDATE_UNSPECIFIED, \
+}
 
-int is_gitmodules_unmerged(const struct index_state *istate);
+int is_gitmodules_unmerged(struct index_state *istate);
 int is_writing_gitmodules_ok(void);
 int is_staging_gitmodules_ok(struct index_state *istate);
 int update_path_in_gitmodules(const char *oldpath, const char *newpath);
@@ -60,16 +62,16 @@ int is_submodule_active(struct repository *repo, const char *path);
  * Otherwise the return error code is the same as of resolve_gitdir_gently.
  */
 int is_submodule_populated_gently(const char *path, int *return_error_code);
-void die_in_unpopulated_submodule(const struct index_state *istate,
+void die_in_unpopulated_submodule(struct index_state *istate,
 				  const char *prefix);
-void die_path_inside_submodule(const struct index_state *istate,
+void die_path_inside_submodule(struct index_state *istate,
 			       const struct pathspec *ps);
 enum submodule_update_type parse_submodule_update_type(const char *value);
 int parse_submodule_update_strategy(const char *value,
 				    struct submodule_update_strategy *dst);
 const char *submodule_strategy_to_string(const struct submodule_update_strategy *s);
 void handle_ignore_submodules_arg(struct diff_options *, const char *);
-void show_submodule_summary(struct diff_options *o, const char *path,
+void show_submodule_diff_summary(struct diff_options *o, const char *path,
 			    struct object_id *one, struct object_id *two,
 			    unsigned dirty_submodule);
 void show_submodule_inline_diff(struct diff_options *o, const char *path,
@@ -84,7 +86,7 @@ int should_update_submodules(void);
 const struct submodule *submodule_from_ce(const struct cache_entry *ce);
 void check_for_new_submodule_commits(struct object_id *oid);
 int fetch_populated_submodules(struct repository *r,
-			       const struct argv_array *options,
+			       const struct strvec *options,
 			       const char *prefix,
 			       int command_line_option,
 			       int default_option,
@@ -97,7 +99,15 @@ int submodule_uses_gitfile(const char *path);
 #define SUBMODULE_REMOVAL_IGNORE_IGNORED_UNTRACKED (1<<2)
 int bad_to_remove_submodule(const char *path, unsigned flags);
 
+/*
+ * Call add_submodule_odb() to add the submodule at the given path to a list.
+ * When register_all_submodule_odb_as_alternates() is called, the object stores
+ * of all submodules in that list will be added as alternates in
+ * the_repository.
+ */
 int add_submodule_odb(const char *path);
+void add_submodule_odb_by_path(const char *path);
+int register_all_submodule_odb_as_alternates(void);
 
 /*
  * Checks if there are submodule changes in a..b. If a is the null OID,
@@ -125,6 +135,13 @@ int push_unpushed_submodules(struct repository *r,
 int submodule_to_gitdir(struct strbuf *buf, const char *submodule);
 
 /*
+ * Given a submodule name, create a path to where the submodule's gitdir lives
+ * inside of the provided repository's 'modules' directory.
+ */
+void submodule_name_to_gitdir(struct strbuf *buf, struct repository *r,
+			      const char *submodule_name);
+
+/*
  * Make sure that no submodule's git dir is nested in a sibling submodule's.
  */
 int validate_submodule_git_dir(char *git_dir, const char *submodule_name);
@@ -143,7 +160,7 @@ void submodule_unset_core_worktree(const struct submodule *sub);
  * a submodule by clearing any repo-specific environment variables, but
  * retaining any config in the environment.
  */
-void prepare_submodule_repo_env(struct argv_array *out);
+void prepare_submodule_repo_env(struct strvec *out);
 
 #define ABSORB_GITDIR_RECURSE_SUBMODULES (1<<0)
 void absorb_git_dir_into_superproject(const char *path,
@@ -152,8 +169,8 @@ void absorb_git_dir_into_superproject(const char *path,
 /*
  * Return the absolute path of the working tree of the superproject, which this
  * project is a submodule of. If this repository is not a submodule of
- * another repository, return NULL.
+ * another repository, return 0.
  */
-const char *get_superproject_working_tree(void);
+int get_superproject_working_tree(struct strbuf *buf);
 
 #endif

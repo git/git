@@ -46,7 +46,7 @@ static inline int is_merge(void)
 	return !access(git_path_merge_head(the_repository), F_OK);
 }
 
-static int reset_index(const struct object_id *oid, int reset_type, int quiet)
+static int reset_index(const char *ref, const struct object_id *oid, int reset_type, int quiet)
 {
 	int i, nr = 0;
 	struct tree_desc desc[2];
@@ -60,18 +60,25 @@ static int reset_index(const struct object_id *oid, int reset_type, int quiet)
 	opts.dst_index = &the_index;
 	opts.fn = oneway_merge;
 	opts.merge = 1;
+	init_checkout_metadata(&opts.meta, ref, oid, NULL);
 	if (!quiet)
 		opts.verbose_update = 1;
 	switch (reset_type) {
 	case KEEP:
 	case MERGE:
 		opts.update = 1;
+		opts.preserve_ignored = 0; /* FIXME: !overwrite_ignore */
 		break;
 	case HARD:
 		opts.update = 1;
-		/* fallthrough */
+		opts.reset = UNPACK_RESET_OVERWRITE_UNTRACKED;
+		break;
+	case MIXED:
+		opts.reset = UNPACK_RESET_PROTECT_UNTRACKED;
+		/* but opts.update=0, so working tree not updated */
+		break;
 	default:
-		opts.reset = 1;
+		BUG("invalid reset_type passed to reset_index");
 	}
 
 	read_cache_unmerged();
@@ -301,9 +308,9 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 				N_("reset HEAD, index and working tree"), MERGE),
 		OPT_SET_INT(0, "keep", &reset_type,
 				N_("reset HEAD but keep local changes"), KEEP),
-		{ OPTION_CALLBACK, 0, "recurse-submodules", NULL,
+		OPT_CALLBACK_F(0, "recurse-submodules", NULL,
 			    "reset", "control recursive updating of submodules",
-			    PARSE_OPT_OPTARG, option_parse_recurse_submodules_worktree_updater },
+			    PARSE_OPT_OPTARG, option_parse_recurse_submodules_worktree_updater),
 		OPT_BOOL('p', "patch", &patch_mode, N_("select hunks interactively")),
 		OPT_BOOL('N', "intent-to-add", &intent_to_add,
 				N_("record only the fact that removed paths will be added later")),
@@ -411,18 +418,27 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 				refresh_index(&the_index, flags, NULL, NULL,
 					      _("Unstaged changes after reset:"));
 				t_delta_in_ms = (getnanotime() - t_begin) / 1000000;
-				if (advice_reset_quiet_warning && t_delta_in_ms > REFRESH_INDEX_DELAY_WARNING_IN_MS) {
+				if (advice_enabled(ADVICE_RESET_QUIET_WARNING) && t_delta_in_ms > REFRESH_INDEX_DELAY_WARNING_IN_MS) {
 					printf(_("\nIt took %.2f seconds to enumerate unstaged changes after reset.  You can\n"
 						"use '--quiet' to avoid this.  Set the config setting reset.quiet to true\n"
 						"to make this the default.\n"), t_delta_in_ms / 1000.0);
 				}
 			}
 		} else {
-			int err = reset_index(&oid, reset_type, quiet);
+			struct object_id dummy;
+			char *ref = NULL;
+			int err;
+
+			dwim_ref(rev, strlen(rev), &dummy, &ref, 0);
+			if (ref && !starts_with(ref, "refs/"))
+				FREE_AND_NULL(ref);
+
+			err = reset_index(ref, &oid, reset_type, quiet);
 			if (reset_type == KEEP && !err)
-				err = reset_index(&oid, MIXED, quiet);
+				err = reset_index(ref, &oid, MIXED, quiet);
 			if (err)
 				die(_("Could not reset index file to revision '%s'."), rev);
+			free(ref);
 		}
 
 		if (write_locked_index(&the_index, &lock, COMMIT_LOCK))

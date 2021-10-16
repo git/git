@@ -70,7 +70,7 @@ struct strbuf {
 };
 
 extern char strbuf_slopbuf[];
-#define STRBUF_INIT  { .alloc = 0, .len = 0, .buf = strbuf_slopbuf }
+#define STRBUF_INIT  { .buf = strbuf_slopbuf }
 
 /*
  * Predeclare this here, since cache.h includes this file before it defines the
@@ -263,6 +263,7 @@ static inline void strbuf_insertstr(struct strbuf *sb, size_t pos,
 void strbuf_vinsertf(struct strbuf *sb, size_t pos, const char *fmt,
 		     va_list ap);
 
+__attribute__((format (printf, 3, 4)))
 void strbuf_insertf(struct strbuf *sb, size_t pos, const char *fmt, ...);
 
 /**
@@ -337,8 +338,8 @@ const char *strbuf_join_argv(struct strbuf *buf, int argc,
  * placeholder is unknown, then the percent sign is copied, too.
  *
  * In order to facilitate caching and to make it possible to give
- * parameters to the callback, `strbuf_expand()` passes a context pointer,
- * which can be used by the programmer of the callback as she sees fit.
+ * parameters to the callback, `strbuf_expand()` passes a context
+ * pointer with any kind of data.
  */
 typedef size_t (*expand_fn_t) (struct strbuf *sb,
 			       const char *placeholder,
@@ -378,11 +379,16 @@ size_t strbuf_expand_dict_cb(struct strbuf *sb,
  */
 void strbuf_addbuf_percentquote(struct strbuf *dst, const struct strbuf *src);
 
+#define STRBUF_ENCODE_SLASH 1
+
 /**
  * Append the contents of a string to a strbuf, percent-encoding any characters
  * that are needed to be encoded for a URL.
+ *
+ * If STRBUF_ENCODE_SLASH is set in flags, percent-encode slashes.  Otherwise,
+ * slashes are not percent-encoded.
  */
-void strbuf_add_percentencode(struct strbuf *dst, const char *src);
+void strbuf_add_percentencode(struct strbuf *dst, const char *src, int flags);
 
 /**
  * Append the given byte size as a human-readable string (i.e. 12.23 KiB,
@@ -501,6 +507,12 @@ int strbuf_getline(struct strbuf *sb, FILE *file);
  * any) in the buffer.
  */
 int strbuf_getwholeline(struct strbuf *sb, FILE *file, int term);
+
+/**
+ * Like `strbuf_getwholeline`, but appends the line instead of
+ * resetting the buffer first.
+ */
+int strbuf_appendwholeline(struct strbuf *sb, FILE *file, int term);
 
 /**
  * Like `strbuf_getwholeline`, but operates on a file descriptor.

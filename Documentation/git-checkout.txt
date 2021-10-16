@@ -118,8 +118,9 @@ OPTIONS
 -f::
 --force::
 	When switching branches, proceed even if the index or the
-	working tree differs from `HEAD`.  This is used to throw away
-	local changes.
+	working tree differs from `HEAD`, and even if there are untracked
+	files in the way.  This is used to throw away local changes and
+	any untracked files or directories that are in the way.
 +
 When checking out paths from the index, do not fail upon unmerged
 entries; instead, unmerged entries are ignored.
@@ -192,12 +193,16 @@ branches from there if `<branch>` is ambiguous but exists on the
 'origin' remote. See also `checkout.defaultRemote` in
 linkgit:git-config[1].
 +
-Use `--no-guess` to disable this.
+`--guess` is the default behavior. Use `--no-guess` to disable it.
++
+The default behavior can be set via the `checkout.guess` configuration
+variable.
 
 -l::
 	Create the new branch's reflog; see linkgit:git-branch[1] for
 	details.
 
+-d::
 --detach::
 	Rather than checking out a branch to work on it, check out a
 	commit for inspection and discardable experiments.
@@ -292,11 +297,11 @@ Note that this option uses the no overlay mode by default (see also
 
 --recurse-submodules::
 --no-recurse-submodules::
-	Using `--recurse-submodules` will update the content of all initialized
+	Using `--recurse-submodules` will update the content of all active
 	submodules according to the commit recorded in the superproject. If
 	local modifications in a submodule would be overwritten the checkout
 	will fail unless `-f` is used. If nothing (or `--no-recurse-submodules`)
-	is used, the work trees of submodules will not be updated.
+	is used, submodules working trees will not be updated.
 	Just like linkgit:git-submodule[1], this will detach `HEAD` of the
 	submodule.
 
@@ -350,6 +355,10 @@ leave out at most one of `A` and `B`, in which case it defaults to `HEAD`.
 <tree-ish>::
 	Tree to checkout from (when paths are given). If not specified,
 	the index will be used.
++
+As a special case, you may use `"A...B"` as a shortcut for the
+merge base of `A` and `B` if there is exactly one merge base. You can
+leave out at most one of `A` and `B`, in which case it defaults to `HEAD`.
 
 \--::
 	Do not interpret any more arguments as options.

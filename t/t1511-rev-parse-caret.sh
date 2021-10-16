@@ -2,6 +2,9 @@
 
 test_description='tests for ref^{stuff}'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -15,7 +18,7 @@ test_expect_success 'setup' '
 	git commit -m Initial &&
 	git tag -a -m commit commit-tag &&
 	git branch ref &&
-	git checkout master &&
+	git checkout main &&
 	echo modified >>a-blob &&
 	git add -u &&
 	git commit -m Modified &&
@@ -73,52 +76,52 @@ test_expect_success 'ref^{tag}' '
 '
 
 test_expect_success 'ref^{/.}' '
-	git rev-parse master >expected &&
-	git rev-parse master^{/.} >actual &&
+	git rev-parse main >expected &&
+	git rev-parse main^{/.} >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'ref^{/non-existent}' '
-	test_must_fail git rev-parse master^{/non-existent}
+	test_must_fail git rev-parse main^{/non-existent}
 '
 
 test_expect_success 'ref^{/Initial}' '
 	git rev-parse ref >expected &&
-	git rev-parse master^{/Initial} >actual &&
+	git rev-parse main^{/Initial} >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'ref^{/!Exp}' '
-	test_must_fail git rev-parse master^{/!Exp}
+	test_must_fail git rev-parse main^{/!Exp}
 '
 
 test_expect_success 'ref^{/!}' '
-	test_must_fail git rev-parse master^{/!}
+	test_must_fail git rev-parse main^{/!}
 '
 
 test_expect_success 'ref^{/!!Exp}' '
 	git rev-parse expref >expected &&
-	git rev-parse master^{/!!Exp} >actual &&
+	git rev-parse main^{/!!Exp} >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'ref^{/!-}' '
-	test_must_fail git rev-parse master^{/!-}
+	test_must_fail git rev-parse main^{/!-}
 '
 
 test_expect_success 'ref^{/!-.}' '
-	test_must_fail git rev-parse master^{/!-.}
+	test_must_fail git rev-parse main^{/!-.}
 '
 
 test_expect_success 'ref^{/!-non-existent}' '
-	git rev-parse master >expected &&
-	git rev-parse master^{/!-non-existent} >actual &&
+	git rev-parse main >expected &&
+	git rev-parse main^{/!-non-existent} >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'ref^{/!-Changed}' '
 	git rev-parse expref >expected &&
-	git rev-parse master^{/!-Changed} >actual &&
+	git rev-parse main^{/!-Changed} >actual &&
 	test_cmp expected actual
 '
 

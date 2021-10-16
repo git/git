@@ -1,6 +1,8 @@
 #ifndef REFS_H
 #define REFS_H
 
+#include "cache.h"
+
 struct object_id;
 struct ref_store;
 struct repository;
@@ -105,6 +107,8 @@ int refs_verify_refname_available(struct ref_store *refs,
 				  const struct string_list *skip,
 				  struct strbuf *err);
 
+int refs_ref_exists(struct ref_store *refs, const char *refname);
+
 int ref_exists(const char *refname);
 
 int should_autocreate_reflog(const char *refname);
@@ -114,16 +118,16 @@ int is_branch(const char *refname);
 int refs_init_db(struct strbuf *err);
 
 /*
- * If refname is a non-symbolic reference that refers to a tag object,
- * and the tag can be (recursively) dereferenced to a non-tag object,
- * store the object ID of the referred-to object to oid and return 0.
- * If any of these conditions are not met, return a non-zero value.
- * Symbolic references are considered unpeelable, even if they
- * ultimately resolve to a peelable tag.
+ * Return the peeled value of the oid currently being iterated via
+ * for_each_ref(), etc. This is equivalent to calling:
+ *
+ *   peel_object(oid, &peeled);
+ *
+ * with the "oid" value given to the each_ref_fn callback, except
+ * that some ref storage may be able to answer the query without
+ * actually loading the object in memory.
  */
-int refs_peel_ref(struct ref_store *refs, const char *refname,
-		  struct object_id *oid);
-int peel_ref(const char *refname, struct object_id *oid);
+int peel_iterated_oid(const struct object_id *base, struct object_id *peeled);
 
 /**
  * Resolve refname in the nested "gitlink" repository in the specified
@@ -145,14 +149,29 @@ int refname_match(const char *abbrev_name, const char *full_name);
  * Given a 'prefix' expand it by the rules in 'ref_rev_parse_rules' and add
  * the results to 'prefixes'
  */
-struct argv_array;
-void expand_ref_prefix(struct argv_array *prefixes, const char *prefix);
+struct strvec;
+void expand_ref_prefix(struct strvec *prefixes, const char *prefix);
 
 int expand_ref(struct repository *r, const char *str, int len, struct object_id *oid, char **ref);
-int repo_dwim_ref(struct repository *r, const char *str, int len, struct object_id *oid, char **ref);
+int repo_dwim_ref(struct repository *r, const char *str, int len,
+		  struct object_id *oid, char **ref, int nonfatal_dangling_mark);
 int repo_dwim_log(struct repository *r, const char *str, int len, struct object_id *oid, char **ref);
-int dwim_ref(const char *str, int len, struct object_id *oid, char **ref);
+static inline int dwim_ref(const char *str, int len, struct object_id *oid,
+			   char **ref, int nonfatal_dangling_mark)
+{
+	return repo_dwim_ref(the_repository, str, len, oid, ref,
+			     nonfatal_dangling_mark);
+}
 int dwim_log(const char *str, int len, struct object_id *oid, char **ref);
+
+/*
+ * Retrieves the default branch name for newly-initialized repositories.
+ *
+ * The return value of `repo_default_branch_name()` is an allocated string. The
+ * return value of `git_default_branch_name()` is a singleton.
+ */
+const char *git_default_branch_name(int quiet);
+char *repo_default_branch_name(struct repository *r, int quiet);
 
 /*
  * A ref_transaction represents a collection of reference updates that
@@ -323,11 +342,17 @@ int for_each_ref(each_ref_fn fn, void *cb_data);
 int for_each_ref_in(const char *prefix, each_ref_fn fn, void *cb_data);
 
 int refs_for_each_fullref_in(struct ref_store *refs, const char *prefix,
-			     each_ref_fn fn, void *cb_data,
-			     unsigned int broken);
-int for_each_fullref_in(const char *prefix, each_ref_fn fn, void *cb_data,
-			unsigned int broken);
+			     each_ref_fn fn, void *cb_data);
+int for_each_fullref_in(const char *prefix, each_ref_fn fn, void *cb_data);
 
+/**
+ * iterate all refs in "patterns" by partitioning patterns into disjoint sets
+ * and iterating the longest-common prefix of each set.
+ *
+ * callers should be prepared to ignore references that they did not ask for.
+ */
+int for_each_fullref_in_prefixes(const char *namespace, const char **patterns,
+				 each_ref_fn fn, void *cb_data);
 /**
  * iterate refs from the respective area.
  */
@@ -360,18 +385,6 @@ int for_each_rawref(each_ref_fn fn, void *cb_data);
  */
 void normalize_glob_ref(struct string_list_item *item, const char *prefix,
 			const char *pattern);
-
-/*
- * Returns 0 if refname matches any of the exclude_patterns, or if it doesn't
- * match any of the include_patterns. Returns 1 otherwise.
- *
- * If pattern list is NULL or empty, matching against that list is skipped.
- * This has the effect of matching everything by default, unless the user
- * specifies rules otherwise.
- */
-int ref_filter_match(const char *refname,
-		     const struct string_list *include_patterns,
-		     const struct string_list *exclude_patterns);
 
 static inline const char *has_glob_specials(const char *pattern)
 {
@@ -444,19 +457,35 @@ int delete_refs(const char *msg, struct string_list *refnames,
 int refs_delete_reflog(struct ref_store *refs, const char *refname);
 int delete_reflog(const char *refname);
 
-/* iterate over reflog entries */
+/*
+ * Callback to process a reflog entry found by the iteration functions (see
+ * below)
+ */
 typedef int each_reflog_ent_fn(
 		struct object_id *old_oid, struct object_id *new_oid,
 		const char *committer, timestamp_t timestamp,
 		int tz, const char *msg, void *cb_data);
 
+/* Iterate over reflog entries in the log for `refname`. */
+
+/* oldest entry first */
 int refs_for_each_reflog_ent(struct ref_store *refs, const char *refname,
 			     each_reflog_ent_fn fn, void *cb_data);
+
+/* youngest entry first */
 int refs_for_each_reflog_ent_reverse(struct ref_store *refs,
 				     const char *refname,
 				     each_reflog_ent_fn fn,
 				     void *cb_data);
+
+/*
+ * Iterate over reflog entries in the log for `refname` in the main ref store.
+ */
+
+/* oldest entry first */
 int for_each_reflog_ent(const char *refname, each_reflog_ent_fn fn, void *cb_data);
+
+/* youngest entry first */
 int for_each_reflog_ent_reverse(const char *refname, each_reflog_ent_fn fn, void *cb_data);
 
 /*
@@ -764,7 +793,7 @@ enum expire_reflog_flags {
  * expiration policy that is desired.
  *
  * reflog_expiry_prepare_fn -- Called once after the reference is
- *     locked.
+ *     locked. Called with the OID of the locked reference.
  *
  * reflog_expiry_should_prune_fn -- Called once for each entry in the
  *     existing reflog. It should return true iff that entry should be
@@ -784,27 +813,24 @@ typedef int reflog_expiry_should_prune_fn(struct object_id *ooid,
 typedef void reflog_expiry_cleanup_fn(void *cb_data);
 
 /*
- * Expire reflog entries for the specified reference. oid is the old
- * value of the reference. flags is a combination of the constants in
+ * Expire reflog entries for the specified reference.
+ * flags is a combination of the constants in
  * enum expire_reflog_flags. The three function pointers are described
  * above. On success, return zero.
  */
 int refs_reflog_expire(struct ref_store *refs,
 		       const char *refname,
-		       const struct object_id *oid,
 		       unsigned int flags,
 		       reflog_expiry_prepare_fn prepare_fn,
 		       reflog_expiry_should_prune_fn should_prune_fn,
 		       reflog_expiry_cleanup_fn cleanup_fn,
 		       void *policy_cb_data);
-int reflog_expire(const char *refname, const struct object_id *oid,
+int reflog_expire(const char *refname,
 		  unsigned int flags,
 		  reflog_expiry_prepare_fn prepare_fn,
 		  reflog_expiry_should_prune_fn should_prune_fn,
 		  reflog_expiry_cleanup_fn cleanup_fn,
 		  void *policy_cb_data);
-
-int ref_storage_backend_exists(const char *name);
 
 struct ref_store *get_main_ref_store(struct repository *r);
 

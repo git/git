@@ -1,0 +1,279 @@
+Git 2.33 Release Notes
+======================
+
+Updates since Git 2.32
+----------------------
+
+UI, Workflows & Features
+
+ * "git send-email" learned the "--sendmail-cmd" command line option
+   and the "sendemail.sendmailCmd" configuration variable, which is a
+   more sensible approach than the current way of repurposing the
+   "smtp-server" that is meant to name the server to instead name the
+   command to talk to the server.
+
+ * The userdiff pattern for C# learned the token "record".
+
+ * "git rev-list" learns to omit the "commit <object-name>" header
+   lines from the output with the `--no-commit-header` option.
+
+ * "git worktree add --lock" learned to record why the worktree is
+   locked with a custom message.
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ * The code to handle the "--format" option in "for-each-ref" and
+   friends made too many string comparisons on %(atom)s used in the
+   format string, which has been corrected by converting them into
+   enum when the format string is parsed.
+
+ * Use the hashfile API in the codepath that writes the index file to
+   reduce code duplication.
+
+ * Repeated rename detections in a sequence of mergy operations have
+   been optimized out for the 'ort' merge strategy.
+
+ * Preliminary clean-up of tests before the main reftable changes
+   hits the codebase.
+
+ * The backend for "diff -G/-S" has been updated to use pcre2 engine
+   when available.
+
+ * Use ".DELETE_ON_ERROR" pseudo target to simplify our Makefile.
+
+ * Code cleanup around struct_type_init() functions.
+
+ * "git send-email" optimization.
+
+ * GitHub Actions / CI update.
+   (merge 0dc787a9f2 js/ci-windows-update later to maint).
+
+ * Object accesses in repositories with many alternate object store
+   have been optimized.
+
+ * "git log" has been optimized not to waste cycles to load ref
+   decoration data that may not be needed.
+
+ * Many "printf"-like helper functions we have have been annotated
+   with __attribute__() to catch placeholder/parameter mismatches.
+
+ * Tests that cover protocol bits have been updated and helpers
+   used there have been consolidated.
+
+ * The CI gained a new job to run "make sparse" check.
+
+ * "git status" codepath learned to work with sparsely populated index
+   without hydrating it fully.
+
+ * A guideline for gender neutral documentation has been added.
+
+ * Documentation on "git diff -l<n>" and diff.renameLimit have been
+   updated, and the defaults for these limits have been raised.
+
+ * The completion support used to offer alternate spelling of options
+   that exist only for compatibility, which has been corrected.
+
+ * "TEST_OUTPUT_DIRECTORY=there make test" failed to work, which has
+   been corrected.
+
+ * "git bundle" gained more test coverage.
+
+ * "git read-tree" had a codepath where blobs are fetched one-by-one
+   from the promisor remote, which has been corrected to fetch in bulk.
+
+ * Rewrite of "git submodule" in C continues.
+
+ * "git checkout" and "git commit" learn to work without unnecessarily
+   expanding sparse indexes.
+
+
+Fixes since v2.32
+-----------------
+
+ * We historically rejected a very short string as an author name
+   while accepting a patch e-mail, which has been loosened.
+   (merge 72ee47ceeb ef/mailinfo-short-name later to maint).
+
+ * The parallel checkout codepath did not initialize object ID field
+   used to talk to the worker processes in a futureproof way.
+
+ * Rewrite code that triggers undefined behaviour warning.
+   (merge aafa5df0df jn/size-t-casted-to-off-t-fix later to maint).
+
+ * The description of "fast-forward" in the glossary has been updated.
+   (merge e22f2daed0 ry/clarify-fast-forward-in-glossary later to maint).
+
+ * Recent "git clone" left a temporary directory behind when the
+   transport layer returned an failure.
+   (merge 6aacb7d861 jk/clone-clean-upon-transport-error later to maint).
+
+ * "git fetch" over protocol v2 left its side of the socket open after
+   it finished speaking, which unnecessarily wasted the resource on
+   the other side.
+   (merge ae1a7eefff jk/fetch-pack-v2-half-close-early later to maint).
+
+ * The command line completion (in contrib/) learned that "git diff"
+   takes the "--anchored" option.
+   (merge d1e7c2cac9 tb/complete-diff-anchored later to maint).
+
+ * "git-svn" tests assumed that "locale -a", which is used to pick an
+   available UTF-8 locale, is available everywhere.  A knob has been
+   introduced to allow testers to specify a suitable locale to use.
+   (merge 482c962de4 dd/svn-test-wo-locale-a later to maint).
+
+ * Update "git subtree" to work better on Windows.
+   (merge 77f37de39f js/subtree-on-windows-fix later to maint).
+
+ * Remove multimail from contrib/
+   (merge f74d11471f js/no-more-multimail later to maint).
+
+ * Make the codebase MSAN clean.
+   (merge 4dbc55e87d ah/uninitialized-reads-fix later to maint).
+
+ * Work around inefficient glob substitution in older versions of bash
+   by rewriting parts of a test.
+   (merge eb87c6f559 jx/t6020-with-older-bash later to maint).
+
+ * Avoid duplicated work while building reachability bitmaps.
+   (merge aa9ad6fee5 jk/bitmap-tree-optim later to maint).
+
+ * We broke "GIT_SKIP_TESTS=t?000" to skip certain tests in recent
+   update, which got fixed.
+
+ * The side-band demultiplexer that is used to display progress output
+   from the remote end did not clear the line properly when the end of
+   line hits at a packet boundary, which has been corrected.
+
+ * Some test scripts assumed that readlink(1) was universally
+   installed and available, which is not the case.
+   (merge 7c0afdf23c jk/test-without-readlink-1 later to maint).
+
+ * Recent update to completion script (in contrib/) broke those who
+   use the __git_complete helper to define completion to their custom
+   command.
+   (merge cea232194d fw/complete-cmd-idx-fix later to maint).
+
+ * Output from some of our tests were affected by the width of the
+   terminal that they were run in, which has been corrected by
+   exporting a fixed value in the COLUMNS environment.
+   (merge c49a177bec ab/fix-columns-to-80-during-tests later to maint).
+
+ * On Windows, mergetool has been taught to find kdiff3.exe just like
+   it finds winmerge.exe.
+   (merge 47eb4c6890 ms/mergetools-kdiff3-on-windows later to maint).
+
+ * When we cannot figure out how wide the terminal is, we use a
+   fallback value of 80 ourselves (which cannot be avoided), but when
+   we run the pager, we export it in COLUMNS, which forces the pager
+   to use the hardcoded value, even when the pager is perfectly
+   capable to figure it out itself.  Stop exporting COLUMNS when we
+   fall back on the hardcoded default value for our own use.
+   (merge 9b6e2c8b98 js/stop-exporting-bogus-columns later to maint).
+
+ * "git cat-file --batch-all-objects"" misbehaved when "--batch" is in
+   use and did not ask for certain object traits.
+   (merge ee02ac6164 zh/cat-file-batch-fix later to maint).
+
+ * Some code and doc clarification around "git push".
+
+ * The "union" conflict resultion variant misbehaved when used with
+   binary merge driver.
+   (merge 382b601acd jk/union-merge-binary later to maint).
+
+ * Prevent "git p4" from failing to submit changes to binary file.
+   (merge 54662d5958 dc/p4-binary-submit-fix later to maint).
+
+ * "git grep --and -e foo" ought to have been diagnosed as an error
+   but instead segfaulted, which has been corrected.
+   (merge fe7fe62d8d rs/grep-parser-fix later to maint).
+
+ * The merge code had funny interactions between content based rename
+   detection and directory rename detection.
+   (merge 3585d0ea23 en/merge-dir-rename-corner-case-fix later to maint).
+
+ * When rebuilding the multi-pack index file reusing an existing one,
+   we used to blindly trust the existing file and ended up carrying
+   corrupted data into the updated file, which has been corrected.
+   (merge f89ecf7988 tb/midx-use-checksum later to maint).
+
+ * Update the location of system-side configuration file on Windows.
+   (merge e355307692 js/gfw-system-config-loc-fix later to maint).
+
+ * Code recently added to support common ancestry negotiation during
+   "git push" did not sanity check its arguments carefully enough.
+   (merge eff40457a4 ab/fetch-negotiate-segv-fix later to maint).
+
+ * Update the documentation not to assume users are of certain gender
+   and adds to guidelines to do so.
+   (merge 46a237f42f ds/gender-neutral-doc later to maint).
+
+ * "git commit --allow-empty-message" won't abort the operation upon
+   an empty message, but the hint shown in the editor said otherwise.
+   (merge 6f70f00b4f hj/commit-allow-empty-message later to maint).
+
+ * The code that gives an error message in "git multi-pack-index" when
+   no subcommand is given tried to print a NULL pointer as a strong,
+   which has been corrected.
+   (merge 88617d11f9 tb/reverse-midx later to maint).
+
+ * CI update.
+   (merge a066a90db6 js/ci-check-whitespace-updates later to maint).
+
+ * Documentation fix for "git pull --rebase=no".
+   (merge d3236becec fc/pull-no-rebase-merges-theirs-into-ours later to maint).
+
+ * A race between repacking and using pack bitmaps has been corrected.
+   (merge dc1daacdcc jk/check-pack-valid-before-opening-bitmap later to maint).
+
+ * The local changes stashed by "git merge --autostash" were lost when
+   the merge failed in certain ways, which has been corrected.
+
+ * Windows rmdir() equivalent behaves differently from POSIX ones in
+   that when used on a symbolic link that points at a directory, the
+   target directory gets removed, which has been corrected.
+   (merge 3e7d4888e5 tb/mingw-rmdir-symlink-to-directory later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
+   (merge bfe35a6165 ah/doc-describe later to maint).
+   (merge f302c1e4aa jc/clarify-revision-range later to maint).
+   (merge 3127ff90ea tl/fix-packfile-uri-doc later to maint).
+   (merge a84216c684 jk/doc-color-pager later to maint).
+   (merge 4e0a64a713 ab/trace2-squelch-gcc-warning later to maint).
+   (merge 225f7fa847 ps/rev-list-object-type-filter later to maint).
+   (merge 5317dfeaed dd/honor-users-tar-in-tests later to maint).
+   (merge ace6d8e3d6 tk/partial-clone-repack-doc later to maint).
+   (merge 7ba68e0cf1 js/trace2-discard-event-docfix later to maint).
+   (merge 8603c419d3 fc/doc-default-to-upstream-config later to maint).
+   (merge 1d72b604ef jk/revision-squelch-gcc-warning later to maint).
+   (merge abcb66c614 ar/typofix later to maint).
+   (merge 9853830787 ah/graph-typofix later to maint).
+   (merge aac578492d ab/config-hooks-path-testfix later to maint).
+   (merge 98c7656a18 ar/more-typofix later to maint).
+   (merge 6fb9195f6c jk/doc-max-pack-size later to maint).
+   (merge 4184cbd635 ar/mailinfo-memcmp-to-skip-prefix later to maint).
+   (merge 91d2347033 ar/doc-libera-chat-in-my-first-contrib later to maint).
+   (merge 338abb0f04 ab/cmd-foo-should-return later to maint).
+   (merge 546096a5cb ab/xdiff-bug-cleanup later to maint).
+   (merge b7b793d1e7 ab/progress-cleanup later to maint).
+   (merge d94f9b8e90 ba/object-info later to maint).
+   (merge 52ff891c03 ar/test-code-cleanup later to maint).
+   (merge a0538e5c8b dd/document-log-decorate-default later to maint).
+   (merge ce24797d38 mr/cmake later to maint).
+   (merge 9eb542f2ee ab/pre-auto-gc-hook-test later to maint).
+   (merge 9fffc38583 bk/doc-commit-typofix later to maint).
+   (merge 1cf823d8f0 ks/submodule-cleanup later to maint).
+   (merge ebbf5d2b70 js/config-mak-windows-pcre-fix later to maint).
+   (merge 617480d75b hn/refs-iterator-peel-returns-boolean later to maint).
+   (merge 6a24cc71ed ar/submodule-helper-include-cleanup later to maint).
+   (merge 5632e838f8 rs/khash-alloc-cleanup later to maint).
+   (merge b1d87fbaf1 jk/typofix later to maint).
+   (merge e04170697a ab/gitignore-discovery-doc later to maint).
+   (merge 8232a0ff48 dl/packet-read-response-end-fix later to maint).
+   (merge eb448631fb dl/diff-merge-base later to maint).
+   (merge c510928a25 hn/refs-debug-empty-prefix later to maint).
+   (merge ddcb189d9d tb/bitmap-type-filter-comment-fix later to maint).
+   (merge 878b399734 pb/submodule-recurse-doc later to maint).
+   (merge 734283855f jk/config-env-doc later to maint).
+   (merge 482e1488a9 ab/getcwd-test later to maint).
+   (merge f0b922473e ar/doc-markup-fix later to maint).

@@ -15,14 +15,17 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-Incorporates changes from a remote repository into the current
-branch.  In its default mode, `git pull` is shorthand for
-`git fetch` followed by `git merge FETCH_HEAD`.
+Incorporates changes from a remote repository into the current branch.
+If the current branch is behind the remote, then by default it will
+fast-forward the current branch to match the remote.  If the current
+branch and the remote have diverged, the user needs to specify how to
+reconcile the divergent branches with `--rebase` or `--no-rebase` (or
+the corresponding configuration option in `pull.rebase`).
 
-More precisely, 'git pull' runs 'git fetch' with the given
-parameters and calls 'git merge' to merge the retrieved branch
-heads into the current branch.
-With `--rebase`, it runs 'git rebase' instead of 'git merge'.
+More precisely, `git pull` runs `git fetch` with the given parameters
+and then depending on configuration options or command line flags,
+will call either `git rebase` or `git merge` to reconcile diverging
+branches.
 
 <repository> should be the name of a remote repository as
 passed to linkgit:git-fetch[1].  <refspec> can name an
@@ -85,8 +88,9 @@ OPTIONS
 	Pass --verbose to git-fetch and git-merge.
 
 --[no-]recurse-submodules[=yes|on-demand|no]::
-	This option controls if new commits of all populated submodules should
-	be fetched and updated, too (see linkgit:git-config[1] and
+	This option controls if new commits of populated submodules should
+	be fetched, and if the working trees of active submodules should be
+	updated, too (see linkgit:git-fetch[1], linkgit:git-config[1] and
 	linkgit:gitmodules[5]).
 +
 If the checkout is done via rebase, local submodule commits are rebased as well.
@@ -116,7 +120,7 @@ When set to `preserve` (deprecated in favor of `merges`), rebase with the
 `--preserve-merges` option passed to `git rebase` so that locally created
 merge commits will not be flattened.
 +
-When false, merge the current branch into the upstream branch.
+When false, merge the upstream branch into the current branch.
 +
 When `interactive`, enable the interactive mode of rebase.
 +
@@ -131,16 +135,7 @@ published that history already.  Do *not* use this option
 unless you have read linkgit:git-rebase[1] carefully.
 
 --no-rebase::
-	Override earlier --rebase.
-
---autostash::
---no-autostash::
-	Before starting rebase, stash local modifications away (see
-	linkgit:git-stash[1]) if needed, and apply the stash entry when
-	done. `--no-autostash` is useful to override the `rebase.autoStash`
-	configuration variable (see linkgit:git-config[1]).
-+
-This option is only valid when "--rebase" is used.
+	This is shorthand for --rebase=false.
 
 Options related to fetching
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -229,9 +224,9 @@ branch.<name>.merge options; see linkgit:git-config[1] for details.
 $ git pull origin next
 ------------------------------------------------
 +
-This leaves a copy of `next` temporarily in FETCH_HEAD, but
-does not update any remote-tracking branches. Using remote-tracking
-branches, the same can be done by invoking fetch and merge:
+This leaves a copy of `next` temporarily in FETCH_HEAD, and
+updates the remote-tracking branch `origin/next`.
+The same can be done by invoking fetch and merge:
 +
 ------------------------------------------------
 $ git fetch origin

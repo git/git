@@ -6,6 +6,7 @@
 #include "object-store.h"
 #include "replace-object.h"
 #include "promisor-remote.h"
+#include "sparse-index.h"
 
 #ifndef DEBUG_CACHE_TREE
 #define DEBUG_CACHE_TREE 0
@@ -45,7 +46,7 @@ static int subtree_name_cmp(const char *one, int onelen,
 	return memcmp(one, two, onelen);
 }
 
-static int subtree_pos(struct cache_tree *it, const char *path, int pathlen)
+int cache_tree_subtree_pos(struct cache_tree *it, const char *path, int pathlen)
 {
 	struct cache_tree_sub **down = it->down;
 	int lo, hi;
@@ -72,7 +73,7 @@ static struct cache_tree_sub *find_subtree(struct cache_tree *it,
 					   int create)
 {
 	struct cache_tree_sub *down;
-	int pos = subtree_pos(it, path, pathlen);
+	int pos = cache_tree_subtree_pos(it, path, pathlen);
 	if (0 <= pos)
 		return it->down[pos];
 	if (!create)
@@ -123,7 +124,7 @@ static int do_invalidate_path(struct cache_tree *it, const char *path)
 	it->entry_count = -1;
 	if (!*slash) {
 		int pos;
-		pos = subtree_pos(it, path, namelen);
+		pos = cache_tree_subtree_pos(it, path, namelen);
 		if (0 <= pos) {
 			cache_tree_free(&it->down[pos]->cache_tree);
 			free(it->down[pos]);
@@ -151,16 +152,15 @@ void cache_tree_invalidate_path(struct index_state *istate, const char *path)
 		istate->cache_changed |= CACHE_TREE_CHANGED;
 }
 
-static int verify_cache(struct cache_entry **cache,
-			int entries, int flags)
+static int verify_cache(struct index_state *istate, int flags)
 {
-	int i, funny;
+	unsigned i, funny;
 	int silent = flags & WRITE_TREE_SILENT;
 
 	/* Verify that the tree is merged */
 	funny = 0;
-	for (i = 0; i < entries; i++) {
-		const struct cache_entry *ce = cache[i];
+	for (i = 0; i < istate->cache_nr; i++) {
+		const struct cache_entry *ce = istate->cache[i];
 		if (ce_stage(ce)) {
 			if (silent)
 				return -1;
@@ -180,17 +180,19 @@ static int verify_cache(struct cache_entry **cache,
 	 * stage 0 entries.
 	 */
 	funny = 0;
-	for (i = 0; i < entries - 1; i++) {
+	for (i = 0; i + 1 < istate->cache_nr; i++) {
 		/* path/file always comes after path because of the way
 		 * the cache is sorted.  Also path can appear only once,
 		 * which means conflicting one would immediately follow.
 		 */
-		const char *this_name = cache[i]->name;
-		const char *next_name = cache[i+1]->name;
-		int this_len = strlen(this_name);
-		if (this_len < strlen(next_name) &&
-		    strncmp(this_name, next_name, this_len) == 0 &&
-		    next_name[this_len] == '/') {
+		const struct cache_entry *this_ce = istate->cache[i];
+		const struct cache_entry *next_ce = istate->cache[i + 1];
+		const char *this_name = this_ce->name;
+		const char *next_name = next_ce->name;
+		int this_len = ce_namelen(this_ce);
+		if (this_len < ce_namelen(next_ce) &&
+		    next_name[this_len] == '/' &&
+		    strncmp(this_name, next_name, this_len) == 0) {
 			if (10 < ++funny) {
 				fprintf(stderr, "...\n");
 				break;
@@ -235,6 +237,11 @@ int cache_tree_fully_valid(struct cache_tree *it)
 	return 1;
 }
 
+static int must_check_existence(const struct cache_entry *ce)
+{
+	return !(has_promisor_remote() && ce_skip_worktree(ce));
+}
+
 static int update_one(struct cache_tree *it,
 		      struct cache_entry **cache,
 		      int entries,
@@ -253,6 +260,24 @@ static int update_one(struct cache_tree *it,
 	assert(!(dryrun && repair));
 
 	*skip_count = 0;
+
+	/*
+	 * If the first entry of this region is a sparse directory
+	 * entry corresponding exactly to 'base', then this cache_tree
+	 * struct is a "leaf" in the data structure, pointing to the
+	 * tree OID specified in the entry.
+	 */
+	if (entries > 0) {
+		const struct cache_entry *ce = cache[0];
+
+		if (S_ISSPARSEDIR(ce->ce_mode) &&
+		    ce->ce_namelen == baselen &&
+		    !strncmp(ce->name, base, baselen)) {
+			it->entry_count = 1;
+			oidcpy(&it->oid, &ce->oid);
+			return 1;
+		}
+	}
 
 	if (0 <= it->entry_count && has_object_file(&it->oid))
 		return it->entry_count;
@@ -358,8 +383,7 @@ static int update_one(struct cache_tree *it,
 		}
 
 		ce_missing_ok = mode == S_IFGITLINK || missing_ok ||
-			(has_promisor_remote() &&
-			 ce_skip_worktree(ce));
+			!must_check_existence(ce);
 		if (is_null_oid(oid) ||
 		    (!ce_missing_ok && !has_object_file(oid))) {
 			strbuf_release(&buffer);
@@ -434,15 +458,24 @@ static int update_one(struct cache_tree *it,
 
 int cache_tree_update(struct index_state *istate, int flags)
 {
-	struct cache_tree *it = istate->cache_tree;
-	struct cache_entry **cache = istate->cache;
-	int entries = istate->cache_nr;
-	int skip, i = verify_cache(cache, entries, flags);
+	int skip, i;
+
+	i = verify_cache(istate, flags);
 
 	if (i)
 		return i;
+
+	if (!istate->cache_tree)
+		istate->cache_tree = cache_tree();
+
+	if (!(flags & WRITE_TREE_MISSING_OK) && has_promisor_remote())
+		prefetch_cache_entries(istate, must_check_existence);
+
 	trace_performance_enter();
-	i = update_one(it, cache, entries, "", 0, &skip, flags);
+	trace2_region_enter("cache_tree", "update", the_repository);
+	i = update_one(istate->cache_tree, istate->cache, istate->cache_nr,
+		       "", 0, &skip, flags);
+	trace2_region_leave("cache_tree", "update", the_repository);
 	trace_performance_leave("cache_tree_update");
 	if (i < 0)
 		return i;
@@ -492,7 +525,9 @@ static void write_one(struct strbuf *buffer, struct cache_tree *it,
 
 void cache_tree_write(struct strbuf *sb, struct cache_tree *root)
 {
+	trace2_region_enter("cache_tree", "write", the_repository);
 	write_one(sb, root, "", 0);
+	trace2_region_leave("cache_tree", "write", the_repository);
 }
 
 static struct cache_tree *read_one(const char **buffer, unsigned long *size_p)
@@ -555,7 +590,7 @@ static struct cache_tree *read_one(const char **buffer, unsigned long *size_p)
 	 * hence +2.
 	 */
 	it->subtree_alloc = subtree_nr + 2;
-	it->down = xcalloc(it->subtree_alloc, sizeof(struct cache_tree_sub *));
+	CALLOC_ARRAY(it->down, it->subtree_alloc);
 	for (i = 0; i < subtree_nr; i++) {
 		/* read each subtree */
 		struct cache_tree *sub;
@@ -581,9 +616,16 @@ static struct cache_tree *read_one(const char **buffer, unsigned long *size_p)
 
 struct cache_tree *cache_tree_read(const char *buffer, unsigned long size)
 {
+	struct cache_tree *result;
+
 	if (buffer[0])
 		return NULL; /* not the whole tree */
-	return read_one(&buffer, &size);
+
+	trace2_region_enter("cache_tree", "read", the_repository);
+	result = read_one(&buffer, &size);
+	trace2_region_leave("cache_tree", "read", the_repository);
+
+	return result;
 }
 
 static struct cache_tree *cache_tree_find(struct cache_tree *it, const char *path)
@@ -621,9 +663,6 @@ static int write_index_as_tree_internal(struct object_id *oid,
 		cache_tree_free(&index_state->cache_tree);
 		cache_tree_valid = 0;
 	}
-
-	if (!index_state->cache_tree)
-		index_state->cache_tree = cache_tree();
 
 	if (!cache_tree_valid && cache_tree_update(index_state, flags) < 0)
 		return WRITE_TREE_UNMERGED_INDEX;
@@ -733,10 +772,13 @@ void prime_cache_tree(struct repository *r,
 		      struct index_state *istate,
 		      struct tree *tree)
 {
+	trace2_region_enter("cache-tree", "prime_cache_tree", the_repository);
 	cache_tree_free(&istate->cache_tree);
 	istate->cache_tree = cache_tree();
+
 	prime_cache_tree_rec(r, istate->cache_tree, tree);
 	istate->cache_changed |= CACHE_TREE_CHANGED;
+	trace2_region_leave("cache-tree", "prime_cache_tree", the_repository);
 }
 
 /*
@@ -771,6 +813,19 @@ int cache_tree_matches_traversal(struct cache_tree *root,
 	return 0;
 }
 
+static void verify_one_sparse(struct repository *r,
+			      struct index_state *istate,
+			      struct cache_tree *it,
+			      struct strbuf *path,
+			      int pos)
+{
+	struct cache_entry *ce = istate->cache[pos];
+
+	if (!S_ISSPARSEDIR(ce->ce_mode))
+		BUG("directory '%s' is present in index, but not sparse",
+		    path->buf);
+}
+
 static void verify_one(struct repository *r,
 		       struct index_state *istate,
 		       struct cache_tree *it,
@@ -793,6 +848,12 @@ static void verify_one(struct repository *r,
 
 	if (path->len) {
 		pos = index_name_pos(istate, path->buf, path->len);
+
+		if (pos >= 0) {
+			verify_one_sparse(r, istate, it, path, pos);
+			return;
+		}
+
 		pos = -pos - 1;
 	} else {
 		pos = 0;

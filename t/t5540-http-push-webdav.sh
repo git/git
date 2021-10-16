@@ -7,6 +7,9 @@ test_description='test WebDAV http-push
 
 This test runs various sanity checks on http-push.'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 if git http-push > /dev/null 2>&1 || [ $? -eq 128 ]
@@ -71,7 +74,7 @@ test_expect_success 'push already up-to-date' '
 test_expect_success 'push to remote repository with unpacked refs' '
 	(cd "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git &&
 	 rm packed-refs &&
-	 git update-ref refs/heads/master $ORIG_HEAD &&
+	 git update-ref refs/heads/main $ORIG_HEAD &&
 	 git --bare update-server-info) &&
 	git push &&
 	(cd "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git &&
@@ -91,7 +94,7 @@ test_expect_success 'http-push fetches unpacked objects' '
 	 git remote rm origin &&
 	 git reflog expire --expire=0 --all &&
 	 git prune &&
-	 git push -f -v $HTTPD_URL/dumb/test_repo_unpacked.git master)
+	 git push -f -v $HTTPD_URL/dumb/test_repo_unpacked.git main)
 '
 
 test_expect_success 'http-push fetches packed objects' '
@@ -111,7 +114,7 @@ test_expect_success 'http-push fetches packed objects' '
 	 git remote remove origin &&
 	 git reflog expire --expire=0 --all &&
 	 git prune &&
-	 git push -f -v $HTTPD_URL/dumb/test_repo_packed.git master)
+	 git push -f -v $HTTPD_URL/dumb/test_repo_packed.git main)
 '
 
 test_expect_success 'create and delete remote branch' '
@@ -124,6 +127,22 @@ test_expect_success 'create and delete remote branch' '
 	git push origin dev &&
 	git push origin :dev &&
 	test_must_fail git show-ref --verify refs/remotes/origin/dev
+'
+
+test_expect_success 'non-force push fails if not up to date' '
+	git init --bare "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo_conflict.git &&
+	git -C "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo_conflict.git update-server-info &&
+	git clone $HTTPD_URL/dumb/test_repo_conflict.git "$ROOT_PATH"/c1 &&
+	git clone $HTTPD_URL/dumb/test_repo_conflict.git "$ROOT_PATH"/c2 &&
+	test_commit -C "$ROOT_PATH/c1" path1 &&
+	git -C "$ROOT_PATH/c1" push origin HEAD &&
+	git -C "$ROOT_PATH/c2" pull &&
+	test_commit -C "$ROOT_PATH/c1" path2 &&
+	git -C "$ROOT_PATH/c1" push origin HEAD &&
+	test_commit -C "$ROOT_PATH/c2" path3 &&
+	git -C "$ROOT_PATH/c1" log --graph --all &&
+	git -C "$ROOT_PATH/c2" log --graph --all &&
+	test_must_fail git -C "$ROOT_PATH/c2" push origin HEAD
 '
 
 test_expect_success 'MKCOL sends directory names with trailing slashes' '
@@ -147,7 +166,7 @@ test_expect_success 'PUT and MOVE sends object to URLs with SHA-1 hash suffix' '
 '
 
 test_http_push_nonff "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git \
-	"$ROOT_PATH"/test_repo_clone master
+	"$ROOT_PATH"/test_repo_clone main
 
 test_expect_success 'push to password-protected repository (user in URL)' '
 	test_commit pw-user &&

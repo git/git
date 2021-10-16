@@ -1,0 +1,51 @@
+# This is a combination of 6 commits.
+# The 1st commit message will be skipped:
+
+# B
+#
+# Signed-off-by: Rebase Committer <rebase.committer@example.com>
+
+# The commit message #2 will be skipped:
+
+# fixup! B
+
+# The commit message #3 will be skipped:
+
+# amend! B
+#
+# B
+#
+# edited 1
+#
+# Signed-off-by: Rebase Committer <rebase.committer@example.com>
+
+# This is the commit message #4:
+
+# amend! amend! B
+
+B
+
+edited 1
+
+edited 2
+
+Signed-off-by: Rebase Committer <rebase.committer@example.com>
+
+# This is the commit message #5:
+
+# squash! amend! amend! B
+
+edited squash
+
+# This is the commit message #6:
+
+# amend! amend! amend! B
+
+B
+
+edited 1
+
+edited 2
+
+edited 3
+squashed

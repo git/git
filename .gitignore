@@ -25,6 +25,7 @@
 /git-bisect--helper
 /git-blame
 /git-branch
+/git-bugreport
 /git-bundle
 /git-cat-file
 /git-check-attr
@@ -32,6 +33,7 @@
 /git-check-mailmap
 /git-check-ref-format
 /git-checkout
+/git-checkout--worker
 /git-checkout-index
 /git-cherry
 /git-cherry-pick
@@ -66,6 +68,7 @@
 /git-filter-branch
 /git-fmt-merge-msg
 /git-for-each-ref
+/git-for-each-repo
 /git-format-patch
 /git-fsck
 /git-fsck-objects
@@ -83,13 +86,13 @@
 /git-init-db
 /git-interpret-trailers
 /git-instaweb
-/git-legacy-stash
 /git-log
 /git-ls-files
 /git-ls-remote
 /git-ls-tree
 /git-mailinfo
 /git-mailsplit
+/git-maintenance
 /git-merge
 /git-merge-base
 /git-merge-index
@@ -113,7 +116,6 @@
 /git-pack-redundant
 /git-pack-objects
 /git-pack-refs
-/git-parse-remote
 /git-patch-id
 /git-prune
 /git-prune-packed
@@ -133,8 +135,6 @@
 /git-remote-ftps
 /git-remote-fd
 /git-remote-ext
-/git-remote-testpy
-/git-remote-testsvn
 /git-repack
 /git-replace
 /git-request-pull
@@ -147,11 +147,9 @@
 /git-rm
 /git-send-email
 /git-send-pack
-/git-serve
 /git-sh-i18n
 /git-sh-i18n--envsubst
 /git-sh-setup
-/git-sh-i18n
 /git-shell
 /git-shortlog
 /git-show
@@ -165,6 +163,7 @@
 /git-stripspace
 /git-submodule
 /git-submodule--helper
+/git-subtree
 /git-svn
 /git-switch
 /git-symbolic-ref
@@ -189,13 +188,16 @@
 /gitweb/gitweb.cgi
 /gitweb/static/gitweb.js
 /gitweb/static/gitweb.min.*
+/config-list.h
 /command-list.h
+/hook-list.h
 *.tar.gz
 *.dsc
 *.deb
 /git.spec
 *.exe
 *.[aos]
+*.o.json
 *.py[co]
 .depend/
 *.gcda
@@ -217,11 +219,13 @@
 /tags
 /TAGS
 /cscope*
+/compile_commands.json
 *.hcc
 *.obj
 *.lib
 *.res
 *.sln
+*.sp
 *.suo
 *.ncb
 *.vcproj
@@ -239,3 +243,4 @@ Release/
 /git.VC.VC.opendb
 /git.VC.db
 *.dSYM
+/contrib/buildsystems/out

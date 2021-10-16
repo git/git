@@ -22,7 +22,6 @@ test_expect_success setup '
 	# Copy notes to remote-notes
 	git fetch . refs/notes/*:refs/remote-notes/origin/* &&
 
-	test_oid_init &&
 	test_oid_cache <<-EOF
 	hash4a sha1:5e93d24084d32e1cb61f7070505b9d2530cca987
 	hash3a sha1:8366731eeee53787d2bdf8fc1eff7d94757e8da0
@@ -109,7 +108,7 @@ test_expect_success 'fail to merge into various non-notes refs' '
 	git update-ref refs/notes/dir/foo HEAD &&
 	test_must_fail git -c "core.notesRef=refs/notes/dir" notes merge x &&
 	test_must_fail git -c "core.notesRef=refs/notes/dir/" notes merge x &&
-	test_must_fail git -c "core.notesRef=refs/heads/master" notes merge x &&
+	test_must_fail git -c "core.notesRef=refs/heads/main" notes merge x &&
 	test_must_fail git -c "core.notesRef=refs/notes/y:" notes merge x &&
 	test_must_fail git -c "core.notesRef=refs/notes/y:foo" notes merge x &&
 	test_must_fail git -c "core.notesRef=refs/notes/foo^{bar" notes merge x

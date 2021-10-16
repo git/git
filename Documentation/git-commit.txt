@@ -9,12 +9,13 @@ SYNOPSIS
 --------
 [verse]
 'git commit' [-a | --interactive | --patch] [-s] [-v] [-u<mode>] [--amend]
-	   [--dry-run] [(-c | -C | --fixup | --squash) <commit>]
+	   [--dry-run] [(-c | -C | --squash) <commit> | --fixup [(amend|reword):]<commit>)]
 	   [-F <file> | -m <msg>] [--reset-author] [--allow-empty]
 	   [--allow-empty-message] [--no-verify] [-e] [--author=<author>]
 	   [--date=<date>] [--cleanup=<mode>] [--[no-]status]
 	   [-i | -o] [--pathspec-from-file=<file> [--pathspec-file-nul]]
-	   [-S[<keyid>]] [--] [<pathspec>...]
+	   [(--trailer <token>[(=|:)<value>])...] [-S[<keyid>]]
+	   [--] [<pathspec>...]
 
 DESCRIPTION
 -----------
@@ -59,6 +60,7 @@ commit by giving the same set of parameters (options and paths).
 If you make a commit and then find a mistake immediately after
 that, you can recover from it with 'git reset'.
 
+:git-commit: 1
 
 OPTIONS
 -------
@@ -70,7 +72,7 @@ OPTIONS
 
 -p::
 --patch::
-	Use the interactive patch selection interface to chose
+	Use the interactive patch selection interface to choose
 	which changes to commit. See linkgit:git-add[1] for
 	details.
 
@@ -85,11 +87,44 @@ OPTIONS
 	Like '-C', but with `-c` the editor is invoked, so that
 	the user can further edit the commit message.
 
---fixup=<commit>::
-	Construct a commit message for use with `rebase --autosquash`.
-	The commit message will be the subject line from the specified
-	commit with a prefix of "fixup! ".  See linkgit:git-rebase[1]
-	for details.
+--fixup=[(amend|reword):]<commit>::
+	Create a new commit which "fixes up" `<commit>` when applied with
+	`git rebase --autosquash`. Plain `--fixup=<commit>` creates a
+	"fixup!" commit which changes the content of `<commit>` but leaves
+	its log message untouched. `--fixup=amend:<commit>` is similar but
+	creates an "amend!" commit which also replaces the log message of
+	`<commit>` with the log message of the "amend!" commit.
+	`--fixup=reword:<commit>` creates an "amend!" commit which
+	replaces the log message of `<commit>` with its own log message
+	but makes no changes to the content of `<commit>`.
++
+The commit created by plain `--fixup=<commit>` has a subject
+composed of "fixup!" followed by the subject line from <commit>,
+and is recognized specially by `git rebase --autosquash`. The `-m`
+option may be used to supplement the log message of the created
+commit, but the additional commentary will be thrown away once the
+"fixup!" commit is squashed into `<commit>` by
+`git rebase --autosquash`.
++
+The commit created by `--fixup=amend:<commit>` is similar but its
+subject is instead prefixed with "amend!". The log message of
+<commit> is copied into the log message of the "amend!" commit and
+opened in an editor so it can be refined. When `git rebase
+--autosquash` squashes the "amend!" commit into `<commit>`, the
+log message of `<commit>` is replaced by the refined log message
+from the "amend!" commit. It is an error for the "amend!" commit's
+log message to be empty unless `--allow-empty-message` is
+specified.
++
+`--fixup=reword:<commit>` is shorthand for `--fixup=amend:<commit>
+--only`. It creates an "amend!" commit with only a log message
+(ignoring any changes staged in the index). When squashed by `git
+rebase --autosquash`, it replaces the log message of `<commit>`
+without making any other changes.
++
+Neither "fixup!" nor "amend!" commits change authorship of
+`<commit>` when applied by `git rebase --autosquash`.
+See linkgit:git-rebase[1] for details.
 
 --squash=<commit>::
 	Construct a commit message for use with `rebase --autosquash`.
@@ -163,14 +198,18 @@ The `-m` option is mutually exclusive with `-c`, `-C`, and `-F`.
 	message, the commit is aborted.  This has no effect when a message
 	is given by other means, e.g. with the `-m` or `-F` options.
 
--s::
---signoff::
-	Add Signed-off-by line by the committer at the end of the commit
-	log message.  The meaning of a signoff depends on the project,
-	but it typically certifies that committer has
-	the rights to submit this work under the same license and
-	agrees to a Developer Certificate of Origin
-	(see http://developercertificate.org/ for more information).
+include::signoff-option.txt[]
+
+--trailer <token>[(=|:)<value>]::
+	Specify a (<token>, <value>) pair that should be applied as a
+	trailer. (e.g. `git commit --trailer "Signed-off-by:C O Mitter \
+	<committer@example.com>" --trailer "Helped-by:C O Mitter \
+	<committer@example.com>"` will add the "Signed-off-by" trailer
+	and the "Helped-by" trailer to the commit message.)
+	The `trailer.*` configuration variables
+	(linkgit:git-interpret-trailers[1]) can be used to define if
+	a duplicated trailer is omitted, where in the run of trailers
+	each trailer would appear, and other details.
 
 -n::
 --no-verify::
@@ -348,13 +387,12 @@ changes to tracked files.
 
 -S[<keyid>]::
 --gpg-sign[=<keyid>]::
+--no-gpg-sign::
 	GPG-sign commits. The `keyid` argument is optional and
 	defaults to the committer identity; if specified, it must be
-	stuck to the option without a space.
-
---no-gpg-sign::
-	Countermand `commit.gpgSign` configuration variable that is
-	set to force each and every commit to be signed.
+	stuck to the option without a space. `--no-gpg-sign` is useful to
+	countermand both `commit.gpgSign` configuration variable, and
+	earlier `--gpg-sign`.
 
 \--::
 	Do not interpret any more arguments as options.

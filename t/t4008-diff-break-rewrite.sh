@@ -22,11 +22,11 @@ With -B, this should be detected as two complete rewrites.
 Further, with -B and -M together, these should turn into two renames.
 '
 . ./test-lib.sh
-. "$TEST_DIRECTORY"/diff-lib.sh ;# test-lib chdir's into trash
+. "$TEST_DIRECTORY"/lib-diff.sh ;# test-lib chdir's into trash
 
 test_expect_success setup '
-	cat "$TEST_DIRECTORY"/diff-lib/README >file0 &&
-	cat "$TEST_DIRECTORY"/diff-lib/COPYING >file1 &&
+	cat "$TEST_DIRECTORY"/lib-diff/README >file0 &&
+	cat "$TEST_DIRECTORY"/lib-diff/COPYING >file1 &&
 	blob0_id=$(git hash-object file0) &&
 	blob1_id=$(git hash-object file1) &&
 	git update-index --add file0 file1 &&

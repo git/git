@@ -45,7 +45,6 @@ extended_table () {
 }
 
 test_expect_success 'setup' '
-	test_oid_init &&
 	test_oid_cache <<-EOF
 	oid000 sha1:1485
 	oid000 sha256:4222

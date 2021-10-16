@@ -1,6 +1,61 @@
 # Functions for supporting the use of themed Tk widgets in git-gui.
 # Copyright (C) 2009 Pat Thoyts <patthoyts@users.sourceforge.net>
 
+
+namespace eval color {
+	# Variable colors
+	# Preffered way to set widget colors is using add_option.
+	# In some cases, like with tags in_diff/in_sel, we use these colors.
+	variable select_bg				lightgray
+	variable select_fg				black
+	variable inactive_select_bg		lightgray
+	variable inactive_select_fg		black
+
+	proc sync_with_theme {} {
+		set base_bg				[ttk::style lookup . -background]
+		set base_fg				[ttk::style lookup . -foreground]
+		set text_bg				[ttk::style lookup Treeview -background]
+		set text_fg				[ttk::style lookup Treeview -foreground]
+		set select_bg			[ttk::style lookup Default -selectbackground]
+		set select_fg			[ttk::style lookup Default -selectforeground]
+		set inactive_select_bg	[convert_rgb_to_gray $select_bg]
+		set inactive_select_fg	$select_fg
+
+		set color::select_bg $select_bg
+		set color::select_fg $select_fg
+		set color::inactive_select_bg $inactive_select_bg
+		set color::inactive_select_fg $inactive_select_fg
+
+		proc add_option {key val} {
+			option add $key $val widgetDefault
+		}
+		# Add options for plain Tk widgets
+		# Using `option add` instead of tk_setPalette to avoid unintended
+		# consequences.
+		if {![is_MacOSX]} {
+			add_option *Menu.Background $base_bg
+			add_option *Menu.Foreground $base_fg
+			add_option *Menu.activeBackground $select_bg
+			add_option *Menu.activeForeground $select_fg
+		}
+		add_option *Text.Background $text_bg
+		add_option *Text.Foreground $text_fg
+		add_option *Text.selectBackground $select_bg
+		add_option *Text.selectForeground $select_fg
+		add_option *Text.inactiveSelectBackground $inactive_select_bg
+		add_option *Text.inactiveSelectForeground $inactive_select_fg
+	}
+}
+
+proc convert_rgb_to_gray {rgb} {
+	# Simply take the average of red, green and blue. This wouldn't be good
+	# enough for, say, converting a photo to grayscale, but for this simple
+	# purpose of approximating the brightness of a color it's good enough.
+	lassign [winfo rgb . $rgb] r g b
+	set gray [expr {($r / 256 + $g / 256 + $b / 256) / 3}]
+	return [format "#%2.2X%2.2X%2.2X" $gray $gray $gray]
+}
+
 proc ttk_get_current_theme {} {
 	# Handle either current Tk or older versions of 8.5
 	if {[catch {set theme [ttk::style theme use]}]} {
@@ -136,7 +191,7 @@ proc InitEntryFrame {} {
 
 proc gold_frame {w args} {
 	global use_ttk
-	if {$use_ttk} {
+	if {$use_ttk && ![is_MacOSX]} {
 		eval [linsert $args 0 ttk::frame $w -style Gold.TFrame]
 	} else {
 		eval [linsert $args 0 frame $w -background gold]
@@ -145,7 +200,7 @@ proc gold_frame {w args} {
 
 proc tlabel {w args} {
 	global use_ttk
-	if {$use_ttk} {
+	if {$use_ttk && ![is_MacOSX]} {
 		set cmd [list ttk::label $w -style Color.TLabel]
 		foreach {k v} $args {
 			switch -glob -- $k {

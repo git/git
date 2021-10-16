@@ -239,6 +239,13 @@ checkout_staged_file () {
 	fi
 }
 
+hide_resolved () {
+	git merge-file --ours -q -p "$LOCAL" "$BASE" "$REMOTE" >"$LCONFL"
+	git merge-file --theirs -q -p "$LOCAL" "$BASE" "$REMOTE" >"$RCONFL"
+	mv -- "$LCONFL" "$LOCAL"
+	mv -- "$RCONFL" "$REMOTE"
+}
+
 merge_file () {
 	MERGED="$1"
 
@@ -265,6 +272,8 @@ merge_file () {
 		ext=
 	esac
 
+	initialize_merge_tool "$merge_tool" || return
+
 	mergetool_tmpdir_init
 
 	if test "$MERGETOOL_TMPDIR" != "."
@@ -276,7 +285,9 @@ merge_file () {
 
 	BACKUP="$MERGETOOL_TMPDIR/${BASE}_BACKUP_$$$ext"
 	LOCAL="$MERGETOOL_TMPDIR/${BASE}_LOCAL_$$$ext"
+	LCONFL="$MERGETOOL_TMPDIR/${BASE}_LOCAL_LCONFL_$$$ext"
 	REMOTE="$MERGETOOL_TMPDIR/${BASE}_REMOTE_$$$ext"
+	RCONFL="$MERGETOOL_TMPDIR/${BASE}_REMOTE_RCONFL_$$$ext"
 	BASE="$MERGETOOL_TMPDIR/${BASE}_BASE_$$$ext"
 
 	base_mode= local_mode= remote_mode=
@@ -321,6 +332,40 @@ merge_file () {
 	checkout_staged_file 1 "$MERGED" "$BASE"
 	checkout_staged_file 2 "$MERGED" "$LOCAL"
 	checkout_staged_file 3 "$MERGED" "$REMOTE"
+
+	# hideResolved preferences hierarchy.
+	global_config="mergetool.hideResolved"
+	tool_config="mergetool.${merge_tool}.hideResolved"
+
+	if enabled=$(git config --type=bool "$tool_config")
+	then
+		# The user has a specific preference for a specific tool and no
+		# other preferences should override that.
+		: ;
+	elif enabled=$(git config --type=bool "$global_config")
+	then
+		# The user has a general preference for all tools.
+		#
+		# 'true' means the user likes the feature so we should use it
+		# where possible but tool authors can still override.
+		#
+		# 'false' means the user doesn't like the feature so we should
+		# not use it anywhere.
+		if test "$enabled" = true && hide_resolved_enabled
+		then
+		    enabled=true
+		else
+		    enabled=false
+		fi
+	else
+		# The user does not have a preference. Default to disabled.
+		enabled=false
+	fi
+
+	if test "$enabled" = true
+	then
+		hide_resolved
+	fi
 
 	if test -z "$local_mode" || test -z "$remote_mode"
 	then

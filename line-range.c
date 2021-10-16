@@ -202,7 +202,7 @@ static const char *parse_range_funcname(
 	drv = userdiff_find_by_path(istate, path);
 	if (drv && drv->funcname.pattern) {
 		const struct userdiff_funcname *pe = &drv->funcname;
-		xecfg = xcalloc(1, sizeof(*xecfg));
+		CALLOC_ARRAY(xecfg, 1);
 		xdiff_set_find_func(xecfg, pe->pattern, pe->cflags);
 	}
 

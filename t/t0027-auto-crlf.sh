@@ -83,7 +83,7 @@ check_warning () {
 	*) echo >&2 "Illegal 1": "$1" ; return false ;;
 	esac
 	grep "will be replaced by" "$2" | sed -e "s/\(.*\) in [^ ]*$/\1/" | uniq  >"$2".actual
-	test_i18ncmp "$2".expect "$2".actual
+	test_cmp "$2".expect "$2".actual
 }
 
 commit_check_warn () {
@@ -368,9 +368,9 @@ test_expect_success 'ls-files --eol -o Text/Binary' '
 	test_cmp expect actual
 '
 
-test_expect_success 'setup master' '
+test_expect_success 'setup main' '
 	echo >.gitattributes &&
-	git checkout -b master &&
+	git checkout -b main &&
 	git add .gitattributes &&
 	git commit -m "add .gitattributes" . &&
 	printf "\$Id: 0000000000000000000000000000000000000000 \$\nLINEONE\nLINETWO\nLINETHREE"     >LF &&
@@ -386,7 +386,9 @@ test_expect_success 'setup master' '
 	test_tick
 '
 
-
+# Disable extra chain-linting for the next set of tests. There are many
+# auto-generated ones that are not worth checking over and over.
+GIT_TEST_CHAIN_LINT_HARDER_DEFAULT=0
 
 warn_LF_CRLF="LF will be replaced by CRLF"
 warn_CRLF_LF="CRLF will be replaced by LF"
@@ -596,6 +598,9 @@ do
 	checkout_files     auto  "$id" ""     false   ""       $NL   CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
 	checkout_files     auto  "$id" ""     false   native   $NL   CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
 done
+
+# The rest of the tests are unique; do the usual linting.
+unset GIT_TEST_CHAIN_LINT_HARDER_DEFAULT
 
 # Should be the last test case: remove some files from the worktree
 test_expect_success 'ls-files --eol -d -z' '

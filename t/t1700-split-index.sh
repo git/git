@@ -2,6 +2,9 @@
 
 test_description='split index mode tests'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 # We need total control of index splitting here
@@ -496,7 +499,7 @@ test_expect_success 'do not refresh null base index' '
 		test_commit initial &&
 		git checkout -b side-branch &&
 		test_commit extra &&
-		git checkout master &&
+		git checkout main &&
 		git update-index --split-index &&
 		test_commit more &&
 		# must not write a new shareindex, or we wont catch the problem
@@ -504,6 +507,40 @@ test_expect_success 'do not refresh null base index' '
 		# i.e. do not expect warnings like
 		# could not freshen shared index .../shareindex.00000...
 		test_must_be_empty err
+	)
+'
+
+test_expect_success 'reading split index at alternate location' '
+	git init reading-alternate-location &&
+	(
+		cd reading-alternate-location &&
+		>file-in-alternate &&
+		git update-index --split-index --add file-in-alternate
+	) &&
+	echo file-in-alternate >expect &&
+
+	# Should be able to find the shared index both right next to
+	# the specified split index file ...
+	GIT_INDEX_FILE=./reading-alternate-location/.git/index \
+	git ls-files --cached >actual &&
+	test_cmp expect actual &&
+
+	# ... and, for backwards compatibility, in the current GIT_DIR
+	# as well.
+	mv -v ./reading-alternate-location/.git/sharedindex.* .git &&
+	GIT_INDEX_FILE=./reading-alternate-location/.git/index \
+	git ls-files --cached >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'GIT_TEST_SPLIT_INDEX works' '
+	git init git-test-split-index &&
+	(
+		cd git-test-split-index &&
+		>file &&
+		GIT_TEST_SPLIT_INDEX=1 git update-index --add file &&
+		ls -l .git/sharedindex.* >actual &&
+		test_line_count = 1 actual
 	)
 '
 

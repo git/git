@@ -32,6 +32,13 @@ struct ref_transaction;
 #define REF_HAVE_OLD (1 << 3)
 
 /*
+ * Used as a flag in ref_update::flags when we want to log a ref
+ * update but not actually perform it.  This is used when a symbolic
+ * ref update is split up.
+ */
+#define REF_LOG_ONLY (1 << 7)
+
+/*
  * Return the length of time to retry acquiring a loose reference lock
  * before giving up, in milliseconds:
  */
@@ -95,12 +102,6 @@ enum peel_status {
  * and leave oid unchanged.
  */
 enum peel_status peel_object(const struct object_id *name, struct object_id *oid);
-
-/*
- * Copy the reflog message msg to sb while cleaning up the whitespaces.
- * Especially, convert LF to space, because reflog file is one line per entry.
- */
-void copy_reflog_msg(struct strbuf *sb, const char *msg);
 
 /**
  * Information needed for a single ref update. Set new_oid to the new
@@ -244,8 +245,36 @@ int refs_rename_ref_available(struct ref_store *refs,
 /* We allow "recursive" symbolic refs. Only within reason, though */
 #define SYMREF_MAXDEPTH 5
 
-/* Include broken references in a do_for_each_ref*() iteration: */
-#define DO_FOR_EACH_INCLUDE_BROKEN 0x01
+/*
+ * These flags are passed to refs_ref_iterator_begin() (and do_for_each_ref(),
+ * which feeds it).
+ */
+enum do_for_each_ref_flags {
+	/*
+	 * Include broken references in a do_for_each_ref*() iteration, which
+	 * would normally be omitted. This includes both refs that point to
+	 * missing objects (a true repository corruption), ones with illegal
+	 * names (which we prefer not to expose to callers), as well as
+	 * dangling symbolic refs (i.e., those that point to a non-existent
+	 * ref; this is not a corruption, but as they have no valid oid, we
+	 * omit them from normal iteration results).
+	 */
+	DO_FOR_EACH_INCLUDE_BROKEN = (1 << 0),
+
+	/*
+	 * Only include per-worktree refs in a do_for_each_ref*() iteration.
+	 * Normally this will be used with a files ref_store, since that's
+	 * where all reference backends will presumably store their
+	 * per-worktree refs.
+	 */
+	DO_FOR_EACH_PER_WORKTREE_ONLY = (1 << 1),
+
+	/*
+	 * Omit dangling symrefs from output; this only has an effect with
+	 * INCLUDE_BROKEN, since they are otherwise not included at all.
+	 */
+	DO_FOR_EACH_OMIT_DANGLING_SYMREFS = (1 << 2),
+};
 
 /*
  * Reference iterators
@@ -347,13 +376,13 @@ int is_empty_ref_iterator(struct ref_iterator *ref_iterator);
 /*
  * Return an iterator that goes over each reference in `refs` for
  * which the refname begins with prefix. If trim is non-zero, then
- * trim that many characters off the beginning of each refname. flags
- * can be DO_FOR_EACH_INCLUDE_BROKEN to include broken references in
- * the iteration. The output is ordered by refname.
+ * trim that many characters off the beginning of each refname.
+ * The output is ordered by refname.
  */
 struct ref_iterator *refs_ref_iterator_begin(
 		struct ref_store *refs,
-		const char *prefix, int trim, int flags);
+		const char *prefix, int trim,
+		enum do_for_each_ref_flags flags);
 
 /*
  * A callback function used to instruct merge_ref_iterator how to
@@ -438,8 +467,17 @@ void base_ref_iterator_free(struct ref_iterator *iter);
 
 /* Virtual function declarations for ref_iterators: */
 
+/*
+ * backend-specific implementation of ref_iterator_advance. For symrefs, the
+ * function should set REF_ISSYMREF, and it should also dereference the symref
+ * to provide the OID referent. It should respect do_for_each_ref_flags
+ * that were passed to refs_ref_iterator_begin().
+ */
 typedef int ref_iterator_advance_fn(struct ref_iterator *ref_iterator);
 
+/*
+ * Peels the current ref, returning 0 for success or -1 for failure.
+ */
 typedef int ref_iterator_peel_fn(struct ref_iterator *ref_iterator,
 				 struct object_id *peeled);
 
@@ -481,14 +519,6 @@ extern struct ref_iterator *current_ref_iter;
 int do_for_each_repo_ref_iterator(struct repository *r,
 				  struct ref_iterator *iter,
 				  each_repo_ref_fn fn, void *cb_data);
-
-/*
- * Only include per-worktree refs in a do_for_each_ref*() iteration.
- * Normally this will be used with a files ref_store, since that's
- * where all reference backends will presumably store their
- * per-worktree refs.
- */
-#define DO_FOR_EACH_PER_WORKTREE_ONLY 0x02
 
 struct ref_store;
 
@@ -577,7 +607,7 @@ typedef int create_reflog_fn(struct ref_store *ref_store, const char *refname,
 			     int force_create, struct strbuf *err);
 typedef int delete_reflog_fn(struct ref_store *ref_store, const char *refname);
 typedef int reflog_expire_fn(struct ref_store *ref_store,
-			     const char *refname, const struct object_id *oid,
+			     const char *refname,
 			     unsigned int flags,
 			     reflog_expiry_prepare_fn prepare_fn,
 			     reflog_expiry_should_prune_fn should_prune_fn,
@@ -604,11 +634,15 @@ typedef int reflog_expire_fn(struct ref_store *ref_store,
  * properly-formatted or even safe reference name. NEITHER INPUT NOR
  * OUTPUT REFERENCE NAMES ARE VALIDATED WITHIN THIS FUNCTION.
  *
- * Return 0 on success. If the ref doesn't exist, set errno to ENOENT
- * and return -1. If the ref exists but is neither a symbolic ref nor
- * an object ID, it is broken; set REF_ISBROKEN in type, set errno to
- * EINVAL, and return -1. If there is another error reading the ref,
- * set errno appropriately and return -1.
+ * Return 0 on success, or -1 on failure. If the ref exists but is neither a
+ * symbolic ref nor an object ID, it is broken. In this case set REF_ISBROKEN in
+ * type, and return -1 (failure_errno should not be ENOENT)
+ *
+ * failure_errno provides errno codes that are interpreted beyond error
+ * reporting. The following error codes have special meaning:
+ *    * ENOENT: the ref doesn't exist
+ *    * EISDIR: ref name is a directory
+ *    * ENOTDIR: ref prefix is not a directory
  *
  * Backend-specific flags might be set in type as well, regardless of
  * outcome.
@@ -622,9 +656,9 @@ typedef int reflog_expire_fn(struct ref_store *ref_store,
  * - in all other cases, referent will be untouched, and therefore
  *   refname will still be valid and unchanged.
  */
-typedef int read_raw_ref_fn(struct ref_store *ref_store,
-			    const char *refname, struct object_id *oid,
-			    struct strbuf *referent, unsigned int *type);
+typedef int read_raw_ref_fn(struct ref_store *ref_store, const char *refname,
+			    struct object_id *oid, struct strbuf *referent,
+			    unsigned int *type, int *failure_errno);
 
 struct ref_storage_be {
 	struct ref_storage_be *next;
@@ -661,12 +695,21 @@ extern struct ref_storage_be refs_be_packed;
 /*
  * A representation of the reference store for the main repository or
  * a submodule. The ref_store instances for submodules are kept in a
- * linked list.
+ * hash map; see get_submodule_ref_store() for more info.
  */
 struct ref_store {
 	/* The backend describing this ref_store's storage scheme: */
 	const struct ref_storage_be *be;
+
+	/* The gitdir that this ref_store applies to: */
+	char *gitdir;
 };
+
+/*
+ * Parse contents of a loose ref file.
+ */
+int parse_loose_ref_contents(const char *buf, struct object_id *oid,
+			     struct strbuf *referent, unsigned int *type);
 
 /*
  * Fill in the generic part of refs and add it to our collection of
@@ -674,5 +717,10 @@ struct ref_store {
  */
 void base_ref_store_init(struct ref_store *refs,
 			 const struct ref_storage_be *be);
+
+/*
+ * Support GIT_TRACE_REFS by optionally wrapping the given ref_store instance.
+ */
+struct ref_store *maybe_debug_wrap_ref_store(const char *gitdir, struct ref_store *store);
 
 #endif /* REFS_REFS_INTERNAL_H */

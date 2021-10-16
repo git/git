@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='signed tag tests'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 . "$TEST_DIRECTORY/lib-gpg.sh"
 
@@ -17,7 +20,7 @@ test_expect_success GPG 'create signed tags' '
 	echo 3 >elif && git add elif &&
 	test_tick && git commit -m "third on side" &&
 
-	git checkout master &&
+	git checkout main &&
 	test_tick && git merge -S side &&
 	git tag -s -m merge merge &&
 
@@ -189,6 +192,10 @@ test_expect_success GPG 'verifying tag with --format' '
 	EOF
 	git verify-tag --format="tagname : %(tag)" "fourth-signed" >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success GPG 'verifying tag with --format="%(rest)" must fail' '
+	test_must_fail git verify-tag --format="%(rest)" "fourth-signed"
 '
 
 test_expect_success GPG 'verifying a forged tag with --format should fail silently' '

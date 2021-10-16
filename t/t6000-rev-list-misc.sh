@@ -2,12 +2,16 @@
 
 test_description='miscellaneous rev-list tests'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success setup '
 	echo content1 >wanted_file &&
 	echo content2 >unwanted_file &&
 	git add wanted_file unwanted_file &&
+	test_tick &&
 	git commit -m one
 '
 
@@ -21,6 +25,7 @@ test_expect_success 'rev-list --objects with pathspecs and deeper paths' '
 	mkdir foo &&
 	>foo/file &&
 	git add foo/file &&
+	test_tick &&
 	git commit -m two &&
 
 	git rev-list --objects HEAD -- foo >output &&
@@ -69,6 +74,7 @@ test_expect_success '--no-object-names and --object-names are last-one-wins' '
 '
 
 test_expect_success 'rev-list A..B and rev-list ^A B are the same' '
+	test_tick &&
 	git commit --allow-empty -m another &&
 	git tag -a -m "annotated" v1.0 &&
 	git rev-list --objects ^v1.0^ v1.0 >expect &&
@@ -82,12 +88,12 @@ test_expect_success 'propagate uninteresting flag down correctly' '
 '
 
 test_expect_success 'symleft flag bit is propagated down from tag' '
-	git log --format="%m %s" --left-right v1.0...master >actual &&
+	git log --format="%m %s" --left-right v1.0...main >actual &&
 	cat >expect <<-\EOF &&
-	> two
-	> one
 	< another
 	< that
+	> two
+	> one
 	EOF
 	test_cmp expect actual
 '
@@ -125,8 +131,8 @@ test_expect_success 'rev-list can negate index objects' '
 	test_cmp expect actual
 '
 
-test_expect_success '--bisect and --first-parent can not be combined' '
-	test_must_fail git rev-list --bisect --first-parent HEAD
+test_expect_success '--bisect and --first-parent can be combined' '
+	git rev-list --bisect --first-parent HEAD
 '
 
 test_expect_success '--header shows a NUL after each commit' '
@@ -161,6 +167,37 @@ test_expect_success 'rev-list --count --objects' '
 	count=$(git rev-list --count --objects HEAD) &&
 	git rev-list --objects HEAD >actual &&
 	test_line_count = $count actual
+'
+
+test_expect_success 'rev-list --unsorted-input results in different sorting' '
+	git rev-list --unsorted-input HEAD HEAD~ >first &&
+	git rev-list --unsorted-input HEAD~ HEAD >second &&
+	! test_cmp first second &&
+	sort first >first.sorted &&
+	sort second >second.sorted &&
+	test_cmp first.sorted second.sorted
+'
+
+test_expect_success 'rev-list --unsorted-input incompatible with --no-walk' '
+	cat >expect <<-EOF &&
+		fatal: --no-walk is incompatible with --unsorted-input
+	EOF
+	test_must_fail git rev-list --unsorted-input --no-walk HEAD 2>error &&
+	test_cmp expect error &&
+	test_must_fail git rev-list --unsorted-input --no-walk=sorted HEAD 2>error &&
+	test_cmp expect error &&
+	test_must_fail git rev-list --unsorted-input --no-walk=unsorted HEAD 2>error &&
+	test_cmp expect error &&
+
+	cat >expect <<-EOF &&
+		fatal: --unsorted-input is incompatible with --no-walk
+	EOF
+	test_must_fail git rev-list --no-walk --unsorted-input HEAD 2>error &&
+	test_cmp expect error &&
+	test_must_fail git rev-list --no-walk=sorted --unsorted-input HEAD 2>error &&
+	test_cmp expect error &&
+	test_must_fail git rev-list --no-walk=unsorted --unsorted-input HEAD 2>error &&
+	test_cmp expect error
 '
 
 test_done

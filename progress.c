@@ -8,6 +8,7 @@
  * published by the Free Software Foundation.
  */
 
+#define GIT_TEST_PROGRESS_ONLY
 #include "cache.h"
 #include "gettext.h"
 #include "progress.h"
@@ -52,7 +53,6 @@ static volatile sig_atomic_t progress_update;
  */
 int progress_testing;
 uint64_t progress_test_ns = 0;
-void progress_test_force_update(void); /* To silence -Wmissing-prototypes */
 void progress_test_force_update(void)
 {
 	progress_update = 1;
@@ -196,7 +196,7 @@ void display_throughput(struct progress *progress, uint64_t total)
 	now_ns = progress_getnanotime(progress);
 
 	if (!tp) {
-		progress->throughput = tp = xcalloc(1, sizeof(*tp));
+		progress->throughput = CALLOC_ARRAY(tp, 1);
 		tp->prev_total = tp->curr_total = total;
 		tp->prev_ns = now_ns;
 		strbuf_init(&tp->display, 0);
@@ -265,6 +265,7 @@ static struct progress *start_progress_delay(const char *title, uint64_t total,
 	progress->title_len = utf8_strwidth(title);
 	progress->split = 0;
 	set_progress_signal();
+	trace2_region_enter("progress", title, the_repository);
 	return progress;
 }
 
@@ -318,14 +319,34 @@ static void finish_if_sparse(struct progress *progress)
 
 void stop_progress(struct progress **p_progress)
 {
+	if (!p_progress)
+		BUG("don't provide NULL to stop_progress");
+
 	finish_if_sparse(*p_progress);
+
+	if (*p_progress) {
+		trace2_data_intmax("progress", the_repository, "total_objects",
+				   (*p_progress)->total);
+
+		if ((*p_progress)->throughput)
+			trace2_data_intmax("progress", the_repository,
+					   "total_bytes",
+					   (*p_progress)->throughput->curr_total);
+
+		trace2_region_leave("progress", (*p_progress)->title, the_repository);
+	}
 
 	stop_progress_msg(p_progress, _("done"));
 }
 
 void stop_progress_msg(struct progress **p_progress, const char *msg)
 {
-	struct progress *progress = *p_progress;
+	struct progress *progress;
+
+	if (!p_progress)
+		BUG("don't provide NULL to stop_progress_msg");
+
+	progress = *p_progress;
 	if (!progress)
 		return;
 	*p_progress = NULL;

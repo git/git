@@ -79,7 +79,4 @@ test_expect_success 'checkout in superproject' '
 	git diff-index --exit-code --raw --cached save -- sub1
 '
 
-# just interesting what happened...
-# git diff --name-status -M save master
-
 test_done

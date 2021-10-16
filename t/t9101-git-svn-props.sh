@@ -160,11 +160,13 @@ cat >create-ignore.expect <<\EOF
 /no-such-file*
 EOF
 
-cat >create-ignore-index.expect <<\EOF
-100644 8c52e5dfcd0a8b6b6bcfe6b41b89bcbf493718a5 0	.gitignore
-100644 8c52e5dfcd0a8b6b6bcfe6b41b89bcbf493718a5 0	deeply/.gitignore
-100644 8c52e5dfcd0a8b6b6bcfe6b41b89bcbf493718a5 0	deeply/nested/.gitignore
-100644 8c52e5dfcd0a8b6b6bcfe6b41b89bcbf493718a5 0	deeply/nested/directory/.gitignore
+expectoid=$(git hash-object create-ignore.expect)
+
+cat >create-ignore-index.expect <<EOF
+100644 $expectoid 0	.gitignore
+100644 $expectoid 0	deeply/.gitignore
+100644 $expectoid 0	deeply/nested/.gitignore
+100644 $expectoid 0	deeply/nested/directory/.gitignore
 EOF
 
 test_expect_success 'test create-ignore' "

@@ -3,7 +3,7 @@ use vars qw/@ISA $_ignore_regex $_include_regex $_preserve_empty_dirs
             $_placeholder_filename @deleted_gpath %added_placeholder
             $repo_id/;
 use strict;
-use warnings;
+use warnings $ENV{GIT_PERL_FATAL_WARNINGS} ? qw(FATAL all) : ();
 use SVN::Delta;
 use Carp qw/croak/;
 use File::Basename qw/dirname/;
@@ -173,7 +173,7 @@ sub delete_entry {
 
 	# remove entire directories.
 	my ($tree) = (command('ls-tree', '-z', $self->{c}, "./$gpath")
-	                 =~ /\A040000 tree ([a-f\d]{40})\t\Q$gpath\E\0/);
+	                 =~ /\A040000 tree ($::oid)\t\Q$gpath\E\0/);
 	if ($tree) {
 		my ($ls, $ctx) = command_output_pipe(qw/ls-tree
 		                                     -r --name-only -z/,
@@ -203,7 +203,7 @@ sub open_file {
 
 	my $gpath = $self->git_path($path);
 	($mode, $blob) = (command('ls-tree', '-z', $self->{c}, "./$gpath")
-	                     =~ /\A(\d{6}) blob ([a-f\d]{40})\t\Q$gpath\E\0/);
+	                     =~ /\A(\d{6}) blob ($::oid)\t\Q$gpath\E\0/);
 	unless (defined $mode && defined $blob) {
 		die "$path was not found in commit $self->{c} (r$rev)\n";
 	}
@@ -413,7 +413,7 @@ sub close_file {
 
 		$hash = $::_repository->hash_and_insert_object(
 				Git::temp_path($fh));
-		$hash =~ /^[a-f\d]{40}$/ or die "not a sha1: $hash\n";
+		$hash =~ /^$::oid$/ or die "not an object ID: $hash\n";
 
 		Git::temp_release($fb->{base}, 1);
 		Git::temp_release($fh, 1);

@@ -223,7 +223,7 @@ are taken from notes refs.  A notes ref is usually a branch which
 contains "files" whose paths are the object names for the objects
 they describe, with some directory separators included for performance
 reasons footnote:[Permitted pathnames have the form
-'ab'`/`'cd'`/`'ef'`/`'...'`/`'abcdef...': a sequence of directory
+'bf'`/`'fe'`/`'30'`/`'...'`/`'680d5a...': a sequence of directory
 names of two hexadecimal digits each followed by a filename with the
 rest of the object ID.].
 

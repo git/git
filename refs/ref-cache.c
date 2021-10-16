@@ -49,7 +49,7 @@ struct ref_cache *create_ref_cache(struct ref_store *refs,
 
 	ret->ref_store = refs;
 	ret->fill_ref_dir = fill_ref_dir;
-	ret->root = create_dir_entry(ret, "", 0, 1);
+	ret->root = create_dir_entry(ret, "", 0);
 	return ret;
 }
 
@@ -86,14 +86,13 @@ static void clear_ref_dir(struct ref_dir *dir)
 }
 
 struct ref_entry *create_dir_entry(struct ref_cache *cache,
-				   const char *dirname, size_t len,
-				   int incomplete)
+				   const char *dirname, size_t len)
 {
 	struct ref_entry *direntry;
 
 	FLEX_ALLOC_MEM(direntry, name, dirname, len);
 	direntry->u.subdir.cache = cache;
-	direntry->flag = REF_DIR | (incomplete ? REF_INCOMPLETE : 0);
+	direntry->flag = REF_DIR | REF_INCOMPLETE;
 	return direntry;
 }
 
@@ -144,30 +143,19 @@ int search_ref_dir(struct ref_dir *dir, const char *refname, size_t len)
 /*
  * Search for a directory entry directly within dir (without
  * recursing).  Sort dir if necessary.  subdirname must be a directory
- * name (i.e., end in '/').  If mkdir is set, then create the
- * directory if it is missing; otherwise, return NULL if the desired
+ * name (i.e., end in '/'). Returns NULL if the desired
  * directory cannot be found.  dir must already be complete.
  */
 static struct ref_dir *search_for_subdir(struct ref_dir *dir,
-					 const char *subdirname, size_t len,
-					 int mkdir)
+					 const char *subdirname, size_t len)
 {
 	int entry_index = search_ref_dir(dir, subdirname, len);
 	struct ref_entry *entry;
-	if (entry_index == -1) {
-		if (!mkdir)
-			return NULL;
-		/*
-		 * Since dir is complete, the absence of a subdir
-		 * means that the subdir really doesn't exist;
-		 * therefore, create an empty record for it but mark
-		 * the record complete.
-		 */
-		entry = create_dir_entry(dir->cache, subdirname, len, 0);
-		add_entry_to_dir(dir, entry);
-	} else {
-		entry = dir->entries[entry_index];
-	}
+
+	if (entry_index == -1)
+		return NULL;
+
+	entry = dir->entries[entry_index];
 	return get_ref_dir(entry);
 }
 
@@ -176,18 +164,17 @@ static struct ref_dir *search_for_subdir(struct ref_dir *dir,
  * tree that should hold refname. If refname is a directory name
  * (i.e., it ends in '/'), then return that ref_dir itself. dir must
  * represent the top-level directory and must already be complete.
- * Sort ref_dirs and recurse into subdirectories as necessary. If
- * mkdir is set, then create any missing directories; otherwise,
+ * Sort ref_dirs and recurse into subdirectories as necessary. Will
  * return NULL if the desired directory cannot be found.
  */
 static struct ref_dir *find_containing_dir(struct ref_dir *dir,
-					   const char *refname, int mkdir)
+					   const char *refname)
 {
 	const char *slash;
 	for (slash = strchr(refname, '/'); slash; slash = strchr(slash + 1, '/')) {
 		size_t dirnamelen = slash - refname + 1;
 		struct ref_dir *subdir;
-		subdir = search_for_subdir(dir, refname, dirnamelen, mkdir);
+		subdir = search_for_subdir(dir, refname, dirnamelen);
 		if (!subdir) {
 			dir = NULL;
 			break;
@@ -202,7 +189,7 @@ struct ref_entry *find_ref_entry(struct ref_dir *dir, const char *refname)
 {
 	int entry_index;
 	struct ref_entry *entry;
-	dir = find_containing_dir(dir, refname, 0);
+	dir = find_containing_dir(dir, refname);
 	if (!dir)
 		return NULL;
 	entry_index = search_ref_dir(dir, refname, strlen(refname));
@@ -210,50 +197,6 @@ struct ref_entry *find_ref_entry(struct ref_dir *dir, const char *refname)
 		return NULL;
 	entry = dir->entries[entry_index];
 	return (entry->flag & REF_DIR) ? NULL : entry;
-}
-
-int remove_entry_from_dir(struct ref_dir *dir, const char *refname)
-{
-	int refname_len = strlen(refname);
-	int entry_index;
-	struct ref_entry *entry;
-	int is_dir = refname[refname_len - 1] == '/';
-	if (is_dir) {
-		/*
-		 * refname represents a reference directory.  Remove
-		 * the trailing slash; otherwise we will get the
-		 * directory *representing* refname rather than the
-		 * one *containing* it.
-		 */
-		char *dirname = xmemdupz(refname, refname_len - 1);
-		dir = find_containing_dir(dir, dirname, 0);
-		free(dirname);
-	} else {
-		dir = find_containing_dir(dir, refname, 0);
-	}
-	if (!dir)
-		return -1;
-	entry_index = search_ref_dir(dir, refname, refname_len);
-	if (entry_index == -1)
-		return -1;
-	entry = dir->entries[entry_index];
-
-	MOVE_ARRAY(&dir->entries[entry_index],
-		   &dir->entries[entry_index + 1], dir->nr - entry_index - 1);
-	dir->nr--;
-	if (dir->sorted > entry_index)
-		dir->sorted--;
-	free_ref_entry(entry);
-	return dir->nr;
-}
-
-int add_ref_entry(struct ref_dir *dir, struct ref_entry *ref)
-{
-	dir = find_containing_dir(dir, ref->name, 1);
-	if (!dir)
-		return -1;
-	add_entry_to_dir(dir, ref);
-	return 0;
 }
 
 /*
@@ -491,7 +434,7 @@ static int cache_ref_iterator_advance(struct ref_iterator *ref_iterator)
 static int cache_ref_iterator_peel(struct ref_iterator *ref_iterator,
 				   struct object_id *peeled)
 {
-	return peel_object(ref_iterator->oid, peeled);
+	return peel_object(ref_iterator->oid, peeled) ? -1 : 0;
 }
 
 static int cache_ref_iterator_abort(struct ref_iterator *ref_iterator)
@@ -522,7 +465,7 @@ struct ref_iterator *cache_ref_iterator_begin(struct ref_cache *cache,
 
 	dir = get_ref_dir(cache->root);
 	if (prefix && *prefix)
-		dir = find_containing_dir(dir, prefix, 0);
+		dir = find_containing_dir(dir, prefix);
 	if (!dir)
 		/* There's nothing to iterate over. */
 		return empty_ref_iterator_begin();
@@ -530,7 +473,7 @@ struct ref_iterator *cache_ref_iterator_begin(struct ref_cache *cache,
 	if (prime_dir)
 		prime_ref_dir(dir, prefix);
 
-	iter = xcalloc(1, sizeof(*iter));
+	CALLOC_ARRAY(iter, 1);
 	ref_iterator = &iter->base;
 	base_ref_iterator_init(ref_iterator, &cache_ref_iterator_vtable, 1);
 	ALLOC_GROW(iter->levels, 10, iter->levels_alloc);

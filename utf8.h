@@ -61,6 +61,7 @@ int is_hfs_dotgit(const char *path);
 int is_hfs_dotgitmodules(const char *path);
 int is_hfs_dotgitignore(const char *path);
 int is_hfs_dotgitattributes(const char *path);
+int is_hfs_dotmailmap(const char *path);
 
 typedef enum {
 	ALIGN_LEFT,

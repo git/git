@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "commit.h"
 #include "config.h"
 #include "run-command.h"
 #include "strbuf.h"
@@ -256,6 +257,55 @@ error:
 	FREE_AND_NULL(sigc->key);
 }
 
+static int verify_signed_buffer(const char *payload, size_t payload_size,
+				const char *signature, size_t signature_size,
+				struct strbuf *gpg_output,
+				struct strbuf *gpg_status)
+{
+	struct child_process gpg = CHILD_PROCESS_INIT;
+	struct gpg_format *fmt;
+	struct tempfile *temp;
+	int ret;
+	struct strbuf buf = STRBUF_INIT;
+
+	temp = mks_tempfile_t(".git_vtag_tmpXXXXXX");
+	if (!temp)
+		return error_errno(_("could not create temporary file"));
+	if (write_in_full(temp->fd, signature, signature_size) < 0 ||
+	    close_tempfile_gently(temp) < 0) {
+		error_errno(_("failed writing detached signature to '%s'"),
+			    temp->filename.buf);
+		delete_tempfile(&temp);
+		return -1;
+	}
+
+	fmt = get_format_by_sig(signature);
+	if (!fmt)
+		BUG("bad signature '%s'", signature);
+
+	strvec_push(&gpg.args, fmt->program);
+	strvec_pushv(&gpg.args, fmt->verify_args);
+	strvec_pushl(&gpg.args,
+		     "--status-fd=1",
+		     "--verify", temp->filename.buf, "-",
+		     NULL);
+
+	if (!gpg_status)
+		gpg_status = &buf;
+
+	sigchain_push(SIGPIPE, SIG_IGN);
+	ret = pipe_command(&gpg, payload, payload_size,
+			   gpg_status, 0, gpg_output, 0);
+	sigchain_pop(SIGPIPE);
+
+	delete_tempfile(&temp);
+
+	ret |= !strstr(gpg_status->buf, "\n[GNUPG:] GOODSIG ");
+	strbuf_release(&buf); /* no matter it was used or not */
+
+	return ret;
+}
+
 int check_signature(const char *payload, size_t plen, const char *signature,
 	size_t slen, struct signature_check *sigc)
 {
@@ -296,7 +346,7 @@ void print_signature_buffer(const struct signature_check *sigc, unsigned flags)
 		fputs(output, stderr);
 }
 
-size_t parse_signature(const char *buf, size_t size)
+size_t parse_signed_buffer(const char *buf, size_t size)
 {
 	size_t len = 0;
 	size_t match = size;
@@ -310,6 +360,18 @@ size_t parse_signature(const char *buf, size_t size)
 		len += eol ? eol - (buf + len) + 1 : size - len;
 	}
 	return match;
+}
+
+int parse_signature(const char *buf, size_t size, struct strbuf *payload, struct strbuf *signature)
+{
+	size_t match = parse_signed_buffer(buf, size);
+	if (match != size) {
+		strbuf_add(payload, buf, match);
+		remove_signature(payload);
+		strbuf_add(signature, buf + match, size - match);
+		return 1;
+	}
+	return 0;
 }
 
 void set_signing_key(const char *key)
@@ -385,11 +447,11 @@ int sign_buffer(struct strbuf *buffer, struct strbuf *signature, const char *sig
 	size_t i, j, bottom;
 	struct strbuf gpg_status = STRBUF_INIT;
 
-	argv_array_pushl(&gpg.args,
-			 use_format->program,
-			 "--status-fd=2",
-			 "-bsau", signing_key,
-			 NULL);
+	strvec_pushl(&gpg.args,
+		     use_format->program,
+		     "--status-fd=2",
+		     "-bsau", signing_key,
+		     NULL);
 
 	bottom = signature->len;
 
@@ -417,52 +479,4 @@ int sign_buffer(struct strbuf *buffer, struct strbuf *signature, const char *sig
 	strbuf_setlen(signature, j);
 
 	return 0;
-}
-
-int verify_signed_buffer(const char *payload, size_t payload_size,
-			 const char *signature, size_t signature_size,
-			 struct strbuf *gpg_output, struct strbuf *gpg_status)
-{
-	struct child_process gpg = CHILD_PROCESS_INIT;
-	struct gpg_format *fmt;
-	struct tempfile *temp;
-	int ret;
-	struct strbuf buf = STRBUF_INIT;
-
-	temp = mks_tempfile_t(".git_vtag_tmpXXXXXX");
-	if (!temp)
-		return error_errno(_("could not create temporary file"));
-	if (write_in_full(temp->fd, signature, signature_size) < 0 ||
-	    close_tempfile_gently(temp) < 0) {
-		error_errno(_("failed writing detached signature to '%s'"),
-			    temp->filename.buf);
-		delete_tempfile(&temp);
-		return -1;
-	}
-
-	fmt = get_format_by_sig(signature);
-	if (!fmt)
-		BUG("bad signature '%s'", signature);
-
-	argv_array_push(&gpg.args, fmt->program);
-	argv_array_pushv(&gpg.args, fmt->verify_args);
-	argv_array_pushl(&gpg.args,
-			 "--status-fd=1",
-			 "--verify", temp->filename.buf, "-",
-			 NULL);
-
-	if (!gpg_status)
-		gpg_status = &buf;
-
-	sigchain_push(SIGPIPE, SIG_IGN);
-	ret = pipe_command(&gpg, payload, payload_size,
-			   gpg_status, 0, gpg_output, 0);
-	sigchain_pop(SIGPIPE);
-
-	delete_tempfile(&temp);
-
-	ret |= !strstr(gpg_status->buf, "\n[GNUPG:] GOODSIG ");
-	strbuf_release(&buf); /* no matter it was used or not */
-
-	return ret;
 }

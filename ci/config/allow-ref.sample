@@ -1,0 +1,27 @@
+#!/bin/sh
+#
+# Sample script for enabling/disabling GitHub Actions CI runs on
+# particular refs. By default, CI is run for all branches pushed to
+# GitHub. You can override this by dropping the ".sample" from the script,
+# editing it, committing, and pushing the result to the "ci-config" branch of
+# your repository:
+#
+#   git checkout -b ci-config
+#   cp allow-ref.sample allow-ref
+#   $EDITOR allow-ref
+#   git add allow-ref
+#   git commit -am "implement my ci preferences"
+#   git push
+#
+# This script will then be run when any refs are pushed to that repository. It
+# gets the fully qualified refname as the first argument, and should exit with
+# success only for refs for which you want to run CI.
+
+case "$1" in
+# allow one-off tests by pushing to "for-ci" or "for-ci/mybranch"
+refs/heads/for-ci*) true ;;
+# always build your integration branch
+refs/heads/my-integration-branch) true ;;
+# don't build any other branches or tags
+*) false ;;
+esac

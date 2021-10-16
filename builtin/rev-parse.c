@@ -16,6 +16,7 @@
 #include "split-index.h"
 #include "submodule.h"
 #include "commit-reach.h"
+#include "shallow.h"
 
 #define DO_REVS		1
 #define DO_NOREV	2
@@ -135,7 +136,7 @@ static void show_rev(int type, const struct object_id *oid, const char *name)
 			struct object_id discard;
 			char *full;
 
-			switch (dwim_ref(name, strlen(name), &discard, &full)) {
+			switch (dwim_ref(name, strlen(name), &discard, &full, 0)) {
 			case 0:
 				/*
 				 * Not found -- not a ref.  We could
@@ -434,11 +435,11 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 	/* get the usage up to the first line with a -- on it */
 	for (;;) {
 		if (strbuf_getline(&sb, stdin) == EOF)
-			die("premature end of input");
+			die(_("premature end of input"));
 		ALLOC_GROW(usage, unb + 1, usz);
 		if (!strcmp("--", sb.buf)) {
 			if (unb < 1)
-				die("no usage string given before the `--' separator");
+				die(_("no usage string given before the `--' separator"));
 			usage[unb] = NULL;
 			break;
 		}
@@ -544,7 +545,7 @@ static void die_no_single_rev(int quiet)
 	if (quiet)
 		exit(1);
 	else
-		die("Needed a single revision");
+		die(_("Needed a single revision"));
 }
 
 static const char builtin_rev_parse_usage[] =
@@ -582,6 +583,75 @@ static void handle_ref_opt(const char *pattern, const char *prefix)
 	clear_ref_exclusion(&ref_excludes);
 }
 
+enum format_type {
+	/* We would like a relative path. */
+	FORMAT_RELATIVE,
+	/* We would like a canonical absolute path. */
+	FORMAT_CANONICAL,
+	/* We would like the default behavior. */
+	FORMAT_DEFAULT,
+};
+
+enum default_type {
+	/* Our default is a relative path. */
+	DEFAULT_RELATIVE,
+	/* Our default is a relative path if there's a shared root. */
+	DEFAULT_RELATIVE_IF_SHARED,
+	/* Our default is a canonical absolute path. */
+	DEFAULT_CANONICAL,
+	/* Our default is not to modify the item. */
+	DEFAULT_UNMODIFIED,
+};
+
+static void print_path(const char *path, const char *prefix, enum format_type format, enum default_type def)
+{
+	char *cwd = NULL;
+	/*
+	 * We don't ever produce a relative path if prefix is NULL, so set the
+	 * prefix to the current directory so that we can produce a relative
+	 * path whenever possible.  If we're using RELATIVE_IF_SHARED mode, then
+	 * we want an absolute path unless the two share a common prefix, so don't
+	 * set it in that case, since doing so causes a relative path to always
+	 * be produced if possible.
+	 */
+	if (!prefix && (format != FORMAT_DEFAULT || def != DEFAULT_RELATIVE_IF_SHARED))
+		prefix = cwd = xgetcwd();
+	if (format == FORMAT_DEFAULT && def == DEFAULT_UNMODIFIED) {
+		puts(path);
+	} else if (format == FORMAT_RELATIVE ||
+		  (format == FORMAT_DEFAULT && def == DEFAULT_RELATIVE)) {
+		/*
+		 * In order for relative_path to work as expected, we need to
+		 * make sure that both paths are absolute paths.  If we don't,
+		 * we can end up with an unexpected absolute path that the user
+		 * didn't want.
+		 */
+		struct strbuf buf = STRBUF_INIT, realbuf = STRBUF_INIT, prefixbuf = STRBUF_INIT;
+		if (!is_absolute_path(path)) {
+			strbuf_realpath_forgiving(&realbuf, path,  1);
+			path = realbuf.buf;
+		}
+		if (!is_absolute_path(prefix)) {
+			strbuf_realpath_forgiving(&prefixbuf, prefix, 1);
+			prefix = prefixbuf.buf;
+		}
+		puts(relative_path(path, prefix, &buf));
+		strbuf_release(&buf);
+		strbuf_release(&realbuf);
+		strbuf_release(&prefixbuf);
+	} else if (format == FORMAT_DEFAULT && def == DEFAULT_RELATIVE_IF_SHARED) {
+		struct strbuf buf = STRBUF_INIT;
+		puts(relative_path(path, prefix, &buf));
+		strbuf_release(&buf);
+	} else {
+		struct strbuf buf = STRBUF_INIT;
+		strbuf_realpath_forgiving(&buf, path, 1);
+		puts(buf.buf);
+		strbuf_release(&buf);
+	}
+	free(cwd);
+}
+
 int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 {
 	int i, as_is = 0, verify = 0, quiet = 0, revs_count = 0, type = 0;
@@ -594,6 +664,8 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 	struct object_context unused;
 	struct strbuf buf = STRBUF_INIT;
 	const int hexsz = the_hash_algo->hexsz;
+	int seen_end_of_options = 0;
+	enum format_type format = FORMAT_DEFAULT;
 
 	if (argc > 1 && !strcmp("--parseopt", argv[1]))
 		return cmd_parseopt(argc - 1, argv + 1, prefix);
@@ -621,21 +693,29 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 
-		if (!strcmp(arg, "--local-env-vars")) {
-			int i;
-			for (i = 0; local_repo_env[i]; i++)
-				printf("%s\n", local_repo_env[i]);
+		if (as_is) {
+			if (show_file(arg, output_prefix) && as_is < 2)
+				verify_filename(prefix, arg, 0);
 			continue;
 		}
-		if (!strcmp(arg, "--resolve-git-dir")) {
-			const char *gitdir = argv[++i];
-			if (!gitdir)
-				die("--resolve-git-dir requires an argument");
-			gitdir = resolve_gitdir(gitdir);
-			if (!gitdir)
-				die("not a gitdir '%s'", argv[i]);
-			puts(gitdir);
-			continue;
+
+		if (!seen_end_of_options) {
+			if (!strcmp(arg, "--local-env-vars")) {
+				int i;
+				for (i = 0; local_repo_env[i]; i++)
+					printf("%s\n", local_repo_env[i]);
+				continue;
+			}
+			if (!strcmp(arg, "--resolve-git-dir")) {
+				const char *gitdir = argv[++i];
+				if (!gitdir)
+					die(_("--resolve-git-dir requires an argument"));
+				gitdir = resolve_gitdir(gitdir);
+				if (!gitdir)
+					die(_("not a gitdir '%s'"), argv[i]);
+				puts(gitdir);
+				continue;
+			}
 		}
 
 		/* The rest of the options require a git repository. */
@@ -645,53 +725,61 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			did_repo_setup = 1;
 		}
 
-		if (!strcmp(arg, "--git-path")) {
-			if (!argv[i + 1])
-				die("--git-path requires an argument");
-			strbuf_reset(&buf);
-			puts(relative_path(git_path("%s", argv[i + 1]),
-					   prefix, &buf));
-			i++;
-			continue;
-		}
-		if (as_is) {
-			if (show_file(arg, output_prefix) && as_is < 2)
-				verify_filename(prefix, arg, 0);
-			continue;
-		}
-		if (!strcmp(arg,"-n")) {
-			if (++i >= argc)
-				die("-n requires an argument");
-			if ((filter & DO_FLAGS) && (filter & DO_REVS)) {
-				show(arg);
-				show(argv[i]);
-			}
-			continue;
-		}
-		if (starts_with(arg, "-n")) {
-			if ((filter & DO_FLAGS) && (filter & DO_REVS))
-				show(arg);
+		if (!strcmp(arg, "--")) {
+			as_is = 2;
+			/* Pass on the "--" if we show anything but files.. */
+			if (filter & (DO_FLAGS | DO_REVS))
+				show_file(arg, 0);
 			continue;
 		}
 
-		if (*arg == '-') {
-			if (!strcmp(arg, "--")) {
-				as_is = 2;
-				/* Pass on the "--" if we show anything but files.. */
-				if (filter & (DO_FLAGS | DO_REVS))
-					show_file(arg, 0);
+		if (!seen_end_of_options && *arg == '-') {
+			if (!strcmp(arg, "--git-path")) {
+				if (!argv[i + 1])
+					die(_("--git-path requires an argument"));
+				strbuf_reset(&buf);
+				print_path(git_path("%s", argv[i + 1]), prefix,
+						format,
+						DEFAULT_RELATIVE_IF_SHARED);
+				i++;
+				continue;
+			}
+			if (!strcmp(arg,"-n")) {
+				if (++i >= argc)
+					die(_("-n requires an argument"));
+				if ((filter & DO_FLAGS) && (filter & DO_REVS)) {
+					show(arg);
+					show(argv[i]);
+				}
+				continue;
+			}
+			if (starts_with(arg, "-n")) {
+				if ((filter & DO_FLAGS) && (filter & DO_REVS))
+					show(arg);
+				continue;
+			}
+			if (opt_with_value(arg, "--path-format", &arg)) {
+				if (!arg)
+					die(_("--path-format requires an argument"));
+				if (!strcmp(arg, "absolute")) {
+					format = FORMAT_CANONICAL;
+				} else if (!strcmp(arg, "relative")) {
+					format = FORMAT_RELATIVE;
+				} else {
+					die(_("unknown argument to --path-format: %s"), arg);
+				}
 				continue;
 			}
 			if (!strcmp(arg, "--default")) {
 				def = argv[++i];
 				if (!def)
-					die("--default requires an argument");
+					die(_("--default requires an argument"));
 				continue;
 			}
 			if (!strcmp(arg, "--prefix")) {
 				prefix = argv[++i];
 				if (!prefix)
-					die("--prefix requires an argument");
+					die(_("--prefix requires an argument"));
 				startup_info->prefix = prefix;
 				output_prefix = 1;
 				continue;
@@ -760,7 +848,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 					else if (!strcmp(arg, "loose"))
 						abbrev_ref_strict = 0;
 					else
-						die("unknown mode for --abbrev-ref: %s",
+						die(_("unknown mode for --abbrev-ref: %s"),
 						    arg);
 				}
 				continue;
@@ -775,8 +863,8 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 			if (!strcmp(arg, "--bisect")) {
-				for_each_fullref_in("refs/bisect/bad", show_reference, NULL, 0);
-				for_each_fullref_in("refs/bisect/good", anti_reference, NULL, 0);
+				for_each_fullref_in("refs/bisect/bad", show_reference, NULL);
+				for_each_fullref_in("refs/bisect/good", anti_reference, NULL);
 				continue;
 			}
 			if (opt_with_value(arg, "--branches", &arg)) {
@@ -802,15 +890,16 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			if (!strcmp(arg, "--show-toplevel")) {
 				const char *work_tree = get_git_work_tree();
 				if (work_tree)
-					puts(work_tree);
+					print_path(work_tree, prefix, format, DEFAULT_UNMODIFIED);
 				else
-					die("this operation must be run in a work tree");
+					die(_("this operation must be run in a work tree"));
 				continue;
 			}
 			if (!strcmp(arg, "--show-superproject-working-tree")) {
-				const char *superproject = get_superproject_working_tree();
-				if (superproject)
-					puts(superproject);
+				struct strbuf superproject = STRBUF_INIT;
+				if (get_superproject_working_tree(&superproject))
+					print_path(superproject.buf, prefix, format, DEFAULT_UNMODIFIED);
+				strbuf_release(&superproject);
 				continue;
 			}
 			if (!strcmp(arg, "--show-prefix")) {
@@ -844,33 +933,38 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				const char *gitdir = getenv(GIT_DIR_ENVIRONMENT);
 				char *cwd;
 				int len;
+				enum format_type wanted = format;
 				if (arg[2] == 'g') {	/* --git-dir */
 					if (gitdir) {
-						puts(gitdir);
+						print_path(gitdir, prefix, format, DEFAULT_UNMODIFIED);
 						continue;
 					}
 					if (!prefix) {
-						puts(".git");
+						print_path(".git", prefix, format, DEFAULT_UNMODIFIED);
 						continue;
 					}
 				} else {		/* --absolute-git-dir */
+					wanted = FORMAT_CANONICAL;
 					if (!gitdir && !prefix)
 						gitdir = ".git";
 					if (gitdir) {
-						puts(real_path(gitdir));
+						struct strbuf realpath = STRBUF_INIT;
+						strbuf_realpath(&realpath, gitdir, 1);
+						puts(realpath.buf);
+						strbuf_release(&realpath);
 						continue;
 					}
 				}
 				cwd = xgetcwd();
 				len = strlen(cwd);
-				printf("%s%s.git\n", cwd, len && cwd[len-1] != '/' ? "/" : "");
+				strbuf_reset(&buf);
+				strbuf_addf(&buf, "%s%s.git", cwd, len && cwd[len-1] != '/' ? "/" : "");
 				free(cwd);
+				print_path(buf.buf, prefix, wanted, DEFAULT_CANONICAL);
 				continue;
 			}
 			if (!strcmp(arg, "--git-common-dir")) {
-				strbuf_reset(&buf);
-				puts(relative_path(get_git_common_dir(),
-						   prefix, &buf));
+				print_path(get_git_common_dir(), prefix, format, DEFAULT_RELATIVE_IF_SHARED);
 				continue;
 			}
 			if (!strcmp(arg, "--is-inside-git-dir")) {
@@ -900,8 +994,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				if (the_index.split_index) {
 					const struct object_id *oid = &the_index.split_index->base_oid;
 					const char *path = git_path("sharedindex.%s", oid_to_hex(oid));
-					strbuf_reset(&buf);
-					puts(relative_path(path, prefix, &buf));
+					print_path(path, prefix, format, DEFAULT_RELATIVE);
 				}
 				continue;
 			}
@@ -927,9 +1020,15 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				if (strcmp(val, "storage") &&
 				    strcmp(val, "input") &&
 				    strcmp(val, "output"))
-					die("unknown mode for --show-object-format: %s",
+					die(_("unknown mode for --show-object-format: %s"),
 					    arg);
 				puts(the_hash_algo->name);
+				continue;
+			}
+			if (!strcmp(arg, "--end-of-options")) {
+				seen_end_of_options = 1;
+				if (filter & (DO_FLAGS | DO_REVS))
+					show_file(arg, 0);
 				continue;
 			}
 			if (show_flag(arg) && verify)
@@ -959,7 +1058,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 		if (verify)
 			die_no_single_rev(quiet);
 		if (has_dashdash)
-			die("bad revision '%s'", arg);
+			die(_("bad revision '%s'"), arg);
 		as_is = 1;
 		if (!show_file(arg, output_prefix))
 			continue;

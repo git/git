@@ -12,6 +12,7 @@
 #include "dir.h"
 #include "builtin.h"
 #include "tree.h"
+#include "cache-tree.h"
 #include "parse-options.h"
 #include "resolve-undo.h"
 #include "string-list.h"
@@ -35,6 +36,7 @@ static int line_terminator = '\n';
 static int debug_mode;
 static int show_eol;
 static int recurse_submodules;
+static int skipping_duplicates;
 
 static const char *prefix;
 static int max_prefix_len;
@@ -55,7 +57,7 @@ static const char *tag_modified = "";
 static const char *tag_skip_worktree = "";
 static const char *tag_resolve_undo = "";
 
-static void write_eolinfo(const struct index_state *istate,
+static void write_eolinfo(struct index_state *istate,
 			  const struct cache_entry *ce, const char *path)
 {
 	if (show_eol) {
@@ -120,7 +122,7 @@ static void print_debug(const struct cache_entry *ce)
 	}
 }
 
-static void show_dir_entry(const struct index_state *istate,
+static void show_dir_entry(struct index_state *istate,
 			   const char *tag, struct dir_entry *ent)
 {
 	int len = max_prefix_len;
@@ -128,15 +130,16 @@ static void show_dir_entry(const struct index_state *istate,
 	if (len > ent->len)
 		die("git ls-files: internal error - directory entry not superset of prefix");
 
-	if (!dir_path_match(istate, ent, &pathspec, len, ps_matched))
-		return;
+	/* If ps_matches is non-NULL, figure out which pathspec(s) match. */
+	if (ps_matched)
+		dir_path_match(istate, ent, &pathspec, len, ps_matched);
 
 	fputs(tag, stdout);
 	write_eolinfo(istate, NULL, ent->name);
 	write_name(ent->name);
 }
 
-static void show_other_files(const struct index_state *istate,
+static void show_other_files(struct index_state *istate,
 			     const struct dir_struct *dir)
 {
 	int i;
@@ -149,7 +152,7 @@ static void show_other_files(const struct index_state *istate,
 	}
 }
 
-static void show_killed_files(const struct index_state *istate,
+static void show_killed_files(struct index_state *istate,
 			      const struct dir_struct *dir)
 {
 	int i;
@@ -206,10 +209,8 @@ static void show_submodule(struct repository *superproject,
 			   struct dir_struct *dir, const char *path)
 {
 	struct repository subrepo;
-	const struct submodule *sub = submodule_from_path(superproject,
-							  &null_oid, path);
 
-	if (repo_submodule_init(&subrepo, superproject, sub))
+	if (repo_submodule_init(&subrepo, superproject, path, null_oid()))
 		return;
 
 	if (repo_read_index(&subrepo) < 0)
@@ -251,7 +252,7 @@ static void show_ce(struct repository *repo, struct dir_struct *dir,
 	}
 }
 
-static void show_ru_info(const struct index_state *istate)
+static void show_ru_info(struct index_state *istate)
 {
 	struct string_list_item *item;
 
@@ -311,45 +312,61 @@ static void show_files(struct repository *repo, struct dir_struct *dir)
 		if (show_killed)
 			show_killed_files(repo->index, dir);
 	}
-	if (show_cached || show_stage) {
-		for (i = 0; i < repo->index->cache_nr; i++) {
-			const struct cache_entry *ce = repo->index->cache[i];
 
-			construct_fullname(&fullname, repo, ce);
+	if (!(show_cached || show_stage || show_deleted || show_modified))
+		return;
+	/* TODO: audit for interaction with sparse-index. */
+	ensure_full_index(repo->index);
+	for (i = 0; i < repo->index->cache_nr; i++) {
+		const struct cache_entry *ce = repo->index->cache[i];
+		struct stat st;
+		int stat_err;
 
-			if ((dir->flags & DIR_SHOW_IGNORED) &&
-			    !ce_excluded(dir, repo->index, fullname.buf, ce))
-				continue;
-			if (show_unmerged && !ce_stage(ce))
-				continue;
-			if (ce->ce_flags & CE_UPDATE)
-				continue;
+		construct_fullname(&fullname, repo, ce);
+
+		if ((dir->flags & DIR_SHOW_IGNORED) &&
+			!ce_excluded(dir, repo->index, fullname.buf, ce))
+			continue;
+		if (ce->ce_flags & CE_UPDATE)
+			continue;
+		if ((show_cached || show_stage) &&
+		    (!show_unmerged || ce_stage(ce))) {
 			show_ce(repo, dir, ce, fullname.buf,
 				ce_stage(ce) ? tag_unmerged :
 				(ce_skip_worktree(ce) ? tag_skip_worktree :
 				 tag_cached));
+			if (skipping_duplicates)
+				goto skip_to_next_name;
 		}
-	}
-	if (show_deleted || show_modified) {
-		for (i = 0; i < repo->index->cache_nr; i++) {
-			const struct cache_entry *ce = repo->index->cache[i];
-			struct stat st;
-			int err;
 
-			construct_fullname(&fullname, repo, ce);
+		if (!(show_deleted || show_modified))
+			continue;
+		if (ce_skip_worktree(ce))
+			continue;
+		stat_err = lstat(fullname.buf, &st);
+		if (stat_err && (errno != ENOENT && errno != ENOTDIR))
+			error_errno("cannot lstat '%s'", fullname.buf);
+		if (stat_err && show_deleted) {
+			show_ce(repo, dir, ce, fullname.buf, tag_removed);
+			if (skipping_duplicates)
+				goto skip_to_next_name;
+		}
+		if (show_modified &&
+		    (stat_err || ie_modified(repo->index, ce, &st, 0))) {
+			show_ce(repo, dir, ce, fullname.buf, tag_modified);
+			if (skipping_duplicates)
+				goto skip_to_next_name;
+		}
+		continue;
 
-			if ((dir->flags & DIR_SHOW_IGNORED) &&
-			    !ce_excluded(dir, repo->index, fullname.buf, ce))
-				continue;
-			if (ce->ce_flags & CE_UPDATE)
-				continue;
-			if (ce_skip_worktree(ce))
-				continue;
-			err = lstat(fullname.buf, &st);
-			if (show_deleted && err)
-				show_ce(repo, dir, ce, fullname.buf, tag_removed);
-			if (show_modified && ie_modified(repo->index, ce, &st, 0))
-				show_ce(repo, dir, ce, fullname.buf, tag_modified);
+skip_to_next_name:
+		{
+			int j;
+			struct cache_entry **cache = repo->index->cache;
+			for (j = i + 1; j < repo->index->cache_nr; j++)
+				if (strcmp(ce->name, cache[j]->name))
+					break;
+			i = j - 1; /* compensate for the for loop */
 		}
 	}
 
@@ -404,6 +421,53 @@ static int get_common_prefix_len(const char *common_prefix)
 	return common_prefix_len;
 }
 
+static int read_one_entry_opt(struct index_state *istate,
+			      const struct object_id *oid,
+			      struct strbuf *base,
+			      const char *pathname,
+			      unsigned mode, int opt)
+{
+	int len;
+	struct cache_entry *ce;
+
+	if (S_ISDIR(mode))
+		return READ_TREE_RECURSIVE;
+
+	len = strlen(pathname);
+	ce = make_empty_cache_entry(istate, base->len + len);
+
+	ce->ce_mode = create_ce_mode(mode);
+	ce->ce_flags = create_ce_flags(1);
+	ce->ce_namelen = base->len + len;
+	memcpy(ce->name, base->buf, base->len);
+	memcpy(ce->name + base->len, pathname, len+1);
+	oidcpy(&ce->oid, oid);
+	return add_index_entry(istate, ce, opt);
+}
+
+static int read_one_entry(const struct object_id *oid, struct strbuf *base,
+			  const char *pathname, unsigned mode,
+			  void *context)
+{
+	struct index_state *istate = context;
+	return read_one_entry_opt(istate, oid, base, pathname,
+				  mode,
+				  ADD_CACHE_OK_TO_ADD|ADD_CACHE_SKIP_DFCHECK);
+}
+
+/*
+ * This is used when the caller knows there is no existing entries at
+ * the stage that will conflict with the entry being added.
+ */
+static int read_one_entry_quick(const struct object_id *oid, struct strbuf *base,
+				const char *pathname, unsigned mode,
+				void *context)
+{
+	struct index_state *istate = context;
+	return read_one_entry_opt(istate, oid, base, pathname,
+				  mode, ADD_CACHE_JUST_APPEND);
+}
+
 /*
  * Read the tree specified with --with-tree option
  * (typically, HEAD) into stage #1 and then
@@ -420,6 +484,8 @@ void overlay_tree_on_index(struct index_state *istate,
 	struct pathspec pathspec;
 	struct cache_entry *last_stage0 = NULL;
 	int i;
+	read_tree_fn_t fn = NULL;
+	int err;
 
 	if (get_oid(tree_name, &oid))
 		die("tree-ish %s not found.", tree_name);
@@ -428,6 +494,8 @@ void overlay_tree_on_index(struct index_state *istate,
 		die("bad tree-ish %s", tree_name);
 
 	/* Hoist the unmerged entries up to stage #3 to make room */
+	/* TODO: audit for interaction with sparse-index. */
+	ensure_full_index(istate);
 	for (i = 0; i < istate->cache_nr; i++) {
 		struct cache_entry *ce = istate->cache[i];
 		if (!ce_stage(ce))
@@ -442,8 +510,31 @@ void overlay_tree_on_index(struct index_state *istate,
 			       PATHSPEC_PREFER_CWD, prefix, matchbuf);
 	} else
 		memset(&pathspec, 0, sizeof(pathspec));
-	if (read_tree(the_repository, tree, 1, &pathspec, istate))
+
+	/*
+	 * See if we have cache entry at the stage.  If so,
+	 * do it the original slow way, otherwise, append and then
+	 * sort at the end.
+	 */
+	for (i = 0; !fn && i < istate->cache_nr; i++) {
+		const struct cache_entry *ce = istate->cache[i];
+		if (ce_stage(ce) == 1)
+			fn = read_one_entry;
+	}
+
+	if (!fn)
+		fn = read_one_entry_quick;
+	err = read_tree(the_repository, tree, &pathspec, fn, istate);
+	if (err)
 		die("unable to read tree entries %s", tree_name);
+
+	/*
+	 * Sort the cache entry -- we need to nuke the cache tree, though.
+	 */
+	if (fn == read_one_entry_quick) {
+		cache_tree_free(&istate->cache_tree);
+		QSORT(istate->cache, istate->cache_nr, cmp_cache_name_compare);
+	}
 
 	for (i = 0; i < istate->cache_nr; i++) {
 		struct cache_entry *ce = istate->cache[i];
@@ -514,14 +605,14 @@ static int option_parse_exclude_standard(const struct option *opt,
 int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 {
 	int require_work_tree = 0, show_tag = 0, i;
-	const char *max_prefix;
-	struct dir_struct dir;
+	char *max_prefix;
+	struct dir_struct dir = DIR_INIT;
 	struct pattern_list *pl;
 	struct string_list exclude_list = STRING_LIST_INIT_NODUP;
 	struct option builtin_ls_files_options[] = {
 		/* Think twice before adding "--nul" synonym to this */
 		OPT_SET_INT('z', NULL, &line_terminator,
-			N_("paths are separated with NUL character"), '\0'),
+			N_("separate paths with the NUL character"), '\0'),
 		OPT_BOOL('t', NULL, &show_tag,
 			N_("identify the file status with tags")),
 		OPT_BOOL('v', NULL, &show_valid_bit,
@@ -554,18 +645,18 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 			N_("show unmerged files in the output")),
 		OPT_BOOL(0, "resolve-undo", &show_resolve_undo,
 			    N_("show resolve-undo information")),
-		{ OPTION_CALLBACK, 'x', "exclude", &exclude_list, N_("pattern"),
+		OPT_CALLBACK_F('x', "exclude", &exclude_list, N_("pattern"),
 			N_("skip files matching pattern"),
-			PARSE_OPT_NONEG, option_parse_exclude },
-		{ OPTION_CALLBACK, 'X', "exclude-from", &dir, N_("file"),
-			N_("exclude patterns are read from <file>"),
-			PARSE_OPT_NONEG, option_parse_exclude_from },
+			PARSE_OPT_NONEG, option_parse_exclude),
+		OPT_CALLBACK_F('X', "exclude-from", &dir, N_("file"),
+			N_("read exclude patterns from <file>"),
+			PARSE_OPT_NONEG, option_parse_exclude_from),
 		OPT_STRING(0, "exclude-per-directory", &dir.exclude_per_dir, N_("file"),
 			N_("read additional per-directory exclude patterns in <file>")),
-		{ OPTION_CALLBACK, 0, "exclude-standard", &dir, NULL,
+		OPT_CALLBACK_F(0, "exclude-standard", &dir, NULL,
 			N_("add the standard git exclusions"),
 			PARSE_OPT_NOARG | PARSE_OPT_NONEG,
-			option_parse_exclude_standard },
+			option_parse_exclude_standard),
 		OPT_SET_INT_F(0, "full-name", &prefix_len,
 			      N_("make the output relative to the project top directory"),
 			      0, PARSE_OPT_NONEG),
@@ -577,13 +668,14 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 			N_("pretend that paths removed since <tree-ish> are still present")),
 		OPT__ABBREV(&abbrev),
 		OPT_BOOL(0, "debug", &debug_mode, N_("show debugging data")),
+		OPT_BOOL(0, "deduplicate", &skipping_duplicates,
+			 N_("suppress duplicate entries")),
 		OPT_END()
 	};
 
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage_with_options(ls_files_usage, builtin_ls_files_options);
 
-	memset(&dir, 0, sizeof(dir));
 	prefix = cmd_prefix;
 	if (prefix)
 		prefix_len = strlen(prefix);
@@ -616,6 +708,8 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 		 * you also show the stage information.
 		 */
 		show_stage = 1;
+	if (show_tag || show_stage)
+		skipping_duplicates = 0;
 	if (dir.exclude_per_dir)
 		exc_given = 1;
 
@@ -655,6 +749,9 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 	if (pathspec.nr && error_unmatch)
 		ps_matched = xcalloc(pathspec.nr, 1);
 
+	if ((dir.flags & DIR_SHOW_IGNORED) && !show_others && !show_cached)
+		die("ls-files -i must be used with either -o or -c");
+
 	if ((dir.flags & DIR_SHOW_IGNORED) && !exc_given)
 		die("ls-files --ignored needs some exclude pattern");
 
@@ -687,6 +784,7 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 		return bad ? 1 : 0;
 	}
 
-	UNLEAK(dir);
+	dir_clear(&dir);
+	free(max_prefix);
 	return 0;
 }

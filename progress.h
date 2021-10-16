@@ -3,6 +3,14 @@
 
 struct progress;
 
+#ifdef GIT_TEST_PROGRESS_ONLY
+
+extern int progress_testing;
+extern uint64_t progress_test_ns;
+void progress_test_force_update(void);
+
+#endif
+
 void display_throughput(struct progress *progress, uint64_t total);
 void display_progress(struct progress *progress, uint64_t n);
 struct progress *start_progress(const char *title, uint64_t total);

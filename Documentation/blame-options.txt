@@ -1,6 +1,6 @@
 -b::
 	Show blank SHA-1 for boundary commits.  This can also
-	be controlled via the `blame.blankboundary` config option.
+	be controlled via the `blame.blankBoundary` config option.
 
 --root::
 	Do not treat root commits as boundaries.  This can also be
@@ -11,11 +11,12 @@
 
 -L <start>,<end>::
 -L :<funcname>::
-	Annotate only the given line range. May be specified multiple times.
-	Overlapping ranges are allowed.
+	Annotate only the line range given by '<start>,<end>',
+	or by the function name regex '<funcname>'.
+	May be specified multiple times. Overlapping ranges are allowed.
 +
-<start> and <end> are optional. ``-L <start>'' or ``-L <start>,'' spans from
-<start> to end of file. ``-L ,<end>'' spans from start of file to <end>.
+'<start>' and '<end>' are optional. `-L <start>` or `-L <start>,` spans from
+'<start>' to end of file. `-L ,<end>` spans from start of file to '<end>'.
 +
 include::line-range-format.txt[]
 
@@ -35,6 +36,12 @@ include::line-range-format.txt[]
 	revision like START..END where the path to blame exists in
 	START.  `git blame --reverse START` is taken as `git blame
 	--reverse START..HEAD` for convenience.
+
+--first-parent::
+	Follow only the first parent commit upon seeing a merge
+	commit. This option can be used to determine when a line
+	was introduced to a particular integration branch, rather
+	than when it was introduced to the history overall.
 
 -p::
 --porcelain::

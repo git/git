@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='git send-email'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 # May be altered later in the test
@@ -42,7 +45,8 @@ clean_fake_sendmail () {
 }
 
 test_expect_success $PREREQ 'Extract patches' '
-	patches=$(git format-patch -s --cc="One <one@example.com>" --cc=two@example.com -n HEAD^1)
+	patches=$(git format-patch -s --cc="One <one@example.com>" --cc=two@example.com -n HEAD^1) &&
+	threaded_patches=$(git format-patch -o threaded -s --in-reply-to="format" HEAD^1)
 '
 
 # Test no confirm early to ensure remaining tests will not hang
@@ -411,15 +415,23 @@ test_expect_success $PREREQ 'reject long lines' '
 	z512=$z64$z64$z64$z64$z64$z64$z64$z64 &&
 	clean_fake_sendmail &&
 	cp $patches longline.patch &&
-	echo $z512$z512 >>longline.patch &&
+	cat >>longline.patch <<-EOF &&
+	$z512$z512
+	not a long line
+	$z512$z512
+	EOF
 	test_must_fail git send-email \
 		--from="Example <nobody@example.com>" \
 		--to=nobody@example.com \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		--transfer-encoding=8bit \
 		$patches longline.patch \
-		2>errors &&
-	grep longline.patch errors
+		2>actual &&
+	cat >expect <<-\EOF &&
+	fatal: longline.patch:35 is longer than 998 characters
+	warning: no patches were sent
+	EOF
+	test_cmp expect actual
 '
 
 test_expect_success $PREREQ 'no patch was sent' '
@@ -509,6 +521,49 @@ do
 
 done
 
+test_expect_success $PREREQ "--validate respects relative core.hooksPath path" '
+	clean_fake_sendmail &&
+	mkdir my-hooks &&
+	test_when_finished "rm my-hooks.ran" &&
+	write_script my-hooks/sendemail-validate <<-\EOF &&
+	>my-hooks.ran
+	exit 1
+	EOF
+	test_config core.hooksPath "my-hooks" &&
+	test_must_fail git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		--validate \
+		longline.patch 2>actual &&
+	test_path_is_file my-hooks.ran &&
+	cat >expect <<-EOF &&
+	fatal: longline.patch: rejected by sendemail-validate hook
+	fatal: command '"'"'my-hooks/sendemail-validate'"'"' died with exit code 1
+	warning: no patches were sent
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success $PREREQ "--validate respects absolute core.hooksPath path" '
+	hooks_path="$(pwd)/my-hooks" &&
+	test_config core.hooksPath "$hooks_path" &&
+	test_when_finished "rm my-hooks.ran" &&
+	test_must_fail git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		--validate \
+		longline.patch 2>actual &&
+	test_path_is_file my-hooks.ran &&
+	cat >expect <<-EOF &&
+	fatal: longline.patch: rejected by sendemail-validate hook
+	fatal: command '"'"'$hooks_path/sendemail-validate'"'"' died with exit code 1
+	warning: no patches were sent
+	EOF
+	test_cmp expect actual
+'
+
 for enc in 7bit 8bit quoted-printable base64
 do
 	test_expect_success $PREREQ "--transfer-encoding=$enc produces correct header" '
@@ -589,13 +644,32 @@ test_expect_success $PREREQ 'In-Reply-To with --chain-reply-to' '
 	test_cmp expect actual
 '
 
+test_set_editor "$(pwd)/fake-editor"
+
+test_expect_success $PREREQ 'setup erroring fake editor' '
+	write_script fake-editor <<-\EOF
+	echo >&2 "I am about to error"
+	exit 1
+	EOF
+'
+
+test_expect_success $PREREQ 'fake editor dies with error' '
+	clean_fake_sendmail &&
+	test_must_fail git send-email \
+		--compose --subject foo \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		$patches 2>err &&
+	grep "I am about to error" err &&
+	grep "the editor exited uncleanly, aborting everything" err
+'
+
 test_expect_success $PREREQ 'setup fake editor' '
 	write_script fake-editor <<-\EOF
 	echo fake edit >>"$1"
 	EOF
 '
-
-test_set_editor "$(pwd)/fake-editor"
 
 test_expect_success $PREREQ '--compose works' '
 	clean_fake_sendmail &&
@@ -1167,10 +1241,10 @@ test_expect_success $PREREQ '--compose-encoding adds correct MIME for subject' '
 '
 
 test_expect_success $PREREQ 'detects ambiguous reference/file conflict' '
-	echo master >master &&
-	git add master &&
-	git commit -m"add master" &&
-	test_must_fail git send-email --dry-run master 2>errors &&
+	echo main >main &&
+	git add main &&
+	git commit -m"add main" &&
+	test_must_fail git send-email --dry-run main 2>errors &&
 	grep disambiguate errors
 '
 
@@ -1184,7 +1258,7 @@ test_expect_success $PREREQ 'feed two files' '
 		outdir/000?-*.patch 2>errors >out &&
 	grep "^Subject: " out >subjects &&
 	test "z$(sed -n -e 1p subjects)" = "zSubject: [PATCH 1/2] Second." &&
-	test "z$(sed -n -e 2p subjects)" = "zSubject: [PATCH 2/2] add master"
+	test "z$(sed -n -e 2p subjects)" = "zSubject: [PATCH 2/2] add main"
 '
 
 test_expect_success $PREREQ 'in-reply-to but no threading' '
@@ -1217,6 +1291,17 @@ test_expect_success $PREREQ 'threading but no chain-reply-to' '
 		--no-chain-reply-to \
 		$patches $patches >stdout &&
 	grep "In-Reply-To: " stdout
+'
+
+test_expect_success $PREREQ 'override in-reply-to if no threading' '
+	git send-email \
+		--dry-run \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--no-thread \
+		--in-reply-to="override" \
+		$threaded_patches >stdout &&
+	grep "In-Reply-To: <override>" stdout
 '
 
 test_expect_success $PREREQ 'sendemail.to works' '
@@ -1281,6 +1366,16 @@ test_expect_success $PREREQ 'sendemail.identity: bool variable fallback' '
 		$patches >stdout &&
 	grep "To: cloud@example.com" stdout &&
 	! grep "X-Mailer" stdout
+'
+
+test_expect_success $PREREQ 'sendemail.identity: bool variable without a value' '
+	git -c sendemail.xmailer \
+		send-email \
+		--dry-run \
+		--from="nobody@example.com" \
+		$patches >stdout &&
+	grep "To: default@example.com" stdout &&
+	grep "X-Mailer" stdout
 '
 
 test_expect_success $PREREQ '--no-to overrides sendemail.to' '
@@ -1438,6 +1533,21 @@ test_expect_success $PREREQ 'sendemail.8bitEncoding works' '
 	test_cmp content-type-decl actual
 '
 
+test_expect_success $PREREQ 'sendemail.8bitEncoding in .git/config overrides --global .gitconfig' '
+	clean_fake_sendmail &&
+	git config sendemail.assume8bitEncoding UTF-8 &&
+	test_when_finished "rm -rf home" &&
+	mkdir home &&
+	git config -f home/.gitconfig sendemail.assume8bitEncoding "bogus too" &&
+	echo bogus |
+	env HOME="$(pwd)/home" DEBUG=1 \
+	git send-email --from=author@example.com --to=nobody@example.com \
+			--smtp-server="$(pwd)/fake.sendmail" \
+			email-using-8bit >stdout &&
+	egrep "Content|MIME" msgtxt1 >actual &&
+	test_cmp content-type-decl actual
+'
+
 test_expect_success $PREREQ '--8bit-encoding overrides sendemail.8bitEncoding' '
 	clean_fake_sendmail &&
 	git config sendemail.assume8bitEncoding "bogus too" &&
@@ -1539,7 +1649,7 @@ test_expect_success $PREREQ '8-bit and sendemail.transferencoding=quoted-printab
 		--smtp-server="$(pwd)/fake.sendmail" \
 		email-using-8bit \
 		2>errors >out &&
-	sed '1,/^$/d' msgtxt1 >actual &&
+	sed "1,/^$/d" msgtxt1 >actual &&
 	test_cmp expected actual
 '
 
@@ -1556,7 +1666,7 @@ test_expect_success $PREREQ '8-bit and sendemail.transferencoding=base64' '
 		--smtp-server="$(pwd)/fake.sendmail" \
 		email-using-8bit \
 		2>errors >out &&
-	sed '1,/^$/d' msgtxt1 >actual &&
+	sed "1,/^$/d" msgtxt1 >actual &&
 	test_cmp expected actual
 '
 
@@ -1582,7 +1692,7 @@ test_expect_success $PREREQ 'convert from quoted-printable to base64' '
 		--smtp-server="$(pwd)/fake.sendmail" \
 		email-using-qp \
 		2>errors >out &&
-	sed '1,/^$/d' msgtxt1 >actual &&
+	sed "1,/^$/d" msgtxt1 >actual &&
 	test_cmp expected actual
 '
 
@@ -1612,7 +1722,7 @@ test_expect_success $PREREQ 'CRLF and sendemail.transferencoding=quoted-printabl
 		--smtp-server="$(pwd)/fake.sendmail" \
 		email-using-crlf \
 		2>errors >out &&
-	sed '1,/^$/d' msgtxt1 >actual &&
+	sed "1,/^$/d" msgtxt1 >actual &&
 	test_cmp expected actual
 '
 
@@ -1629,7 +1739,7 @@ test_expect_success $PREREQ 'CRLF and sendemail.transferencoding=base64' '
 		--smtp-server="$(pwd)/fake.sendmail" \
 		email-using-crlf \
 		2>errors >out &&
-	sed '1,/^$/d' msgtxt1 >actual &&
+	sed "1,/^$/d" msgtxt1 >actual &&
 	test_cmp expected actual
 '
 
@@ -1744,7 +1854,7 @@ test_expect_success $PREREQ 'sendemail.aliasfiletype=mailrc' '
 	grep "^!somebody@example\.org!$" commandline1
 '
 
-test_expect_success $PREREQ 'sendemail.aliasfile=~/.mailrc' '
+test_expect_success $PREREQ 'sendemail.aliasesfile=~/.mailrc' '
 	clean_fake_sendmail &&
 	echo "alias sbd  someone@example.org" >"$HOME/.mailrc" &&
 	git config --replace-all sendemail.aliasesfile "~/.mailrc" &&
@@ -2007,8 +2117,27 @@ test_expect_success $PREREQ '--[no-]xmailer with sendemail.xmailer=true' '
 	do_xmailer_test 1 "--xmailer"
 '
 
+test_expect_success $PREREQ '--[no-]xmailer with sendemail.xmailer' '
+	test_when_finished "test_unconfig sendemail.xmailer" &&
+	cat >>.git/config <<-\EOF &&
+	[sendemail]
+		xmailer
+	EOF
+	test_config sendemail.xmailer true &&
+	do_xmailer_test 1 "" &&
+	do_xmailer_test 0 "--no-xmailer" &&
+	do_xmailer_test 1 "--xmailer"
+'
+
 test_expect_success $PREREQ '--[no-]xmailer with sendemail.xmailer=false' '
 	test_config sendemail.xmailer false &&
+	do_xmailer_test 0 "" &&
+	do_xmailer_test 0 "--no-xmailer" &&
+	do_xmailer_test 1 "--xmailer"
+'
+
+test_expect_success $PREREQ '--[no-]xmailer with sendemail.xmailer=' '
+	test_config sendemail.xmailer "" &&
 	do_xmailer_test 0 "" &&
 	do_xmailer_test 0 "--no-xmailer" &&
 	do_xmailer_test 1 "--xmailer"
@@ -2025,7 +2154,7 @@ test_expect_success $PREREQ 'setup expected-list' '
 	--cc="Cc2 <cc2@example.com>" \
 	--bcc="bcc1@example.com" \
 	--bcc="bcc2@example.com" \
-	0001-add-master.patch | replace_variable_fields \
+	0001-add-main.patch | replace_variable_fields \
 	>expected-list
 '
 
@@ -2037,7 +2166,7 @@ test_expect_success $PREREQ 'use email list in --cc --to and --bcc' '
 	--to="to3@example.com" \
 	--cc="Cc 1 <cc1@example.com>, Cc2 <cc2@example.com>" \
 	--bcc="bcc1@example.com, bcc2@example.com" \
-	0001-add-master.patch | replace_variable_fields \
+	0001-add-main.patch | replace_variable_fields \
 	>actual-list &&
 	test_cmp expected-list actual-list
 '
@@ -2053,7 +2182,7 @@ test_expect_success $PREREQ 'aliases work with email list' '
 	--to="To 1 <to1@example.com>, to2, to3@example.com" \
 	--cc="cc1, Cc2 <cc2@example.com>" \
 	--bcc="bcc1@example.com, bcc2@example.com" \
-	0001-add-master.patch | replace_variable_fields \
+	0001-add-main.patch | replace_variable_fields \
 	>actual-list &&
 	test_cmp expected-list actual-list
 '
@@ -2077,9 +2206,85 @@ test_expect_success $PREREQ 'leading and trailing whitespaces are removed' '
 	--cc="Cc2 <cc2@example.com>" \
 	--bcc="$BCC1" \
 	--bcc="bcc2@example.com" \
-	0001-add-master.patch | replace_variable_fields \
+	0001-add-main.patch | replace_variable_fields \
 	>actual-list &&
 	test_cmp expected-list actual-list
+'
+
+test_expect_success $PREREQ 'test using command name with --sendmail-cmd' '
+	clean_fake_sendmail &&
+	PATH="$PWD:$PATH" \
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--sendmail-cmd="fake.sendmail" \
+		HEAD^ &&
+	test_path_is_file commandline1
+'
+
+test_expect_success $PREREQ 'test using arguments with --sendmail-cmd' '
+	clean_fake_sendmail &&
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--sendmail-cmd='\''"$(pwd)/fake.sendmail" -f nobody@example.com'\'' \
+		HEAD^ &&
+	test_path_is_file commandline1
+'
+
+test_expect_success $PREREQ 'test shell expression with --sendmail-cmd' '
+	clean_fake_sendmail &&
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--sendmail-cmd='\''f() { "$(pwd)/fake.sendmail" "$@"; };f'\'' \
+		HEAD^ &&
+	test_path_is_file commandline1
+'
+
+test_expect_success $PREREQ 'set up in-reply-to/references patches' '
+	cat >has-reply.patch <<-\EOF &&
+	From: A U Thor <author@example.com>
+	Subject: patch with in-reply-to
+	Message-ID: <patch.with.in.reply.to@example.com>
+	In-Reply-To: <replied.to@example.com>
+	References: <replied.to@example.com>
+
+	This is the body.
+	EOF
+	cat >no-reply.patch <<-\EOF
+	From: A U Thor <author@example.com>
+	Subject: patch without in-reply-to
+	Message-ID: <patch.without.in.reply.to@example.com>
+
+	This is the body.
+	EOF
+'
+
+test_expect_success $PREREQ 'patch reply headers correct with --no-thread' '
+	clean_fake_sendmail &&
+	git send-email \
+		--no-thread \
+		--to=nobody@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		has-reply.patch no-reply.patch &&
+	grep "In-Reply-To: <replied.to@example.com>" msgtxt1 &&
+	grep "References: <replied.to@example.com>" msgtxt1 &&
+	! grep replied.to@example.com msgtxt2
+'
+
+test_expect_success $PREREQ 'cmdline in-reply-to used with --no-thread' '
+	clean_fake_sendmail &&
+	git send-email \
+		--no-thread \
+		--in-reply-to="<cmdline.reply@example.com>" \
+		--to=nobody@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		has-reply.patch no-reply.patch &&
+	grep "In-Reply-To: <cmdline.reply@example.com>" msgtxt1 &&
+	grep "References: <cmdline.reply@example.com>" msgtxt1 &&
+	grep "In-Reply-To: <cmdline.reply@example.com>" msgtxt2 &&
+	grep "References: <cmdline.reply@example.com>" msgtxt2
 '
 
 test_expect_success $PREREQ 'invoke hook' '
@@ -2096,8 +2301,8 @@ test_expect_success $PREREQ 'invoke hook' '
 		false
 		;;
 	esac &&
-	test -f 0001-add-master.patch &&
-	grep "add master" "$1"
+	test -f 0001-add-main.patch &&
+	grep "add main" "$1"
 	EOF
 
 	mkdir subdir &&
@@ -2109,10 +2314,10 @@ test_expect_success $PREREQ 'invoke hook' '
 			--from="Example <nobody@example.com>" \
 			--to=nobody@example.com \
 			--smtp-server="$(pwd)/../fake.sendmail" \
-			../0001-add-master.patch &&
+			../0001-add-main.patch &&
 
 		# Verify error message when a patch is rejected by the hook
-		sed -e "s/add master/x/" ../0001-add-master.patch >../another.patch &&
+		sed -e "s/add main/x/" ../0001-add-main.patch >../another.patch &&
 		test_must_fail git send-email \
 			--from="Example <nobody@example.com>" \
 			--to=nobody@example.com \
@@ -2127,7 +2332,36 @@ test_expect_success $PREREQ 'test that send-email works outside a repo' '
 		--from="Example <nobody@example.com>" \
 		--to=nobody@example.com \
 		--smtp-server="$(pwd)/fake.sendmail" \
-		"$(pwd)/0001-add-master.patch"
+		"$(pwd)/0001-add-main.patch"
+'
+
+test_expect_success $PREREQ 'test that sendmail config is rejected' '
+	test_config sendmail.program sendmail &&
+	test_must_fail git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		HEAD^ 2>err &&
+	test_i18ngrep "found configuration options for '"'"sendmail"'"'" err
+'
+
+test_expect_success $PREREQ 'test that sendmail config rejection is specific' '
+	test_config resendmail.program sendmail &&
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		HEAD^
+'
+
+test_expect_success $PREREQ 'test forbidSendmailVariables behavior override' '
+	test_config sendmail.program sendmail &&
+	test_config sendemail.forbidSendmailVariables false &&
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		HEAD^
 '
 
 test_done

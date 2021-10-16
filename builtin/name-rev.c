@@ -7,7 +7,7 @@
 #include "refs.h"
 #include "parse-options.h"
 #include "prio-queue.h"
-#include "sha1-lookup.h"
+#include "hash-lookup.h"
 #include "commit-slab.h"
 
 /*
@@ -390,10 +390,10 @@ static void name_tips(void)
 	}
 }
 
-static const unsigned char *nth_tip_table_ent(size_t ix, void *table_)
+static const struct object_id *nth_tip_table_ent(size_t ix, const void *table_)
 {
-	struct tip_table_entry *table = table_;
-	return table[ix].oid.hash;
+	const struct tip_table_entry *table = table_;
+	return &table[ix].oid;
 }
 
 static const char *get_exact_ref_match(const struct object *o)
@@ -408,8 +408,8 @@ static const char *get_exact_ref_match(const struct object *o)
 		tip_table.sorted = 1;
 	}
 
-	found = sha1_pos(o->oid.hash, tip_table.table, tip_table.nr,
-			 nth_tip_table_ent);
+	found = oid_pos(&o->oid, tip_table.table, tip_table.nr,
+			nth_tip_table_ent);
 	if (0 <= found)
 		return tip_table.table[found].refname;
 	return NULL;
@@ -521,7 +521,7 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 	int all = 0, transform_stdin = 0, allow_undefined = 1, always = 0, peel_tag = 0;
 	struct name_ref_data data = { 0, 0, STRING_LIST_INIT_NODUP, STRING_LIST_INIT_NODUP };
 	struct option opts[] = {
-		OPT_BOOL(0, "name-only", &data.name_only, N_("print only names (no SHA-1)")),
+		OPT_BOOL(0, "name-only", &data.name_only, N_("print only ref-based names (no object names)")),
 		OPT_BOOL(0, "tags", &data.tags_only, N_("only use tags to name the commits")),
 		OPT_STRING_LIST(0, "refs", &data.ref_filters, N_("pattern"),
 				   N_("only use refs matching <pattern>")),

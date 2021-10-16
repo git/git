@@ -23,5 +23,5 @@ int cmd__match_trees(int ac, const char **av)
 	shift_tree(the_repository, &one->object.oid, &two->object.oid, &shifted, -1);
 	printf("shifted: %s\n", oid_to_hex(&shifted));
 
-	exit(0);
+	return 0;
 }

@@ -6,6 +6,9 @@
 test_description='git shortlog
 '
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -191,7 +194,7 @@ test_expect_success 'shortlog with revision pseudo options' '
 '
 
 test_expect_success 'shortlog with --output=<file>' '
-	git shortlog --output=shortlog -1 master >output &&
+	git shortlog --output=shortlog -1 main >output &&
 	test_must_be_empty output &&
 	test_line_count = 3 shortlog
 '
@@ -213,6 +216,147 @@ test_expect_success 'shortlog --committer (internal)' '
 test_expect_success 'shortlog --committer (external)' '
 	git log --format=full | git shortlog -nsc >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success '--group=committer is the same as --committer' '
+	git shortlog -ns --group=committer HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'shortlog --group=trailer:signed-off-by' '
+	git commit --allow-empty -m foo -s &&
+	GIT_COMMITTER_NAME="SOB One" \
+	GIT_COMMITTER_EMAIL=sob@example.com \
+		git commit --allow-empty -m foo -s &&
+	git commit --allow-empty --amend --no-edit -s &&
+	cat >expect <<-\EOF &&
+	     2	C O Mitter <committer@example.com>
+	     1	SOB One <sob@example.com>
+	EOF
+	git shortlog -nse --group=trailer:signed-off-by HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'trailer idents are split' '
+	cat >expect <<-\EOF &&
+	     2	C O Mitter
+	     1	SOB One
+	EOF
+	git shortlog -ns --group=trailer:signed-off-by HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'trailer idents are mailmapped' '
+	cat >expect <<-\EOF &&
+	     2	C O Mitter
+	     1	Another Name
+	EOF
+	echo "Another Name <sob@example.com>" >mail.map &&
+	git -c mailmap.file=mail.map shortlog -ns \
+		--group=trailer:signed-off-by HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'shortlog de-duplicates trailers in a single commit' '
+	git commit --allow-empty -F - <<-\EOF &&
+	subject one
+
+	this message has two distinct values, plus a repeat
+
+	Repeated-trailer: Foo
+	Repeated-trailer: Bar
+	Repeated-trailer: Foo
+	EOF
+
+	git commit --allow-empty -F - <<-\EOF &&
+	subject two
+
+	similar to the previous, but without the second distinct value
+
+	Repeated-trailer: Foo
+	Repeated-trailer: Foo
+	EOF
+
+	cat >expect <<-\EOF &&
+	     2	Foo
+	     1	Bar
+	EOF
+	git shortlog -ns --group=trailer:repeated-trailer -2 HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'shortlog can match multiple groups' '
+	git commit --allow-empty -F - <<-\EOF &&
+	subject one
+
+	this has two trailers that are distinct from the author; it will count
+	3 times in the output
+
+	Some-trailer: User A <a@example.com>
+	Another-trailer: User B <b@example.com>
+	EOF
+
+	git commit --allow-empty -F - <<-\EOF &&
+	subject two
+
+	this one has two trailers, one of which is a duplicate with the author;
+	it will only be counted once for them
+
+	Another-trailer: A U Thor <author@example.com>
+	Some-trailer: User B <b@example.com>
+	EOF
+
+	cat >expect <<-\EOF &&
+	     2	A U Thor
+	     2	User B
+	     1	User A
+	EOF
+	git shortlog -ns \
+		--group=author \
+		--group=trailer:some-trailer \
+		--group=trailer:another-trailer \
+		-2 HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'set up option selection tests' '
+	git commit --allow-empty -F - <<-\EOF
+	subject
+
+	body
+
+	Trailer-one: value-one
+	Trailer-two: value-two
+	EOF
+'
+
+test_expect_success '--no-group resets group list to author' '
+	cat >expect <<-\EOF &&
+	     1	A U Thor
+	EOF
+	git shortlog -ns \
+		--group=committer \
+		--group=trailer:trailer-one \
+		--no-group \
+		-1 HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--no-group resets trailer list' '
+	cat >expect <<-\EOF &&
+	     1	value-two
+	EOF
+	git shortlog -ns \
+		--group=trailer:trailer-one \
+		--no-group \
+		--group=trailer:trailer-two \
+		-1 HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'stdin with multiple groups reports error' '
+	git log >log &&
+	test_must_fail git shortlog --group=author --group=committer <log
 '
 
 test_done

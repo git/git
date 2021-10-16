@@ -9,12 +9,13 @@
 #include "lockfile.h"
 #include "dir.h"
 #include "run-command.h"
+#include "prompt.h"
 
 static void init_color(struct repository *r, struct add_i_state *s,
-		       const char *slot_name, char *dst,
+		       const char *section_and_slot, char *dst,
 		       const char *default_color)
 {
-	char *key = xstrfmt("color.interactive.%s", slot_name);
+	char *key = xstrfmt("color.%s", section_and_slot);
 	const char *value;
 
 	if (!s->use_color)
@@ -39,19 +40,26 @@ void init_add_i_state(struct add_i_state *s, struct repository *r)
 			git_config_colorbool("color.interactive", value);
 	s->use_color = want_color(s->use_color);
 
-	init_color(r, s, "header", s->header_color, GIT_COLOR_BOLD);
-	init_color(r, s, "help", s->help_color, GIT_COLOR_BOLD_RED);
-	init_color(r, s, "prompt", s->prompt_color, GIT_COLOR_BOLD_BLUE);
-	init_color(r, s, "error", s->error_color, GIT_COLOR_BOLD_RED);
-	init_color(r, s, "reset", s->reset_color, GIT_COLOR_RESET);
-	init_color(r, s, "fraginfo", s->fraginfo_color,
+	init_color(r, s, "interactive.header", s->header_color, GIT_COLOR_BOLD);
+	init_color(r, s, "interactive.help", s->help_color, GIT_COLOR_BOLD_RED);
+	init_color(r, s, "interactive.prompt", s->prompt_color,
+		   GIT_COLOR_BOLD_BLUE);
+	init_color(r, s, "interactive.error", s->error_color,
+		   GIT_COLOR_BOLD_RED);
+
+	init_color(r, s, "diff.frag", s->fraginfo_color,
 		   diff_get_color(s->use_color, DIFF_FRAGINFO));
-	init_color(r, s, "context", s->context_color,
-		diff_get_color(s->use_color, DIFF_CONTEXT));
-	init_color(r, s, "old", s->file_old_color,
+	init_color(r, s, "diff.context", s->context_color, "fall back");
+	if (!strcmp(s->context_color, "fall back"))
+		init_color(r, s, "diff.plain", s->context_color,
+			   diff_get_color(s->use_color, DIFF_CONTEXT));
+	init_color(r, s, "diff.old", s->file_old_color,
 		diff_get_color(s->use_color, DIFF_FILE_OLD));
-	init_color(r, s, "new", s->file_new_color,
+	init_color(r, s, "diff.new", s->file_new_color,
 		diff_get_color(s->use_color, DIFF_FILE_NEW));
+
+	strlcpy(s->reset_color,
+		s->use_color ? GIT_COLOR_RESET : "", COLOR_MAXLEN);
 
 	FREE_AND_NULL(s->interactive_diff_filter);
 	git_config_get_string("interactive.difffilter",
@@ -94,8 +102,12 @@ struct prefix_item_list {
 	int *selected; /* for multi-selections */
 	size_t min_length, max_length;
 };
-#define PREFIX_ITEM_LIST_INIT \
-	{ STRING_LIST_INIT_DUP, STRING_LIST_INIT_NODUP, NULL, 1, 4 }
+#define PREFIX_ITEM_LIST_INIT { \
+	.items = STRING_LIST_INIT_DUP, \
+	.sorted = STRING_LIST_INIT_NODUP, \
+	.min_length = 1, \
+	.max_length = 4, \
+}
 
 static void prefix_item_list_clear(struct prefix_item_list *list)
 {
@@ -193,7 +205,8 @@ static ssize_t find_unique(const char *string, struct prefix_item_list *list)
 	else if (index + 1 < list->sorted.nr &&
 		 starts_with(list->sorted.items[index + 1].string, string))
 		return -1;
-	else if (index < list->sorted.nr)
+	else if (index < list->sorted.nr &&
+		 starts_with(list->sorted.items[index].string, string))
 		item = list->sorted.items[index].util;
 	else
 		return -1;
@@ -289,13 +302,12 @@ static ssize_t list_and_choose(struct add_i_state *s,
 		fputs(singleton ? "> " : ">> ", stdout);
 		fflush(stdout);
 
-		if (strbuf_getline(&input, stdin) == EOF) {
+		if (git_read_line_interactively(&input) == EOF) {
 			putchar('\n');
 			if (immediate)
 				res = LIST_AND_CHOOSE_QUIT;
 			break;
 		}
-		strbuf_trim(&input);
 
 		if (!input.len)
 			break;
@@ -364,7 +376,7 @@ static ssize_t list_and_choose(struct add_i_state *s,
 
 			if (from < 0 || from >= items->items.nr ||
 			    (singleton && from + 1 != to)) {
-				color_fprintf_ln(stdout, s->error_color,
+				color_fprintf_ln(stderr, s->error_color,
 						 _("Huh (%s)?"), p);
 				break;
 			} else if (singleton) {
@@ -405,7 +417,7 @@ struct file_item {
 
 static void add_file_item(struct string_list *files, const char *name)
 {
-	struct file_item *item = xcalloc(sizeof(*item), 1);
+	struct file_item *item = xcalloc(1, sizeof(*item));
 
 	string_list_append(files, name)->util = item;
 }
@@ -468,7 +480,7 @@ static void collect_changes_cb(struct diff_queue_struct *q,
 
 			add_file_item(s->files, name);
 
-			entry = xcalloc(sizeof(*entry), 1);
+			CALLOC_ARRAY(entry, 1);
 			hashmap_entry_init(&entry->ent, hash);
 			entry->name = s->files->items[s->files->nr - 1].string;
 			entry->item = s->files->items[s->files->nr - 1].util;
@@ -557,7 +569,7 @@ static int get_modified_files(struct repository *r,
 		if (ps)
 			clear_pathspec(&rev.prune_data);
 	}
-	hashmap_free_entries(&s.file_map, struct pathname_entry, ent);
+	hashmap_clear_and_free(&s.file_map, struct pathname_entry, ent);
 	if (unmerged_count)
 		*unmerged_count = s.unmerged_count;
 	if (binary_count)
@@ -935,18 +947,18 @@ static int run_patch(struct add_i_state *s, const struct pathspec *ps,
 	opts->prompt = N_("Patch update");
 	count = list_and_choose(s, files, opts);
 	if (count > 0) {
-		struct argv_array args = ARGV_ARRAY_INIT;
+		struct strvec args = STRVEC_INIT;
 		struct pathspec ps_selected = { 0 };
 
 		for (i = 0; i < files->items.nr; i++)
 			if (files->selected[i])
-				argv_array_push(&args,
-						files->items.items[i].string);
+				strvec_push(&args,
+					    files->items.items[i].string);
 		parse_pathspec(&ps_selected,
 			       PATHSPEC_ALL_MAGIC & ~PATHSPEC_LITERAL,
-			       PATHSPEC_LITERAL_PATH, "", args.argv);
+			       PATHSPEC_LITERAL_PATH, "", args.v);
 		res = run_add_p(s->r, ADD_P_ADD, NULL, &ps_selected);
-		argv_array_clear(&args);
+		strvec_clear(&args);
 		clear_pathspec(&ps_selected);
 	}
 
@@ -976,18 +988,18 @@ static int run_diff(struct add_i_state *s, const struct pathspec *ps,
 	count = list_and_choose(s, files, opts);
 	opts->flags = 0;
 	if (count > 0) {
-		struct argv_array args = ARGV_ARRAY_INIT;
+		struct strvec args = STRVEC_INIT;
 
-		argv_array_pushl(&args, "git", "diff", "-p", "--cached",
-				 oid_to_hex(!is_initial ? &oid :
-					    s->r->hash_algo->empty_tree),
-				 "--", NULL);
+		strvec_pushl(&args, "git", "diff", "-p", "--cached",
+			     oid_to_hex(!is_initial ? &oid :
+					s->r->hash_algo->empty_tree),
+			     "--", NULL);
 		for (i = 0; i < files->items.nr; i++)
 			if (files->selected[i])
-				argv_array_push(&args,
-						files->items.items[i].string);
-		res = run_command_v_opt(args.argv, 0);
-		argv_array_clear(&args);
+				strvec_push(&args,
+					    files->items.items[i].string);
+		res = run_command_v_opt(args.v, 0);
+		strvec_clear(&args);
 	}
 
 	putchar('\n');
@@ -1112,7 +1124,7 @@ int run_add_i(struct repository *r, const struct pathspec *ps)
 	int res = 0;
 
 	for (i = 0; i < ARRAY_SIZE(command_list); i++) {
-		struct command_item *util = xcalloc(sizeof(*util), 1);
+		struct command_item *util = xcalloc(1, sizeof(*util));
 		util->command = command_list[i].command;
 		string_list_append(&commands.items, command_list[i].string)
 			->util = util;
@@ -1131,7 +1143,7 @@ int run_add_i(struct repository *r, const struct pathspec *ps)
 	print_file_item_data.color = data.color;
 	print_file_item_data.reset = data.reset;
 
-	strbuf_addstr(&header, "      ");
+	strbuf_addstr(&header, "     ");
 	strbuf_addf(&header, print_file_item_data.modified_fmt,
 		    _("staged"), _("unstaged"), _("path"));
 	opts.list_opts.header = header.buf;

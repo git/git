@@ -20,7 +20,7 @@ enum protocol_version get_protocol_version_config(void)
 	const char *git_test_k = "GIT_TEST_PROTOCOL_VERSION";
 	const char *git_test_v;
 
-	if (!git_config_get_string_const("protocol.version", &value)) {
+	if (!git_config_get_string_tmp("protocol.version", &value)) {
 		enum protocol_version version = parse_protocol_version(value);
 
 		if (version == protocol_unknown_version)
@@ -72,6 +72,8 @@ enum protocol_version determine_protocol_version_server(void)
 
 		string_list_clear(&list, 0);
 	}
+
+	trace2_data_intmax("transfer", NULL, "negotiated-version", version);
 
 	return version;
 }

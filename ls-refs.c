@@ -2,24 +2,63 @@
 #include "repository.h"
 #include "refs.h"
 #include "remote.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "ls-refs.h"
 #include "pkt-line.h"
 #include "config.h"
+
+static int config_read;
+static int advertise_unborn;
+static int allow_unborn;
+
+static void ensure_config_read(void)
+{
+	const char *str = NULL;
+
+	if (config_read)
+		return;
+
+	if (repo_config_get_string_tmp(the_repository, "lsrefs.unborn", &str)) {
+		/*
+		 * If there is no such config, advertise and allow it by
+		 * default.
+		 */
+		advertise_unborn = 1;
+		allow_unborn = 1;
+	} else {
+		if (!strcmp(str, "advertise")) {
+			advertise_unborn = 1;
+			allow_unborn = 1;
+		} else if (!strcmp(str, "allow")) {
+			allow_unborn = 1;
+		} else if (!strcmp(str, "ignore")) {
+			/* do nothing */
+		} else {
+			die(_("invalid value '%s' for lsrefs.unborn"), str);
+		}
+	}
+	config_read = 1;
+}
+
+/*
+ * If we see this many or more "ref-prefix" lines from the client, we consider
+ * it "too many" and will avoid using the prefix feature entirely.
+ */
+#define TOO_MANY_PREFIXES 65536
 
 /*
  * Check if one of the prefixes is a prefix of the ref.
  * If no prefixes were provided, all refs match.
  */
-static int ref_match(const struct argv_array *prefixes, const char *refname)
+static int ref_match(const struct strvec *prefixes, const char *refname)
 {
 	int i;
 
-	if (!prefixes->argc)
+	if (!prefixes->nr)
 		return 1; /* no restriction */
 
-	for (i = 0; i < prefixes->argc; i++) {
-		const char *prefix = prefixes->argv[i];
+	for (i = 0; i < prefixes->nr; i++) {
+		const char *prefix = prefixes->v[i];
 
 		if (starts_with(refname, prefix))
 			return 1;
@@ -31,7 +70,9 @@ static int ref_match(const struct argv_array *prefixes, const char *refname)
 struct ls_refs_data {
 	unsigned peel;
 	unsigned symrefs;
-	struct argv_array prefixes;
+	struct strvec prefixes;
+	struct strbuf buf;
+	unsigned unborn : 1;
 };
 
 static int send_ref(const char *refname, const struct object_id *oid,
@@ -39,7 +80,8 @@ static int send_ref(const char *refname, const struct object_id *oid,
 {
 	struct ls_refs_data *data = cb_data;
 	const char *refname_nons = strip_namespace(refname);
-	struct strbuf refline = STRBUF_INIT;
+
+	strbuf_reset(&data->buf);
 
 	if (ref_is_hidden(refname_nons, refname))
 		return 0;
@@ -47,7 +89,10 @@ static int send_ref(const char *refname, const struct object_id *oid,
 	if (!ref_match(&data->prefixes, refname_nons))
 		return 0;
 
-	strbuf_addf(&refline, "%s %s", oid_to_hex(oid), refname_nons);
+	if (oid)
+		strbuf_addf(&data->buf, "%s %s", oid_to_hex(oid), refname_nons);
+	else
+		strbuf_addf(&data->buf, "unborn %s", refname_nons);
 	if (data->symrefs && flag & REF_ISSYMREF) {
 		struct object_id unused;
 		const char *symref_target = resolve_ref_unsafe(refname, 0,
@@ -57,21 +102,37 @@ static int send_ref(const char *refname, const struct object_id *oid,
 		if (!symref_target)
 			die("'%s' is a symref but it is not?", refname);
 
-		strbuf_addf(&refline, " symref-target:%s",
+		strbuf_addf(&data->buf, " symref-target:%s",
 			    strip_namespace(symref_target));
 	}
 
-	if (data->peel) {
+	if (data->peel && oid) {
 		struct object_id peeled;
-		if (!peel_ref(refname, &peeled))
-			strbuf_addf(&refline, " peeled:%s", oid_to_hex(&peeled));
+		if (!peel_iterated_oid(oid, &peeled))
+			strbuf_addf(&data->buf, " peeled:%s", oid_to_hex(&peeled));
 	}
 
-	strbuf_addch(&refline, '\n');
-	packet_write(1, refline.buf, refline.len);
+	strbuf_addch(&data->buf, '\n');
+	packet_fwrite(stdout, data->buf.buf, data->buf.len);
 
-	strbuf_release(&refline);
 	return 0;
+}
+
+static void send_possibly_unborn_head(struct ls_refs_data *data)
+{
+	struct strbuf namespaced = STRBUF_INIT;
+	struct object_id oid;
+	int flag;
+	int oid_is_null;
+
+	strbuf_addf(&namespaced, "%sHEAD", get_git_namespace());
+	if (!resolve_ref_unsafe(namespaced.buf, 0, &oid, &flag))
+		return; /* bad ref */
+	oid_is_null = is_null_oid(&oid);
+	if (!oid_is_null ||
+	    (data->unborn && data->symrefs && (flag & REF_ISSYMREF)))
+		send_ref(namespaced.buf, oid_is_null ? NULL : &oid, flag, data);
+	strbuf_release(&namespaced);
 }
 
 static int ls_refs_config(const char *var, const char *value, void *data)
@@ -84,16 +145,18 @@ static int ls_refs_config(const char *var, const char *value, void *data)
 	return parse_hide_refs_config(var, value, "uploadpack");
 }
 
-int ls_refs(struct repository *r, struct argv_array *keys,
-	    struct packet_reader *request)
+int ls_refs(struct repository *r, struct packet_reader *request)
 {
 	struct ls_refs_data data;
 
 	memset(&data, 0, sizeof(data));
+	strvec_init(&data.prefixes);
+	strbuf_init(&data.buf, 0);
 
+	ensure_config_read();
 	git_config(ls_refs_config, NULL);
 
-	while (packet_reader_read(request) != PACKET_READ_FLUSH) {
+	while (packet_reader_read(request) == PACKET_READ_NORMAL) {
 		const char *arg = request->line;
 		const char *out;
 
@@ -101,13 +164,45 @@ int ls_refs(struct repository *r, struct argv_array *keys,
 			data.peel = 1;
 		else if (!strcmp("symrefs", arg))
 			data.symrefs = 1;
-		else if (skip_prefix(arg, "ref-prefix ", &out))
-			argv_array_push(&data.prefixes, out);
+		else if (skip_prefix(arg, "ref-prefix ", &out)) {
+			if (data.prefixes.nr < TOO_MANY_PREFIXES)
+				strvec_push(&data.prefixes, out);
+		}
+		else if (!strcmp("unborn", arg))
+			data.unborn = allow_unborn;
+		else
+			die(_("unexpected line: '%s'"), arg);
 	}
 
-	head_ref_namespaced(send_ref, &data);
-	for_each_namespaced_ref(send_ref, &data);
-	packet_flush(1);
-	argv_array_clear(&data.prefixes);
+	if (request->status != PACKET_READ_FLUSH)
+		die(_("expected flush after ls-refs arguments"));
+
+	/*
+	 * If we saw too many prefixes, we must avoid using them at all; as
+	 * soon as we have any prefix, they are meant to form a comprehensive
+	 * list.
+	 */
+	if (data.prefixes.nr >= TOO_MANY_PREFIXES)
+		strvec_clear(&data.prefixes);
+
+	send_possibly_unborn_head(&data);
+	if (!data.prefixes.nr)
+		strvec_push(&data.prefixes, "");
+	for_each_fullref_in_prefixes(get_git_namespace(), data.prefixes.v,
+				     send_ref, &data);
+	packet_fflush(stdout);
+	strvec_clear(&data.prefixes);
+	strbuf_release(&data.buf);
 	return 0;
+}
+
+int ls_refs_advertise(struct repository *r, struct strbuf *value)
+{
+	if (value) {
+		ensure_config_read();
+		if (advertise_unborn)
+			strbuf_addstr(value, "unborn");
+	}
+
+	return 1;
 }

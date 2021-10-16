@@ -57,6 +57,7 @@ void install_packed_git(struct repository *r, struct packed_git *pack);
 struct packed_git *get_packed_git(struct repository *r);
 struct list_head *get_packed_git_mru(struct repository *r);
 struct multi_pack_index *get_multi_pack_index(struct repository *r);
+struct multi_pack_index *get_local_multi_pack_index(struct repository *r);
 struct packed_git *get_all_packs(struct repository *r);
 
 /*
@@ -89,6 +90,7 @@ uint32_t get_pack_fanout(struct packed_git *p, uint32_t value);
 
 unsigned char *use_pack(struct packed_git *, struct pack_window **, off_t, unsigned long *);
 void close_pack_windows(struct packed_git *);
+void close_pack_revindex(struct packed_git *);
 void close_pack(struct packed_git *);
 void close_object_store(struct raw_object_store *o);
 void unuse_pack(struct pack_window **);
@@ -157,16 +159,21 @@ int packed_object_info(struct repository *r,
 		       struct packed_git *pack,
 		       off_t offset, struct object_info *);
 
-void mark_bad_packed_object(struct packed_git *p, const unsigned char *sha1);
-const struct packed_git *has_packed_and_bad(struct repository *r, const unsigned char *sha1);
+void mark_bad_packed_object(struct packed_git *, const struct object_id *);
+const struct packed_git *has_packed_and_bad(struct repository *, const struct object_id *);
+
+#define ON_DISK_KEEP_PACKS 1
+#define IN_CORE_KEEP_PACKS 2
 
 /*
  * Iff a pack file in the given repository contains the object named by sha1,
  * return true and store its location to e.
  */
 int find_pack_entry(struct repository *r, const struct object_id *oid, struct pack_entry *e);
+int find_kept_pack_entry(struct repository *r, const struct object_id *oid, unsigned flags, struct pack_entry *e);
 
 int has_object_pack(const struct object_id *oid);
+int has_object_kept_pack(const struct object_id *oid, unsigned flags);
 
 int has_pack_index(const unsigned char *sha1);
 

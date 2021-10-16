@@ -11,16 +11,16 @@
 #include "quote.h"
 #include "transport.h"
 #include "version.h"
-#include "sha1-array.h"
+#include "oid-array.h"
 #include "gpg-interface.h"
 #include "gettext.h"
 #include "protocol.h"
 
 static const char * const send_pack_usage[] = {
-	N_("git send-pack [--all | --mirror] [--dry-run] [--force] "
-	  "[--receive-pack=<git-receive-pack>] [--verbose] [--thin] [--atomic] "
-	  "[<host>:]<directory> [<ref>...]\n"
-	  "  --all and explicit <ref> specification are mutually exclusive."),
+	N_("git send-pack [--mirror] [--dry-run] [--force]\n"
+	   "              [--receive-pack=<git-receive-pack>]\n"
+	   "              [--verbose] [--thin] [--atomic]\n"
+	   "              [<host>:]<directory> (--all | <ref>...)"),
 	NULL,
 };
 
@@ -29,10 +29,12 @@ static struct send_pack_args args;
 static void print_helper_status(struct ref *ref)
 {
 	struct strbuf buf = STRBUF_INIT;
+	struct ref_push_report *report;
 
 	for (; ref; ref = ref->next) {
 		const char *msg = NULL;
 		const char *res;
+		int count = 0;
 
 		switch(ref->status) {
 		case REF_STATUS_NONE:
@@ -69,6 +71,11 @@ static void print_helper_status(struct ref *ref)
 			msg = "stale info";
 			break;
 
+		case REF_STATUS_REJECT_REMOTE_UPDATED:
+			res = "error";
+			msg = "remote ref updated since checkout";
+			break;
+
 		case REF_STATUS_REJECT_ALREADY_EXISTS:
 			res = "error";
 			msg = "already exists";
@@ -94,6 +101,23 @@ static void print_helper_status(struct ref *ref)
 		}
 		strbuf_addch(&buf, '\n');
 
+		if (ref->status == REF_STATUS_OK) {
+			for (report = ref->report; report; report = report->next) {
+				if (count++ > 0)
+					strbuf_addf(&buf, "ok %s\n", ref->name);
+				if (report->ref_name)
+					strbuf_addf(&buf, "option refname %s\n",
+						report->ref_name);
+				if (report->old_oid)
+					strbuf_addf(&buf, "option old-oid %s\n",
+						oid_to_hex(report->old_oid));
+				if (report->new_oid)
+					strbuf_addf(&buf, "option new-oid %s\n",
+						oid_to_hex(report->new_oid));
+				if (report->forced_update)
+					strbuf_addstr(&buf, "option forced-update\n");
+			}
+		}
 		write_or_die(1, buf.buf, buf.len);
 	}
 	strbuf_release(&buf);
@@ -154,6 +178,7 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 	int progress = -1;
 	int from_stdin = 0;
 	struct push_cas_option cas = {0};
+	int force_if_includes = 0;
 	struct packet_reader reader;
 
 	struct option options[] = {
@@ -165,9 +190,8 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 		OPT_BOOL('n' , "dry-run", &dry_run, N_("dry run")),
 		OPT_BOOL(0, "mirror", &send_mirror, N_("mirror all refs")),
 		OPT_BOOL('f', "force", &force_update, N_("force updates")),
-		{ OPTION_CALLBACK,
-		  0, "signed", &push_cert, "(yes|no|if-asked)", N_("GPG sign the push"),
-		  PARSE_OPT_OPTARG, option_parse_push_signed },
+		OPT_CALLBACK_F(0, "signed", &push_cert, "(yes|no|if-asked)", N_("GPG sign the push"),
+		  PARSE_OPT_OPTARG, option_parse_push_signed),
 		OPT_STRING_LIST(0, "push-option", &push_options,
 				N_("server-specific"),
 				N_("option to transmit")),
@@ -177,10 +201,11 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "stateless-rpc", &stateless_rpc, N_("use stateless RPC protocol")),
 		OPT_BOOL(0, "stdin", &from_stdin, N_("read refs from stdin")),
 		OPT_BOOL(0, "helper-status", &helper_status, N_("print status from remote helper")),
-		{ OPTION_CALLBACK,
-		  0, CAS_OPT_NAME, &cas, N_("<refname>:<expect>"),
+		OPT_CALLBACK_F(0, CAS_OPT_NAME, &cas, N_("<refname>:<expect>"),
 		  N_("require old value of ref to be at this value"),
-		  PARSE_OPT_OPTARG, parseopt_push_cas_option },
+		  PARSE_OPT_OPTARG, parseopt_push_cas_option),
+		OPT_BOOL(0, TRANS_OPT_FORCE_IF_INCLUDES, &force_if_includes,
+			 N_("require remote updates to be integrated locally")),
 		OPT_END()
 	};
 
@@ -205,6 +230,7 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 	args.atomic = atomic;
 	args.stateless_rpc = stateless_rpc;
 	args.push_options = push_options.nr ? &push_options : NULL;
+	args.url = dest;
 
 	if (from_stdin) {
 		if (args.stateless_rpc) {
@@ -281,6 +307,9 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 
 	if (!is_empty_cas(&cas))
 		apply_push_cas(&cas, remote, remote_refs);
+
+	if (!is_empty_cas(&cas) && force_if_includes)
+		cas.use_force_if_includes = 1;
 
 	set_ref_status_for_push(remote_refs, args.send_mirror,
 		args.force_update);

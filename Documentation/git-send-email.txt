@@ -167,6 +167,14 @@ Sending
 	`sendemail.envelopeSender` configuration variable; if that is
 	unspecified, choosing the envelope sender is left to your MTA.
 
+--sendmail-cmd=<command>::
+	Specify a command to run to send the email. The command should
+	be sendmail-like; specifically, it must support the `-i` option.
+	The command will be executed in the shell if necessary.  Default
+	is the value of `sendemail.sendmailcmd`.  If unspecified, and if
+	--smtp-server is also unspecified, git-send-email will search
+	for `sendmail` in `/usr/sbin`, `/usr/lib` and $PATH.
+
 --smtp-encryption=<encryption>::
 	Specify the encryption to use, either 'ssl' or 'tls'.  Any other
 	value reverts to plain SMTP.  Default is the value of
@@ -211,13 +219,16 @@ a password is obtained using 'git-credential'.
 
 --smtp-server=<host>::
 	If set, specifies the outgoing SMTP server to use (e.g.
-	`smtp.example.com` or a raw IP address).  Alternatively it can
-	specify a full pathname of a sendmail-like program instead;
-	the program must support the `-i` option.  Default value can
-	be specified by the `sendemail.smtpServer` configuration
-	option; the built-in default is to search for `sendmail` in
-	`/usr/sbin`, `/usr/lib` and $PATH if such program is
-	available, falling back to `localhost` otherwise.
+	`smtp.example.com` or a raw IP address).  If unspecified, and if
+	`--sendmail-cmd` is also unspecified, the default is to search
+	for `sendmail` in `/usr/sbin`, `/usr/lib` and $PATH if such a
+	program is available, falling back to `localhost` otherwise.
++
+For backward compatibility, this option can also specify a full pathname
+of a sendmail-like program instead; the program must support the `-i`
+option.  This method does not support passing arguments or using plain
+command names.  For those use cases, consider using `--sendmail-cmd`
+instead.
 
 --smtp-server-port=<port>::
 	Specifies a port different from the default port (SMTP
@@ -313,7 +324,7 @@ Automating
 	the value of `sendemail.identity`.
 
 --[no-]signed-off-by-cc::
-	If this is set, add emails found in Signed-off-by: or Cc: lines to the
+	If this is set, add emails found in the `Signed-off-by` trailer or Cc: lines to the
 	cc list. Default is the value of `sendemail.signedoffbycc` configuration
 	value; if that is unspecified, default to --signed-off-by-cc.
 
@@ -340,7 +351,7 @@ Automating
   except for self (use 'self' for that).
 - 'bodycc' will avoid including anyone mentioned in Cc lines in the
   patch body (commit message) except for self (use 'self' for that).
-- 'sob' will avoid including anyone mentioned in Signed-off-by lines except
+- 'sob' will avoid including anyone mentioned in the Signed-off-by trailers except
   for self (use 'self' for that).
 - 'misc-by' will avoid including anyone mentioned in Acked-by,
   Reviewed-by, Tested-by and other "-by" lines in the patch body,
@@ -494,9 +505,13 @@ edit ~/.gitconfig to specify your account settings:
 	smtpServerPort = 587
 ----
 
-If you have multifactor authentication setup on your gmail account, you will
+If you have multi-factor authentication set up on your Gmail account, you will
 need to generate an app-specific password for use with 'git send-email'. Visit
 https://security.google.com/settings/security/apppasswords to create it.
+
+If you do not have multi-factor authentication set up on your Gmail account,
+you will need to allow less secure app access. Visit
+https://myaccount.google.com/lesssecureapps to enable it.
 
 Once your commits are ready to be sent to the mailing list, run the
 following commands:

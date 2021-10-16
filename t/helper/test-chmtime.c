@@ -109,9 +109,9 @@ int cmd__chmtime(int argc, const char **argv)
 		uintmax_t mtime;
 
 		if (stat(argv[i], &sb) < 0) {
-			fprintf(stderr, "Failed to stat %s: %s\n",
+			fprintf(stderr, "Failed to stat %s: %s. Skipping\n",
 			        argv[i], strerror(errno));
-			return 1;
+			continue;
 		}
 
 #ifdef GIT_WINDOWS_NATIVE

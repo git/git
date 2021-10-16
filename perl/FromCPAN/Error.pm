@@ -12,7 +12,7 @@
 package Error;
 
 use strict;
-use warnings;
+use warnings $ENV{GIT_PERL_FATAL_WARNINGS} ? qw(FATAL all) : ();
 
 use vars qw($VERSION);
 use 5.004;

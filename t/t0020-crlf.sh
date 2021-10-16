@@ -2,6 +2,9 @@
 
 test_description='CRLF conversion'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 has_cr() {
@@ -84,10 +87,8 @@ test_expect_success 'safecrlf: print warning only once' '
 	git commit -m "nowarn" &&
 	for w in Oh here is CRLFQ in text; do echo $w; done | q_to_cr >doublewarn &&
 	git add doublewarn 2>err &&
-	if test_have_prereq C_LOCALE_OUTPUT
-	then
-		test $(grep "CRLF will be replaced by LF" err | wc -l) = 1
-	fi
+	grep "CRLF will be replaced by LF" err >err.warnings &&
+	test_line_count = 1 err.warnings
 '
 
 
@@ -318,8 +319,8 @@ test_expect_success 'checkout with existing .gitattributes' '
 	git add .gitattributes .file &&
 	git commit -m second &&
 
-	git checkout master~1 &&
-	git checkout master &&
+	git checkout main~1 &&
+	git checkout main &&
 	test "$(git diff-files --raw)" = ""
 
 '
@@ -331,8 +332,8 @@ test_expect_success 'checkout when deleting .gitattributes' '
 	git add .file2 &&
 	git commit -m third &&
 
-	git checkout master~1 &&
-	git checkout master &&
+	git checkout main~1 &&
+	git checkout main &&
 	has_cr .file2
 
 '

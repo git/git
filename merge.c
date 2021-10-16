@@ -19,22 +19,22 @@ int try_merge_command(struct repository *r,
 		      const char **xopts, struct commit_list *common,
 		      const char *head_arg, struct commit_list *remotes)
 {
-	struct argv_array args = ARGV_ARRAY_INIT;
+	struct strvec args = STRVEC_INIT;
 	int i, ret;
 	struct commit_list *j;
 
-	argv_array_pushf(&args, "merge-%s", strategy);
+	strvec_pushf(&args, "merge-%s", strategy);
 	for (i = 0; i < xopts_nr; i++)
-		argv_array_pushf(&args, "--%s", xopts[i]);
+		strvec_pushf(&args, "--%s", xopts[i]);
 	for (j = common; j; j = j->next)
-		argv_array_push(&args, merge_argument(j->item));
-	argv_array_push(&args, "--");
-	argv_array_push(&args, head_arg);
+		strvec_push(&args, merge_argument(j->item));
+	strvec_push(&args, "--");
+	strvec_push(&args, head_arg);
 	for (j = remotes; j; j = j->next)
-		argv_array_push(&args, merge_argument(j->item));
+		strvec_push(&args, merge_argument(j->item));
 
-	ret = run_command_v_opt(args.argv, RUN_GIT_CMD);
-	argv_array_clear(&args);
+	ret = run_command_v_opt(args.v, RUN_GIT_CMD);
+	strvec_clear(&args);
 
 	discard_index(r->index);
 	if (repo_read_index(r) < 0)
@@ -53,7 +53,6 @@ int checkout_fast_forward(struct repository *r,
 	struct unpack_trees_options opts;
 	struct tree_desc t[MAX_UNPACK_TREES];
 	int i, nr_trees = 0;
-	struct dir_struct dir;
 	struct lock_file lock_file = LOCK_INIT;
 
 	refresh_index(r->index, REFRESH_QUIET, NULL, NULL, NULL);
@@ -80,12 +79,7 @@ int checkout_fast_forward(struct repository *r,
 	}
 
 	memset(&opts, 0, sizeof(opts));
-	if (overwrite_ignore) {
-		memset(&dir, 0, sizeof(dir));
-		dir.flags |= DIR_SHOW_IGNORED;
-		setup_standard_excludes(&dir);
-		opts.dir = &dir;
-	}
+	opts.preserve_ignored = !overwrite_ignore;
 
 	opts.head_idx = 1;
 	opts.src_index = r->index;
@@ -94,6 +88,7 @@ int checkout_fast_forward(struct repository *r,
 	opts.verbose_update = 1;
 	opts.merge = 1;
 	opts.fn = twoway_merge;
+	init_checkout_metadata(&opts.meta, NULL, remote, NULL);
 	setup_unpack_trees_porcelain(&opts, "merge");
 
 	if (unpack_trees(nr_trees, t, &opts)) {

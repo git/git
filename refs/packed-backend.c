@@ -200,6 +200,7 @@ struct ref_store *packed_ref_store_create(const char *path,
 	struct ref_store *ref_store = (struct ref_store *)refs;
 
 	base_ref_store_init(ref_store, &refs_be_packed);
+	ref_store->gitdir = xstrdup(path);
 	refs->store_flags = store_flags;
 
 	refs->path = xstrdup(path);
@@ -723,9 +724,9 @@ static struct snapshot *get_snapshot(struct packed_ref_store *refs)
 	return refs->snapshot;
 }
 
-static int packed_read_raw_ref(struct ref_store *ref_store,
-			       const char *refname, struct object_id *oid,
-			       struct strbuf *referent, unsigned int *type)
+static int packed_read_raw_ref(struct ref_store *ref_store, const char *refname,
+			       struct object_id *oid, struct strbuf *referent,
+			       unsigned int *type, int *failure_errno)
 {
 	struct packed_ref_store *refs =
 		packed_downcast(ref_store, REF_STORE_READ, "read_raw_ref");
@@ -738,7 +739,7 @@ static int packed_read_raw_ref(struct ref_store *ref_store,
 
 	if (!rec) {
 		/* refname is not a packed reference. */
-		errno = ENOENT;
+		*failure_errno = ENOENT;
 		return -1;
 	}
 
@@ -888,7 +889,7 @@ static int packed_ref_iterator_peel(struct ref_iterator *ref_iterator,
 	} else if ((iter->base.flags & (REF_ISBROKEN | REF_ISSYMREF))) {
 		return -1;
 	} else {
-		return !!peel_object(&iter->oid, peeled);
+		return peel_object(&iter->oid, peeled) ? -1 : 0;
 	}
 }
 
@@ -940,7 +941,7 @@ static struct ref_iterator *packed_ref_iterator_begin(
 	if (start == snapshot->eof)
 		return empty_ref_iterator_begin();
 
-	iter = xcalloc(1, sizeof(*iter));
+	CALLOC_ARRAY(iter, 1);
 	ref_iterator = &iter->base;
 	base_ref_iterator_init(ref_iterator, &packed_ref_iterator_vtable, 1);
 
@@ -1423,8 +1424,8 @@ static int packed_transaction_prepare(struct ref_store *ref_store,
 	 * do so itself.
 	 */
 
-	data = xcalloc(1, sizeof(*data));
-	string_list_init(&data->updates, 0);
+	CALLOC_ARRAY(data, 1);
+	string_list_init_nodup(&data->updates);
 
 	transaction->backend_data = data;
 
@@ -1599,6 +1600,7 @@ static int packed_for_each_reflog_ent(struct ref_store *ref_store,
 				      const char *refname,
 				      each_reflog_ent_fn fn, void *cb_data)
 {
+	BUG("packed reference store does not support reflogs");
 	return 0;
 }
 
@@ -1607,12 +1609,14 @@ static int packed_for_each_reflog_ent_reverse(struct ref_store *ref_store,
 					      each_reflog_ent_fn fn,
 					      void *cb_data)
 {
+	BUG("packed reference store does not support reflogs");
 	return 0;
 }
 
 static int packed_reflog_exists(struct ref_store *ref_store,
 			       const char *refname)
 {
+	BUG("packed reference store does not support reflogs");
 	return 0;
 }
 
@@ -1626,17 +1630,19 @@ static int packed_create_reflog(struct ref_store *ref_store,
 static int packed_delete_reflog(struct ref_store *ref_store,
 			       const char *refname)
 {
+	BUG("packed reference store does not support reflogs");
 	return 0;
 }
 
 static int packed_reflog_expire(struct ref_store *ref_store,
-				const char *refname, const struct object_id *oid,
+				const char *refname,
 				unsigned int flags,
 				reflog_expiry_prepare_fn prepare_fn,
 				reflog_expiry_should_prune_fn should_prune_fn,
 				reflog_expiry_cleanup_fn cleanup_fn,
 				void *policy_cb_data)
 {
+	BUG("packed reference store does not support reflogs");
 	return 0;
 }
 

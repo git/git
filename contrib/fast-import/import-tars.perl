@@ -139,6 +139,8 @@ foreach my $tar_file (@ARGV)
 			print FI "\n";
 		}
 
+		next if ($typeflag eq 'g'); # ignore global header
+
 		my $path;
 		if ($prefix) {
 			$path = "$prefix/$name";

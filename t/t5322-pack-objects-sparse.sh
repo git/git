@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='pack-objects object selection using sparse algorithm'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'setup repo' '
@@ -18,7 +21,7 @@ test_expect_success 'setup repo' '
 	git commit -m "Initialized trees" &&
 	for i in $(test_seq 1 3)
 	do
-		git checkout -b topic$i master &&
+		git checkout -b topic$i main &&
 		echo change-$i >f$i/f$i/data.txt &&
 		git commit -a -m "Changed f$i/f$i/data.txt"
 	done &&
@@ -105,14 +108,16 @@ test_expect_success 'non-sparse pack-objects' '
 	test_cmp required_objects.txt nonsparse_required_objects.txt
 '
 
+# --sparse is enabled by default by pack.useSparse
 test_expect_success 'sparse pack-objects' '
+	GIT_TEST_PACK_SPARSE=-1 &&
 	git rev-parse			\
 		topic1			\
 		topic1^{tree}		\
 		topic1:f3		\
 		topic1:f3/f4		\
 		topic1:f3/f4/data.txt | sort >expect_sparse_objects.txt &&
-	git pack-objects --stdout --revs --sparse <packinput.txt >sparse.pack &&
+	git pack-objects --stdout --revs <packinput.txt >sparse.pack &&
 	git index-pack -o sparse.idx sparse.pack &&
 	git show-index <sparse.idx | awk "{print \$2}" >sparse_objects.txt &&
 	test_cmp expect_sparse_objects.txt sparse_objects.txt

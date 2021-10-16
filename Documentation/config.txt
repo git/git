@@ -3,11 +3,12 @@ CONFIGURATION FILE
 
 The Git configuration file contains a number of variables that affect
 the Git commands' behavior. The files `.git/config` and optionally
-`config.worktree` (see `extensions.worktreeConfig` below) in each
-repository are used to store the configuration for that repository, and
-`$HOME/.gitconfig` is used to store a per-user configuration as
-fallback values for the `.git/config` file. The file `/etc/gitconfig`
-can be used to store a system-wide default configuration.
+`config.worktree` (see the "CONFIGURATION FILE" section of
+linkgit:git-worktree[1]) in each repository are used to store the
+configuration for that repository, and `$HOME/.gitconfig` is used to
+store a per-user configuration as fallback values for the `.git/config`
+file. The file `/etc/gitconfig` can be used to store a system-wide
+default configuration.
 
 The configuration variables are used by both the Git plumbing
 and the porcelains. The variables are divided into sections, wherein
@@ -45,7 +46,7 @@ Subsection names are case sensitive and can contain any characters except
 newline and the null byte. Doublequote `"` and backslash can be included
 by escaping them as `\"` and `\\`, respectively. Backslashes preceding
 other characters are dropped when reading; for example, `\t` is read as
-`t` and `\0` is read as `0` Section headers cannot span multiple lines.
+`t` and `\0` is read as `0`. Section headers cannot span multiple lines.
 Variables may belong directly to a section or to a given subsection. You
 can have `[section]` if you have `[section "subsection"]`, but you don't
 need to.
@@ -63,7 +64,7 @@ The variable names are case-insensitive, allow only alphanumeric characters
 and `-`, and must start with an alphabetic character.
 
 A line that defines a value can be continued to the next line by
-ending it with a `\`; the backquote and the end-of-line are
+ending it with a `\`; the backslash and the end-of-line are
 stripped.  Leading whitespaces after 'name =', the remainder of the
 line after the first comment character '#' or ';', and trailing
 whitespaces of the line are discarded unless they are enclosed in
@@ -220,12 +221,12 @@ Example
 ; affected by the condition
 [includeIf "gitdir:/path/to/group/"]
 	path = foo.inc
-----
 
-	; include only if we are in a worktree where foo-branch is
-	; currently checked out
-	[includeIf "onbranch:foo-branch"]
-		path = foo.inc
+; include only if we are in a worktree where foo-branch is
+; currently checked out
+[includeIf "onbranch:foo-branch"]
+	path = foo.inc
+----
 
 Values
 ~~~~~~
@@ -264,7 +265,7 @@ color::
 The basic colors accepted are `normal`, `black`, `red`, `green`, `yellow`,
 `blue`, `magenta`, `cyan` and `white`.  The first color given is the
 foreground; the second is the background.  All the basic colors except
-`normal` have a bright variant that can be speficied by prefixing the
+`normal` have a bright variant that can be specified by prefixing the
 color with `bright`, like `brightred`.
 +
 Colors may also be given as numbers between 0 and 255; these use ANSI
@@ -297,6 +298,15 @@ pathname::
 	tilde expansion happens to such a string: `~/`
 	is expanded to the value of `$HOME`, and `~user/` to the
 	specified user's home directory.
++
+If a path starts with `%(prefix)/`, the remainder is interpreted as a
+path relative to Git's "runtime prefix", i.e. relative to the location
+where Git itself was installed. For example, `%(prefix)/bin/` refers to
+the directory in which the Git executable itself lives. If Git was
+compiled without runtime prefix support, the compiled-in prefix will be
+subsituted instead. In the unlikely event that a literal path needs to
+be specified that should _not_ be expanded, it needs to be prefixed by
+`./`, like so: `./%(prefix)/bin`.
 
 
 Variables
@@ -333,11 +343,15 @@ include::config/checkout.txt[]
 
 include::config/clean.txt[]
 
+include::config/clone.txt[]
+
 include::config/color.txt[]
 
 include::config/column.txt[]
 
 include::config/commit.txt[]
+
+include::config/commitgraph.txt[]
 
 include::config/credential.txt[]
 
@@ -346,6 +360,8 @@ include::config/completion.txt[]
 include::config/diff.txt[]
 
 include::config/difftool.txt[]
+
+include::config/extensions.txt[]
 
 include::config/fastimport.txt[]
 
@@ -391,9 +407,13 @@ include::config/interactive.txt[]
 
 include::config/log.txt[]
 
+include::config/lsrefs.txt[]
+
 include::config/mailinfo.txt[]
 
 include::config/mailmap.txt[]
+
+include::config/maintenance.txt[]
 
 include::config/man.txt[]
 
@@ -446,6 +466,8 @@ include::config/stash.txt[]
 include::config/submodule.txt[]
 
 include::config/tag.txt[]
+
+include::config/tar.txt[]
 
 include::config/trace2.txt[]
 

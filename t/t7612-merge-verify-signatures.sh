@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='merge signature verification tests'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 . "$TEST_DIRECTORY/lib-gpg.sh"
 
@@ -31,7 +34,7 @@ test_expect_success GPG 'create signed commits' '
 	echo 3 >baz && git add baz &&
 	test_tick && git commit -SB7227189 -m "untrusted on side" &&
 
-	git checkout master
+	git checkout main
 '
 
 test_expect_success GPG 'merge unsigned commit with verification' '

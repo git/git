@@ -7,7 +7,13 @@ if we see, for example, a ref with a bogus name, it is OK either to
 bail out or to proceed using it as a reachable tip, but it is _not_
 OK to proceed as if it did not exist. Otherwise we might silently
 delete objects that cannot be recovered.
+
+Note that we do assert command failure in these cases, because that is
+what currently happens. If that changes, these tests should be revisited.
 '
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'disable reflogs' '
@@ -15,43 +21,62 @@ test_expect_success 'disable reflogs' '
 	git reflog expire --expire=all --all
 '
 
+create_bogus_ref () {
+	test_when_finished 'rm -f .git/refs/heads/bogus..name' &&
+	echo $bogus >.git/refs/heads/bogus..name
+}
+
 test_expect_success 'create history reachable only from a bogus-named ref' '
-	test_tick && git commit --allow-empty -m master &&
+	test_tick && git commit --allow-empty -m main &&
 	base=$(git rev-parse HEAD) &&
 	test_tick && git commit --allow-empty -m bogus &&
 	bogus=$(git rev-parse HEAD) &&
 	git cat-file commit $bogus >saved &&
-	echo $bogus >.git/refs/heads/bogus..name &&
 	git reset --hard HEAD^
 '
 
 test_expect_success 'pruning does not drop bogus object' '
 	test_when_finished "git hash-object -w -t commit saved" &&
-	test_might_fail git prune --expire=now &&
-	verbose git cat-file -e $bogus
+	create_bogus_ref &&
+	test_must_fail git prune --expire=now &&
+	git cat-file -e $bogus
 '
 
 test_expect_success 'put bogus object into pack' '
 	git tag reachable $bogus &&
 	git repack -ad &&
 	git tag -d reachable &&
-	verbose git cat-file -e $bogus
+	git cat-file -e $bogus
 '
+
+test_expect_success 'non-destructive repack bails on bogus ref' '
+	create_bogus_ref &&
+	test_must_fail git repack -adk
+'
+
+test_expect_success 'GIT_REF_PARANOIA=0 overrides safety' '
+	create_bogus_ref &&
+	GIT_REF_PARANOIA=0 git repack -adk
+'
+
 
 test_expect_success 'destructive repack keeps packed object' '
-	test_might_fail git repack -Ad --unpack-unreachable=now &&
-	verbose git cat-file -e $bogus &&
-	test_might_fail git repack -ad &&
-	verbose git cat-file -e $bogus
+	create_bogus_ref &&
+	test_must_fail git repack -Ad --unpack-unreachable=now &&
+	git cat-file -e $bogus &&
+	test_must_fail git repack -ad &&
+	git cat-file -e $bogus
 '
 
-# subsequent tests will have different corruptions
-test_expect_success 'clean up bogus ref' '
-	rm .git/refs/heads/bogus..name
+test_expect_success 'destructive repack not confused by dangling symref' '
+	test_when_finished "git symbolic-ref -d refs/heads/dangling" &&
+	git symbolic-ref refs/heads/dangling refs/heads/does-not-exist &&
+	git repack -ad &&
+	test_must_fail git cat-file -e $bogus
 '
 
 # We create two new objects here, "one" and "two". Our
-# master branch points to "two", which is deleted,
+# main branch points to "two", which is deleted,
 # corrupting the repository. But we'd like to make sure
 # that the otherwise unreachable "one" is not pruned
 # (since it is the user's best bet for recovering
@@ -74,14 +99,14 @@ test_expect_success 'create history with missing tip commit' '
 
 test_expect_success 'pruning with a corrupted tip does not drop history' '
 	test_when_finished "git hash-object -w -t commit saved" &&
-	test_might_fail git prune --expire=now &&
-	verbose git cat-file -e $recoverable
+	test_must_fail git prune --expire=now &&
+	git cat-file -e $recoverable
 '
 
 test_expect_success 'pack-refs does not silently delete broken loose ref' '
 	git pack-refs --all --prune &&
 	echo $missing >expect &&
-	git rev-parse refs/heads/master >actual &&
+	git rev-parse refs/heads/main >actual &&
 	test_cmp expect actual
 '
 
@@ -89,25 +114,25 @@ test_expect_success 'pack-refs does not silently delete broken loose ref' '
 # actually pack it, as it is perfectly reasonable to
 # skip processing a broken ref
 test_expect_success 'create packed-refs file with broken ref' '
-	rm -f .git/refs/heads/master &&
+	rm -f .git/refs/heads/main &&
 	cat >.git/packed-refs <<-EOF &&
-	$missing refs/heads/master
+	$missing refs/heads/main
 	$recoverable refs/heads/other
 	EOF
 	echo $missing >expect &&
-	git rev-parse refs/heads/master >actual &&
+	git rev-parse refs/heads/main >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'pack-refs does not silently delete broken packed ref' '
 	git pack-refs --all --prune &&
-	git rev-parse refs/heads/master >actual &&
+	git rev-parse refs/heads/main >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'pack-refs does not drop broken refs during deletion' '
 	git update-ref -d refs/heads/other &&
-	git rev-parse refs/heads/master >actual &&
+	git rev-parse refs/heads/main >actual &&
 	test_cmp expect actual
 '
 

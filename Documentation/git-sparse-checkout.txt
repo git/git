@@ -45,6 +45,20 @@ To avoid interfering with other worktrees, it first enables the
 When `--cone` is provided, the `core.sparseCheckoutCone` setting is
 also set, allowing for better performance with a limited set of
 patterns (see 'CONE PATTERN SET' below).
++
+Use the `--[no-]sparse-index` option to toggle the use of the sparse
+index format. This reduces the size of the index to be more closely
+aligned with your sparse-checkout definition. This can have significant
+performance advantages for commands such as `git status` or `git add`.
+This feature is still experimental. Some commands might be slower with
+a sparse index until they are properly integrated with the feature.
++
+**WARNING:** Using a sparse index requires modifying the index in a way
+that is not completely understood by external tools. If you have trouble
+with this compatibility, then run `git sparse-checkout init --no-sparse-index`
+to rewrite your index to not be sparse. Older versions of Git will not
+understand the sparse directory entries index extension and may fail to
+interact with your repository until it is disabled.
 
 'set'::
 	Write a set of patterns to the sparse-checkout file, as given as
@@ -69,6 +83,16 @@ C-style quoted strings.
 	but they can be read from stdin using the `--stdin` option. When
 	`core.sparseCheckoutCone` is enabled, the given patterns are interpreted
 	as directory names as in the 'set' subcommand.
+
+'reapply'::
+	Reapply the sparsity pattern rules to paths in the working tree.
+	Commands like merge or rebase can materialize paths to do their
+	work (e.g. in order to show you a conflict), and other
+	sparse-checkout commands might fail to sparsify an individual file
+	(e.g. because it has unstaged changes or conflicts).  In such
+	cases, it can make sense to run `git sparse-checkout reapply` later
+	after cleaning up affected paths (e.g. resolving conflicts, undoing
+	or committing changes, etc.).
 
 'disable'::
 	Disable the `core.sparseCheckout` config setting, and restore the
@@ -186,14 +210,46 @@ case-insensitive check. This corrects for case mismatched filenames in the
 'git sparse-checkout set' command to reflect the expected cone in the working
 directory.
 
+When changing the sparse-checkout patterns in cone mode, Git will inspect each
+tracked directory that is not within the sparse-checkout cone to see if it
+contains any untracked files. If all of those files are ignored due to the
+`.gitignore` patterns, then the directory will be deleted. If any of the
+untracked files within that directory is not ignored, then no deletions will
+occur within that directory and a warning message will appear. If these files
+are important, then reset your sparse-checkout definition so they are included,
+use `git add` and `git commit` to store them, then remove any remaining files
+manually to ensure Git can behave optimally.
+
 
 SUBMODULES
 ----------
 
-If your repository contains one or more submodules, then those submodules will
-appear based on which you initialized with the `git submodule` command. If
-your sparse-checkout patterns exclude an initialized submodule, then that
-submodule will still appear in your working directory.
+If your repository contains one or more submodules, then submodules
+are populated based on interactions with the `git submodule` command.
+Specifically, `git submodule init -- <path>` will ensure the submodule
+at `<path>` is present, while `git submodule deinit [-f] -- <path>`
+will remove the files for the submodule at `<path>` (including any
+untracked files, uncommitted changes, and unpushed history).  Similar
+to how sparse-checkout removes files from the working tree but still
+leaves entries in the index, deinitialized submodules are removed from
+the working directory but still have an entry in the index.
+
+Since submodules may have unpushed changes or untracked files,
+removing them could result in data loss.  Thus, changing sparse
+inclusion/exclusion rules will not cause an already checked out
+submodule to be removed from the working copy.  Said another way, just
+as `checkout` will not cause submodules to be automatically removed or
+initialized even when switching between branches that remove or add
+submodules, using `sparse-checkout` to reduce or expand the scope of
+"interesting" files will not cause submodules to be automatically
+deinitialized or initialized either.
+
+Further, the above facts mean that there are multiple reasons that
+"tracked" files might not be present in the working copy: sparsity
+pattern application from sparse-checkout, and submodule initialization
+state.  Thus, commands like `git grep` that work on tracked files in
+the working copy may return results that are limited by either or both
+of these restrictions.
 
 
 SEE ALSO

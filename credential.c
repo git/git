@@ -10,8 +10,8 @@
 
 void credential_init(struct credential *c)
 {
-	memset(c, 0, sizeof(*c));
-	c->helpers.strdup_strings = 1;
+	struct credential blank = CREDENTIAL_INIT;
+	memcpy(c, &blank, sizeof(*c));
 }
 
 void credential_clear(struct credential *c)
@@ -36,6 +36,10 @@ int credential_match(const struct credential *want,
 	       CHECK(username);
 #undef CHECK
 }
+
+
+static int credential_from_potentially_partial_url(struct credential *c,
+						   const char *url);
 
 static int credential_config_callback(const char *var, const char *value,
 				      void *data)
@@ -82,11 +86,32 @@ static int select_all(const struct urlmatch_item *a,
 	return 0;
 }
 
+static int match_partial_url(const char *url, void *cb)
+{
+	struct credential *c = cb;
+	struct credential want = CREDENTIAL_INIT;
+	int matches = 0;
+
+	if (credential_from_potentially_partial_url(&want, url) < 0)
+		warning(_("skipping credential lookup for key: credential.%s"),
+			url);
+	else
+		matches = credential_match(&want, c);
+	credential_clear(&want);
+
+	return matches;
+}
+
 static void credential_apply_config(struct credential *c)
 {
 	char *normalized_url;
 	struct urlmatch_config config = { STRING_LIST_INIT_DUP };
 	struct strbuf url = STRBUF_INIT;
+
+	if (!c->host)
+		die(_("refusing to work with credential missing host field"));
+	if (!c->protocol)
+		die(_("refusing to work with credential missing protocol field"));
 
 	if (c->configured)
 		return;
@@ -96,12 +121,14 @@ static void credential_apply_config(struct credential *c)
 	config.collect_fn = credential_config_callback;
 	config.cascade_fn = NULL;
 	config.select_fn = select_all;
+	config.fallback_match_fn = match_partial_url;
 	config.cb = c;
 
 	credential_format(c, &url);
 	normalized_url = url_normalize(url.buf, &config.url);
 
 	git_config(urlmatch_config_entry, &config);
+	string_list_clear(&config.vars, 1);
 	free(normalized_url);
 	strbuf_release(&url);
 
@@ -131,14 +158,14 @@ static void credential_format(struct credential *c, struct strbuf *out)
 		return;
 	strbuf_addf(out, "%s://", c->protocol);
 	if (c->username && *c->username) {
-		strbuf_add_percentencode(out, c->username);
+		strbuf_add_percentencode(out, c->username, STRBUF_ENCODE_SLASH);
 		strbuf_addch(out, '@');
 	}
 	if (c->host)
 		strbuf_addstr(out, c->host);
 	if (c->path) {
 		strbuf_addch(out, '/');
-		strbuf_add_percentencode(out, c->path);
+		strbuf_add_percentencode(out, c->path, 0);
 	}
 }
 
@@ -176,7 +203,7 @@ int credential_read(struct credential *c, FILE *fp)
 {
 	struct strbuf line = STRBUF_INIT;
 
-	while (strbuf_getline_lf(&line, fp) != EOF) {
+	while (strbuf_getline(&line, fp) != EOF) {
 		char *key = line.buf;
 		char *value = strchr(key, '=');
 
@@ -222,20 +249,25 @@ int credential_read(struct credential *c, FILE *fp)
 	return 0;
 }
 
-static void credential_write_item(FILE *fp, const char *key, const char *value)
+static void credential_write_item(FILE *fp, const char *key, const char *value,
+				  int required)
 {
+	if (!value && required)
+		BUG("credential value for %s is missing", key);
 	if (!value)
 		return;
+	if (strchr(value, '\n'))
+		die("credential value for %s contains newline", key);
 	fprintf(fp, "%s=%s\n", key, value);
 }
 
 void credential_write(const struct credential *c, FILE *fp)
 {
-	credential_write_item(fp, "protocol", c->protocol);
-	credential_write_item(fp, "host", c->host);
-	credential_write_item(fp, "path", c->path);
-	credential_write_item(fp, "username", c->username);
-	credential_write_item(fp, "password", c->password);
+	credential_write_item(fp, "protocol", c->protocol, 1);
+	credential_write_item(fp, "host", c->host, 1);
+	credential_write_item(fp, "path", c->path, 0);
+	credential_write_item(fp, "username", c->username, 0);
+	credential_write_item(fp, "password", c->password, 0);
 }
 
 static int run_credential_helper(struct credential *c,
@@ -243,11 +275,9 @@ static int run_credential_helper(struct credential *c,
 				 int want_output)
 {
 	struct child_process helper = CHILD_PROCESS_INIT;
-	const char *argv[] = { NULL, NULL };
 	FILE *fp;
 
-	argv[0] = cmd;
-	helper.argv = argv;
+	strvec_push(&helper.args, cmd);
 	helper.use_shell = 1;
 	helper.in = -1;
 	if (want_output)
@@ -353,7 +383,45 @@ void credential_reject(struct credential *c)
 	c->approved = 0;
 }
 
-void credential_from_url(struct credential *c, const char *url)
+static int check_url_component(const char *url, int quiet,
+			       const char *name, const char *value)
+{
+	if (!value)
+		return 0;
+	if (!strchr(value, '\n'))
+		return 0;
+
+	if (!quiet)
+		warning(_("url contains a newline in its %s component: %s"),
+			name, url);
+	return -1;
+}
+
+/*
+ * Potentially-partial URLs can, but do not have to, contain
+ *
+ * - a protocol (or scheme) of the form "<protocol>://"
+ *
+ * - a host name (the part after the protocol and before the first slash after
+ *   that, if any)
+ *
+ * - a user name and potentially a password (as "<user>[:<password>]@" part of
+ *   the host name)
+ *
+ * - a path (the part after the host name, if any, starting with the slash)
+ *
+ * Missing parts will be left unset in `struct credential`. Thus, `https://`
+ * will have only the `protocol` set, `example.com` only the host name, and
+ * `/git` only the path.
+ *
+ * Note that an empty host name in an otherwise fully-qualified URL (e.g.
+ * `cert:///path/to/cert.pem`) will be treated as unset if we expect the URL to
+ * be potentially partial, and only then (otherwise, the empty string is used).
+ *
+ * The credential_from_url() function does not allow partial URLs.
+ */
+static int credential_from_url_1(struct credential *c, const char *url,
+				 int allow_partial_url, int quiet)
 {
 	const char *at, *colon, *cp, *slash, *host, *proto_end;
 
@@ -366,12 +434,22 @@ void credential_from_url(struct credential *c, const char *url)
 	 *   (3) proto://<user>:<pass>@<host>/...
 	 */
 	proto_end = strstr(url, "://");
-	if (!proto_end)
-		return;
-	cp = proto_end + 3;
+	if (!allow_partial_url && (!proto_end || proto_end == url)) {
+		if (!quiet)
+			warning(_("url has no scheme: %s"), url);
+		return -1;
+	}
+	cp = proto_end ? proto_end + 3 : url;
 	at = strchr(cp, '@');
 	colon = strchr(cp, ':');
-	slash = strchrnul(cp, '/');
+
+	/*
+	 * A query or fragment marker before the slash ends the host portion.
+	 * We'll just continue to call this "slash" for simplicity. Notably our
+	 * "trim leading slashes" part won't skip over this part of the path,
+	 * but that's what we'd want.
+	 */
+	slash = cp + strcspn(cp, "/?#");
 
 	if (!at || slash <= at) {
 		/* Case (1) */
@@ -392,9 +470,9 @@ void credential_from_url(struct credential *c, const char *url)
 		host = at + 1;
 	}
 
-	if (proto_end - url > 0)
+	if (proto_end && proto_end - url > 0)
 		c->protocol = xmemdupz(url, proto_end - url);
-	if (slash - host > 0)
+	if (!allow_partial_url || slash - host > 0)
 		c->host = url_decode_mem(host, slash - host);
 	/* Trim leading and trailing slashes from path */
 	while (*slash == '/')
@@ -406,4 +484,30 @@ void credential_from_url(struct credential *c, const char *url)
 		while (p > c->path && *p == '/')
 			*p-- = '\0';
 	}
+
+	if (check_url_component(url, quiet, "username", c->username) < 0 ||
+	    check_url_component(url, quiet, "password", c->password) < 0 ||
+	    check_url_component(url, quiet, "protocol", c->protocol) < 0 ||
+	    check_url_component(url, quiet, "host", c->host) < 0 ||
+	    check_url_component(url, quiet, "path", c->path) < 0)
+		return -1;
+
+	return 0;
+}
+
+static int credential_from_potentially_partial_url(struct credential *c,
+						   const char *url)
+{
+	return credential_from_url_1(c, url, 1, 0);
+}
+
+int credential_from_url_gently(struct credential *c, const char *url, int quiet)
+{
+	return credential_from_url_1(c, url, 0, quiet);
+}
+
+void credential_from_url(struct credential *c, const char *url)
+{
+	if (credential_from_url_gently(c, url, 0) < 0)
+		die(_("credential url cannot be parsed: %s"), url);
 }

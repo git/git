@@ -128,4 +128,18 @@ test_expect_success 'export-subst' '
 	test_cmp substfile2 archive/substfile2
 '
 
+test_expect_success 'export-subst expands %(describe) once' '
+	echo "\$Format:%(describe)\$" >substfile3 &&
+	echo "\$Format:%(describe)\$" >>substfile3 &&
+	echo "\$Format:%(describe)${LF}%(describe)\$" >substfile4 &&
+	git add substfile[34] &&
+	git commit -m export-subst-describe &&
+	git tag -m export-subst-describe export-subst-describe &&
+	git archive HEAD >archive-describe.tar &&
+	extract_tar_to_dir archive-describe &&
+	desc=$(git describe) &&
+	grep -F "$desc" archive-describe/substfile[34] >substituted &&
+	test_line_count = 1 substituted
+'
+
 test_done

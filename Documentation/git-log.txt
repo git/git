@@ -15,9 +15,12 @@ DESCRIPTION
 -----------
 Shows the commit logs.
 
-The command takes options applicable to the `git rev-list`
+:git-log: 1
+include::rev-list-description.txt[]
+
+The command takes options applicable to the linkgit:git-rev-list[1]
 command to control what is shown and how, and options applicable to
-the `git diff-*` commands to control how the changes
+the linkgit:git-diff[1] command to control how the changes
 each commit introduces are shown.
 
 
@@ -36,19 +39,25 @@ OPTIONS
 	full ref name (including prefix) will be printed. If 'auto' is
 	specified, then if the output is going to a terminal, the ref names
 	are shown as if 'short' were given, otherwise no ref names are
-	shown. The default option is 'short'.
+	shown. The option `--decorate` is short-hand for `--decorate=short`.
+	Default to configuration value of `log.decorate` if configured,
+	otherwise, `auto`.
 
 --decorate-refs=<pattern>::
 --decorate-refs-exclude=<pattern>::
 	If no `--decorate-refs` is given, pretend as if all refs were
 	included.  For each candidate, do not use it for decoration if it
 	matches any patterns given to `--decorate-refs-exclude` or if it
-	doesn't match any of the patterns given to `--decorate-refs`.
+	doesn't match any of the patterns given to `--decorate-refs`. The
+	`log.excludeDecoration` config option allows excluding refs from
+	the decorations, but an explicit `--decorate-refs` pattern will
+	override a match in `log.excludeDecoration`.
 
 --source::
 	Print out the ref name given on the command line by which each
 	commit was reached.
 
+--[no-]mailmap::
 --[no-]use-mailmap::
 	Use mailmap file to map author and committer names and email
 	addresses to canonical real names and email addresses. See
@@ -70,20 +79,7 @@ produced by `--stat`, etc.
 	Intended to speed up tools that read log messages from `git log`
 	output by allowing them to allocate space in advance.
 
--L <start>,<end>:<file>::
--L :<funcname>:<file>::
-	Trace the evolution of the line range given by "<start>,<end>"
-	(or the function name regex <funcname>) within the <file>.  You may
-	not give any pathspec limiters.  This is currently limited to
-	a walk starting from a single revision, i.e., you may only
-	give zero or one positive revision arguments, and
-	<start> and <end> (or <funcname>) must exist in the starting revision.
-	You can specify this option more than once. Implies `--patch`.
-	Patch output can be suppressed using `--no-patch`, but other diff formats
-	(namely `--raw`, `--numstat`, `--shortstat`, `--dirstat`, `--summary`,
-	`--name-only`, `--name-status`, `--check`) are not currently implemented.
-+
-include::line-range-format.txt[]
+include::line-range-options.txt[]
 
 <revision range>::
 	Show only commits in the specified revision range.  When no
@@ -107,10 +103,21 @@ include::rev-list-options.txt[]
 
 include::pretty-formats.txt[]
 
-COMMON DIFF OPTIONS
--------------------
+DIFF FORMATTING
+---------------
+
+By default, `git log` does not generate any diff output. The options
+below can be used to show the changes made by each commit.
+
+Note that unless one of `--diff-merges` variants (including short
+`-m`, `-c`, and `--cc` options) is explicitly given, merge commits
+will not show a diff, even if a diff format like `--patch` is
+selected, nor will they match search options like `-S`. The exception
+is when `--first-parent` is in use, in which case `first-parent` is
+the default format.
 
 :git-log: 1
+:diff-merges-default: `off`
 include::diff-options.txt[]
 
 include::diff-generate-patch.txt[]

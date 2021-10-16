@@ -25,14 +25,16 @@ ASCIIDOC_HTML    = xhtml11
 ASCIIDOC_DOCBOOK = docbook
 ASCIIDOC_EXTRA   =
 XMLTO            = xmlto
+XMLTO_EXTRA      =
 
 ifdef USE_ASCIIDOCTOR
 ASCIIDOC         = asciidoctor
 ASCIIDOC_CONF    =
 ASCIIDOC_HTML    = xhtml5
-ASCIIDOC_DOCBOOK = docbook45
+ASCIIDOC_DOCBOOK = docbook
 ASCIIDOC_EXTRA  += -I../../Documentation -rasciidoctor-extensions
 ASCIIDOC_EXTRA  += -alitdd='&\#x2d;&\#x2d;'
+XMLTO_EXTRA     += --skip-validation
 endif
 
 ifndef SHELL_PATH
@@ -78,7 +80,7 @@ install-html: $(GIT_SUBTREE_HTML)
 	$(INSTALL) -m 644 $^ $(DESTDIR)$(htmldir)
 
 $(GIT_SUBTREE_DOC): $(GIT_SUBTREE_XML)
-	$(XMLTO) -m $(MANPAGE_XSL) man $^
+	$(XMLTO) -m $(MANPAGE_XSL) $(XMLTO_EXTRA) man $^
 
 $(GIT_SUBTREE_XML): $(GIT_SUBTREE_TXT)
 	$(ASCIIDOC) -b $(ASCIIDOC_DOCBOOK) -d manpage $(ASCIIDOC_CONF) \

@@ -52,8 +52,8 @@ char strbuf_slopbuf[1];
 
 void strbuf_init(struct strbuf *sb, size_t hint)
 {
-	sb->alloc = sb->len = 0;
-	sb->buf = strbuf_slopbuf;
+	struct strbuf blank = STRBUF_INIT;
+	memcpy(sb, &blank, sizeof(*sb));
 	if (hint)
 		strbuf_grow(sb, hint);
 }
@@ -209,6 +209,8 @@ void strbuf_list_free(struct strbuf **sbs)
 {
 	struct strbuf **s = sbs;
 
+	if (!s)
+		return;
 	while (*s) {
 		strbuf_release(*s);
 		free(*s++);
@@ -479,15 +481,17 @@ void strbuf_addbuf_percentquote(struct strbuf *dst, const struct strbuf *src)
 	}
 }
 
-#define URL_UNSAFE_CHARS " <>\"%{}|\\^`:/?#[]@!$&'()*+,;="
+#define URL_UNSAFE_CHARS " <>\"%{}|\\^`:?#[]@!$&'()*+,;="
 
-void strbuf_add_percentencode(struct strbuf *dst, const char *src)
+void strbuf_add_percentencode(struct strbuf *dst, const char *src, int flags)
 {
 	size_t i, len = strlen(src);
 
 	for (i = 0; i < len; i++) {
 		unsigned char ch = src[i];
-		if (ch <= 0x1F || ch >= 0x7F || strchr(URL_UNSAFE_CHARS, ch))
+		if (ch <= 0x1F || ch >= 0x7F ||
+		    (ch == '/' && (flags & STRBUF_ENCODE_SLASH)) ||
+		    strchr(URL_UNSAFE_CHARS, ch))
 			strbuf_addf(dst, "%%%02X", (unsigned char)ch);
 		else
 			strbuf_addch(dst, ch);
@@ -553,7 +557,6 @@ ssize_t strbuf_write(struct strbuf *sb, FILE *f)
 {
 	return sb->len ? fwrite(sb->buf, 1, sb->len, f) : 0;
 }
-
 
 #define STRBUF_MAXLINK (2*PATH_MAX)
 
@@ -689,6 +692,16 @@ int strbuf_getwholeline(struct strbuf *sb, FILE *fp, int term)
 	return 0;
 }
 #endif
+
+int strbuf_appendwholeline(struct strbuf *sb, FILE *fp, int term)
+{
+	struct strbuf line = STRBUF_INIT;
+	if (strbuf_getwholeline(&line, fp, term))
+		return EOF;
+	strbuf_addbuf(sb, &line);
+	strbuf_release(&line);
+	return 0;
+}
 
 static int strbuf_getdelim(struct strbuf *sb, FILE *fp, int term)
 {

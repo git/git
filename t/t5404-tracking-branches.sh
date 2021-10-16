@@ -2,6 +2,9 @@
 
 test_description='tracking branch update checks for git push'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -30,9 +33,9 @@ test_expect_success 'prepare pushable branches' '
 	git checkout -b b2 origin/b2 &&
 	echo aa-b2 >>file &&
 	git commit -a -m aa-b2 &&
-	git checkout master &&
-	echo aa-master >>file &&
-	git commit -a -m aa-master
+	git checkout main &&
+	echo aa-main >>file &&
+	git commit -a -m aa-main
 '
 
 test_expect_success 'mixed-success push returns error' '
@@ -40,7 +43,7 @@ test_expect_success 'mixed-success push returns error' '
 '
 
 test_expect_success 'check tracking branches updated correctly after push' '
-	test "$(git rev-parse origin/master)" = "$(git rev-parse master)"
+	test "$(git rev-parse origin/main)" = "$(git rev-parse main)"
 '
 
 test_expect_success 'check tracking branches not updated for failed refs' '

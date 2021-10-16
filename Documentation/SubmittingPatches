@@ -3,8 +3,9 @@ Submitting Patches
 
 == Guidelines
 
-Here are some guidelines for people who want to contribute their code
-to this software.
+Here are some guidelines for people who want to contribute their code to this
+software. There is also a link:MyFirstContribution.html[step-by-step tutorial]
+available which covers many of these same guidelines.
 
 [[base-branch]]
 === Decide what to base your work on.
@@ -18,7 +19,7 @@ change is relevant to.
   base your work on the tip of the topic.
 
 * A new feature should be based on `master` in general. If the new
-  feature depends on a topic that is in `pu`, but not in `master`,
+  feature depends on a topic that is in `seen`, but not in `master`,
   base your work on the tip of that topic.
 
 * Corrections and enhancements to a topic not yet in `master` should
@@ -27,7 +28,7 @@ change is relevant to.
   into the series.
 
 * In the exceptional case that a new feature depends on several topics
-  not in `master`, start working on `next` or `pu` privately and send
+  not in `master`, start working on `next` or `seen` privately and send
   out patches for discussion. Before the final merge, you may have to
   wait until some of the dependent topics graduate to `master`, and
   rebase your work.
@@ -37,7 +38,7 @@ change is relevant to.
   these parts should be based on their trees.
 
 To find the tip of a topic branch, run `git log --first-parent
-master..pu` and look for the merge commit. The second parent of this
+master..seen` and look for the merge commit. The second parent of this
 commit is the tip of the topic branch.
 
 [[separate-commits]]
@@ -73,10 +74,9 @@ the feature triggers the new behavior when it should, and to show the
 feature does not trigger when it shouldn't.  After any code change, make
 sure that the entire test suite passes.
 
-If you have an account at GitHub (and you can get one for free to work
-on open source projects), you can use their Travis CI integration to
-test your changes on Linux, Mac (and hopefully soon Windows).  See
-GitHub-Travis CI hints section for details.
+Pushing to a fork of https://github.com/git/git will use their CI
+integration to test your changes on Linux, Mac and Windows. See the
+<<GHCI,GitHub CI>> section for details.
 
 Do not forget to update the documentation to describe the updated
 behavior and make sure that the resulting documentation set formats
@@ -116,10 +116,13 @@ If in doubt which identifier to use, run `git log --no-merges` on the
 files you are modifying to see the current conventions.
 
 [[summary-section]]
-It's customary to start the remainder of the first line after "area: "
-with a lower-case letter. E.g. "doc: clarify...", not "doc:
-Clarify...", or "githooks.txt: improve...", not "githooks.txt:
-Improve...".
+The title sentence after the "area:" prefix omits the full stop at the
+end, and its first word is not capitalized unless there is a reason to
+capitalize it other than because it is the first word in the sentence.
+E.g. "doc: clarify...", not "doc: Clarify...", or "githooks.txt:
+improve...", not "githooks.txt: Improve...".  But "refs: HEAD is also
+treated as a ref" is correct, as we spell `HEAD` in all caps even when
+it appears in the middle of a sentence.
 
 [[meaningful-message]]
 The body should provide a meaningful commit message, which:
@@ -162,6 +165,85 @@ or, on an older version of Git without support for --pretty=reference:
 ....
 	git show -s --date=short --pretty='format:%h (%s, %ad)' <commit>
 ....
+
+[[sign-off]]
+=== Certify your work by adding your `Signed-off-by` trailer
+
+To improve tracking of who did what, we ask you to certify that you
+wrote the patch or have the right to pass it on under the same license
+as ours, by "signing off" your patch.  Without sign-off, we cannot
+accept your patches.
+
+If (and only if) you certify the below D-C-O:
+
+[[dco]]
+.Developer's Certificate of Origin 1.1
+____
+By making a contribution to this project, I certify that:
+
+a. The contribution was created in whole or in part by me and I
+   have the right to submit it under the open source license
+   indicated in the file; or
+
+b. The contribution is based upon previous work that, to the best
+   of my knowledge, is covered under an appropriate open source
+   license and I have the right under that license to submit that
+   work with modifications, whether created in whole or in part
+   by me, under the same open source license (unless I am
+   permitted to submit under a different license), as indicated
+   in the file; or
+
+c. The contribution was provided directly to me by some other
+   person who certified (a), (b) or (c) and I have not modified
+   it.
+
+d. I understand and agree that this project and the contribution
+   are public and that a record of the contribution (including all
+   personal information I submit with it, including my sign-off) is
+   maintained indefinitely and may be redistributed consistent with
+   this project or the open source license(s) involved.
+____
+
+you add a "Signed-off-by" trailer to your commit, that looks like
+this:
+
+....
+	Signed-off-by: Random J Developer <random@developer.example.org>
+....
+
+This line can be added by Git if you run the git-commit command with
+the -s option.
+
+Notice that you can place your own `Signed-off-by` trailer when
+forwarding somebody else's patch with the above rules for
+D-C-O.  Indeed you are encouraged to do so.  Do not forget to
+place an in-body "From: " line at the beginning to properly attribute
+the change to its true author (see (2) above).
+
+This procedure originally came from the Linux kernel project, so our
+rule is quite similar to theirs, but what exactly it means to sign-off
+your patch differs from project to project, so it may be different
+from that of the project you are accustomed to.
+
+[[real-name]]
+Also notice that a real name is used in the `Signed-off-by` trailer. Please
+don't hide your real name.
+
+[[commit-trailers]]
+If you like, you can put extra tags at the end:
+
+. `Reported-by:` is used to credit someone who found the bug that
+  the patch attempts to fix.
+. `Acked-by:` says that the person who is more familiar with the area
+  the patch attempts to modify liked the patch.
+. `Reviewed-by:`, unlike the other tags, can only be offered by the
+  reviewers themselves when they are completely satisfied with the
+  patch after a detailed analysis.
+. `Tested-by:` is used to indicate that the person applied the patch
+  and found it to have the desired effect.
+
+You can also create your own tag or use one that's in common usage
+such as "Thanks-to:", "Based-on-patch-by:", or "Mentored-by:".
 
 [[git-tools]]
 === Generate your patch using Git tools out of your commits.
@@ -208,7 +290,7 @@ send them as replies to either an additional "cover letter" message
 (see below), the first patch, or the respective preceding patch.
 
 If your log message (including your name on the
-Signed-off-by line) is not writable in ASCII, make sure that
+`Signed-off-by` trailer) is not writable in ASCII, make sure that
 you send off a message in the correct encoding.
 
 WARNING: Be wary of your MUAs word-wrap
@@ -228,7 +310,7 @@ previously sent.
 The `git format-patch` command follows the best current practice to
 format the body of an e-mail message.  At the beginning of the
 patch should come your commit message, ending with the
-Signed-off-by: lines, and a line that consists of three dashes,
+`Signed-off-by` trailers, and a line that consists of three dashes,
 followed by the diffstat information and the patch itself.  If
 you are forwarding a patch from somebody else, optionally, at
 the beginning of the e-mail message just before the commit
@@ -289,89 +371,14 @@ identify them), to solicit comments and reviews.
 :git-ml: footnote:[The mailing list: git@vger.kernel.org]
 
 After the list reached a consensus that it is a good idea to apply the
-patch, re-send it with "To:" set to the maintainer{current-maintainer} and "cc:" the
-list{git-ml} for inclusion.
+patch, re-send it with "To:" set to the maintainer{current-maintainer}
+and "cc:" the list{git-ml} for inclusion.  This is especially relevant
+when the maintainer did not heavily participate in the discussion and
+instead left the review to trusted others.
 
 Do not forget to add trailers such as `Acked-by:`, `Reviewed-by:` and
 `Tested-by:` lines as necessary to credit people who helped your
-patch.
-
-[[sign-off]]
-=== Certify your work by adding your "Signed-off-by: " line
-
-To improve tracking of who did what, we've borrowed the
-"sign-off" procedure from the Linux kernel project on patches
-that are being emailed around.  Although core Git is a lot
-smaller project it is a good discipline to follow it.
-
-The sign-off is a simple line at the end of the explanation for
-the patch, which certifies that you wrote it or otherwise have
-the right to pass it on as an open-source patch.  The rules are
-pretty simple: if you can certify the below D-C-O:
-
-[[dco]]
-.Developer's Certificate of Origin 1.1
-____
-By making a contribution to this project, I certify that:
-
-a. The contribution was created in whole or in part by me and I
-   have the right to submit it under the open source license
-   indicated in the file; or
-
-b. The contribution is based upon previous work that, to the best
-   of my knowledge, is covered under an appropriate open source
-   license and I have the right under that license to submit that
-   work with modifications, whether created in whole or in part
-   by me, under the same open source license (unless I am
-   permitted to submit under a different license), as indicated
-   in the file; or
-
-c. The contribution was provided directly to me by some other
-   person who certified (a), (b) or (c) and I have not modified
-   it.
-
-d. I understand and agree that this project and the contribution
-   are public and that a record of the contribution (including all
-   personal information I submit with it, including my sign-off) is
-   maintained indefinitely and may be redistributed consistent with
-   this project or the open source license(s) involved.
-____
-
-then you just add a line saying
-
-....
-	Signed-off-by: Random J Developer <random@developer.example.org>
-....
-
-This line can be automatically added by Git if you run the git-commit
-command with the -s option.
-
-Notice that you can place your own Signed-off-by: line when
-forwarding somebody else's patch with the above rules for
-D-C-O.  Indeed you are encouraged to do so.  Do not forget to
-place an in-body "From: " line at the beginning to properly attribute
-the change to its true author (see (2) above).
-
-[[real-name]]
-Also notice that a real name is used in the Signed-off-by: line. Please
-don't hide your real name.
-
-[[commit-trailers]]
-If you like, you can put extra tags at the end:
-
-. `Reported-by:` is used to credit someone who found the bug that
-  the patch attempts to fix.
-. `Acked-by:` says that the person who is more familiar with the area
-  the patch attempts to modify liked the patch.
-. `Reviewed-by:`, unlike the other tags, can only be offered by the
-  reviewer and means that she is completely satisfied that the patch
-  is ready for application.  It is usually offered only after a
-  detailed review.
-. `Tested-by:` is used to indicate that the person applied the patch
-  and found it to have the desired effect.
-
-You can also create your own tag or use one that's in common usage
-such as "Thanks-to:", "Based-on-patch-by:", or "Mentored-by:".
+patch, and "cc:" them when sending such a final version for inclusion.
 
 == Subsystems with dedicated maintainers
 
@@ -423,7 +430,7 @@ help you find out who they are.
   and cooked further and eventually graduates to `master`.
 
 In any time between the (2)-(3) cycle, the maintainer may pick it up
-from the list and queue it to `pu`, in order to make it easier for
+from the list and queue it to `seen`, in order to make it easier for
 people play with it without having to pick up and apply the patch to
 their trees themselves.
 
@@ -434,20 +441,19 @@ their trees themselves.
   master. `git pull --rebase` will automatically skip already-applied
   patches, and will let you know. This works only if you rebase on top
   of the branch in which your patch has been merged (i.e. it will not
-  tell you if your patch is merged in pu if you rebase on top of
+  tell you if your patch is merged in `seen` if you rebase on top of
   master).
 
 * Read the Git mailing list, the maintainer regularly posts messages
   entitled "What's cooking in git.git" and "What's in git.git" giving
   the status of various proposed changes.
 
-[[travis]]
-== GitHub-Travis CI hints
+== GitHub CI[[GHCI]]]
 
-With an account at GitHub (you can get one for free to work on open
-source projects), you can use Travis CI to test your changes on Linux,
-Mac (and hopefully soon Windows).  You can find a successful example
-test build here: https://travis-ci.org/git/git/builds/120473209
+With an account at GitHub, you can use GitHub CI to test your changes
+on Linux, Mac and Windows. See
+https://github.com/git/git/actions/workflows/main.yml for examples of
+recent CI runs.
 
 Follow these steps for the initial setup:
 
@@ -455,31 +461,18 @@ Follow these steps for the initial setup:
   You can find detailed instructions how to fork here:
   https://help.github.com/articles/fork-a-repo/
 
-. Open the Travis CI website: https://travis-ci.org
-
-. Press the "Sign in with GitHub" button.
-
-. Grant Travis CI permissions to access your GitHub account.
-  You can find more information about the required permissions here:
-  https://docs.travis-ci.com/user/github-oauth-scopes
-
-. Open your Travis CI profile page: https://travis-ci.org/profile
-
-. Enable Travis CI builds for your Git fork.
-
-After the initial setup, Travis CI will run whenever you push new changes
+After the initial setup, CI will run whenever you push new changes
 to your fork of Git on GitHub.  You can monitor the test state of all your
-branches here: https://travis-ci.org/__<Your GitHub handle>__/git/branches
+branches here: https://github.com/<Your GitHub handle>/git/actions/workflows/main.yml
 
 If a branch did not pass all test cases then it is marked with a red
-cross.  In that case you can click on the failing Travis CI job and
-scroll all the way down in the log.  Find the line "<-- Click here to see
-detailed test output!" and click on the triangle next to the log line
-number to expand the detailed test output.  Here is such a failing
-example: https://travis-ci.org/git/git/jobs/122676187
+cross. In that case you can click on the failing job and navigate to
+"ci/run-build-and-tests.sh" and/or "ci/print-test-failures.sh". You
+can also download "Artifacts" which are tarred (or zipped) archives
+with test data relevant for debugging.
 
-Fix the problem and push your fix to your Git fork.  This will trigger
-a new Travis CI build to ensure all tests pass.
+Then fix the problem and push your fix to your GitHub fork. This will
+trigger a new CI build to ensure all tests pass.
 
 [[mua]]
 == MUA specific hints

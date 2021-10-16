@@ -130,7 +130,7 @@ ignored, then the directory is not shown, but all contents are shown.
 --column[=<options>]::
 --no-column::
 	Display untracked files in columns. See configuration variable
-	column.status for option syntax.`--column` and `--no-column`
+	`column.status` for option syntax. `--column` and `--no-column`
 	without options are equivalent to 'always' and 'never'
 	respectively.
 
@@ -184,37 +184,52 @@ characters, that field will be quoted in the manner of a C string
 literal: surrounded by ASCII double quote (34) characters, and with
 interior special characters backslash-escaped.
 
-For paths with merge conflicts, `X` and `Y` show the modification
-states of each side of the merge. For paths that do not have merge
-conflicts, `X` shows the status of the index, and `Y` shows the status
-of the work tree.  For untracked paths, `XY` are `??`.  Other status
-codes can be interpreted as follows:
+There are three different types of states that are shown using this format, and
+each one uses the `XY` syntax differently:
+
+* When a merge is occurring and the merge was successful, or outside of a merge
+	situation, `X` shows the status of the index and `Y` shows the status of the
+	working tree.
+* When a merge conflict has occurred and has not yet been resolved, `X` and `Y`
+	show the state introduced by each head of the merge, relative to the common
+	ancestor. These paths are said to be _unmerged_.
+* When a path is untracked, `X` and `Y` are always the same, since they are
+	unknown to the index. `??` is used for untracked paths. Ignored files are
+	not listed unless `--ignored` is used; if it is, ignored files are indicated
+	by `!!`.
+
+Note that the term _merge_ here also includes rebases using the default
+`--merge` strategy, cherry-picks, and anything else using the merge machinery.
+
+In the following table, these three classes are shown in separate sections, and
+these characters are used for `X` and `Y` fields for the first two sections that
+show tracked paths:
 
 * ' ' = unmodified
 * 'M' = modified
+* 'T' = file type changed (regular file, symbolic link or submodule)
 * 'A' = added
 * 'D' = deleted
 * 'R' = renamed
-* 'C' = copied
+* 'C' = copied (if config option status.renames is set to "copies")
 * 'U' = updated but unmerged
-
-Ignored files are not listed, unless `--ignored` option is in effect,
-in which case `XY` are `!!`.
 
 ....
 X          Y     Meaning
 -------------------------------------------------
 	 [AMD]   not updated
-M        [ MD]   updated in index
-A        [ MD]   added to index
+M        [ MTD]  updated in index
+T        [ MTD]  type changed in index
+A        [ MTD]  added to index
 D                deleted from index
-R        [ MD]   renamed in index
-C        [ MD]   copied in index
-[MARC]           index and work tree matches
-[ MARC]     M    work tree changed since index
-[ MARC]     D    deleted in work tree
-[ D]        R    renamed in work tree
-[ D]        C    copied in work tree
+R        [ MTD]  renamed in index
+C        [ MTD]  copied in index
+[MTARC]          index and work tree matches
+[ MTARC]    M    work tree changed since index
+[ MTARC]    T    type changed in work tree since index
+[ MTARC]    D    deleted in work tree
+	    R    renamed in work tree
+	    C    copied in work tree
 -------------------------------------------------
 D           D    unmerged, both deleted
 A           U    unmerged, added by us
@@ -351,7 +366,7 @@ Field       Meaning
 Unmerged entries have the following format; the first character is
 a "u" to distinguish from ordinary changed entries.
 
-    u <xy> <sub> <m1> <m2> <m3> <mW> <h1> <h2> <h3> <path>
+    u <XY> <sub> <m1> <m2> <m3> <mW> <h1> <h2> <h3> <path>
 
 ....
 Field       Meaning

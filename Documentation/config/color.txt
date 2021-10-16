@@ -127,8 +127,9 @@ color.interactive.<slot>::
 	interactive commands.
 
 color.pager::
-	A boolean to enable/disable colored output when the pager is in
-	use (default is true).
+	A boolean to specify whether `auto` color modes should colorize
+	output going to the pager. Defaults to true; set this to false
+	if your pager does not understand ANSI color codes.
 
 color.push::
 	A boolean to enable/disable color in push errors. May be set to

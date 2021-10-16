@@ -14,6 +14,7 @@
 #include "utf8.h"
 #include "quote.h"
 #include "thread-utils.h"
+#include "dir.h"
 
 const char git_attr__true[] = "(builtin)true";
 const char git_attr__false[] = "\0(builtin)false";
@@ -52,13 +53,6 @@ static inline void hashmap_unlock(struct attr_hashmap *map)
 	pthread_mutex_unlock(&map->mutex);
 }
 
-/*
- * The global dictionary of all interned attributes.  This
- * is a singleton object which is shared between threads.
- * Access to this dictionary must be surrounded with a mutex.
- */
-static struct attr_hashmap g_attr_hashmap;
-
 /* The container for objects stored in "struct attr_hashmap" */
 struct attr_hash_entry {
 	struct hashmap_entry ent;
@@ -80,11 +74,14 @@ static int attr_hash_entry_cmp(const void *unused_cmp_data,
 	return (a->keylen != b->keylen) || strncmp(a->key, b->key, a->keylen);
 }
 
-/* Initialize an 'attr_hashmap' object */
-static void attr_hashmap_init(struct attr_hashmap *map)
-{
-	hashmap_init(&map->map, attr_hash_entry_cmp, NULL, 0);
-}
+/*
+ * The global dictionary of all interned attributes.  This
+ * is a singleton object which is shared between threads.
+ * Access to this dictionary must be surrounded with a mutex.
+ */
+static struct attr_hashmap g_attr_hashmap = {
+	HASHMAP_INIT(attr_hash_entry_cmp, NULL)
+};
 
 /*
  * Retrieve the 'value' stored in a hashmap given the provided 'key'.
@@ -95,9 +92,6 @@ static void *attr_hashmap_get(struct attr_hashmap *map,
 {
 	struct attr_hash_entry k;
 	struct attr_hash_entry *e;
-
-	if (!map->map.tablesize)
-		attr_hashmap_init(map);
 
 	hashmap_entry_init(&k.ent, memhash(key, keylen));
 	k.key = key;
@@ -113,9 +107,6 @@ static void attr_hashmap_add(struct attr_hashmap *map,
 			     void *value)
 {
 	struct attr_hash_entry *e;
-
-	if (!map->map.tablesize)
-		attr_hashmap_init(map);
 
 	e = xmalloc(sizeof(struct attr_hash_entry));
 	hashmap_entry_init(&e->ent, memhash(key, keylen));
@@ -288,6 +279,10 @@ struct match_attr {
 
 static const char blank[] = " \t\r\n";
 
+/* Flags usable in read_attr() and parse_attr_line() family of functions. */
+#define READ_ATTR_MACRO_OK (1<<0)
+#define READ_ATTR_NOFOLLOW (1<<1)
+
 /*
  * Parse a whitespace-delimited attribute state (i.e., "attr",
  * "-attr", "!attr", or "attr=value") from the string starting at src.
@@ -341,7 +336,7 @@ static const char *parse_attr(const char *src, int lineno, const char *cp,
 }
 
 static struct match_attr *parse_attr_line(const char *line, const char *src,
-					  int lineno, int macro_ok)
+					  int lineno, unsigned flags)
 {
 	int namelen;
 	int num_attr, i;
@@ -365,7 +360,7 @@ static struct match_attr *parse_attr_line(const char *line, const char *src,
 
 	if (strlen(ATTRIBUTE_MACRO_PREFIX) < namelen &&
 	    starts_with(name, ATTRIBUTE_MACRO_PREFIX)) {
-		if (!macro_ok) {
+		if (!(flags & READ_ATTR_MACRO_OK)) {
 			fprintf_ln(stderr, _("%s not allowed: %s:%d"),
 				   name, src, lineno);
 			goto fail_return;
@@ -579,7 +574,7 @@ struct attr_check *attr_check_initl(const char *one, ...)
 	check = attr_check_alloc();
 	check->nr = cnt;
 	check->alloc = cnt;
-	check->items = xcalloc(cnt, sizeof(struct attr_check_item));
+	CALLOC_ARRAY(check->items, cnt);
 
 	check->items[0].attr = git_attr(one);
 	va_start(params, one);
@@ -663,11 +658,11 @@ static void handle_attr_line(struct attr_stack *res,
 			     const char *line,
 			     const char *src,
 			     int lineno,
-			     int macro_ok)
+			     unsigned flags)
 {
 	struct match_attr *a;
 
-	a = parse_attr_line(line, src, lineno, macro_ok);
+	a = parse_attr_line(line, src, lineno, flags);
 	if (!a)
 		return;
 	ALLOC_GROW(res->attrs, res->num_matches + 1, res->alloc);
@@ -680,9 +675,10 @@ static struct attr_stack *read_attr_from_array(const char **list)
 	const char *line;
 	int lineno = 0;
 
-	res = xcalloc(1, sizeof(*res));
+	CALLOC_ARRAY(res, 1);
 	while ((line = *(list++)) != NULL)
-		handle_attr_line(res, line, "[builtin]", ++lineno, 1);
+		handle_attr_line(res, line, "[builtin]", ++lineno,
+				 READ_ATTR_MACRO_OK);
 	return res;
 }
 
@@ -690,7 +686,7 @@ static struct attr_stack *read_attr_from_array(const char **list)
  * Callers into the attribute system assume there is a single, system-wide
  * global state where attributes are read from and when the state is flipped by
  * calling git_attr_set_direction(), the stack frames that have been
- * constructed need to be discarded so so that subsequent calls into the
+ * constructed need to be discarded so that subsequent calls into the
  * attribute system will lazily read from the right place.  Since changing
  * direction causes a global paradigm shift, it should not ever be called while
  * another thread could potentially be calling into the attribute system.
@@ -708,29 +704,39 @@ void git_attr_set_direction(enum git_attr_direction new_direction)
 	direction = new_direction;
 }
 
-static struct attr_stack *read_attr_from_file(const char *path, int macro_ok)
+static struct attr_stack *read_attr_from_file(const char *path, unsigned flags)
 {
-	FILE *fp = fopen_or_warn(path, "r");
+	int fd;
+	FILE *fp;
 	struct attr_stack *res;
 	char buf[2048];
 	int lineno = 0;
 
-	if (!fp)
+	if (flags & READ_ATTR_NOFOLLOW)
+		fd = open_nofollow(path, O_RDONLY);
+	else
+		fd = open(path, O_RDONLY);
+
+	if (fd < 0) {
+		warn_on_fopen_errors(path);
 		return NULL;
-	res = xcalloc(1, sizeof(*res));
+	}
+	fp = xfdopen(fd, "r");
+
+	CALLOC_ARRAY(res, 1);
 	while (fgets(buf, sizeof(buf), fp)) {
 		char *bufp = buf;
 		if (!lineno)
 			skip_utf8_bom(&bufp, strlen(bufp));
-		handle_attr_line(res, bufp, path, ++lineno, macro_ok);
+		handle_attr_line(res, bufp, path, ++lineno, flags);
 	}
 	fclose(fp);
 	return res;
 }
 
-static struct attr_stack *read_attr_from_index(const struct index_state *istate,
+static struct attr_stack *read_attr_from_index(struct index_state *istate,
 					       const char *path,
-					       int macro_ok)
+					       unsigned flags)
 {
 	struct attr_stack *res;
 	char *buf, *sp;
@@ -739,11 +745,25 @@ static struct attr_stack *read_attr_from_index(const struct index_state *istate,
 	if (!istate)
 		return NULL;
 
+	/*
+	 * The .gitattributes file only applies to files within its
+	 * parent directory. In the case of cone-mode sparse-checkout,
+	 * the .gitattributes file is sparse if and only if all paths
+	 * within that directory are also sparse. Thus, don't load the
+	 * .gitattributes file since it will not matter.
+	 *
+	 * In the case of a sparse index, it is critical that we don't go
+	 * looking for a .gitattributes file, as doing so would cause the
+	 * index to expand.
+	 */
+	if (!path_in_cone_mode_sparse_checkout(path, istate))
+		return NULL;
+
 	buf = read_blob_data_from_index(istate, path, NULL);
 	if (!buf)
 		return NULL;
 
-	res = xcalloc(1, sizeof(*res));
+	CALLOC_ARRAY(res, 1);
 	for (sp = buf; *sp; ) {
 		char *ep;
 		int more;
@@ -751,27 +771,27 @@ static struct attr_stack *read_attr_from_index(const struct index_state *istate,
 		ep = strchrnul(sp, '\n');
 		more = (*ep == '\n');
 		*ep = '\0';
-		handle_attr_line(res, sp, path, ++lineno, macro_ok);
+		handle_attr_line(res, sp, path, ++lineno, flags);
 		sp = ep + more;
 	}
 	free(buf);
 	return res;
 }
 
-static struct attr_stack *read_attr(const struct index_state *istate,
-				    const char *path, int macro_ok)
+static struct attr_stack *read_attr(struct index_state *istate,
+				    const char *path, unsigned flags)
 {
 	struct attr_stack *res = NULL;
 
 	if (direction == GIT_ATTR_INDEX) {
-		res = read_attr_from_index(istate, path, macro_ok);
+		res = read_attr_from_index(istate, path, flags);
 	} else if (!is_bare_repository()) {
 		if (direction == GIT_ATTR_CHECKOUT) {
-			res = read_attr_from_index(istate, path, macro_ok);
+			res = read_attr_from_index(istate, path, flags);
 			if (!res)
-				res = read_attr_from_file(path, macro_ok);
+				res = read_attr_from_file(path, flags);
 		} else if (direction == GIT_ATTR_CHECKIN) {
-			res = read_attr_from_file(path, macro_ok);
+			res = read_attr_from_file(path, flags);
 			if (!res)
 				/*
 				 * There is no checked out .gitattributes file
@@ -779,12 +799,12 @@ static struct attr_stack *read_attr(const struct index_state *istate,
 				 * We allow operation in a sparsely checked out
 				 * work tree, so read from it.
 				 */
-				res = read_attr_from_index(istate, path, macro_ok);
+				res = read_attr_from_index(istate, path, flags);
 		}
 	}
 
 	if (!res)
-		res = xcalloc(1, sizeof(*res));
+		CALLOC_ARRAY(res, 1);
 	return res;
 }
 
@@ -850,10 +870,11 @@ static void push_stack(struct attr_stack **attr_stack_p,
 	}
 }
 
-static void bootstrap_attr_stack(const struct index_state *istate,
+static void bootstrap_attr_stack(struct index_state *istate,
 				 struct attr_stack **stack)
 {
 	struct attr_stack *e;
+	unsigned flags = READ_ATTR_MACRO_OK;
 
 	if (*stack)
 		return;
@@ -864,31 +885,31 @@ static void bootstrap_attr_stack(const struct index_state *istate,
 
 	/* system-wide frame */
 	if (git_attr_system()) {
-		e = read_attr_from_file(git_etc_gitattributes(), 1);
+		e = read_attr_from_file(git_etc_gitattributes(), flags);
 		push_stack(stack, e, NULL, 0);
 	}
 
 	/* home directory */
 	if (get_home_gitattributes()) {
-		e = read_attr_from_file(get_home_gitattributes(), 1);
+		e = read_attr_from_file(get_home_gitattributes(), flags);
 		push_stack(stack, e, NULL, 0);
 	}
 
 	/* root directory */
-	e = read_attr(istate, GITATTRIBUTES_FILE, 1);
+	e = read_attr(istate, GITATTRIBUTES_FILE, flags | READ_ATTR_NOFOLLOW);
 	push_stack(stack, e, xstrdup(""), 0);
 
 	/* info frame */
 	if (startup_info->have_repository)
-		e = read_attr_from_file(git_path_info_attributes(), 1);
+		e = read_attr_from_file(git_path_info_attributes(), flags);
 	else
 		e = NULL;
 	if (!e)
-		e = xcalloc(1, sizeof(struct attr_stack));
+		CALLOC_ARRAY(e, 1);
 	push_stack(stack, e, NULL, 0);
 }
 
-static void prepare_attr_stack(const struct index_state *istate,
+static void prepare_attr_stack(struct index_state *istate,
 			       const char *path, int dirlen,
 			       struct attr_stack **stack)
 {
@@ -966,7 +987,7 @@ static void prepare_attr_stack(const struct index_state *istate,
 		strbuf_add(&pathbuf, path + pathbuf.len, (len - pathbuf.len));
 		strbuf_addf(&pathbuf, "/%s", GITATTRIBUTES_FILE);
 
-		next = read_attr(istate, pathbuf.buf, 0);
+		next = read_attr(istate, pathbuf.buf, READ_ATTR_NOFOLLOW);
 
 		/* reset the pathbuf to not include "/.gitattributes" */
 		strbuf_setlen(&pathbuf, len);
@@ -1088,7 +1109,7 @@ static void determine_macros(struct all_attrs_item *all_attrs,
  * If check->check_nr is non-zero, only attributes in check[] are collected.
  * Otherwise all attributes are collected.
  */
-static void collect_some_attrs(const struct index_state *istate,
+static void collect_some_attrs(struct index_state *istate,
 			       const char *path,
 			       struct attr_check *check)
 {
@@ -1117,7 +1138,7 @@ static void collect_some_attrs(const struct index_state *istate,
 	fill(path, pathlen, basename_offset, check->stack, check->all_attrs, rem);
 }
 
-void git_check_attr(const struct index_state *istate,
+void git_check_attr(struct index_state *istate,
 		    const char *path,
 		    struct attr_check *check)
 {
@@ -1134,7 +1155,7 @@ void git_check_attr(const struct index_state *istate,
 	}
 }
 
-void git_all_attrs(const struct index_state *istate,
+void git_all_attrs(struct index_state *istate,
 		   const char *path, struct attr_check *check)
 {
 	int i;

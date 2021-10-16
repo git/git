@@ -399,7 +399,7 @@ the largest projects.  You probably do not need to adjust this value.
 Common unit suffixes of 'k', 'm', or 'g' are supported.
 
 core.deltaBaseCacheLimit::
-	Maximum number of bytes to reserve for caching base objects
+	Maximum number of bytes per thread to reserve for caching base objects
 	that may be referenced by multiple deltified objects.  By storing the
 	entire decompressed base objects in a cache Git is able
 	to avoid unpacking and decompressing frequently used base
@@ -606,8 +606,8 @@ core.useReplaceRefs::
 
 core.multiPackIndex::
 	Use the multi-pack-index file to track multiple packfiles using a
-	single index. See link:technical/multi-pack-index.html[the
-	multi-pack-index design document].
+	single index. See linkgit:git-multi-pack-index[1] for more
+	information. Defaults to true.
 
 core.sparseCheckout::
 	Enable "sparse checkout" feature. See linkgit:git-sparse-checkout[1]
@@ -625,4 +625,6 @@ core.abbrev::
 	computed based on the approximate number of packed objects
 	in your repository, which hopefully is enough for
 	abbreviated object names to stay unique for some time.
+	If set to "no", no abbreviation is made and the object names
+	are shown in their full length.
 	The minimum length is 4.

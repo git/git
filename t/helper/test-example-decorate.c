@@ -26,8 +26,8 @@ int cmd__example_decorate(int argc, const char **argv)
 	 * Add 2 objects, one with a non-NULL decoration and one with a NULL
 	 * decoration.
 	 */
-	one = lookup_unknown_object(&one_oid);
-	two = lookup_unknown_object(&two_oid);
+	one = lookup_unknown_object(the_repository, &one_oid);
+	two = lookup_unknown_object(the_repository, &two_oid);
 	ret = add_decoration(&n, one, &decoration_a);
 	if (ret)
 		BUG("when adding a brand-new object, NULL should be returned");
@@ -56,7 +56,7 @@ int cmd__example_decorate(int argc, const char **argv)
 	ret = lookup_decoration(&n, two);
 	if (ret != &decoration_b)
 		BUG("lookup should return added declaration");
-	three = lookup_unknown_object(&three_oid);
+	three = lookup_unknown_object(the_repository, &three_oid);
 	ret = lookup_decoration(&n, three);
 	if (ret)
 		BUG("lookup for unknown object should return NULL");

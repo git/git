@@ -6,6 +6,8 @@
 #include "hashmap.h"
 #include "refspec.h"
 
+struct transport_ls_refs_options;
+
 /**
  * The API gives access to the configuration related to remotes. It handles
  * all three configuration mechanisms historically and currently used by Git,
@@ -93,18 +95,34 @@ int for_each_remote(each_remote_fn fn, void *priv);
 
 int remote_has_url(struct remote *remote, const char *url);
 
+struct ref_push_report {
+	const char *ref_name;
+	struct object_id *old_oid;
+	struct object_id *new_oid;
+	unsigned int forced_update:1;
+	struct ref_push_report *next;
+};
+
 struct ref {
 	struct ref *next;
 	struct object_id old_oid;
 	struct object_id new_oid;
 	struct object_id old_oid_expect; /* used by expect-old */
 	char *symref;
+	char *tracking_ref;
 	unsigned int
 		force:1,
 		forced_update:1,
 		expect_old_sha1:1,
 		exact_oid:1,
-		deletion:1;
+		deletion:1,
+		/* Need to check if local reflog reaches the remote tip. */
+		check_reachable:1,
+		/*
+		 * Store the result of the check enabled by "check_reachable";
+		 * implies the local reflog does not reach the remote tip.
+		 */
+		unreachable:1;
 
 	enum {
 		REF_NOT_MATCHED = 0, /* initial value */
@@ -118,7 +136,7 @@ struct ref {
 	 * should be 0, so that xcalloc'd structures get it
 	 * by default.
 	 */
-	enum {
+	enum fetch_head_status {
 		FETCH_HEAD_MERGE = -1,
 		FETCH_HEAD_NOT_FOR_MERGE = 0,
 		FETCH_HEAD_IGNORE = 1
@@ -134,12 +152,14 @@ struct ref {
 		REF_STATUS_REJECT_NEEDS_FORCE,
 		REF_STATUS_REJECT_STALE,
 		REF_STATUS_REJECT_SHALLOW,
+		REF_STATUS_REJECT_REMOTE_UPDATED,
 		REF_STATUS_UPTODATE,
 		REF_STATUS_REMOTE_REJECT,
 		REF_STATUS_EXPECTING_REPORT,
 		REF_STATUS_ATOMIC_PUSH_FAILED
 	} status;
 	char *remote_status;
+	struct ref_push_report *report;
 	struct ref *peer_ref; /* when renaming */
 	char name[FLEX_ARRAY]; /* more */
 };
@@ -168,7 +188,7 @@ void free_refs(struct ref *ref);
 
 struct oid_array;
 struct packet_reader;
-struct argv_array;
+struct strvec;
 struct string_list;
 struct ref **get_remote_heads(struct packet_reader *reader,
 			      struct ref **list, unsigned int flags,
@@ -178,8 +198,9 @@ struct ref **get_remote_heads(struct packet_reader *reader,
 /* Used for protocol v2 in order to retrieve refs from a remote */
 struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 			     struct ref **list, int for_push,
-			     const struct argv_array *ref_prefixes,
-			     const struct string_list *server_options);
+			     struct transport_ls_refs_options *transport_options,
+			     const struct string_list *server_options,
+			     int stateless_rpc);
 
 int resolve_remote_symref(struct ref *ref, struct ref *list);
 
@@ -191,6 +212,12 @@ int resolve_remote_symref(struct ref *ref, struct ref *list);
  * pointer to the head of the resulting list.
  */
 struct ref *ref_remove_duplicates(struct ref *ref_map);
+
+/*
+ * Remove all entries in the input list which match any negative refspec in
+ * the refspec list.
+ */
+struct ref *apply_negative_refspecs(struct ref *ref_map, struct refspec *rs);
 
 int query_refspecs(struct refspec *rs, struct refspec_item *query);
 char *apply_refspecs(struct refspec *rs, const char *name);
@@ -204,7 +231,8 @@ void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
 /*
  * Given a list of the remote refs and the specification of things to
  * fetch, makes a (separate) list of the refs to fetch and the local
- * refs to store into.
+ * refs to store into. Note that negative refspecs are ignored here, and
+ * should be handled separately.
  *
  * *tail is the pointer to the tail pointer of the list of results
  * beforehand, and will be set to the tail pointer of the list of
@@ -331,6 +359,7 @@ struct ref *get_stale_heads(struct refspec *rs, struct ref *fetch_map);
 
 struct push_cas_option {
 	unsigned use_tracking_for_rest:1;
+	unsigned use_force_if_includes:1;
 	struct push_cas {
 		struct object_id expect;
 		unsigned use_tracking:1;

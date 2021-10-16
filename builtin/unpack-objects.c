@@ -46,7 +46,7 @@ static struct obj_buffer *lookup_object_buffer(struct object *base)
 static void add_object_buffer(struct object *object, char *buffer, unsigned long size)
 {
 	struct obj_buffer *obj;
-	obj = xcalloc(1, sizeof(struct obj_buffer));
+	CALLOC_ARRAY(obj, 1);
 	obj->buffer = buffer;
 	obj->size = size;
 	if (add_decoration(&obj_decorate, object, obj))
@@ -187,7 +187,8 @@ static void write_cached_object(struct object *obj, struct obj_buffer *obj_buf)
  * that have reachability requirements and calls this function.
  * Verify its reachability and validity recursively and write it out.
  */
-static int check_object(struct object *obj, int type, void *data, struct fsck_options *options)
+static int check_object(struct object *obj, enum object_type type,
+			void *data, struct fsck_options *options)
 {
 	struct obj_buffer *obj_buf;
 
@@ -354,7 +355,7 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 	struct object_id base_oid;
 
 	if (type == OBJ_REF_DELTA) {
-		hashcpy(base_oid.hash, fill(the_hash_algo->rawsz));
+		oidread(&base_oid, fill(the_hash_algo->rawsz));
 		use(the_hash_algo->rawsz);
 		delta_data = get_data(delta_size);
 		if (dry_run || !delta_data) {
@@ -420,7 +421,8 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 			 * has not been resolved yet.
 			 */
 			oidclr(&obj_list[nr].oid);
-			add_delta_to_list(nr, &null_oid, base_offset, delta_data, delta_size);
+			add_delta_to_list(nr, null_oid(), base_offset,
+					  delta_data, delta_size);
 			return;
 		}
 	}
@@ -500,7 +502,7 @@ static void unpack_all(void)
 
 	if (!quiet)
 		progress = start_progress(_("Unpacking objects"), nr_objects);
-	obj_list = xcalloc(nr_objects, sizeof(*obj_list));
+	CALLOC_ARRAY(obj_list, nr_objects);
 	for (i = 0; i < nr_objects; i++) {
 		unpack_one(i);
 		display_progress(progress, i + 1);
@@ -575,7 +577,7 @@ int cmd_unpack_objects(int argc, const char **argv, const char *prefix)
 	the_hash_algo->init_fn(&ctx);
 	unpack_all();
 	the_hash_algo->update_fn(&ctx, buffer, offset);
-	the_hash_algo->final_fn(oid.hash, &ctx);
+	the_hash_algo->final_oid_fn(&oid, &ctx);
 	if (strict) {
 		write_rest();
 		if (fsck_finish(&fsck_options))

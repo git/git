@@ -11,7 +11,7 @@ check_relative() {
 	echo "$t -> $2" >expect
 	test_expect_${3:-success} "relative date ($2)" "
 	test-tool date relative $t >actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 	"
 }
 
@@ -81,6 +81,11 @@ check_parse 2008-02 bad
 check_parse 2008-02-14 bad
 check_parse '2008-02-14 20:30:45' '2008-02-14 20:30:45 +0000'
 check_parse '2008-02-14 20:30:45 -0500' '2008-02-14 20:30:45 -0500'
+check_parse '2008.02.14 20:30:45 -0500' '2008-02-14 20:30:45 -0500'
+check_parse '20080214T203045-04:00' '2008-02-14 20:30:45 -0400'
+check_parse '20080214T203045 -04:00' '2008-02-14 20:30:45 -0400'
+check_parse '20080214T203045.019-04:00' '2008-02-14 20:30:45 -0400'
+check_parse '2008-02-14 20:30:45.019-04:00' '2008-02-14 20:30:45 -0400'
 check_parse '2008-02-14 20:30:45 -0015' '2008-02-14 20:30:45 -0015'
 check_parse '2008-02-14 20:30:45 -5' '2008-02-14 20:30:45 +0000'
 check_parse '2008-02-14 20:30:45 -5:' '2008-02-14 20:30:45 +0000'
@@ -103,6 +108,7 @@ check_approxidate 5.seconds.ago '2009-08-30 19:19:55'
 check_approxidate 10.minutes.ago '2009-08-30 19:10:00'
 check_approxidate yesterday '2009-08-29 19:20:00'
 check_approxidate 3.days.ago '2009-08-27 19:20:00'
+check_approxidate '12:34:56.3.days.ago' '2009-08-27 12:34:56'
 check_approxidate 3.weeks.ago '2009-08-09 19:20:00'
 check_approxidate 3.months.ago '2009-05-30 19:20:00'
 check_approxidate 2.years.3.months.ago '2007-05-30 19:20:00'
@@ -133,7 +139,7 @@ check_date_format_human() {
 	echo "$t -> $2" >expect
 	test_expect_success "human date $t" '
 		test-tool date human $t >actual &&
-		test_i18ncmp expect actual
+		test_cmp expect actual
 '
 }
 

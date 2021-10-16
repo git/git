@@ -1,7 +1,16 @@
 #!/bin/sh
 
 test_description='exercise basic bitmap functionality'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-bundle.sh
+. "$TEST_DIRECTORY"/lib-bitmap.sh
+
+# t5310 deals only with single-pack bitmaps, so don't write MIDX bitmaps in
+# their place.
+GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=0
 
 objpath () {
 	echo ".git/objects/$(echo "$1" | sed -e 's|\(..\)|\1/|')"
@@ -20,119 +29,22 @@ has_any () {
 	grep -Ff "$1" "$2"
 }
 
-test_expect_success 'setup repo with moderate-sized history' '
-	test_commit_bulk --id=file 100 &&
-	git checkout -b other HEAD~5 &&
-	test_commit_bulk --id=side 10 &&
-	git checkout master &&
-	bitmaptip=$(git rev-parse master) &&
-	blob=$(echo tagged-blob | git hash-object -w --stdin) &&
-	git tag tagged-blob $blob &&
-	git config repack.writebitmaps true
+setup_bitmap_history
+
+test_expect_success 'setup writing bitmaps during repack' '
+	git config repack.writeBitmaps true
 '
 
 test_expect_success 'full repack creates bitmaps' '
-	git repack -ad &&
+	GIT_TRACE2_EVENT_NESTING=4 GIT_TRACE2_EVENT="$(pwd)/trace" \
+		git repack -ad &&
 	ls .git/objects/pack/ | grep bitmap >output &&
-	test_line_count = 1 output
+	test_line_count = 1 output &&
+	grep "\"key\":\"num_selected_commits\",\"value\":\"106\"" trace &&
+	grep "\"key\":\"num_maximal_commits\",\"value\":\"107\"" trace
 '
 
-test_expect_success 'rev-list --test-bitmap verifies bitmaps' '
-	git rev-list --test-bitmap HEAD
-'
-
-rev_list_tests() {
-	state=$1
-
-	test_expect_success "counting commits via bitmap ($state)" '
-		git rev-list --count HEAD >expect &&
-		git rev-list --use-bitmap-index --count HEAD >actual &&
-		test_cmp expect actual
-	'
-
-	test_expect_success "counting partial commits via bitmap ($state)" '
-		git rev-list --count HEAD~5..HEAD >expect &&
-		git rev-list --use-bitmap-index --count HEAD~5..HEAD >actual &&
-		test_cmp expect actual
-	'
-
-	test_expect_success "counting commits with limit ($state)" '
-		git rev-list --count -n 1 HEAD >expect &&
-		git rev-list --use-bitmap-index --count -n 1 HEAD >actual &&
-		test_cmp expect actual
-	'
-
-	test_expect_success "counting non-linear history ($state)" '
-		git rev-list --count other...master >expect &&
-		git rev-list --use-bitmap-index --count other...master >actual &&
-		test_cmp expect actual
-	'
-
-	test_expect_success "counting commits with limiting ($state)" '
-		git rev-list --count HEAD -- 1.t >expect &&
-		git rev-list --use-bitmap-index --count HEAD -- 1.t >actual &&
-		test_cmp expect actual
-	'
-
-	test_expect_success "counting objects via bitmap ($state)" '
-		git rev-list --count --objects HEAD >expect &&
-		git rev-list --use-bitmap-index --count --objects HEAD >actual &&
-		test_cmp expect actual
-	'
-
-	test_expect_success "enumerate commits ($state)" '
-		git rev-list --use-bitmap-index HEAD >actual &&
-		git rev-list HEAD >expect &&
-		test_bitmap_traversal --no-confirm-bitmaps expect actual
-	'
-
-	test_expect_success "enumerate --objects ($state)" '
-		git rev-list --objects --use-bitmap-index HEAD >actual &&
-		git rev-list --objects HEAD >expect &&
-		test_bitmap_traversal expect actual
-	'
-
-	test_expect_success "bitmap --objects handles non-commit objects ($state)" '
-		git rev-list --objects --use-bitmap-index HEAD tagged-blob >actual &&
-		grep $blob actual
-	'
-}
-
-rev_list_tests 'full bitmap'
-
-test_expect_success 'clone from bitmapped repository' '
-	git clone --no-local --bare . clone.git &&
-	git rev-parse HEAD >expect &&
-	git --git-dir=clone.git rev-parse HEAD >actual &&
-	test_cmp expect actual
-'
-
-test_expect_success 'partial clone from bitmapped repository' '
-	test_config uploadpack.allowfilter true &&
-	git clone --no-local --bare --filter=blob:none . partial-clone.git &&
-	(
-		cd partial-clone.git &&
-		pack=$(echo objects/pack/*.pack) &&
-		git verify-pack -v "$pack" >have &&
-		awk "/blob/ { print \$1 }" <have >blobs &&
-		# we expect this single blob because of the direct ref
-		git rev-parse refs/tags/tagged-blob >expect &&
-		test_cmp expect blobs
-	)
-'
-
-test_expect_success 'setup further non-bitmapped commits' '
-	test_commit_bulk --id=further 10
-'
-
-rev_list_tests 'partial bitmap'
-
-test_expect_success 'fetch (partial bitmap)' '
-	git --git-dir=clone.git fetch origin master:master &&
-	git rev-parse HEAD >expect &&
-	git --git-dir=clone.git rev-parse HEAD >actual &&
-	test_cmp expect actual
-'
+basic_bitmap_tests
 
 test_expect_success 'incremental repack fails when bitmaps are requested' '
 	test_commit more-1 &&
@@ -230,7 +142,7 @@ test_expect_success 'full repack, reusing previous bitmaps' '
 '
 
 test_expect_success 'fetch (full bitmap)' '
-	git --git-dir=clone.git fetch origin master:master &&
+	git --git-dir=clone.git fetch origin second:second &&
 	git rev-parse HEAD >expect &&
 	git --git-dir=clone.git rev-parse HEAD >actual &&
 	test_cmp expect actual
@@ -277,7 +189,7 @@ test_expect_success 'pack with missing parent' '
 	git pack-objects --stdout --revs <revs >/dev/null
 '
 
-test_expect_success JGIT 'we can read jgit bitmaps' '
+test_expect_success JGIT,SHA1 'we can read jgit bitmaps' '
 	git clone --bare . compat-jgit.git &&
 	(
 		cd compat-jgit.git &&
@@ -287,7 +199,7 @@ test_expect_success JGIT 'we can read jgit bitmaps' '
 	)
 '
 
-test_expect_success JGIT 'jgit can read our bitmaps' '
+test_expect_success JGIT,SHA1 'jgit can read our bitmaps' '
 	git clone --bare . compat-us.git &&
 	(
 		cd compat-us.git &&
@@ -343,7 +255,20 @@ test_expect_success 'pack reuse respects --incremental' '
 	test_must_be_empty actual
 '
 
-test_expect_success 'truncated bitmap fails gracefully' '
+test_expect_success 'truncated bitmap fails gracefully (ewah)' '
+	test_config pack.writebitmaphashcache false &&
+	git repack -ad &&
+	git rev-list --use-bitmap-index --count --all >expect &&
+	bitmap=$(ls .git/objects/pack/*.bitmap) &&
+	test_when_finished "rm -f $bitmap" &&
+	test_copy_bytes 256 <$bitmap >$bitmap.tmp &&
+	mv -f $bitmap.tmp $bitmap &&
+	git rev-list --use-bitmap-index --count --all >actual 2>stderr &&
+	test_cmp expect actual &&
+	test_i18ngrep corrupt.ewah.bitmap stderr
+'
+
+test_expect_success 'truncated bitmap fails gracefully (cache)' '
 	git repack -ad &&
 	git rev-list --use-bitmap-index --count --all >expect &&
 	bitmap=$(ls .git/objects/pack/*.bitmap) &&
@@ -352,19 +277,8 @@ test_expect_success 'truncated bitmap fails gracefully' '
 	mv -f $bitmap.tmp $bitmap &&
 	git rev-list --use-bitmap-index --count --all >actual 2>stderr &&
 	test_cmp expect actual &&
-	test_i18ngrep corrupt stderr
+	test_i18ngrep corrupted.bitmap.index stderr
 '
-
-# have_delta <obj> <expected_base>
-#
-# Note that because this relies on cat-file, it might find _any_ copy of an
-# object in the repository. The caller is responsible for making sure
-# there's only one (e.g., via "repack -ad", or having just fetched a copy).
-have_delta () {
-	echo $2 >expect &&
-	echo $1 | git cat-file --batch-check="%(deltabase)" >actual &&
-	test_cmp expect actual
-}
 
 # Create a state of history with these properties:
 #
@@ -445,6 +359,44 @@ test_expect_success 'fetch with bitmaps can reuse old base' '
 		git fetch .. delta-reuse-old:delta-reuse-old &&
 		git fetch .. delta-reuse-new:delta-reuse-new &&
 		have_delta $delta $base
+	)
+'
+
+test_expect_success 'pack.preferBitmapTips' '
+	git init repo &&
+	test_when_finished "rm -fr repo" &&
+	(
+		cd repo &&
+
+		# create enough commits that not all are receive bitmap
+		# coverage even if they are all at the tip of some reference.
+		test_commit_bulk --message="%s" 103 &&
+
+		git rev-list HEAD >commits.raw &&
+		sort <commits.raw >commits &&
+
+		git log --format="create refs/tags/%s %H" HEAD >refs &&
+		git update-ref --stdin <refs &&
+
+		git repack -adb &&
+		test-tool bitmap list-commits | sort >bitmaps &&
+
+		# remember which commits did not receive bitmaps
+		comm -13 bitmaps commits >before &&
+		test_file_not_empty before &&
+
+		# mark the commits which did not receive bitmaps as preferred,
+		# and generate the bitmap again
+		perl -pe "s{^}{create refs/tags/include/$. }" <before |
+			git update-ref --stdin &&
+		git -c pack.preferBitmapTips=refs/tags/include repack -adb &&
+
+		# finally, check that the commit(s) without bitmap coverage
+		# are not the same ones as before
+		test-tool bitmap list-commits | sort >bitmaps &&
+		comm -13 bitmaps commits >after &&
+
+		! test_cmp before after
 	)
 '
 

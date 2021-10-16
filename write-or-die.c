@@ -57,8 +57,9 @@ void fprintf_or_die(FILE *f, const char *fmt, ...)
 
 void fsync_or_die(int fd, const char *msg)
 {
-	if (fsync(fd) < 0) {
-		die_errno("fsync error on '%s'", msg);
+	while (fsync(fd) < 0) {
+		if (errno != EINTR)
+			die_errno("fsync error on '%s'", msg);
 	}
 }
 
@@ -68,4 +69,16 @@ void write_or_die(int fd, const void *buf, size_t count)
 		check_pipe(errno);
 		die_errno("write error");
 	}
+}
+
+void fwrite_or_die(FILE *f, const void *buf, size_t count)
+{
+	if (fwrite(buf, 1, count, f) != count)
+		die_errno("fwrite error");
+}
+
+void fflush_or_die(FILE *f)
+{
+	if (fflush(f))
+		die_errno("fflush error");
 }

@@ -1,0 +1,22 @@
+---%%
+ configure | 2 +-%%
+ 1 file changed, 1 insertion(+), 1 deletion(-)%%
+%%
+diff --git a/configure b/configure%%
+index db3538b3..f7c1c095 100755%%
+--- a/configure%%
++++ b/configure%%
+@@ -814,7 +814,7 @@ if [ $have_python3 -eq 1 ]; then%%
+     printf "%%Checking for python3 pytest (>= 3.0)... "%%
+     conf=$(mktemp)%%
+     printf "[pytest]\nminversion=3.0\n" > $conf%%
+-    if pytest-3 -c $conf --version >/dev/null 2>&1; then%%
++    if "$python" -m pytest -c $conf --version >/dev/null 2>&1; then%%
+         printf "Yes.\n"%%
+         have_python3_pytest=1%%
+     else%%
+-- %%
+2.28.0%%
+_______________________________________________
+example mailing list -- list@example.org
+To unsubscribe send an email to list-leave@example.org

@@ -1,7 +1,7 @@
 package Git::SVN::Ra;
 use vars qw/@ISA $config_dir $_ignore_refs_regex $_log_window_size/;
 use strict;
-use warnings;
+use warnings $ENV{GIT_PERL_FATAL_WARNINGS} ? qw(FATAL all) : ();
 use Memoize;
 use Git::SVN::Utils qw(
 	canonicalize_url
@@ -486,11 +486,11 @@ sub gs_fetch_loop_common {
 			$reload_ra->() if $ra_invalid;
 		}
 		# pre-fill the .rev_db since it'll eventually get filled in
-		# with '0' x40 if something new gets committed
+		# with '0' x $oid_length if something new gets committed
 		foreach my $gs (@$gsv) {
 			next if $gs->rev_map_max >= $max;
 			next if defined $gs->rev_map_get($max);
-			$gs->rev_map_set($max, 0 x40);
+			$gs->rev_map_set($max, 0 x $::oid_length);
 		}
 		foreach my $g (@$globs) {
 			my $k = "svn-remote.$g->{remote}.$g->{t}-maxRev";

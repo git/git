@@ -1,14 +1,25 @@
-#!/bin/sh
+# We always set GNUPGHOME, even if no usable GPG was found, as
+#
+# - It does not hurt, and
+#
+# - we cannot set global environment variables in lazy prereqs because they are
+#   executed in an eval'ed subshell that changes the working directory to a
+#   temporary one.
 
-gpg_version=$(gpg --version 2>&1)
-if test $? != 127
-then
+GNUPGHOME="$PWD/gpghome"
+export GNUPGHOME
+
+test_lazy_prereq GPG '
+	gpg_version=$(gpg --version 2>&1)
+	test $? != 127 || exit 1
+
 	# As said here: http://www.gnupg.org/documentation/faqs.html#q6.19
-	# the gpg version 1.0.6 didn't parse trust packets correctly, so for
+	# the gpg version 1.0.6 did not parse trust packets correctly, so for
 	# that version, creation of signed tags using the generated key fails.
 	case "$gpg_version" in
-	'gpg (GnuPG) 1.0.6'*)
+	"gpg (GnuPG) 1.0.6"*)
 		say "Your version of gpg (1.0.6) is too buggy for testing"
+		exit 1
 		;;
 	*)
 		# Available key info:
@@ -27,55 +38,54 @@ then
 		# To export ownertrust:
 		#	gpg --homedir /tmp/gpghome --export-ownertrust \
 		#		> lib-gpg/ownertrust
-		mkdir ./gpghome &&
-		chmod 0700 ./gpghome &&
-		GNUPGHOME="$(pwd)/gpghome" &&
-		export GNUPGHOME &&
-		(gpgconf --kill gpg-agent >/dev/null 2>&1 || : ) &&
-		gpg --homedir "${GNUPGHOME}" 2>/dev/null --import \
+		mkdir "$GNUPGHOME" &&
+		chmod 0700 "$GNUPGHOME" &&
+		(gpgconf --kill gpg-agent || : ) &&
+		gpg --homedir "${GNUPGHOME}" --import \
 			"$TEST_DIRECTORY"/lib-gpg/keyring.gpg &&
-		gpg --homedir "${GNUPGHOME}" 2>/dev/null --import-ownertrust \
+		gpg --homedir "${GNUPGHOME}" --import-ownertrust \
 			"$TEST_DIRECTORY"/lib-gpg/ownertrust &&
-		gpg --homedir "${GNUPGHOME}" </dev/null >/dev/null 2>&1 \
-			--sign -u committer@example.com &&
-		test_set_prereq GPG &&
-		# Available key info:
-		# * see t/lib-gpg/gpgsm-gen-key.in
-		# To generate new certificate:
-		#  * no passphrase
-		#	gpgsm --homedir /tmp/gpghome/ \
-		#		-o /tmp/gpgsm.crt.user \
-		#		--generate-key \
-		#		--batch t/lib-gpg/gpgsm-gen-key.in
-		# To import certificate:
-		#	gpgsm --homedir /tmp/gpghome/ \
-		#		--import /tmp/gpgsm.crt.user
-		# To export into a .p12 we can later import:
-		#	gpgsm --homedir /tmp/gpghome/ \
-		#		-o t/lib-gpg/gpgsm_cert.p12 \
-		#		--export-secret-key-p12 "committer@example.com"
-		echo | gpgsm --homedir "${GNUPGHOME}" 2>/dev/null \
-			--passphrase-fd 0 --pinentry-mode loopback \
-			--import "$TEST_DIRECTORY"/lib-gpg/gpgsm_cert.p12 &&
-
-		gpgsm --homedir "${GNUPGHOME}" 2>/dev/null -K |
-		grep fingerprint: |
-		cut -d" " -f4 |
-		tr -d '\n' >"${GNUPGHOME}/trustlist.txt" &&
-
-		echo " S relax" >>"${GNUPGHOME}/trustlist.txt" &&
-		echo hello | gpgsm --homedir "${GNUPGHOME}" >/dev/null \
-			-u committer@example.com -o /dev/null --sign - 2>&1 &&
-		test_set_prereq GPGSM
+		gpg --homedir "${GNUPGHOME}" </dev/null >/dev/null \
+			--sign -u committer@example.com
 		;;
 	esac
-fi
+'
 
-if test_have_prereq GPG &&
-    echo | gpg --homedir "${GNUPGHOME}" -b --rfc1991 >/dev/null 2>&1
-then
-	test_set_prereq RFC1991
-fi
+test_lazy_prereq GPGSM '
+	test_have_prereq GPG &&
+	# Available key info:
+	# * see t/lib-gpg/gpgsm-gen-key.in
+	# To generate new certificate:
+	#  * no passphrase
+	#	gpgsm --homedir /tmp/gpghome/ \
+	#		-o /tmp/gpgsm.crt.user \
+	#		--generate-key \
+	#		--batch t/lib-gpg/gpgsm-gen-key.in
+	# To import certificate:
+	#	gpgsm --homedir /tmp/gpghome/ \
+	#		--import /tmp/gpgsm.crt.user
+	# To export into a .p12 we can later import:
+	#	gpgsm --homedir /tmp/gpghome/ \
+	#		-o t/lib-gpg/gpgsm_cert.p12 \
+	#		--export-secret-key-p12 "committer@example.com"
+	echo | gpgsm --homedir "${GNUPGHOME}" \
+		--passphrase-fd 0 --pinentry-mode loopback \
+		--import "$TEST_DIRECTORY"/lib-gpg/gpgsm_cert.p12 &&
+
+	gpgsm --homedir "${GNUPGHOME}" -K |
+	grep fingerprint: |
+	cut -d" " -f4 |
+	tr -d "\\n" >"${GNUPGHOME}/trustlist.txt" &&
+
+	echo " S relax" >>"${GNUPGHOME}/trustlist.txt" &&
+	echo hello | gpgsm --homedir "${GNUPGHOME}" >/dev/null \
+	       -u committer@example.com -o /dev/null --sign -
+'
+
+test_lazy_prereq RFC1991 '
+	test_have_prereq GPG &&
+	echo | gpg --homedir "${GNUPGHOME}" -b --rfc1991 >/dev/null
+'
 
 sanitize_pgp() {
 	perl -ne '

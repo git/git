@@ -1,0 +1,5 @@
+program RIGHT
+
+call ChangeMe
+
+end program RIGHT

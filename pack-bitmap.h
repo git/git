@@ -5,6 +5,7 @@
 #include "khash.h"
 #include "pack.h"
 #include "pack-objects.h"
+#include "string-list.h"
 
 struct commit;
 struct repository;
@@ -43,14 +44,18 @@ typedef int (*show_reachable_fn)(
 struct bitmap_index;
 
 struct bitmap_index *prepare_bitmap_git(struct repository *r);
+struct bitmap_index *prepare_midx_bitmap_git(struct multi_pack_index *midx);
 void count_bitmap_commit_list(struct bitmap_index *, uint32_t *commits,
 			      uint32_t *trees, uint32_t *blobs, uint32_t *tags);
 void traverse_bitmap_commit_list(struct bitmap_index *,
 				 struct rev_info *revs,
 				 show_reachable_fn show_reachable);
 void test_bitmap_walk(struct rev_info *revs);
+int test_bitmap_commits(struct repository *r);
+int test_bitmap_hashes(struct repository *r);
 struct bitmap_index *prepare_bitmap_walk(struct rev_info *revs,
-					 struct list_objects_filter_options *filter);
+					 struct list_objects_filter_options *filter,
+					 int filter_provided_objects);
 int reuse_partial_packfile_from_bitmap(struct bitmap_index *,
 				       struct packed_git **packfile,
 				       uint32_t *entries,
@@ -68,18 +73,33 @@ int bitmap_walk_contains(struct bitmap_index *,
  */
 int bitmap_has_oid_in_uninteresting(struct bitmap_index *, const struct object_id *oid);
 
+off_t get_disk_usage_from_bitmap(struct bitmap_index *, struct rev_info *);
+
 void bitmap_writer_show_progress(int show);
 void bitmap_writer_set_checksum(unsigned char *sha1);
 void bitmap_writer_build_type_index(struct packing_data *to_pack,
 				    struct pack_idx_entry **index,
 				    uint32_t index_nr);
-void bitmap_writer_reuse_bitmaps(struct packing_data *to_pack);
+uint32_t *create_bitmap_mapping(struct bitmap_index *bitmap_git,
+				struct packing_data *mapping);
+int rebuild_bitmap(const uint32_t *reposition,
+		   struct ewah_bitmap *source,
+		   struct bitmap *dest);
+struct ewah_bitmap *bitmap_for_commit(struct bitmap_index *bitmap_git,
+				      struct commit *commit);
 void bitmap_writer_select_commits(struct commit **indexed_commits,
 		unsigned int indexed_commits_nr, int max_bitmaps);
-void bitmap_writer_build(struct packing_data *to_pack);
+int bitmap_writer_build(struct packing_data *to_pack);
 void bitmap_writer_finish(struct pack_idx_entry **index,
 			  uint32_t index_nr,
 			  const char *filename,
 			  uint16_t options);
+char *midx_bitmap_filename(struct multi_pack_index *midx);
+char *pack_bitmap_filename(struct packed_git *p);
+
+int bitmap_is_midx(struct bitmap_index *bitmap_git);
+
+const struct string_list *bitmap_preferred_tips(struct repository *r);
+int bitmap_is_preferred_refname(struct repository *r, const char *refname);
 
 #endif

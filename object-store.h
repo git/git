@@ -4,9 +4,13 @@
 #include "cache.h"
 #include "oidmap.h"
 #include "list.h"
-#include "sha1-array.h"
+#include "oid-array.h"
 #include "strbuf.h"
 #include "thread-utils.h"
+#include "khash.h"
+#include "dir.h"
+#include "oidtree.h"
+#include "oidset.h"
 
 struct object_directory {
 	struct object_directory *next;
@@ -20,8 +24,8 @@ struct object_directory {
 	 *
 	 * Be sure to call odb_load_loose_cache() before using.
 	 */
-	char loose_objects_subdir_seen[256];
-	struct oid_array loose_objects_cache[256];
+	uint32_t loose_objects_subdir_seen[8]; /* 256 bits */
+	struct oidtree *loose_objects_cache;
 
 	/*
 	 * Path to the alternative object store. If this is a relative path,
@@ -30,8 +34,12 @@ struct object_directory {
 	char *path;
 };
 
+KHASH_INIT(odb_path_map, const char * /* key: odb_path */,
+	struct object_directory *, 1, fspathhash, fspatheq)
+
 void prepare_alt_odb(struct repository *r);
 char *compute_alternate_path(const char *path, struct strbuf *err);
+struct object_directory *find_odb(struct repository *r, const char *obj_dir);
 typedef int alt_odb_fn(struct object_directory *, void *);
 int foreach_alt_odb(alt_odb_fn, void*);
 typedef void alternate_ref_fn(const struct object_id *oid, void *);
@@ -54,7 +62,7 @@ void add_to_alternates_memory(const char *dir);
  * Populate and return the loose object cache array corresponding to the
  * given object ID.
  */
-struct oid_array *odb_loose_cache(struct object_directory *odb,
+struct oidtree *odb_loose_cache(struct object_directory *odb,
 				  const struct object_id *oid);
 
 /* Empty the loose object cache for the specified object directory. */
@@ -69,8 +77,8 @@ struct packed_git {
 	const void *index_data;
 	size_t index_size;
 	uint32_t num_objects;
-	uint32_t num_bad_objects;
-	unsigned char *bad_object_sha1;
+	uint32_t crc_offset;
+	struct oidset bad_objects;
 	int index_version;
 	time_t mtime;
 	int pack_fd;
@@ -84,6 +92,9 @@ struct packed_git {
 		 multi_pack_index:1;
 	unsigned char hash[GIT_MAX_RAWSZ];
 	struct revindex_entry *revindex;
+	const uint32_t *revindex_data;
+	const uint32_t *revindex_map;
+	size_t revindex_size;
 	/* something like ".git/objects/pack/xxxxx.pack" */
 	char pack_name[FLEX_ARRAY]; /* more */
 };
@@ -112,6 +123,8 @@ struct raw_object_store {
 	 */
 	struct object_directory *odb;
 	struct object_directory **odb_tail;
+	kh_odb_path_map_t *odb_by_path;
+
 	int loaded_alternates;
 
 	/*
@@ -148,6 +161,11 @@ struct raw_object_store {
 	struct packed_git *packed_git;
 	/* A most-recently-used ordered version of the packed_git list. */
 	struct list_head packed_git_mru;
+
+	struct {
+		struct packed_git **packs;
+		unsigned flags;
+	} kept_pack_cache;
 
 	/*
 	 * A map of packfiles to packed_git structs for tracking which
@@ -238,12 +256,33 @@ int read_loose_object(const char *path,
 		      unsigned long *size,
 		      void **contents);
 
+/* Retry packed storage after checking packed and loose storage */
+#define HAS_OBJECT_RECHECK_PACKED 1
+
+/*
+ * Returns 1 if the object exists. This function will not lazily fetch objects
+ * in a partial clone.
+ */
+int has_object(struct repository *r, const struct object_id *oid,
+	       unsigned flags);
+
+/*
+ * These macros and functions are deprecated. If checking existence for an
+ * object that is likely to be missing and/or whose absence is relatively
+ * inconsequential (or is consequential but the caller is prepared to handle
+ * it), use has_object(), which has better defaults (no lazy fetch in a partial
+ * clone and no rechecking of packed storage). In the unlikely event that a
+ * caller needs to assert existence of an object that it fully expects to
+ * exist, and wants to trigger a lazy fetch in a partial clone, use
+ * oid_object_info_extended() with a NULL struct object_info.
+ *
+ * These functions can be removed once all callers have migrated to
+ * has_object() and/or oid_object_info_extended().
+ */
 #ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
 #define has_sha1_file_with_flags(sha1, flags) repo_has_sha1_file_with_flags(the_repository, sha1, flags)
 #define has_sha1_file(sha1) repo_has_sha1_file(the_repository, sha1)
 #endif
-
-/* Same as the above, except for struct object_id. */
 int repo_has_object_file(struct repository *r, const struct object_id *oid);
 int repo_has_object_file_with_flags(struct repository *r,
 				    const struct object_id *oid, int flags);
@@ -332,7 +371,7 @@ struct object_info {
  * Initializer for a "struct object_info" that wants no items. You may
  * also memset() the memory to all-zeroes.
  */
-#define OBJECT_INFO_INIT {NULL}
+#define OBJECT_INFO_INIT { 0 }
 
 /* Invoke lookup_replace_object() on the given hash */
 #define OBJECT_INFO_LOOKUP_REPLACE 1
@@ -417,6 +456,12 @@ enum for_each_object_flags {
 	 * Visit objects within a pack in packfile order rather than .idx order
 	 */
 	FOR_EACH_OBJECT_PACK_ORDER = (1<<2),
+
+	/* Only iterate over packs that are not marked as kept in-core. */
+	FOR_EACH_OBJECT_SKIP_IN_CORE_KEPT_PACKS = (1<<3),
+
+	/* Only iterate over packs that do not have .keep files. */
+	FOR_EACH_OBJECT_SKIP_ON_DISK_KEPT_PACKS = (1<<4),
 };
 
 /*

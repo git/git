@@ -1,0 +1,14 @@
+      module a
+
+      contains
+
+      subroutine RIGHT (funcA, funcB)
+
+      real funcA  ! grid function a
+      real funcB  ! grid function b
+
+      real ChangeMe
+
+      end subroutine RIGHT
+
+      end module a

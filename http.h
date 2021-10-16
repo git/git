@@ -10,49 +10,7 @@
 #include "remote.h"
 #include "url.h"
 
-/*
- * We detect based on the cURL version if multi-transfer is
- * usable in this implementation and define this symbol accordingly.
- * This shouldn't be set by the Makefile or by the user (e.g. via CFLAGS).
- */
-#undef USE_CURL_MULTI
-
-#if LIBCURL_VERSION_NUM >= 0x071000
-#define USE_CURL_MULTI
 #define DEFAULT_MAX_REQUESTS 5
-#endif
-
-#if LIBCURL_VERSION_NUM < 0x070704
-#define curl_global_cleanup() do { /* nothing */ } while (0)
-#endif
-
-#if LIBCURL_VERSION_NUM < 0x070800
-#define curl_global_init(a) do { /* nothing */ } while (0)
-#elif LIBCURL_VERSION_NUM >= 0x070c00
-#define curl_global_init(a) curl_global_init_mem(a, xmalloc, free, \
-						xrealloc, xstrdup, xcalloc)
-#endif
-
-#if (LIBCURL_VERSION_NUM < 0x070c04) || (LIBCURL_VERSION_NUM == 0x071000)
-#define NO_CURL_EASY_DUPHANDLE
-#endif
-
-#if LIBCURL_VERSION_NUM < 0x070a03
-#define CURLE_HTTP_RETURNED_ERROR CURLE_HTTP_NOT_FOUND
-#endif
-
-#if LIBCURL_VERSION_NUM < 0x070c03
-#define NO_CURL_IOCTL
-#endif
-
-/*
- * CURLOPT_USE_SSL was known as CURLOPT_FTP_SSL up to 7.16.4,
- * and the constants were known as CURLFTPSSL_*
-*/
-#if !defined(CURLOPT_USE_SSL) && defined(CURLOPT_FTP_SSL)
-#define CURLOPT_USE_SSL CURLOPT_FTP_SSL
-#define CURLUSESSL_TRY CURLFTPSSL_TRY
-#endif
 
 struct slot_results {
 	CURLcode curl_result;
@@ -82,9 +40,7 @@ struct buffer {
 size_t fread_buffer(char *ptr, size_t eltsize, size_t nmemb, void *strbuf);
 size_t fwrite_buffer(char *ptr, size_t eltsize, size_t nmemb, void *strbuf);
 size_t fwrite_null(char *ptr, size_t eltsize, size_t nmemb, void *strbuf);
-#ifndef NO_CURL_IOCTL
 curlioerr ioctl_buffer(CURL *handle, int cmd, void *clientp);
-#endif
 
 /* Slot lifecycle functions */
 struct active_request_slot *get_active_slot(void);
@@ -101,11 +57,9 @@ void finish_all_active_slots(void);
 int run_one_slot(struct active_request_slot *slot,
 		 struct slot_results *results);
 
-#ifdef USE_CURL_MULTI
 void fill_active_slots(void);
 void add_fill_function(void *data, int (*fill)(void *));
 void step_active_slots(void);
-#endif
 
 void http_init(struct remote *remote, const char *url,
 	       int proactive_auth);
@@ -200,6 +154,7 @@ struct http_get_options {
 #define HTTP_START_FAILED	3
 #define HTTP_REAUTH	4
 #define HTTP_NOAUTH	5
+#define HTTP_NOMATCHPUBLICKEY	6
 
 /*
  * Requests a URL and stores the result in a strbuf.
@@ -216,17 +171,35 @@ int http_get_info_packs(const char *base_url,
 
 struct http_pack_request {
 	char *url;
-	struct packed_git *target;
-	struct packed_git **lst;
+
+	/*
+	 * index-pack command to run. Must be terminated by NULL.
+	 *
+	 * If NULL, defaults to	{"index-pack", "--stdin", NULL}.
+	 */
+	const char **index_pack_args;
+	unsigned preserve_index_pack_stdout : 1;
+
 	FILE *packfile;
 	struct strbuf tmpfile;
 	struct active_request_slot *slot;
 };
 
 struct http_pack_request *new_http_pack_request(
-	struct packed_git *target, const char *base_url);
+	const unsigned char *packed_git_hash, const char *base_url);
+struct http_pack_request *new_direct_http_pack_request(
+	const unsigned char *packed_git_hash, char *url);
 int finish_http_pack_request(struct http_pack_request *preq);
 void release_http_pack_request(struct http_pack_request *preq);
+
+/*
+ * Remove p from the given list, and invoke install_packed_git() on it.
+ *
+ * This is a convenience function for users that have obtained a list of packs
+ * from http_get_info_packs() and have chosen a specific pack to fetch.
+ */
+void http_install_packfile(struct packed_git *p,
+			   struct packed_git **list_to_remove_from);
 
 /* Helpers for fetching object */
 struct http_object_request {
@@ -251,6 +224,13 @@ void process_http_object_request(struct http_object_request *freq);
 int finish_http_object_request(struct http_object_request *freq);
 void abort_http_object_request(struct http_object_request *freq);
 void release_http_object_request(struct http_object_request *freq);
+
+/*
+ * Instead of using environment variables to determine if curl tracing happens,
+ * behave as if GIT_TRACE_CURL=1 and GIT_TRACE_CURL_NO_DATA=1 is set. Call this
+ * before calling setup_curl_trace().
+ */
+void http_trace_curl_no_data(void);
 
 /* setup routine for curl_easy_setopt CURLOPT_DEBUGFUNCTION */
 void setup_curl_trace(CURL *handle);

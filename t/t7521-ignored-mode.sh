@@ -30,7 +30,7 @@ test_expect_success 'Verify behavior of status on directories with ignored files
 		dir/ignored/ignored_1.ign dir/ignored/ignored_2.ign &&
 
 	git status --porcelain=v2 --ignored=matching --untracked-files=all >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 test_expect_success 'Verify status behavior on directory with tracked & ignored files' '
@@ -55,7 +55,7 @@ test_expect_success 'Verify status behavior on directory with tracked & ignored 
 	git commit -m "commit tracked files" &&
 
 	git status --porcelain=v2 --ignored=matching --untracked-files=all >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 test_expect_success 'Verify status behavior on directory with untracked and ignored files' '
@@ -80,7 +80,7 @@ test_expect_success 'Verify status behavior on directory with untracked and igno
 		dir/untracked_ignored/ignored_1.ign dir/untracked_ignored/ignored_2.ign &&
 
 	git status --porcelain=v2 --ignored=matching --untracked-files=all >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 test_expect_success 'Verify status matching ignored files on ignored directory' '
@@ -96,7 +96,7 @@ test_expect_success 'Verify status matching ignored files on ignored directory' 
 		ignored_dir/ignored_1.ign ignored_dir/ignored_2.ign &&
 
 	git status --porcelain=v2 --ignored=matching --untracked-files=all >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 test_expect_success 'Verify status behavior on ignored directory containing tracked file' '
@@ -117,7 +117,7 @@ test_expect_success 'Verify status behavior on ignored directory containing trac
 	git add -f ignored_dir/tracked &&
 	git commit -m "Force add file in ignored directory" &&
 	git status --porcelain=v2 --ignored=matching --untracked-files=all >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 test_expect_success 'Verify matching ignored files with --untracked-files=normal' '
@@ -136,7 +136,7 @@ test_expect_success 'Verify matching ignored files with --untracked-files=normal
 		ignored_files/ignored_1.ign ignored_files/ignored_2.ign \
 		untracked_dir/untracked &&
 	git status --porcelain=v2 --ignored=matching --untracked-files=normal >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 test_expect_success 'Verify matching ignored files with --untracked-files=normal' '
@@ -155,7 +155,7 @@ test_expect_success 'Verify matching ignored files with --untracked-files=normal
 		ignored_files/ignored_1.ign ignored_files/ignored_2.ign \
 		untracked_dir/untracked &&
 	git status --porcelain=v2 --ignored=matching --untracked-files=normal >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 test_expect_success 'Verify status behavior on ignored directory containing tracked file' '
@@ -176,7 +176,7 @@ test_expect_success 'Verify status behavior on ignored directory containing trac
 	git add -f ignored_dir/tracked &&
 	git commit -m "Force add file in ignored directory" &&
 	git status --porcelain=v2 --ignored=matching --untracked-files=normal >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 test_expect_success 'Verify behavior of status with --ignored=no' '
@@ -191,7 +191,7 @@ test_expect_success 'Verify behavior of status with --ignored=no' '
 		dir/ignored/ignored_1.ign dir/ignored/ignored_2.ign &&
 
 	git status --porcelain=v2 --ignored=no --untracked-files=all >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 test_expect_success 'Verify behavior of status with --ignored=traditional and --untracked-files=all' '
@@ -210,7 +210,7 @@ test_expect_success 'Verify behavior of status with --ignored=traditional and --
 		dir/ignored/ignored_1.ign dir/ignored/ignored_2.ign &&
 
 	git status --porcelain=v2 --ignored=traditional --untracked-files=all >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 test_expect_success 'Verify behavior of status with --ignored=traditional and --untracked-files=normal' '
@@ -227,7 +227,7 @@ test_expect_success 'Verify behavior of status with --ignored=traditional and --
 		dir/ignored/ignored_1.ign dir/ignored/ignored_2.ign &&
 
 	git status --porcelain=v2 --ignored=traditional --untracked-files=normal >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 test_done

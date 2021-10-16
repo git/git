@@ -91,16 +91,18 @@ struct string_list {
 	compare_strings_fn cmp; /* NULL uses strcmp() */
 };
 
-#define STRING_LIST_INIT_NODUP { NULL, 0, 0, 0, NULL }
-#define STRING_LIST_INIT_DUP   { NULL, 0, 0, 1, NULL }
+#define STRING_LIST_INIT_NODUP { 0 }
+#define STRING_LIST_INIT_DUP   { .strdup_strings = 1 }
 
 /* General functions which work with both sorted and unsorted lists. */
 
 /**
- * Initialize the members of the string_list, set `strdup_strings`
- * member according to the value of the second parameter.
+ * Initialize the members of a string_list pointer in the same way as
+ * the corresponding `STRING_LIST_INIT_NODUP` and
+ * `STRING_LIST_INIT_DUP` macros.
  */
-void string_list_init(struct string_list *list, int strdup_strings);
+void string_list_init_nodup(struct string_list *list);
+void string_list_init_dup(struct string_list *list);
 
 /** Callback function type for for_each_string_list */
 typedef int (*string_list_each_func_t)(struct string_list_item *, void *);

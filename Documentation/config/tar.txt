@@ -1,0 +1,6 @@
+tar.umask::
+	This variable can be used to restrict the permission bits of
+	tar archive entries.  The default is 0002, which turns off the
+	world write bit.  The special value "user" indicates that the
+	archiving user's umask will be used instead.  See umask(2) and
+	linkgit:git-archive[1].

@@ -60,6 +60,7 @@
    #undefs RE_DUP_MAX and sets it to the right value.  */
 #include <limits.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 #ifdef GAWK
 #undef alloca

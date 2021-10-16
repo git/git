@@ -138,12 +138,15 @@ Issues of note:
 	  BLK_SHA1.  Also included is a version optimized for PowerPC
 	  (PPC_SHA1).
 
-	- "libcurl" library is used by git-http-fetch, git-fetch, and, if
-	  the curl version >= 7.34.0, for git-imap-send.  You might also
-	  want the "curl" executable for debugging purposes. If you do not
-	  use http:// or https:// repositories, and do not want to put
-	  patches into an IMAP mailbox, you do not have to have them
-	  (use NO_CURL).
+	- "libcurl" library is used for fetching and pushing
+	  repositories over http:// or https://, as well as by
+	  git-imap-send if the curl version is >= 7.34.0. If you do
+	  not need that functionality, use NO_CURL to build without
+	  it.
+
+	  Git requires version "7.19.4" or later of "libcurl" to build
+	  without NO_CURL. This version requirement may be bumped in
+	  the future.
 
 	- "expat" library; git-http-push uses it for remote lock
 	  management over DAV.  Similar to "curl" above, this is optional
@@ -165,8 +168,7 @@ Issues of note:
 	  use English. Under autoconf the configure script will do this
 	  automatically if it can't find libintl on the system.
 
-	- Python version 2.4 or later (but not 3.x, which is not
-	  supported by Perforce) is needed to use the git-p4 interface
+	- Python version 2.7 or later is needed to use the git-p4 interface
 	  to Perforce.
 
  - Some platform specific issues are dealt with Makefile rules,
@@ -198,7 +200,9 @@ Issues of note:
    Building and installing the pdf file additionally requires
    dblatex.  Version >= 0.2.7 is known to work.
 
-   All formats require at least asciidoc 8.4.1.
+   All formats require at least asciidoc 8.4.1. Alternatively, you can
+   use Asciidoctor (requires Ruby) by passing USE_ASCIIDOCTOR=YesPlease
+   to make. You need at least Asciidoctor version 1.5.
 
    There are also "make quick-install-doc", "make quick-install-man"
    and "make quick-install-html" which install preformatted man pages
@@ -206,9 +210,7 @@ Issues of note:
    clone two separate git-htmldocs and git-manpages repositories next
    to the clone of git itself.
 
-   It has been reported that docbook-xsl version 1.72 and 1.73 are
-   buggy; 1.72 misformats manual pages for callouts, and 1.73 needs
-   the patch in contrib/patches/docbook-xsl-manpages-charmap.patch
+   The minimum supported version of docbook-xsl is 1.74.
 
    Users attempting to build the documentation on Cygwin may need to ensure
    that the /etc/xml/catalog file looks something like this:

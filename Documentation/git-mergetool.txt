@@ -99,6 +99,10 @@ success of the resolution after the custom tool has exited.
 	(see linkgit:git-config[1]).  To cancel `diff.orderFile`,
 	use `-O/dev/null`.
 
+CONFIGURATION
+-------------
+include::config/mergetool.txt[]
+
 TEMPORARY FILES
 ---------------
 `git mergetool` creates `*.orig` backup files while resolving merges.

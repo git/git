@@ -1,0 +1,5 @@
+       BLOCK DATA RIGHT
+       
+       COMMON /B/ C, ChangeMe
+       DATA C, ChangeMe  / 2.0, 6.0 / 
+       END 

@@ -2,14 +2,17 @@
 
 test_description='git receive-pack with alternate ref filtering'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'setup' '
 	test_commit base &&
 	git clone -s --bare . fork &&
-	git checkout -b public/branch master &&
+	git checkout -b public/branch main &&
 	test_commit public &&
-	git checkout -b private/branch master &&
+	git checkout -b private/branch main &&
 	test_commit private
 '
 

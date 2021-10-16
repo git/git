@@ -114,18 +114,8 @@ static int handle_is_ancestor(int argc, const char **argv)
 static int handle_fork_point(int argc, const char **argv)
 {
 	struct object_id oid;
-	char *refname;
 	struct commit *derived, *fork_point;
 	const char *commitname;
-
-	switch (dwim_ref(argv[0], strlen(argv[0]), &oid, &refname)) {
-	case 0:
-		die("No such ref: '%s'", argv[0]);
-	case 1:
-		break; /* good */
-	default:
-		die("Ambiguous refname: '%s'", argv[0]);
-	}
 
 	commitname = (argc == 2) ? argv[1] : "HEAD";
 	if (get_oid(commitname, &oid))
@@ -133,7 +123,7 @@ static int handle_fork_point(int argc, const char **argv)
 
 	derived = lookup_commit_reference(the_repository, &oid);
 
-	fork_point = get_fork_point(refname, derived);
+	fork_point = get_fork_point(argv[0], derived);
 
 	if (!fork_point)
 		return 1;

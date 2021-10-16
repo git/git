@@ -2,6 +2,9 @@
 
 test_description='pulling into void'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 modify () {
@@ -10,11 +13,13 @@ modify () {
 }
 
 test_pull_autostash () {
+	expect_parent_num="$1" &&
+	shift &&
 	git reset --hard before-rebase &&
 	echo dirty >new_file &&
 	git add new_file &&
 	git pull "$@" . copy &&
-	test_cmp_rev HEAD^ copy &&
+	test_cmp_rev HEAD^"$expect_parent_num" copy &&
 	echo dirty >expect &&
 	test_cmp expect new_file &&
 	echo "modified again" >expect &&
@@ -26,7 +31,7 @@ test_pull_autostash_fail () {
 	echo dirty >new_file &&
 	git add new_file &&
 	test_must_fail git pull "$@" . copy 2>err &&
-	test_i18ngrep "uncommitted changes." err
+	test_i18ngrep -E "uncommitted changes.|overwritten by merge:" err
 }
 
 test_expect_success setup '
@@ -46,11 +51,11 @@ test_expect_success 'pulling into void' '
 	test_cmp file cloned/file
 '
 
-test_expect_success 'pulling into void using master:master' '
+test_expect_success 'pulling into void using main:main' '
 	git init cloned-uho &&
 	(
 		cd cloned-uho &&
-		git pull .. master:master
+		git pull .. main:main
 	) &&
 	test_path_is_file file &&
 	test_path_is_file cloned-uho/file &&
@@ -62,7 +67,7 @@ test_expect_success 'pulling into void does not overwrite untracked files' '
 	(
 		cd cloned-untracked &&
 		echo untracked >file &&
-		test_must_fail git pull .. master &&
+		test_must_fail git pull .. main &&
 		echo untracked >expect &&
 		test_cmp expect file
 	)
@@ -74,7 +79,7 @@ test_expect_success 'pulling into void does not overwrite staged files' '
 		cd cloned-staged-colliding &&
 		echo "alternate content" >file &&
 		git add file &&
-		test_must_fail git pull .. master &&
+		test_must_fail git pull .. main &&
 		echo "alternate content" >expect &&
 		test_cmp expect file &&
 		git cat-file blob :file >file.index &&
@@ -88,7 +93,7 @@ test_expect_success 'pulling into void does not remove new staged files' '
 		cd cloned-staged-new &&
 		echo "new tracked file" >newfile &&
 		git add newfile &&
-		git pull .. master &&
+		git pull .. main &&
 		echo "new tracked file" >expect &&
 		test_cmp expect newfile &&
 		git cat-file blob :newfile >newfile.index &&
@@ -100,15 +105,15 @@ test_expect_success 'pulling into void must not create an octopus' '
 	git init cloned-octopus &&
 	(
 		cd cloned-octopus &&
-		test_must_fail git pull .. master master &&
+		test_must_fail git pull .. main main &&
 		test_path_is_missing file
 	)
 '
 
 test_expect_success 'test . as a remote' '
-	git branch copy master &&
+	git branch copy main &&
 	git config branch.copy.remote . &&
-	git config branch.copy.merge refs/heads/master &&
+	git config branch.copy.merge refs/heads/main &&
 	echo updated >file &&
 	git commit -a -m updated &&
 	git checkout copy &&
@@ -124,19 +129,19 @@ test_expect_success 'test . as a remote' '
 '
 
 test_expect_success 'the default remote . should not break explicit pull' '
-	git checkout -b second master^ &&
+	git checkout -b second main^ &&
 	echo modified >file &&
 	git commit -a -m modified &&
 	git checkout copy &&
 	git reset --hard HEAD^ &&
 	echo file >expect &&
 	test_cmp expect file &&
-	git pull . second &&
+	git pull --no-rebase . second &&
 	echo modified >expect &&
 	test_cmp expect file &&
 	git reflog -1 >reflog.actual &&
 	sed "s/^[0-9a-f][0-9a-f]*/OBJID/" reflog.actual >reflog.fuzzy &&
-	echo "OBJID HEAD@{0}: pull . second: Fast-forward" >reflog.expected &&
+	echo "OBJID HEAD@{0}: pull --no-rebase . second: Fast-forward" >reflog.expected &&
 	test_cmp reflog.expected reflog.fuzzy
 '
 
@@ -221,7 +226,7 @@ test_expect_success 'fail if the index has unresolved entries' '
 	test_commit modified2 file &&
 	git ls-files -u >unmerged &&
 	test_must_be_empty unmerged &&
-	test_must_fail git pull . second &&
+	test_must_fail git pull --no-rebase . second &&
 	git ls-files -u >unmerged &&
 	test_file_not_empty unmerged &&
 	cp file expected &&
@@ -359,7 +364,7 @@ test_expect_success 'failed --rebase shows advice' '
 
 test_expect_success '--rebase fails with multiple branches' '
 	git reset --hard before-rebase &&
-	test_must_fail git pull --rebase . copy master 2>err &&
+	test_must_fail git pull --rebase . copy main 2>err &&
 	test_cmp_rev HEAD before-rebase &&
 	test_i18ngrep "Cannot rebase onto multiple branches" err &&
 	echo modified >expect &&
@@ -369,22 +374,22 @@ test_expect_success '--rebase fails with multiple branches' '
 
 test_expect_success 'pull --rebase succeeds with dirty working directory and rebase.autostash set' '
 	test_config rebase.autostash true &&
-	test_pull_autostash --rebase
+	test_pull_autostash 1 --rebase
 '
 
 test_expect_success 'pull --rebase --autostash & rebase.autostash=true' '
 	test_config rebase.autostash true &&
-	test_pull_autostash --rebase --autostash
+	test_pull_autostash 1 --rebase --autostash
 '
 
 test_expect_success 'pull --rebase --autostash & rebase.autostash=false' '
 	test_config rebase.autostash false &&
-	test_pull_autostash --rebase --autostash
+	test_pull_autostash 1 --rebase --autostash
 '
 
 test_expect_success 'pull --rebase --autostash & rebase.autostash unset' '
 	test_unconfig rebase.autostash &&
-	test_pull_autostash --rebase --autostash
+	test_pull_autostash 1 --rebase --autostash
 '
 
 test_expect_success 'pull --rebase --no-autostash & rebase.autostash=true' '
@@ -402,13 +407,40 @@ test_expect_success 'pull --rebase --no-autostash & rebase.autostash unset' '
 	test_pull_autostash_fail --rebase --no-autostash
 '
 
-for i in --autostash --no-autostash
-do
-	test_expect_success "pull $i (without --rebase) is illegal" '
-		test_must_fail git pull $i . copy 2>err &&
-		test_i18ngrep "only valid with --rebase" err
-	'
-done
+test_expect_success 'pull succeeds with dirty working directory and merge.autostash set' '
+	test_config merge.autostash true &&
+	test_pull_autostash 2 --no-rebase
+'
+
+test_expect_success 'pull --autostash & merge.autostash=true' '
+	test_config merge.autostash true &&
+	test_pull_autostash 2 --autostash --no-rebase
+'
+
+test_expect_success 'pull --autostash & merge.autostash=false' '
+	test_config merge.autostash false &&
+	test_pull_autostash 2 --autostash --no-rebase
+'
+
+test_expect_success 'pull --autostash & merge.autostash unset' '
+	test_unconfig merge.autostash &&
+	test_pull_autostash 2 --autostash --no-rebase
+'
+
+test_expect_success 'pull --no-autostash & merge.autostash=true' '
+	test_config merge.autostash true &&
+	test_pull_autostash_fail --no-autostash --no-rebase
+'
+
+test_expect_success 'pull --no-autostash & merge.autostash=false' '
+	test_config merge.autostash false &&
+	test_pull_autostash_fail --no-autostash --no-rebase
+'
+
+test_expect_success 'pull --no-autostash & merge.autostash unset' '
+	test_unconfig merge.autostash &&
+	test_pull_autostash_fail --no-autostash --no-rebase
+'
 
 test_expect_success 'pull.rebase' '
 	git reset --hard before-rebase &&
@@ -422,7 +454,7 @@ test_expect_success 'pull.rebase' '
 
 test_expect_success 'pull --autostash & pull.rebase=true' '
 	test_config pull.rebase true &&
-	test_pull_autostash --autostash
+	test_pull_autostash 1 --autostash
 '
 
 test_expect_success 'pull --no-autostash & pull.rebase=true' '
@@ -471,7 +503,7 @@ test_expect_success 'pull --rebase does not warn on --no-verify-signatures' '
 	test_i18ngrep ! "verify-signatures" err
 '
 
-# add a feature branch, keep-merge, that is merged into master, so the
+# add a feature branch, keep-merge, that is merged into main, so the
 # test can try preserving the merge commit (or not) with various
 # --rebase flags/pull.rebase settings.
 test_expect_success 'preserve merge setup' '
@@ -670,12 +702,12 @@ test_expect_success 'pull --rebase dies early with dirty working directory' '
 '
 
 test_expect_success 'pull --rebase works on branch yet to be born' '
-	git rev-parse master >expect &&
+	git rev-parse main >expect &&
 	mkdir empty_repo &&
 	(
 		cd empty_repo &&
 		git init &&
-		git pull --rebase .. master &&
+		git pull --rebase .. main &&
 		git rev-parse HEAD >../actual
 	) &&
 	test_cmp expect actual
@@ -691,7 +723,7 @@ test_expect_success 'pull --rebase fails on unborn branch with staged changes' '
 		echo staged-file >expect &&
 		git ls-files >actual &&
 		test_cmp expect actual &&
-		test_must_fail git pull --rebase .. master 2>err &&
+		test_must_fail git pull --rebase .. main 2>err &&
 		git ls-files >actual &&
 		test_cmp expect actual &&
 		git show :staged-file >actual &&
@@ -714,14 +746,8 @@ test_expect_success 'pull --rebase fails on corrupt HEAD' '
 '
 
 test_expect_success 'setup for detecting upstreamed changes' '
-	mkdir src &&
-	(
-		cd src &&
-		git init &&
-		printf "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n" > stuff &&
-		git add stuff &&
-		git commit -m "Initial revision"
-	) &&
+	test_create_repo src &&
+	test_commit -C src --printf one stuff "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n" &&
 	git clone src dst &&
 	(
 		cd src &&
@@ -750,7 +776,7 @@ test_expect_success 'setup for avoiding reapplying old patches' '
 	(
 		cd dst &&
 		test_might_fail git rebase --abort &&
-		git reset --hard origin/master
+		git reset --hard origin/main
 	) &&
 	git clone --bare src src-replace.git &&
 	rm -rf src &&

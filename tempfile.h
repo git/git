@@ -88,8 +88,16 @@ struct tempfile {
  * Attempt to create a temporary file at the specified `path`. Return
  * a tempfile (whose "fd" member can be used for writing to it), or
  * NULL on error. It is an error if a file already exists at that path.
+ * Note that `mode` will be further modified by the umask, and possibly
+ * `core.sharedRepository`, so it is not guaranteed to have the given
+ * mode.
  */
-struct tempfile *create_tempfile(const char *path);
+struct tempfile *create_tempfile_mode(const char *path, int mode);
+
+static inline struct tempfile *create_tempfile(const char *path)
+{
+	return create_tempfile_mode(path, 0666);
+}
 
 /*
  * Register an existing file as a tempfile, meaning that it will be

@@ -292,6 +292,11 @@ EOF
 	test_cmp expect actual
 '
 
+test_expect_success 'ls-files with "**" patterns and --directory' '
+	# Expectation same as previous test
+	git ls-files --directory -o -i --exclude "**/a.1" >actual &&
+	test_cmp expect actual
+'
 
 test_expect_success 'ls-files with "**" patterns and no slashes' '
 	git ls-files -o -i --exclude "one**a.1" >actual &&

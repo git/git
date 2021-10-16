@@ -3,6 +3,7 @@
 #include "parse-options.h"
 #include "range-diff.h"
 #include "config.h"
+#include "revision.h"
 
 static const char * const builtin_range_diff_usage[] = {
 N_("git range-diff [<options>] <old-base>..<old-tip> <new-base>..<new-tip>"),
@@ -13,18 +14,27 @@ NULL
 
 int cmd_range_diff(int argc, const char **argv, const char *prefix)
 {
-	int creation_factor = RANGE_DIFF_CREATION_FACTOR_DEFAULT;
 	struct diff_options diffopt = { NULL };
-	struct argv_array other_arg = ARGV_ARRAY_INIT;
-	int simple_color = -1;
+	struct strvec other_arg = STRVEC_INIT;
+	struct range_diff_options range_diff_opts = {
+		.creation_factor = RANGE_DIFF_CREATION_FACTOR_DEFAULT,
+		.diffopt = &diffopt,
+		.other_arg = &other_arg
+	};
+	int simple_color = -1, left_only = 0, right_only = 0;
 	struct option range_diff_options[] = {
-		OPT_INTEGER(0, "creation-factor", &creation_factor,
-			    N_("Percentage by which creation is weighted")),
+		OPT_INTEGER(0, "creation-factor",
+			    &range_diff_opts.creation_factor,
+			    N_("percentage by which creation is weighted")),
 		OPT_BOOL(0, "no-dual-color", &simple_color,
 			    N_("use simple diff colors")),
 		OPT_PASSTHRU_ARGV(0, "notes", &other_arg,
 				  N_("notes"), N_("passed to 'git log'"),
 				  PARSE_OPT_OPTARG),
+		OPT_BOOL(0, "left-only", &left_only,
+			 N_("only emit output related to the first range")),
+		OPT_BOOL(0, "right-only", &right_only,
+			 N_("only emit output related to the second range")),
 		OPT_END()
 	};
 	struct option *options;
@@ -46,12 +56,12 @@ int cmd_range_diff(int argc, const char **argv, const char *prefix)
 		diffopt.use_color = 1;
 
 	if (argc == 2) {
-		if (!strstr(argv[0], ".."))
-			die(_("no .. in range: '%s'"), argv[0]);
+		if (!is_range_diff_range(argv[0]))
+			die(_("not a commit range: '%s'"), argv[0]);
 		strbuf_addstr(&range1, argv[0]);
 
-		if (!strstr(argv[1], ".."))
-			die(_("no .. in range: '%s'"), argv[1]);
+		if (!is_range_diff_range(argv[1]))
+			die(_("not a commit range: '%s'"), argv[1]);
 		strbuf_addstr(&range2, argv[1]);
 	} else if (argc == 3) {
 		strbuf_addf(&range1, "%s..%s", argv[0], argv[1]);
@@ -81,10 +91,12 @@ int cmd_range_diff(int argc, const char **argv, const char *prefix)
 	}
 	FREE_AND_NULL(options);
 
-	res = show_range_diff(range1.buf, range2.buf, creation_factor,
-			      simple_color < 1, &diffopt, &other_arg);
+	range_diff_opts.dual_color = simple_color < 1;
+	range_diff_opts.left_only = left_only;
+	range_diff_opts.right_only = right_only;
+	res = show_range_diff(range1.buf, range2.buf, &range_diff_opts);
 
-	argv_array_clear(&other_arg);
+	strvec_clear(&other_arg);
 	strbuf_release(&range1);
 	strbuf_release(&range2);
 

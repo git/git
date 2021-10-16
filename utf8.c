@@ -777,6 +777,11 @@ int is_hfs_dotgitattributes(const char *path)
 	return is_hfs_dot_str(path, "gitattributes");
 }
 
+int is_hfs_dotmailmap(const char *path)
+{
+	return is_hfs_dot_str(path, "mailmap");
+}
+
 const char utf8_bom[] = "\357\273\277";
 
 int skip_utf8_bom(char **text, size_t len)

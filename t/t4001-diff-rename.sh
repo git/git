@@ -7,7 +7,7 @@ test_description='Test rename detection in diff engine.
 
 '
 . ./test-lib.sh
-. "$TEST_DIRECTORY"/diff-lib.sh
+. "$TEST_DIRECTORY"/lib-diff.sh
 
 test_expect_success 'setup' '
 	cat >path0 <<-\EOF &&
@@ -260,6 +260,30 @@ test_expect_success 'diff-tree -l0 defaults to a big rename limit, not zero' '
 	git diff-tree -M -l0 HEAD HEAD^ >actual &&
 	# Verify that a rename from myotherfile to myfile was detected
 	grep "myotherfile.*myfile" actual
+'
+
+test_expect_success 'basename similarity vs best similarity' '
+	mkdir subdir &&
+	test_write_lines line1 line2 line3 line4 line5 \
+			 line6 line7 line8 line9 line10 >subdir/file.txt &&
+	git add subdir/file.txt &&
+	git commit -m "base txt" &&
+
+	git rm subdir/file.txt &&
+	test_write_lines line1 line2 line3 line4 line5 \
+			  line6 line7 line8 >file.txt &&
+	test_write_lines line1 line2 line3 line4 line5 \
+			  line6 line7 line8 line9 >file.md &&
+	git add file.txt file.md &&
+	git commit -a -m "rename" &&
+	git diff-tree -r -M --name-status HEAD^ HEAD >actual &&
+	# subdir/file.txt is 88% similar to file.md, 78% similar to file.txt,
+	# but since same basenames are checked first...
+	cat >expected <<-\EOF &&
+	A	file.md
+	R078	subdir/file.txt	file.txt
+	EOF
+	test_cmp expected actual
 '
 
 test_done

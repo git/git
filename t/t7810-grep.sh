@@ -6,7 +6,17 @@
 test_description='git grep various.
 '
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
+
+test_invalid_grep_expression() {
+	params="$@" &&
+	test_expect_success "invalid expression: grep $params" '
+		test_must_fail git grep $params -- nonexisting
+	'
+}
 
 cat >hello.c <<EOF
 #include <assert.h>
@@ -72,6 +82,11 @@ test_expect_success setup '
 	# Still a no-op.
 	function dummy() {}
 	EOF
+	if test_have_prereq FUNNYNAMES
+	then
+		echo unusual >"\"unusual\" pathname" &&
+		echo unusual >"t/nested \"unusual\" pathname"
+	fi &&
 	git add . &&
 	test_tick &&
 	git commit -m initial
@@ -80,6 +95,8 @@ test_expect_success setup '
 test_expect_success 'grep should not segfault with a bad input' '
 	test_must_fail git grep "("
 '
+
+test_invalid_grep_expression --and -e A
 
 for H in HEAD ''
 do
@@ -481,6 +498,48 @@ do
 		git grep --count -h -e b $H -- ab >actual &&
 		test_cmp expected actual
 	'
+
+	test_expect_success FUNNYNAMES "grep $L should quote unusual pathnames" '
+		cat >expected <<-EOF &&
+		${HC}"\"unusual\" pathname":unusual
+		${HC}"t/nested \"unusual\" pathname":unusual
+		EOF
+		git grep unusual $H >actual &&
+		test_cmp expected actual
+	'
+
+	test_expect_success FUNNYNAMES "grep $L in subdir should quote unusual relative pathnames" '
+		cat >expected <<-EOF &&
+		${HC}"nested \"unusual\" pathname":unusual
+		EOF
+		(
+			cd t &&
+			git grep unusual $H
+		) >actual &&
+		test_cmp expected actual
+	'
+
+	test_expect_success FUNNYNAMES "grep -z $L with unusual pathnames" '
+		cat >expected <<-EOF &&
+		${HC}"unusual" pathname:unusual
+		${HC}t/nested "unusual" pathname:unusual
+		EOF
+		git grep -z unusual $H >actual &&
+		tr "\0" ":" <actual >actual-replace-null &&
+		test_cmp expected actual-replace-null
+	'
+
+	test_expect_success FUNNYNAMES "grep -z $L in subdir with unusual relative pathnames" '
+		cat >expected <<-EOF &&
+		${HC}nested "unusual" pathname:unusual
+		EOF
+		(
+			cd t &&
+			git grep -z unusual $H
+		) >actual &&
+		tr "\0" ":" <actual >actual-replace-null &&
+		test_cmp expected actual-replace-null
+	'
 done
 
 cat >expected <<EOF
@@ -640,21 +699,9 @@ test_expect_success 'grep -C1 hunk mark between files' '
 '
 
 test_expect_success 'log grep setup' '
-	echo a >>file &&
-	test_tick &&
-	GIT_AUTHOR_NAME="With * Asterisk" \
-	GIT_AUTHOR_EMAIL="xyzzy@frotz.com" \
-	git commit -a -m "second" &&
-
-	echo a >>file &&
-	test_tick &&
-	git commit -a -m "third" &&
-
-	echo a >>file &&
-	test_tick &&
-	GIT_AUTHOR_NAME="Night Fall" \
-	GIT_AUTHOR_EMAIL="nitfol@frobozz.com" \
-	git commit -a -m "fourth"
+	test_commit --append --author "With * Asterisk <xyzzy@frotz.com>" second file a &&
+	test_commit --append third file a &&
+	test_commit --append --author "Night Fall <nitfol@frobozz.com>" fourth file a
 '
 
 test_expect_success 'log grep (1)' '
@@ -931,7 +978,8 @@ do
 	"
 done
 
-test_expect_success !PTHREADS,C_LOCALE_OUTPUT 'grep --threads=N or pack.threads=N warns when no pthreads' '
+test_expect_success !PTHREADS,!FAIL_PREREQS \
+	'grep --threads=N or pack.threads=N warns when no pthreads' '
 	git grep --threads=2 Hello hello_world 2>err &&
 	grep ^warning: err >warnings &&
 	test_line_count = 1 warnings &&
@@ -1159,19 +1207,19 @@ test_expect_success 'grep -e -- -- path' '
 '
 
 test_expect_success 'dashdash disambiguates rev as rev' '
-	test_when_finished "rm -f master" &&
-	echo content >master &&
-	echo master:hello.c >expect &&
-	git grep -l o master -- hello.c >actual &&
+	test_when_finished "rm -f main" &&
+	echo content >main &&
+	echo main:hello.c >expect &&
+	git grep -l o main -- hello.c >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'dashdash disambiguates pathspec as pathspec' '
-	test_when_finished "git rm -f master" &&
-	echo content >master &&
-	git add master &&
-	echo master:content >expect &&
-	git grep o -- master >actual &&
+	test_when_finished "git rm -f main" &&
+	echo content >main &&
+	git add main &&
+	echo main:content >expect &&
+	git grep o -- main >actual &&
 	test_cmp expect actual
 '
 
@@ -1207,15 +1255,15 @@ test_expect_success 'grep --no-index pattern -- path' '
 '
 
 test_expect_success 'grep --no-index complains of revs' '
-	test_must_fail git grep --no-index o master -- 2>err &&
+	test_must_fail git grep --no-index o main -- 2>err &&
 	test_i18ngrep "cannot be used with revs" err
 '
 
 test_expect_success 'grep --no-index prefers paths to revs' '
-	test_when_finished "rm -f master" &&
-	echo content >master &&
-	echo master:content >expect &&
-	git grep --no-index o master >actual &&
+	test_when_finished "rm -f main" &&
+	echo content >main &&
+	echo main:content >expect &&
+	git grep --no-index o main >actual &&
 	test_cmp expect actual
 '
 

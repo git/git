@@ -94,24 +94,8 @@
  * command.
  */
 
-#define DEFAULT_MERGE_LOG_LEN 20
-
 extern const char git_usage_string[];
 extern const char git_more_info_string[];
-
-#define PRUNE_PACKED_DRY_RUN 01
-#define PRUNE_PACKED_VERBOSE 02
-
-void prune_packed_objects(int);
-
-struct fmt_merge_msg_opts {
-	unsigned add_title:1,
-		credit_people:1;
-	int shortlog_len;
-};
-
-int fmt_merge_msg(struct strbuf *in, struct strbuf *out,
-		  struct fmt_merge_msg_opts *);
 
 /**
  * If a built-in has DELAY_PAGER_CONFIG set, the built-in should call this early
@@ -135,9 +119,11 @@ int cmd_archive(int argc, const char **argv, const char *prefix);
 int cmd_bisect__helper(int argc, const char **argv, const char *prefix);
 int cmd_blame(int argc, const char **argv, const char *prefix);
 int cmd_branch(int argc, const char **argv, const char *prefix);
+int cmd_bugreport(int argc, const char **argv, const char *prefix);
 int cmd_bundle(int argc, const char **argv, const char *prefix);
 int cmd_cat_file(int argc, const char **argv, const char *prefix);
 int cmd_checkout(int argc, const char **argv, const char *prefix);
+int cmd_checkout__worker(int argc, const char **argv, const char *prefix);
 int cmd_checkout_index(int argc, const char **argv, const char *prefix);
 int cmd_check_attr(int argc, const char **argv, const char *prefix);
 int cmd_check_ignore(int argc, const char **argv, const char *prefix);
@@ -154,6 +140,9 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix);
 int cmd_config(int argc, const char **argv, const char *prefix);
 int cmd_count_objects(int argc, const char **argv, const char *prefix);
 int cmd_credential(int argc, const char **argv, const char *prefix);
+int cmd_credential_cache(int argc, const char **argv, const char *prefix);
+int cmd_credential_cache_daemon(int argc, const char **argv, const char *prefix);
+int cmd_credential_store(int argc, const char **argv, const char *prefix);
 int cmd_describe(int argc, const char **argv, const char *prefix);
 int cmd_diff_files(int argc, const char **argv, const char *prefix);
 int cmd_diff_index(int argc, const char **argv, const char *prefix);
@@ -162,10 +151,12 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix);
 int cmd_difftool(int argc, const char **argv, const char *prefix);
 int cmd_env__helper(int argc, const char **argv, const char *prefix);
 int cmd_fast_export(int argc, const char **argv, const char *prefix);
+int cmd_fast_import(int argc, const char **argv, const char *prefix);
 int cmd_fetch(int argc, const char **argv, const char *prefix);
 int cmd_fetch_pack(int argc, const char **argv, const char *prefix);
 int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix);
 int cmd_for_each_ref(int argc, const char **argv, const char *prefix);
+int cmd_for_each_repo(int argc, const char **argv, const char *prefix);
 int cmd_format_patch(int argc, const char **argv, const char *prefix);
 int cmd_fsck(int argc, const char **argv, const char *prefix);
 int cmd_gc(int argc, const char **argv, const char *prefix);
@@ -183,6 +174,7 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix);
 int cmd_ls_remote(int argc, const char **argv, const char *prefix);
 int cmd_mailinfo(int argc, const char **argv, const char *prefix);
 int cmd_mailsplit(int argc, const char **argv, const char *prefix);
+int cmd_maintenance(int argc, const char **argv, const char *prefix);
 int cmd_merge(int argc, const char **argv, const char *prefix);
 int cmd_merge_base(int argc, const char **argv, const char *prefix);
 int cmd_merge_index(int argc, const char **argv, const char *prefix);
@@ -233,7 +225,6 @@ int cmd_submodule__helper(int argc, const char **argv, const char *prefix);
 int cmd_switch(int argc, const char **argv, const char *prefix);
 int cmd_symbolic_ref(int argc, const char **argv, const char *prefix);
 int cmd_tag(int argc, const char **argv, const char *prefix);
-int cmd_tar_tree(int argc, const char **argv, const char *prefix);
 int cmd_unpack_file(int argc, const char **argv, const char *prefix);
 int cmd_unpack_objects(int argc, const char **argv, const char *prefix);
 int cmd_update_index(int argc, const char **argv, const char *prefix);

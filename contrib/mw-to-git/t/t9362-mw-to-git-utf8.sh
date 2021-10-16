@@ -287,7 +287,7 @@ test_expect_success 'git push with \' '
 		git add \\ko\\o.mw &&
 		git commit -m " \\ko\\o added" &&
 		git push
-	)&&
+	) &&
 	wiki_page_exist \\ko\\o &&
 	wiki_check_content mw_dir_18/\\ko\\o.mw \\ko\\o
 
@@ -311,7 +311,7 @@ test_expect_success 'git push with \ in format control' '
 		git add \\fo\\o.mw &&
 		git commit -m " \\fo\\o added" &&
 		git push
-	)&&
+	) &&
 	wiki_page_exist \\fo\\o &&
 	wiki_check_content mw_dir_20/\\fo\\o.mw \\fo\\o
 

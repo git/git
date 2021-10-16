@@ -20,6 +20,9 @@ one tagged as v1.0.0.  They all have one regular file each.
 
 '
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 if ! test_have_prereq SHA1
@@ -48,7 +51,7 @@ test_expect_success 'blob and tree' '
 
 test_expect_success 'warn ambiguity when no candidate matches type hint' '
 	test_must_fail git rev-parse --verify 000000000^{commit} 2>actual &&
-	test_i18ngrep "short SHA1 000000000 is ambiguous" actual
+	test_i18ngrep "short object ID 000000000 is ambiguous" actual
 '
 
 test_expect_success 'disambiguate tree-ish' '
@@ -212,7 +215,7 @@ test_expect_success 'more history' '
 	side=$(git rev-parse HEAD) &&
 
 	# commit 000000000066
-	git checkout master &&
+	git checkout main &&
 
 	# If you use recursive, merge will fail and you will need to
 	# clean up a0blgqsjc as well.  If you use resolve, merge will
@@ -311,39 +314,39 @@ test_expect_success 'ambiguous short sha1 ref' '
 	grep "refname.*${REF}.*ambiguous" err
 '
 
-test_expect_success C_LOCALE_OUTPUT 'ambiguity errors are not repeated (raw)' '
+test_expect_success 'ambiguity errors are not repeated (raw)' '
 	test_must_fail git rev-parse 00000 2>stderr &&
 	grep "is ambiguous" stderr >errors &&
 	test_line_count = 1 errors
 '
 
-test_expect_success C_LOCALE_OUTPUT 'ambiguity errors are not repeated (treeish)' '
+test_expect_success 'ambiguity errors are not repeated (treeish)' '
 	test_must_fail git rev-parse 00000:foo 2>stderr &&
 	grep "is ambiguous" stderr >errors &&
 	test_line_count = 1 errors
 '
 
-test_expect_success C_LOCALE_OUTPUT 'ambiguity errors are not repeated (peel)' '
+test_expect_success 'ambiguity errors are not repeated (peel)' '
 	test_must_fail git rev-parse 00000^{commit} 2>stderr &&
 	grep "is ambiguous" stderr >errors &&
 	test_line_count = 1 errors
 '
 
-test_expect_success C_LOCALE_OUTPUT 'ambiguity hints' '
+test_expect_success 'ambiguity hints' '
 	test_must_fail git rev-parse 000000000 2>stderr &&
 	grep ^hint: stderr >hints &&
 	# 16 candidates, plus one intro line
 	test_line_count = 17 hints
 '
 
-test_expect_success C_LOCALE_OUTPUT 'ambiguity hints respect type' '
+test_expect_success 'ambiguity hints respect type' '
 	test_must_fail git rev-parse 000000000^{commit} 2>stderr &&
 	grep ^hint: stderr >hints &&
 	# 5 commits, 1 tag (which is a committish), plus intro line
 	test_line_count = 7 hints
 '
 
-test_expect_success C_LOCALE_OUTPUT 'failed type-selector still shows hint' '
+test_expect_success 'failed type-selector still shows hint' '
 	# these two blobs share the same prefix "ee3d", but neither
 	# will pass for a commit
 	echo 851 | git hash-object --stdin -w &&
@@ -367,7 +370,7 @@ test_expect_success 'core.disambiguate does not override context' '
 		git -c core.disambiguate=committish rev-parse $sha1^{tree}
 '
 
-test_expect_success C_LOCALE_OUTPUT 'ambiguous commits are printed by type first, then hash order' '
+test_expect_success 'ambiguous commits are printed by type first, then hash order' '
 	test_must_fail git rev-parse 0000 2>stderr &&
 	grep ^hint: stderr >hints &&
 	grep 0000 hints >objects &&

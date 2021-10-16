@@ -45,6 +45,7 @@ static struct string_list extra_refs = STRING_LIST_INIT_NODUP;
 static struct string_list tag_refs = STRING_LIST_INIT_NODUP;
 static struct refspec refspecs = REFSPEC_INIT_FETCH;
 static int anonymize;
+static struct hashmap anonymized_seeds;
 static struct revision_sources revision_sources;
 
 static int parse_opt_signed_tag_mode(const struct option *opt,
@@ -120,24 +121,33 @@ static int has_unshown_parent(struct commit *commit)
 
 struct anonymized_entry {
 	struct hashmap_entry hash;
+	const char *anon;
+	const char orig[FLEX_ARRAY];
+};
+
+struct anonymized_entry_key {
+	struct hashmap_entry hash;
 	const char *orig;
 	size_t orig_len;
-	const char *anon;
-	size_t anon_len;
 };
 
 static int anonymized_entry_cmp(const void *unused_cmp_data,
 				const struct hashmap_entry *eptr,
 				const struct hashmap_entry *entry_or_key,
-				const void *unused_keydata)
+				const void *keydata)
 {
 	const struct anonymized_entry *a, *b;
 
 	a = container_of(eptr, const struct anonymized_entry, hash);
-	b = container_of(entry_or_key, const struct anonymized_entry, hash);
+	if (keydata) {
+		const struct anonymized_entry_key *key = keydata;
+		int equal = !strncmp(a->orig, key->orig, key->orig_len) &&
+			    !a->orig[key->orig_len];
+		return !equal;
+	}
 
-	return a->orig_len != b->orig_len ||
-		memcmp(a->orig, b->orig, a->orig_len);
+	b = container_of(entry_or_key, const struct anonymized_entry, hash);
+	return strcmp(a->orig, b->orig);
 }
 
 /*
@@ -145,31 +155,39 @@ static int anonymized_entry_cmp(const void *unused_cmp_data,
  * the same anonymized string with another. The actual generation
  * is farmed out to the generate function.
  */
-static const void *anonymize_mem(struct hashmap *map,
-				 void *(*generate)(const void *, size_t *),
-				 const void *orig, size_t *len)
+static const char *anonymize_str(struct hashmap *map,
+				 char *(*generate)(void *),
+				 const char *orig, size_t len,
+				 void *data)
 {
-	struct anonymized_entry key, *ret;
+	struct anonymized_entry_key key;
+	struct anonymized_entry *ret;
 
 	if (!map->cmpfn)
 		hashmap_init(map, anonymized_entry_cmp, NULL, 0);
 
-	hashmap_entry_init(&key.hash, memhash(orig, *len));
+	hashmap_entry_init(&key.hash, memhash(orig, len));
 	key.orig = orig;
-	key.orig_len = *len;
-	ret = hashmap_get_entry(map, &key, hash, NULL);
+	key.orig_len = len;
 
+	/* First check if it's a token the user configured manually... */
+	if (anonymized_seeds.cmpfn)
+		ret = hashmap_get_entry(&anonymized_seeds, &key, hash, &key);
+	else
+		ret = NULL;
+
+	/* ...otherwise check if we've already seen it in this context... */
+	if (!ret)
+		ret = hashmap_get_entry(map, &key, hash, &key);
+
+	/* ...and finally generate a new mapping if necessary */
 	if (!ret) {
-		ret = xmalloc(sizeof(*ret));
+		FLEX_ALLOC_MEM(ret, orig, orig, len);
 		hashmap_entry_init(&ret->hash, key.hash.hash);
-		ret->orig = xstrdup(orig);
-		ret->orig_len = *len;
-		ret->anon = generate(orig, len);
-		ret->anon_len = *len;
+		ret->anon = generate(data);
 		hashmap_put(map, &ret->hash);
 	}
 
-	*len = ret->anon_len;
 	return ret->anon;
 }
 
@@ -181,13 +199,13 @@ static const void *anonymize_mem(struct hashmap *map,
  */
 static void anonymize_path(struct strbuf *out, const char *path,
 			   struct hashmap *map,
-			   void *(*generate)(const void *, size_t *))
+			   char *(*generate)(void *))
 {
 	while (*path) {
 		const char *end_of_component = strchrnul(path, '/');
 		size_t len = end_of_component - path;
-		const char *c = anonymize_mem(map, generate, path, &len);
-		strbuf_add(out, c, len);
+		const char *c = anonymize_str(map, generate, path, len, NULL);
+		strbuf_addstr(out, c);
 		path = end_of_component;
 		if (*path)
 			strbuf_addch(out, *path++);
@@ -361,12 +379,12 @@ static void print_path_1(const char *path)
 		printf("%s", path);
 }
 
-static void *anonymize_path_component(const void *path, size_t *len)
+static char *anonymize_path_component(void *data)
 {
 	static int counter;
 	struct strbuf out = STRBUF_INIT;
 	strbuf_addf(&out, "path%d", counter++);
-	return strbuf_detach(&out, len);
+	return strbuf_detach(&out, NULL);
 }
 
 static void print_path(const char *path)
@@ -383,20 +401,23 @@ static void print_path(const char *path)
 	}
 }
 
-static void *generate_fake_oid(const void *old, size_t *len)
+static char *generate_fake_oid(void *data)
 {
 	static uint32_t counter = 1; /* avoid null oid */
 	const unsigned hashsz = the_hash_algo->rawsz;
-	unsigned char *out = xcalloc(hashsz, 1);
-	put_be32(out + hashsz - 4, counter++);
-	return out;
+	struct object_id oid;
+	char *hex = xmallocz(GIT_MAX_HEXSZ);
+
+	oidclr(&oid);
+	put_be32(oid.hash + hashsz - 4, counter++);
+	return oid_to_hex_r(hex, &oid);
 }
 
-static const struct object_id *anonymize_oid(const struct object_id *oid)
+static const char *anonymize_oid(const char *oid_hex)
 {
 	static struct hashmap objs;
-	size_t len = the_hash_algo->rawsz;
-	return anonymize_mem(&objs, generate_fake_oid, oid, &len);
+	size_t len = strlen(oid_hex);
+	return anonymize_str(&objs, generate_fake_oid, oid_hex, len, NULL);
 }
 
 static void show_filemodify(struct diff_queue_struct *q,
@@ -455,9 +476,9 @@ static void show_filemodify(struct diff_queue_struct *q,
 			 */
 			if (no_data || S_ISGITLINK(spec->mode))
 				printf("M %06o %s ", spec->mode,
-				       oid_to_hex(anonymize ?
-						  anonymize_oid(&spec->oid) :
-						  &spec->oid));
+				       anonymize ?
+				       anonymize_oid(oid_to_hex(&spec->oid)) :
+				       oid_to_hex(&spec->oid));
 			else {
 				struct object *object = lookup_object(the_repository,
 								      &spec->oid);
@@ -493,12 +514,12 @@ static const char *find_encoding(const char *begin, const char *end)
 	return bol;
 }
 
-static void *anonymize_ref_component(const void *old, size_t *len)
+static char *anonymize_ref_component(void *data)
 {
 	static int counter;
 	struct strbuf out = STRBUF_INIT;
 	strbuf_addf(&out, "ref%d", counter++);
-	return strbuf_detach(&out, len);
+	return strbuf_detach(&out, NULL);
 }
 
 static const char *anonymize_refname(const char *refname)
@@ -516,13 +537,6 @@ static const char *anonymize_refname(const char *refname)
 	static struct hashmap refs;
 	static struct strbuf anon = STRBUF_INIT;
 	int i;
-
-	/*
-	 * We also leave "master" as a special case, since it does not reveal
-	 * anything interesting.
-	 */
-	if (!strcmp(refname, "refs/heads/master"))
-		return refname;
 
 	strbuf_reset(&anon);
 	for (i = 0; i < ARRAY_SIZE(prefixes); i++) {
@@ -546,14 +560,13 @@ static char *anonymize_commit_message(const char *old)
 	return xstrfmt("subject %d\n\nbody\n", counter++);
 }
 
-static struct hashmap idents;
-static void *anonymize_ident(const void *old, size_t *len)
+static char *anonymize_ident(void *data)
 {
 	static int counter;
 	struct strbuf out = STRBUF_INIT;
 	strbuf_addf(&out, "User %d <user%d@example.com>", counter, counter);
 	counter++;
-	return strbuf_detach(&out, len);
+	return strbuf_detach(&out, NULL);
 }
 
 /*
@@ -563,6 +576,7 @@ static void *anonymize_ident(const void *old, size_t *len)
  */
 static void anonymize_ident_line(const char **beg, const char **end)
 {
+	static struct hashmap idents;
 	static struct strbuf buffers[] = { STRBUF_INIT, STRBUF_INIT };
 	static unsigned which_buffer;
 
@@ -588,9 +602,9 @@ static void anonymize_ident_line(const char **beg, const char **end)
 		size_t len;
 
 		len = split.mail_end - split.name_begin;
-		ident = anonymize_mem(&idents, anonymize_ident,
-				      split.name_begin, &len);
-		strbuf_add(out, ident, len);
+		ident = anonymize_str(&idents, anonymize_ident,
+				      split.name_begin, len, NULL);
+		strbuf_addstr(out, ident);
 		strbuf_addch(out, ' ');
 		strbuf_add(out, split.date_begin, split.tz_end - split.date_begin);
 	} else {
@@ -712,9 +726,10 @@ static void handle_commit(struct commit *commit, struct rev_info *rev,
 		if (mark)
 			printf(":%d\n", mark);
 		else
-			printf("%s\n", oid_to_hex(anonymize ?
-						  anonymize_oid(&obj->oid) :
-						  &obj->oid));
+			printf("%s\n",
+			       anonymize ?
+			       anonymize_oid(oid_to_hex(&obj->oid)) :
+			       oid_to_hex(&obj->oid));
 		i++;
 	}
 
@@ -729,12 +744,12 @@ static void handle_commit(struct commit *commit, struct rev_info *rev,
 	show_progress();
 }
 
-static void *anonymize_tag(const void *old, size_t *len)
+static char *anonymize_tag(void *data)
 {
 	static int counter;
 	struct strbuf out = STRBUF_INIT;
 	strbuf_addf(&out, "tag message %d", counter++);
-	return strbuf_detach(&out, len);
+	return strbuf_detach(&out, NULL);
 }
 
 static void handle_tail(struct object_array *commits, struct rev_info *revs,
@@ -804,8 +819,9 @@ static void handle_tag(const char *name, struct tag *tag)
 		name = anonymize_refname(name);
 		if (message) {
 			static struct hashmap tags;
-			message = anonymize_mem(&tags, anonymize_tag,
-						message, &message_size);
+			message = anonymize_str(&tags, anonymize_tag,
+						message, message_size, NULL);
+			message_size = strlen(message);
 		}
 	}
 
@@ -855,7 +871,7 @@ static void handle_tag(const char *name, struct tag *tag)
 				p = rewrite_commit((struct commit *)tagged);
 				if (!p) {
 					printf("reset %s\nfrom %s\n\n",
-					       name, oid_to_hex(&null_oid));
+					       name, oid_to_hex(null_oid()));
 					free(buf);
 					return;
 				}
@@ -869,7 +885,7 @@ static void handle_tag(const char *name, struct tag *tag)
 
 	if (tagged->type == OBJ_TAG) {
 		printf("reset %s\nfrom %s\n\n",
-		       name, oid_to_hex(&null_oid));
+		       name, oid_to_hex(null_oid()));
 	}
 	skip_prefix(name, "refs/tags/", &name);
 	printf("tag %s\n", name);
@@ -908,7 +924,6 @@ static struct commit *get_commit(struct rev_cmdline_entry *e, char *full_name)
 		if (!tag)
 			die("Tag %s points nowhere?", e->name);
 		return (struct commit *)tag;
-		break;
 	}
 	default:
 		return NULL;
@@ -928,7 +943,7 @@ static void get_tags_and_duplicates(struct rev_cmdline_info *info)
 		if (e->flags & UNINTERESTING)
 			continue;
 
-		if (dwim_ref(e->name, strlen(e->name), &oid, &full_name) != 1)
+		if (dwim_ref(e->name, strlen(e->name), &oid, &full_name, 0) != 1)
 			continue;
 
 		if (refspecs.nr) {
@@ -1002,7 +1017,7 @@ static void handle_tags_and_duplicates(struct string_list *extras)
 				 * it.
 				 */
 				printf("reset %s\nfrom %s\n\n",
-				       name, oid_to_hex(&null_oid));
+				       name, oid_to_hex(null_oid()));
 				continue;
 			}
 
@@ -1011,7 +1026,7 @@ static void handle_tags_and_duplicates(struct string_list *extras)
 				/*
 				 * Getting here means we have a commit which
 				 * was excluded by a negative refspec (e.g.
-				 * fast-export ^master master).  If we are
+				 * fast-export ^HEAD HEAD).  If we are
 				 * referencing excluded commits, set the ref
 				 * to the exact commit.  Otherwise, the user
 				 * wants the branch exported but every commit
@@ -1021,7 +1036,7 @@ static void handle_tags_and_duplicates(struct string_list *extras)
 				if (!reference_excluded_commits) {
 					/* delete the ref */
 					printf("reset %s\nfrom %s\n\n",
-					       name, oid_to_hex(&null_oid));
+					       name, oid_to_hex(null_oid()));
 					continue;
 				}
 				/* set ref to commit using oid, not mark */
@@ -1132,8 +1147,39 @@ static void handle_deletes(void)
 			continue;
 
 		printf("reset %s\nfrom %s\n\n",
-				refspec->dst, oid_to_hex(&null_oid));
+				refspec->dst, oid_to_hex(null_oid()));
 	}
+}
+
+static char *anonymize_seed(void *data)
+{
+	return xstrdup(data);
+}
+
+static int parse_opt_anonymize_map(const struct option *opt,
+				   const char *arg, int unset)
+{
+	struct hashmap *map = opt->value;
+	const char *delim, *value;
+	size_t keylen;
+
+	BUG_ON_OPT_NEG(unset);
+
+	delim = strchr(arg, ':');
+	if (delim) {
+		keylen = delim - arg;
+		value = delim + 1;
+	} else {
+		keylen = strlen(arg);
+		value = arg;
+	}
+
+	if (!keylen || !*value)
+		return error(_("--anonymize-map token cannot be empty"));
+
+	anonymize_str(map, anonymize_seed, arg, keylen, (void *)value);
+
+	return 0;
 }
 
 int cmd_fast_export(int argc, const char **argv, const char *prefix)
@@ -1160,29 +1206,32 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 			     N_("select handling of commit messages in an alternate encoding"),
 			     parse_opt_reencode_mode),
 		OPT_STRING(0, "export-marks", &export_filename, N_("file"),
-			     N_("Dump marks to this file")),
+			     N_("dump marks to this file")),
 		OPT_STRING(0, "import-marks", &import_filename, N_("file"),
-			     N_("Import marks from this file")),
+			     N_("import marks from this file")),
 		OPT_STRING(0, "import-marks-if-exists",
 			     &import_filename_if_exists,
 			     N_("file"),
-			     N_("Import marks from this file if it exists")),
+			     N_("import marks from this file if it exists")),
 		OPT_BOOL(0, "fake-missing-tagger", &fake_missing_tagger,
-			 N_("Fake a tagger when tags lack one")),
+			 N_("fake a tagger when tags lack one")),
 		OPT_BOOL(0, "full-tree", &full_tree,
-			 N_("Output full tree for each commit")),
+			 N_("output full tree for each commit")),
 		OPT_BOOL(0, "use-done-feature", &use_done_feature,
-			     N_("Use the done feature to terminate the stream")),
-		OPT_BOOL(0, "no-data", &no_data, N_("Skip output of blob data")),
+			     N_("use the done feature to terminate the stream")),
+		OPT_BOOL(0, "no-data", &no_data, N_("skip output of blob data")),
 		OPT_STRING_LIST(0, "refspec", &refspecs_list, N_("refspec"),
-			     N_("Apply refspec to exported refs")),
+			     N_("apply refspec to exported refs")),
 		OPT_BOOL(0, "anonymize", &anonymize, N_("anonymize output")),
+		OPT_CALLBACK_F(0, "anonymize-map", &anonymized_seeds, N_("from:to"),
+			       N_("convert <from> to <to> in anonymized output"),
+			       PARSE_OPT_NONEG, parse_opt_anonymize_map),
 		OPT_BOOL(0, "reference-excluded-parents",
-			 &reference_excluded_commits, N_("Reference parents which are not in fast-export stream by object id")),
+			 &reference_excluded_commits, N_("reference parents which are not in fast-export stream by object id")),
 		OPT_BOOL(0, "show-original-ids", &show_original_ids,
-			    N_("Show original object ids of blobs/commits")),
+			    N_("show original object ids of blobs/commits")),
 		OPT_BOOL(0, "mark-tags", &mark_tags,
-			    N_("Label tags with mark ids")),
+			    N_("label tags with mark ids")),
 
 		OPT_END()
 	};
@@ -1203,6 +1252,9 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 	argc = setup_revisions(argc, argv, &revs, NULL);
 	if (argc > 1)
 		usage_with_options (fast_export_usage, options);
+
+	if (anonymized_seeds.cmpfn && !anonymize)
+		die(_("--anonymize-map without --anonymize does not make sense"));
 
 	if (refspecs_list.nr) {
 		int i;

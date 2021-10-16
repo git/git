@@ -122,6 +122,26 @@ Locations of Marks Files
 Relative and non-relative marks may be combined by interweaving
 --(no-)-relative-marks with the --(import|export)-marks= options.
 
+Submodule Rewriting
+~~~~~~~~~~~~~~~~~~~
+
+--rewrite-submodules-from=<name>:<file>::
+--rewrite-submodules-to=<name>:<file>::
+  Rewrite the object IDs for the submodule specified by <name> from the values
+	used in the from <file> to those used in the to <file>. The from marks should
+	have been created by `git fast-export`, and the to marks should have been
+	created by `git fast-import` when importing that same submodule.
++
+<name> may be any arbitrary string not containing a colon character, but the
+same value must be used with both options when specifying corresponding marks.
+Multiple submodules may be specified with different values for <name>. It is an
+error not to use these options in corresponding pairs.
++
+These options are primarily useful when converting a repository from one hash
+algorithm to another; without them, fast-import will fail if it encounters a
+submodule because it has no way of writing the object ID into the new hash
+algorithm.
+
 Performance and Compression Tuning
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -273,7 +293,14 @@ by users who are located in the same location and time zone.  In this
 case a reasonable offset from UTC could be assumed.
 +
 Unlike the `rfc2822` format, this format is very strict.  Any
-variation in formatting will cause fast-import to reject the value.
+variation in formatting will cause fast-import to reject the value,
+and some sanity checks on the numeric values may also be performed.
+
+`raw-permissive`::
+	This is the same as `raw` except that no sanity checks on
+	the numeric epoch and local offset are performed.  This can
+	be useful when trying to filter or import an existing history
+	with e.g. bogus timezone values.
 
 `rfc2822`::
 	This is the standard email format as described by RFC 2822.
@@ -787,7 +814,7 @@ may have uses for this information
 	'original-oid' SP <object-identifier> LF
 ....
 
-where `<object-identifer>` is any string not containing LF.
+where `<object-identifier>` is any string not containing LF.
 
 `tag`
 ~~~~~

@@ -121,7 +121,9 @@ depth is 4095.
 	If specified, multiple packfiles may be created, which also
 	prevents the creation of a bitmap index.
 	The default is unlimited, unless the config variable
-	`pack.packSizeLimit` is set.
+	`pack.packSizeLimit` is set. Note that this option may result in
+	a larger and slower repository; see the discussion in
+	`pack.packSizeLimit`.
 
 -b::
 --write-bitmap-index::
@@ -165,8 +167,34 @@ depth is 4095.
 	Pass the `--delta-islands` option to `git-pack-objects`, see
 	linkgit:git-pack-objects[1].
 
-Configuration
+-g=<factor>::
+--geometric=<factor>::
+	Arrange resulting pack structure so that each successive pack
+	contains at least `<factor>` times the number of objects as the
+	next-largest pack.
++
+`git repack` ensures this by determining a "cut" of packfiles that need
+to be repacked into one in order to ensure a geometric progression. It
+picks the smallest set of packfiles such that as many of the larger
+packfiles (by count of objects contained in that pack) may be left
+intact.
++
+Unlike other repack modes, the set of objects to pack is determined
+uniquely by the set of packs being "rolled-up"; in other words, the
+packs determined to need to be combined in order to restore a geometric
+progression.
++
+When `--unpacked` is specified, loose objects are implicitly included in
+this "roll-up", without respect to their reachability. This is subject
+to change in the future. This option (implying a drastically different
+repack mode) is not guaranteed to work with all other combinations of
+option to `git repack`.
+
+CONFIGURATION
 -------------
+
+Various configuration variables affect packing, see
+linkgit:git-config[1] (search for "pack" and "delta").
 
 By default, the command passes `--delta-base-offset` option to
 'git pack-objects'; this typically results in slightly smaller packs,
@@ -177,6 +205,10 @@ need to set the configuration variable `repack.UseDeltaBaseOffset` to
 "false" and repack. Access from old Git versions over the native protocol
 is unaffected by this option as the conversion is performed on the fly
 as needed in that case.
+
+Delta compression is not used on objects larger than the
+`core.bigFileThreshold` configuration variable and on files with the
+attribute `delta` set to false.
 
 SEE ALSO
 --------

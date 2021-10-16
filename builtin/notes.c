@@ -172,9 +172,7 @@ static void prepare_note_data(const struct object_id *object, struct note_data *
 
 		/* write the template message before editing: */
 		d->edit_path = git_pathdup("NOTES_EDITMSG");
-		fd = open(d->edit_path, O_CREAT | O_TRUNC | O_WRONLY, 0600);
-		if (fd < 0)
-			die_errno(_("could not create file '%s'"), d->edit_path);
+		fd = xopen(d->edit_path, O_CREAT | O_TRUNC | O_WRONLY, 0600);
 
 		if (d->given)
 			write_or_die(fd, d->buf.buf, d->buf.len);
@@ -373,7 +371,7 @@ static int list(int argc, const char **argv, const char *prefix)
 				     git_notes_list_usage, 0);
 
 	if (1 < argc) {
-		error(_("too many parameters"));
+		error(_("too many arguments"));
 		usage_with_options(git_notes_list_usage, options);
 	}
 
@@ -406,18 +404,18 @@ static int add(int argc, const char **argv, const char *prefix)
 	const struct object_id *note;
 	struct note_data d = { 0, 0, NULL, STRBUF_INIT };
 	struct option options[] = {
-		{ OPTION_CALLBACK, 'm', "message", &d, N_("message"),
+		OPT_CALLBACK_F('m', "message", &d, N_("message"),
 			N_("note contents as a string"), PARSE_OPT_NONEG,
-			parse_msg_arg},
-		{ OPTION_CALLBACK, 'F', "file", &d, N_("file"),
+			parse_msg_arg),
+		OPT_CALLBACK_F('F', "file", &d, N_("file"),
 			N_("note contents in a file"), PARSE_OPT_NONEG,
-			parse_file_arg},
-		{ OPTION_CALLBACK, 'c', "reedit-message", &d, N_("object"),
+			parse_file_arg),
+		OPT_CALLBACK_F('c', "reedit-message", &d, N_("object"),
 			N_("reuse and edit specified note object"), PARSE_OPT_NONEG,
-			parse_reedit_arg},
-		{ OPTION_CALLBACK, 'C', "reuse-message", &d, N_("object"),
+			parse_reedit_arg),
+		OPT_CALLBACK_F('C', "reuse-message", &d, N_("object"),
 			N_("reuse specified note object"), PARSE_OPT_NONEG,
-			parse_reuse_arg},
+			parse_reuse_arg),
 		OPT_BOOL(0, "allow-empty", &allow_empty,
 			N_("allow storing empty note")),
 		OPT__FORCE(&force, N_("replace existing notes"), PARSE_OPT_NOCOMPLETE),
@@ -428,7 +426,7 @@ static int add(int argc, const char **argv, const char *prefix)
 			     PARSE_OPT_KEEP_ARGV0);
 
 	if (2 < argc) {
-		error(_("too many parameters"));
+		error(_("too many arguments"));
 		usage_with_options(git_notes_add_usage, options);
 	}
 
@@ -506,7 +504,7 @@ static int copy(int argc, const char **argv, const char *prefix)
 
 	if (from_stdin || rewrite_cmd) {
 		if (argc) {
-			error(_("too many parameters"));
+			error(_("too many arguments"));
 			usage_with_options(git_notes_copy_usage, options);
 		} else {
 			return notes_copy_from_stdin(force, rewrite_cmd);
@@ -514,11 +512,11 @@ static int copy(int argc, const char **argv, const char *prefix)
 	}
 
 	if (argc < 1) {
-		error(_("too few parameters"));
+		error(_("too few arguments"));
 		usage_with_options(git_notes_copy_usage, options);
 	}
 	if (2 < argc) {
-		error(_("too many parameters"));
+		error(_("too many arguments"));
 		usage_with_options(git_notes_copy_usage, options);
 	}
 
@@ -572,18 +570,18 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 	const char * const *usage;
 	struct note_data d = { 0, 0, NULL, STRBUF_INIT };
 	struct option options[] = {
-		{ OPTION_CALLBACK, 'm', "message", &d, N_("message"),
+		OPT_CALLBACK_F('m', "message", &d, N_("message"),
 			N_("note contents as a string"), PARSE_OPT_NONEG,
-			parse_msg_arg},
-		{ OPTION_CALLBACK, 'F', "file", &d, N_("file"),
+			parse_msg_arg),
+		OPT_CALLBACK_F('F', "file", &d, N_("file"),
 			N_("note contents in a file"), PARSE_OPT_NONEG,
-			parse_file_arg},
-		{ OPTION_CALLBACK, 'c', "reedit-message", &d, N_("object"),
+			parse_file_arg),
+		OPT_CALLBACK_F('c', "reedit-message", &d, N_("object"),
 			N_("reuse and edit specified note object"), PARSE_OPT_NONEG,
-			parse_reedit_arg},
-		{ OPTION_CALLBACK, 'C', "reuse-message", &d, N_("object"),
+			parse_reedit_arg),
+		OPT_CALLBACK_F('C', "reuse-message", &d, N_("object"),
 			N_("reuse specified note object"), PARSE_OPT_NONEG,
-			parse_reuse_arg},
+			parse_reuse_arg),
 		OPT_BOOL(0, "allow-empty", &allow_empty,
 			N_("allow storing empty note")),
 		OPT_END()
@@ -595,7 +593,7 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 			     PARSE_OPT_KEEP_ARGV0);
 
 	if (2 < argc) {
-		error(_("too many parameters"));
+		error(_("too many arguments"));
 		usage_with_options(usage, options);
 	}
 
@@ -662,7 +660,7 @@ static int show(int argc, const char **argv, const char *prefix)
 			     0);
 
 	if (1 < argc) {
-		error(_("too many parameters"));
+		error(_("too many arguments"));
 		usage_with_options(git_notes_show_usage, options);
 	}
 
@@ -730,7 +728,7 @@ static int merge_commit(struct notes_merge_options *o)
 	else
 		oidclr(&parent_oid);
 
-	t = xcalloc(1, sizeof(struct notes_tree));
+	CALLOC_ARRAY(t, 1);
 	init_notes(t, "NOTES_MERGE_PARTIAL", combine_notes_overwrite, 0);
 
 	o->local_ref = local_ref_to_free =
@@ -812,7 +810,7 @@ static int merge(int argc, const char **argv, const char *prefix)
 		error(_("must specify a notes ref to merge"));
 		usage_with_options(git_notes_merge_usage, options);
 	} else if (!do_merge && argc) {
-		error(_("too many parameters"));
+		error(_("too many arguments"));
 		usage_with_options(git_notes_merge_usage, options);
 	}
 
@@ -960,7 +958,7 @@ static int prune(int argc, const char **argv, const char *prefix)
 			     0);
 
 	if (argc) {
-		error(_("too many parameters"));
+		error(_("too many arguments"));
 		usage_with_options(git_notes_prune_usage, options);
 	}
 
@@ -982,7 +980,7 @@ static int get_ref(int argc, const char **argv, const char *prefix)
 			     git_notes_get_ref_usage, 0);
 
 	if (argc) {
-		error(_("too many parameters"));
+		error(_("too many arguments"));
 		usage_with_options(git_notes_get_ref_usage, options);
 	}
 

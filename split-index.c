@@ -5,7 +5,7 @@
 struct split_index *init_split_index(struct index_state *istate)
 {
 	if (!istate->split_index) {
-		istate->split_index = xcalloc(1, sizeof(*istate->split_index));
+		CALLOC_ARRAY(istate->split_index, 1);
 		istate->split_index->refcount = 1;
 	}
 	return istate->split_index;
@@ -21,7 +21,7 @@ int read_link_extension(struct index_state *istate,
 	if (sz < the_hash_algo->rawsz)
 		return error("corrupt link extension (too short)");
 	si = init_split_index(istate);
-	hashcpy(si->base_oid.hash, data);
+	oidread(&si->base_oid, data);
 	data += the_hash_algo->rawsz;
 	sz -= the_hash_algo->rawsz;
 	if (!sz)
@@ -79,13 +79,15 @@ void move_cache_to_base_index(struct index_state *istate)
 	if (si->base &&
 		si->base->ce_mem_pool) {
 
-		if (!istate->ce_mem_pool)
-			mem_pool_init(&istate->ce_mem_pool, 0);
+		if (!istate->ce_mem_pool) {
+			istate->ce_mem_pool = xmalloc(sizeof(struct mem_pool));
+			mem_pool_init(istate->ce_mem_pool, 0);
+		}
 
 		mem_pool_combine(istate->ce_mem_pool, istate->split_index->base->ce_mem_pool);
 	}
 
-	si->base = xcalloc(1, sizeof(*si->base));
+	CALLOC_ARRAY(si->base, 1);
 	si->base->version = istate->version;
 	/* zero timestamp disables racy test in ce_write_index() */
 	si->base->timestamp = istate->timestamp;
@@ -205,7 +207,8 @@ static int compare_ce_content(struct cache_entry *a, struct cache_entry *b)
 	b->ce_flags &= ondisk_flags;
 	ret = memcmp(&a->ce_stat_data, &b->ce_stat_data,
 		     offsetof(struct cache_entry, name) -
-		     offsetof(struct cache_entry, ce_stat_data));
+		     offsetof(struct cache_entry, oid)) ||
+		!oideq(&a->oid, &b->oid);
 	a->ce_flags = ce_flags;
 	b->ce_flags = base_flags;
 

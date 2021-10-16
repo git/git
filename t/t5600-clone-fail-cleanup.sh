@@ -35,7 +35,9 @@ test_expect_success 'create a repo to clone' '
 '
 
 test_expect_success 'create objects in repo for later corruption' '
-	test_commit -C foo file
+	test_commit -C foo file &&
+	git -C foo checkout --detach &&
+	test_commit -C foo detached
 '
 
 # source repository given to git clone should be relative to the
@@ -95,6 +97,13 @@ test_expect_success 'failed clone into empty leaves directory (separate, wt)' '
 	test_must_fail git clone --separate-git-dir no-git foo empty-wt &&
 	test_path_is_missing no-git &&
 	test_dir_is_empty empty-wt
+'
+
+test_expect_success 'transport failure cleans up directory' '
+	test_must_fail git clone --no-local \
+		-u "f() { git-upload-pack \"\$@\"; return 1; }; f" \
+		foo broken-clone &&
+	test_path_is_missing broken-clone
 '
 
 test_done

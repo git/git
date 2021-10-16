@@ -8,6 +8,8 @@
 
 struct diff_options;
 struct repository;
+struct strintmap;
+struct strmap;
 struct userdiff_driver;
 
 /* This header file is internal between diff.c and its diff transformers
@@ -65,9 +67,25 @@ void free_filespec(struct diff_filespec *);
 void fill_filespec(struct diff_filespec *, const struct object_id *,
 		   int, unsigned short);
 
-#define CHECK_SIZE_ONLY 1
-#define CHECK_BINARY    2
-int diff_populate_filespec(struct repository *, struct diff_filespec *, unsigned int);
+/*
+ * Prefetch the entries in diff_queued_diff. The parameter is a pointer to a
+ * struct repository.
+ */
+void diff_queued_diff_prefetch(void *repository);
+
+struct diff_populate_filespec_options {
+	unsigned check_size_only : 1;
+	unsigned check_binary : 1;
+
+	/*
+	 * If an object is missing, diff_populate_filespec() will invoke this
+	 * callback before attempting to read that object again.
+	 */
+	void (*missing_object_cb)(void *);
+	void *missing_object_data;
+};
+int diff_populate_filespec(struct repository *, struct diff_filespec *,
+			   const struct diff_populate_filespec_options *);
 void diff_free_filespec_data(struct diff_filespec *);
 void diff_free_filespec_blob(struct diff_filespec *);
 int diff_filespec_is_binary(struct repository *, struct diff_filespec *);
@@ -109,6 +127,8 @@ struct diff_filepair {
 #define DIFF_PAIR_MODE_CHANGED(p) ((p)->one->mode != (p)->two->mode)
 
 void diff_free_filepair(struct diff_filepair *);
+void pool_diff_free_filepair(struct mem_pool *pool,
+			     struct diff_filepair *p);
 
 int diff_unmodified_pair(struct diff_filepair *);
 
@@ -143,11 +163,33 @@ struct diff_filepair *diff_queue(struct diff_queue_struct *,
 				 struct diff_filespec *);
 void diff_q(struct diff_queue_struct *, struct diff_filepair *);
 
+/* dir_rename_relevance: the reason we want rename information for a dir */
+enum dir_rename_relevance {
+	NOT_RELEVANT = 0,
+	RELEVANT_FOR_ANCESTOR = 1,
+	RELEVANT_FOR_SELF = 2
+};
+/* file_rename_relevance: the reason(s) we want rename information for a file */
+enum file_rename_relevance {
+	RELEVANT_NO_MORE = 0,  /* i.e. NOT relevant */
+	RELEVANT_CONTENT = 1,
+	RELEVANT_LOCATION = 2
+};
+
+void partial_clear_dir_rename_count(struct strmap *dir_rename_count);
+
 void diffcore_break(struct repository *, int);
 void diffcore_rename(struct diff_options *);
+void diffcore_rename_extended(struct diff_options *options,
+			      struct mem_pool *pool,
+			      struct strintmap *relevant_sources,
+			      struct strintmap *dirs_removed,
+			      struct strmap *dir_rename_count,
+			      struct strmap *cached_pairs);
 void diffcore_merge_broken(void);
 void diffcore_pickaxe(struct diff_options *);
 void diffcore_order(const char *orderfile);
+void diffcore_rotate(struct diff_options *);
 
 /* low-level interface to diffcore_order */
 struct obj_order {
@@ -181,5 +223,13 @@ int diffcore_count_changes(struct repository *r,
 			   void **dst_count_p,
 			   unsigned long *src_copied,
 			   unsigned long *literal_added);
+
+/*
+ * If filespec contains an OID and if that object is missing from the given
+ * repository, add that OID to to_fetch.
+ */
+void diff_add_if_missing(struct repository *r,
+			 struct oid_array *to_fetch,
+			 const struct diff_filespec *filespec);
 
 #endif

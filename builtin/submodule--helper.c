@@ -19,7 +19,6 @@
 #include "diffcore.h"
 #include "diff.h"
 #include "object-store.h"
-#include "dir.h"
 #include "advice.h"
 
 #define OPT_QUIET (1 << 0)
@@ -188,44 +187,40 @@ static char *relative_url(const char *remote_url,
 		out = xstrdup(sb.buf + 2);
 	else
 		out = xstrdup(sb.buf);
-	strbuf_reset(&sb);
 
-	if (!up_path || !is_relative)
+	if (!up_path || !is_relative) {
+		strbuf_release(&sb);
 		return out;
+	}
 
+	strbuf_reset(&sb);
 	strbuf_addf(&sb, "%s%s", up_path, out);
 	free(out);
 	return strbuf_detach(&sb, NULL);
 }
 
-static int resolve_relative_url(int argc, const char **argv, const char *prefix)
+static char *resolve_relative_url(const char *rel_url, const char *up_path, int quiet)
 {
-	char *remoteurl = NULL;
+	char *remoteurl, *resolved_url;
 	char *remote = get_default_remote();
-	const char *up_path = NULL;
-	char *res;
-	const char *url;
-	struct strbuf sb = STRBUF_INIT;
+	struct strbuf remotesb = STRBUF_INIT;
 
-	if (argc != 2 && argc != 3)
-		die("resolve-relative-url only accepts one or two arguments");
-
-	url = argv[1];
-	strbuf_addf(&sb, "remote.%s.url", remote);
-	free(remote);
-
-	if (git_config_get_string(sb.buf, &remoteurl))
-		/* the repository is its own authoritative upstream */
+	strbuf_addf(&remotesb, "remote.%s.url", remote);
+	if (git_config_get_string(remotesb.buf, &remoteurl)) {
+		if (!quiet)
+			warning(_("could not look up configuration '%s'. "
+				  "Assuming this repository is its own "
+				  "authoritative upstream."),
+				remotesb.buf);
 		remoteurl = xgetcwd();
+	}
+	resolved_url = relative_url(remoteurl, rel_url, up_path);
 
-	if (argc == 3)
-		up_path = argv[2];
-
-	res = relative_url(remoteurl, url, up_path);
-	puts(res);
-	free(res);
+	free(remote);
 	free(remoteurl);
-	return 0;
+	strbuf_release(&remotesb);
+
+	return resolved_url;
 }
 
 static int resolve_relative_url_test(int argc, const char **argv, const char *prefix)
@@ -294,9 +289,9 @@ static char *compute_rev_name(const char *sub_path, const char* object_id)
 		cp.git_cmd = 1;
 		cp.no_stderr = 1;
 
-		argv_array_push(&cp.args, "describe");
-		argv_array_pushv(&cp.args, *d);
-		argv_array_push(&cp.args, object_id);
+		strvec_push(&cp.args, "describe");
+		strvec_pushv(&cp.args, *d);
+		strvec_push(&cp.args, object_id);
 
 		if (!capture_command(&cp, &sb, 0)) {
 			strbuf_strip_suffix(&sb, "\n");
@@ -312,7 +307,7 @@ struct module_list {
 	const struct cache_entry **entries;
 	int alloc, nr;
 };
-#define MODULE_LIST_INIT { NULL, 0, 0 }
+#define MODULE_LIST_INIT { 0 }
 
 static int module_list_compute(int argc, const char **argv,
 			       const char *prefix,
@@ -426,7 +421,8 @@ static int module_list(int argc, const char **argv, const char *prefix)
 		const struct cache_entry *ce = list.entries[i];
 
 		if (ce_stage(ce))
-			printf("%06o %s U\t", ce->ce_mode, oid_to_hex(&null_oid));
+			printf("%06o %s U\t", ce->ce_mode,
+			       oid_to_hex(null_oid()));
 		else
 			printf("%06o %s %d\t", ce->ce_mode,
 			       oid_to_hex(&ce->oid), ce_stage(ce));
@@ -444,19 +440,19 @@ static void for_each_listed_submodule(const struct module_list *list,
 		fn(list->entries[i], cb_data);
 }
 
-struct cb_foreach {
+struct foreach_cb {
 	int argc;
 	const char **argv;
 	const char *prefix;
 	int quiet;
 	int recursive;
 };
-#define CB_FOREACH_INIT { 0 }
+#define FOREACH_CB_INIT { 0 }
 
 static void runcommand_in_submodule_cb(const struct cache_entry *list_item,
 				       void *cb_data)
 {
-	struct cb_foreach *info = cb_data;
+	struct foreach_cb *info = cb_data;
 	const char *path = list_item->name;
 	const struct object_id *ce_oid = &list_item->oid;
 
@@ -466,7 +462,7 @@ static void runcommand_in_submodule_cb(const struct cache_entry *list_item,
 
 	displaypath = get_submodule_displaypath(path, info->prefix);
 
-	sub = submodule_from_path(the_repository, &null_oid, path);
+	sub = submodule_from_path(the_repository, null_oid(), path);
 
 	if (!sub)
 		die(_("No url found for submodule path '%s' in .gitmodules"),
@@ -495,12 +491,12 @@ static void runcommand_in_submodule_cb(const struct cache_entry *list_item,
 		char *toplevel = xgetcwd();
 		struct strbuf sb = STRBUF_INIT;
 
-		argv_array_pushf(&cp.env_array, "name=%s", sub->name);
-		argv_array_pushf(&cp.env_array, "sm_path=%s", path);
-		argv_array_pushf(&cp.env_array, "displaypath=%s", displaypath);
-		argv_array_pushf(&cp.env_array, "sha1=%s",
-				oid_to_hex(ce_oid));
-		argv_array_pushf(&cp.env_array, "toplevel=%s", toplevel);
+		strvec_pushf(&cp.env_array, "name=%s", sub->name);
+		strvec_pushf(&cp.env_array, "sm_path=%s", path);
+		strvec_pushf(&cp.env_array, "displaypath=%s", displaypath);
+		strvec_pushf(&cp.env_array, "sha1=%s",
+			     oid_to_hex(ce_oid));
+		strvec_pushf(&cp.env_array, "toplevel=%s", toplevel);
 
 		/*
 		 * Since the path variable was accessible from the script
@@ -509,15 +505,15 @@ static void runcommand_in_submodule_cb(const struct cache_entry *list_item,
 		 * on windows. And since environment variables are
 		 * case-insensitive in windows, it interferes with the
 		 * existing PATH variable. Hence, to avoid that, we expose
-		 * path via the args argv_array and not via env_array.
+		 * path via the args strvec and not via env_array.
 		 */
 		sq_quote_buf(&sb, path);
-		argv_array_pushf(&cp.args, "path=%s; %s",
-				 sb.buf, info->argv[0]);
+		strvec_pushf(&cp.args, "path=%s; %s",
+			     sb.buf, info->argv[0]);
 		strbuf_release(&sb);
 		free(toplevel);
 	} else {
-		argv_array_pushv(&cp.args, info->argv);
+		strvec_pushv(&cp.args, info->argv);
 	}
 
 	if (!info->quiet)
@@ -534,16 +530,16 @@ static void runcommand_in_submodule_cb(const struct cache_entry *list_item,
 		cpr.dir = path;
 		prepare_submodule_repo_env(&cpr.env_array);
 
-		argv_array_pushl(&cpr.args, "--super-prefix", NULL);
-		argv_array_pushf(&cpr.args, "%s/", displaypath);
-		argv_array_pushl(&cpr.args, "submodule--helper", "foreach", "--recursive",
-				NULL);
+		strvec_pushl(&cpr.args, "--super-prefix", NULL);
+		strvec_pushf(&cpr.args, "%s/", displaypath);
+		strvec_pushl(&cpr.args, "submodule--helper", "foreach", "--recursive",
+			     NULL);
 
 		if (info->quiet)
-			argv_array_push(&cpr.args, "--quiet");
+			strvec_push(&cpr.args, "--quiet");
 
-		argv_array_push(&cpr.args, "--");
-		argv_array_pushv(&cpr.args, info->argv);
+		strvec_push(&cpr.args, "--");
+		strvec_pushv(&cpr.args, info->argv);
 
 		if (run_command(&cpr))
 			die(_("run_command returned non-zero status while "
@@ -557,14 +553,14 @@ cleanup:
 
 static int module_foreach(int argc, const char **argv, const char *prefix)
 {
-	struct cb_foreach info = CB_FOREACH_INIT;
+	struct foreach_cb info = FOREACH_CB_INIT;
 	struct pathspec pathspec;
 	struct module_list list = MODULE_LIST_INIT;
 
 	struct option module_foreach_options[] = {
-		OPT__QUIET(&info.quiet, N_("Suppress output of entering each submodule command")),
+		OPT__QUIET(&info.quiet, N_("suppress output of entering each submodule command")),
 		OPT_BOOL(0, "recursive", &info.recursive,
-			 N_("Recurse into nested submodules")),
+			 N_("recurse into nested submodules")),
 		OPT_END()
 	};
 
@@ -588,32 +584,11 @@ static int module_foreach(int argc, const char **argv, const char *prefix)
 	return 0;
 }
 
-static char *compute_submodule_clone_url(const char *rel_url)
-{
-	char *remoteurl, *relurl;
-	char *remote = get_default_remote();
-	struct strbuf remotesb = STRBUF_INIT;
-
-	strbuf_addf(&remotesb, "remote.%s.url", remote);
-	if (git_config_get_string(remotesb.buf, &remoteurl)) {
-		warning(_("could not look up configuration '%s'. Assuming this repository is its own authoritative upstream."), remotesb.buf);
-		remoteurl = xgetcwd();
-	}
-	relurl = relative_url(remoteurl, rel_url, NULL);
-
-	free(remote);
-	free(remoteurl);
-	strbuf_release(&remotesb);
-
-	return relurl;
-}
-
 struct init_cb {
 	const char *prefix;
 	unsigned int flags;
 };
-
-#define INIT_CB_INIT { NULL, 0 }
+#define INIT_CB_INIT { 0 }
 
 static void init_submodule(const char *path, const char *prefix,
 			   unsigned int flags)
@@ -624,7 +599,7 @@ static void init_submodule(const char *path, const char *prefix,
 
 	displaypath = get_submodule_displaypath(path, prefix);
 
-	sub = submodule_from_path(the_repository, &null_oid, path);
+	sub = submodule_from_path(the_repository, null_oid(), path);
 
 	if (!sub)
 		die(_("No url found for submodule path '%s' in .gitmodules"),
@@ -659,7 +634,7 @@ static void init_submodule(const char *path, const char *prefix,
 		if (starts_with_dot_dot_slash(url) ||
 		    starts_with_dot_slash(url)) {
 			char *oldurl = url;
-			url = compute_submodule_clone_url(oldurl);
+			url = resolve_relative_url(oldurl, NULL, 0);
 			free(oldurl);
 		}
 
@@ -707,7 +682,7 @@ static int module_init(int argc, const char **argv, const char *prefix)
 	int quiet = 0;
 
 	struct option module_init_options[] = {
-		OPT__QUIET(&quiet, N_("Suppress output for initializing a submodule")),
+		OPT__QUIET(&quiet, N_("suppress output for initializing a submodule")),
 		OPT_END()
 	};
 
@@ -742,8 +717,7 @@ struct status_cb {
 	const char *prefix;
 	unsigned int flags;
 };
-
-#define STATUS_CB_INIT { NULL, 0 }
+#define STATUS_CB_INIT { 0 }
 
 static void print_status(unsigned int flags, char state, const char *path,
 			 const struct object_id *oid, const char *displaypath)
@@ -779,20 +753,20 @@ static void status_submodule(const char *path, const struct object_id *ce_oid,
 			     unsigned int flags)
 {
 	char *displaypath;
-	struct argv_array diff_files_args = ARGV_ARRAY_INIT;
+	struct strvec diff_files_args = STRVEC_INIT;
 	struct rev_info rev;
 	int diff_files_result;
 	struct strbuf buf = STRBUF_INIT;
 	const char *git_dir;
 
-	if (!submodule_from_path(the_repository, &null_oid, path))
+	if (!submodule_from_path(the_repository, null_oid(), path))
 		die(_("no submodule mapping found in .gitmodules for path '%s'"),
 		      path);
 
 	displaypath = get_submodule_displaypath(path, prefix);
 
 	if ((CE_STAGEMASK & ce_flags) >> CE_STAGESHIFT) {
-		print_status(flags, 'U', path, &null_oid, displaypath);
+		print_status(flags, 'U', path, null_oid(), displaypath);
 		goto cleanup;
 	}
 
@@ -809,17 +783,17 @@ static void status_submodule(const char *path, const struct object_id *ce_oid,
 	}
 	strbuf_release(&buf);
 
-	argv_array_pushl(&diff_files_args, "diff-files",
-			 "--ignore-submodules=dirty", "--quiet", "--",
-			 path, NULL);
+	strvec_pushl(&diff_files_args, "diff-files",
+		     "--ignore-submodules=dirty", "--quiet", "--",
+		     path, NULL);
 
 	git_config(git_diff_basic_config, NULL);
 
 	repo_init_revisions(the_repository, &rev, NULL);
 	rev.abbrev = 0;
-	diff_files_args.argc = setup_revisions(diff_files_args.argc,
-					       diff_files_args.argv,
-					       &rev, NULL);
+	diff_files_args.nr = setup_revisions(diff_files_args.nr,
+					     diff_files_args.v,
+					     &rev, NULL);
 	diff_files_result = run_diff_files(&rev, 0);
 
 	if (!diff_result_code(&rev.diffopt, diff_files_result)) {
@@ -849,23 +823,23 @@ static void status_submodule(const char *path, const struct object_id *ce_oid,
 		cpr.dir = path;
 		prepare_submodule_repo_env(&cpr.env_array);
 
-		argv_array_push(&cpr.args, "--super-prefix");
-		argv_array_pushf(&cpr.args, "%s/", displaypath);
-		argv_array_pushl(&cpr.args, "submodule--helper", "status",
-				 "--recursive", NULL);
+		strvec_push(&cpr.args, "--super-prefix");
+		strvec_pushf(&cpr.args, "%s/", displaypath);
+		strvec_pushl(&cpr.args, "submodule--helper", "status",
+			     "--recursive", NULL);
 
 		if (flags & OPT_CACHED)
-			argv_array_push(&cpr.args, "--cached");
+			strvec_push(&cpr.args, "--cached");
 
 		if (flags & OPT_QUIET)
-			argv_array_push(&cpr.args, "--quiet");
+			strvec_push(&cpr.args, "--quiet");
 
 		if (run_command(&cpr))
 			die(_("failed to recurse into submodule '%s'"), path);
 	}
 
 cleanup:
-	argv_array_clear(&diff_files_args);
+	strvec_clear(&diff_files_args);
 	free(displaypath);
 }
 
@@ -885,8 +859,8 @@ static int module_status(int argc, const char **argv, const char *prefix)
 	int quiet = 0;
 
 	struct option module_status_options[] = {
-		OPT__QUIET(&quiet, N_("Suppress submodule status output")),
-		OPT_BIT(0, "cached", &info.flags, N_("Use commit stored in the index instead of the one stored in the submodule HEAD"), OPT_CACHED),
+		OPT__QUIET(&quiet, N_("suppress submodule status output")),
+		OPT_BIT(0, "cached", &info.flags, N_("use commit stored in the index instead of the one stored in the submodule HEAD"), OPT_CACHED),
 		OPT_BIT(0, "recursive", &info.flags, N_("recurse into nested submodules"), OPT_RECURSIVE),
 		OPT_END()
 	};
@@ -918,7 +892,7 @@ static int module_name(int argc, const char **argv, const char *prefix)
 	if (argc != 2)
 		usage(_("git submodule--helper name <path>"));
 
-	sub = submodule_from_path(the_repository, &null_oid, argv[1]);
+	sub = submodule_from_path(the_repository, null_oid(), argv[1]);
 
 	if (!sub)
 		die(_("no submodule mapping found in .gitmodules for path '%s'"),
@@ -929,12 +903,438 @@ static int module_name(int argc, const char **argv, const char *prefix)
 	return 0;
 }
 
+struct module_cb {
+	unsigned int mod_src;
+	unsigned int mod_dst;
+	struct object_id oid_src;
+	struct object_id oid_dst;
+	char status;
+	const char *sm_path;
+};
+#define MODULE_CB_INIT { 0 }
+
+struct module_cb_list {
+	struct module_cb **entries;
+	int alloc, nr;
+};
+#define MODULE_CB_LIST_INIT { 0 }
+
+struct summary_cb {
+	int argc;
+	const char **argv;
+	const char *prefix;
+	unsigned int cached: 1;
+	unsigned int for_status: 1;
+	unsigned int files: 1;
+	int summary_limit;
+};
+#define SUMMARY_CB_INIT { 0 }
+
+enum diff_cmd {
+	DIFF_INDEX,
+	DIFF_FILES
+};
+
+static char *verify_submodule_committish(const char *sm_path,
+					 const char *committish)
+{
+	struct child_process cp_rev_parse = CHILD_PROCESS_INIT;
+	struct strbuf result = STRBUF_INIT;
+
+	cp_rev_parse.git_cmd = 1;
+	cp_rev_parse.dir = sm_path;
+	prepare_submodule_repo_env(&cp_rev_parse.env_array);
+	strvec_pushl(&cp_rev_parse.args, "rev-parse", "-q", "--short", NULL);
+	strvec_pushf(&cp_rev_parse.args, "%s^0", committish);
+	strvec_push(&cp_rev_parse.args, "--");
+
+	if (capture_command(&cp_rev_parse, &result, 0))
+		return NULL;
+
+	strbuf_trim_trailing_newline(&result);
+	return strbuf_detach(&result, NULL);
+}
+
+static void print_submodule_summary(struct summary_cb *info, char *errmsg,
+				    int total_commits, const char *displaypath,
+				    const char *src_abbrev, const char *dst_abbrev,
+				    struct module_cb *p)
+{
+	if (p->status == 'T') {
+		if (S_ISGITLINK(p->mod_dst))
+			printf(_("* %s %s(blob)->%s(submodule)"),
+				 displaypath, src_abbrev, dst_abbrev);
+		else
+			printf(_("* %s %s(submodule)->%s(blob)"),
+				 displaypath, src_abbrev, dst_abbrev);
+	} else {
+		printf("* %s %s...%s",
+			displaypath, src_abbrev, dst_abbrev);
+	}
+
+	if (total_commits < 0)
+		printf(":\n");
+	else
+		printf(" (%d):\n", total_commits);
+
+	if (errmsg) {
+		printf(_("%s"), errmsg);
+	} else if (total_commits > 0) {
+		struct child_process cp_log = CHILD_PROCESS_INIT;
+
+		cp_log.git_cmd = 1;
+		cp_log.dir = p->sm_path;
+		prepare_submodule_repo_env(&cp_log.env_array);
+		strvec_pushl(&cp_log.args, "log", NULL);
+
+		if (S_ISGITLINK(p->mod_src) && S_ISGITLINK(p->mod_dst)) {
+			if (info->summary_limit > 0)
+				strvec_pushf(&cp_log.args, "-%d",
+					     info->summary_limit);
+
+			strvec_pushl(&cp_log.args, "--pretty=  %m %s",
+				     "--first-parent", NULL);
+			strvec_pushf(&cp_log.args, "%s...%s",
+				     src_abbrev, dst_abbrev);
+		} else if (S_ISGITLINK(p->mod_dst)) {
+			strvec_pushl(&cp_log.args, "--pretty=  > %s",
+				     "-1", dst_abbrev, NULL);
+		} else {
+			strvec_pushl(&cp_log.args, "--pretty=  < %s",
+				     "-1", src_abbrev, NULL);
+		}
+		run_command(&cp_log);
+	}
+	printf("\n");
+}
+
+static void generate_submodule_summary(struct summary_cb *info,
+				       struct module_cb *p)
+{
+	char *displaypath, *src_abbrev = NULL, *dst_abbrev;
+	int missing_src = 0, missing_dst = 0;
+	char *errmsg = NULL;
+	int total_commits = -1;
+
+	if (!info->cached && oideq(&p->oid_dst, null_oid())) {
+		if (S_ISGITLINK(p->mod_dst)) {
+			struct ref_store *refs = get_submodule_ref_store(p->sm_path);
+			if (refs)
+				refs_head_ref(refs, handle_submodule_head_ref, &p->oid_dst);
+		} else if (S_ISLNK(p->mod_dst) || S_ISREG(p->mod_dst)) {
+			struct stat st;
+			int fd = open(p->sm_path, O_RDONLY);
+
+			if (fd < 0 || fstat(fd, &st) < 0 ||
+			    index_fd(&the_index, &p->oid_dst, fd, &st, OBJ_BLOB,
+				     p->sm_path, 0))
+				error(_("couldn't hash object from '%s'"), p->sm_path);
+		} else {
+			/* for a submodule removal (mode:0000000), don't warn */
+			if (p->mod_dst)
+				warning(_("unexpected mode %o\n"), p->mod_dst);
+		}
+	}
+
+	if (S_ISGITLINK(p->mod_src)) {
+		if (p->status != 'D')
+			src_abbrev = verify_submodule_committish(p->sm_path,
+								 oid_to_hex(&p->oid_src));
+		if (!src_abbrev) {
+			missing_src = 1;
+			/*
+			 * As `rev-parse` failed, we fallback to getting
+			 * the abbreviated hash using oid_src. We do
+			 * this as we might still need the abbreviated
+			 * hash in cases like a submodule type change, etc.
+			 */
+			src_abbrev = xstrndup(oid_to_hex(&p->oid_src), 7);
+		}
+	} else {
+		/*
+		 * The source does not point to a submodule.
+		 * So, we fallback to getting the abbreviation using
+		 * oid_src as we might still need the abbreviated
+		 * hash in cases like submodule add, etc.
+		 */
+		src_abbrev = xstrndup(oid_to_hex(&p->oid_src), 7);
+	}
+
+	if (S_ISGITLINK(p->mod_dst)) {
+		dst_abbrev = verify_submodule_committish(p->sm_path,
+							 oid_to_hex(&p->oid_dst));
+		if (!dst_abbrev) {
+			missing_dst = 1;
+			/*
+			 * As `rev-parse` failed, we fallback to getting
+			 * the abbreviated hash using oid_dst. We do
+			 * this as we might still need the abbreviated
+			 * hash in cases like a submodule type change, etc.
+			 */
+			dst_abbrev = xstrndup(oid_to_hex(&p->oid_dst), 7);
+		}
+	} else {
+		/*
+		 * The destination does not point to a submodule.
+		 * So, we fallback to getting the abbreviation using
+		 * oid_dst as we might still need the abbreviated
+		 * hash in cases like a submodule removal, etc.
+		 */
+		dst_abbrev = xstrndup(oid_to_hex(&p->oid_dst), 7);
+	}
+
+	displaypath = get_submodule_displaypath(p->sm_path, info->prefix);
+
+	if (!missing_src && !missing_dst) {
+		struct child_process cp_rev_list = CHILD_PROCESS_INIT;
+		struct strbuf sb_rev_list = STRBUF_INIT;
+
+		strvec_pushl(&cp_rev_list.args, "rev-list",
+			     "--first-parent", "--count", NULL);
+		if (S_ISGITLINK(p->mod_src) && S_ISGITLINK(p->mod_dst))
+			strvec_pushf(&cp_rev_list.args, "%s...%s",
+				     src_abbrev, dst_abbrev);
+		else
+			strvec_push(&cp_rev_list.args, S_ISGITLINK(p->mod_src) ?
+				    src_abbrev : dst_abbrev);
+		strvec_push(&cp_rev_list.args, "--");
+
+		cp_rev_list.git_cmd = 1;
+		cp_rev_list.dir = p->sm_path;
+		prepare_submodule_repo_env(&cp_rev_list.env_array);
+
+		if (!capture_command(&cp_rev_list, &sb_rev_list, 0))
+			total_commits = atoi(sb_rev_list.buf);
+
+		strbuf_release(&sb_rev_list);
+	} else {
+		/*
+		 * Don't give error msg for modification whose dst is not
+		 * submodule, i.e., deleted or changed to blob
+		 */
+		if (S_ISGITLINK(p->mod_dst)) {
+			struct strbuf errmsg_str = STRBUF_INIT;
+			if (missing_src && missing_dst) {
+				strbuf_addf(&errmsg_str, "  Warn: %s doesn't contain commits %s and %s\n",
+					    displaypath, oid_to_hex(&p->oid_src),
+					    oid_to_hex(&p->oid_dst));
+			} else {
+				strbuf_addf(&errmsg_str, "  Warn: %s doesn't contain commit %s\n",
+					    displaypath, missing_src ?
+					    oid_to_hex(&p->oid_src) :
+					    oid_to_hex(&p->oid_dst));
+			}
+			errmsg = strbuf_detach(&errmsg_str, NULL);
+		}
+	}
+
+	print_submodule_summary(info, errmsg, total_commits,
+				displaypath, src_abbrev,
+				dst_abbrev, p);
+
+	free(displaypath);
+	free(src_abbrev);
+	free(dst_abbrev);
+}
+
+static void prepare_submodule_summary(struct summary_cb *info,
+				      struct module_cb_list *list)
+{
+	int i;
+	for (i = 0; i < list->nr; i++) {
+		const struct submodule *sub;
+		struct module_cb *p = list->entries[i];
+		struct strbuf sm_gitdir = STRBUF_INIT;
+
+		if (p->status == 'D' || p->status == 'T') {
+			generate_submodule_summary(info, p);
+			continue;
+		}
+
+		if (info->for_status && p->status != 'A' &&
+		    (sub = submodule_from_path(the_repository,
+					       null_oid(), p->sm_path))) {
+			char *config_key = NULL;
+			const char *value;
+			int ignore_all = 0;
+
+			config_key = xstrfmt("submodule.%s.ignore",
+					     sub->name);
+			if (!git_config_get_string_tmp(config_key, &value))
+				ignore_all = !strcmp(value, "all");
+			else if (sub->ignore)
+				ignore_all = !strcmp(sub->ignore, "all");
+
+			free(config_key);
+			if (ignore_all)
+				continue;
+		}
+
+		/* Also show added or modified modules which are checked out */
+		strbuf_addstr(&sm_gitdir, p->sm_path);
+		if (is_nonbare_repository_dir(&sm_gitdir))
+			generate_submodule_summary(info, p);
+		strbuf_release(&sm_gitdir);
+	}
+}
+
+static void submodule_summary_callback(struct diff_queue_struct *q,
+				       struct diff_options *options,
+				       void *data)
+{
+	int i;
+	struct module_cb_list *list = data;
+	for (i = 0; i < q->nr; i++) {
+		struct diff_filepair *p = q->queue[i];
+		struct module_cb *temp;
+
+		if (!S_ISGITLINK(p->one->mode) && !S_ISGITLINK(p->two->mode))
+			continue;
+		temp = (struct module_cb*)malloc(sizeof(struct module_cb));
+		temp->mod_src = p->one->mode;
+		temp->mod_dst = p->two->mode;
+		temp->oid_src = p->one->oid;
+		temp->oid_dst = p->two->oid;
+		temp->status = p->status;
+		temp->sm_path = xstrdup(p->one->path);
+
+		ALLOC_GROW(list->entries, list->nr + 1, list->alloc);
+		list->entries[list->nr++] = temp;
+	}
+}
+
+static const char *get_diff_cmd(enum diff_cmd diff_cmd)
+{
+	switch (diff_cmd) {
+	case DIFF_INDEX: return "diff-index";
+	case DIFF_FILES: return "diff-files";
+	default: BUG("bad diff_cmd value %d", diff_cmd);
+	}
+}
+
+static int compute_summary_module_list(struct object_id *head_oid,
+				       struct summary_cb *info,
+				       enum diff_cmd diff_cmd)
+{
+	struct strvec diff_args = STRVEC_INIT;
+	struct rev_info rev;
+	struct module_cb_list list = MODULE_CB_LIST_INIT;
+
+	strvec_push(&diff_args, get_diff_cmd(diff_cmd));
+	if (info->cached)
+		strvec_push(&diff_args, "--cached");
+	strvec_pushl(&diff_args, "--ignore-submodules=dirty", "--raw", NULL);
+	if (head_oid)
+		strvec_push(&diff_args, oid_to_hex(head_oid));
+	strvec_push(&diff_args, "--");
+	if (info->argc)
+		strvec_pushv(&diff_args, info->argv);
+
+	git_config(git_diff_basic_config, NULL);
+	init_revisions(&rev, info->prefix);
+	rev.abbrev = 0;
+	precompose_argv_prefix(diff_args.nr, diff_args.v, NULL);
+	setup_revisions(diff_args.nr, diff_args.v, &rev, NULL);
+	rev.diffopt.output_format = DIFF_FORMAT_NO_OUTPUT | DIFF_FORMAT_CALLBACK;
+	rev.diffopt.format_callback = submodule_summary_callback;
+	rev.diffopt.format_callback_data = &list;
+
+	if (!info->cached) {
+		if (diff_cmd == DIFF_INDEX)
+			setup_work_tree();
+		if (read_cache_preload(&rev.diffopt.pathspec) < 0) {
+			perror("read_cache_preload");
+			return -1;
+		}
+	} else if (read_cache() < 0) {
+		perror("read_cache");
+		return -1;
+	}
+
+	if (diff_cmd == DIFF_INDEX)
+		run_diff_index(&rev, info->cached);
+	else
+		run_diff_files(&rev, 0);
+	prepare_submodule_summary(info, &list);
+	strvec_clear(&diff_args);
+	return 0;
+}
+
+static int module_summary(int argc, const char **argv, const char *prefix)
+{
+	struct summary_cb info = SUMMARY_CB_INIT;
+	int cached = 0;
+	int for_status = 0;
+	int files = 0;
+	int summary_limit = -1;
+	enum diff_cmd diff_cmd = DIFF_INDEX;
+	struct object_id head_oid;
+	int ret;
+
+	struct option module_summary_options[] = {
+		OPT_BOOL(0, "cached", &cached,
+			 N_("use the commit stored in the index instead of the submodule HEAD")),
+		OPT_BOOL(0, "files", &files,
+			 N_("compare the commit in the index with that in the submodule HEAD")),
+		OPT_BOOL(0, "for-status", &for_status,
+			 N_("skip submodules with 'ignore_config' value set to 'all'")),
+		OPT_INTEGER('n', "summary-limit", &summary_limit,
+			     N_("limit the summary size")),
+		OPT_END()
+	};
+
+	const char *const git_submodule_helper_usage[] = {
+		N_("git submodule--helper summary [<options>] [<commit>] [--] [<path>]"),
+		NULL
+	};
+
+	argc = parse_options(argc, argv, prefix, module_summary_options,
+			     git_submodule_helper_usage, 0);
+
+	if (!summary_limit)
+		return 0;
+
+	if (!get_oid(argc ? argv[0] : "HEAD", &head_oid)) {
+		if (argc) {
+			argv++;
+			argc--;
+		}
+	} else if (!argc || !strcmp(argv[0], "HEAD")) {
+		/* before the first commit: compare with an empty tree */
+		oidcpy(&head_oid, the_hash_algo->empty_tree);
+		if (argc) {
+			argv++;
+			argc--;
+		}
+	} else {
+		if (get_oid("HEAD", &head_oid))
+			die(_("could not fetch a revision for HEAD"));
+	}
+
+	if (files) {
+		if (cached)
+			die(_("--cached and --files are mutually exclusive"));
+		diff_cmd = DIFF_FILES;
+	}
+
+	info.argc = argc;
+	info.argv = argv;
+	info.prefix = prefix;
+	info.cached = !!cached;
+	info.files = !!files;
+	info.for_status = !!for_status;
+	info.summary_limit = summary_limit;
+
+	ret = compute_summary_module_list((diff_cmd == DIFF_INDEX) ? &head_oid : NULL,
+					  &info, diff_cmd);
+	return ret;
+}
+
 struct sync_cb {
 	const char *prefix;
 	unsigned int flags;
 };
-
-#define SYNC_CB_INIT { NULL, 0 }
+#define SYNC_CB_INIT { 0 }
 
 static void sync_submodule(const char *path, const char *prefix,
 			   unsigned int flags)
@@ -949,25 +1349,15 @@ static void sync_submodule(const char *path, const char *prefix,
 	if (!is_submodule_active(the_repository, path))
 		return;
 
-	sub = submodule_from_path(the_repository, &null_oid, path);
+	sub = submodule_from_path(the_repository, null_oid(), path);
 
 	if (sub && sub->url) {
 		if (starts_with_dot_dot_slash(sub->url) ||
 		    starts_with_dot_slash(sub->url)) {
-			char *remote_url, *up_path;
-			char *remote = get_default_remote();
-			strbuf_addf(&sb, "remote.%s.url", remote);
-
-			if (git_config_get_string(sb.buf, &remote_url))
-				remote_url = xgetcwd();
-
-			up_path = get_up_path(path);
-			sub_origin_url = relative_url(remote_url, sub->url, up_path);
-			super_config_url = relative_url(remote_url, sub->url, NULL);
-
-			free(remote);
+			char *up_path = get_up_path(path);
+			sub_origin_url = resolve_relative_url(sub->url, up_path, 1);
+			super_config_url = resolve_relative_url(sub->url, NULL, 1);
 			free(up_path);
-			free(remote_url);
 		} else {
 			sub_origin_url = xstrdup(sub->url);
 			super_config_url = xstrdup(sub->url);
@@ -995,8 +1385,8 @@ static void sync_submodule(const char *path, const char *prefix,
 	prepare_submodule_repo_env(&cp.env_array);
 	cp.git_cmd = 1;
 	cp.dir = path;
-	argv_array_pushl(&cp.args, "submodule--helper",
-			 "print-default-remote", NULL);
+	strvec_pushl(&cp.args, "submodule--helper",
+		     "print-default-remote", NULL);
 
 	strbuf_reset(&sb);
 	if (capture_command(&cp, &sb, 0))
@@ -1021,13 +1411,13 @@ static void sync_submodule(const char *path, const char *prefix,
 		cpr.dir = path;
 		prepare_submodule_repo_env(&cpr.env_array);
 
-		argv_array_push(&cpr.args, "--super-prefix");
-		argv_array_pushf(&cpr.args, "%s/", displaypath);
-		argv_array_pushl(&cpr.args, "submodule--helper", "sync",
-				 "--recursive", NULL);
+		strvec_push(&cpr.args, "--super-prefix");
+		strvec_pushf(&cpr.args, "%s/", displaypath);
+		strvec_pushl(&cpr.args, "submodule--helper", "sync",
+			     "--recursive", NULL);
 
 		if (flags & OPT_QUIET)
-			argv_array_push(&cpr.args, "--quiet");
+			strvec_push(&cpr.args, "--quiet");
 
 		if (run_command(&cpr))
 			die(_("failed to recurse into submodule '%s'"),
@@ -1058,9 +1448,9 @@ static int module_sync(int argc, const char **argv, const char *prefix)
 	int recursive = 0;
 
 	struct option module_sync_options[] = {
-		OPT__QUIET(&quiet, N_("Suppress output of synchronizing submodule url")),
+		OPT__QUIET(&quiet, N_("suppress output of synchronizing submodule url")),
 		OPT_BOOL(0, "recursive", &recursive,
-			N_("Recurse into nested submodules")),
+			N_("recurse into nested submodules")),
 		OPT_END()
 	};
 
@@ -1090,7 +1480,7 @@ struct deinit_cb {
 	const char *prefix;
 	unsigned int flags;
 };
-#define DEINIT_CB_INIT { NULL, 0 }
+#define DEINIT_CB_INIT { 0 }
 
 static void deinit_submodule(const char *path, const char *prefix,
 			     unsigned int flags)
@@ -1101,7 +1491,7 @@ static void deinit_submodule(const char *path, const char *prefix,
 	struct strbuf sb_config = STRBUF_INIT;
 	char *sub_git_dir = xstrfmt("%s/.git", path);
 
-	sub = submodule_from_path(the_repository, &null_oid, path);
+	sub = submodule_from_path(the_repository, null_oid(), path);
 
 	if (!sub || !sub->name)
 		goto cleanup;
@@ -1127,8 +1517,8 @@ static void deinit_submodule(const char *path, const char *prefix,
 		if (!(flags & OPT_FORCE)) {
 			struct child_process cp_rm = CHILD_PROCESS_INIT;
 			cp_rm.git_cmd = 1;
-			argv_array_pushl(&cp_rm.args, "rm", "-qn",
-					 path, NULL);
+			strvec_pushl(&cp_rm.args, "rm", "-qn",
+				     path, NULL);
 
 			if (run_command(&cp_rm))
 				die(_("Submodule work tree '%s' contains local "
@@ -1156,8 +1546,8 @@ static void deinit_submodule(const char *path, const char *prefix,
 		      displaypath);
 
 	cp_config.git_cmd = 1;
-	argv_array_pushl(&cp_config.args, "config", "--get-regexp", NULL);
-	argv_array_pushf(&cp_config.args, "submodule.%s\\.", sub->name);
+	strvec_pushl(&cp_config.args, "config", "--get-regexp", NULL);
+	strvec_pushf(&cp_config.args, "submodule.%s\\.", sub->name);
 
 	/* remove the .git/config entries (unless the user already did it) */
 	if (!capture_command(&cp_config, &sb_config, 0) && sb_config.len) {
@@ -1196,9 +1586,9 @@ static int module_deinit(int argc, const char **argv, const char *prefix)
 	int all = 0;
 
 	struct option module_deinit_options[] = {
-		OPT__QUIET(&quiet, N_("Suppress submodule status output")),
-		OPT__FORCE(&force, N_("Remove submodule working trees even if they contain local changes"), 0),
-		OPT_BOOL(0, "all", &all, N_("Unregister all submodules")),
+		OPT__QUIET(&quiet, N_("suppress submodule status output")),
+		OPT__FORCE(&force, N_("remove submodule working trees even if they contain local changes"), 0),
+		OPT_BOOL(0, "all", &all, N_("unregister all submodules")),
 		OPT_END()
 	};
 
@@ -1233,45 +1623,20 @@ static int module_deinit(int argc, const char **argv, const char *prefix)
 	return 0;
 }
 
-static int clone_submodule(const char *path, const char *gitdir, const char *url,
-			   const char *depth, struct string_list *reference, int dissociate,
-			   int quiet, int progress, int single_branch)
-{
-	struct child_process cp = CHILD_PROCESS_INIT;
-
-	argv_array_push(&cp.args, "clone");
-	argv_array_push(&cp.args, "--no-checkout");
-	if (quiet)
-		argv_array_push(&cp.args, "--quiet");
-	if (progress)
-		argv_array_push(&cp.args, "--progress");
-	if (depth && *depth)
-		argv_array_pushl(&cp.args, "--depth", depth, NULL);
-	if (reference->nr) {
-		struct string_list_item *item;
-		for_each_string_list_item(item, reference)
-			argv_array_pushl(&cp.args, "--reference",
-					 item->string, NULL);
-	}
-	if (dissociate)
-		argv_array_push(&cp.args, "--dissociate");
-	if (gitdir && *gitdir)
-		argv_array_pushl(&cp.args, "--separate-git-dir", gitdir, NULL);
-	if (single_branch >= 0)
-		argv_array_push(&cp.args, single_branch ?
-					  "--single-branch" :
-					  "--no-single-branch");
-
-	argv_array_push(&cp.args, "--");
-	argv_array_push(&cp.args, url);
-	argv_array_push(&cp.args, path);
-
-	cp.git_cmd = 1;
-	prepare_submodule_repo_env(&cp.env_array);
-	cp.no_stdin = 1;
-
-	return run_command(&cp);
-}
+struct module_clone_data {
+	const char *prefix;
+	const char *path;
+	const char *name;
+	const char *url;
+	const char *depth;
+	struct string_list reference;
+	unsigned int quiet: 1;
+	unsigned int progress: 1;
+	unsigned int dissociate: 1;
+	unsigned int require_init: 1;
+	int single_branch;
+};
+#define MODULE_CLONE_DATA_INIT { .reference = STRING_LIST_INIT_NODUP, .single_branch = -1 }
 
 struct submodule_alternate_setup {
 	const char *submodule_name;
@@ -1282,8 +1647,9 @@ struct submodule_alternate_setup {
 	} error_mode;
 	struct string_list *reference;
 };
-#define SUBMODULE_ALTERNATE_SETUP_INIT { NULL, \
-	SUBMODULE_ALTERNATE_ERROR_IGNORE, NULL }
+#define SUBMODULE_ALTERNATE_SETUP_INIT { \
+	.error_mode = SUBMODULE_ALTERNATE_ERROR_IGNORE, \
+}
 
 static const char alternate_error_advice[] = N_(
 "An alternate computed from a superproject's alternate is invalid.\n"
@@ -1303,10 +1669,13 @@ static int add_possible_reference_from_superproject(
 	 * standard layout with .git/(modules/<name>)+/objects
 	 */
 	if (strip_suffix(odb->path, "/objects", &len)) {
+		struct repository alternate;
 		char *sm_alternate;
 		struct strbuf sb = STRBUF_INIT;
 		struct strbuf err = STRBUF_INIT;
 		strbuf_add(&sb, odb->path, len);
+
+		repo_init(&alternate, sb.buf, NULL);
 
 		/*
 		 * We need to end the new path with '/' to mark it as a dir,
@@ -1314,7 +1683,10 @@ static int add_possible_reference_from_superproject(
 		 * as the last part of a missing submodule reference would
 		 * be taken as a file name.
 		 */
-		strbuf_addf(&sb, "/modules/%s/", sas->submodule_name);
+		strbuf_reset(&sb);
+		submodule_name_to_gitdir(&sb, &alternate, sas->submodule_name);
+		strbuf_addch(&sb, '/');
+		repo_clear(&alternate);
 
 		sm_alternate = compute_alternate_path(sb.buf, &err);
 		if (sm_alternate) {
@@ -1323,7 +1695,7 @@ static int add_possible_reference_from_superproject(
 		} else {
 			switch (sas->error_mode) {
 			case SUBMODULE_ALTERNATE_ERROR_DIE:
-				if (advice_submodule_alternate_error_strategy_die)
+				if (advice_enabled(ADVICE_SUBMODULE_ALTERNATE_ERROR_STRATEGY_DIE))
 					advise(_(alternate_error_advice));
 				die(_("submodule '%s' cannot add alternate: %s"),
 				    sas->submodule_name, err.buf);
@@ -1377,37 +1749,128 @@ static void prepare_possible_alternates(const char *sm_name,
 	free(error_strategy);
 }
 
+static int clone_submodule(struct module_clone_data *clone_data)
+{
+	char *p, *sm_gitdir;
+	char *sm_alternate = NULL, *error_strategy = NULL;
+	struct strbuf sb = STRBUF_INIT;
+	struct child_process cp = CHILD_PROCESS_INIT;
+
+	submodule_name_to_gitdir(&sb, the_repository, clone_data->name);
+	sm_gitdir = absolute_pathdup(sb.buf);
+	strbuf_reset(&sb);
+
+	if (!is_absolute_path(clone_data->path)) {
+		strbuf_addf(&sb, "%s/%s", get_git_work_tree(), clone_data->path);
+		clone_data->path = strbuf_detach(&sb, NULL);
+	} else {
+		clone_data->path = xstrdup(clone_data->path);
+	}
+
+	if (validate_submodule_git_dir(sm_gitdir, clone_data->name) < 0)
+		die(_("refusing to create/use '%s' in another submodule's "
+		      "git dir"), sm_gitdir);
+
+	if (!file_exists(sm_gitdir)) {
+		if (safe_create_leading_directories_const(sm_gitdir) < 0)
+			die(_("could not create directory '%s'"), sm_gitdir);
+
+		prepare_possible_alternates(clone_data->name, &clone_data->reference);
+
+		strvec_push(&cp.args, "clone");
+		strvec_push(&cp.args, "--no-checkout");
+		if (clone_data->quiet)
+			strvec_push(&cp.args, "--quiet");
+		if (clone_data->progress)
+			strvec_push(&cp.args, "--progress");
+		if (clone_data->depth && *(clone_data->depth))
+			strvec_pushl(&cp.args, "--depth", clone_data->depth, NULL);
+		if (clone_data->reference.nr) {
+			struct string_list_item *item;
+			for_each_string_list_item(item, &clone_data->reference)
+				strvec_pushl(&cp.args, "--reference",
+					     item->string, NULL);
+		}
+		if (clone_data->dissociate)
+			strvec_push(&cp.args, "--dissociate");
+		if (sm_gitdir && *sm_gitdir)
+			strvec_pushl(&cp.args, "--separate-git-dir", sm_gitdir, NULL);
+		if (clone_data->single_branch >= 0)
+			strvec_push(&cp.args, clone_data->single_branch ?
+				    "--single-branch" :
+				    "--no-single-branch");
+
+		strvec_push(&cp.args, "--");
+		strvec_push(&cp.args, clone_data->url);
+		strvec_push(&cp.args, clone_data->path);
+
+		cp.git_cmd = 1;
+		prepare_submodule_repo_env(&cp.env_array);
+		cp.no_stdin = 1;
+
+		if(run_command(&cp))
+			die(_("clone of '%s' into submodule path '%s' failed"),
+			    clone_data->url, clone_data->path);
+	} else {
+		if (clone_data->require_init && !access(clone_data->path, X_OK) &&
+		    !is_empty_dir(clone_data->path))
+			die(_("directory not empty: '%s'"), clone_data->path);
+		if (safe_create_leading_directories_const(clone_data->path) < 0)
+			die(_("could not create directory '%s'"), clone_data->path);
+		strbuf_addf(&sb, "%s/index", sm_gitdir);
+		unlink_or_warn(sb.buf);
+		strbuf_reset(&sb);
+	}
+
+	connect_work_tree_and_git_dir(clone_data->path, sm_gitdir, 0);
+
+	p = git_pathdup_submodule(clone_data->path, "config");
+	if (!p)
+		die(_("could not get submodule directory for '%s'"), clone_data->path);
+
+	/* setup alternateLocation and alternateErrorStrategy in the cloned submodule if needed */
+	git_config_get_string("submodule.alternateLocation", &sm_alternate);
+	if (sm_alternate)
+		git_config_set_in_file(p, "submodule.alternateLocation",
+				       sm_alternate);
+	git_config_get_string("submodule.alternateErrorStrategy", &error_strategy);
+	if (error_strategy)
+		git_config_set_in_file(p, "submodule.alternateErrorStrategy",
+				       error_strategy);
+
+	free(sm_alternate);
+	free(error_strategy);
+
+	strbuf_release(&sb);
+	free(sm_gitdir);
+	free(p);
+	return 0;
+}
+
 static int module_clone(int argc, const char **argv, const char *prefix)
 {
-	const char *name = NULL, *url = NULL, *depth = NULL;
-	int quiet = 0;
-	int progress = 0;
-	char *p, *path = NULL, *sm_gitdir;
-	struct strbuf sb = STRBUF_INIT;
-	struct string_list reference = STRING_LIST_INIT_NODUP;
-	int dissociate = 0, require_init = 0;
-	char *sm_alternate = NULL, *error_strategy = NULL;
-	int single_branch = -1;
+	int dissociate = 0, quiet = 0, progress = 0, require_init = 0;
+	struct module_clone_data clone_data = MODULE_CLONE_DATA_INIT;
 
 	struct option module_clone_options[] = {
-		OPT_STRING(0, "prefix", &prefix,
+		OPT_STRING(0, "prefix", &clone_data.prefix,
 			   N_("path"),
 			   N_("alternative anchor for relative paths")),
-		OPT_STRING(0, "path", &path,
+		OPT_STRING(0, "path", &clone_data.path,
 			   N_("path"),
 			   N_("where the new submodule will be cloned to")),
-		OPT_STRING(0, "name", &name,
+		OPT_STRING(0, "name", &clone_data.name,
 			   N_("string"),
 			   N_("name of the new submodule")),
-		OPT_STRING(0, "url", &url,
+		OPT_STRING(0, "url", &clone_data.url,
 			   N_("string"),
 			   N_("url where to clone the submodule from")),
-		OPT_STRING_LIST(0, "reference", &reference,
+		OPT_STRING_LIST(0, "reference", &clone_data.reference,
 			   N_("repo"),
 			   N_("reference repository")),
 		OPT_BOOL(0, "dissociate", &dissociate,
 			   N_("use --reference only while cloning")),
-		OPT_STRING(0, "depth", &depth,
+		OPT_STRING(0, "depth", &clone_data.depth,
 			   N_("string"),
 			   N_("depth for shallow clones")),
 		OPT__QUIET(&quiet, "Suppress output for cloning a submodule"),
@@ -1415,7 +1878,7 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 			   N_("force cloning progress")),
 		OPT_BOOL(0, "require-init", &require_init,
 			   N_("disallow cloning into non-empty directory")),
-		OPT_BOOL(0, "single-branch", &single_branch,
+		OPT_BOOL(0, "single-branch", &clone_data.single_branch,
 			 N_("clone only one branch, HEAD or --branch")),
 		OPT_END()
 	};
@@ -1431,67 +1894,16 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, module_clone_options,
 			     git_submodule_helper_usage, 0);
 
-	if (argc || !url || !path || !*path)
+	clone_data.dissociate = !!dissociate;
+	clone_data.quiet = !!quiet;
+	clone_data.progress = !!progress;
+	clone_data.require_init = !!require_init;
+
+	if (argc || !clone_data.url || !clone_data.path || !*(clone_data.path))
 		usage_with_options(git_submodule_helper_usage,
 				   module_clone_options);
 
-	strbuf_addf(&sb, "%s/modules/%s", get_git_dir(), name);
-	sm_gitdir = absolute_pathdup(sb.buf);
-	strbuf_reset(&sb);
-
-	if (!is_absolute_path(path)) {
-		strbuf_addf(&sb, "%s/%s", get_git_work_tree(), path);
-		path = strbuf_detach(&sb, NULL);
-	} else
-		path = xstrdup(path);
-
-	if (validate_submodule_git_dir(sm_gitdir, name) < 0)
-		die(_("refusing to create/use '%s' in another submodule's "
-			"git dir"), sm_gitdir);
-
-	if (!file_exists(sm_gitdir)) {
-		if (safe_create_leading_directories_const(sm_gitdir) < 0)
-			die(_("could not create directory '%s'"), sm_gitdir);
-
-		prepare_possible_alternates(name, &reference);
-
-		if (clone_submodule(path, sm_gitdir, url, depth, &reference, dissociate,
-				    quiet, progress, single_branch))
-			die(_("clone of '%s' into submodule path '%s' failed"),
-			    url, path);
-	} else {
-		if (require_init && !access(path, X_OK) && !is_empty_dir(path))
-			die(_("directory not empty: '%s'"), path);
-		if (safe_create_leading_directories_const(path) < 0)
-			die(_("could not create directory '%s'"), path);
-		strbuf_addf(&sb, "%s/index", sm_gitdir);
-		unlink_or_warn(sb.buf);
-		strbuf_reset(&sb);
-	}
-
-	connect_work_tree_and_git_dir(path, sm_gitdir, 0);
-
-	p = git_pathdup_submodule(path, "config");
-	if (!p)
-		die(_("could not get submodule directory for '%s'"), path);
-
-	/* setup alternateLocation and alternateErrorStrategy in the cloned submodule if needed */
-	git_config_get_string("submodule.alternateLocation", &sm_alternate);
-	if (sm_alternate)
-		git_config_set_in_file(p, "submodule.alternateLocation",
-					   sm_alternate);
-	git_config_get_string("submodule.alternateErrorStrategy", &error_strategy);
-	if (error_strategy)
-		git_config_set_in_file(p, "submodule.alternateErrorStrategy",
-					   error_strategy);
-
-	free(sm_alternate);
-	free(error_strategy);
-
-	strbuf_release(&sb);
-	free(sm_gitdir);
-	free(path);
-	free(p);
+	clone_submodule(&clone_data);
 	return 0;
 }
 
@@ -1501,7 +1913,7 @@ static void determine_submodule_update_strategy(struct repository *r,
 						const char *update,
 						struct submodule_update_strategy *out)
 {
-	const struct submodule *sub = submodule_from_path(r, &null_oid, path);
+	const struct submodule *sub = submodule_from_path(r, null_oid(), path);
 	char *key;
 	const char *val;
 
@@ -1511,7 +1923,7 @@ static void determine_submodule_update_strategy(struct repository *r,
 		if (parse_submodule_update_strategy(update, out) < 0)
 			die(_("Invalid update mode '%s' for submodule path '%s'"),
 				update, path);
-	} else if (!repo_config_get_string_const(r, key, &val)) {
+	} else if (!repo_config_get_string_tmp(r, key, &val)) {
 		if (parse_submodule_update_strategy(val, out) < 0)
 			die(_("Invalid update mode '%s' configured for submodule path '%s'"),
 				val, path);
@@ -1604,6 +2016,20 @@ struct submodule_update_clone {
 	.max_jobs = 1, \
 }
 
+struct update_data {
+	const char *recursive_prefix;
+	const char *sm_path;
+	const char *displaypath;
+	struct object_id oid;
+	struct object_id suboid;
+	struct submodule_update_strategy update_strategy;
+	int depth;
+	unsigned int force: 1;
+	unsigned int quiet: 1;
+	unsigned int nofetch: 1;
+	unsigned int just_cloned: 1;
+};
+#define UPDATE_DATA_INIT { .update_strategy = SUBMODULE_UPDATE_STRATEGY_INIT }
 
 static void next_submodule_warn_missing(struct submodule_update_clone *suc,
 		struct strbuf *out, const char *displaypath)
@@ -1653,7 +2079,7 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 		goto cleanup;
 	}
 
-	sub = submodule_from_path(the_repository, &null_oid, ce->name);
+	sub = submodule_from_path(the_repository, null_oid(), ce->name);
 
 	if (suc->recursive_prefix)
 		displaypath = relative_path(suc->recursive_prefix,
@@ -1667,7 +2093,7 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 	}
 
 	key = xstrfmt("submodule.%s.update", sub->name);
-	if (!repo_config_get_string_const(the_repository, key, &update_string)) {
+	if (!repo_config_get_string_tmp(the_repository, key, &update_string)) {
 		update_type = parse_submodule_update_type(update_string);
 	} else {
 		update_type = sub->update_strategy.type;
@@ -1690,10 +2116,10 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 
 	strbuf_reset(&sb);
 	strbuf_addf(&sb, "submodule.%s.url", sub->name);
-	if (repo_config_get_string_const(the_repository, sb.buf, &url)) {
+	if (repo_config_get_string_tmp(the_repository, sb.buf, &url)) {
 		if (starts_with_dot_slash(sub->url) ||
 		    starts_with_dot_dot_slash(sub->url)) {
-			url = compute_submodule_clone_url(sub->url);
+			url = resolve_relative_url(sub->url, NULL, 0);
 			need_free_url = 1;
 		} else
 			url = sub->url;
@@ -1717,38 +2143,38 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 	child->no_stdin = 1;
 	child->stdout_to_stderr = 1;
 	child->err = -1;
-	argv_array_push(&child->args, "submodule--helper");
-	argv_array_push(&child->args, "clone");
+	strvec_push(&child->args, "submodule--helper");
+	strvec_push(&child->args, "clone");
 	if (suc->progress)
-		argv_array_push(&child->args, "--progress");
+		strvec_push(&child->args, "--progress");
 	if (suc->quiet)
-		argv_array_push(&child->args, "--quiet");
+		strvec_push(&child->args, "--quiet");
 	if (suc->prefix)
-		argv_array_pushl(&child->args, "--prefix", suc->prefix, NULL);
+		strvec_pushl(&child->args, "--prefix", suc->prefix, NULL);
 	if (suc->recommend_shallow && sub->recommend_shallow == 1)
-		argv_array_push(&child->args, "--depth=1");
+		strvec_push(&child->args, "--depth=1");
 	if (suc->require_init)
-		argv_array_push(&child->args, "--require-init");
-	argv_array_pushl(&child->args, "--path", sub->path, NULL);
-	argv_array_pushl(&child->args, "--name", sub->name, NULL);
-	argv_array_pushl(&child->args, "--url", url, NULL);
+		strvec_push(&child->args, "--require-init");
+	strvec_pushl(&child->args, "--path", sub->path, NULL);
+	strvec_pushl(&child->args, "--name", sub->name, NULL);
+	strvec_pushl(&child->args, "--url", url, NULL);
 	if (suc->references.nr) {
 		struct string_list_item *item;
 		for_each_string_list_item(item, &suc->references)
-			argv_array_pushl(&child->args, "--reference", item->string, NULL);
+			strvec_pushl(&child->args, "--reference", item->string, NULL);
 	}
 	if (suc->dissociate)
-		argv_array_push(&child->args, "--dissociate");
+		strvec_push(&child->args, "--dissociate");
 	if (suc->depth)
-		argv_array_push(&child->args, suc->depth);
+		strvec_push(&child->args, suc->depth);
 	if (suc->single_branch >= 0)
-		argv_array_push(&child->args, suc->single_branch ?
+		strvec_push(&child->args, suc->single_branch ?
 					      "--single-branch" :
 					      "--no-single-branch");
 
 cleanup:
-	strbuf_reset(&displaypath_sb);
-	strbuf_reset(&sb);
+	strbuf_release(&displaypath_sb);
+	strbuf_release(&sb);
 	if (need_free_url)
 		free((void*)url);
 
@@ -1857,6 +2283,181 @@ static int git_update_clone_config(const char *var, const char *value,
 	return 0;
 }
 
+static int is_tip_reachable(const char *path, struct object_id *oid)
+{
+	struct child_process cp = CHILD_PROCESS_INIT;
+	struct strbuf rev = STRBUF_INIT;
+	char *hex = oid_to_hex(oid);
+
+	cp.git_cmd = 1;
+	cp.dir = xstrdup(path);
+	cp.no_stderr = 1;
+	strvec_pushl(&cp.args, "rev-list", "-n", "1", hex, "--not", "--all", NULL);
+
+	prepare_submodule_repo_env(&cp.env_array);
+
+	if (capture_command(&cp, &rev, GIT_MAX_HEXSZ + 1) || rev.len)
+		return 0;
+
+	return 1;
+}
+
+static int fetch_in_submodule(const char *module_path, int depth, int quiet, struct object_id *oid)
+{
+	struct child_process cp = CHILD_PROCESS_INIT;
+
+	prepare_submodule_repo_env(&cp.env_array);
+	cp.git_cmd = 1;
+	cp.dir = xstrdup(module_path);
+
+	strvec_push(&cp.args, "fetch");
+	if (quiet)
+		strvec_push(&cp.args, "--quiet");
+	if (depth)
+		strvec_pushf(&cp.args, "--depth=%d", depth);
+	if (oid) {
+		char *hex = oid_to_hex(oid);
+		char *remote = get_default_remote();
+		strvec_pushl(&cp.args, remote, hex, NULL);
+	}
+
+	return run_command(&cp);
+}
+
+static int run_update_command(struct update_data *ud, int subforce)
+{
+	struct strvec args = STRVEC_INIT;
+	struct strvec child_env = STRVEC_INIT;
+	char *oid = oid_to_hex(&ud->oid);
+	int must_die_on_failure = 0;
+	int git_cmd;
+
+	switch (ud->update_strategy.type) {
+	case SM_UPDATE_CHECKOUT:
+		git_cmd = 1;
+		strvec_pushl(&args, "checkout", "-q", NULL);
+		if (subforce)
+			strvec_push(&args, "-f");
+		break;
+	case SM_UPDATE_REBASE:
+		git_cmd = 1;
+		strvec_push(&args, "rebase");
+		if (ud->quiet)
+			strvec_push(&args, "--quiet");
+		must_die_on_failure = 1;
+		break;
+	case SM_UPDATE_MERGE:
+		git_cmd = 1;
+		strvec_push(&args, "merge");
+		if (ud->quiet)
+			strvec_push(&args, "--quiet");
+		must_die_on_failure = 1;
+		break;
+	case SM_UPDATE_COMMAND:
+		git_cmd = 0;
+		strvec_push(&args, ud->update_strategy.command);
+		must_die_on_failure = 1;
+		break;
+	default:
+		BUG("unexpected update strategy type: %s",
+		    submodule_strategy_to_string(&ud->update_strategy));
+	}
+	strvec_push(&args, oid);
+
+	prepare_submodule_repo_env(&child_env);
+	if (run_command_v_opt_cd_env(args.v, git_cmd ? RUN_GIT_CMD : RUN_USING_SHELL,
+				     ud->sm_path, child_env.v)) {
+		switch (ud->update_strategy.type) {
+		case SM_UPDATE_CHECKOUT:
+			printf(_("Unable to checkout '%s' in submodule path '%s'"),
+			       oid, ud->displaypath);
+			break;
+		case SM_UPDATE_REBASE:
+			printf(_("Unable to rebase '%s' in submodule path '%s'"),
+			       oid, ud->displaypath);
+			break;
+		case SM_UPDATE_MERGE:
+			printf(_("Unable to merge '%s' in submodule path '%s'"),
+			       oid, ud->displaypath);
+			break;
+		case SM_UPDATE_COMMAND:
+			printf(_("Execution of '%s %s' failed in submodule path '%s'"),
+			       ud->update_strategy.command, oid, ud->displaypath);
+			break;
+		default:
+			BUG("unexpected update strategy type: %s",
+			    submodule_strategy_to_string(&ud->update_strategy));
+		}
+		/*
+		 * NEEDSWORK: We are currently printing to stdout with error
+		 * return so that the shell caller handles the error output
+		 * properly. Once we start handling the error messages within
+		 * C, we should use die() instead.
+		 */
+		if (must_die_on_failure)
+			return 2;
+		/*
+		 * This signifies to the caller in shell that the command
+		 * failed without dying
+		 */
+		return 1;
+	}
+
+	switch (ud->update_strategy.type) {
+	case SM_UPDATE_CHECKOUT:
+		printf(_("Submodule path '%s': checked out '%s'\n"),
+		       ud->displaypath, oid);
+		break;
+	case SM_UPDATE_REBASE:
+		printf(_("Submodule path '%s': rebased into '%s'\n"),
+		       ud->displaypath, oid);
+		break;
+	case SM_UPDATE_MERGE:
+		printf(_("Submodule path '%s': merged in '%s'\n"),
+		       ud->displaypath, oid);
+		break;
+	case SM_UPDATE_COMMAND:
+		printf(_("Submodule path '%s': '%s %s'\n"),
+		       ud->displaypath, ud->update_strategy.command, oid);
+		break;
+	default:
+		BUG("unexpected update strategy type: %s",
+		    submodule_strategy_to_string(&ud->update_strategy));
+	}
+
+	return 0;
+}
+
+static int do_run_update_procedure(struct update_data *ud)
+{
+	int subforce = is_null_oid(&ud->suboid) || ud->force;
+
+	if (!ud->nofetch) {
+		/*
+		 * Run fetch only if `oid` isn't present or it
+		 * is not reachable from a ref.
+		 */
+		if (!is_tip_reachable(ud->sm_path, &ud->oid) &&
+		    fetch_in_submodule(ud->sm_path, ud->depth, ud->quiet, NULL) &&
+		    !ud->quiet)
+			fprintf_ln(stderr,
+				   _("Unable to fetch in submodule path '%s'; "
+				     "trying to directly fetch %s:"),
+				   ud->displaypath, oid_to_hex(&ud->oid));
+		/*
+		 * Now we tried the usual fetch, but `oid` may
+		 * not be reachable from any of the refs.
+		 */
+		if (!is_tip_reachable(ud->sm_path, &ud->oid) &&
+		    fetch_in_submodule(ud->sm_path, ud->depth, ud->quiet, &ud->oid))
+			die(_("Fetched in submodule path '%s', but it did not "
+			      "contain %s. Direct fetching of that commit failed."),
+			    ud->displaypath, oid_to_hex(&ud->oid));
+	}
+
+	return run_update_command(ud, subforce);
+}
+
 static void update_submodule(struct update_clone_data *ucd)
 {
 	fprintf(stdout, "dummy %s %d\t%s\n",
@@ -1913,7 +2514,7 @@ static int update_clone(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "dissociate", &suc.dissociate,
 			   N_("use --reference only while cloning")),
 		OPT_STRING(0, "depth", &suc.depth, "<depth>",
-			   N_("Create a shallow clone truncated to the "
+			   N_("create a shallow clone truncated to the "
 			      "specified number of revisions")),
 		OPT_INTEGER('j', "jobs", &suc.max_jobs,
 			    N_("parallel jobs")),
@@ -1954,6 +2555,73 @@ static int update_clone(int argc, const char **argv, const char *prefix)
 	return update_submodules(&suc);
 }
 
+static int run_update_procedure(int argc, const char **argv, const char *prefix)
+{
+	int force = 0, quiet = 0, nofetch = 0, just_cloned = 0;
+	char *prefixed_path, *update = NULL;
+	struct update_data update_data = UPDATE_DATA_INIT;
+
+	struct option options[] = {
+		OPT__QUIET(&quiet, N_("suppress output for update by rebase or merge")),
+		OPT__FORCE(&force, N_("force checkout updates"), 0),
+		OPT_BOOL('N', "no-fetch", &nofetch,
+			 N_("don't fetch new objects from the remote site")),
+		OPT_BOOL(0, "just-cloned", &just_cloned,
+			 N_("overrides update mode in case the repository is a fresh clone")),
+		OPT_INTEGER(0, "depth", &update_data.depth, N_("depth for shallow fetch")),
+		OPT_STRING(0, "prefix", &prefix,
+			   N_("path"),
+			   N_("path into the working tree")),
+		OPT_STRING(0, "update", &update,
+			   N_("string"),
+			   N_("rebase, merge, checkout or none")),
+		OPT_STRING(0, "recursive-prefix", &update_data.recursive_prefix, N_("path"),
+			   N_("path into the working tree, across nested "
+			      "submodule boundaries")),
+		OPT_CALLBACK_F(0, "oid", &update_data.oid, N_("sha1"),
+			       N_("SHA1 expected by superproject"), PARSE_OPT_NONEG,
+			       parse_opt_object_id),
+		OPT_CALLBACK_F(0, "suboid", &update_data.suboid, N_("subsha1"),
+			       N_("SHA1 of submodule's HEAD"), PARSE_OPT_NONEG,
+			       parse_opt_object_id),
+		OPT_END()
+	};
+
+	const char *const usage[] = {
+		N_("git submodule--helper run-update-procedure [<options>] <path>"),
+		NULL
+	};
+
+	argc = parse_options(argc, argv, prefix, options, usage, 0);
+
+	if (argc != 1)
+		usage_with_options(usage, options);
+
+	update_data.force = !!force;
+	update_data.quiet = !!quiet;
+	update_data.nofetch = !!nofetch;
+	update_data.just_cloned = !!just_cloned;
+	update_data.sm_path = argv[0];
+
+	if (update_data.recursive_prefix)
+		prefixed_path = xstrfmt("%s%s", update_data.recursive_prefix, update_data.sm_path);
+	else
+		prefixed_path = xstrdup(update_data.sm_path);
+
+	update_data.displaypath = get_submodule_displaypath(prefixed_path, prefix);
+
+	determine_submodule_update_strategy(the_repository, update_data.just_cloned,
+					    update_data.sm_path, update,
+					    &update_data.update_strategy);
+
+	free(prefixed_path);
+
+	if (!oideq(&update_data.oid, &update_data.suboid) || update_data.force)
+		return do_run_update_procedure(&update_data);
+
+	return 3;
+}
+
 static int resolve_relative_path(int argc, const char **argv, const char *prefix)
 {
 	struct strbuf sb = STRBUF_INIT;
@@ -1971,17 +2639,17 @@ static const char *remote_submodule_branch(const char *path)
 	const char *branch = NULL;
 	char *key;
 
-	sub = submodule_from_path(the_repository, &null_oid, path);
+	sub = submodule_from_path(the_repository, null_oid(), path);
 	if (!sub)
 		return NULL;
 
 	key = xstrfmt("submodule.%s.branch", sub->name);
-	if (repo_config_get_string_const(the_repository, key, &branch))
+	if (repo_config_get_string_tmp(the_repository, key, &branch))
 		branch = sub->branch;
 	free(key);
 
 	if (!branch)
-		return "master";
+		return "HEAD";
 
 	if (!strcmp(branch, ".")) {
 		const char *refname = resolve_ref_unsafe("HEAD", 0, NULL, NULL);
@@ -2099,9 +2767,8 @@ static int push_check(int argc, const char **argv, const char *prefix)
 
 static int ensure_core_worktree(int argc, const char **argv, const char *prefix)
 {
-	const struct submodule *sub;
 	const char *path;
-	char *cw;
+	const char *cw;
 	struct repository subrepo;
 
 	if (argc != 2)
@@ -2109,14 +2776,10 @@ static int ensure_core_worktree(int argc, const char **argv, const char *prefix)
 
 	path = argv[1];
 
-	sub = submodule_from_path(the_repository, &null_oid, path);
-	if (!sub)
-		BUG("We could get the submodule handle before?");
-
-	if (repo_submodule_init(&subrepo, the_repository, sub))
+	if (repo_submodule_init(&subrepo, the_repository, path, null_oid()))
 		die(_("could not get a repository handle for submodule '%s'"), path);
 
-	if (!repo_config_get_string(&subrepo, "core.worktree", &cw)) {
+	if (!repo_config_get_string_tmp(&subrepo, "core.worktree", &cw)) {
 		char *cfg_file, *abs_path;
 		const char *rel_path;
 		struct strbuf sb = STRBUF_INIT;
@@ -2246,6 +2909,442 @@ static int module_config(int argc, const char **argv, const char *prefix)
 	usage_with_options(git_submodule_helper_usage, module_config_options);
 }
 
+static int module_set_url(int argc, const char **argv, const char *prefix)
+{
+	int quiet = 0;
+	const char *newurl;
+	const char *path;
+	char *config_name;
+
+	struct option options[] = {
+		OPT__QUIET(&quiet, N_("suppress output for setting url of a submodule")),
+		OPT_END()
+	};
+	const char *const usage[] = {
+		N_("git submodule--helper set-url [--quiet] <path> <newurl>"),
+		NULL
+	};
+
+	argc = parse_options(argc, argv, prefix, options, usage, 0);
+
+	if (argc != 2 || !(path = argv[0]) || !(newurl = argv[1]))
+		usage_with_options(usage, options);
+
+	config_name = xstrfmt("submodule.%s.url", path);
+
+	config_set_in_gitmodules_file_gently(config_name, newurl);
+	sync_submodule(path, prefix, quiet ? OPT_QUIET : 0);
+
+	free(config_name);
+
+	return 0;
+}
+
+static int module_set_branch(int argc, const char **argv, const char *prefix)
+{
+	int opt_default = 0, ret;
+	const char *opt_branch = NULL;
+	const char *path;
+	char *config_name;
+
+	/*
+	 * We accept the `quiet` option for uniformity across subcommands,
+	 * though there is nothing to make less verbose in this subcommand.
+	 */
+	struct option options[] = {
+		OPT_NOOP_NOARG('q', "quiet"),
+		OPT_BOOL('d', "default", &opt_default,
+			N_("set the default tracking branch to master")),
+		OPT_STRING('b', "branch", &opt_branch, N_("branch"),
+			N_("set the default tracking branch")),
+		OPT_END()
+	};
+	const char *const usage[] = {
+		N_("git submodule--helper set-branch [-q|--quiet] (-d|--default) <path>"),
+		N_("git submodule--helper set-branch [-q|--quiet] (-b|--branch) <branch> <path>"),
+		NULL
+	};
+
+	argc = parse_options(argc, argv, prefix, options, usage, 0);
+
+	if (!opt_branch && !opt_default)
+		die(_("--branch or --default required"));
+
+	if (opt_branch && opt_default)
+		die(_("--branch and --default are mutually exclusive"));
+
+	if (argc != 1 || !(path = argv[0]))
+		usage_with_options(usage, options);
+
+	config_name = xstrfmt("submodule.%s.branch", path);
+	ret = config_set_in_gitmodules_file_gently(config_name, opt_branch);
+
+	free(config_name);
+	return !!ret;
+}
+
+struct add_data {
+	const char *prefix;
+	const char *branch;
+	const char *reference_path;
+	char *sm_path;
+	const char *sm_name;
+	const char *repo;
+	const char *realrepo;
+	int depth;
+	unsigned int force: 1;
+	unsigned int quiet: 1;
+	unsigned int progress: 1;
+	unsigned int dissociate: 1;
+};
+#define ADD_DATA_INIT { .depth = -1 }
+
+static void show_fetch_remotes(FILE *output, const char *git_dir_path)
+{
+	struct child_process cp_remote = CHILD_PROCESS_INIT;
+	struct strbuf sb_remote_out = STRBUF_INIT;
+
+	cp_remote.git_cmd = 1;
+	strvec_pushf(&cp_remote.env_array,
+		     "GIT_DIR=%s", git_dir_path);
+	strvec_push(&cp_remote.env_array, "GIT_WORK_TREE=.");
+	strvec_pushl(&cp_remote.args, "remote", "-v", NULL);
+	if (!capture_command(&cp_remote, &sb_remote_out, 0)) {
+		char *next_line;
+		char *line = sb_remote_out.buf;
+		while ((next_line = strchr(line, '\n')) != NULL) {
+			size_t len = next_line - line;
+			if (strip_suffix_mem(line, &len, " (fetch)"))
+				fprintf(output, "  %.*s\n", (int)len, line);
+			line = next_line + 1;
+		}
+	}
+
+	strbuf_release(&sb_remote_out);
+}
+
+static int add_submodule(const struct add_data *add_data)
+{
+	char *submod_gitdir_path;
+	struct module_clone_data clone_data = MODULE_CLONE_DATA_INIT;
+
+	/* perhaps the path already exists and is already a git repo, else clone it */
+	if (is_directory(add_data->sm_path)) {
+		struct strbuf sm_path = STRBUF_INIT;
+		strbuf_addstr(&sm_path, add_data->sm_path);
+		submod_gitdir_path = xstrfmt("%s/.git", add_data->sm_path);
+		if (is_nonbare_repository_dir(&sm_path))
+			printf(_("Adding existing repo at '%s' to the index\n"),
+			       add_data->sm_path);
+		else
+			die(_("'%s' already exists and is not a valid git repo"),
+			    add_data->sm_path);
+		strbuf_release(&sm_path);
+		free(submod_gitdir_path);
+	} else {
+		struct child_process cp = CHILD_PROCESS_INIT;
+		submod_gitdir_path = xstrfmt(".git/modules/%s", add_data->sm_name);
+
+		if (is_directory(submod_gitdir_path)) {
+			if (!add_data->force) {
+				fprintf(stderr, _("A git directory for '%s' is found "
+						  "locally with remote(s):"),
+					add_data->sm_name);
+				show_fetch_remotes(stderr, submod_gitdir_path);
+				free(submod_gitdir_path);
+				die(_("If you want to reuse this local git "
+				      "directory instead of cloning again from\n"
+				      "  %s\n"
+				      "use the '--force' option. If the local git "
+				      "directory is not the correct repo\n"
+				      "or if you are unsure what this means, choose "
+				      "another name with the '--name' option.\n"),
+				    add_data->realrepo);
+			} else {
+				printf(_("Reactivating local git directory for "
+					 "submodule '%s'\n"), add_data->sm_name);
+			}
+		}
+		free(submod_gitdir_path);
+
+		clone_data.prefix = add_data->prefix;
+		clone_data.path = add_data->sm_path;
+		clone_data.name = add_data->sm_name;
+		clone_data.url = add_data->realrepo;
+		clone_data.quiet = add_data->quiet;
+		clone_data.progress = add_data->progress;
+		if (add_data->reference_path)
+			string_list_append(&clone_data.reference,
+					   xstrdup(add_data->reference_path));
+		clone_data.dissociate = add_data->dissociate;
+		if (add_data->depth >= 0)
+			clone_data.depth = xstrfmt("%d", add_data->depth);
+
+		if (clone_submodule(&clone_data))
+			return -1;
+
+		prepare_submodule_repo_env(&cp.env_array);
+		cp.git_cmd = 1;
+		cp.dir = add_data->sm_path;
+		/*
+		 * NOTE: we only get here if add_data->force is true, so
+		 * passing --force to checkout is reasonable.
+		 */
+		strvec_pushl(&cp.args, "checkout", "-f", "-q", NULL);
+
+		if (add_data->branch) {
+			strvec_pushl(&cp.args, "-B", add_data->branch, NULL);
+			strvec_pushf(&cp.args, "origin/%s", add_data->branch);
+		}
+
+		if (run_command(&cp))
+			die(_("unable to checkout submodule '%s'"), add_data->sm_path);
+	}
+	return 0;
+}
+
+static int config_submodule_in_gitmodules(const char *name, const char *var, const char *value)
+{
+	char *key;
+	int ret;
+
+	if (!is_writing_gitmodules_ok())
+		die(_("please make sure that the .gitmodules file is in the working tree"));
+
+	key = xstrfmt("submodule.%s.%s", name, var);
+	ret = config_set_in_gitmodules_file_gently(key, value);
+	free(key);
+
+	return ret;
+}
+
+static void configure_added_submodule(struct add_data *add_data)
+{
+	char *key;
+	char *val = NULL;
+	struct child_process add_submod = CHILD_PROCESS_INIT;
+	struct child_process add_gitmodules = CHILD_PROCESS_INIT;
+
+	key = xstrfmt("submodule.%s.url", add_data->sm_name);
+	git_config_set_gently(key, add_data->realrepo);
+	free(key);
+
+	add_submod.git_cmd = 1;
+	strvec_pushl(&add_submod.args, "add",
+		     "--no-warn-embedded-repo", NULL);
+	if (add_data->force)
+		strvec_push(&add_submod.args, "--force");
+	strvec_pushl(&add_submod.args, "--", add_data->sm_path, NULL);
+
+	if (run_command(&add_submod))
+		die(_("Failed to add submodule '%s'"), add_data->sm_path);
+
+	if (config_submodule_in_gitmodules(add_data->sm_name, "path", add_data->sm_path) ||
+	    config_submodule_in_gitmodules(add_data->sm_name, "url", add_data->repo))
+		die(_("Failed to register submodule '%s'"), add_data->sm_path);
+
+	if (add_data->branch) {
+		if (config_submodule_in_gitmodules(add_data->sm_name,
+						   "branch", add_data->branch))
+			die(_("Failed to register submodule '%s'"), add_data->sm_path);
+	}
+
+	add_gitmodules.git_cmd = 1;
+	strvec_pushl(&add_gitmodules.args,
+		     "add", "--force", "--", ".gitmodules", NULL);
+
+	if (run_command(&add_gitmodules))
+		die(_("Failed to register submodule '%s'"), add_data->sm_path);
+
+	/*
+	 * NEEDSWORK: In a multi-working-tree world this needs to be
+	 * set in the per-worktree config.
+	 */
+	/*
+	 * NEEDSWORK: In the longer run, we need to get rid of this
+	 * pattern of querying "submodule.active" before calling
+	 * is_submodule_active(), since that function needs to find
+	 * out the value of "submodule.active" again anyway.
+	 */
+	if (!git_config_get_string("submodule.active", &val) && val) {
+		/*
+		 * If the submodule being added isn't already covered by the
+		 * current configured pathspec, set the submodule's active flag
+		 */
+		if (!is_submodule_active(the_repository, add_data->sm_path)) {
+			key = xstrfmt("submodule.%s.active", add_data->sm_name);
+			git_config_set_gently(key, "true");
+			free(key);
+		}
+	} else {
+		key = xstrfmt("submodule.%s.active", add_data->sm_name);
+		git_config_set_gently(key, "true");
+		free(key);
+	}
+}
+
+static void die_on_index_match(const char *path, int force)
+{
+	struct pathspec ps;
+	const char *args[] = { path, NULL };
+	parse_pathspec(&ps, 0, PATHSPEC_PREFER_CWD, NULL, args);
+
+	if (read_cache_preload(NULL) < 0)
+		die(_("index file corrupt"));
+
+	if (ps.nr) {
+		int i;
+		char *ps_matched = xcalloc(ps.nr, 1);
+
+		/* TODO: audit for interaction with sparse-index. */
+		ensure_full_index(&the_index);
+
+		/*
+		 * Since there is only one pathspec, we just need
+		 * need to check ps_matched[0] to know if a cache
+		 * entry matched.
+		 */
+		for (i = 0; i < active_nr; i++) {
+			ce_path_match(&the_index, active_cache[i], &ps,
+				      ps_matched);
+
+			if (ps_matched[0]) {
+				if (!force)
+					die(_("'%s' already exists in the index"),
+					    path);
+				if (!S_ISGITLINK(active_cache[i]->ce_mode))
+					die(_("'%s' already exists in the index "
+					      "and is not a submodule"), path);
+				break;
+			}
+		}
+		free(ps_matched);
+	}
+}
+
+static void die_on_repo_without_commits(const char *path)
+{
+	struct strbuf sb = STRBUF_INIT;
+	strbuf_addstr(&sb, path);
+	if (is_nonbare_repository_dir(&sb)) {
+		struct object_id oid;
+		if (resolve_gitlink_ref(path, "HEAD", &oid) < 0)
+			die(_("'%s' does not have a commit checked out"), path);
+	}
+}
+
+static int module_add(int argc, const char **argv, const char *prefix)
+{
+	int force = 0, quiet = 0, progress = 0, dissociate = 0;
+	struct add_data add_data = ADD_DATA_INIT;
+
+	struct option options[] = {
+		OPT_STRING('b', "branch", &add_data.branch, N_("branch"),
+			   N_("branch of repository to add as submodule")),
+		OPT__FORCE(&force, N_("allow adding an otherwise ignored submodule path"),
+			   PARSE_OPT_NOCOMPLETE),
+		OPT__QUIET(&quiet, N_("print only error messages")),
+		OPT_BOOL(0, "progress", &progress, N_("force cloning progress")),
+		OPT_STRING(0, "reference", &add_data.reference_path, N_("repository"),
+			   N_("reference repository")),
+		OPT_BOOL(0, "dissociate", &dissociate, N_("borrow the objects from reference repositories")),
+		OPT_STRING(0, "name", &add_data.sm_name, N_("name"),
+			   N_("sets the submodule’s name to the given string "
+			      "instead of defaulting to its path")),
+		OPT_INTEGER(0, "depth", &add_data.depth, N_("depth for shallow clones")),
+		OPT_END()
+	};
+
+	const char *const usage[] = {
+		N_("git submodule--helper add [<options>] [--] <repository> [<path>]"),
+		NULL
+	};
+
+	argc = parse_options(argc, argv, prefix, options, usage, 0);
+
+	if (!is_writing_gitmodules_ok())
+		die(_("please make sure that the .gitmodules file is in the working tree"));
+
+	if (prefix && *prefix &&
+	    add_data.reference_path && !is_absolute_path(add_data.reference_path))
+		add_data.reference_path = xstrfmt("%s%s", prefix, add_data.reference_path);
+
+	if (argc == 0 || argc > 2)
+		usage_with_options(usage, options);
+
+	add_data.repo = argv[0];
+	if (argc == 1)
+		add_data.sm_path = git_url_basename(add_data.repo, 0, 0);
+	else
+		add_data.sm_path = xstrdup(argv[1]);
+
+	if (prefix && *prefix && !is_absolute_path(add_data.sm_path))
+		add_data.sm_path = xstrfmt("%s%s", prefix, add_data.sm_path);
+
+	if (starts_with_dot_dot_slash(add_data.repo) ||
+	    starts_with_dot_slash(add_data.repo)) {
+		if (prefix)
+			die(_("Relative path can only be used from the toplevel "
+			      "of the working tree"));
+
+		/* dereference source url relative to parent's url */
+		add_data.realrepo = resolve_relative_url(add_data.repo, NULL, 1);
+	} else if (is_dir_sep(add_data.repo[0]) || strchr(add_data.repo, ':')) {
+		add_data.realrepo = add_data.repo;
+	} else {
+		die(_("repo URL: '%s' must be absolute or begin with ./|../"),
+		    add_data.repo);
+	}
+
+	/*
+	 * normalize path:
+	 * multiple //; leading ./; /./; /../;
+	 */
+	normalize_path_copy(add_data.sm_path, add_data.sm_path);
+	strip_dir_trailing_slashes(add_data.sm_path);
+
+	die_on_index_match(add_data.sm_path, force);
+	die_on_repo_without_commits(add_data.sm_path);
+
+	if (!force) {
+		int exit_code = -1;
+		struct strbuf sb = STRBUF_INIT;
+		struct child_process cp = CHILD_PROCESS_INIT;
+		cp.git_cmd = 1;
+		cp.no_stdout = 1;
+		strvec_pushl(&cp.args, "add", "--dry-run", "--ignore-missing",
+			     "--no-warn-embedded-repo", add_data.sm_path, NULL);
+		if ((exit_code = pipe_command(&cp, NULL, 0, NULL, 0, &sb, 0))) {
+			strbuf_complete_line(&sb);
+			fputs(sb.buf, stderr);
+			free(add_data.sm_path);
+			return exit_code;
+		}
+		strbuf_release(&sb);
+	}
+
+	if(!add_data.sm_name)
+		add_data.sm_name = add_data.sm_path;
+
+	if (check_submodule_name(add_data.sm_name))
+		die(_("'%s' is not a valid submodule name"), add_data.sm_name);
+
+	add_data.prefix = prefix;
+	add_data.force = !!force;
+	add_data.quiet = !!quiet;
+	add_data.progress = !!progress;
+	add_data.dissociate = !!dissociate;
+
+	if (add_submodule(&add_data)) {
+		free(add_data.sm_path);
+		return 1;
+	}
+	configure_added_submodule(&add_data);
+	free(add_data.sm_path);
+
+	return 0;
+}
+
 #define SUPPORT_SUPER_PREFIX (1<<0)
 
 struct cmd_struct {
@@ -2258,11 +3357,12 @@ static struct cmd_struct commands[] = {
 	{"list", module_list, 0},
 	{"name", module_name, 0},
 	{"clone", module_clone, 0},
+	{"add", module_add, SUPPORT_SUPER_PREFIX},
 	{"update-module-mode", module_update_module_mode, 0},
 	{"update-clone", update_clone, 0},
+	{"run-update-procedure", run_update_procedure, 0},
 	{"ensure-core-worktree", ensure_core_worktree, 0},
 	{"relative-path", resolve_relative_path, 0},
-	{"resolve-relative-url", resolve_relative_url, 0},
 	{"resolve-relative-url-test", resolve_relative_url_test, 0},
 	{"foreach", module_foreach, SUPPORT_SUPER_PREFIX},
 	{"init", module_init, SUPPORT_SUPER_PREFIX},
@@ -2270,12 +3370,15 @@ static struct cmd_struct commands[] = {
 	{"print-default-remote", print_default_remote, 0},
 	{"sync", module_sync, SUPPORT_SUPER_PREFIX},
 	{"deinit", module_deinit, 0},
+	{"summary", module_summary, SUPPORT_SUPER_PREFIX},
 	{"remote-branch", resolve_remote_submodule_branch, 0},
 	{"push-check", push_check, 0},
 	{"absorb-git-dirs", absorb_git_dirs, SUPPORT_SUPER_PREFIX},
 	{"is-active", is_active, 0},
 	{"check-name", check_name, 0},
 	{"config", module_config, 0},
+	{"set-url", module_set_url, 0},
+	{"set-branch", module_set_branch, 0},
 };
 
 int cmd_submodule__helper(int argc, const char **argv, const char *prefix)

@@ -6,7 +6,9 @@
 #include "reachable.h"
 #include "parse-options.h"
 #include "progress.h"
+#include "prune-packed.h"
 #include "object-store.h"
+#include "shallow.h"
 
 static const char * const prune_usage[] = {
 	N_("git prune [-n] [-v] [--progress] [--expire <time>] [--] [<head>...]"),
@@ -141,7 +143,6 @@ int cmd_prune(int argc, const char **argv, const char *prefix)
 	expire = TIME_MAX;
 	save_commit_buffer = 0;
 	read_replace_refs = 0;
-	ref_paranoia = 1;
 	repo_init_revisions(the_repository, &revs, prefix);
 
 	argc = parse_options(argc, argv, prefix, options, prune_usage, 0);

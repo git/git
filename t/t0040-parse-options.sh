@@ -37,14 +37,13 @@ String options
     --list <str>          add str to list
 
 Magic arguments
-    --quux                means --quux
     -NUM                  set integer to NUM
     +                     same as -b
     --ambiguous           positive ambiguity
     --no-ambiguous        negative ambiguity
 
 Standard options
-    --abbrev[=<n>]        use <n> digits to display SHA-1s
+    --abbrev[=<n>]        use <n> digits to display object names
     -v, --verbose         be verbose
     -n, --dry-run         dry run
     -q, --quiet           be quiet
@@ -54,14 +53,14 @@ Alias
     -A, --alias-source <string>
                           get a string
     -Z, --alias-target <string>
-                          get a string
+                          alias of --alias-source
 
 EOF
 
 test_expect_success 'test help' '
 	test_must_fail test-tool parse-options -h >output 2>output.err &&
 	test_must_be_empty output.err &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 mv expect expect.err
@@ -84,7 +83,7 @@ check_unknown_i18n() {
 	cat expect.err >>expect &&
 	test_must_fail test-tool parse-options $* >output 2>output.err &&
 	test_must_be_empty output &&
-	test_i18ncmp expect output.err
+	test_cmp expect output.err
 }
 
 test_expect_success 'OPT_BOOL() #1' 'check boolean: 1 --yes'
@@ -250,7 +249,7 @@ EOF
 test_expect_success 'detect possible typos' '
 	test_must_fail test-tool parse-options -boolean >output 2>output.err &&
 	test_must_be_empty output &&
-	test_i18ncmp typo.err output.err
+	test_cmp typo.err output.err
 '
 
 cat >typo.err <<\EOF
@@ -260,11 +259,7 @@ EOF
 test_expect_success 'detect possible typos' '
 	test_must_fail test-tool parse-options -ambiguous >output 2>output.err &&
 	test_must_be_empty output &&
-	test_i18ncmp typo.err output.err
-'
-
-test_expect_success 'keep some options as arguments' '
-	test-tool parse-options --expect="arg 00: --quux" --quux
+	test_cmp typo.err output.err
 '
 
 cat >expect <<\EOF

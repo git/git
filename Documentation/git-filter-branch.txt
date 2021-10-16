@@ -532,7 +532,7 @@ The https://github.com/newren/git-filter-repo/[git filter-repo] tool is
 an alternative to git-filter-branch which does not suffer from these
 performance problems or the safety problems (mentioned below). For those
 with existing tooling which relies upon git-filter-branch, 'git
-repo-filter' also provides
+filter-repo' also provides
 https://github.com/newren/git-filter-repo/blob/master/contrib/filter-repo-demos/filter-lamely[filter-lamely],
 a drop-in git-filter-branch replacement (with a few caveats).  While
 filter-lamely suffers from all the same safety issues as

@@ -168,7 +168,7 @@ mark :11
 data 10
 unrelated
 
-commit refs/heads/master
+commit refs/heads/main
 mark :12
 author Thomas Rast <trast@inf.ethz.ch> 1374485127 +0200
 committer Thomas Rast <trast@inf.ethz.ch> 1374485127 +0200

@@ -7,7 +7,7 @@ Set up repo with conflicting and non-conflicting branches:
 There are three files foo/bar/baz, and the following graph illustrates the
 content of these files in each commit:
 
-# foo/bar/baz --- foo/bar/bazz     <-- master
+# foo/bar/baz --- foo/bar/bazz     <-- main
 #             \
 #              --- foo/barf/bazf   <-- conflict_branch
 #               \
@@ -22,6 +22,9 @@ Next, test git merge --abort with the following variables:
 - changed/unchanged worktree after merge
 - changed/unchanged index after merge
 '
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -40,7 +43,7 @@ test_expect_success 'setup' '
 	git checkout -b clean_branch HEAD^ &&
 	echo bart > bar &&
 	git commit -a -m "clean" &&
-	git checkout master
+	git checkout main
 '
 
 pre_merge_head="$(git rev-parse HEAD)"

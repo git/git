@@ -14,6 +14,11 @@ index.recordOffsetTable::
 	Defaults to 'true' if index.threads has been explicitly enabled,
 	'false' otherwise.
 
+index.sparse::
+	When enabled, write the index using sparse-directory entries. This
+	has no effect unless `core.sparseCheckout` and
+	`core.sparseCheckoutCone` are both enabled. Defaults to 'false'.
+
 index.threads::
 	Specifies the number of threads to spawn when loading the index.
 	This is meant to reduce index load time on multiprocessor machines.

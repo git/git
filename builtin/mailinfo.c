@@ -7,54 +7,103 @@
 #include "utf8.h"
 #include "strbuf.h"
 #include "mailinfo.h"
+#include "parse-options.h"
 
-static const char mailinfo_usage[] =
-	"git mailinfo [-k | -b] [-m | --message-id] [-u | --encoding=<encoding> | -n] [--scissors | --no-scissors] <msg> <patch> < mail >info";
+static const char * const mailinfo_usage[] = {
+	/* TRANSLATORS: keep <> in "<" mail ">" info. */
+	N_("git mailinfo [<options>] <msg> <patch> < mail >info"),
+	NULL,
+};
+
+struct metainfo_charset
+{
+	enum {
+		CHARSET_DEFAULT,
+		CHARSET_NO_REENCODE,
+		CHARSET_EXPLICIT,
+	} policy;
+	const char *charset;
+};
+
+static int parse_opt_explicit_encoding(const struct option *opt,
+				       const char *arg, int unset)
+{
+	struct metainfo_charset *meta_charset = opt->value;
+
+	BUG_ON_OPT_NEG(unset);
+
+	meta_charset->policy = CHARSET_EXPLICIT;
+	meta_charset->charset = arg;
+
+	return 0;
+}
+
+static int parse_opt_quoted_cr(const struct option *opt, const char *arg, int unset)
+{
+	BUG_ON_OPT_NEG(unset);
+
+	if (mailinfo_parse_quoted_cr_action(arg, opt->value) != 0)
+		return error(_("bad action '%s' for '%s'"), arg, "--quoted-cr");
+	return 0;
+}
 
 int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 {
-	const char *def_charset;
+	struct metainfo_charset meta_charset;
 	struct mailinfo mi;
 	int status;
 	char *msgfile, *patchfile;
 
+	struct option options[] = {
+		OPT_BOOL('k', NULL, &mi.keep_subject, N_("keep subject")),
+		OPT_BOOL('b', NULL, &mi.keep_non_patch_brackets_in_subject,
+			 N_("keep non patch brackets in subject")),
+		OPT_BOOL('m', "message-id", &mi.add_message_id,
+			 N_("copy Message-ID to the end of commit message")),
+		OPT_SET_INT_F('u', NULL, &meta_charset.policy,
+			      N_("re-code metadata to i18n.commitEncoding"),
+			      CHARSET_DEFAULT, PARSE_OPT_NONEG),
+		OPT_SET_INT_F('n', NULL, &meta_charset.policy,
+			      N_("disable charset re-coding of metadata"),
+			      CHARSET_NO_REENCODE, PARSE_OPT_NONEG),
+		OPT_CALLBACK_F(0, "encoding", &meta_charset, N_("encoding"),
+			       N_("re-code metadata to this encoding"),
+			       PARSE_OPT_NONEG, parse_opt_explicit_encoding),
+		OPT_BOOL(0, "scissors", &mi.use_scissors, N_("use scissors")),
+		OPT_CALLBACK_F(0, "quoted-cr", &mi.quoted_cr, N_("<action>"),
+			       N_("action when quoted CR is found"),
+			       PARSE_OPT_NONEG, parse_opt_quoted_cr),
+		OPT_HIDDEN_BOOL(0, "inbody-headers", &mi.use_inbody_headers,
+			 N_("use headers in message's body")),
+		OPT_END()
+	};
+
 	setup_mailinfo(&mi);
+	meta_charset.policy = CHARSET_DEFAULT;
 
-	def_charset = get_commit_output_encoding();
-	mi.metainfo_charset = def_charset;
+	argc = parse_options(argc, argv, prefix, options, mailinfo_usage, 0);
 
-	while (1 < argc && argv[1][0] == '-') {
-		if (!strcmp(argv[1], "-k"))
-			mi.keep_subject = 1;
-		else if (!strcmp(argv[1], "-b"))
-			mi.keep_non_patch_brackets_in_subject = 1;
-		else if (!strcmp(argv[1], "-m") || !strcmp(argv[1], "--message-id"))
-			mi.add_message_id = 1;
-		else if (!strcmp(argv[1], "-u"))
-			mi.metainfo_charset = def_charset;
-		else if (!strcmp(argv[1], "-n"))
-			mi.metainfo_charset = NULL;
-		else if (starts_with(argv[1], "--encoding="))
-			mi.metainfo_charset = argv[1] + 11;
-		else if (!strcmp(argv[1], "--scissors"))
-			mi.use_scissors = 1;
-		else if (!strcmp(argv[1], "--no-scissors"))
-			mi.use_scissors = 0;
-		else if (!strcmp(argv[1], "--no-inbody-headers"))
-			mi.use_inbody_headers = 0;
-		else
-			usage(mailinfo_usage);
-		argc--; argv++;
+	if (argc != 2)
+		usage_with_options(mailinfo_usage, options);
+
+	switch (meta_charset.policy) {
+	case CHARSET_DEFAULT:
+		mi.metainfo_charset = get_commit_output_encoding();
+		break;
+	case CHARSET_NO_REENCODE:
+		mi.metainfo_charset = NULL;
+		break;
+	case CHARSET_EXPLICIT:
+		break;
+	default:
+		BUG("invalid meta_charset.policy");
 	}
-
-	if (argc != 3)
-		usage(mailinfo_usage);
 
 	mi.input = stdin;
 	mi.output = stdout;
 
-	msgfile = prefix_filename(prefix, argv[1]);
-	patchfile = prefix_filename(prefix, argv[2]);
+	msgfile = prefix_filename(prefix, argv[0]);
+	patchfile = prefix_filename(prefix, argv[1]);
 
 	status = !!mailinfo(&mi, msgfile, patchfile);
 	clear_mailinfo(&mi);

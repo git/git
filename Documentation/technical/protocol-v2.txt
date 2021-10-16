@@ -33,6 +33,8 @@ In protocol v2 these special packets will have the following semantics:
 
   * '0000' Flush Packet (flush-pkt) - indicates the end of a message
   * '0001' Delimiter Packet (delim-pkt) - separates sections of a message
+  * '0002' Response End Packet (response-end-pkt) - indicates the end of a
+    response for stateless connections
 
 Initial Client Request
 ----------------------
@@ -40,7 +42,8 @@ Initial Client Request
 In general a client can request to speak protocol v2 by sending
 `version=2` through the respective side-channel for the transport being
 used which inevitably sets `GIT_PROTOCOL`.  More information can be
-found in `pack-protocol.txt` and `http-protocol.txt`.  In all cases the
+found in `pack-protocol.txt` and `http-protocol.txt`, as well as the
+`GIT_PROTOCOL` definition in `git.txt`. In all cases the
 response from the server is the capability advertisement.
 
 Git Transport
@@ -56,6 +59,8 @@ SSH and File Transport
 
 When using either the ssh:// or file:// transport, the GIT_PROTOCOL
 environment variable must be set explicitly to include "version=2".
+The server may need to be configured to allow this environment variable
+to pass.
 
 HTTP Transport
 ~~~~~~~~~~~~~~
@@ -78,6 +83,12 @@ A v2 server would reply:
 
 Subsequent requests are then made directly to the service
 `$GIT_URL/git-upload-pack`. (This works the same for git-receive-pack).
+
+Uses the `--http-backend-info-refs` option to
+linkgit:git-upload-pack[1].
+
+The server may need to be configured to pass this header's contents via
+the `GIT_PROTOCOL` variable. See the discussion in `git-http-backend.txt`.
 
 Capability Advertisement
 ------------------------
@@ -188,13 +199,26 @@ ls-refs takes in the following arguments:
 	Show peeled tags.
     ref-prefix <prefix>
 	When specified, only references having a prefix matching one of
-	the provided prefixes are displayed.
+	the provided prefixes are displayed. Multiple instances may be
+	given, in which case references matching any prefix will be
+	shown. Note that this is purely for optimization; a server MAY
+	show refs not matching the prefix if it chooses, and clients
+	should filter the result themselves.
+
+If the 'unborn' feature is advertised the following argument can be
+included in the client's request.
+
+    unborn
+	The server will send information about HEAD even if it is a symref
+	pointing to an unborn branch in the form "unborn HEAD
+	symref-target:<target>".
 
 The output of ls-refs is as follows:
 
     output = *ref
 	     flush-pkt
-    ref = PKT-LINE(obj-id SP refname *(SP ref-attribute) LF)
+    obj-id-or-unborn = (obj-id | "unborn")
+    ref = PKT-LINE(obj-id-or-unborn SP refname *(SP ref-attribute) LF)
     ref-attribute = (symref | peeled)
     symref = "symref-target:" symref-target
     peeled = "peeled:" obj-id
@@ -323,13 +347,34 @@ included in the client's request:
 	indicating its sideband (1, 2, or 3), and the server may send "0005\2"
 	(a PKT-LINE of sideband 2 with no payload) as a keepalive packet.
 
+If the 'packfile-uris' feature is advertised, the following argument
+can be included in the client's request as well as the potential
+addition of the 'packfile-uris' section in the server's response as
+explained below.
+
+    packfile-uris <comma-separated list of protocols>
+	Indicates to the server that the client is willing to receive
+	URIs of any of the given protocols in place of objects in the
+	sent packfile. Before performing the connectivity check, the
+	client should download from all given URIs. Currently, the
+	protocols supported are "http" and "https".
+
+If the 'wait-for-done' feature is advertised, the following argument
+can be included in the client's request.
+
+    wait-for-done
+	Indicates to the server that it should never send "ready", but
+	should wait for the client to say "done" before sending the
+	packfile.
+
 The response of `fetch` is broken into a number of sections separated by
 delimiter packets (0001), with each section beginning with its section
-header.
+header. Most sections are sent only when the packfile is sent.
 
-    output = *section
-    section = (acknowledgments | shallow-info | wanted-refs | packfile)
-	      (flush-pkt | delim-pkt)
+    output = acknowledgements flush-pkt |
+	     [acknowledgments delim-pkt] [shallow-info delim-pkt]
+	     [wanted-refs delim-pkt] [packfile-uris delim-pkt]
+	     packfile flush-pkt
 
     acknowledgments = PKT-LINE("acknowledgments" LF)
 		      (nak | *ack)
@@ -347,13 +392,17 @@ header.
 		  *PKT-LINE(wanted-ref LF)
     wanted-ref = obj-id SP refname
 
+    packfile-uris = PKT-LINE("packfile-uris" LF) *packfile-uri
+    packfile-uri = PKT-LINE(40*(HEXDIGIT) SP *%x20-ff LF)
+
     packfile = PKT-LINE("packfile" LF)
 	       *PKT-LINE(%x01-03 *%x00-ff)
 
     acknowledgments section
-	* If the client determines that it is finished with negotiations
-	  by sending a "done" line, the acknowledgments sections MUST be
-	  omitted from the server's response.
+	* If the client determines that it is finished with negotiations by
+	  sending a "done" line (thus requiring the server to send a packfile),
+	  the acknowledgments sections MUST be omitted from the server's
+	  response.
 
 	* Always begins with the section header "acknowledgments"
 
@@ -404,9 +453,6 @@ header.
 	  which the client has not indicated was shallow as a part of
 	  its request.
 
-	* This section is only included if a packfile section is also
-	  included in the response.
-
     wanted-refs section
 	* This section is only included if the client has requested a
 	  ref using a 'want-ref' line and if a packfile section is also
@@ -419,6 +465,20 @@ header.
 
 	* The server MUST NOT send any refs which were not requested
 	  using 'want-ref' lines.
+
+    packfile-uris section
+	* This section is only included if the client sent
+	  'packfile-uris' and the server has at least one such URI to
+	  send.
+
+	* Always begins with the section header "packfile-uris".
+
+	* For each URI the server sends, it sends a hash of the pack's
+	  contents (as output by git index-pack) followed by the URI.
+
+	* The hashes are 40 hex characters long. When Git upgrades to a new
+	  hash algorithm, this might need to be updated. (It should match
+	  whatever index-pack outputs after "pack\t" or "keep\t".
 
     packfile section
 	* This section is only included if the client has sent 'want'
@@ -453,3 +513,56 @@ included in a request.  This is done by sending each option as a
 a request.
 
 The provided options must not contain a NUL or LF character.
+
+ object-format
+~~~~~~~~~~~~~~~
+
+The server can advertise the `object-format` capability with a value `X` (in the
+form `object-format=X`) to notify the client that the server is able to deal
+with objects using hash algorithm X.  If not specified, the server is assumed to
+only handle SHA-1.  If the client would like to use a hash algorithm other than
+SHA-1, it should specify its object-format string.
+
+session-id=<session id>
+~~~~~~~~~~~~~~~~~~~~~~~
+
+The server may advertise a session ID that can be used to identify this process
+across multiple requests. The client may advertise its own session ID back to
+the server as well.
+
+Session IDs should be unique to a given process. They must fit within a
+packet-line, and must not contain non-printable or whitespace characters. The
+current implementation uses trace2 session IDs (see
+link:api-trace2.html[api-trace2] for details), but this may change and users of
+the session ID should not rely on this fact.
+
+object-info
+~~~~~~~~~~~
+
+`object-info` is the command to retrieve information about one or more objects.
+Its main purpose is to allow a client to make decisions based on this
+information without having to fully fetch objects. Object size is the only
+information that is currently supported.
+
+An `object-info` request takes the following arguments:
+
+	size
+	Requests size information to be returned for each listed object id.
+
+	oid <oid>
+	Indicates to the server an object which the client wants to obtain
+	information for.
+
+The response of `object-info` is a list of the requested object ids
+and associated requested information, each separated by a single space.
+
+	output = info flush-pkt
+
+	info = PKT-LINE(attrs) LF)
+		*PKT-LINE(obj-info LF)
+
+	attrs = attr | attrs SP attrs
+
+	attr = "size"
+
+	obj-info = obj-id SP obj-size

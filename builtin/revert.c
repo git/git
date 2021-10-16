@@ -107,7 +107,7 @@ static int run_sequencer(int argc, const char **argv, struct replay_opts *opts)
 		OPT_BOOL('n', "no-commit", &opts->no_commit, N_("don't automatically commit")),
 		OPT_BOOL('e', "edit", &opts->edit, N_("edit the commit message")),
 		OPT_NOOP_NOARG('r', NULL),
-		OPT_BOOL('s', "signoff", &opts->signoff, N_("add Signed-off-by:")),
+		OPT_BOOL('s', "signoff", &opts->signoff, N_("add a Signed-off-by trailer")),
 		OPT_CALLBACK('m', "mainline", opts, N_("parent-number"),
 			     N_("select mainline parent"), option_parse_m),
 		OPT_RERERE_AUTOUPDATE(&opts->allow_rerere_auto),
@@ -135,6 +135,9 @@ static int run_sequencer(int argc, const char **argv, struct replay_opts *opts)
 	argc = parse_options(argc, argv, NULL, options, usage_str,
 			PARSE_OPT_KEEP_ARGV0 |
 			PARSE_OPT_KEEP_UNKNOWN);
+
+	prepare_repo_settings(the_repository);
+	the_repository->settings.command_requires_full_index = 0;
 
 	/* implies allow_empty */
 	if (opts->keep_redundant_commits)
@@ -172,12 +175,17 @@ static int run_sequencer(int argc, const char **argv, struct replay_opts *opts)
 				NULL);
 	}
 
+	if (!opts->strategy && opts->default_strategy) {
+		opts->strategy = opts->default_strategy;
+		opts->default_strategy = NULL;
+	}
+
 	if (opts->allow_ff)
 		verify_opt_compatible(me, "--ff",
 				"--signoff", opts->signoff,
 				"--no-commit", opts->no_commit,
 				"-x", opts->record_origin,
-				"--edit", opts->edit,
+				"--edit", opts->edit > 0,
 				NULL);
 
 	if (cmd) {
@@ -186,7 +194,8 @@ static int run_sequencer(int argc, const char **argv, struct replay_opts *opts)
 		struct setup_revision_opt s_r_opt;
 		opts->revs = xmalloc(sizeof(*opts->revs));
 		repo_init_revisions(the_repository, opts->revs, NULL);
-		opts->revs->no_walk = REVISION_WALK_NO_WALK_UNSORTED;
+		opts->revs->no_walk = 1;
+		opts->revs->unsorted_input = 1;
 		if (argc < 2)
 			usage_with_options(usage_str, options);
 		if (!strcmp(argv[1], "-"))
@@ -202,6 +211,8 @@ static int run_sequencer(int argc, const char **argv, struct replay_opts *opts)
 	/* These option values will be free()d */
 	opts->gpg_sign = xstrdup_or_null(opts->gpg_sign);
 	opts->strategy = xstrdup_or_null(opts->strategy);
+	if (!opts->strategy && getenv("GIT_TEST_MERGE_ALGORITHM"))
+		opts->strategy = xstrdup(getenv("GIT_TEST_MERGE_ALGORITHM"));
 
 	if (cmd == 'q') {
 		int ret = sequencer_remove_state(opts);
@@ -223,8 +234,6 @@ int cmd_revert(int argc, const char **argv, const char *prefix)
 	struct replay_opts opts = REPLAY_OPTS_INIT;
 	int res;
 
-	if (isatty(0))
-		opts.edit = 1;
 	opts.action = REPLAY_REVERT;
 	sequencer_init_config(&opts);
 	res = run_sequencer(argc, argv, &opts);

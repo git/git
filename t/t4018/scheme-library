@@ -1,0 +1,11 @@
+(library (my-helpers id-stuff) RIGHT
+  (export find-dup)
+  (import (ChangeMe))
+  (define (find-dup l)
+    (and (pair? l)
+         (let loop ((rest (cdr l)))
+           (cond
+            [(null? rest) (find-dup (cdr l))]
+            [(bound-identifier=? (car l) (car rest))
+             (car rest)]
+            [else (loop (cdr rest))])))))

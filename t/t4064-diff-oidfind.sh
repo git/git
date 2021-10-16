@@ -65,4 +65,59 @@ test_expect_success 'find a submodule' '
 	test_cmp expect actual
 '
 
+test_expect_success 'set up merge tests' '
+	test_commit base &&
+
+	git checkout -b boring base^ &&
+	echo boring >file &&
+	git add file &&
+	git commit -m boring &&
+
+	git checkout -b interesting base^ &&
+	echo interesting >file &&
+	git add file &&
+	git commit -m interesting &&
+
+	blob=$(git rev-parse interesting:file)
+'
+
+test_expect_success 'detect merge which introduces blob' '
+	git checkout -B merge base &&
+	git merge --no-commit boring &&
+	echo interesting >file &&
+	git commit -am "introduce blob" &&
+	git diff-tree --format=%s --find-object=$blob -c --name-status HEAD >actual &&
+	cat >expect <<-\EOF &&
+	introduce blob
+
+	AM	file
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'detect merge which removes blob' '
+	git checkout -B merge interesting &&
+	git merge --no-commit base &&
+	echo boring >file &&
+	git commit -am "remove blob" &&
+	git diff-tree --format=%s --find-object=$blob -c --name-status HEAD >actual &&
+	cat >expect <<-\EOF &&
+	remove blob
+
+	MA	file
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'do not detect merge that does not touch blob' '
+	git checkout -B merge interesting &&
+	git merge -m "untouched blob" base &&
+	git diff-tree --format=%s --find-object=$blob -c --name-status HEAD >actual &&
+	cat >expect <<-\EOF &&
+	untouched blob
+
+	EOF
+	test_cmp expect actual
+'
+
 test_done

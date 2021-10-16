@@ -6,24 +6,32 @@
 #define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
 #include "config.h"
+#include "ewah/ewok.h"
 #include "lockfile.h"
 #include "color.h"
 #include "commit.h"
 #include "blob.h"
 #include "tag.h"
 #include "diff.h"
+#include "diff-merges.h"
 #include "diffcore.h"
 #include "revision.h"
 #include "log-tree.h"
 #include "builtin.h"
 #include "submodule.h"
-#include "sha1-array.h"
+#include "oid-array.h"
 
 #define DIFF_NO_INDEX_EXPLICIT 1
 #define DIFF_NO_INDEX_IMPLICIT 2
 
 static const char builtin_diff_usage[] =
-"git diff [<options>] [<commit> [<commit>]] [--] [<path>...]";
+"git diff [<options>] [<commit>] [--] [<path>...]\n"
+"   or: git diff [<options>] --cached [--merge-base] [<commit>] [--] [<path>...]\n"
+"   or: git diff [<options>] [--merge-base] <commit> [<commit>...] <commit> [--] [<path>...]\n"
+"   or: git diff [<options>] <commit>...<commit>] [--] [<path>...]\n"
+"   or: git diff [<options>] <blob> <blob>]\n"
+"   or: git diff [<options>] --no-index [--] <path> <path>]\n"
+COMMON_DIFF_OPTIONS_HELP;
 
 static const char *blob_path(struct object_array_entry *entry)
 {
@@ -90,7 +98,7 @@ static int builtin_diff_b_f(struct rev_info *revs,
 
 	stuff_change(&revs->diffopt,
 		     blob[0]->mode, canon_mode(st.st_mode),
-		     &blob[0]->item->oid, &null_oid,
+		     &blob[0]->item->oid, null_oid(),
 		     1, 0,
 		     blob[0]->path ? blob[0]->path : path,
 		     path);
@@ -127,11 +135,13 @@ static int builtin_diff_blobs(struct rev_info *revs,
 static int builtin_diff_index(struct rev_info *revs,
 			      int argc, const char **argv)
 {
-	int cached = 0;
+	unsigned int option = 0;
 	while (1 < argc) {
 		const char *arg = argv[1];
 		if (!strcmp(arg, "--cached") || !strcmp(arg, "--staged"))
-			cached = 1;
+			option |= DIFF_INDEX_CACHED;
+		else if (!strcmp(arg, "--merge-base"))
+			option |= DIFF_INDEX_MERGE_BASE;
 		else
 			usage(builtin_diff_usage);
 		argv++; argc--;
@@ -144,7 +154,7 @@ static int builtin_diff_index(struct rev_info *revs,
 	    revs->max_count != -1 || revs->min_age != -1 ||
 	    revs->max_age != -1)
 		usage(builtin_diff_usage);
-	if (!cached) {
+	if (!(option & DIFF_INDEX_CACHED)) {
 		setup_work_tree();
 		if (read_cache_preload(&revs->diffopt.pathspec) < 0) {
 			perror("read_cache_preload");
@@ -154,7 +164,7 @@ static int builtin_diff_index(struct rev_info *revs,
 		perror("read_cache");
 		return -1;
 	}
-	return run_diff_index(revs, cached);
+	return run_diff_index(revs, option);
 }
 
 static int builtin_diff_tree(struct rev_info *revs,
@@ -163,19 +173,34 @@ static int builtin_diff_tree(struct rev_info *revs,
 			     struct object_array_entry *ent1)
 {
 	const struct object_id *(oid[2]);
-	int swap = 0;
+	struct object_id mb_oid;
+	int merge_base = 0;
 
-	if (argc > 1)
-		usage(builtin_diff_usage);
+	while (1 < argc) {
+		const char *arg = argv[1];
+		if (!strcmp(arg, "--merge-base"))
+			merge_base = 1;
+		else
+			usage(builtin_diff_usage);
+		argv++; argc--;
+	}
 
-	/*
-	 * We saw two trees, ent0 and ent1.  If ent1 is uninteresting,
-	 * swap them.
-	 */
-	if (ent1->item->flags & UNINTERESTING)
-		swap = 1;
-	oid[swap] = &ent0->item->oid;
-	oid[1 - swap] = &ent1->item->oid;
+	if (merge_base) {
+		diff_get_merge_base(revs, &mb_oid);
+		oid[0] = &mb_oid;
+		oid[1] = &revs->pending.objects[1].item->oid;
+	} else {
+		int swap = 0;
+
+		/*
+		 * We saw two trees, ent0 and ent1.  If ent1 is uninteresting,
+		 * swap them.
+		 */
+		if (ent1->item->flags & UNINTERESTING)
+			swap = 1;
+		oid[swap] = &ent0->item->oid;
+		oid[1 - swap] = &ent1->item->oid;
+	}
 	diff_tree_oid(oid[0], oid[1], "", &revs->diffopt);
 	log_tree_diff_flush(revs);
 	return 0;
@@ -192,12 +217,11 @@ static int builtin_diff_combined(struct rev_info *revs,
 	if (argc > 1)
 		usage(builtin_diff_usage);
 
-	if (!revs->dense_combined_merges && !revs->combine_merges)
-		revs->dense_combined_merges = revs->combine_merges = 1;
+	diff_merges_set_dense_combined_if_unset(revs);
+
 	for (i = 1; i < ents; i++)
 		oid_array_append(&parents, &ent[i].item->oid);
-	diff_tree_combined(&ent[0].item->oid, &parents,
-			   revs->dense_combined_merges, revs);
+	diff_tree_combined(&ent[0].item->oid, &parents, revs);
 	oid_array_clear(&parents);
 	return 0;
 }
@@ -242,9 +266,9 @@ static int builtin_diff_files(struct rev_info *revs, int argc, const char **argv
 	 * dense one, --cc can be explicitly asked for, or just rely
 	 * on the default).
 	 */
-	if (revs->max_count == -1 && !revs->combine_merges &&
+	if (revs->max_count == -1 &&
 	    (revs->diffopt.output_format & DIFF_FORMAT_PATCH))
-		revs->combine_merges = revs->dense_combined_merges = 1;
+		diff_merges_set_dense_combined_if_unset(revs);
 
 	setup_work_tree();
 	if (read_cache_preload(&revs->diffopt.pathspec) < 0) {
@@ -252,6 +276,108 @@ static int builtin_diff_files(struct rev_info *revs, int argc, const char **argv
 		return -1;
 	}
 	return run_diff_files(revs, options);
+}
+
+struct symdiff {
+	struct bitmap *skip;
+	int warn;
+	const char *base, *left, *right;
+};
+
+/*
+ * Check for symmetric-difference arguments, and if present, arrange
+ * everything we need to know to handle them correctly.  As a bonus,
+ * weed out all bogus range-based revision specifications, e.g.,
+ * "git diff A..B C..D" or "git diff A..B C" get rejected.
+ *
+ * For an actual symmetric diff, *symdiff is set this way:
+ *
+ *  - its skip is non-NULL and marks *all* rev->pending.objects[i]
+ *    indices that the caller should ignore (extra merge bases, of
+ *    which there might be many, and A in A...B).  Note that the
+ *    chosen merge base and right side are NOT marked.
+ *  - warn is set if there are multiple merge bases.
+ *  - base, left, and right point to the names to use in a
+ *    warning about multiple merge bases.
+ *
+ * If there is no symmetric diff argument, sym->skip is NULL and
+ * sym->warn is cleared.  The remaining fields are not set.
+ */
+static void symdiff_prepare(struct rev_info *rev, struct symdiff *sym)
+{
+	int i, is_symdiff = 0, basecount = 0, othercount = 0;
+	int lpos = -1, rpos = -1, basepos = -1;
+	struct bitmap *map = NULL;
+
+	/*
+	 * Use the whence fields to find merge bases and left and
+	 * right parts of symmetric difference, so that we do not
+	 * depend on the order that revisions are parsed.  If there
+	 * are any revs that aren't from these sources, we have a
+	 * "git diff C A...B" or "git diff A...B C" case.  Or we
+	 * could even get "git diff A...B C...E", for instance.
+	 *
+	 * If we don't have just one merge base, we pick one
+	 * at random.
+	 *
+	 * NB: REV_CMD_LEFT, REV_CMD_RIGHT are also used for A..B,
+	 * so we must check for SYMMETRIC_LEFT too.  The two arrays
+	 * rev->pending.objects and rev->cmdline.rev are parallel.
+	 */
+	for (i = 0; i < rev->cmdline.nr; i++) {
+		struct object *obj = rev->pending.objects[i].item;
+		switch (rev->cmdline.rev[i].whence) {
+		case REV_CMD_MERGE_BASE:
+			if (basepos < 0)
+				basepos = i;
+			basecount++;
+			break;		/* do mark all bases */
+		case REV_CMD_LEFT:
+			if (lpos >= 0)
+				usage(builtin_diff_usage);
+			lpos = i;
+			if (obj->flags & SYMMETRIC_LEFT) {
+				is_symdiff = 1;
+				break;	/* do mark A */
+			}
+			continue;
+		case REV_CMD_RIGHT:
+			if (rpos >= 0)
+				usage(builtin_diff_usage);
+			rpos = i;
+			continue;	/* don't mark B */
+		case REV_CMD_PARENTS_ONLY:
+		case REV_CMD_REF:
+		case REV_CMD_REV:
+			othercount++;
+			continue;
+		}
+		if (map == NULL)
+			map = bitmap_new();
+		bitmap_set(map, i);
+	}
+
+	/*
+	 * Forbid any additional revs for both A...B and A..B.
+	 */
+	if (lpos >= 0 && othercount > 0)
+		usage(builtin_diff_usage);
+
+	if (!is_symdiff) {
+		bitmap_free(map);
+		sym->warn = 0;
+		sym->skip = NULL;
+		return;
+	}
+
+	sym->left = rev->pending.objects[lpos].name;
+	sym->right = rev->pending.objects[rpos].name;
+	if (basecount == 0)
+		die(_("%s...%s: no merge base"), sym->left, sym->right);
+	sym->base = rev->pending.objects[basepos].name;
+	bitmap_unset(map, basepos);	/* unmark the base we want */
+	sym->warn = basecount > 1;
+	sym->skip = map;
 }
 
 int cmd_diff(int argc, const char **argv, const char *prefix)
@@ -263,19 +389,29 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	struct object_array_entry *blob[2];
 	int nongit = 0, no_index = 0;
 	int result = 0;
+	struct symdiff sdiff;
 
 	/*
 	 * We could get N tree-ish in the rev.pending_objects list.
-	 * Also there could be M blobs there, and P pathspecs.
+	 * Also there could be M blobs there, and P pathspecs. --cached may
+	 * also be present.
 	 *
 	 * N=0, M=0:
-	 *	cache vs files (diff-files)
+	 *      cache vs files (diff-files)
+	 *
+	 * N=0, M=0, --cached:
+	 *      HEAD vs cache (diff-index --cached)
+	 *
 	 * N=0, M=2:
 	 *      compare two random blobs.  P must be zero.
+	 *
 	 * N=0, M=1, P=1:
-	 *	compare a blob with a working tree file.
+	 *      compare a blob with a working tree file.
 	 *
 	 * N=1, M=0:
+	 *      tree vs files (diff-index)
+	 *
+	 * N=1, M=0, --cached:
 	 *      tree vs cache (diff-index --cached)
 	 *
 	 * N=2, M=0:
@@ -317,7 +453,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 
 	init_diff_ui_defaults();
 	git_config(git_diff_ui_config, NULL);
-	precompose_argv(argc, argv);
+	prefix = precompose_argv_prefix(argc, argv, prefix);
 
 	repo_init_revisions(the_repository, &rev, prefix);
 
@@ -355,6 +491,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	}
 
 	rev.diffopt.flags.recursive = 1;
+	rev.diffopt.rotate_to_strict = 1;
 
 	setup_diff_pager(&rev.diffopt);
 
@@ -382,6 +519,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 		}
 	}
 
+	symdiff_prepare(&rev, &sdiff);
 	for (i = 0; i < rev.pending.nr; i++) {
 		struct object_array_entry *entry = &rev.pending.objects[i];
 		struct object *obj = entry->item;
@@ -396,6 +534,8 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 			obj = &get_commit_tree(((struct commit *)obj))->object;
 
 		if (obj->type == OBJ_TREE) {
+			if (sdiff.skip && bitmap_get(sdiff.skip, i))
+				continue;
 			obj->flags |= flags;
 			add_object_array(obj, name, &ent);
 		} else if (obj->type == OBJ_BLOB) {
@@ -437,21 +577,12 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 		usage(builtin_diff_usage);
 	else if (ent.nr == 1)
 		result = builtin_diff_index(&rev, argc, argv);
-	else if (ent.nr == 2)
+	else if (ent.nr == 2) {
+		if (sdiff.warn)
+			warning(_("%s...%s: multiple merge bases, using %s"),
+				sdiff.left, sdiff.right, sdiff.base);
 		result = builtin_diff_tree(&rev, argc, argv,
 					   &ent.objects[0], &ent.objects[1]);
-	else if (ent.objects[0].item->flags & UNINTERESTING) {
-		/*
-		 * diff A...B where there is at least one merge base
-		 * between A and B.  We have ent.objects[0] ==
-		 * merge-base, ent.objects[ents-2] == A, and
-		 * ent.objects[ents-1] == B.  Show diff between the
-		 * base and B.  Note that we pick one merge base at
-		 * random if there are more than one.
-		 */
-		result = builtin_diff_tree(&rev, argc, argv,
-					   &ent.objects[0],
-					   &ent.objects[ent.nr-1]);
 	} else
 		result = builtin_diff_combined(&rev, argc, argv,
 					       ent.objects, ent.nr);

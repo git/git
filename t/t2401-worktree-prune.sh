@@ -2,6 +2,9 @@
 
 test_description='prune $GIT_DIR/worktrees'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success initialize '
@@ -20,7 +23,7 @@ test_expect_success 'prune files inside $GIT_DIR/worktrees' '
 	cat >expect <<EOF &&
 Removing worktrees/abc: not a valid directory
 EOF
-	test_i18ncmp expect actual &&
+	test_cmp expect actual &&
 	! test -f .git/worktrees/abc &&
 	! test -d .git/worktrees
 '
@@ -32,7 +35,7 @@ test_expect_success 'prune directories without gitdir' '
 Removing worktrees/def: gitdir file does not exist
 EOF
 	git worktree prune --verbose >actual &&
-	test_i18ncmp expect actual &&
+	test_cmp expect actual &&
 	! test -d .git/worktrees/def &&
 	! test -d .git/worktrees
 '
@@ -87,9 +90,33 @@ test_expect_success 'not prune recent checkouts' '
 
 test_expect_success 'not prune proper checkouts' '
 	test_when_finished rm -r .git/worktrees &&
-	git worktree add --detach "$PWD/nop" master &&
+	git worktree add --detach "$PWD/nop" main &&
 	git worktree prune &&
 	test -d .git/worktrees/nop
+'
+
+test_expect_success 'prune duplicate (linked/linked)' '
+	test_when_finished rm -fr .git/worktrees w1 w2 &&
+	git worktree add --detach w1 &&
+	git worktree add --detach w2 &&
+	sed "s/w2/w1/" .git/worktrees/w2/gitdir >.git/worktrees/w2/gitdir.new &&
+	mv .git/worktrees/w2/gitdir.new .git/worktrees/w2/gitdir &&
+	git worktree prune --verbose >actual &&
+	test_i18ngrep "duplicate entry" actual &&
+	test -d .git/worktrees/w1 &&
+	! test -d .git/worktrees/w2
+'
+
+test_expect_success 'prune duplicate (main/linked)' '
+	test_when_finished rm -fr repo wt &&
+	test_create_repo repo &&
+	test_commit -C repo x &&
+	git -C repo worktree add --detach ../wt &&
+	rm -fr wt &&
+	mv repo wt &&
+	git -C wt worktree prune --verbose >actual &&
+	test_i18ngrep "duplicate entry" actual &&
+	! test -d .git/worktrees/wt
 '
 
 test_done

@@ -2,7 +2,7 @@
 
 test_description='sparse checkout tests
 
-* (tag: removed, master) removed
+* (tag: removed, main) removed
 | D	sub/added
 * (HEAD, tag: top) modified and added
 | M	init.t
@@ -74,13 +74,19 @@ test_expect_success 'read-tree --no-sparse-checkout with empty .git/info/sparse-
 test_expect_success 'read-tree with empty .git/info/sparse-checkout' '
 	git config core.sparsecheckout true &&
 	echo >.git/info/sparse-checkout &&
-	read_tree_u_must_fail -m -u HEAD &&
+	read_tree_u_must_succeed -m -u HEAD &&
 	git ls-files --stage >result &&
 	test_cmp expected result &&
 	git ls-files -t >result &&
+	cat >expected.swt <<-\EOF &&
+	S init.t
+	S sub/added
+	S sub/addedtoo
+	S subsub/added
+	EOF
 	test_cmp expected.swt result &&
-	test -f init.t &&
-	test -f sub/added
+	! test -f init.t &&
+	! test -f sub/added
 '
 
 test_expect_success 'match directories with trailing slash' '
@@ -233,20 +239,21 @@ test_expect_success 'read-tree --reset removes outside worktree' '
 	test_must_be_empty result
 '
 
-test_expect_success 'print errors when failed to update worktree' '
+test_expect_success 'print warnings when some worktree updates disabled' '
 	echo sub >.git/info/sparse-checkout &&
 	git checkout -f init &&
 	mkdir sub &&
 	touch sub/added sub/addedtoo &&
-	test_must_fail git checkout top 2>actual &&
+	# Use -q to suppress "Previous HEAD position" and "Head is now at" msgs
+	git checkout -q top 2>actual &&
 	cat >expected <<\EOF &&
-error: The following untracked working tree files would be overwritten by checkout:
+warning: The following paths were already present and thus not updated despite sparse patterns:
 	sub/added
 	sub/addedtoo
-Please move or remove them before you switch branches.
-Aborting
+
+After fixing the above paths, you may want to run `git sparse-checkout reapply`.
 EOF
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 test_expect_success 'checkout without --ignore-skip-worktree-bits' '

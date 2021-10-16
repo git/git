@@ -2,6 +2,9 @@
 
 test_description='git pack-objects using object filtering'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 # Test blob:none filter.
@@ -382,7 +385,7 @@ test_expect_success 'verify sparse:oid=oid-ish' '
 	awk -f print_2.awk ls_files_result |
 	sort >expected &&
 
-	git -C r4 pack-objects --revs --stdout --filter=sparse:oid=master:pattern >filter.pack <<-EOF &&
+	git -C r4 pack-objects --revs --stdout --filter=sparse:oid=main:pattern >filter.pack <<-EOF &&
 	HEAD
 	EOF
 	git -C r4 index-pack ../filter.pack &&

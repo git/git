@@ -211,4 +211,37 @@ test_expect_success 't_e_i() exclude case #8' '
 	)
 '
 
+test_expect_success 'grep --untracked PATTERN' '
+	# This test is not an actual test of exclude patterns, rather it
+	# is here solely to ensure that if any tests are inserted, deleted, or
+	# changed above, that we still have untracked files with the expected
+	# contents for the NEXT two tests.
+	cat <<-\EOF >expect-grep &&
+	actual
+	expect
+	sub/actual
+	sub/expect
+	EOF
+	git grep -l --untracked file -- >actual-grep &&
+	test_cmp expect-grep actual-grep
+'
+
+test_expect_success 'grep --untracked PATTERN :(exclude)DIR' '
+	cat <<-\EOF >expect-grep &&
+	actual
+	expect
+	EOF
+	git grep -l --untracked file -- ":(exclude)sub" >actual-grep &&
+	test_cmp expect-grep actual-grep
+'
+
+test_expect_success 'grep --untracked PATTERN :(exclude)*FILE' '
+	cat <<-\EOF >expect-grep &&
+	actual
+	sub/actual
+	EOF
+	git grep -l --untracked file -- ":(exclude)*expect" >actual-grep &&
+	test_cmp expect-grep actual-grep
+'
+
 test_done

@@ -10,6 +10,7 @@ SYNOPSIS
 [verse]
 'git range-diff' [--color=[<when>]] [--no-color] [<diff-options>]
 	[--no-dual-color] [--creation-factor=<factor>]
+	[--left-only | --right-only]
 	( <range1> <range2> | <rev1>...<rev2> | <base> <rev1> <rev2> )
 
 DESCRIPTION
@@ -28,6 +29,17 @@ Finally, the list of matching commits is shown in the order of the
 second commit range, with unmatched commits being inserted just after
 all of their ancestors have been shown.
 
+There are three ways to specify the commit ranges:
+
+- `<range1> <range2>`: Either commit range can be of the form
+  `<base>..<rev>`, `<rev>^!` or `<rev>^-<n>`. See `SPECIFYING RANGES`
+  in linkgit:gitrevisions[7] for more details.
+
+- `<rev1>...<rev2>`. This is equivalent to
+  `<rev2>..<rev1> <rev1>..<rev2>`.
+
+- `<base> <rev1> <rev2>`: This is equivalent to `<base>..<rev1>
+  <base>..<rev2>`.
 
 OPTIONS
 -------
@@ -56,6 +68,14 @@ to revert to color all lines according to the outer diff markers
 	and addition of another), and a smaller one in the reverse case.
 	See the ``Algorithm`` section below for an explanation why this is
 	needed.
+
+--left-only::
+	Suppress commits that are missing from the first specified range
+	(or the "left range" when using the `<rev1>...<rev2>` format).
+
+--right-only::
+	Suppress commits that are missing from the second specified range
+	(or the "right range" when using the `<rev1>...<rev2>` format).
 
 --[no-]notes[=<ref>]::
 	This flag is passed to the `git log` program

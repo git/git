@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='fetch/push involving ref namespaces'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success setup '
@@ -27,9 +30,9 @@ test_expect_success setup '
 test_expect_success 'pushing into a repository using a ref namespace' '
 	(
 		cd original &&
-		git push pushee-namespaced master &&
+		git push pushee-namespaced main &&
 		git ls-remote pushee-namespaced >actual &&
-		printf "$commit1\trefs/heads/master\n" >expected &&
+		printf "$commit1\trefs/heads/main\n" >expected &&
 		test_cmp expected actual &&
 		git push pushee-namespaced --tags &&
 		git ls-remote pushee-namespaced >actual &&
@@ -56,7 +59,7 @@ test_expect_success 'pulling from a repository using a ref namespace' '
 		cd puller &&
 		git remote add -f pushee-namespaced "ext::git --namespace=namespace %s ../pushee" &&
 		git for-each-ref refs/ >actual &&
-		printf "$commit1 commit\trefs/remotes/pushee-namespaced/master\n" >expected &&
+		printf "$commit1 commit\trefs/remotes/pushee-namespaced/main\n" >expected &&
 		printf "$commit0 commit\trefs/tags/0\n" >>expected &&
 		printf "$commit1 commit\trefs/tags/1\n" >>expected &&
 		test_cmp expected actual
@@ -76,7 +79,7 @@ test_expect_success 'mirroring a repository using a ref namespace' '
 	(
 		cd mirror &&
 		git for-each-ref refs/ >actual &&
-		printf "$commit1 commit\trefs/namespaces/namespace/refs/heads/master\n" >expected &&
+		printf "$commit1 commit\trefs/namespaces/namespace/refs/heads/main\n" >expected &&
 		printf "$commit0 commit\trefs/namespaces/namespace/refs/tags/0\n" >>expected &&
 		printf "$commit1 commit\trefs/namespaces/namespace/refs/tags/1\n" >>expected &&
 		test_cmp expected actual
@@ -87,7 +90,7 @@ test_expect_success 'hide namespaced refs with transfer.hideRefs' '
 	GIT_NAMESPACE=namespace \
 		git -C pushee -c transfer.hideRefs=refs/tags \
 		ls-remote "ext::git %s ." >actual &&
-	printf "$commit1\trefs/heads/master\n" >expected &&
+	printf "$commit1\trefs/heads/main\n" >expected &&
 	test_cmp expected actual
 '
 
@@ -95,7 +98,7 @@ test_expect_success 'check that transfer.hideRefs does not match unstripped refs
 	GIT_NAMESPACE=namespace \
 		git -C pushee -c transfer.hideRefs=refs/namespaces/namespace/refs/tags \
 		ls-remote "ext::git %s ." >actual &&
-	printf "$commit1\trefs/heads/master\n" >expected &&
+	printf "$commit1\trefs/heads/main\n" >expected &&
 	printf "$commit0\trefs/tags/0\n" >>expected &&
 	printf "$commit1\trefs/tags/1\n" >>expected &&
 	test_cmp expected actual
@@ -105,23 +108,23 @@ test_expect_success 'hide full refs with transfer.hideRefs' '
 	GIT_NAMESPACE=namespace \
 		git -C pushee -c transfer.hideRefs="^refs/namespaces/namespace/refs/tags" \
 		ls-remote "ext::git %s ." >actual &&
-	printf "$commit1\trefs/heads/master\n" >expected &&
+	printf "$commit1\trefs/heads/main\n" >expected &&
 	test_cmp expected actual
 '
 
 test_expect_success 'try to update a hidden ref' '
-	test_config -C pushee transfer.hideRefs refs/heads/master &&
-	test_must_fail git -C original push pushee-namespaced master
+	test_config -C pushee transfer.hideRefs refs/heads/main &&
+	test_must_fail git -C original push pushee-namespaced main
 '
 
 test_expect_success 'try to update a ref that is not hidden' '
-	test_config -C pushee transfer.hideRefs refs/namespaces/namespace/refs/heads/master &&
-	git -C original push pushee-namespaced master
+	test_config -C pushee transfer.hideRefs refs/namespaces/namespace/refs/heads/main &&
+	git -C original push pushee-namespaced main
 '
 
 test_expect_success 'try to update a hidden full ref' '
-	test_config -C pushee transfer.hideRefs "^refs/namespaces/namespace/refs/heads/master" &&
-	test_must_fail git -C original push pushee-namespaced master
+	test_config -C pushee transfer.hideRefs "^refs/namespaces/namespace/refs/heads/main" &&
+	test_must_fail git -C original push pushee-namespaced main
 '
 
 test_expect_success 'set up ambiguous HEAD' '
@@ -157,9 +160,9 @@ test_expect_success 'denyCurrentBranch and unborn branch with ref namespace' '
 		cd original &&
 		git init unborn &&
 		git remote add unborn-namespaced "ext::git --namespace=namespace %s unborn" &&
-		test_must_fail git push unborn-namespaced HEAD:master &&
+		test_must_fail git push unborn-namespaced HEAD:main &&
 		git -C unborn config receive.denyCurrentBranch updateInstead &&
-		git push unborn-namespaced HEAD:master
+		git push unborn-namespaced HEAD:main
 	)
 '
 

@@ -1,0 +1,8 @@
+clone.defaultRemoteName::
+	The name of the remote to create when cloning a repository.  Defaults to
+	`origin`, and can be overridden by passing the `--origin` command-line
+	option to linkgit:git-clone[1].
+
+clone.rejectShallow::
+	Reject to clone a repository if it is a shallow one, can be overridden by
+	passing option `--reject-shallow` in command line. See linkgit:git-clone[1]

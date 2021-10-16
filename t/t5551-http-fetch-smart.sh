@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='test smart fetching over http via http-backend'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
@@ -18,7 +21,7 @@ test_expect_success 'create http-accessible bare repository' '
 	 git --bare init
 	) &&
 	git remote add public "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
-	git push public master:master
+	git push public main:main
 '
 
 setup_askpass_helper
@@ -185,6 +188,40 @@ test_expect_success 'redirects send auth to new location' '
 	expect_askpass both user@host auth/smart/repo.git
 '
 
+test_expect_success 'GIT_TRACE_CURL redacts auth details' '
+	rm -rf redact-auth trace &&
+	set_askpass user@host pass@host &&
+	GIT_TRACE_CURL="$(pwd)/trace" git clone --bare "$HTTPD_URL/auth/smart/repo.git" redact-auth &&
+	expect_askpass both user@host &&
+
+	# Ensure that there is no "Basic" followed by a base64 string, but that
+	# the auth details are redacted
+	! grep -i "Authorization: Basic [0-9a-zA-Z+/]" trace &&
+	grep -i "Authorization: Basic <redacted>" trace
+'
+
+test_expect_success 'GIT_CURL_VERBOSE redacts auth details' '
+	rm -rf redact-auth trace &&
+	set_askpass user@host pass@host &&
+	GIT_CURL_VERBOSE=1 git clone --bare "$HTTPD_URL/auth/smart/repo.git" redact-auth 2>trace &&
+	expect_askpass both user@host &&
+
+	# Ensure that there is no "Basic" followed by a base64 string, but that
+	# the auth details are redacted
+	! grep -i "Authorization: Basic [0-9a-zA-Z+/]" trace &&
+	grep -i "Authorization: Basic <redacted>" trace
+'
+
+test_expect_success 'GIT_TRACE_CURL does not redact auth details if GIT_TRACE_REDACT=0' '
+	rm -rf redact-auth trace &&
+	set_askpass user@host pass@host &&
+	GIT_TRACE_REDACT=0 GIT_TRACE_CURL="$(pwd)/trace" \
+		git clone --bare "$HTTPD_URL/auth/smart/repo.git" redact-auth &&
+	expect_askpass both user@host &&
+
+	grep -i "Authorization: Basic [0-9a-zA-Z+/]" trace
+'
+
 test_expect_success 'disable dumb http on server' '
 	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH/repo.git" \
 		config http.getanyfile false
@@ -204,9 +241,9 @@ test_expect_success 'invalid Content-Type rejected' '
 
 test_expect_success 'create namespaced refs' '
 	test_commit namespaced &&
-	git push public HEAD:refs/namespaces/ns/refs/heads/master &&
+	git push public HEAD:refs/namespaces/ns/refs/heads/main &&
 	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH/repo.git" \
-		symbolic-ref refs/namespaces/ns/HEAD refs/namespaces/ns/refs/heads/master
+		symbolic-ref refs/namespaces/ns/HEAD refs/namespaces/ns/refs/heads/main
 '
 
 test_expect_success 'smart clone respects namespace' '
@@ -237,7 +274,7 @@ test_expect_success 'cookies stored in http.cookiefile when http.savecookies set
 	EOF
 	git config http.cookiefile cookies.txt &&
 	git config http.savecookies true &&
-	git ls-remote $HTTPD_URL/smart_cookies/repo.git master &&
+	git ls-remote $HTTPD_URL/smart_cookies/repo.git main &&
 
 	# NEEDSWORK: If the overspecification of the expected result is reduced, we
 	# might be able to run this test in all protocol versions.
@@ -310,12 +347,12 @@ test_expect_success 'large fetch-pack requests can be sent using chunked encodin
 test_expect_success 'test allowreachablesha1inwant' '
 	test_when_finished "rm -rf test_reachable.git" &&
 	server="$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
-	master_sha=$(git -C "$server" rev-parse refs/heads/master) &&
+	main_sha=$(git -C "$server" rev-parse refs/heads/main) &&
 	git -C "$server" config uploadpack.allowreachablesha1inwant 1 &&
 
 	git init --bare test_reachable.git &&
 	git -C test_reachable.git remote add origin "$HTTPD_URL/smart/repo.git" &&
-	git -C test_reachable.git fetch origin "$master_sha"
+	git -C test_reachable.git fetch origin "$main_sha"
 '
 
 test_expect_success 'test allowreachablesha1inwant with unreachable' '
@@ -329,7 +366,7 @@ test_expect_success 'test allowreachablesha1inwant with unreachable' '
 	git push public :refs/heads/doomed &&
 
 	server="$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
-	master_sha=$(git -C "$server" rev-parse refs/heads/master) &&
+	main_sha=$(git -C "$server" rev-parse refs/heads/main) &&
 	git -C "$server" config uploadpack.allowreachablesha1inwant 1 &&
 
 	git init --bare test_reachable.git &&
@@ -351,7 +388,7 @@ test_expect_success 'test allowanysha1inwant with unreachable' '
 	git push public :refs/heads/doomed &&
 
 	server="$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
-	master_sha=$(git -C "$server" rev-parse refs/heads/master) &&
+	main_sha=$(git -C "$server" rev-parse refs/heads/main) &&
 	git -C "$server" config uploadpack.allowreachablesha1inwant 1 &&
 
 	git init --bare test_reachable.git &&
@@ -410,8 +447,8 @@ test_expect_success 'using fetch command in remote-curl updates refs' '
 	test_commit -C "$SERVER" bar &&
 	git -C client -c protocol.version=0 fetch &&
 
-	git -C "$SERVER" rev-parse master >expect &&
-	git -C client rev-parse origin/master >actual &&
+	git -C "$SERVER" rev-parse main >expect &&
+	git -C client rev-parse origin/main >actual &&
 	test_cmp expect actual
 '
 
@@ -430,25 +467,37 @@ test_expect_success 'fetch by SHA-1 without tag following' '
 		--no-tags origin $(cat bar_hash)
 '
 
-test_expect_success 'GIT_REDACT_COOKIES redacts cookies' '
+test_expect_success 'cookies are redacted by default' '
 	rm -rf clone &&
 	echo "Set-Cookie: Foo=1" >cookies &&
 	echo "Set-Cookie: Bar=2" >>cookies &&
-	GIT_TRACE_CURL=true GIT_REDACT_COOKIES=Bar,Baz \
+	GIT_TRACE_CURL=true \
 		git -c "http.cookieFile=$(pwd)/cookies" clone \
 		$HTTPD_URL/smart/repo.git clone 2>err &&
-	grep "Cookie:.*Foo=1" err &&
-	grep "Cookie:.*Bar=<redacted>" err &&
-	! grep "Cookie:.*Bar=2" err
+	grep -i "Cookie:.*Foo=<redacted>" err &&
+	grep -i "Cookie:.*Bar=<redacted>" err &&
+	! grep -i "Cookie:.*Foo=1" err &&
+	! grep -i "Cookie:.*Bar=2" err
 '
 
-test_expect_success 'GIT_REDACT_COOKIES handles empty values' '
+test_expect_success 'empty values of cookies are also redacted' '
 	rm -rf clone &&
 	echo "Set-Cookie: Foo=" >cookies &&
-	GIT_TRACE_CURL=true GIT_REDACT_COOKIES=Foo \
+	GIT_TRACE_CURL=true \
 		git -c "http.cookieFile=$(pwd)/cookies" clone \
 		$HTTPD_URL/smart/repo.git clone 2>err &&
-	grep "Cookie:.*Foo=<redacted>" err
+	grep -i "Cookie:.*Foo=<redacted>" err
+'
+
+test_expect_success 'GIT_TRACE_REDACT=0 disables cookie redaction' '
+	rm -rf clone &&
+	echo "Set-Cookie: Foo=1" >cookies &&
+	echo "Set-Cookie: Bar=2" >>cookies &&
+	GIT_TRACE_REDACT=0 GIT_TRACE_CURL=true \
+		git -c "http.cookieFile=$(pwd)/cookies" clone \
+		$HTTPD_URL/smart/repo.git clone 2>err &&
+	grep -i "Cookie:.*Foo=1" err &&
+	grep -i "Cookie:.*Bar=2" err
 '
 
 test_expect_success 'GIT_TRACE_CURL_NO_DATA prevents data from being traced' '
@@ -466,6 +515,56 @@ test_expect_success 'GIT_TRACE_CURL_NO_DATA prevents data from being traced' '
 test_expect_success 'server-side error detected' '
 	test_must_fail git clone $HTTPD_URL/error_smart/repo.git 2>actual &&
 	test_i18ngrep "server-side error" actual
+'
+
+test_expect_success 'http auth remembers successful credentials' '
+	rm -f .git-credentials &&
+	test_config credential.helper store &&
+
+	# the first request prompts the user...
+	set_askpass user@host pass@host &&
+	git ls-remote "$HTTPD_URL/auth/smart/repo.git" >/dev/null &&
+	expect_askpass both user@host &&
+
+	# ...and the second one uses the stored value rather than
+	# prompting the user.
+	set_askpass bogus-user bogus-pass &&
+	git ls-remote "$HTTPD_URL/auth/smart/repo.git" >/dev/null &&
+	expect_askpass none
+'
+
+test_expect_success 'http auth forgets bogus credentials' '
+	# seed credential store with bogus values. In real life,
+	# this would probably come from a password which worked
+	# for a previous request.
+	rm -f .git-credentials &&
+	test_config credential.helper store &&
+	{
+		echo "url=$HTTPD_URL" &&
+		echo "username=bogus" &&
+		echo "password=bogus"
+	} | git credential approve &&
+
+	# we expect this to use the bogus values and fail, never even
+	# prompting the user...
+	set_askpass user@host pass@host &&
+	test_must_fail git ls-remote "$HTTPD_URL/auth/smart/repo.git" >/dev/null &&
+	expect_askpass none &&
+
+	# ...but now we should have forgotten the bad value, causing
+	# us to prompt the user again.
+	set_askpass user@host pass@host &&
+	git ls-remote "$HTTPD_URL/auth/smart/repo.git" >/dev/null &&
+	expect_askpass both user@host
+'
+
+test_expect_success 'client falls back from v2 to v0 to match server' '
+	GIT_TRACE_PACKET=$PWD/trace \
+	GIT_TEST_PROTOCOL_VERSION=2 \
+	git clone $HTTPD_URL/smart_v0/repo.git repo-v0 &&
+	# check for v0; there the HEAD symref is communicated in the capability
+	# line; v2 uses a different syntax on each ref advertisement line
+	grep symref=HEAD:refs/heads/ trace
 '
 
 test_done

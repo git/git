@@ -7,6 +7,10 @@
 	existing contents of `.git/FETCH_HEAD`.  Without this
 	option old data in `.git/FETCH_HEAD` will be overwritten.
 
+--atomic::
+	Use an atomic transaction to update local refs. Either all refs are
+	updated, or on error, no refs are updated.
+
 --depth=<depth>::
 	Limit fetching to the specified number of commits from the tip of
 	each remote branch history. If fetching to a 'shallow' repository
@@ -58,12 +62,28 @@ The argument to this option may be a glob on ref names, a ref, or the (possibly
 abbreviated) SHA-1 of a commit. Specifying a glob is equivalent to specifying
 this option multiple times, one for each matching ref name.
 +
-See also the `fetch.negotiationAlgorithm` configuration variable
-documented in linkgit:git-config[1].
+See also the `fetch.negotiationAlgorithm` and `push.negotiate`
+configuration variables documented in linkgit:git-config[1], and the
+`--negotiate-only` option below.
 
-ifndef::git-pull[]
+--negotiate-only::
+	Do not fetch anything from the server, and instead print the
+	ancestors of the provided `--negotiation-tip=*` arguments,
+	which we have in common with the server.
++
+Internally this is used to implement the `push.negotiate` option, see
+linkgit:git-config[1].
+
 --dry-run::
 	Show what would be done, without making any changes.
+
+ifndef::git-pull[]
+--[no-]write-fetch-head::
+	Write the list of remote refs fetched in the `FETCH_HEAD`
+	file directly under `$GIT_DIR`.  This is the default.
+	Passing `--no-write-fetch-head` from the command line tells
+	Git not to write the file.  Under `--dry-run` option, the
+	file is never written.
 endif::git-pull[]
 
 -f::
@@ -88,13 +108,21 @@ ifndef::git-pull[]
 	Allow several <repository> and <group> arguments to be
 	specified. No <refspec>s may be specified.
 
+--[no-]auto-maintenance::
 --[no-]auto-gc::
-	Run `git gc --auto` at the end to perform garbage collection
-	if needed. This is enabled by default.
+	Run `git maintenance run --auto` at the end to perform automatic
+	repository maintenance if needed. (`--[no-]auto-gc` is a synonym.)
+	This is enabled by default.
 
 --[no-]write-commit-graph::
 	Write a commit-graph after fetching. This overrides the config
 	setting `fetch.writeCommitGraph`.
+endif::git-pull[]
+
+--prefetch::
+	Modify the configured refspec to place all refs into the
+	`refs/prefetch/` namespace. See the `prefetch` task in
+	linkgit:git-maintenance[1].
 
 -p::
 --prune::
@@ -107,6 +135,7 @@ ifndef::git-pull[]
 	was cloned with the --mirror option), then they are also
 	subject to pruning. Supplying `--prune-tags` is a shorthand for
 	providing the tag refspec.
+ifndef::git-pull[]
 +
 See the PRUNING section below for more details.
 
@@ -133,7 +162,6 @@ endif::git-pull[]
 	behavior for a remote may be specified with the remote.<name>.tagOpt
 	setting. See linkgit:git-config[1].
 
-ifndef::git-pull[]
 --refmap=<refspec>::
 	When fetching refs listed on the command line, use the
 	specified refspec (can be given more than once) to map the
@@ -154,6 +182,7 @@ ifndef::git-pull[]
 	is used (though tags may be pruned anyway if they are also the
 	destination of an explicit refspec; see `--prune`).
 
+ifndef::git-pull[]
 --recurse-submodules[=yes|on-demand|no]::
 	This option controls if and under what conditions new commits of
 	populated submodules should be fetched too. It can be used as a
@@ -163,7 +192,9 @@ ifndef::git-pull[]
 	value. Use 'on-demand' to only recurse into a populated submodule
 	when the superproject retrieves a commit that updates the submodule's
 	reference to a commit that isn't already in the local submodule
-	clone.
+	clone. By default, 'on-demand' is used, unless
+	`fetch.recurseSubmodules` is set (see linkgit:git-config[1]).
+endif::git-pull[]
 
 -j::
 --jobs=<n>::
@@ -177,17 +208,20 @@ parallel. To control them independently, use the config settings
 Typically, parallel recursive and multi-remote fetches will be faster. By
 default fetches are performed sequentially, not in parallel.
 
+ifndef::git-pull[]
 --no-recurse-submodules::
 	Disable recursive fetching of submodules (this has the same effect as
 	using the `--recurse-submodules=no` option).
+endif::git-pull[]
 
 --set-upstream::
-	If the remote is fetched successfully, pull and add upstream
+	If the remote is fetched successfully, add upstream
 	(tracking) reference, used by argument-less
 	linkgit:git-pull[1] and other commands. For more information,
 	see `branch.<name>.merge` and `branch.<name>.remote` in
 	linkgit:git-config[1].
 
+ifndef::git-pull[]
 --submodule-prefix=<path>::
 	Prepend <path> to paths printed in informative messages
 	such as "Fetching submodule foo".  This option is used
@@ -200,7 +234,6 @@ default fetches are performed sequentially, not in parallel.
 	recursion (such as settings in linkgit:gitmodules[5] and
 	linkgit:git-config[1]) override this option, as does
 	specifying --[no-]recurse-submodules directly.
-endif::git-pull[]
 
 -u::
 --update-head-ok::
@@ -210,6 +243,7 @@ endif::git-pull[]
 	to communicate with 'git fetch', and unless you are
 	implementing your own Porcelain you are not supposed to
 	use it.
+endif::git-pull[]
 
 --upload-pack <upload-pack>::
 	When given, and the repository to fetch from is handled

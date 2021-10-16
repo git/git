@@ -1,12 +1,24 @@
+ifndef COMPILER_FEATURES
+COMPILER_FEATURES := $(shell ./detect-compiler $(CC))
+endif
+
 ifeq ($(filter no-error,$(DEVOPTS)),)
 DEVELOPER_CFLAGS += -Werror
+SPARSE_FLAGS += -Wsparse-error
 endif
-ifneq ($(filter pedantic,$(DEVOPTS)),)
-DEVELOPER_CFLAGS += -pedantic
-# don't warn for each N_ use
-DEVELOPER_CFLAGS += -DUSE_PARENS_AROUND_GETTEXT_N=0
-endif
+
 DEVELOPER_CFLAGS += -Wall
+ifeq ($(filter no-pedantic,$(DEVOPTS)),)
+DEVELOPER_CFLAGS += -pedantic
+ifneq (($or $(filter gcc5,$(COMPILER_FEATURES)),$(filter clang4,$(COMPILER_FEATURES))),)
+DEVELOPER_CFLAGS += -Wpedantic
+ifneq ($(filter gcc10,$(COMPILER_FEATURES)),)
+ifeq ($(uname_S),MINGW)
+DEVELOPER_CFLAGS += -Wno-pedantic-ms-format
+endif
+endif
+endif
+endif
 DEVELOPER_CFLAGS += -Wdeclaration-after-statement
 DEVELOPER_CFLAGS += -Wformat-security
 DEVELOPER_CFLAGS += -Wold-style-definition
@@ -15,10 +27,7 @@ DEVELOPER_CFLAGS += -Wpointer-arith
 DEVELOPER_CFLAGS += -Wstrict-prototypes
 DEVELOPER_CFLAGS += -Wunused
 DEVELOPER_CFLAGS += -Wvla
-
-ifndef COMPILER_FEATURES
-COMPILER_FEATURES := $(shell ./detect-compiler $(CC))
-endif
+DEVELOPER_CFLAGS += -fno-common
 
 ifneq ($(filter clang4,$(COMPILER_FEATURES)),)
 DEVELOPER_CFLAGS += -Wtautological-constant-out-of-range-compare
@@ -45,3 +54,5 @@ ifeq ($(filter gcc5,$(COMPILER_FEATURES)),)
 DEVELOPER_CFLAGS += -Wno-uninitialized
 endif
 endif
+
+GIT_TEST_PERL_FATAL_WARNINGS = YesPlease

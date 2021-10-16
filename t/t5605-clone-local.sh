@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='test local clone'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 repo_is_hardlinked() {
@@ -15,7 +18,7 @@ test_expect_success 'preparing origin repository' '
 	test "$(cd a.git && git config --bool core.bare)" = true &&
 	test "$(cd x && git config --bool core.bare)" = true &&
 	git bundle create b1.bundle --all &&
-	git bundle create b2.bundle master &&
+	git bundle create b2.bundle main &&
 	mkdir dir &&
 	cp b1.bundle dir/b3 &&
 	cp b1.bundle b4
@@ -84,7 +87,7 @@ test_expect_success 'bundle clone with nonexistent HEAD' '
 	git clone b2.bundle b2 &&
 	(cd b2 &&
 	git fetch &&
-	test_must_fail git rev-parse --verify refs/heads/master)
+	test_must_fail git rev-parse --verify refs/heads/main)
 '
 
 test_expect_success 'clone empty repository' '
@@ -98,9 +101,9 @@ test_expect_success 'clone empty repository' '
 	 echo "content" >> foo &&
 	 git add foo &&
 	 git commit -m "Initial commit" &&
-	 git push origin master &&
-	 expected=$(git rev-parse master) &&
-	 actual=$(git --git-dir=../empty/.git rev-parse master) &&
+	 git push origin main &&
+	 expected=$(git rev-parse main) &&
+	 actual=$(git --git-dir=../empty/.git rev-parse main) &&
 	 test $actual = $expected)
 '
 

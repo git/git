@@ -36,10 +36,17 @@ name is provided or known to the 'mailmap', ``Name $$<user@host>$$'' is
 printed; otherwise only ``$$<user@host>$$'' is printed.
 
 
+CONFIGURATION
+-------------
+
+See `mailmap.file` and `mailmap.blob` in linkgit:git-config[1] for how
+to specify a custom `.mailmap` target file or object.
+
+
 MAPPING AUTHORS
 ---------------
 
-include::mailmap.txt[]
+See linkgit:gitmailmap[5].
 
 
 GIT

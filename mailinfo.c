@@ -19,7 +19,7 @@ static void cleanup_space(struct strbuf *sb)
 static void get_sane_name(struct strbuf *out, struct strbuf *name, struct strbuf *email)
 {
 	struct strbuf *src = name;
-	if (name->len < 3 || 60 < name->len || strpbrk(name->buf, "@<>"))
+	if (!name->len || 60 < name->len || strpbrk(name->buf, "@<>"))
 		src = email;
 	else if (name == out)
 		return;
@@ -447,19 +447,21 @@ static int convert_to_utf8(struct mailinfo *mi,
 			   struct strbuf *line, const char *charset)
 {
 	char *out;
+	size_t out_len;
 
 	if (!mi->metainfo_charset || !charset || !*charset)
 		return 0;
 
 	if (same_encoding(mi->metainfo_charset, charset))
 		return 0;
-	out = reencode_string(line->buf, mi->metainfo_charset, charset);
+	out = reencode_string_len(line->buf, line->len,
+				  mi->metainfo_charset, charset, &out_len);
 	if (!out) {
 		mi->input_error = -1;
 		return error("cannot convert from %s to %s",
 			     charset, mi->metainfo_charset);
 	}
-	strbuf_attach(line, out, strlen(out), strlen(out));
+	strbuf_attach(line, out, out_len, out_len);
 	return 0;
 }
 
@@ -703,8 +705,8 @@ static int is_scissors_line(const char *line)
 			perforation++;
 			continue;
 		}
-		if ((!memcmp(c, ">8", 2) || !memcmp(c, "8<", 2) ||
-		     !memcmp(c, ">%", 2) || !memcmp(c, "%<", 2))) {
+		if (starts_with(c, ">8") || starts_with(c, "8<") ||
+		    starts_with(c, ">%") || starts_with(c, "%<")) {
 			in_perforation = 1;
 			perforation += 2;
 			scissors += 2;
@@ -819,7 +821,7 @@ static int handle_commit_msg(struct mailinfo *mi, struct strbuf *line)
 		for (i = 0; header[i]; i++) {
 			if (mi->s_hdr_data[i])
 				strbuf_release(mi->s_hdr_data[i]);
-			mi->s_hdr_data[i] = NULL;
+			FREE_AND_NULL(mi->s_hdr_data[i]);
 		}
 		return 0;
 	}
@@ -992,6 +994,16 @@ static void handle_filter_flowed(struct mailinfo *mi, struct strbuf *line,
 	const char *rest;
 
 	if (!mi->format_flowed) {
+		if (len >= 2 &&
+		    line->buf[len - 2] == '\r' &&
+		    line->buf[len - 1] == '\n') {
+			mi->have_quoted_cr = 1;
+			if (mi->quoted_cr == quoted_cr_strip) {
+				strbuf_setlen(line, len - 2);
+				strbuf_addch(line, '\n');
+				len--;
+			}
+		}
 		handle_filter(mi, line);
 		return;
 	}
@@ -1031,6 +1043,13 @@ static void handle_filter_flowed(struct mailinfo *mi, struct strbuf *line,
 	handle_filter(mi, line);
 }
 
+static void summarize_quoted_cr(struct mailinfo *mi)
+{
+	if (mi->have_quoted_cr &&
+	    mi->quoted_cr == quoted_cr_warn)
+		warning(_("quoted CRLF detected"));
+}
+
 static void handle_body(struct mailinfo *mi, struct strbuf *line)
 {
 	struct strbuf prev = STRBUF_INIT;
@@ -1049,6 +1068,8 @@ static void handle_body(struct mailinfo *mi, struct strbuf *line)
 				handle_filter(mi, &prev);
 				strbuf_reset(&prev);
 			}
+			summarize_quoted_cr(mi);
+			mi->have_quoted_cr = 0;
 			if (!handle_boundary(mi, line))
 				goto handle_body_out;
 		}
@@ -1098,6 +1119,7 @@ static void handle_body(struct mailinfo *mi, struct strbuf *line)
 
 	if (prev.len)
 		handle_filter(mi, &prev);
+	summarize_quoted_cr(mi);
 
 	flush_inbody_header_accum(mi);
 
@@ -1135,6 +1157,11 @@ static void handle_info(struct mailinfo *mi)
 			hdr = mi->p_hdr_data[i];
 		else
 			continue;
+
+		if (memchr(hdr->buf, '\0', hdr->len)) {
+			error("a NUL byte in '%s' is not allowed.", header[i]);
+			mi->input_error = -1;
+		}
 
 		if (!strcmp(header[i], "Subject")) {
 			if (!mi->keep_subject) {
@@ -1199,6 +1226,19 @@ int mailinfo(struct mailinfo *mi, const char *msg, const char *patch)
 	return mi->input_error;
 }
 
+int mailinfo_parse_quoted_cr_action(const char *actionstr, int *action)
+{
+	if (!strcmp(actionstr, "nowarn"))
+		*action = quoted_cr_nowarn;
+	else if (!strcmp(actionstr, "warn"))
+		*action = quoted_cr_warn;
+	else if (!strcmp(actionstr, "strip"))
+		*action = quoted_cr_strip;
+	else
+		return -1;
+	return 0;
+}
+
 static int git_mailinfo_config(const char *var, const char *value, void *mi_)
 {
 	struct mailinfo *mi = mi_;
@@ -1207,6 +1247,11 @@ static int git_mailinfo_config(const char *var, const char *value, void *mi_)
 		return git_default_config(var, value, NULL);
 	if (!strcmp(var, "mailinfo.scissors")) {
 		mi->use_scissors = git_config_bool(var, value);
+		return 0;
+	}
+	if (!strcmp(var, "mailinfo.quotedcr")) {
+		if (mailinfo_parse_quoted_cr_action(value, &mi->quoted_cr) != 0)
+			return error(_("bad action '%s' for '%s'"), value, var);
 		return 0;
 	}
 	/* perhaps others here */
@@ -1221,6 +1266,7 @@ void setup_mailinfo(struct mailinfo *mi)
 	strbuf_init(&mi->charset, 0);
 	strbuf_init(&mi->log_message, 0);
 	strbuf_init(&mi->inbody_header_accum, 0);
+	mi->quoted_cr = quoted_cr_warn;
 	mi->header_stage = 1;
 	mi->use_inbody_headers = 1;
 	mi->content_top = mi->content;
@@ -1229,22 +1275,14 @@ void setup_mailinfo(struct mailinfo *mi)
 
 void clear_mailinfo(struct mailinfo *mi)
 {
-	int i;
-
 	strbuf_release(&mi->name);
 	strbuf_release(&mi->email);
 	strbuf_release(&mi->charset);
 	strbuf_release(&mi->inbody_header_accum);
 	free(mi->message_id);
 
-	if (mi->p_hdr_data)
-		for (i = 0; mi->p_hdr_data[i]; i++)
-			strbuf_release(mi->p_hdr_data[i]);
-	free(mi->p_hdr_data);
-	if (mi->s_hdr_data)
-		for (i = 0; mi->s_hdr_data[i]; i++)
-			strbuf_release(mi->s_hdr_data[i]);
-	free(mi->s_hdr_data);
+	strbuf_list_free(mi->p_hdr_data);
+	strbuf_list_free(mi->s_hdr_data);
 
 	while (mi->content < mi->content_top) {
 		free(*(mi->content_top));

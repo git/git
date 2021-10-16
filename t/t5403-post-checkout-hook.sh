@@ -4,6 +4,9 @@
 #
 
 test_description='Test the post-checkout hook.'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success setup '
@@ -20,7 +23,7 @@ test_expect_success setup '
 
 test_expect_success 'post-checkout receives the right arguments with HEAD unchanged ' '
 	test_when_finished "rm -f .git/post-checkout.args" &&
-	git checkout master &&
+	git checkout main &&
 	read old new flag <.git/post-checkout.args &&
 	test $old = $new && test $flag = 1
 '
@@ -41,14 +44,14 @@ test_expect_success 'post-checkout receives the right args with HEAD changed ' '
 
 test_expect_success 'post-checkout receives the right args when not switching branches ' '
 	test_when_finished "rm -f .git/post-checkout.args" &&
-	git checkout master -- three.t &&
+	git checkout main -- three.t &&
 	read old new flag <.git/post-checkout.args &&
 	test $old = $new && test $flag = 0
 '
 
 test_expect_success 'post-checkout is triggered on rebase' '
 	test_when_finished "rm -f .git/post-checkout.args" &&
-	git checkout -b rebase-test master &&
+	git checkout -b rebase-test main &&
 	rm -f .git/post-checkout.args &&
 	git rebase rebase-on-me &&
 	read old new flag <.git/post-checkout.args &&

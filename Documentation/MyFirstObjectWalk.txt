@@ -182,30 +182,6 @@ its `init_log_defaults()` sets its own state (`decoration_style`) and asks
 `grep` and `diff` to initialize themselves by calling each of their
 initialization functions.
 
-For our first example within `git walken`, we don't intend to use any other
-components within Git, and we don't have any configuration to do.  However, we
-may want to add some later, so for now, we can add an empty placeholder. Create
-a new function in `builtin/walken.c`:
-
-----
-static void init_walken_defaults(void)
-{
-	/*
-	 * We don't actually need the same components `git log` does; leave this
-	 * empty for now.
-	 */
-}
-----
-
-Make sure to add a line invoking it inside of `cmd_walken()`.
-
-----
-int cmd_walken(int argc, const char **argv, const char *prefix)
-{
-	init_walken_defaults();
-}
-----
-
 ==== Configuring From `.gitconfig`
 
 Next, we should have a look at any relevant configuration settings (i.e.,
@@ -357,9 +333,6 @@ static void walken_commit_walk(struct rev_info *rev)
 	...
 
 	while ((commit = get_revision(rev))) {
-		if (!commit)
-			continue;
-
 		strbuf_reset(&prettybuf);
 		pp_commit_easy(CMIT_FMT_ONELINE, commit, &prettybuf);
 		puts(prettybuf.buf);
@@ -391,17 +364,9 @@ Next, let's try to filter the commits we see based on their author. This is
 equivalent to running `git log --author=<pattern>`. We can add a filter by
 modifying `rev_info.grep_filter`, which is a `struct grep_opt`.
 
-First some setup. Add `init_grep_defaults()` to `init_walken_defaults()` and add
-`grep_config()` to `git_walken_config()`:
+First some setup. Add `grep_config()` to `git_walken_config()`:
 
 ----
-static void init_walken_defaults(void)
-{
-	init_grep_defaults(the_repository);
-}
-
-...
-
 static int git_walken_config(const char *var, const char *value, void *cb)
 {
 	grep_config(var, value, cb);
@@ -726,7 +691,7 @@ help understand. In our case, that means we omit trees and blobs not directly
 referenced by `HEAD` or `HEAD`'s history, because we begin the walk with only
 `HEAD` in the `pending` list.)
 
-First, we'll need to `#include "list-objects-filter-options.h`" and set up the
+First, we'll need to `#include "list-objects-filter-options.h"` and set up the
 `struct list_objects_filter_options` at the top of the function.
 
 ----
@@ -814,7 +779,7 @@ Count all the objects within and modify the print statement:
 	while ((oid = oidset_iter_next(&oit)))
 		omitted_count++;
 
-	printf("commits %d\nblobs %d\ntags %d\ntrees%d\nomitted %d\n",
+	printf("commits %d\nblobs %d\ntags %d\ntrees %d\nomitted %d\n",
 		commit_count, blob_count, tag_count, tree_count, omitted_count);
 ----
 

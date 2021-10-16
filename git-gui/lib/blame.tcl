@@ -328,6 +328,7 @@ constructor new {i_commit i_path i_jump} {
 		bind $i <Any-Motion>  [cb _show_tooltip $i @%x,%y]
 		bind $i <Any-Enter>   [cb _hide_tooltip]
 		bind $i <Any-Leave>   [cb _hide_tooltip]
+		bind $i <Deactivate>  [cb _hide_tooltip]
 		bind_button3 $i "
 			[cb _hide_tooltip]
 			set cursorX %x

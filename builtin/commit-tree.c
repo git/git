@@ -88,9 +88,7 @@ static int parse_file_arg_callback(const struct option *opt,
 	if (!strcmp(arg, "-"))
 		fd = 0;
 	else {
-		fd = open(arg, O_RDONLY);
-		if (fd < 0)
-			die_errno(_("git commit-tree: failed to open '%s'"), arg);
+		fd = xopen(arg, O_RDONLY);
 	}
 	if (strbuf_read(buf, fd, 0) < 0)
 		die_errno(_("git commit-tree: failed to read '%s'"), arg);
@@ -108,15 +106,15 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 	struct object_id commit_oid;
 
 	struct option options[] = {
-		{ OPTION_CALLBACK, 'p', NULL, &parents, N_("parent"),
+		OPT_CALLBACK_F('p', NULL, &parents, N_("parent"),
 			N_("id of a parent commit object"), PARSE_OPT_NONEG,
-			parse_parent_arg_callback },
-		{ OPTION_CALLBACK, 'm', NULL, &buffer, N_("message"),
+			parse_parent_arg_callback),
+		OPT_CALLBACK_F('m', NULL, &buffer, N_("message"),
 			N_("commit message"), PARSE_OPT_NONEG,
-			parse_message_arg_callback },
-		{ OPTION_CALLBACK, 'F', NULL, &buffer, N_("file"),
+			parse_message_arg_callback),
+		OPT_CALLBACK_F('F', NULL, &buffer, N_("file"),
 			N_("read commit log message from file"), PARSE_OPT_NONEG,
-			parse_file_arg_callback },
+			parse_file_arg_callback),
 		{ OPTION_STRING, 'S', "gpg-sign", &sign_commit, N_("key-id"),
 			N_("GPG sign commit"), PARSE_OPT_OPTARG, NULL, (intptr_t) "" },
 		OPT_END()

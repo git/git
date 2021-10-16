@@ -10,6 +10,8 @@
 #include "object.h"
 #include "lockfile.h"
 #include "submodule-config.h"
+#include "sparse-index.h"
+#include "promisor-remote.h"
 
 /* The main repository */
 static struct repository the_repo;
@@ -72,7 +74,7 @@ void repo_set_gitdir(struct repository *repo,
 	repo_set_commondir(repo, o->commondir);
 
 	if (!repo->objects->odb) {
-		repo->objects->odb = xcalloc(1, sizeof(*repo->objects->odb));
+		CALLOC_ARRAY(repo->objects->odb, 1);
 		repo->objects->odb_tail = &repo->objects->odb->next;
 	}
 	expand_base_dir(&repo->objects->odb->path, o->object_dir,
@@ -171,6 +173,10 @@ int repo_init(struct repository *repo,
 
 	repo_set_hash_algo(repo, format.hash_algo);
 
+	/* take ownership of format.partial_clone */
+	repo->repository_format_partial_clone = format.partial_clone;
+	format.partial_clone = NULL;
+
 	if (worktree)
 		repo_set_worktree(repo, worktree);
 
@@ -184,19 +190,15 @@ error:
 
 int repo_submodule_init(struct repository *subrepo,
 			struct repository *superproject,
-			const struct submodule *sub)
+			const char *path,
+			const struct object_id *treeish_name)
 {
 	struct strbuf gitdir = STRBUF_INIT;
 	struct strbuf worktree = STRBUF_INIT;
 	int ret = 0;
 
-	if (!sub) {
-		ret = -1;
-		goto out;
-	}
-
-	strbuf_repo_worktree_path(&gitdir, superproject, "%s/.git", sub->path);
-	strbuf_repo_worktree_path(&worktree, superproject, "%s", sub->path);
+	strbuf_repo_worktree_path(&gitdir, superproject, "%s/.git", path);
+	strbuf_repo_worktree_path(&worktree, superproject, "%s", path);
 
 	if (repo_init(subrepo, gitdir.buf, worktree.buf)) {
 		/*
@@ -206,9 +208,15 @@ int repo_submodule_init(struct repository *subrepo,
 		 * in the superproject's 'modules' directory.  In this case the
 		 * submodule would not have a worktree.
 		 */
+		const struct submodule *sub =
+			submodule_from_path(superproject, treeish_name, path);
+		if (!sub) {
+			ret = -1;
+			goto out;
+		}
+
 		strbuf_reset(&gitdir);
-		strbuf_repo_git_path(&gitdir, superproject,
-				     "modules/%s", sub->name);
+		submodule_name_to_gitdir(&gitdir, superproject, sub->name);
 
 		if (repo_init(subrepo, gitdir.buf, NULL)) {
 			ret = -1;
@@ -219,7 +227,7 @@ int repo_submodule_init(struct repository *subrepo,
 	subrepo->submodule_prefix = xstrfmt("%s%s/",
 					    superproject->submodule_prefix ?
 					    superproject->submodule_prefix :
-					    "", sub->path);
+					    "", path);
 
 out:
 	strbuf_release(&gitdir);
@@ -257,14 +265,33 @@ void repo_clear(struct repository *repo)
 		if (repo->index != &the_index)
 			FREE_AND_NULL(repo->index);
 	}
+
+	if (repo->promisor_remote_config) {
+		promisor_remote_clear(repo->promisor_remote_config);
+		FREE_AND_NULL(repo->promisor_remote_config);
+	}
 }
 
 int repo_read_index(struct repository *repo)
 {
-	if (!repo->index)
-		repo->index = xcalloc(1, sizeof(*repo->index));
+	int res;
 
-	return read_index_from(repo->index, repo->index_file, repo->gitdir);
+	if (!repo->index)
+		CALLOC_ARRAY(repo->index, 1);
+
+	/* Complete the double-reference */
+	if (!repo->index->repo)
+		repo->index->repo = repo;
+	else if (repo->index->repo != repo)
+		BUG("repo's index should point back at itself");
+
+	res = read_index_from(repo->index, repo->index_file, repo->gitdir);
+
+	prepare_repo_settings(repo);
+	if (repo->settings.command_requires_full_index)
+		ensure_full_index(repo->index);
+
+	return res;
 }
 
 int repo_hold_locked_index(struct repository *repo,

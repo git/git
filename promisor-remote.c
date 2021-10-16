@@ -3,54 +3,50 @@
 #include "promisor-remote.h"
 #include "config.h"
 #include "transport.h"
+#include "strvec.h"
 
-static char *repository_format_partial_clone;
-static const char *core_partial_clone_filter_default;
+struct promisor_remote_config {
+	struct promisor_remote *promisors;
+	struct promisor_remote **promisors_tail;
+};
 
-void set_repository_format_partial_clone(char *partial_clone)
-{
-	repository_format_partial_clone = xstrdup_or_null(partial_clone);
-}
-
-static int fetch_refs(const char *remote_name, struct ref *ref)
-{
-	struct remote *remote;
-	struct transport *transport;
-	int res;
-
-	remote = remote_get(remote_name);
-	if (!remote->url[0])
-		die(_("Remote with no URL"));
-	transport = transport_get(remote, remote->url[0]);
-
-	transport_set_option(transport, TRANS_OPT_FROM_PROMISOR, "1");
-	transport_set_option(transport, TRANS_OPT_NO_DEPENDENTS, "1");
-	res = transport_fetch_refs(transport, ref);
-
-	return res;
-}
-
-static int fetch_objects(const char *remote_name,
+static int fetch_objects(struct repository *repo,
+			 const char *remote_name,
 			 const struct object_id *oids,
 			 int oid_nr)
 {
-	struct ref *ref = NULL;
+	struct child_process child = CHILD_PROCESS_INIT;
 	int i;
+	FILE *child_in;
+
+	child.git_cmd = 1;
+	child.in = -1;
+	if (repo != the_repository)
+		prepare_other_repo_env(&child.env_array, repo->gitdir);
+	strvec_pushl(&child.args, "-c", "fetch.negotiationAlgorithm=noop",
+		     "fetch", remote_name, "--no-tags",
+		     "--no-write-fetch-head", "--recurse-submodules=no",
+		     "--filter=blob:none", "--stdin", NULL);
+	if (start_command(&child))
+		die(_("promisor-remote: unable to fork off fetch subprocess"));
+	child_in = xfdopen(child.in, "w");
+
+	trace2_data_intmax("promisor", repo, "fetch_count", oid_nr);
 
 	for (i = 0; i < oid_nr; i++) {
-		struct ref *new_ref = alloc_ref(oid_to_hex(&oids[i]));
-		oidcpy(&new_ref->old_oid, &oids[i]);
-		new_ref->exact_oid = 1;
-		new_ref->next = ref;
-		ref = new_ref;
+		if (fputs(oid_to_hex(&oids[i]), child_in) < 0)
+			die_errno(_("promisor-remote: could not write to fetch subprocess"));
+		if (fputc('\n', child_in) < 0)
+			die_errno(_("promisor-remote: could not write to fetch subprocess"));
 	}
-	return fetch_refs(remote_name, ref);
+
+	if (fclose(child_in) < 0)
+		die_errno(_("promisor-remote: could not close stdin to fetch subprocess"));
+	return finish_command(&child) ? -1 : 0;
 }
 
-static struct promisor_remote *promisors;
-static struct promisor_remote **promisors_tail = &promisors;
-
-static struct promisor_remote *promisor_remote_new(const char *remote_name)
+static struct promisor_remote *promisor_remote_new(struct promisor_remote_config *config,
+						   const char *remote_name)
 {
 	struct promisor_remote *r;
 
@@ -62,18 +58,19 @@ static struct promisor_remote *promisor_remote_new(const char *remote_name)
 
 	FLEX_ALLOC_STR(r, name, remote_name);
 
-	*promisors_tail = r;
-	promisors_tail = &r->next;
+	*config->promisors_tail = r;
+	config->promisors_tail = &r->next;
 
 	return r;
 }
 
-static struct promisor_remote *promisor_remote_lookup(const char *remote_name,
+static struct promisor_remote *promisor_remote_lookup(struct promisor_remote_config *config,
+						      const char *remote_name,
 						      struct promisor_remote **previous)
 {
 	struct promisor_remote *r, *p;
 
-	for (p = NULL, r = promisors; r; p = r, r = r->next)
+	for (p = NULL, r = config->promisors; r; p = r, r = r->next)
 		if (!strcmp(r->name, remote_name)) {
 			if (previous)
 				*previous = p;
@@ -83,7 +80,8 @@ static struct promisor_remote *promisor_remote_lookup(const char *remote_name,
 	return NULL;
 }
 
-static void promisor_remote_move_to_tail(struct promisor_remote *r,
+static void promisor_remote_move_to_tail(struct promisor_remote_config *config,
+					 struct promisor_remote *r,
 					 struct promisor_remote *previous)
 {
 	if (r->next == NULL)
@@ -92,21 +90,18 @@ static void promisor_remote_move_to_tail(struct promisor_remote *r,
 	if (previous)
 		previous->next = r->next;
 	else
-		promisors = r->next ? r->next : r;
+		config->promisors = r->next ? r->next : r;
 	r->next = NULL;
-	*promisors_tail = r;
-	promisors_tail = &r->next;
+	*config->promisors_tail = r;
+	config->promisors_tail = &r->next;
 }
 
 static int promisor_remote_config(const char *var, const char *value, void *data)
 {
+	struct promisor_remote_config *config = data;
 	const char *name;
-	int namelen;
+	size_t namelen;
 	const char *subkey;
-
-	if (!strcmp(var, "core.partialclonefilter"))
-		return git_config_string(&core_partial_clone_filter_default,
-					 var, value);
 
 	if (parse_config_key(var, "remote", &name, &namelen, &subkey) < 0)
 		return 0;
@@ -119,8 +114,8 @@ static int promisor_remote_config(const char *var, const char *value, void *data
 
 		remote_name = xmemdupz(name, namelen);
 
-		if (!promisor_remote_lookup(remote_name, NULL))
-			promisor_remote_new(remote_name);
+		if (!promisor_remote_lookup(config, remote_name, NULL))
+			promisor_remote_new(config, remote_name);
 
 		free(remote_name);
 		return 0;
@@ -129,9 +124,9 @@ static int promisor_remote_config(const char *var, const char *value, void *data
 		struct promisor_remote *r;
 		char *remote_name = xmemdupz(name, namelen);
 
-		r = promisor_remote_lookup(remote_name, NULL);
+		r = promisor_remote_lookup(config, remote_name, NULL);
 		if (!r)
-			r = promisor_remote_new(remote_name);
+			r = promisor_remote_new(config, remote_name);
 
 		free(remote_name);
 
@@ -144,59 +139,63 @@ static int promisor_remote_config(const char *var, const char *value, void *data
 	return 0;
 }
 
-static int initialized;
-
-static void promisor_remote_init(void)
+static void promisor_remote_init(struct repository *r)
 {
-	if (initialized)
+	struct promisor_remote_config *config;
+
+	if (r->promisor_remote_config)
 		return;
-	initialized = 1;
+	config = r->promisor_remote_config =
+		xcalloc(sizeof(*r->promisor_remote_config), 1);
+	config->promisors_tail = &config->promisors;
 
-	git_config(promisor_remote_config, NULL);
+	repo_config(r, promisor_remote_config, config);
 
-	if (repository_format_partial_clone) {
+	if (r->repository_format_partial_clone) {
 		struct promisor_remote *o, *previous;
 
-		o = promisor_remote_lookup(repository_format_partial_clone,
+		o = promisor_remote_lookup(config,
+					   r->repository_format_partial_clone,
 					   &previous);
 		if (o)
-			promisor_remote_move_to_tail(o, previous);
+			promisor_remote_move_to_tail(config, o, previous);
 		else
-			promisor_remote_new(repository_format_partial_clone);
+			promisor_remote_new(config, r->repository_format_partial_clone);
 	}
 }
 
-static void promisor_remote_clear(void)
+void promisor_remote_clear(struct promisor_remote_config *config)
 {
-	while (promisors) {
-		struct promisor_remote *r = promisors;
-		promisors = promisors->next;
+	while (config->promisors) {
+		struct promisor_remote *r = config->promisors;
+		config->promisors = config->promisors->next;
 		free(r);
 	}
 
-	promisors_tail = &promisors;
+	config->promisors_tail = &config->promisors;
 }
 
-void promisor_remote_reinit(void)
+void repo_promisor_remote_reinit(struct repository *r)
 {
-	initialized = 0;
-	promisor_remote_clear();
-	promisor_remote_init();
+	promisor_remote_clear(r->promisor_remote_config);
+	FREE_AND_NULL(r->promisor_remote_config);
+	promisor_remote_init(r);
 }
 
-struct promisor_remote *promisor_remote_find(const char *remote_name)
+struct promisor_remote *repo_promisor_remote_find(struct repository *r,
+						  const char *remote_name)
 {
-	promisor_remote_init();
+	promisor_remote_init(r);
 
 	if (!remote_name)
-		return promisors;
+		return r->promisor_remote_config->promisors;
 
-	return promisor_remote_lookup(remote_name, NULL);
+	return promisor_remote_lookup(r->promisor_remote_config, remote_name, NULL);
 }
 
-int has_promisor_remote(void)
+int repo_has_promisor_remote(struct repository *r)
 {
-	return !!promisor_remote_find(NULL);
+	return !!repo_promisor_remote_find(r, NULL);
 }
 
 static int remove_fetched_oids(struct repository *repo,
@@ -217,7 +216,7 @@ static int remove_fetched_oids(struct repository *repo,
 
 	if (remaining_nr) {
 		int j = 0;
-		new_oids = xcalloc(remaining_nr, sizeof(*new_oids));
+		CALLOC_ARRAY(new_oids, remaining_nr);
 		for (i = 0; i < oid_nr; i++)
 			if (remaining[i])
 				oidcpy(&new_oids[j++], &old_oids[i]);
@@ -241,10 +240,13 @@ int promisor_remote_get_direct(struct repository *repo,
 	int to_free = 0;
 	int res = -1;
 
-	promisor_remote_init();
+	if (oid_nr == 0)
+		return 0;
 
-	for (r = promisors; r; r = r->next) {
-		if (fetch_objects(r->name, remaining_oids, remaining_nr) < 0) {
+	promisor_remote_init(repo);
+
+	for (r = repo->promisor_remote_config->promisors; r; r = r->next) {
+		if (fetch_objects(repo, r->name, remaining_oids, remaining_nr) < 0) {
 			if (remaining_nr == 1)
 				continue;
 			remaining_nr = remove_fetched_oids(repo, &remaining_oids,

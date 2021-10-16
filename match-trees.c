@@ -226,7 +226,7 @@ static int splice_tree(const struct object_id *oid1, const char *prefix,
 		    oid_to_hex(oid1));
 	if (*subpath) {
 		struct object_id tree_oid;
-		hashcpy(tree_oid.hash, rewrite_here);
+		oidread(&tree_oid, rewrite_here);
 		status = splice_tree(&tree_oid, subpath, oid2, &subtree);
 		if (status)
 			return status;

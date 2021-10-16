@@ -1,5 +1,5 @@
-#ifndef COMMIT_SLAB_HDR_H
-#define COMMIT_SLAB_HDR_H
+#ifndef COMMIT_SLAB_DECL_H
+#define COMMIT_SLAB_DECL_H
 
 /* allocate ~512kB at once, allowing for malloc overhead */
 #ifndef COMMIT_SLAB_SIZE
@@ -32,6 +32,7 @@ struct slabname {							\
 void init_ ##slabname## _with_stride(struct slabname *s, unsigned stride); \
 void init_ ##slabname(struct slabname *s);				\
 void clear_ ##slabname(struct slabname *s);				\
+void deep_clear_ ##slabname(struct slabname *s, void (*free_fn)(elemtype *ptr)); \
 elemtype *slabname## _at_peek(struct slabname *s, const struct commit *c, int add_if_missing); \
 elemtype *slabname## _at(struct slabname *s, const struct commit *c);	\
 elemtype *slabname## _peek(struct slabname *s, const struct commit *c)
@@ -40,4 +41,4 @@ elemtype *slabname## _peek(struct slabname *s, const struct commit *c)
 	declare_commit_slab(slabname, elemtype); \
 	declare_commit_slab_prototypes(slabname, elemtype)
 
-#endif /* COMMIT_SLAB_HDR_H */
+#endif /* COMMIT_SLAB_DECL_H */

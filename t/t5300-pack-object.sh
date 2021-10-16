@@ -8,125 +8,195 @@ test_description='git pack-object
 '
 . ./test-lib.sh
 
-TRASH=$(pwd)
+test_expect_success 'setup' '
+	rm -f .git/index* &&
+	perl -e "print \"a\" x 4096;" >a &&
+	perl -e "print \"b\" x 4096;" >b &&
+	perl -e "print \"c\" x 4096;" >c &&
+	test-tool genrandom "seed a" 2097152 >a_big &&
+	test-tool genrandom "seed b" 2097152 >b_big &&
+	git update-index --add a a_big b b_big c &&
+	cat c >d && echo foo >>d && git update-index --add d &&
+	tree=$(git write-tree) &&
+	commit=$(git commit-tree $tree </dev/null) &&
+	{
+		echo $tree &&
+		echo $commit &&
+		git ls-tree $tree | sed -e "s/.* \\([0-9a-f]*\\)	.*/\\1/"
+	} >obj-list &&
+	{
+		git diff-tree --root -p $commit &&
+		while read object
+		do
+			t=$(git cat-file -t $object) &&
+			git cat-file $t $object || return 1
+		done <obj-list
+	} >expect
+'
 
-test_expect_success \
-    'setup' \
-    'rm -f .git/index* &&
-     perl -e "print \"a\" x 4096;" > a &&
-     perl -e "print \"b\" x 4096;" > b &&
-     perl -e "print \"c\" x 4096;" > c &&
-     test-tool genrandom "seed a" 2097152 > a_big &&
-     test-tool genrandom "seed b" 2097152 > b_big &&
-     git update-index --add a a_big b b_big c &&
-     cat c >d && echo foo >>d && git update-index --add d &&
-     tree=$(git write-tree) &&
-     commit=$(git commit-tree $tree </dev/null) && {
-	 echo $tree &&
-	 echo $commit &&
-	 git ls-tree $tree | sed -e "s/.* \\([0-9a-f]*\\)	.*/\\1/"
-     } >obj-list && {
-	 git diff-tree --root -p $commit &&
-	 while read object
-	 do
-	    t=$(git cat-file -t $object) &&
-	    git cat-file $t $object || return 1
-	 done <obj-list
-     } >expect'
+test_expect_success 'setup pack-object <stdin' '
+	git init pack-object-stdin &&
+	test_commit -C pack-object-stdin one &&
+	test_commit -C pack-object-stdin two
 
-test_expect_success \
-    'pack without delta' \
-    'packname_1=$(git pack-objects --window=0 test-1 <obj-list)'
+'
 
-test_expect_success \
-    'pack-objects with bogus arguments' \
-    'test_must_fail git pack-objects --window=0 test-1 blah blah <obj-list'
+test_expect_success 'pack-object <stdin parsing: basic [|--revs]' '
+	cat >in <<-EOF &&
+	$(git -C pack-object-stdin rev-parse one)
+	EOF
 
-rm -fr .git2
-mkdir .git2
+	git -C pack-object-stdin pack-objects basic-stdin <in &&
+	idx=$(echo pack-object-stdin/basic-stdin-*.idx) &&
+	git show-index <"$idx" >actual &&
+	test_line_count = 1 actual &&
 
-test_expect_success \
-    'unpack without delta' \
-    "GIT_OBJECT_DIRECTORY=.git2/objects &&
-     export GIT_OBJECT_DIRECTORY &&
-     git init &&
-     git unpack-objects -n <test-1-${packname_1}.pack &&
-     git unpack-objects <test-1-${packname_1}.pack"
+	git -C pack-object-stdin pack-objects --revs basic-stdin-revs <in &&
+	idx=$(echo pack-object-stdin/basic-stdin-revs-*.idx) &&
+	git show-index <"$idx" >actual &&
+	test_line_count = 3 actual
+'
 
-unset GIT_OBJECT_DIRECTORY
-cd "$TRASH/.git2"
+test_expect_success 'pack-object <stdin parsing: [|--revs] bad line' '
+	cat >in <<-EOF &&
+	$(git -C pack-object-stdin rev-parse one)
+	garbage
+	$(git -C pack-object-stdin rev-parse two)
+	EOF
 
-test_expect_success \
-    'check unpack without delta' \
-    '(cd ../.git && find objects -type f -print) |
-     while read path
-     do
-         cmp $path ../.git/$path || {
-	     echo $path differs.
-	     return 1
-	 }
-     done'
-cd "$TRASH"
+	sed "s/^> //g" >err.expect <<-EOF &&
+	fatal: expected object ID, got garbage:
+	>  garbage
 
-test_expect_success \
-    'pack with REF_DELTA' \
-    'pwd &&
-     packname_2=$(git pack-objects test-2 <obj-list)'
+	EOF
+	test_must_fail git -C pack-object-stdin pack-objects bad-line-stdin <in 2>err.actual &&
+	test_cmp err.expect err.actual &&
 
-rm -fr .git2
-mkdir .git2
+	cat >err.expect <<-EOF &&
+	fatal: bad revision '"'"'garbage'"'"'
+	EOF
+	test_must_fail git -C pack-object-stdin pack-objects --revs bad-line-stdin-revs <in 2>err.actual &&
+	test_cmp err.expect err.actual
+'
 
-test_expect_success \
-    'unpack with REF_DELTA' \
-    'GIT_OBJECT_DIRECTORY=.git2/objects &&
-     export GIT_OBJECT_DIRECTORY &&
-     git init &&
-     git unpack-objects -n <test-2-${packname_2}.pack &&
-     git unpack-objects <test-2-${packname_2}.pack'
+test_expect_success 'pack-object <stdin parsing: [|--revs] empty line' '
+	cat >in <<-EOF &&
+	$(git -C pack-object-stdin rev-parse one)
 
-unset GIT_OBJECT_DIRECTORY
-cd "$TRASH/.git2"
-test_expect_success \
-    'check unpack with REF_DELTA' \
-    '(cd ../.git && find objects -type f -print) |
-     while read path
-     do
-         cmp $path ../.git/$path || {
-	     echo $path differs.
-	     return 1
-	 }
-     done'
-cd "$TRASH"
+	$(git -C pack-object-stdin rev-parse two)
+	EOF
 
-test_expect_success \
-    'pack with OFS_DELTA' \
-    'pwd &&
-     packname_3=$(git pack-objects --delta-base-offset test-3 <obj-list)'
+	sed -e "s/^> //g" -e "s/Z$//g" >err.expect <<-EOF &&
+	fatal: expected object ID, got garbage:
+	>  Z
 
-rm -fr .git2
-mkdir .git2
+	EOF
+	test_must_fail git -C pack-object-stdin pack-objects empty-line-stdin <in 2>err.actual &&
+	test_cmp err.expect err.actual &&
 
-test_expect_success \
-    'unpack with OFS_DELTA' \
-    'GIT_OBJECT_DIRECTORY=.git2/objects &&
-     export GIT_OBJECT_DIRECTORY &&
-     git init &&
-     git unpack-objects -n <test-3-${packname_3}.pack &&
-     git unpack-objects <test-3-${packname_3}.pack'
+	git -C pack-object-stdin pack-objects --revs empty-line-stdin-revs <in &&
+	idx=$(echo pack-object-stdin/empty-line-stdin-revs-*.idx) &&
+	git show-index <"$idx" >actual &&
+	test_line_count = 3 actual
+'
 
-unset GIT_OBJECT_DIRECTORY
-cd "$TRASH/.git2"
-test_expect_success \
-    'check unpack with OFS_DELTA' \
-    '(cd ../.git && find objects -type f -print) |
-     while read path
-     do
-         cmp $path ../.git/$path || {
-	     echo $path differs.
-	     return 1
-	 }
-     done'
-cd "$TRASH"
+test_expect_success 'pack-object <stdin parsing: [|--revs] with --stdin' '
+	cat >in <<-EOF &&
+	$(git -C pack-object-stdin rev-parse one)
+	$(git -C pack-object-stdin rev-parse two)
+	EOF
+
+	# There is the "--stdin-packs is incompatible with --revs"
+	# test below, but we should make sure that the revision.c
+	# --stdin is not picked up
+	cat >err.expect <<-EOF &&
+	fatal: disallowed abbreviated or ambiguous option '"'"'stdin'"'"'
+	EOF
+	test_must_fail git -C pack-object-stdin pack-objects stdin-with-stdin-option --stdin <in 2>err.actual &&
+	test_cmp err.expect err.actual &&
+
+	test_must_fail git -C pack-object-stdin pack-objects --stdin --revs stdin-with-stdin-option-revs 2>err.actual <in &&
+	test_cmp err.expect err.actual
+'
+
+test_expect_success 'pack-object <stdin parsing: --stdin-packs handles garbage' '
+	cat >in <<-EOF &&
+	$(git -C pack-object-stdin rev-parse one)
+	$(git -C pack-object-stdin rev-parse two)
+	EOF
+
+	# That we get "two" and not "one" has to do with OID
+	# ordering. It happens to be the same here under SHA-1 and
+	# SHA-256. See commentary in pack-objects.c
+	cat >err.expect <<-EOF &&
+	fatal: could not find pack '"'"'$(git -C pack-object-stdin rev-parse two)'"'"'
+	EOF
+	test_must_fail git \
+		-C pack-object-stdin \
+		pack-objects stdin-with-stdin-option --stdin-packs \
+		<in 2>err.actual &&
+	test_cmp err.expect err.actual
+'
+
+# usage: check_deltas <stderr_from_pack_objects> <cmp_op> <nr_deltas>
+# e.g.: check_deltas stderr -gt 0
+check_deltas() {
+	deltas=$(perl -lne '/delta (\d+)/ and print $1' "$1") &&
+	shift &&
+	if ! test "$deltas" "$@"
+	then
+		echo >&2 "unexpected number of deltas (compared $delta $*)"
+		return 1
+	fi
+}
+
+test_expect_success 'pack without delta' '
+	packname_1=$(git pack-objects --progress --window=0 test-1 \
+			<obj-list 2>stderr) &&
+	check_deltas stderr = 0
+'
+
+test_expect_success 'pack-objects with bogus arguments' '
+	test_must_fail git pack-objects --window=0 test-1 blah blah <obj-list
+'
+
+check_unpack () {
+	test_when_finished "rm -rf git2" &&
+	git init --bare git2 &&
+	git -C git2 unpack-objects -n <"$1".pack &&
+	git -C git2 unpack-objects <"$1".pack &&
+	(cd .git && find objects -type f -print) |
+	while read path
+	do
+		cmp git2/$path .git/$path || {
+			echo $path differs.
+			return 1
+		}
+	done
+}
+
+test_expect_success 'unpack without delta' '
+	check_unpack test-1-${packname_1}
+'
+
+test_expect_success 'pack with REF_DELTA' '
+	packname_2=$(git pack-objects --progress test-2 <obj-list 2>stderr) &&
+	check_deltas stderr -gt 0
+'
+
+test_expect_success 'unpack with REF_DELTA' '
+	check_unpack test-2-${packname_2}
+'
+
+test_expect_success 'pack with OFS_DELTA' '
+	packname_3=$(git pack-objects --progress --delta-base-offset test-3 \
+			<obj-list 2>stderr) &&
+	check_deltas stderr -gt 0
+'
+
+test_expect_success 'unpack with OFS_DELTA' '
+	check_unpack test-3-${packname_3}
+'
 
 test_expect_success 'compare delta flavors' '
 	perl -e '\''
@@ -135,55 +205,33 @@ test_expect_success 'compare delta flavors' '
 	'\'' test-2-$packname_2.pack test-3-$packname_3.pack
 '
 
-rm -fr .git2
-mkdir .git2
+check_use_objects () {
+	test_when_finished "rm -rf git2" &&
+	git init --bare git2 &&
+	cp "$1".pack "$1".idx git2/objects/pack &&
+	(
+		cd git2 &&
+		git diff-tree --root -p $commit &&
+		while read object
+		do
+			t=$(git cat-file -t $object) &&
+			git cat-file $t $object || exit 1
+		done
+	) <obj-list >current &&
+	cmp expect current
+}
 
-test_expect_success \
-    'use packed objects' \
-    'GIT_OBJECT_DIRECTORY=.git2/objects &&
-     export GIT_OBJECT_DIRECTORY &&
-     git init &&
-     cp test-1-${packname_1}.pack test-1-${packname_1}.idx .git2/objects/pack && {
-	 git diff-tree --root -p $commit &&
-	 while read object
-	 do
-	    t=$(git cat-file -t $object) &&
-	    git cat-file $t $object || return 1
-	 done <obj-list
-    } >current &&
-    cmp expect current'
+test_expect_success 'use packed objects' '
+	check_use_objects test-1-${packname_1}
+'
 
-test_expect_success \
-    'use packed deltified (REF_DELTA) objects' \
-    'GIT_OBJECT_DIRECTORY=.git2/objects &&
-     export GIT_OBJECT_DIRECTORY &&
-     rm -f .git2/objects/pack/test-* &&
-     cp test-2-${packname_2}.pack test-2-${packname_2}.idx .git2/objects/pack && {
-	 git diff-tree --root -p $commit &&
-	 while read object
-	 do
-	    t=$(git cat-file -t $object) &&
-	    git cat-file $t $object || return 1
-	 done <obj-list
-    } >current &&
-    cmp expect current'
+test_expect_success 'use packed deltified (REF_DELTA) objects' '
+	check_use_objects test-2-${packname_2}
+'
 
-test_expect_success \
-    'use packed deltified (OFS_DELTA) objects' \
-    'GIT_OBJECT_DIRECTORY=.git2/objects &&
-     export GIT_OBJECT_DIRECTORY &&
-     rm -f .git2/objects/pack/test-* &&
-     cp test-3-${packname_3}.pack test-3-${packname_3}.idx .git2/objects/pack && {
-	 git diff-tree --root -p $commit &&
-	 while read object
-	 do
-	    t=$(git cat-file -t $object) &&
-	    git cat-file $t $object || return 1
-	 done <obj-list
-    } >current &&
-    cmp expect current'
-
-unset GIT_OBJECT_DIRECTORY
+test_expect_success 'use packed deltified (OFS_DELTA) objects' '
+	check_use_objects test-3-${packname_3}
+'
 
 test_expect_success 'survive missing objects/pack directory' '
 	(
@@ -412,22 +460,23 @@ test_expect_success 'set up pack for non-repo tests' '
 '
 
 test_expect_success 'index-pack --stdin complains of non-repo' '
-	nongit test_must_fail git index-pack --stdin <foo.pack &&
+	nongit test_must_fail git index-pack --object-format=$(test_oid algo) --stdin <foo.pack &&
 	test_path_is_missing non-repo/.git
 '
 
 test_expect_success 'index-pack <pack> works in non-repo' '
-	nongit git index-pack ../foo.pack &&
+	nongit git index-pack --object-format=$(test_oid algo) ../foo.pack &&
 	test_path_is_file foo.idx
 '
 
 test_expect_success 'index-pack --strict <pack> works in non-repo' '
 	rm -f foo.idx &&
-	nongit git index-pack --strict ../foo.pack &&
+	nongit git index-pack --strict --object-format=$(test_oid algo) ../foo.pack &&
 	test_path_is_file foo.idx
 '
 
-test_expect_success !PTHREADS,C_LOCALE_OUTPUT 'index-pack --threads=N or pack.threads=N warns when no pthreads' '
+test_expect_success !PTHREADS,!FAIL_PREREQS \
+	'index-pack --threads=N or pack.threads=N warns when no pthreads' '
 	test_must_fail git index-pack --threads=2 2>err &&
 	grep ^warning: err >warnings &&
 	test_line_count = 1 warnings &&
@@ -445,7 +494,8 @@ test_expect_success !PTHREADS,C_LOCALE_OUTPUT 'index-pack --threads=N or pack.th
 	grep -F "no threads support, ignoring pack.threads" err
 '
 
-test_expect_success !PTHREADS,C_LOCALE_OUTPUT 'pack-objects --threads=N or pack.threads=N warns when no pthreads' '
+test_expect_success !PTHREADS,!FAIL_PREREQS \
+	'pack-objects --threads=N or pack.threads=N warns when no pthreads' '
 	git pack-objects --threads=2 --stdout --all </dev/null >/dev/null 2>err &&
 	grep ^warning: err >warnings &&
 	test_line_count = 1 warnings &&
@@ -494,6 +544,182 @@ test_expect_success 'make sure index-pack detects the SHA1 collision (large blob
 		test_must_fail git -c core.bigfilethreshold=1 index-pack -o ../bad.idx ../test-3.pack 2>msg &&
 		test_i18ngrep "SHA1 COLLISION FOUND" msg
 	)
+'
+
+test_expect_success 'prefetch objects' '
+	rm -rf server client &&
+
+	git init server &&
+	test_config -C server uploadpack.allowanysha1inwant 1 &&
+	test_config -C server uploadpack.allowfilter 1 &&
+	test_config -C server protocol.version 2 &&
+
+	echo one >server/one &&
+	git -C server add one &&
+	git -C server commit -m one &&
+	git -C server branch one_branch &&
+
+	echo two_a >server/two_a &&
+	echo two_b >server/two_b &&
+	git -C server add two_a two_b &&
+	git -C server commit -m two &&
+
+	echo three >server/three &&
+	git -C server add three &&
+	git -C server commit -m three &&
+	git -C server branch three_branch &&
+
+	# Clone, fetch "two" with blobs excluded, and re-push it. This requires
+	# the client to have the blobs of "two" - verify that these are
+	# prefetched in one batch.
+	git clone --filter=blob:none --single-branch -b one_branch \
+		"file://$(pwd)/server" client &&
+	test_config -C client protocol.version 2 &&
+	TWO=$(git -C server rev-parse three_branch^) &&
+	git -C client fetch --filter=blob:none origin "$TWO" &&
+	GIT_TRACE_PACKET=$(pwd)/trace git -C client push origin "$TWO":refs/heads/two_branch &&
+	grep "fetch> done" trace >donelines &&
+	test_line_count = 1 donelines
+'
+
+test_expect_success 'setup for --stdin-packs tests' '
+	git init stdin-packs &&
+	(
+		cd stdin-packs &&
+
+		test_commit A &&
+		test_commit B &&
+		test_commit C &&
+
+		for id in A B C
+		do
+			git pack-objects .git/objects/pack/pack-$id \
+				--incremental --revs <<-EOF
+			refs/tags/$id
+			EOF
+		done &&
+
+		ls -la .git/objects/pack
+	)
+'
+
+test_expect_success '--stdin-packs with excluded packs' '
+	(
+		cd stdin-packs &&
+
+		PACK_A="$(basename .git/objects/pack/pack-A-*.pack)" &&
+		PACK_B="$(basename .git/objects/pack/pack-B-*.pack)" &&
+		PACK_C="$(basename .git/objects/pack/pack-C-*.pack)" &&
+
+		git pack-objects test --stdin-packs <<-EOF &&
+		$PACK_A
+		^$PACK_B
+		$PACK_C
+		EOF
+
+		(
+			git show-index <$(ls .git/objects/pack/pack-A-*.idx) &&
+			git show-index <$(ls .git/objects/pack/pack-C-*.idx)
+		) >expect.raw &&
+		git show-index <$(ls test-*.idx) >actual.raw &&
+
+		cut -d" " -f2 <expect.raw | sort >expect &&
+		cut -d" " -f2 <actual.raw | sort >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success '--stdin-packs is incompatible with --filter' '
+	(
+		cd stdin-packs &&
+		test_must_fail git pack-objects --stdin-packs --stdout \
+			--filter=blob:none </dev/null 2>err &&
+		test_i18ngrep "cannot use --filter with --stdin-packs" err
+	)
+'
+
+test_expect_success '--stdin-packs is incompatible with --revs' '
+	(
+		cd stdin-packs &&
+		test_must_fail git pack-objects --stdin-packs --revs out \
+			</dev/null 2>err &&
+		test_i18ngrep "cannot use internal rev list with --stdin-packs" err
+	)
+'
+
+test_expect_success '--stdin-packs with loose objects' '
+	(
+		cd stdin-packs &&
+
+		PACK_A="$(basename .git/objects/pack/pack-A-*.pack)" &&
+		PACK_B="$(basename .git/objects/pack/pack-B-*.pack)" &&
+		PACK_C="$(basename .git/objects/pack/pack-C-*.pack)" &&
+
+		test_commit D && # loose
+
+		git pack-objects test2 --stdin-packs --unpacked <<-EOF &&
+		$PACK_A
+		^$PACK_B
+		$PACK_C
+		EOF
+
+		(
+			git show-index <$(ls .git/objects/pack/pack-A-*.idx) &&
+			git show-index <$(ls .git/objects/pack/pack-C-*.idx) &&
+			git rev-list --objects --no-object-names \
+				refs/tags/C..refs/tags/D
+
+		) >expect.raw &&
+		ls -la . &&
+		git show-index <$(ls test2-*.idx) >actual.raw &&
+
+		cut -d" " -f2 <expect.raw | sort >expect &&
+		cut -d" " -f2 <actual.raw | sort >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success '--stdin-packs with broken links' '
+	(
+		cd stdin-packs &&
+
+		# make an unreachable object with a bogus parent
+		git cat-file -p HEAD >commit &&
+		sed "s/$(git rev-parse HEAD^)/$(test_oid zero)/" <commit |
+		git hash-object -w -t commit --stdin >in &&
+
+		git pack-objects .git/objects/pack/pack-D <in &&
+
+		PACK_A="$(basename .git/objects/pack/pack-A-*.pack)" &&
+		PACK_B="$(basename .git/objects/pack/pack-B-*.pack)" &&
+		PACK_C="$(basename .git/objects/pack/pack-C-*.pack)" &&
+		PACK_D="$(basename .git/objects/pack/pack-D-*.pack)" &&
+
+		git pack-objects test3 --stdin-packs --unpacked <<-EOF &&
+		$PACK_A
+		^$PACK_B
+		$PACK_C
+		$PACK_D
+		EOF
+
+		(
+			git show-index <$(ls .git/objects/pack/pack-A-*.idx) &&
+			git show-index <$(ls .git/objects/pack/pack-C-*.idx) &&
+			git show-index <$(ls .git/objects/pack/pack-D-*.idx) &&
+			git rev-list --objects --no-object-names \
+				refs/tags/C..refs/tags/D
+		) >expect.raw &&
+		git show-index <$(ls test3-*.idx) >actual.raw &&
+
+		cut -d" " -f2 <expect.raw | sort >expect &&
+		cut -d" " -f2 <actual.raw | sort >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'negative window clamps to 0' '
+	git pack-objects --progress --window=-1 neg-window <obj-list 2>stderr &&
+	check_deltas stderr = 0
 '
 
 test_done

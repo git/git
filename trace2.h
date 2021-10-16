@@ -134,6 +134,16 @@ void trace2_cmd_path_fl(const char *file, int line, const char *pathname);
 #define trace2_cmd_path(p) trace2_cmd_path_fl(__FILE__, __LINE__, (p))
 
 /*
+ * Emit an 'ancestry' event with the process name of the current process's
+ * parent process.
+ * This gives post-processors a way to determine what invoked the command and
+ * learn more about usage patterns.
+ */
+void trace2_cmd_ancestry_fl(const char *file, int line, const char **parent_names);
+
+#define trace2_cmd_ancestry(v) trace2_cmd_ancestry_fl(__FILE__, __LINE__, (v))
+
+/*
  * Emit a 'cmd_name' event with the canonical name of the command.
  * This gives post-processors a simple field to identify the command
  * without having to parse the argv.
@@ -183,6 +193,19 @@ void trace2_cmd_list_config_fl(const char *file, int line);
 #define trace2_cmd_list_config() trace2_cmd_list_config_fl(__FILE__, __LINE__)
 
 /*
+ * Emit one or more 'def_param' events for "important" environment variables.
+ *
+ * Use the TR2_SYSENV_ENV_VARS setting to register a comma-separated list of
+ * environment variables considered important.  For example:
+ *     git config --system trace2.envVars 'GIT_HTTP_USER_AGENT,GIT_CONFIG'
+ * or:
+ *     GIT_TRACE2_ENV_VARS="GIT_HTTP_USER_AGENT,GIT_CONFIG"
+ */
+void trace2_cmd_list_env_vars_fl(const char *file, int line);
+
+#define trace2_cmd_list_env_vars() trace2_cmd_list_env_vars_fl(__FILE__, __LINE__)
+
+/*
  * Emit a "def_param" event for the given config key/value pair IF
  * we consider the key to be "important".
  *
@@ -229,6 +252,31 @@ void trace2_child_exit_fl(const char *file, int line, struct child_process *cmd,
 
 #define trace2_child_exit(cmd, code) \
 	trace2_child_exit_fl(__FILE__, __LINE__, (cmd), (code))
+
+/**
+ * Emits a "child_ready" message containing the "child-id" and a flag
+ * indicating whether the child was considered "ready" when we
+ * released it.
+ *
+ * This function should be called after starting a daemon process in
+ * the background (and after giving it sufficient time to boot
+ * up) to indicate that we no longer control or own it.
+ *
+ * The "ready" argument should contain one of { "ready", "timeout",
+ * "error" } to indicate the state of the running daemon when we
+ * released it.
+ *
+ * If the daemon process fails to start or it exits or is terminated
+ * while we are still waiting for it, the caller should emit a
+ * regular "child_exit" to report the normal process exit information.
+ *
+ */
+void trace2_child_ready_fl(const char *file, int line,
+			   struct child_process *cmd,
+			   const char *ready);
+
+#define trace2_child_ready(cmd, ready) \
+	trace2_child_ready_fl(__FILE__, __LINE__, (cmd), (ready))
 
 /**
  * Emit an 'exec' event prior to calling one of exec(), execv(),
@@ -327,7 +375,7 @@ void trace2_def_repo_fl(const char *file, int line, struct repository *repo);
  * being started, such as "read_recursive" or "do_read_index".
  *
  * The `repo` field, if set, will be used to get the "repo-id", so that
- * recursive oerations can be attributed to the correct repository.
+ * recursive operations can be attributed to the correct repository.
  */
 void trace2_region_enter_fl(const char *file, int line, const char *category,
 			    const char *label, const struct repository *repo, ...);
@@ -479,12 +527,8 @@ enum trace2_process_info_reason {
 	TRACE2_PROCESS_INFO_EXIT,
 };
 
-#if defined(GIT_WINDOWS_NATIVE)
 void trace2_collect_process_info(enum trace2_process_info_reason reason);
-#else
-#define trace2_collect_process_info(reason) \
-	do {                                \
-	} while (0)
-#endif
+
+const char *trace2_session_id(void);
 
 #endif /* TRACE2_H */

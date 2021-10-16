@@ -122,8 +122,8 @@ test_expect_success 'missing submodule alternate fails clone and submodule updat
 		# update of the submodule succeeds
 		test_must_fail git submodule update --init &&
 		# and we have no alternates:
-		test_must_fail test_alternate_is_used .git/modules/sub/objects/info/alternates sub &&
-		test_must_fail test_path_is_file sub/file1
+		test_path_is_missing .git/modules/sub/objects/info/alternates &&
+		test_path_is_missing sub/file1
 	)
 '
 
@@ -137,7 +137,7 @@ test_expect_success 'ignoring missing submodule alternates passes clone and subm
 		# update of the submodule succeeds
 		git submodule update --init &&
 		# and we have no alternates:
-		test_must_fail test_alternate_is_used .git/modules/sub/objects/info/alternates sub &&
+		test_path_is_missing .git/modules/sub/objects/info/alternates &&
 		test_path_is_file sub/file1
 	)
 '
@@ -182,7 +182,7 @@ check_that_two_of_three_alternates_are_used() {
 	# immediate submodule has alternate:
 	test_alternate_is_used .git/modules/subwithsub/objects/info/alternates subwithsub &&
 	# but nested submodule has no alternate:
-	test_must_fail test_alternate_is_used .git/modules/subwithsub/modules/sub/objects/info/alternates subwithsub/sub
+	test_path_is_missing .git/modules/subwithsub/modules/sub/objects/info/alternates
 }
 
 

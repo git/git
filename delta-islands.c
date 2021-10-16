@@ -17,7 +17,7 @@
 #include "pack-bitmap.h"
 #include "pack-objects.h"
 #include "delta-islands.h"
-#include "sha1-array.h"
+#include "oid-array.h"
 #include "config.h"
 
 KHASH_INIT(str, const char *, void *, 1, kh_str_hash_func, kh_str_hash_equal)

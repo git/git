@@ -112,6 +112,27 @@ test_expect_success 'move locked worktree (force)' '
 	git worktree move --force --force flump ploof
 '
 
+test_expect_success 'refuse to move worktree atop existing path' '
+	>bobble &&
+	git worktree add --detach beeble &&
+	test_must_fail git worktree move beeble bobble
+'
+
+test_expect_success 'move atop existing but missing worktree' '
+	git worktree add --detach gnoo &&
+	git worktree add --detach pneu &&
+	rm -fr pneu &&
+	test_must_fail git worktree move gnoo pneu &&
+	git worktree move --force gnoo pneu &&
+
+	git worktree add --detach nu &&
+	git worktree lock nu &&
+	rm -fr nu &&
+	test_must_fail git worktree move pneu nu &&
+	test_must_fail git worktree --force move pneu nu &&
+	git worktree move --force --force pneu nu
+'
+
 test_expect_success 'move a repo with uninitialized submodule' '
 	git init withsub &&
 	(

@@ -37,7 +37,7 @@ static const char **get_store(const char **argv, struct ref_store **refs)
 
 		*refs = get_submodule_ref_store(gitdir);
 	} else if (skip_prefix(argv[0], "worktree:", &gitdir)) {
-		struct worktree **p, **worktrees = get_worktrees(0);
+		struct worktree **p, **worktrees = get_worktrees();
 
 		for (p = worktrees; *p; p++) {
 			struct worktree *wt = *p;
@@ -70,18 +70,6 @@ static int cmd_pack_refs(struct ref_store *refs, const char **argv)
 	unsigned int flags = arg_flags(*argv++, "flags");
 
 	return refs_pack_refs(refs, flags);
-}
-
-static int cmd_peel_ref(struct ref_store *refs, const char **argv)
-{
-	const char *refname = notnull(*argv++, "refname");
-	struct object_id oid;
-	int ret;
-
-	ret = refs_peel_ref(refs, refname, &oid);
-	if (!ret)
-		puts(oid_to_hex(&oid));
-	return ret;
 }
 
 static int cmd_create_symref(struct ref_store *refs, const char **argv)
@@ -130,7 +118,7 @@ static int cmd_for_each_ref(struct ref_store *refs, const char **argv)
 
 static int cmd_resolve_ref(struct ref_store *refs, const char **argv)
 {
-	struct object_id oid;
+	struct object_id oid = *null_oid();
 	const char *refname = notnull(*argv++, "refname");
 	int resolve_flags = arg_flags(*argv++, "resolve-flags");
 	int flags;
@@ -255,7 +243,6 @@ struct command {
 
 static struct command commands[] = {
 	{ "pack-refs", cmd_pack_refs },
-	{ "peel-ref", cmd_peel_ref },
 	{ "create-symref", cmd_create_symref },
 	{ "delete-refs", cmd_delete_refs },
 	{ "rename-ref", cmd_rename_ref },

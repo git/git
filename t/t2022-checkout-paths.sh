@@ -1,19 +1,22 @@
 #!/bin/sh
 
 test_description='checkout $tree -- $paths'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success setup '
 	mkdir dir &&
-	>dir/master &&
+	>dir/main &&
 	echo common >dir/common &&
-	git add dir/master dir/common &&
-	test_tick && git commit -m "master has dir/master" &&
+	git add dir/main dir/common &&
+	test_tick && git commit -m "main has dir/main" &&
 	git checkout -b next &&
-	git mv dir/master dir/next0 &&
+	git mv dir/main dir/next0 &&
 	echo next >dir/next1 &&
 	git add dir &&
-	test_tick && git commit -m "next has dir/next but not dir/master"
+	test_tick && git commit -m "next has dir/next but not dir/main"
 '
 
 test_expect_success 'checking out paths out of a tree does not clobber unrelated paths' '
@@ -26,11 +29,11 @@ test_expect_success 'checking out paths out of a tree does not clobber unrelated
 	echo untracked >expect.next2 &&
 	cat expect.next2 >dir/next2 &&
 
-	git checkout master dir &&
+	git checkout main dir &&
 
 	test_cmp expect.common dir/common &&
-	test_path_is_file dir/master &&
-	git diff --exit-code master dir/master &&
+	test_path_is_file dir/main &&
+	git diff --exit-code main dir/main &&
 
 	test_path_is_missing dir/next0 &&
 	test_cmp expect.next1 dir/next1 &&
@@ -52,11 +55,11 @@ test_expect_success 'do not touch unmerged entries matching $path but not in $tr
 	EOF
 	git update-index --index-info <expect.next0 &&
 
-	git checkout master dir &&
+	git checkout main dir &&
 
 	test_cmp expect.common dir/common &&
-	test_path_is_file dir/master &&
-	git diff --exit-code master dir/master &&
+	test_path_is_file dir/main &&
+	git diff --exit-code main dir/main &&
 	git ls-files -s dir/next0 >actual.next0 &&
 	test_cmp expect.next0 actual.next0
 '

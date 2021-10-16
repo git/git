@@ -4,6 +4,9 @@
 #
 
 test_description='git rebase --autostash tests'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success setup '
@@ -21,12 +24,12 @@ test_expect_success setup '
 	git add . &&
 	test_tick &&
 	git commit -m "third commit" &&
-	git checkout -b unrelated-onto-branch master &&
+	git checkout -b unrelated-onto-branch main &&
 	echo unrelated >file4 &&
 	git add . &&
 	test_tick &&
 	git commit -m "unrelated commit" &&
-	git checkout -b related-onto-branch master &&
+	git checkout -b related-onto-branch main &&
 	echo conflicting-change >file2 &&
 	git add . &&
 	test_tick &&
@@ -107,7 +110,7 @@ testrebase () {
 		fi &&
 		create_expected_success_$suffix &&
 		sed "$remove_progress_re" <actual >actual2 &&
-		test_i18ncmp expected actual2
+		test_cmp expected actual2
 	'
 
 	test_expect_success "rebase$type: dirty index, non-conflicting rebase" '
@@ -184,6 +187,26 @@ testrebase () {
 		git checkout feature-branch
 	'
 
+	test_expect_success "rebase$type: --quit" '
+		test_config rebase.autostash true &&
+		git reset --hard &&
+		git checkout -b rebased-feature-branch feature-branch &&
+		test_when_finished git branch -D rebased-feature-branch &&
+		echo dirty >>file3 &&
+		git diff >expect &&
+		test_must_fail git rebase$type related-onto-branch &&
+		test_path_is_file $dotest/autostash &&
+		test_path_is_missing file3 &&
+		git rebase --quit &&
+		test_when_finished git stash drop &&
+		test_path_is_missing $dotest/autostash &&
+		! grep dirty file3 &&
+		git stash show -p >actual &&
+		test_cmp expect actual &&
+		git reset --hard &&
+		git checkout feature-branch
+	'
+
 	test_expect_success "rebase$type: non-conflicting rebase, conflicting stash" '
 		test_config rebase.autostash true &&
 		git reset --hard &&
@@ -208,7 +231,7 @@ testrebase () {
 		fi &&
 		create_expected_failure_$suffix &&
 		sed "$remove_progress_re" <actual >actual2 &&
-		test_i18ncmp expected actual2
+		test_cmp expected actual2
 	'
 }
 
@@ -285,7 +308,7 @@ test_expect_success 'autostash is saved on editor failure with conflict' '
 '
 
 test_expect_success 'autostash with dirty submodules' '
-	test_when_finished "git reset --hard && git checkout master" &&
+	test_when_finished "git reset --hard && git checkout main" &&
 	git checkout -b with-submodule &&
 	git submodule add ./ sub &&
 	test_tick &&
@@ -304,7 +327,7 @@ test_expect_success 'branch is left alone when possible' '
 
 test_expect_success 'never change active branch' '
 	git checkout -b not-the-feature-branch unrelated-onto-branch &&
-	test_when_finished "git reset --hard && git checkout master" &&
+	test_when_finished "git reset --hard && git checkout main" &&
 	echo changed >file0 &&
 	git rebase --autostash not-the-feature-branch feature-branch &&
 	test_cmp_rev not-the-feature-branch unrelated-onto-branch

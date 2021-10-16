@@ -2,17 +2,30 @@
 #define COMMIT_GRAPH_H
 
 #include "git-compat-util.h"
-#include "repository.h"
-#include "string-list.h"
-#include "cache.h"
 #include "object-store.h"
+#include "oidset.h"
 
 #define GIT_TEST_COMMIT_GRAPH "GIT_TEST_COMMIT_GRAPH"
-#define GIT_TEST_COMMIT_GRAPH_DIE_ON_LOAD "GIT_TEST_COMMIT_GRAPH_DIE_ON_LOAD"
+#define GIT_TEST_COMMIT_GRAPH_DIE_ON_PARSE "GIT_TEST_COMMIT_GRAPH_DIE_ON_PARSE"
+#define GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS "GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS"
+
+/*
+ * This method is only used to enhance coverage of the commit-graph
+ * feature in the test suite with the GIT_TEST_COMMIT_GRAPH and
+ * GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS environment variables. Do not
+ * call this method oustide of a builtin, and only if you know what
+ * you are doing!
+ */
+void git_test_write_commit_graph_or_die(void);
 
 struct commit;
+struct bloom_filter_settings;
+struct repository;
+struct raw_object_store;
+struct string_list;
 
 char *get_commit_graph_filename(struct object_directory *odb);
+char *get_commit_graph_chain_filename(struct object_directory *odb);
 int open_commit_graph(const char *graph_file, int *fd, struct stat *st);
 
 /*
@@ -28,6 +41,14 @@ int open_commit_graph(const char *graph_file, int *fd, struct stat *st);
 int parse_commit_in_graph(struct repository *r, struct commit *item);
 
 /*
+ * Look up the given commit ID in the commit-graph. This will only return a
+ * commit if the ID exists both in the graph and in the object database such
+ * that we don't return commits whose object has been pruned. Otherwise, this
+ * function returns `NULL`.
+ */
+struct commit *lookup_commit_in_graph(struct repository *repo, const struct object_id *id);
+
+/*
  * It is possible that we loaded commit contents from the commit buffer,
  * but we also want to ensure the commit-graph content is correctly
  * checked and filled. Fill the graph_pos and generation members of
@@ -39,8 +60,6 @@ struct tree *get_commit_tree_in_graph(struct repository *r,
 				      const struct commit *c);
 
 struct commit_graph {
-	int graph_fd;
-
 	const unsigned char *data;
 	size_t data_len;
 
@@ -52,21 +71,30 @@ struct commit_graph {
 	struct object_directory *odb;
 
 	uint32_t num_commits_in_base;
+	unsigned int read_generation_data;
 	struct commit_graph *base_graph;
 
 	const uint32_t *chunk_oid_fanout;
 	const unsigned char *chunk_oid_lookup;
 	const unsigned char *chunk_commit_data;
+	const unsigned char *chunk_generation_data;
+	const unsigned char *chunk_generation_data_overflow;
 	const unsigned char *chunk_extra_edges;
 	const unsigned char *chunk_base_graphs;
+	const unsigned char *chunk_bloom_indexes;
+	const unsigned char *chunk_bloom_data;
+
+	struct topo_level_slab *topo_levels;
+	struct bloom_filter_settings *bloom_filter_settings;
 };
 
-struct commit_graph *load_commit_graph_one_fd_st(int fd, struct stat *st,
+struct commit_graph *load_commit_graph_one_fd_st(struct repository *r,
+						 int fd, struct stat *st,
 						 struct object_directory *odb);
 struct commit_graph *read_commit_graph_one(struct repository *r,
 					   struct object_directory *odb);
-struct commit_graph *parse_commit_graph(void *graph_map, int fd,
-					size_t graph_size);
+struct commit_graph *parse_commit_graph(struct repository *r,
+					void *graph_map, size_t graph_size);
 
 /*
  * Return 1 if and only if the repository has a commit-graph
@@ -74,18 +102,34 @@ struct commit_graph *parse_commit_graph(void *graph_map, int fd,
  */
 int generation_numbers_enabled(struct repository *r);
 
+/*
+ * Return 1 if and only if the repository has a commit-graph
+ * file and generation data chunk has been written for the file.
+ */
+int corrected_commit_dates_enabled(struct repository *r);
+
+struct bloom_filter_settings *get_bloom_filter_settings(struct repository *r);
+
 enum commit_graph_write_flags {
 	COMMIT_GRAPH_WRITE_APPEND     = (1 << 0),
 	COMMIT_GRAPH_WRITE_PROGRESS   = (1 << 1),
 	COMMIT_GRAPH_WRITE_SPLIT      = (1 << 2),
-	/* Make sure that each OID in the input is a valid commit OID. */
-	COMMIT_GRAPH_WRITE_CHECK_OIDS = (1 << 3)
+	COMMIT_GRAPH_WRITE_BLOOM_FILTERS = (1 << 3),
+	COMMIT_GRAPH_NO_WRITE_BLOOM_FILTERS = (1 << 4),
 };
 
-struct split_commit_graph_opts {
+enum commit_graph_split_flags {
+	COMMIT_GRAPH_SPLIT_UNSPECIFIED      = 0,
+	COMMIT_GRAPH_SPLIT_MERGE_PROHIBITED = 1,
+	COMMIT_GRAPH_SPLIT_REPLACE          = 2
+};
+
+struct commit_graph_opts {
 	int size_multiple;
 	int max_commits;
 	timestamp_t expire_time;
+	enum commit_graph_split_flags split_flags;
+	int max_new_filters;
 };
 
 /*
@@ -96,12 +140,12 @@ struct split_commit_graph_opts {
  */
 int write_commit_graph_reachable(struct object_directory *odb,
 				 enum commit_graph_write_flags flags,
-				 const struct split_commit_graph_opts *split_opts);
+				 const struct commit_graph_opts *opts);
 int write_commit_graph(struct object_directory *odb,
 		       struct string_list *pack_indexes,
-		       struct string_list *commit_hex,
+		       struct oidset *commits,
 		       enum commit_graph_write_flags flags,
-		       const struct split_commit_graph_opts *split_opts);
+		       const struct commit_graph_opts *opts);
 
 #define COMMIT_GRAPH_VERIFY_SHALLOW	(1 << 0)
 
@@ -116,4 +160,14 @@ void free_commit_graph(struct commit_graph *);
  */
 void disable_commit_graph(struct repository *r);
 
+struct commit_graph_data {
+	uint32_t graph_pos;
+	timestamp_t generation;
+};
+
+/*
+ * Commits should be parsed before accessing generation, graph positions.
+ */
+timestamp_t commit_graph_generation(const struct commit *);
+uint32_t commit_graph_position(const struct commit *);
 #endif

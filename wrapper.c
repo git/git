@@ -105,14 +105,25 @@ char *xstrndup(const char *str, size_t len)
 	return xmemdupz(str, p ? p - str : len);
 }
 
+int xstrncmpz(const char *s, const char *t, size_t len)
+{
+	int res = strncmp(s, t, len);
+	if (res)
+		return res;
+	return s[len] == '\0' ? 0 : 1;
+}
+
 void *xrealloc(void *ptr, size_t size)
 {
 	void *ret;
 
+	if (!size) {
+		free(ptr);
+		return xmalloc(0);
+	}
+
 	memory_limit_check(size, 0);
 	ret = realloc(ptr, size);
-	if (!ret && !size)
-		ret = realloc(ptr, 1);
 	if (!ret)
 		die("Out of memory, realloc failed");
 	return ret;
@@ -132,6 +143,18 @@ void *xcalloc(size_t nmemb, size_t size)
 	if (!ret)
 		die("Out of memory, calloc failed");
 	return ret;
+}
+
+void xsetenv(const char *name, const char *value, int overwrite)
+{
+	if (setenv(name, value, overwrite))
+		die_errno(_("could not setenv '%s'"), name ? name : "(null)");
+}
+
+void xunsetenv(const char *name)
+{
+	if (!unsetenv(name))
+		die_errno(_("could not unsetenv '%s'"), name ? name : "(null)");
 }
 
 /*
@@ -182,7 +205,9 @@ int xopen(const char *path, int oflag, ...)
 		if (errno == EINTR)
 			continue;
 
-		if ((oflag & O_RDWR) == O_RDWR)
+		if ((oflag & (O_CREAT | O_EXCL)) == (O_CREAT | O_EXCL))
+			die_errno(_("unable to create '%s'"), path);
+		else if ((oflag & O_RDWR) == O_RDWR)
 			die_errno(_("could not open '%s' for reading and writing"), path);
 		else if ((oflag & O_WRONLY) == O_WRONLY)
 			die_errno(_("could not open '%s' for writing"), path);
@@ -218,7 +243,7 @@ ssize_t xread(int fd, void *buf, size_t len)
 {
 	ssize_t nr;
 	if (len > MAX_IO_SIZE)
-	    len = MAX_IO_SIZE;
+		len = MAX_IO_SIZE;
 	while (1) {
 		nr = read(fd, buf, len);
 		if (nr < 0) {
@@ -240,7 +265,7 @@ ssize_t xwrite(int fd, const void *buf, size_t len)
 {
 	ssize_t nr;
 	if (len > MAX_IO_SIZE)
-	    len = MAX_IO_SIZE;
+		len = MAX_IO_SIZE;
 	while (1) {
 		nr = write(fd, buf, len);
 		if (nr < 0) {
@@ -666,4 +691,20 @@ int is_empty_or_missing_file(const char *filename)
 	}
 
 	return !st.st_size;
+}
+
+int open_nofollow(const char *path, int flags)
+{
+#ifdef O_NOFOLLOW
+	return open(path, flags | O_NOFOLLOW);
+#else
+	struct stat st;
+	if (lstat(path, &st) < 0)
+		return -1;
+	if (S_ISLNK(st.st_mode)) {
+		errno = ELOOP;
+		return -1;
+	}
+	return open(path, flags);
+#endif
 }

@@ -8,13 +8,16 @@ help.format::
 	the default. 'web' and 'html' are the same.
 
 help.autoCorrect::
-	Automatically correct and execute mistyped commands after
-	waiting for the given number of deciseconds (0.1 sec). If more
-	than one command can be deduced from the entered text, nothing
-	will be executed.  If the value of this option is negative,
-	the corrected command will be executed immediately. If the
-	value is 0 - the command will be just shown but not executed.
-	This is the default.
+	If git detects typos and can identify exactly one valid command similar
+	to the error, git will try to suggest the correct command or even
+	run the suggestion automatically. Possible config values are:
+	 - 0 (default): show the suggested command.
+	 - positive number: run the suggested command after specified
+deciseconds (0.1 sec).
+	 - "immediate": run the suggested command immediately.
+	 - "prompt": show the suggestion and prompt for confirmation to run
+the command.
+	 - "never": don't run or show any suggested command.
 
 help.htmlPath::
 	Specify the path where the HTML documentation resides. File system paths

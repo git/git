@@ -492,14 +492,12 @@ then
 		sha1=$(git rev-parse "$ref"^0)
 		test -f "$workdir"/../map/$sha1 && continue
 		ancestor=$(git rev-list --simplify-merges -1 "$ref" "$@")
-		test "$ancestor" && echo $(map $ancestor) >> "$workdir"/../map/$sha1
+		test "$ancestor" && echo $(map $ancestor) >"$workdir"/../map/$sha1
 	done < "$tempdir"/heads
 fi
 
 # Finally update the refs
 
-_x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
-_x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
 echo
 while read ref
 do
@@ -519,7 +517,7 @@ do
 		git update-ref -m "filter-branch: delete" -d "$ref" $sha1 ||
 			die "Could not delete $ref"
 	;;
-	$_x40)
+	*)
 		echo "Ref '$ref' was rewritten"
 		if ! git update-ref -m "filter-branch: rewrite" \
 					"$ref" $rewritten $sha1 2>/dev/null; then
@@ -532,16 +530,6 @@ do
 				die "Could not rewrite $ref"
 			fi
 		fi
-	;;
-	*)
-		# NEEDSWORK: possibly add -Werror, making this an error
-		warn "WARNING: '$ref' was rewritten into multiple commits:"
-		warn "$rewritten"
-		warn "WARNING: Ref '$ref' points to the first one now."
-		rewritten=$(echo "$rewritten" | head -n 1)
-		git update-ref -m "filter-branch: rewrite to first" \
-				"$ref" $rewritten $sha1 ||
-			die "Could not rewrite $ref"
 	;;
 	esac
 	git update-ref -m "filter-branch: backup" "$orig_namespace$ref" $sha1 ||

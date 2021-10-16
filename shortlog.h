@@ -15,9 +15,14 @@ struct shortlog {
 	int in2;
 	int user_format;
 	int abbrev;
-	int committer;
 
-	char *common_repo_prefix;
+	enum {
+		SHORTLOG_GROUP_AUTHOR = (1 << 0),
+		SHORTLOG_GROUP_COMMITTER = (1 << 1),
+		SHORTLOG_GROUP_TRAILER = (1 << 2),
+	} groups;
+	struct string_list trailers;
+
 	int email;
 	struct string_list mailmap;
 	FILE *file;

@@ -456,6 +456,7 @@ A rescan will be automatically started now.
 	}
 
 	$ui_comm delete 0.0 end
+	load_message [get_config commit.template]
 	$ui_comm edit reset
 	$ui_comm edit modified false
 	if {$::GITGUI_BCK_exists} {

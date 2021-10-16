@@ -19,11 +19,10 @@ static void test_parse_commit_in_graph(const char *gitdir, const char *worktree,
 
 	memset(the_repository, 0, sizeof(*the_repository));
 
-	/* TODO: Needed for temporary hack in hashcmp, see 183a638b7da. */
-	repo_set_hash_algo(the_repository, GIT_HASH_SHA1);
-
 	if (repo_init(&r, gitdir, worktree))
 		die("Couldn't init repo");
+
+	repo_set_hash_algo(the_repository, hash_algo_by_ptr(r.hash_algo));
 
 	c = lookup_commit(&r, commit_oid);
 
@@ -50,11 +49,10 @@ static void test_get_commit_tree_in_graph(const char *gitdir,
 
 	memset(the_repository, 0, sizeof(*the_repository));
 
-	/* TODO: Needed for temporary hack in hashcmp, see 183a638b7da. */
-	repo_set_hash_algo(the_repository, GIT_HASH_SHA1);
-
 	if (repo_init(&r, gitdir, worktree))
 		die("Couldn't init repo");
+
+	repo_set_hash_algo(the_repository, hash_algo_by_ptr(r.hash_algo));
 
 	c = lookup_commit(&r, commit_oid);
 
@@ -75,6 +73,10 @@ static void test_get_commit_tree_in_graph(const char *gitdir,
 
 int cmd__repository(int argc, const char **argv)
 {
+	int nongit_ok = 0;
+
+	setup_git_directory_gently(&nongit_ok);
+
 	if (argc < 2)
 		die("must have at least 2 arguments");
 	if (!strcmp(argv[1], "parse_commit_in_graph")) {

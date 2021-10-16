@@ -14,7 +14,7 @@ struct tracking_name_data {
 	struct object_id *default_dst_oid;
 };
 
-#define TRACKING_NAME_DATA_INIT { NULL, NULL, NULL, 0, NULL, NULL, NULL }
+#define TRACKING_NAME_DATA_INIT { 0 }
 
 static int check_tracking_name(struct remote *remote, void *cb_data)
 {
@@ -47,7 +47,7 @@ const char *unique_tracking_name(const char *name, struct object_id *oid,
 {
 	struct tracking_name_data cb_data = TRACKING_NAME_DATA_INIT;
 	const char *default_remote = NULL;
-	if (!git_config_get_string_const("checkout.defaultremote", &default_remote))
+	if (!git_config_get_string_tmp("checkout.defaultremote", &default_remote))
 		cb_data.default_remote = default_remote;
 	cb_data.src_ref = xstrfmt("refs/heads/%s", name);
 	cb_data.dst_oid = oid;
@@ -55,7 +55,6 @@ const char *unique_tracking_name(const char *name, struct object_id *oid,
 	if (dwim_remotes_matched)
 		*dwim_remotes_matched = cb_data.num_matches;
 	free(cb_data.src_ref);
-	free((char *)default_remote);
 	if (cb_data.num_matches == 1) {
 		free(cb_data.default_dst_ref);
 		free(cb_data.default_dst_oid);

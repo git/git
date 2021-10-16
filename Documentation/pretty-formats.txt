@@ -83,6 +83,12 @@ placeholders, its output is not affected by other options like
 
 	  <full commit message>
 
+* 'mboxrd'
++
+Like 'email', but lines in the commit message starting with "From "
+(preceded by zero or more ">") are quoted with ">" so they aren't
+confused as starting a new commit.
+
 * 'raw'
 +
 The 'raw' format shows the entire commit exactly as
@@ -184,14 +190,16 @@ The placeholders are:
 '%ai':: author date, ISO 8601-like format
 '%aI':: author date, strict ISO 8601 format
 '%as':: author date, short format (`YYYY-MM-DD`)
+'%ah':: author date, human style (like the `--date=human` option of
+	linkgit:git-rev-list[1])
 '%cn':: committer name
 '%cN':: committer name (respecting .mailmap, see
 	linkgit:git-shortlog[1] or linkgit:git-blame[1])
 '%ce':: committer email
 '%cE':: committer email (respecting .mailmap, see
 	linkgit:git-shortlog[1] or linkgit:git-blame[1])
-'%cl':: author email local-part (the part before the '@' sign)
-'%cL':: author local-part (see '%cl') respecting .mailmap, see
+'%cl':: committer email local-part (the part before the '@' sign)
+'%cL':: committer local-part (see '%cl') respecting .mailmap, see
 	linkgit:git-shortlog[1] or linkgit:git-blame[1])
 '%cd':: committer date (format respects --date= option)
 '%cD':: committer date, RFC2822 style
@@ -200,8 +208,23 @@ The placeholders are:
 '%ci':: committer date, ISO 8601-like format
 '%cI':: committer date, strict ISO 8601 format
 '%cs':: committer date, short format (`YYYY-MM-DD`)
+'%ch':: committer date, human style (like the `--date=human` option of
+	linkgit:git-rev-list[1])
 '%d':: ref names, like the --decorate option of linkgit:git-log[1]
 '%D':: ref names without the " (", ")" wrapping.
+'%(describe[:options])':: human-readable name, like
+			  linkgit:git-describe[1]; empty string for
+			  undescribable commits.  The `describe` string
+			  may be followed by a colon and zero or more
+			  comma-separated options.  Descriptions can be
+			  inconsistent when tags are added or removed at
+			  the same time.
++
+** 'match=<pattern>': Only consider tags matching the given
+   `glob(7)` pattern, excluding the "refs/tags/" prefix.
+** 'exclude=<pattern>': Do not consider tags matching the given
+   `glob(7)` pattern, excluding the "refs/tags/" prefix.
+
 '%S':: ref name given on the command line by which the commit was reached
        (like `git log --source`), only works with `git log`
 '%e':: encoding
@@ -246,7 +269,15 @@ endif::git-rev-list[]
 			  interpreted by
 			  linkgit:git-interpret-trailers[1]. The
 			  `trailers` string may be followed by a colon
-			  and zero or more comma-separated options:
+			  and zero or more comma-separated options.
+			  If any option is provided multiple times the
+			  last occurrence wins.
++
+The boolean options accept an optional value `[=<BOOL>]`. The values
+`true`, `false`, `on`, `off` etc. are all accepted. See the "boolean"
+sub-section in "EXAMPLES" in linkgit:git-config[1]. If a boolean
+option is given with no value, it's enabled.
++
 ** 'key=<K>': only show trailers with specified key. Matching is done
    case-insensitively and trailing colon is optional. If option is
    given multiple times trailer lines matching any of the keys are
@@ -255,27 +286,25 @@ endif::git-rev-list[]
    desired it can be disabled with `only=false`.  E.g.,
    `%(trailers:key=Reviewed-by)` shows trailer lines with key
    `Reviewed-by`.
-** 'only[=val]': select whether non-trailer lines from the trailer
-   block should be included. The `only` keyword may optionally be
-   followed by an equal sign and one of `true`, `on`, `yes` to omit or
-   `false`, `off`, `no` to show the non-trailer lines. If option is
-   given without value it is enabled. If given multiple times the last
-   value is used.
+** 'only[=<BOOL>]': select whether non-trailer lines from the trailer
+   block should be included.
 ** 'separator=<SEP>': specify a separator inserted between trailer
    lines. When this option is not given each trailer line is
    terminated with a line feed character. The string SEP may contain
    the literal formatting codes described above. To use comma as
    separator one must use `%x2C` as it would otherwise be parsed as
-   next option. If separator option is given multiple times only the
-   last one is used. E.g., `%(trailers:key=Ticket,separator=%x2C )`
+   next option. E.g., `%(trailers:key=Ticket,separator=%x2C )`
    shows all trailer lines whose key is "Ticket" separated by a comma
    and a space.
-** 'unfold[=val]': make it behave as if interpret-trailer's `--unfold`
-   option was given. In same way as to for `only` it can be followed
-   by an equal sign and explicit value. E.g.,
+** 'unfold[=<BOOL>]': make it behave as if interpret-trailer's `--unfold`
+   option was given. E.g.,
    `%(trailers:only,unfold=true)` unfolds and shows all trailer lines.
-** 'valueonly[=val]': skip over the key part of the trailer line and only
-   show the value part. Also this optionally allows explicit value.
+** 'keyonly[=<BOOL>]': only show the key part of the trailer.
+** 'valueonly[=<BOOL>]': only show the value part of the trailer.
+** 'key_value_separator=<SEP>': specify a separator inserted between
+   trailer lines. When this option is not given each trailer key-value
+   pair is separated by ": ". Otherwise it shares the same semantics
+   as 'separator=<SEP>' above.
 
 NOTE: Some placeholders may depend on other options given to the
 revision traversal engine. For example, the `%g*` reflog options will

@@ -14,7 +14,7 @@ SYNOPSIS
 	[--local] [--incremental] [--window=<n>] [--depth=<n>]
 	[--revs [--unpacked | --all]] [--keep-pack=<pack-name>]
 	[--stdout [--filter=<filter-spec>] | base-name]
-	[--shallow] [--keep-true-parents] [--sparse] < object-list
+	[--shallow] [--keep-true-parents] [--[no-]sparse] < object-list
 
 
 DESCRIPTION
@@ -85,6 +85,16 @@ base-name::
 	reference was included in the resulting packfile.  This
 	can be useful to send new tags to native Git clients.
 
+--stdin-packs::
+	Read the basenames of packfiles (e.g., `pack-1234abcd.pack`)
+	from the standard input, instead of object names or revision
+	arguments. The resulting pack contains all objects listed in the
+	included packs (those not beginning with `^`), excluding any
+	objects listed in the excluded packs (beginning with `^`).
++
+Incompatible with `--revs`, or options that imply `--revs` (such as
+`--all`), with the exception of `--unpacked`, which is compatible.
+
 --window=<n>::
 --depth=<n>::
 	These two options affect how the objects contained in
@@ -118,10 +128,10 @@ depth is 4095.
 	into multiple independent packfiles, each not larger than the
 	given size. The size can be suffixed with
 	"k", "m", or "g". The minimum size allowed is limited to 1 MiB.
-	This option
-	prevents the creation of a bitmap index.
 	The default is unlimited, unless the config variable
-	`pack.packSizeLimit` is set.
+	`pack.packSizeLimit` is set. Note that this option may result in
+	a larger and slower repository; see the discussion in
+	`pack.packSizeLimit`.
 
 --honor-pack-keep::
 	This flag causes an object already in a local pack that
@@ -196,14 +206,16 @@ depth is 4095.
 	Add --no-reuse-object if you want to force a uniform compression
 	level on all data no matter the source.
 
---sparse::
-	Use the "sparse" algorithm to determine which objects to include in
+--[no-]sparse::
+	Toggle the "sparse" algorithm to determine which objects to include in
 	the pack, when combined with the "--revs" option. This algorithm
 	only walks trees that appear in paths that introduce new objects.
 	This can have significant performance benefits when computing
 	a pack to send a small change. However, it is possible that extra
 	objects are added to the pack-file if the included commits contain
-	certain types of direct renames.
+	certain types of direct renames. If this option is not included,
+	it defaults to the value of `pack.useSparse`, which is true unless
+	otherwise specified.
 
 --thin::
 	Create a "thin" pack by omitting the common objects between a
@@ -268,15 +280,18 @@ So does `git bundle` (see linkgit:git-bundle[1]) when it creates a bundle.
 	This option specifies how missing objects are handled.
 +
 The form '--missing=error' requests that pack-objects stop with an error if
-a missing object is encountered.  This is the default action.
+a missing object is encountered.  If the repository is a partial clone, an
+attempt to fetch missing objects will be made before declaring them missing.
+This is the default action.
 +
 The form '--missing=allow-any' will allow object traversal to continue
-if a missing object is encountered.  Missing objects will silently be
-omitted from the results.
+if a missing object is encountered.  No fetch of a missing object will occur.
+Missing objects will silently be omitted from the results.
 +
 The form '--missing=allow-promisor' is like 'allow-any', but will only
 allow object traversal to continue for EXPECTED promisor missing objects.
-Unexpected missing object will raise an error.
+No fetch of a missing object will occur.  An unexpected missing object will
+raise an error.
 
 --exclude-promisor-objects::
 	Omit objects that are known to be in the promisor remote.  (This
@@ -394,6 +409,17 @@ That puts the heads and tags for each fork in their own island (named
 Note that we pick a single island for each regex to go into, using "last
 one wins" ordering (which allows repo-specific config to take precedence
 over user-wide config, and so forth).
+
+
+CONFIGURATION
+-------------
+
+Various configuration variables affect packing, see
+linkgit:git-config[1] (search for "pack" and "delta").
+
+Notably, delta compression is not used on objects larger than the
+`core.bigFileThreshold` configuration variable and on files with the
+attribute `delta` set to false.
 
 SEE ALSO
 --------

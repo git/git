@@ -1,0 +1,6 @@
+$ git diff-tree --format=%N note
+note
+
+
+:100644 100755 01e79c32a8c99c557f0757da7cb6d65b3414466d 01e79c32a8c99c557f0757da7cb6d65b3414466d M	file2
+$

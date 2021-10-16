@@ -159,24 +159,6 @@ int add_unseen_recent_objects_to_traversal(struct rev_info *revs,
 				      FOR_EACH_OBJECT_LOCAL_ONLY);
 }
 
-static void *lookup_object_by_type(struct repository *r,
-				   const struct object_id *oid,
-				   enum object_type type)
-{
-	switch (type) {
-	case OBJ_COMMIT:
-		return lookup_commit(r, oid);
-	case OBJ_TREE:
-		return lookup_tree(r, oid);
-	case OBJ_TAG:
-		return lookup_tag(r, oid);
-	case OBJ_BLOB:
-		return lookup_blob(r, oid);
-	default:
-		die("BUG: unknown object type %d", type);
-	}
-}
-
 static int mark_object_seen(const struct object_id *oid,
 			     enum object_type type,
 			     int exclude,
@@ -223,20 +205,15 @@ void mark_reachable_objects(struct rev_info *revs, int mark_reflog,
 	cp.progress = progress;
 	cp.count = 0;
 
-	bitmap_git = prepare_bitmap_walk(revs, NULL);
+	bitmap_git = prepare_bitmap_walk(revs, NULL, 0);
 	if (bitmap_git) {
 		traverse_bitmap_commit_list(bitmap_git, revs, mark_object_seen);
 		free_bitmap_index(bitmap_git);
-		return;
+	} else {
+		if (prepare_revision_walk(revs))
+			die("revision walk setup failed");
+		traverse_commit_list(revs, mark_commit, mark_object, &cp);
 	}
-
-	/*
-	 * Set up the revision walk - this will move all commits
-	 * from the pending list to the commit walking list.
-	 */
-	if (prepare_revision_walk(revs))
-		die("revision walk setup failed");
-	traverse_commit_list(revs, mark_commit, mark_object, &cp);
 
 	if (mark_recent) {
 		revs->ignore_missing_links = 1;

@@ -310,19 +310,6 @@ static enum parse_opt_result parse_long_opt(
 again:
 		if (!skip_prefix(arg, long_name, &rest))
 			rest = NULL;
-		if (options->type == OPTION_ARGUMENT) {
-			if (!rest)
-				continue;
-			if (*rest == '=')
-				return error(_("%s takes no value"),
-					     optname(options, flags));
-			if (*rest)
-				continue;
-			if (options->value)
-				*(int *)options->value = options->defval;
-			p->out[p->cpidx++] = arg - 2;
-			return PARSE_OPT_DONE;
-		}
 		if (!rest) {
 			/* abbreviated? */
 			if (!(p->flags & PARSE_OPT_KEEP_UNKNOWN) &&
@@ -525,7 +512,8 @@ void parse_options_start(struct parse_opt_ctx_t *ctx,
 	parse_options_start_1(ctx, argc, argv, prefix, options, flags);
 }
 
-static void show_negated_gitcomp(const struct option *opts, int nr_noopts)
+static void show_negated_gitcomp(const struct option *opts, int show_all,
+				 int nr_noopts)
 {
 	int printed_dashdash = 0;
 
@@ -535,7 +523,8 @@ static void show_negated_gitcomp(const struct option *opts, int nr_noopts)
 
 		if (!opts->long_name)
 			continue;
-		if (opts->flags & (PARSE_OPT_HIDDEN | PARSE_OPT_NOCOMPLETE))
+		if (!show_all &&
+			(opts->flags & (PARSE_OPT_HIDDEN | PARSE_OPT_NOCOMPLETE)))
 			continue;
 		if (opts->flags & PARSE_OPT_NONEG)
 			continue;
@@ -572,7 +561,7 @@ static void show_negated_gitcomp(const struct option *opts, int nr_noopts)
 	}
 }
 
-static int show_gitcomp(const struct option *opts)
+static int show_gitcomp(const struct option *opts, int show_all)
 {
 	const struct option *original_opts = opts;
 	int nr_noopts = 0;
@@ -582,7 +571,8 @@ static int show_gitcomp(const struct option *opts)
 
 		if (!opts->long_name)
 			continue;
-		if (opts->flags & (PARSE_OPT_HIDDEN | PARSE_OPT_NOCOMPLETE))
+		if (!show_all &&
+			(opts->flags & (PARSE_OPT_HIDDEN | PARSE_OPT_NOCOMPLETE | PARSE_OPT_FROM_ALIAS)))
 			continue;
 
 		switch (opts->type) {
@@ -610,8 +600,8 @@ static int show_gitcomp(const struct option *opts)
 			nr_noopts++;
 		printf(" --%s%s", opts->long_name, suffix);
 	}
-	show_negated_gitcomp(original_opts, -1);
-	show_negated_gitcomp(original_opts, nr_noopts);
+	show_negated_gitcomp(original_opts, show_all, -1);
+	show_negated_gitcomp(original_opts, show_all, nr_noopts);
 	fputc('\n', stdout);
 	return PARSE_OPT_COMPLETE;
 }
@@ -622,6 +612,8 @@ static int show_gitcomp(const struct option *opts)
  *
  * Right now this is only used to preprocess and substitute
  * OPTION_ALIAS.
+ *
+ * The returned options should be freed using free_preprocessed_options.
  */
 static struct option *preprocess_options(struct parse_opt_ctx_t *ctx,
 					 const struct option *options)
@@ -648,6 +640,7 @@ static struct option *preprocess_options(struct parse_opt_ctx_t *ctx,
 		int short_name;
 		const char *long_name;
 		const char *source;
+		struct strbuf help = STRBUF_INIT;
 		int j;
 
 		if (newopt[i].type != OPTION_ALIAS)
@@ -659,6 +652,7 @@ static struct option *preprocess_options(struct parse_opt_ctx_t *ctx,
 
 		if (!long_name)
 			BUG("An alias must have long option name");
+		strbuf_addf(&help, _("alias of --%s"), source);
 
 		for (j = 0; j < nr; j++) {
 			const char *name = options[j].long_name;
@@ -669,15 +663,11 @@ static struct option *preprocess_options(struct parse_opt_ctx_t *ctx,
 			if (options[j].type == OPTION_ALIAS)
 				BUG("No please. Nested aliases are not supported.");
 
-			/*
-			 * NEEDSWORK: this is a bit inconsistent because
-			 * usage_with_options() on the original options[] will print
-			 * help string as "alias of %s" but "git cmd -h" will
-			 * print the original help string.
-			 */
 			memcpy(newopt + i, options + j, sizeof(*newopt));
 			newopt[i].short_name = short_name;
 			newopt[i].long_name = long_name;
+			newopt[i].help = strbuf_detach(&help, NULL);
+			newopt[i].flags |= PARSE_OPT_FROM_ALIAS;
 			break;
 		}
 
@@ -691,6 +681,20 @@ static struct option *preprocess_options(struct parse_opt_ctx_t *ctx,
 	}
 
 	return newopt;
+}
+
+static void free_preprocessed_options(struct option *options)
+{
+	int i;
+
+	if (!options)
+		return;
+
+	for (i = 0; options[i].type != OPTION_END; i++) {
+		if (options[i].flags & PARSE_OPT_FROM_ALIAS)
+			free((void *)options[i].help);
+	}
+	free(options);
 }
 
 static int usage_with_options_internal(struct parse_opt_ctx_t *,
@@ -726,9 +730,14 @@ int parse_options_step(struct parse_opt_ctx_t *ctx,
 		if (internal_help && ctx->total == 1 && !strcmp(arg + 1, "h"))
 			goto show_usage;
 
-		/* lone --git-completion-helper is asked by git-completion.bash */
-		if (ctx->total == 1 && !strcmp(arg + 1, "-git-completion-helper"))
-			return show_gitcomp(options);
+		/*
+		 * lone --git-completion-helper and --git-completion-helper-all
+		 * are asked by git-completion.bash
+		 */
+		if (ctx->total == 1 && !strcmp(arg, "--git-completion-helper"))
+			return show_gitcomp(options, 0);
+		if (ctx->total == 1 && !strcmp(arg, "--git-completion-helper-all"))
+			return show_gitcomp(options, 1);
 
 		if (arg[1] != '-') {
 			ctx->opt = arg + 1;
@@ -864,8 +873,8 @@ int parse_options(int argc, const char **argv, const char *prefix,
 		usage_with_options(usagestr, options);
 	}
 
-	precompose_argv(argc, argv);
-	free(real_options);
+	precompose_argv_prefix(argc, argv, NULL);
+	free_preprocessed_options(real_options);
 	free(ctx.alias_groups);
 	return parse_options_end(&ctx);
 }
@@ -895,25 +904,77 @@ static int usage_with_options_internal(struct parse_opt_ctx_t *ctx,
 	FILE *outfile = err ? stderr : stdout;
 	int need_newline;
 
+	const char *usage_prefix = _("usage: %s");
+	/*
+	 * The translation could be anything, but we can count on
+	 * msgfmt(1)'s --check option to have asserted that "%s" is in
+	 * the translation. So compute the length of the "usage: "
+	 * part. We are assuming that the translator wasn't overly
+	 * clever and used e.g. "%1$s" instead of "%s", there's only
+	 * one "%s" in "usage_prefix" above, so there's no reason to
+	 * do so even with a RTL language.
+	 */
+	size_t usage_len = strlen(usage_prefix) - strlen("%s");
+	/*
+	 * TRANSLATORS: the colon here should align with the
+	 * one in "usage: %s" translation.
+	 */
+	const char *or_prefix = _("   or: %s");
+	/*
+	 * TRANSLATORS: You should only need to translate this format
+	 * string if your language is a RTL language (e.g. Arabic,
+	 * Hebrew etc.), not if it's a LTR language (e.g. German,
+	 * Russian, Chinese etc.).
+	 *
+	 * When a translated usage string has an embedded "\n" it's
+	 * because options have wrapped to the next line. The line
+	 * after the "\n" will then be padded to align with the
+	 * command name, such as N_("git cmd [opt]\n<8
+	 * spaces>[opt2]"), where the 8 spaces are the same length as
+	 * "git cmd ".
+	 *
+	 * This format string prints out that already-translated
+	 * line. The "%*s" is whitespace padding to account for the
+	 * padding at the start of the line that we add in this
+	 * function. The "%s" is a line in the (hopefully already
+	 * translated) N_() usage string, which contained embedded
+	 * newlines before we split it up.
+	 */
+	const char *usage_continued = _("%*s%s");
+	const char *prefix = usage_prefix;
+	int saw_empty_line = 0;
+
 	if (!usagestr)
 		return PARSE_OPT_HELP;
 
 	if (!err && ctx && ctx->flags & PARSE_OPT_SHELL_EVAL)
 		fprintf(outfile, "cat <<\\EOF\n");
 
-	fprintf_ln(outfile, _("usage: %s"), _(*usagestr++));
-	while (*usagestr && **usagestr)
-		/*
-		 * TRANSLATORS: the colon here should align with the
-		 * one in "usage: %s" translation.
-		 */
-		fprintf_ln(outfile, _("   or: %s"), _(*usagestr++));
 	while (*usagestr) {
-		if (**usagestr)
-			fprintf_ln(outfile, _("    %s"), _(*usagestr));
-		else
-			fputc('\n', outfile);
-		usagestr++;
+		const char *str = _(*usagestr++);
+		struct string_list list = STRING_LIST_INIT_DUP;
+		unsigned int j;
+
+		if (!saw_empty_line && !*str)
+			saw_empty_line = 1;
+
+		string_list_split(&list, str, '\n', -1);
+		for (j = 0; j < list.nr; j++) {
+			const char *line = list.items[j].string;
+
+			if (saw_empty_line && *line)
+				fprintf_ln(outfile, _("    %s"), line);
+			else if (saw_empty_line)
+				fputc('\n', outfile);
+			else if (!j)
+				fprintf_ln(outfile, prefix, line);
+			else
+				fprintf_ln(outfile, usage_continued,
+					   (int)usage_len, "", line);
+		}
+		string_list_clear(&list, 0);
+
+		prefix = or_prefix;
 	}
 
 	need_newline = 1;

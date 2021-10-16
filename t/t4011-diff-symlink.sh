@@ -7,7 +7,7 @@ test_description='Test diff of symlinks.
 
 '
 . ./test-lib.sh
-. "$TEST_DIRECTORY"/diff-lib.sh
+. "$TEST_DIRECTORY"/lib-diff.sh
 
 # Print the short OID of a symlink with the given name.
 symlink_oid () {

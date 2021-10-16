@@ -13,7 +13,7 @@ SYNOPSIS
     [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]
     [-p|--paginate|-P|--no-pager] [--no-replace-objects] [--bare]
     [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]
-    [--super-prefix=<path>]
+    [--super-prefix=<path>] [--config-env=<name>=<envvar>]
     <command> [<args>]
 
 DESCRIPTION
@@ -41,6 +41,10 @@ OPTIONS
 -------
 --version::
 	Prints the Git suite version that the 'git' program came from.
++
+This option is internaly converted to `git version ...` and accepts
+the same options as the linkgit:git-version[1] command. If `--help` is
+also given, it takes precedence over `--version`.
 
 --help::
 	Prints the synopsis and a list of the most commonly used
@@ -79,6 +83,28 @@ Note that omitting the `=` in `git -c foo.bar ...` is allowed and sets
 config file). Including the equals but with an empty value (like `git -c
 foo.bar= ...`) sets `foo.bar` to the empty string which `git config
 --type=bool` will convert to `false`.
+
+--config-env=<name>=<envvar>::
+	Like `-c <name>=<value>`, give configuration variable
+	'<name>' a value, where <envvar> is the name of an
+	environment variable from which to retrieve the value. Unlike
+	`-c` there is no shortcut for directly setting the value to an
+	empty string, instead the environment variable itself must be
+	set to the empty string.  It is an error if the `<envvar>` does not exist
+	in the environment. `<envvar>` may not contain an equals sign
+	to avoid ambiguity with `<name>` containing one.
++
+This is useful for cases where you want to pass transitory
+configuration options to git, but are doing so on OS's where
+other processes might be able to read your cmdline
+(e.g. `/proc/self/cmdline`), but not your environ
+(e.g. `/proc/self/environ`). That behavior is the default on
+Linux, but may not be on your system.
++
+Note that this might add security for variables such as
+`http.extraHeader` where the sensitive information is part of
+the value, but not e.g. `url.<base>.insteadOf` where the
+sensitive information can be part of the key.
 
 --exec-path[=<path>]::
 	Path to wherever your core Git programs are installed.
@@ -304,6 +330,13 @@ users typically do not use them directly.
 
 include::cmds-purehelpers.txt[]
 
+Guides
+------
+
+The following documentation pages are guides about Git concepts.
+
+include::cmds-guide.txt[]
+
 
 Configuration Mechanism
 -----------------------
@@ -493,6 +526,13 @@ double-quotes and respecting backslash escapes. E.g., the value
 	details. This variable has lower precedence than other path
 	variables such as GIT_INDEX_FILE, GIT_OBJECT_DIRECTORY...
 
+`GIT_DEFAULT_HASH`::
+	If this variable is set, the default hash algorithm for new
+	repositories will be set to this value. This value is currently
+	ignored when cloning; the setting of the remote repository
+	is used instead. The default is "sha1". THIS VARIABLE IS
+	EXPERIMENTAL! See `--object-format` in linkgit:git-init[1].
+
 Git Commits
 ~~~~~~~~~~~
 `GIT_AUTHOR_NAME`::
@@ -537,8 +577,9 @@ Git Diffs
 
 `GIT_EXTERNAL_DIFF`::
 	When the environment variable `GIT_EXTERNAL_DIFF` is set, the
-	program named by it is called, instead of the diff invocation
-	described above.  For a path that is added, removed, or modified,
+	program named by it is called to generate diffs, and Git
+	does not use its builtin diff machinery.
+	For a path that is added, removed, or modified,
 	`GIT_EXTERNAL_DIFF` is called with 7 parameters:
 
 	path old-file old-hex old-mode new-file new-hex new-mode
@@ -591,6 +632,12 @@ other
 	an editor is to be launched. See also linkgit:git-var[1]
 	and the `core.editor` option in linkgit:git-config[1].
 
+`GIT_SEQUENCE_EDITOR`::
+	This environment variable overrides the configured Git editor
+	when editing the todo list of an interactive rebase. See also
+	linkgit:git-rebase[1] and the `sequence.editor` option in
+	linkgit:git-config[1].
+
 `GIT_SSH`::
 `GIT_SSH_COMMAND`::
 	If either of these environment variables is set then 'git fetch'
@@ -626,6 +673,16 @@ for further details.
 `GIT_TERMINAL_PROMPT`::
 	If this environment variable is set to `0`, git will not prompt
 	on the terminal (e.g., when asking for HTTP authentication).
+
+`GIT_CONFIG_GLOBAL`::
+`GIT_CONFIG_SYSTEM`::
+	Take the configuration from the given files instead from global or
+	system-level configuration files. If `GIT_CONFIG_SYSTEM` is set, the
+	system config file defined at build time (usually `/etc/gitconfig`)
+	will not be read. Likewise, if `GIT_CONFIG_GLOBAL` is set, neither
+	`$HOME/.gitconfig` nor `$XDG_CONFIG_HOME/git/config` will be read. Can
+	be set to `/dev/null` to skip reading configuration files of the
+	respective level.
 
 `GIT_CONFIG_NOSYSTEM`::
 	Whether to skip reading settings from the system-wide
@@ -701,6 +758,10 @@ of clones and fetches.
 	time of each Git command.
 	See `GIT_TRACE` for available trace output options.
 
+`GIT_TRACE_REFS`::
+	Enables trace messages for operations on the ref database.
+	See `GIT_TRACE` for available trace output options.
+
 `GIT_TRACE_SETUP`::
 	Enables trace messages printing the .git, working tree and current
 	working directory after Git has completed its setup phase.
@@ -715,8 +776,6 @@ of clones and fetches.
 	Enables a curl full trace dump of all incoming and outgoing data,
 	including descriptive information, of the git transport protocol.
 	This is similar to doing curl `--trace-ascii` on the command line.
-	This option overrides setting the `GIT_CURL_VERBOSE` environment
-	variable.
 	See `GIT_TRACE` for available trace output options.
 
 `GIT_TRACE_CURL_NO_DATA`::
@@ -771,11 +830,10 @@ for full details.
 	See `GIT_TRACE2` for available trace output options and
 	link:technical/api-trace2.html[Trace2 documentation] for full details.
 
-`GIT_REDACT_COOKIES`::
-	This can be set to a comma-separated list of strings. When a curl trace
-	is enabled (see `GIT_TRACE_CURL` above), whenever a "Cookies:" header
-	sent by the client is dumped, values of cookies whose key is in that
-	list (case-sensitive) are redacted.
+`GIT_TRACE_REDACT`::
+	By default, when tracing is activated, Git redacts the values of
+	cookies, the "Authorization:" header, and the "Proxy-Authorization:"
+	header. Set this variable to `0` to prevent this redaction.
 
 `GIT_LITERAL_PATHSPECS`::
 	Setting this variable to `1` will cause Git to treat all
@@ -809,15 +867,16 @@ for full details.
 	end user, to be recorded in the body of the reflog.
 
 `GIT_REF_PARANOIA`::
-	If set to `1`, include broken or badly named refs when iterating
-	over lists of refs. In a normal, non-corrupted repository, this
-	does nothing. However, enabling it may help git to detect and
-	abort some operations in the presence of broken refs. Git sets
-	this variable automatically when performing destructive
-	operations like linkgit:git-prune[1]. You should not need to set
-	it yourself unless you want to be paranoid about making sure
-	an operation has touched every ref (e.g., because you are
-	cloning a repository to make a backup).
+	If set to `0`, ignore broken or badly named refs when iterating
+	over lists of refs. Normally Git will try to include any such
+	refs, which may cause some operations to fail. This is usually
+	preferable, as potentially destructive operations (e.g.,
+	linkgit:git-prune[1]) are better off aborting rather than
+	ignoring broken refs (and thus considering the history they
+	point to as not worth saving). The default value is `1` (i.e.,
+	be paranoid about detecting and aborting all operations). You
+	should not normally need to set this to `0`, but it may be
+	useful when trying to salvage data from a corrupted repository.
 
 `GIT_ALLOW_PROTOCOL`::
 	If set to a colon-separated list of protocols, behave as if
@@ -840,6 +899,21 @@ for full details.
 	Contains a colon ':' separated list of keys with optional values
 	'key[=value]'.  Presence of unknown keys and values must be
 	ignored.
++
+Note that servers may need to be configured to allow this variable to
+pass over some transports. It will be propagated automatically when
+accessing local repositories (i.e., `file://` or a filesystem path), as
+well as over the `git://` protocol. For git-over-http, it should work
+automatically in most configurations, but see the discussion in
+linkgit:git-http-backend[1]. For git-over-ssh, the ssh server may need
+to be configured to allow clients to pass this variable (e.g., by using
+`AcceptEnv GIT_PROTOCOL` with OpenSSH).
++
+This configuration is optional. If the variable is not propagated, then
+clients will fall back to the original "v0" protocol (but may miss out
+on some performance improvements or features). This variable currently
+only affects clones and fetches; it is not yet used for pushes (but may
+be in the future).
 
 `GIT_OPTIONAL_LOCKS`::
 	If set to `0`, Git will complete any requested operation without

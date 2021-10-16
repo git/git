@@ -9,7 +9,7 @@ struct transport;
  * When called after returning the name for the last object, return -1
  * to signal EOF, otherwise return 0.
  */
-typedef int (*oid_iterate_fn)(void *, struct object_id *oid);
+typedef const struct object_id *(*oid_iterate_fn)(void *);
 
 /*
  * Named-arguments struct for check_connected. All arguments are
@@ -46,15 +46,6 @@ struct check_connected_options {
 	 * during a fetch.
 	 */
 	unsigned is_deepening_fetch : 1;
-
-	/*
-	 * If non-zero, only check that the top-level objects referenced by the
-	 * wanted refs (passed in as cb_data) are promisor objects. This is
-	 * useful for partial clones, where enumerating and excluding all
-	 * promisor objects is very slow and the commit-walk itself becomes a
-	 * no-op.
-	 */
-	unsigned check_refs_are_promisor_objects_only : 1;
 };
 
 #define CHECK_CONNECTED_INIT { 0 }

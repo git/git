@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='test oidmap'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # This purposefully is very similar to t0011-hashmap.sh

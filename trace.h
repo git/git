@@ -89,7 +89,7 @@ struct trace_key {
 
 extern struct trace_key trace_default_key;
 
-#define TRACE_KEY_INIT(name) { "GIT_TRACE_" #name, 0, 0, 0 }
+#define TRACE_KEY_INIT(name) { .key = "GIT_TRACE_" #name }
 extern struct trace_key trace_perf_key;
 extern struct trace_key trace_setup_key;
 
@@ -100,6 +100,12 @@ void trace_repo_setup(const char *prefix);
  * string formatting before calling one of the printing APIs.
  */
 int trace_want(struct trace_key *key);
+
+/**
+ * Enables or disables tracing for the specified key, as if the environment
+ * variable was set to the given value.
+ */
+void trace_override_envvar(struct trace_key *key, const char *value);
 
 /**
  * Disables tracing for the specified key, even if the environment variable

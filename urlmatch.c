@@ -572,10 +572,14 @@ int urlmatch_config_entry(const char *var, const char *value, void *cb)
 
 		config_url = xmemdupz(key, dot - key);
 		norm_url = url_normalize_1(config_url, &norm_info, 1);
+		if (norm_url)
+			retval = match_urls(url, &norm_info, &matched);
+		else if (collect->fallback_match_fn)
+			retval = collect->fallback_match_fn(config_url,
+							    collect->cb);
+		else
+			retval = 0;
 		free(config_url);
-		if (!norm_url)
-			return 0;
-		retval = match_urls(url, &norm_info, &matched);
 		free(norm_url);
 		if (!retval)
 			return 0;

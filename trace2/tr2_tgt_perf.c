@@ -253,6 +253,21 @@ static void fn_command_path_fl(const char *file, int line, const char *pathname)
 	strbuf_release(&buf_payload);
 }
 
+static void fn_command_ancestry_fl(const char *file, int line, const char **parent_names)
+{
+	const char *event_name = "cmd_ancestry";
+	struct strbuf buf_payload = STRBUF_INIT;
+
+	strbuf_addstr(&buf_payload, "ancestry:[");
+	/* It's not an argv but the rules are basically the same. */
+	sq_append_quote_argv_pretty(&buf_payload, parent_names);
+	strbuf_addch(&buf_payload, ']');
+
+	perf_io_write_fl(file, line, event_name, NULL, NULL, NULL, NULL,
+			 &buf_payload);
+	strbuf_release(&buf_payload);
+}
+
 static void fn_command_name_fl(const char *file, int line, const char *name,
 			       const char *hierarchy)
 {
@@ -339,6 +354,20 @@ static void fn_child_exit_fl(const char *file, int line,
 	struct strbuf buf_payload = STRBUF_INIT;
 
 	strbuf_addf(&buf_payload, "[ch%d] pid:%d code:%d", cid, pid, code);
+
+	perf_io_write_fl(file, line, event_name, NULL, &us_elapsed_absolute,
+			 &us_elapsed_child, NULL, &buf_payload);
+	strbuf_release(&buf_payload);
+}
+
+static void fn_child_ready_fl(const char *file, int line,
+			      uint64_t us_elapsed_absolute, int cid, int pid,
+			      const char *ready, uint64_t us_elapsed_child)
+{
+	const char *event_name = "child_ready";
+	struct strbuf buf_payload = STRBUF_INIT;
+
+	strbuf_addf(&buf_payload, "[ch%d] pid:%d ready:%s", cid, pid, ready);
 
 	perf_io_write_fl(file, line, event_name, NULL, &us_elapsed_absolute,
 			 &us_elapsed_child, NULL, &buf_payload);
@@ -532,11 +561,13 @@ struct tr2_tgt tr2_tgt_perf = {
 	fn_atexit,
 	fn_error_va_fl,
 	fn_command_path_fl,
+	fn_command_ancestry_fl,
 	fn_command_name_fl,
 	fn_command_mode_fl,
 	fn_alias_fl,
 	fn_child_start_fl,
 	fn_child_exit_fl,
+	fn_child_ready_fl,
 	fn_thread_start_fl,
 	fn_thread_exit_fl,
 	fn_exec_fl,

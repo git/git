@@ -85,6 +85,8 @@ diff.ignoreSubmodules::
 	and 'git status' when `status.submoduleSummary` is set unless it is
 	overridden by using the --ignore-submodules command-line option.
 	The 'git submodule' commands are not affected by this setting.
+	By default this is set to untracked so that any untracked
+	submodules are ignored.
 
 diff.mnemonicPrefix::
 	If set, 'git diff' uses a prefix pair that is different from the
@@ -105,6 +107,10 @@ diff.mnemonicPrefix::
 diff.noprefix::
 	If set, 'git diff' does not show any source or destination prefix.
 
+diff.relative::
+	If set to 'true', 'git diff' does not show changes outside of the directory
+	and show pathnames relative to the current directory.
+
 diff.orderFile::
 	File indicating how to order files within a diff.
 	See the '-O' option to linkgit:git-diff[1] for details.
@@ -112,9 +118,10 @@ diff.orderFile::
 	relative to the top of the working tree.
 
 diff.renameLimit::
-	The number of files to consider when performing the copy/rename
-	detection; equivalent to the 'git diff' option `-l`. This setting
-	has no effect if rename detection is turned off.
+	The number of files to consider in the exhaustive portion of
+	copy/rename detection; equivalent to the 'git diff' option
+	`-l`.  If not set, the default value is currently 1000.  This
+	setting has no effect if rename detection is turned off.
 
 diff.renames::
 	Whether and how Git detects renames.  If set to "false",

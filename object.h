@@ -15,7 +15,6 @@ struct parsed_object_pool {
 	struct alloc_state *commit_state;
 	struct alloc_state *tag_state;
 	struct alloc_state *object_state;
-	unsigned commit_count;
 
 	/* parent substitutions from .git/info/grafts and .git/shallow */
 	struct commit_graft **grafts;
@@ -26,6 +25,7 @@ struct parsed_object_pool {
 	char *alternate_shallow_file;
 
 	int commit_graft_prepared;
+	int substituted_parent;
 
 	struct buffer_slab *buffer_slab;
 };
@@ -55,31 +55,31 @@ struct object_array {
 	} *objects;
 };
 
-#define OBJECT_ARRAY_INIT { 0, 0, NULL }
+#define OBJECT_ARRAY_INIT { 0 }
 
 /*
  * object flag allocation:
- * revision.h:               0---------10                              25----28
- * fetch-pack.c:             01
+ * revision.h:               0---------10         15             23------26
+ * fetch-pack.c:             01    67
  * negotiator/default.c:       2--5
  * walker.c:                 0-2
  * upload-pack.c:                4       11-----14  16-----19
  * builtin/blame.c:                        12-13
  * bisect.c:                                        16
  * bundle.c:                                        16
- * http-push.c:                                     16-----19
+ * http-push.c:                          11-----14
  * commit-graph.c:                                15
  * commit-reach.c:                                  16-----19
  * sha1-name.c:                                              20
  * list-objects-filter.c:                                      21
  * builtin/fsck.c:           0--3
+ * builtin/gc.c:             0
  * builtin/index-pack.c:                                     2021
- * builtin/pack-objects.c:                                   20
  * builtin/reflog.c:                   10--12
  * builtin/show-branch.c:    0-------------------------------------------26
  * builtin/unpack-objects.c:                                 2021
  */
-#define FLAG_BITS  29
+#define FLAG_BITS  28
 
 /*
  * The object type is stored in 3 bits.
@@ -121,7 +121,7 @@ struct object *lookup_object(struct repository *r, const struct object_id *oid);
 
 void *create_object(struct repository *r, const struct object_id *oid, void *obj);
 
-void *object_as_type(struct repository *r, struct object *obj, enum object_type type, int quiet);
+void *object_as_type(struct object *obj, enum object_type type, int quiet);
 
 /*
  * Returns the object, having parsed it to find out what it is.
@@ -143,8 +143,26 @@ struct object *parse_object_or_die(const struct object_id *oid, const char *name
  */
 struct object *parse_object_buffer(struct repository *r, const struct object_id *oid, enum object_type type, unsigned long size, void *buffer, int *eaten_p);
 
-/** Returns the object, with potentially excess memory allocated. **/
-struct object *lookup_unknown_object(const struct object_id *oid);
+/*
+ * Allocate and return an object struct, even if you do not know the type of
+ * the object. The returned object may have its "type" field set to a real type
+ * (if somebody previously called lookup_blob(), etc), or it may be set to
+ * OBJ_NONE. In the latter case, subsequent calls to lookup_blob(), etc, will
+ * set the type field as appropriate.
+ *
+ * Use this when you do not know the expected type of an object and want to
+ * avoid parsing it for efficiency reasons. Try to avoid it otherwise; it
+ * may allocate excess memory, since the returned object must be as large as
+ * the maximum struct of any type.
+ */
+struct object *lookup_unknown_object(struct repository *r, const struct object_id *oid);
+
+/*
+ * Dispatch to the appropriate lookup_blob(), lookup_commit(), etc, based on
+ * "type".
+ */
+struct object *lookup_object_by_type(struct repository *r, const struct object_id *oid,
+				     enum object_type type);
 
 struct object_list *object_list_insert(struct object *item,
 				       struct object_list **list_p);
@@ -190,8 +208,9 @@ void object_array_clear(struct object_array *array);
 void clear_object_flags(unsigned flags);
 
 /*
- * Clear the specified object flags from all in-core commit objects.
+ * Clear the specified object flags from all in-core commit objects from
+ * the specified repository.
  */
-void clear_commit_marks_all(unsigned int flags);
+void repo_clear_commit_marks(struct repository *r, unsigned int flags);
 
 #endif /* OBJECT_H */

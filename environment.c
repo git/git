@@ -9,14 +9,16 @@
  */
 #include "cache.h"
 #include "branch.h"
+#include "environment.h"
 #include "repository.h"
 #include "config.h"
 #include "refs.h"
 #include "fmt-merge-msg.h"
 #include "commit.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "object-store.h"
 #include "chdir-notify.h"
+#include "shallow.h"
 
 int trust_executable_bit = 1;
 int trust_ctime = 1;
@@ -29,17 +31,15 @@ int prefer_symlink_refs;
 int is_bare_repository_cfg = -1; /* unspecified */
 int warn_ambiguous_refs = 1;
 int warn_on_object_refname_ambiguity = 1;
-int ref_paranoia = -1;
 int repository_format_precious_objects;
 int repository_format_worktree_config;
 const char *git_commit_encoding;
 const char *git_log_output_encoding;
-const char *apply_default_whitespace;
-const char *apply_default_ignorewhitespace;
+char *apply_default_whitespace;
+char *apply_default_ignorewhitespace;
 const char *git_attributes_file;
 const char *git_hooks_path;
 int zlib_compression_level = Z_BEST_SPEED;
-int core_compression_level;
 int pack_compression_level = Z_DEFAULT_COMPRESSION;
 int fsync_object_files;
 size_t packed_git_window_size = DEFAULT_PACKED_GIT_WINDOW_SIZE;
@@ -94,13 +94,6 @@ int auto_comment_line_char;
 /* Parallel index stat data preload? */
 int core_preload_index = 1;
 
-/*
- * This is a hack for test programs like test-dump-untracked-cache to
- * ensure that they do not modify the untracked cache when reading it.
- * Do not use it otherwise!
- */
-int ignore_untracked_cache_config;
-
 /* This is set by setup_git_dir_gently() and/or git_default_config() */
 char *git_work_tree_cfg;
 
@@ -115,6 +108,7 @@ const char * const local_repo_env[] = {
 	ALTERNATE_DB_ENVIRONMENT,
 	CONFIG_ENVIRONMENT,
 	CONFIG_DATA_ENVIRONMENT,
+	CONFIG_COUNT_ENVIRONMENT,
 	DB_ENVIRONMENT,
 	GIT_DIR_ENVIRONMENT,
 	GIT_WORK_TREE_ENVIRONMENT,
@@ -151,19 +145,15 @@ static char *expand_namespace(const char *raw_namespace)
 	return strbuf_detach(&buf, NULL);
 }
 
-/*
- * Wrapper of getenv() that returns a strdup value. This value is kept
- * in argv to be freed later.
- */
-static const char *getenv_safe(struct argv_array *argv, const char *name)
+const char *getenv_safe(struct strvec *argv, const char *name)
 {
 	const char *value = getenv(name);
 
 	if (!value)
 		return NULL;
 
-	argv_array_push(argv, value);
-	return argv->argv[argv->argc - 1];
+	strvec_push(argv, value);
+	return argv->v[argv->nr - 1];
 }
 
 void setup_git_env(const char *git_dir)
@@ -171,7 +161,7 @@ void setup_git_env(const char *git_dir)
 	const char *shallow_file;
 	const char *replace_ref_base;
 	struct set_gitdir_args args = { NULL };
-	struct argv_array to_free = ARGV_ARRAY_INIT;
+	struct strvec to_free = STRVEC_INIT;
 
 	args.commondir = getenv_safe(&to_free, GIT_COMMON_DIR_ENVIRONMENT);
 	args.object_dir = getenv_safe(&to_free, DB_ENVIRONMENT);
@@ -179,7 +169,7 @@ void setup_git_env(const char *git_dir)
 	args.index_file = getenv_safe(&to_free, INDEX_ENVIRONMENT);
 	args.alternate_db = getenv_safe(&to_free, ALTERNATE_DB_ENVIRONMENT);
 	repo_set_gitdir(the_repository, git_dir, &args);
-	argv_array_clear(&to_free);
+	strvec_clear(&to_free);
 
 	if (getenv(NO_REPLACE_OBJECTS_ENVIRONMENT))
 		read_replace_refs = 0;
@@ -255,11 +245,15 @@ static int git_work_tree_initialized;
 void set_git_work_tree(const char *new_work_tree)
 {
 	if (git_work_tree_initialized) {
-		new_work_tree = real_path(new_work_tree);
+		struct strbuf realpath = STRBUF_INIT;
+
+		strbuf_realpath(&realpath, new_work_tree, 1);
+		new_work_tree = realpath.buf;
 		if (strcmp(new_work_tree, the_repository->worktree))
 			die("internal error: work tree has already been set\n"
 			    "Current worktree: %s\nNew worktree: %s",
 			    the_repository->worktree, new_work_tree);
+		strbuf_release(&realpath);
 		return;
 	}
 	git_work_tree_initialized = 1;
@@ -327,8 +321,7 @@ char *get_graft_file(struct repository *r)
 
 static void set_git_dir_1(const char *path)
 {
-	if (setenv(GIT_DIR_ENVIRONMENT, path, 1))
-		die(_("could not set GIT_DIR to '%s'"), path);
+	xsetenv(GIT_DIR_ENVIRONMENT, path, 1);
 	setup_git_env(path);
 }
 
@@ -345,11 +338,20 @@ static void update_relative_gitdir(const char *name,
 	free(path);
 }
 
-void set_git_dir(const char *path)
+void set_git_dir(const char *path, int make_realpath)
 {
+	struct strbuf realpath = STRBUF_INIT;
+
+	if (make_realpath) {
+		strbuf_realpath(&realpath, path, 1);
+		path = realpath.buf;
+	}
+
 	set_git_dir_1(path);
 	if (!is_absolute_path(path))
 		chdir_notify_register(NULL, update_relative_gitdir, NULL);
+
+	strbuf_release(&realpath);
 }
 
 const char *get_log_output_encoding(void)

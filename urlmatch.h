@@ -59,6 +59,11 @@ struct urlmatch_config {
 	 * specificity rules) than existing.
 	 */
 	int (*select_fn)(const struct urlmatch_item *found, const struct urlmatch_item *existing);
+	/*
+	 * An optional callback to allow e.g. for partial URLs; it shall
+	 * return 1 or 0 depending whether `url` matches or not.
+	 */
+	int (*fallback_match_fn)(const char *url, void *cb);
 };
 
 int urlmatch_config_entry(const char *var, const char *value, void *cb);

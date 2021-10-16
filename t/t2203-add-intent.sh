@@ -232,17 +232,53 @@ test_expect_success 'double rename detection in status' '
 	)
 '
 
-test_expect_success 'diff-files/diff-cached shows ita as new/not-new files' '
+test_expect_success 'i-t-a files shown as new for "diff", "diff-files"; not-new for "diff --cached"' '
 	git reset --hard &&
-	echo new >new-ita &&
-	git add -N new-ita &&
-	git diff --summary >actual &&
-	echo " create mode 100644 new-ita" >expected &&
-	test_cmp expected actual &&
-	git diff --cached --summary >actual2 &&
-	test_must_be_empty actual2
-'
+	: >empty &&
+	content="foo" &&
+	echo "$content" >not-empty &&
 
+	hash_e=$(git hash-object empty) &&
+	hash_n=$(git hash-object not-empty) &&
+
+	cat >expect.diff_p <<-EOF &&
+	diff --git a/empty b/empty
+	new file mode 100644
+	index 0000000..$(git rev-parse --short $hash_e)
+	diff --git a/not-empty b/not-empty
+	new file mode 100644
+	index 0000000..$(git rev-parse --short $hash_n)
+	--- /dev/null
+	+++ b/not-empty
+	@@ -0,0 +1 @@
+	+$content
+	EOF
+	cat >expect.diff_s <<-EOF &&
+	 create mode 100644 empty
+	 create mode 100644 not-empty
+	EOF
+	cat >expect.diff_a <<-EOF &&
+	:000000 100644 0000000 0000000 A$(printf "\t")empty
+	:000000 100644 0000000 0000000 A$(printf "\t")not-empty
+	EOF
+
+	git add -N empty not-empty &&
+
+	git diff >actual &&
+	test_cmp expect.diff_p actual &&
+
+	git diff --summary >actual &&
+	test_cmp expect.diff_s actual &&
+
+	git diff-files -p >actual &&
+	test_cmp expect.diff_p actual &&
+
+	git diff-files --abbrev >actual &&
+	test_cmp expect.diff_a actual &&
+
+	git diff --cached >actual &&
+	test_must_be_empty actual
+'
 
 test_expect_success '"diff HEAD" includes ita as new files' '
 	git reset --hard &&
