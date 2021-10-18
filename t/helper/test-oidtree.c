@@ -45,5 +45,8 @@ int cmd__oidtree(int argc, const char **argv)
 			die("unknown command: %s", line.buf);
 		}
 	}
+
+	strbuf_release(&line);
+
 	return 0;
 }

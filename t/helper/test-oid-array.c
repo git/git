@@ -35,5 +35,9 @@ int cmd__oid_array(int argc, const char **argv)
 		else
 			die("unknown command: %s", line.buf);
 	}
+
+	strbuf_release(&line);
+	oid_array_clear(&array);
+
 	return 0;
 }
