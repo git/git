@@ -9,6 +9,7 @@ This test tries pathnames with funny characters in the working
 tree, index, and tree objects.
 '
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 HT='	'

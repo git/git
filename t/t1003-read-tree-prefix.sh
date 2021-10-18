@@ -6,6 +6,7 @@
 test_description='git read-tree --prefix test.
 '
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '
