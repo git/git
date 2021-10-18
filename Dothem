@@ -216,6 +216,7 @@ do
 			test -n "$skip_doc" ||
 			if test "$save" = "$(git rev-parse HEAD)"
 			then
+				Meta/Make $M $jobs -- check-docs &&
 				Meta/Make $M $jobs -- doc &&
 				Meta/Make $M -- install-man install-html
 			else
