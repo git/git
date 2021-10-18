@@ -226,6 +226,7 @@ endif
 
 ifneq ($(findstring $(MAKEFLAGS),s),s)
 ifndef V
+	QUIET		= @
 	QUIET_ASCIIDOC	= @echo '   ' ASCIIDOC $@;
 	QUIET_XMLTO	= @echo '   ' XMLTO $@;
 	QUIET_DB2TEXI	= @echo '   ' DB2TEXI $@;
@@ -233,11 +234,15 @@ ifndef V
 	QUIET_DBLATEX	= @echo '   ' DBLATEX $@;
 	QUIET_XSLTPROC	= @echo '   ' XSLTPROC $@;
 	QUIET_GEN	= @echo '   ' GEN $@;
-	QUIET_LINT	= @echo '   ' LINT $@;
 	QUIET_STDERR	= 2> /dev/null
 	QUIET_SUBDIR0	= +@subdir=
 	QUIET_SUBDIR1	= ;$(NO_SUBDIR) echo '   ' SUBDIR $$subdir; \
 			  $(MAKE) $(PRINT_DIR) -C $$subdir
+
+	QUIET_LINT_GITLINK	= @echo '   ' LINT GITLINK $<;
+	QUIET_LINT_MANSEC	= @echo '   ' LINT MAN SEC $<;
+	QUIET_LINT_MANEND	= @echo '   ' LINT MAN END $<;
+
 	export V
 endif
 endif
@@ -285,7 +290,7 @@ install-html: html
 ../GIT-VERSION-FILE: FORCE
 	$(QUIET_SUBDIR0)../ $(QUIET_SUBDIR1) GIT-VERSION-FILE
 
-ifneq ($(MAKECMDGOALS),clean)
+ifneq ($(filter-out lint-docs clean,$(MAKECMDGOALS)),)
 -include ../GIT-VERSION-FILE
 endif
 
@@ -344,6 +349,7 @@ GIT-ASCIIDOCFLAGS: FORCE
             fi
 
 clean:
+	$(RM) -rf .build/
 	$(RM) *.xml *.xml+ *.html *.html+ *.1 *.5 *.7
 	$(RM) *.texi *.texi+ *.texi++ git.info gitman.info
 	$(RM) *.pdf
@@ -457,14 +463,61 @@ quick-install-html: require-htmlrepo
 print-man1:
 	@for i in $(MAN1_TXT); do echo $$i; done
 
-lint-docs::
-	$(QUIET_LINT)$(PERL_PATH) lint-gitlink.perl \
+## Lint: Common
+.build:
+	$(QUIET)mkdir $@
+.build/lint-docs: | .build
+	$(QUIET)mkdir $@
+
+## Lint: gitlink
+.build/lint-docs/gitlink: | .build/lint-docs
+	$(QUIET)mkdir $@
+.build/lint-docs/gitlink/howto: | .build/lint-docs
+	$(QUIET)mkdir $@
+.build/lint-docs/gitlink/config: | .build/lint-docs
+	$(QUIET)mkdir $@
+LINT_DOCS_GITLINK = $(patsubst %.txt,.build/lint-docs/gitlink/%.ok,$(HOWTO_TXT) $(DOC_DEP_TXT))
+$(LINT_DOCS_GITLINK): | .build/lint-docs/gitlink
+$(LINT_DOCS_GITLINK): | .build/lint-docs/gitlink/howto
+$(LINT_DOCS_GITLINK): | .build/lint-docs/gitlink/config
+$(LINT_DOCS_GITLINK): lint-gitlink.perl
+$(LINT_DOCS_GITLINK): .build/lint-docs/gitlink/%.ok: %.txt
+	$(QUIET_LINT_GITLINK)$(PERL_PATH) lint-gitlink.perl \
+		$< \
 		$(HOWTO_TXT) $(DOC_DEP_TXT) \
 		--section=1 $(MAN1_TXT) \
 		--section=5 $(MAN5_TXT) \
-		--section=7 $(MAN7_TXT); \
-	$(PERL_PATH) lint-man-end-blurb.perl $(MAN_TXT); \
-	$(PERL_PATH) lint-man-section-order.perl $(MAN_TXT);
+		--section=7 $(MAN7_TXT) >$@
+.PHONY: lint-docs-gitlink
+lint-docs-gitlink: $(LINT_DOCS_GITLINK)
+
+## Lint: man-end-blurb
+.build/lint-docs/man-end-blurb: | .build/lint-docs
+	$(QUIET)mkdir $@
+LINT_DOCS_MAN_END_BLURB = $(patsubst %.txt,.build/lint-docs/man-end-blurb/%.ok,$(MAN_TXT))
+$(LINT_DOCS_MAN_END_BLURB): | .build/lint-docs/man-end-blurb
+$(LINT_DOCS_MAN_END_BLURB): lint-man-end-blurb.perl
+$(LINT_DOCS_MAN_END_BLURB): .build/lint-docs/man-end-blurb/%.ok: %.txt
+	$(QUIET_LINT_MANEND)$(PERL_PATH) lint-man-end-blurb.perl $< >$@
+.PHONY: lint-docs-man-end-blurb
+lint-docs-man-end-blurb: $(LINT_DOCS_MAN_END_BLURB)
+
+## Lint: man-section-order
+.build/lint-docs/man-section-order: | .build/lint-docs
+	$(QUIET)mkdir $@
+LINT_DOCS_MAN_SECTION_ORDER = $(patsubst %.txt,.build/lint-docs/man-section-order/%.ok,$(MAN_TXT))
+$(LINT_DOCS_MAN_SECTION_ORDER): | .build/lint-docs/man-section-order
+$(LINT_DOCS_MAN_SECTION_ORDER): lint-man-section-order.perl
+$(LINT_DOCS_MAN_SECTION_ORDER): .build/lint-docs/man-section-order/%.ok: %.txt
+	$(QUIET_LINT_MANSEC)$(PERL_PATH) lint-man-section-order.perl $< >$@
+.PHONY: lint-docs-man-section-order
+lint-docs-man-section-order: $(LINT_DOCS_MAN_SECTION_ORDER)
+
+## Lint: list of targets above
+.PHONY: lint-docs
+lint-docs: lint-docs-gitlink
+lint-docs: lint-docs-man-end-blurb
+lint-docs: lint-docs-man-section-order
 
 ifeq ($(wildcard po/Makefile),po/Makefile)
 doc-l10n install-l10n::
