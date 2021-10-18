@@ -105,7 +105,7 @@ static int match_partial_url(const char *url, void *cb)
 static void credential_apply_config(struct credential *c)
 {
 	char *normalized_url;
-	struct urlmatch_config config = { STRING_LIST_INIT_DUP };
+	struct urlmatch_config config = URLMATCH_CONFIG_INIT;
 	struct strbuf url = STRBUF_INIT;
 
 	if (!c->host)
