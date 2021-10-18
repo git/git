@@ -62,6 +62,10 @@ UI, Workflows & Features
  * The ref iteration code used to optionally allow dangling refs to be
    shown, which has been tightened up.
 
+ * "git add", "git mv", and "git rm" have been adjusted to avoid
+   updating paths outside of the sparse-checkout definition unless
+   the user specifies a "--sparse" option.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -145,6 +149,21 @@ Performance, Internal Implementation, Development Support etc.
    hashcache from original bitmap to resulting bitmap.
 
  * CI learns to run the leak sanitizer builds.
+
+ * "git grep --recurse-submodules" takes trees and blobs from the
+   submodule repository, but the textconv settings when processing a
+   blob from the submodule is not taken from the submodule repository.
+   A test is added to demonstrate the issue, without fixing it.
+
+ * Teach "git help -c" into helping the command line completion of
+   configuration variables.
+
+ * When "git cmd -h" shows more than one line of usage text (e.g.
+   the cmd subcommand may take sub-sub-command), parse-options API
+   learned to align these lines, even across i18n/l10n.
+
+ * Prevent "make sparse" from running for the source files that
+   haven't been modified.
 
 
 Fixes since v2.33
@@ -274,6 +293,9 @@ Fixes since v2.33
    dependencies.
 
  * Protocol v0 clients can get stuck parsing a malformed feature line.
+
+ * A few kinds of changes "git status" can show were not documented.
+   (merge d2a534c515 ja/doc-status-types-and-copies later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge f188160be9 ab/bundle-remove-verbose-option later to maint).

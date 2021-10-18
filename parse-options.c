@@ -904,25 +904,77 @@ static int usage_with_options_internal(struct parse_opt_ctx_t *ctx,
 	FILE *outfile = err ? stderr : stdout;
 	int need_newline;
 
+	const char *usage_prefix = _("usage: %s");
+	/*
+	 * The translation could be anything, but we can count on
+	 * msgfmt(1)'s --check option to have asserted that "%s" is in
+	 * the translation. So compute the length of the "usage: "
+	 * part. We are assuming that the translator wasn't overly
+	 * clever and used e.g. "%1$s" instead of "%s", there's only
+	 * one "%s" in "usage_prefix" above, so there's no reason to
+	 * do so even with a RTL language.
+	 */
+	size_t usage_len = strlen(usage_prefix) - strlen("%s");
+	/*
+	 * TRANSLATORS: the colon here should align with the
+	 * one in "usage: %s" translation.
+	 */
+	const char *or_prefix = _("   or: %s");
+	/*
+	 * TRANSLATORS: You should only need to translate this format
+	 * string if your language is a RTL language (e.g. Arabic,
+	 * Hebrew etc.), not if it's a LTR language (e.g. German,
+	 * Russian, Chinese etc.).
+	 *
+	 * When a translated usage string has an embedded "\n" it's
+	 * because options have wrapped to the next line. The line
+	 * after the "\n" will then be padded to align with the
+	 * command name, such as N_("git cmd [opt]\n<8
+	 * spaces>[opt2]"), where the 8 spaces are the same length as
+	 * "git cmd ".
+	 *
+	 * This format string prints out that already-translated
+	 * line. The "%*s" is whitespace padding to account for the
+	 * padding at the start of the line that we add in this
+	 * function. The "%s" is a line in the (hopefully already
+	 * translated) N_() usage string, which contained embedded
+	 * newlines before we split it up.
+	 */
+	const char *usage_continued = _("%*s%s");
+	const char *prefix = usage_prefix;
+	int saw_empty_line = 0;
+
 	if (!usagestr)
 		return PARSE_OPT_HELP;
 
 	if (!err && ctx && ctx->flags & PARSE_OPT_SHELL_EVAL)
 		fprintf(outfile, "cat <<\\EOF\n");
 
-	fprintf_ln(outfile, _("usage: %s"), _(*usagestr++));
-	while (*usagestr && **usagestr)
-		/*
-		 * TRANSLATORS: the colon here should align with the
-		 * one in "usage: %s" translation.
-		 */
-		fprintf_ln(outfile, _("   or: %s"), _(*usagestr++));
 	while (*usagestr) {
-		if (**usagestr)
-			fprintf_ln(outfile, _("    %s"), _(*usagestr));
-		else
-			fputc('\n', outfile);
-		usagestr++;
+		const char *str = _(*usagestr++);
+		struct string_list list = STRING_LIST_INIT_DUP;
+		unsigned int j;
+
+		if (!saw_empty_line && !*str)
+			saw_empty_line = 1;
+
+		string_list_split(&list, str, '\n', -1);
+		for (j = 0; j < list.nr; j++) {
+			const char *line = list.items[j].string;
+
+			if (saw_empty_line && *line)
+				fprintf_ln(outfile, _("    %s"), line);
+			else if (saw_empty_line)
+				fputc('\n', outfile);
+			else if (!j)
+				fprintf_ln(outfile, prefix, line);
+			else
+				fprintf_ln(outfile, usage_continued,
+					   (int)usage_len, "", line);
+		}
+		string_list_clear(&list, 0);
+
+		prefix = or_prefix;
 	}
 
 	need_newline = 1;

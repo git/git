@@ -67,12 +67,18 @@ static int reset_index(const char *ref, const struct object_id *oid, int reset_t
 	case KEEP:
 	case MERGE:
 		opts.update = 1;
+		opts.preserve_ignored = 0; /* FIXME: !overwrite_ignore */
 		break;
 	case HARD:
 		opts.update = 1;
-		/* fallthrough */
+		opts.reset = UNPACK_RESET_OVERWRITE_UNTRACKED;
+		break;
+	case MIXED:
+		opts.reset = UNPACK_RESET_PROTECT_UNTRACKED;
+		/* but opts.update=0, so working tree not updated */
+		break;
 	default:
-		opts.reset = 1;
+		BUG("invalid reset_type passed to reset_index");
 	}
 
 	read_cache_unmerged();

@@ -7,7 +7,6 @@
 #include "exec-cmd.h"
 #include "parse-options.h"
 #include "run-command.h"
-#include "column.h"
 #include "config-list.h"
 #include "help.h"
 #include "alias.h"
@@ -34,32 +33,52 @@ enum help_format {
 	HELP_FORMAT_WEB
 };
 
-static const char *html_path;
+enum show_config_type {
+	SHOW_CONFIG_HUMAN,
+	SHOW_CONFIG_VARS,
+	SHOW_CONFIG_SECTIONS,
+};
 
-static int show_all = 0;
-static int show_guides = 0;
-static int show_config;
+static enum help_action {
+	HELP_ACTION_ALL = 1,
+	HELP_ACTION_GUIDES,
+	HELP_ACTION_CONFIG,
+	HELP_ACTION_CONFIG_FOR_COMPLETION,
+	HELP_ACTION_CONFIG_SECTIONS_FOR_COMPLETION,
+} cmd_mode;
+
+static const char *html_path;
 static int verbose = 1;
-static unsigned int colopts;
 static enum help_format help_format = HELP_FORMAT_NONE;
 static int exclude_guides;
 static struct option builtin_help_options[] = {
-	OPT_BOOL('a', "all", &show_all, N_("print all available commands")),
+	OPT_CMDMODE('a', "all", &cmd_mode, N_("print all available commands"),
+		    HELP_ACTION_ALL),
 	OPT_HIDDEN_BOOL(0, "exclude-guides", &exclude_guides, N_("exclude guides")),
-	OPT_BOOL('g', "guides", &show_guides, N_("print list of useful guides")),
-	OPT_BOOL('c', "config", &show_config, N_("print all configuration variable names")),
-	OPT_SET_INT_F(0, "config-for-completion", &show_config, "", 2, PARSE_OPT_HIDDEN),
 	OPT_SET_INT('m', "man", &help_format, N_("show man page"), HELP_FORMAT_MAN),
 	OPT_SET_INT('w', "web", &help_format, N_("show manual in web browser"),
 			HELP_FORMAT_WEB),
 	OPT_SET_INT('i', "info", &help_format, N_("show info page"),
 			HELP_FORMAT_INFO),
 	OPT__VERBOSE(&verbose, N_("print command description")),
+
+	OPT_CMDMODE('g', "guides", &cmd_mode, N_("print list of useful guides"),
+		    HELP_ACTION_GUIDES),
+	OPT_CMDMODE('c', "config", &cmd_mode, N_("print all configuration variable names"),
+		    HELP_ACTION_CONFIG),
+	OPT_CMDMODE_F(0, "config-for-completion", &cmd_mode, "",
+		    HELP_ACTION_CONFIG_FOR_COMPLETION, PARSE_OPT_HIDDEN),
+	OPT_CMDMODE_F(0, "config-sections-for-completion", &cmd_mode, "",
+		    HELP_ACTION_CONFIG_SECTIONS_FOR_COMPLETION, PARSE_OPT_HIDDEN),
+
 	OPT_END(),
 };
 
 static const char * const builtin_help_usage[] = {
-	N_("git help [--all] [--guides] [--man | --web | --info] [<command>]"),
+	N_("git help [-a|--all] [--[no-]verbose]]\n"
+	   "         [[-i|--info] [-m|--man] [-w|--web]] [<command>]"),
+	N_("git help [-g|--guides]"),
+	N_("git help [-c|--config]"),
 	NULL
 };
 
@@ -70,7 +89,7 @@ struct slot_expansion {
 	int found;
 };
 
-static void list_config_help(int for_human)
+static void list_config_help(enum show_config_type type)
 {
 	struct slot_expansion slot_expansions[] = {
 		{ "advice", "*", list_config_advices },
@@ -88,6 +107,8 @@ static void list_config_help(int for_human)
 	const char **p;
 	struct slot_expansion *e;
 	struct string_list keys = STRING_LIST_INIT_DUP;
+	struct string_list keys_uniq = STRING_LIST_INIT_DUP;
+	struct string_list_item *item;
 	int i;
 
 	for (p = config_name_list; *p; p++) {
@@ -118,34 +139,46 @@ static void list_config_help(int for_human)
 	for (i = 0; i < keys.nr; i++) {
 		const char *var = keys.items[i].string;
 		const char *wildcard, *tag, *cut;
+		const char *dot = NULL;
+		struct strbuf sb = STRBUF_INIT;
 
-		if (for_human) {
+		switch (type) {
+		case SHOW_CONFIG_HUMAN:
 			puts(var);
 			continue;
+		case SHOW_CONFIG_SECTIONS:
+			dot = strchr(var, '.');
+			break;
+		case SHOW_CONFIG_VARS:
+			break;
 		}
-
 		wildcard = strchr(var, '*');
 		tag = strchr(var, '<');
 
-		if (!wildcard && !tag) {
-			puts(var);
+		if (!dot && !wildcard && !tag) {
+			string_list_append(&keys_uniq, var);
 			continue;
 		}
 
-		if (wildcard && !tag)
+		if (dot)
+			cut = dot;
+		else if (wildcard && !tag)
 			cut = wildcard;
 		else if (!wildcard && tag)
 			cut = tag;
 		else
 			cut = wildcard < tag ? wildcard : tag;
 
-		/*
-		 * We may produce duplicates, but that's up to
-		 * git-completion.bash to handle
-		 */
-		printf("%.*s\n", (int)(cut - var), var);
+		strbuf_add(&sb, var, cut - var);
+		string_list_append(&keys_uniq, sb.buf);
+		strbuf_release(&sb);
+
 	}
 	string_list_clear(&keys, 0);
+	string_list_remove_duplicates(&keys_uniq, 0);
+	for_each_string_list_item(item, &keys_uniq)
+		puts(item->string);
+	string_list_clear(&keys_uniq, 0);
 }
 
 static enum help_format parse_help_format(const char *format)
@@ -349,8 +382,6 @@ static int add_man_viewer_info(const char *var, const char *value)
 
 static int git_help_config(const char *var, const char *value, void *cb)
 {
-	if (starts_with(var, "column."))
-		return git_column_config(var, value, "help", &colopts);
 	if (!strcmp(var, "help.format")) {
 		if (!value)
 			return config_error_nonbool(var);
@@ -544,6 +575,13 @@ static const char *check_git_cmd(const char* cmd)
 	return cmd;
 }
 
+static void no_extra_argc(int argc)
+{
+	if (argc)
+		usage_msg_opt(_("this option doesn't take any other arguments"),
+			      builtin_help_usage, builtin_help_options);
+}
+
 int cmd_help(int argc, const char **argv, const char *prefix)
 {
 	int nongit;
@@ -554,8 +592,8 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 			builtin_help_usage, 0);
 	parsed_help_format = help_format;
 
-	if (show_all) {
-		git_config(git_help_config, NULL);
+	switch (cmd_mode) {
+	case HELP_ACTION_ALL:
 		if (verbose) {
 			setup_pager();
 			list_all_cmds_help();
@@ -563,30 +601,27 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 		}
 		printf(_("usage: %s%s"), _(git_usage_string), "\n\n");
 		load_command_list("git-", &main_cmds, &other_cmds);
-		list_commands(colopts, &main_cmds, &other_cmds);
-	}
-
-	if (show_config) {
-		int for_human = show_config == 1;
-
-		if (!for_human) {
-			list_config_help(for_human);
-			return 0;
-		}
-		setup_pager();
-		list_config_help(for_human);
-		printf("\n%s\n", _("'git help config' for more information"));
-		return 0;
-	}
-
-	if (show_guides)
-		list_guides_help();
-
-	if (show_all || show_guides) {
+		list_commands(&main_cmds, &other_cmds);
 		printf("%s\n", _(git_more_info_string));
-		/*
-		* We're done. Ignore any remaining args
-		*/
+		break;
+	case HELP_ACTION_GUIDES:
+		no_extra_argc(argc);
+		list_guides_help();
+		printf("%s\n", _(git_more_info_string));
+		return 0;
+	case HELP_ACTION_CONFIG_FOR_COMPLETION:
+		no_extra_argc(argc);
+		list_config_help(SHOW_CONFIG_VARS);
+		return 0;
+	case HELP_ACTION_CONFIG_SECTIONS_FOR_COMPLETION:
+		no_extra_argc(argc);
+		list_config_help(SHOW_CONFIG_SECTIONS);
+		return 0;
+	case HELP_ACTION_CONFIG:
+		no_extra_argc(argc);
+		setup_pager();
+		list_config_help(SHOW_CONFIG_HUMAN);
+		printf("\n%s\n", _("'git help config' for more information"));
 		return 0;
 	}
 

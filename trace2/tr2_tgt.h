@@ -45,6 +45,10 @@ typedef void(tr2_tgt_evt_child_exit_fl_t)(const char *file, int line,
 					  uint64_t us_elapsed_absolute, int cid,
 					  int pid, int code,
 					  uint64_t us_elapsed_child);
+typedef void(tr2_tgt_evt_child_ready_fl_t)(const char *file, int line,
+					   uint64_t us_elapsed_absolute,
+					   int cid, int pid, const char *ready,
+					   uint64_t us_elapsed_child);
 
 typedef void(tr2_tgt_evt_thread_start_fl_t)(const char *file, int line,
 					    uint64_t us_elapsed_absolute);
@@ -116,6 +120,7 @@ struct tr2_tgt {
 	tr2_tgt_evt_alias_fl_t                  *pfn_alias_fl;
 	tr2_tgt_evt_child_start_fl_t            *pfn_child_start_fl;
 	tr2_tgt_evt_child_exit_fl_t             *pfn_child_exit_fl;
+	tr2_tgt_evt_child_ready_fl_t            *pfn_child_ready_fl;
 	tr2_tgt_evt_thread_start_fl_t           *pfn_thread_start_fl;
 	tr2_tgt_evt_thread_exit_fl_t            *pfn_thread_exit_fl;
 	tr2_tgt_evt_exec_fl_t                   *pfn_exec_fl;
