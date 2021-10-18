@@ -519,7 +519,7 @@ test_expect_success 'report error server does not provide ref status' '
 		rev-parse --verify refs/tags/will-fail &&
 	cat >expect <<-EOF &&
 	To $HTTPD_URL/smart/no_report
-	!	HEAD:refs/tags/will-fail	[remote rejected] (expecting report)
+	!	HEAD:refs/tags/will-fail	[remote failure] (remote failed to report status)
 	Done
 	EOF
 	test_cmp expect actual
