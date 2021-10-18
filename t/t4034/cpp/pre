@@ -1,19 +1,30 @@
-Foo():x(0&&1){}
+Foo():x(0&&1){ foo0( x.find); }
 cout<<"Hello World!\n"<<endl;
 1 -1e10 0xabcdef 'x'
-[a] a->b a.b
-!a ~a a++ a-- a*b a&b
-a*b a/b a%b
-a+b a-b
-a<<b a>>b
-a<b a<=b a>b a>=b
-a==b a!=b
-a&b
-a^b
-a|b
-a&&b
+// long double
+3.141'592'653e-10l
+// float
+120E5f
+// hex
+0xdead'beaf+8ULL
+// octal
+0123'4567
+// binary
+0b10'00+e1
+// expression
+1.5-e+2+f
+// another one
+str.e+65
+[a] b->v d.e
+!a ~b c++ d-- e*f g&h
+a*b c/d e%f
+a+b c-d
+a<<b c>>d
+a<b c<=d e>f g>=h i<=j
+a==b c!=d
+a^b c|d e&&f
 a||b
-a?b:z
-a=b a+=b a-=b a*=b a/=b a%=b a<<=b a>>=b a&=b a^=b a|=b
-a,y
+a?b
+a=b c+=d e-=f g*=h i/=j k%=l m<<=n o>>=p q&=r s^=t u|=v
+a,b
 a::b
