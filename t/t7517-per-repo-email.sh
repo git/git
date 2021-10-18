@@ -75,19 +75,6 @@ test_expect_success 'noop interactive rebase does not care about ident' '
 	git rebase -i HEAD^
 '
 
-test_expect_success REBASE_P \
-	'fast-forward rebase does not care about ident (preserve)' '
-	git checkout -B tmp side-without-commit &&
-	git rebase -p main
-'
-
-test_expect_success REBASE_P \
-	'non-fast-forward rebase refuses to write commits (preserve)' '
-	test_when_finished "git rebase --abort || true" &&
-	git checkout -B tmp side-with-commit &&
-	test_must_fail git rebase -p main
-'
-
 test_expect_success 'author.name overrides user.name' '
 	test_config user.name user &&
 	test_config user.email user@example.com &&
