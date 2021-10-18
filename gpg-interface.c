@@ -365,6 +365,7 @@ static int verify_gpg_signed_buffer(struct signature_check *sigc,
 static void parse_ssh_output(struct signature_check *sigc)
 {
 	const char *line, *principal, *search;
+	char *to_free;
 	char *key = NULL;
 
 	/*
@@ -383,7 +384,7 @@ static void parse_ssh_output(struct signature_check *sigc)
 	sigc->result = 'B';
 	sigc->trust_level = TRUST_NEVER;
 
-	line = xmemdupz(sigc->output, strcspn(sigc->output, "\n"));
+	line = to_free = xmemdupz(sigc->output, strcspn(sigc->output, "\n"));
 
 	if (skip_prefix(line, "Good \"git\" signature for ", &line)) {
 		/* Valid signature and known principal */
@@ -403,7 +404,7 @@ static void parse_ssh_output(struct signature_check *sigc)
 		sigc->result = 'G';
 		sigc->trust_level = TRUST_UNDEFINED;
 	} else {
-		return;
+		goto cleanup;
 	}
 
 	key = strstr(line, "key");
@@ -417,6 +418,9 @@ static void parse_ssh_output(struct signature_check *sigc)
 		 */
 		sigc->result = 'B';
 	}
+
+cleanup:
+	free(to_free);
 }
 
 static int verify_ssh_signed_buffer(struct signature_check *sigc,
