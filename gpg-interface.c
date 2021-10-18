@@ -711,6 +711,7 @@ static char *get_ssh_key_fingerprint(const char *signing_key)
 	int ret = -1;
 	struct strbuf fingerprint_stdout = STRBUF_INIT;
 	struct strbuf **fingerprint;
+	char *fingerprint_ret;
 
 	/*
 	 * With SSH Signing this can contain a filename or a public key
@@ -737,7 +738,10 @@ static char *get_ssh_key_fingerprint(const char *signing_key)
 		die_errno(_("failed to get the ssh fingerprint for key '%s'"),
 			  signing_key);
 
-	return strbuf_detach(fingerprint[1], NULL);
+	fingerprint_ret = strbuf_detach(fingerprint[1], NULL);
+	strbuf_list_free(fingerprint);
+	strbuf_release(&fingerprint_stdout);
+	return fingerprint_ret;
 }
 
 /* Returns the first public key from an ssh-agent to use for signing */
