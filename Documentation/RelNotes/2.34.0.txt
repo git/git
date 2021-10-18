@@ -4,6 +4,11 @@ Git 2.34 Release Notes
 Updates since Git 2.33
 ----------------------
 
+Backward compatibility notes
+
+ * The "--preserve-merges" option of "git rebase" has been removed.
+
+
 UI, Workflows & Features
 
  * Pathname expansion (like "~username/") learned a way to specify a
@@ -65,6 +70,9 @@ UI, Workflows & Features
  * "git add", "git mv", and "git rm" have been adjusted to avoid
    updating paths outside of the sparse-checkout definition unless
    the user specifies a "--sparse" option.
+
+ * "git repack" has been taught to generate multi-pack reachability
+   bitmaps.
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -297,6 +305,35 @@ Fixes since v2.33
  * A few kinds of changes "git status" can show were not documented.
    (merge d2a534c515 ja/doc-status-types-and-copies later to maint).
 
+ * The mergesort implementation used to sort linked list has been
+   optimized.
+   (merge c90cfc225b rs/mergesort later to maint).
+
+ * An editor session launched during a Git operation (e.g. during 'git
+   commit') can leave the terminal in a funny state.  The code path
+   has updated to save the terminal state before, and restore it
+   after, it spawns an editor.
+   (merge 3d411afabc cm/save-restore-terminal later to maint).
+
+ * "git cat-file --batch" with the "--batch-all-objects" option is
+   supposed to iterate over all the objects found in a repository, but
+   it used to translate these object names using the replace mechanism,
+   which defeats the point of enumerating all objects in the repository.
+   This has been corrected.
+   (merge bf972896d7 jk/cat-file-batch-all-wo-replace later to maint).
+
+ * Recent sparse-index work broke safety against attempts to add paths
+   with trailing slashes to the index, which has been corrected.
+   (merge c8ad9d04c6 rs/make-verify-path-really-verify-again later to maint).
+
+ * The "--color-lines" and "--color-by-age" options of "git blame"
+   have been missing, which are now documented.
+   (merge 8c32856133 bs/doc-blame-color-lines later to maint).
+
+ * The PATH used in CI job may be too wide and let incompatible dlls
+   to be grabbed, which can cause the build&test to fail.  Tighten it.
+   (merge 7491ef6198 js/windows-ci-path-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge f188160be9 ab/bundle-remove-verbose-option later to maint).
    (merge 8c6b4332b4 rs/close-pack-leakfix later to maint).
@@ -305,3 +342,4 @@ Fixes since v2.33
    (merge 6ffb990dc4 os/status-docfix later to maint).
    (merge 100c2da2d3 rs/p3400-lose-tac later to maint).
    (merge 76f3b69896 tb/aggregate-ignore-leading-whitespaces later to maint).
+   (merge 6e4fd8bfcd tz/doc-link-to-bundle-format-fix later to maint).
