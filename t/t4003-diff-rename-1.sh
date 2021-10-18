@@ -11,7 +11,7 @@ test_description='More rename detection
 
 test_expect_success \
     'prepare reference tree' \
-    'cat "$TEST_DIRECTORY"/lib-diff/COPYING >COPYING &&
+    'COPYING_test_data >COPYING &&
      echo frotz >rezrov &&
     git update-index --add COPYING rezrov &&
     tree=$(git write-tree) &&
@@ -99,7 +99,7 @@ test_expect_success \
 
 test_expect_success \
     'prepare work tree once again' \
-    'cat "$TEST_DIRECTORY"/lib-diff/COPYING >COPYING &&
+    'COPYING_test_data >COPYING &&
      git update-index --add --remove COPYING COPYING.1'
 
 # tree has COPYING and rezrov.  work tree has COPYING and COPYING.1,
