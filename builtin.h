@@ -237,6 +237,7 @@ int cmd_var(int argc, const char **argv, const char *prefix);
 int cmd_verify_commit(int argc, const char **argv, const char *prefix);
 int cmd_verify_tag(int argc, const char **argv, const char *prefix);
 int cmd_version(int argc, const char **argv, const char *prefix);
+int cmd_walken(int argc, const char **argv, const char *prefix);
 int cmd_whatchanged(int argc, const char **argv, const char *prefix);
 int cmd_worktree(int argc, const char **argv, const char *prefix);
 int cmd_write_tree(int argc, const char **argv, const char *prefix);
