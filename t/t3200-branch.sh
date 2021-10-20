@@ -1418,7 +1418,17 @@ test_expect_success 'invalid sort parameter in configuration' '
 	(
 		cd sort &&
 		git config branch.sort "v:notvalid" &&
-		test_must_fail git branch
+
+		# this works in the "listing" mode, so bad sort key
+		# is a dying offence.
+		test_must_fail git branch &&
+
+		# these do not need to use sorting, and should all
+		# succeed
+		git branch newone main &&
+		git branch -c newone newerone &&
+		git branch -m newone newestone &&
+		git branch -d newerone newestone
 	)
 '
 
