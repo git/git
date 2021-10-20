@@ -630,6 +630,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 		       find_unique_abbrev(&prev, DEFAULT_ABBREV));
 
 cleanup:
+	ref_sorting_release(sorting);
 	strbuf_release(&buf);
 	strbuf_release(&ref);
 	strbuf_release(&reflog_msg);
