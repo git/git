@@ -6,6 +6,7 @@ struct strbuf;
 /*
  * The maximum length of ANSI color sequence we would generate:
  * - leading ESC '['            2
+ * - reset ';' .................1
  * - attr + ';'                 2 * num_attr (e.g. "1;")
  * - no-attr + ';'              3 * num_attr (e.g. "22;")
  * - fg color + ';'             17 (e.g. "38;2;255;255;255;")

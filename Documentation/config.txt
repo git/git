@@ -280,6 +280,11 @@ The position of any attributes with respect to the colors
 be turned off by prefixing them with `no` or `no-` (e.g., `noreverse`,
 `no-ul`, etc).
 +
+The pseudo-attribute `reset` resets all colors and attributes before
+applying the specified coloring. For example, `reset green` will result
+in a green foreground and default background without any active
+attributes.
++
 An empty color string produces no color effect at all. This can be used
 to avoid coloring specific elements without disabling color entirely.
 +

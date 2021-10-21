@@ -58,6 +58,10 @@ test_expect_success 'fg bg attr...' '
 	color "blue bold dim ul blink reverse" "[1;2;4;5;7;34m"
 '
 
+test_expect_success 'reset fg bg attr...' '
+	color "reset blue bold dim ul blink reverse" "[;1;2;4;5;7;34m"
+'
+
 # note that nobold and nodim are the same code (22)
 test_expect_success 'attr negation' '
 	color "nobold nodim noul noblink noreverse" "[22;24;25;27m"
