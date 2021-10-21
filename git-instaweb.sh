@@ -380,10 +380,7 @@ TypesConfig "$fqgitdir/mime.types"
 DirectoryIndex gitweb.cgi
 EOF
 
-	# check to see if Dennis Stosberg's mod_perl compatibility patch
-	# (<20060621130708.Gcbc6e5c@leonov.stosberg.net>) has been applied
-	if test -f "$module_path/mod_perl.so" &&
-	   sane_grep 'MOD_PERL' "$root/gitweb.cgi" >/dev/null
+	if test -f "$module_path/mod_perl.so"
 	then
 		# favor mod_perl if available
 		cat >> "$conf" <<EOF
