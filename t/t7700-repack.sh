@@ -3,6 +3,8 @@
 test_description='git repack works correctly'
 
 . ./test-lib.sh
+. "${TEST_DIRECTORY}/lib-bitmap.sh"
+. "${TEST_DIRECTORY}/lib-midx.sh"
 
 commit_and_pack () {
 	test_commit "$@" 1>&2 &&
@@ -232,6 +234,142 @@ test_expect_success 'auto-bitmaps do not complain if unavailable' '
 	test_must_be_empty stderr &&
 	find bare.git/objects/pack -type f -name "*.bitmap" >actual &&
 	test_must_be_empty actual
+'
+
+objdir=.git/objects
+midx=$objdir/pack/multi-pack-index
+
+test_expect_success 'setup for --write-midx tests' '
+	git init midx &&
+	(
+		cd midx &&
+		git config core.multiPackIndex true &&
+
+		test_commit base
+	)
+'
+
+test_expect_success '--write-midx unchanged' '
+	(
+		cd midx &&
+		GIT_TEST_MULTI_PACK_INDEX=0 git repack &&
+		test_path_is_missing $midx &&
+		test_path_is_missing $midx-*.bitmap &&
+
+		GIT_TEST_MULTI_PACK_INDEX=0 git repack --write-midx &&
+
+		test_path_is_file $midx &&
+		test_path_is_missing $midx-*.bitmap &&
+		test_midx_consistent $objdir
+	)
+'
+
+test_expect_success '--write-midx with a new pack' '
+	(
+		cd midx &&
+		test_commit loose &&
+
+		GIT_TEST_MULTI_PACK_INDEX=0 git repack --write-midx &&
+
+		test_path_is_file $midx &&
+		test_path_is_missing $midx-*.bitmap &&
+		test_midx_consistent $objdir
+	)
+'
+
+test_expect_success '--write-midx with -b' '
+	(
+		cd midx &&
+		GIT_TEST_MULTI_PACK_INDEX=0 git repack -mb &&
+
+		test_path_is_file $midx &&
+		test_path_is_file $midx-*.bitmap &&
+		test_midx_consistent $objdir
+	)
+'
+
+test_expect_success '--write-midx with -d' '
+	(
+		cd midx &&
+		test_commit repack &&
+
+		GIT_TEST_MULTI_PACK_INDEX=0 git repack -Ad --write-midx &&
+
+		test_path_is_file $midx &&
+		test_path_is_missing $midx-*.bitmap &&
+		test_midx_consistent $objdir
+	)
+'
+
+test_expect_success 'cleans up MIDX when appropriate' '
+	(
+		cd midx &&
+
+		test_commit repack-2 &&
+		GIT_TEST_MULTI_PACK_INDEX=0 git repack -Adb --write-midx &&
+
+		checksum=$(midx_checksum $objdir) &&
+		test_path_is_file $midx &&
+		test_path_is_file $midx-$checksum.bitmap &&
+		test_path_is_file $midx-$checksum.rev &&
+
+		test_commit repack-3 &&
+		GIT_TEST_MULTI_PACK_INDEX=0 git repack -Adb --write-midx &&
+
+		test_path_is_file $midx &&
+		test_path_is_missing $midx-$checksum.bitmap &&
+		test_path_is_missing $midx-$checksum.rev &&
+		test_path_is_file $midx-$(midx_checksum $objdir).bitmap &&
+		test_path_is_file $midx-$(midx_checksum $objdir).rev &&
+
+		test_commit repack-4 &&
+		GIT_TEST_MULTI_PACK_INDEX=0 git repack -Adb &&
+
+		find $objdir/pack -type f -name "multi-pack-index*" >files &&
+		test_must_be_empty files
+	)
+'
+
+test_expect_success '--write-midx with preferred bitmap tips' '
+	git init midx-preferred-tips &&
+	test_when_finished "rm -fr midx-preferred-tips" &&
+	(
+		cd midx-preferred-tips &&
+
+		test_commit_bulk --message="%s" 103 &&
+
+		git log --format="%H" >commits.raw &&
+		sort <commits.raw >commits &&
+
+		git log --format="create refs/tags/%s/%s %H" HEAD >refs &&
+		git update-ref --stdin <refs &&
+
+		git repack --write-midx --write-bitmap-index &&
+		test_path_is_file $midx &&
+		test_path_is_file $midx-$(midx_checksum $objdir).bitmap &&
+
+		test-tool bitmap list-commits | sort >bitmaps &&
+		comm -13 bitmaps commits >before &&
+		test_line_count = 1 before &&
+
+		rm -fr $midx-$(midx_checksum $objdir).bitmap &&
+		rm -fr $midx-$(midx_checksum $objdir).rev &&
+		rm -fr $midx &&
+
+		# instead of constructing the snapshot ourselves (c.f., the test
+		# "write a bitmap with --refs-snapshot (preferred tips)" in
+		# t5326), mark the missing commit as preferred by adding it to
+		# the pack.preferBitmapTips configuration.
+		git for-each-ref --format="%(refname:rstrip=1)" \
+			--points-at="$(cat before)" >missing &&
+		git config pack.preferBitmapTips "$(cat missing)" &&
+		git repack --write-midx --write-bitmap-index &&
+
+		test-tool bitmap list-commits | sort >bitmaps &&
+		comm -13 bitmaps commits >after &&
+
+		! test_cmp before after
+	)
 '
 
 test_done

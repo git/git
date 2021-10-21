@@ -226,32 +226,3 @@ int todo_list_check_against_backup(struct repository *r, struct todo_list *todo_
 	todo_list_release(&backup);
 	return res;
 }
-
-int check_todo_list_from_file(struct repository *r)
-{
-	struct todo_list old_todo = TODO_LIST_INIT, new_todo = TODO_LIST_INIT;
-	int res = 0;
-
-	if (strbuf_read_file(&new_todo.buf, rebase_path_todo(), 0) < 0) {
-		res = error(_("could not read '%s'."), rebase_path_todo());
-		goto out;
-	}
-
-	if (strbuf_read_file(&old_todo.buf, rebase_path_todo_backup(), 0) < 0) {
-		res = error(_("could not read '%s'."), rebase_path_todo_backup());
-		goto out;
-	}
-
-	res = todo_list_parse_insn_buffer(r, old_todo.buf.buf, &old_todo);
-	if (!res)
-		res = todo_list_parse_insn_buffer(r, new_todo.buf.buf, &new_todo);
-	if (res)
-		fprintf(stderr, _(edit_todo_list_advice));
-	if (!res)
-		res = todo_list_check(&old_todo, &new_todo);
-out:
-	todo_list_release(&old_todo);
-	todo_list_release(&new_todo);
-
-	return res;
-}
