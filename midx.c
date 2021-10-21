@@ -179,12 +179,13 @@ struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local
 	trace2_data_intmax("midx", the_repository, "load/num_packs", m->num_packs);
 	trace2_data_intmax("midx", the_repository, "load/num_objects", m->num_objects);
 
+	free_chunkfile(cf);
 	return m;
 
 cleanup_fail:
 	free(m);
 	free(midx_name);
-	free(cf);
+	free_chunkfile(cf);
 	if (midx_map)
 		munmap(midx_map, midx_size);
 	if (0 <= fd)
