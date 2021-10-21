@@ -507,14 +507,6 @@ if test -n "$ASCIIDOC"; then
 	esac
 fi
 
-if grep -a ascii configure.ac >/dev/null; then
-  AC_MSG_RESULT([Using 'grep -a' for sane_grep])
-  SANE_TEXT_GREP=-a
-else
-  SANE_TEXT_GREP=
-fi
-GIT_CONF_SUBST([SANE_TEXT_GREP])
-
 ## Checks for libraries.
 AC_MSG_NOTICE([CHECKS for libraries])
 #

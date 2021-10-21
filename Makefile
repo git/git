@@ -305,9 +305,6 @@ all::
 #
 # Define NO_TCLTK if you do not want Tcl/Tk GUI.
 #
-# Define SANE_TEXT_GREP to "-a" if you use recent versions of GNU grep
-# and egrep that are pickier when their input contains non-ASCII data.
-#
 # The TCL_PATH variable governs the location of the Tcl interpreter
 # used to optimize git-gui for your system.  Only used if NO_TCLTK
 # is not set.  Defaults to the bare 'tclsh'.
@@ -2254,7 +2251,7 @@ hook-list.h: generate-hooklist.sh Documentation/githooks.txt
 
 SCRIPT_DEFINES = $(SHELL_PATH_SQ):$(DIFF_SQ):\
 	$(localedir_SQ):$(USE_GETTEXT_SCHEME):$(SANE_TOOL_PATH_SQ):\
-	$(gitwebdir_SQ):$(PERL_PATH_SQ):$(SANE_TEXT_GREP):$(PAGER_ENV):\
+	$(gitwebdir_SQ):$(PERL_PATH_SQ):$(PAGER_ENV):\
 	$(perllibdir_SQ)
 GIT-SCRIPT-DEFINES: FORCE
 	@FLAGS='$(SCRIPT_DEFINES)'; \
@@ -2272,7 +2269,6 @@ sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
     -e $(BROKEN_PATH_FIX) \
     -e 's|@@GITWEBDIR@@|$(gitwebdir_SQ)|g' \
     -e 's|@@PERL@@|$(PERL_PATH_SQ)|g' \
-    -e 's|@@SANE_TEXT_GREP@@|$(SANE_TEXT_GREP)|g' \
     -e 's|@@PAGER_ENV@@|$(PAGER_ENV_SQ)|g' \
     $@.sh >$@+
 endef
