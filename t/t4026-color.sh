@@ -94,6 +94,18 @@ test_expect_success '24-bit colors' '
 	color "#ff00ff black" "[38;2;255;0;255;40m"
 '
 
+test_expect_success '"default" foreground' '
+	color "default" "[39m"
+'
+
+test_expect_success '"normal default" to clear background' '
+	color "normal default" "[49m"
+'
+
+test_expect_success '"default" can be combined with attributes' '
+	color "default default no-reverse bold" "[1;27;39;49m"
+'
+
 test_expect_success '"normal" yields no color at all"' '
 	color "normal black" "[40m"
 '

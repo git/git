@@ -40,7 +40,7 @@ struct color {
 	enum {
 		COLOR_UNSPECIFIED = 0,
 		COLOR_NORMAL,
-		COLOR_ANSI, /* basic 0-7 ANSI colors */
+		COLOR_ANSI, /* basic 0-7 ANSI colors + "default" (value = 9) */
 		COLOR_256,
 		COLOR_RGB
 	} type;
@@ -82,6 +82,27 @@ static int parse_ansi_color(struct color *out, const char *name, int len)
 	};
 	int i;
 	int color_offset = COLOR_FOREGROUND_ANSI;
+
+	if (match_word(name, len, "default")) {
+		/*
+		 * Restores to the terminal's default color, which may not be
+		 * the same as explicitly setting "white" or "black".
+		 *
+		 * ECMA-48 - Control Functions \
+		 *  for Coded Character Sets, 5th edition (June 1991):
+		 * > 39 default display colour (implementation-defined)
+		 * > 49 default background colour (implementation-defined)
+		 *
+		 * Although not supported /everywhere/--according to terminfo,
+		 * some terminals define "op" (original pair) as a blunt
+		 * "set to white on black", or even "send full SGR reset"--
+		 * it's standard and well-supported enough that if a user
+		 * asks for it in their config this will do the right thing.
+		 */
+		out->type = COLOR_ANSI;
+		out->value = 9 + color_offset;
+		return 0;
+	}
 
 	if (strncasecmp(name, "bright", 6) == 0) {
 		color_offset = COLOR_FOREGROUND_BRIGHT_ANSI;
