@@ -2183,6 +2183,18 @@ static void wt_porcelain_v2_print_tracking(struct wt_status *s)
 }
 
 /*
+ * Print the stash count in a porcelain-friendly format
+ */
+static void wt_porcelain_v2_print_stash(struct wt_status *s)
+{
+	int stash_count = count_stash_entries();
+	char eol = s->null_termination ? '\0' : '\n';
+
+	if (stash_count > 0)
+		fprintf(s->fp, "# stash %d%c", stash_count, eol);
+}
+
+/*
  * Convert various submodule status values into a
  * fixed-length string of characters in the buffer provided.
  */
@@ -2442,6 +2454,9 @@ static void wt_porcelain_v2_print(struct wt_status *s)
 
 	if (s->show_branch)
 		wt_porcelain_v2_print_tracking(s);
+
+	if (s->show_stash)
+		wt_porcelain_v2_print_stash(s);
 
 	for (i = 0; i < s->change.nr; i++) {
 		it = &(s->change.items[i]);

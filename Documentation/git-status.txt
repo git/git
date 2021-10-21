@@ -314,6 +314,14 @@ Line                                     Notes
 ------------------------------------------------------------
 ....
 
+Stash Information
+^^^^^^^^^^^^^^^^^
+
+If `--show-stash` is given, one line is printed showing the number of stash
+entries if non-zero:
+
+    # stash <N>
+
 Changed Tracked Entries
 ^^^^^^^^^^^^^^^^^^^^^^^
 

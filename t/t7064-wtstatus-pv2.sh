@@ -113,6 +113,21 @@ test_expect_success 'after first commit, create unstaged changes' '
 	test_cmp expect actual
 '
 
+test_expect_success 'after first commit, stash existing changes' '
+	cat >expect <<-EOF &&
+	# branch.oid $H0
+	# branch.head initial-branch
+	# stash 2
+	EOF
+
+	test_when_finished "git stash pop && git stash pop" &&
+
+	git stash -- file_x &&
+	git stash &&
+	git status --porcelain=v2 --branch --show-stash --untracked-files=no >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'after first commit but omit untracked files and branch' '
 	cat >expect <<-EOF &&
 	1 .M N... 100644 100644 100644 $OID_X $OID_X file_x
