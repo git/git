@@ -653,6 +653,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 					should_expire_reflog_ent,
 					reflog_expiry_cleanup,
 					&cb);
+		free(ref);
 	}
 	return status;
 }
