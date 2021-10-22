@@ -1196,6 +1196,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		run_pager(&opt, prefix);
 	clear_pathspec(&pathspec);
 	free_grep_patterns(&opt);
+	object_array_clear(&list);
 	free_repos();
 	return !hit;
 }
