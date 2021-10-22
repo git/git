@@ -93,12 +93,19 @@ BACKEND EXTRA OPTIONS
 
 zip
 ~~~
--0::
-	Store the files instead of deflating them.
--9::
-	Highest and slowest compression level.  You can specify any
-	number from 1 to 9 to adjust compression speed and ratio.
+-<digit>::
+	Specify compression level.  Larger values allow the command
+	to spend more time to compress to smaller size.  Supported
+	values are from `-0` (store-only) to `-9` (best ratio).
+	Default is `-6` if not given.
 
+tar
+~~~
+-<number>::
+	Specify compression level. The value will be passed to the
+	compression command configured in `tar.<format>.command`. See
+	manual page of the configured command for the list of supported
+	levels and the default level if this option isn't specified.
 
 CONFIGURATION
 -------------
