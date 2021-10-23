@@ -125,14 +125,14 @@ OPTIONS
 
 -m::
 --move::
-	Move/rename a branch and the corresponding reflog.
+	Move/rename a branch, together with its config and reflog.
 
 -M::
 	Shortcut for `--move --force`.
 
 -c::
 --copy::
-	Copy a branch and the corresponding reflog.
+	Copy a branch, together with its config and reflog.
 
 -C::
 	Shortcut for `--copy --force`.
