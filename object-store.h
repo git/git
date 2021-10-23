@@ -28,6 +28,18 @@ struct object_directory {
 	struct oidtree *loose_objects_cache;
 
 	/*
+	 * This is a temporary object store created by the tmp_objdir
+	 * facility. Disable ref updates since the objects in the store
+	 * might be discarded on rollback.
+	 */
+	unsigned int disable_ref_updates : 1;
+
+	/*
+	 * This object store is ephemeral, so there is no need to fsync.
+	 */
+	unsigned int will_destroy : 1;
+
+	/*
 	 * Path to the alternative object store. If this is a relative path,
 	 * it is relative to the current working directory.
 	 */
@@ -59,6 +71,17 @@ void add_to_alternates_file(const char *dir);
 void add_to_alternates_memory(const char *dir);
 
 /*
+ * Replace the current writable object directory with the specified temporary
+ * object directory; returns the former primary object directory.
+ */
+struct object_directory *set_temporary_primary_odb(const char *dir, int will_destroy);
+
+/*
+ * Restore a previous ODB replaced by set_temporary_main_odb.
+ */
+void restore_primary_odb(struct object_directory *restore_odb, const char *old_path);
+
+/*
  * Populate and return the loose object cache array corresponding to the
  * given object ID.
  */
@@ -67,6 +90,9 @@ struct oidtree *odb_loose_cache(struct object_directory *odb,
 
 /* Empty the loose object cache for the specified object directory. */
 void odb_clear_loose_cache(struct object_directory *odb);
+
+/* Clear and free the specified object directory */
+void free_object_directory(struct object_directory *odb);
 
 struct packed_git {
 	struct hashmap_entry packmap_ent;

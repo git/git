@@ -18,6 +18,7 @@ static int show_only;
 static int verbose;
 static timestamp_t expire;
 static int show_progress = -1;
+static struct strbuf remove_dir_buf = STRBUF_INIT;
 
 static int prune_tmp_file(const char *fullpath)
 {
@@ -26,10 +27,19 @@ static int prune_tmp_file(const char *fullpath)
 		return error("Could not stat '%s'", fullpath);
 	if (st.st_mtime > expire)
 		return 0;
-	if (show_only || verbose)
-		printf("Removing stale temporary file %s\n", fullpath);
-	if (!show_only)
-		unlink_or_warn(fullpath);
+	if (S_ISDIR(st.st_mode)) {
+		if (show_only || verbose)
+			printf("Removing stale temporary directory %s\n", fullpath);
+		if (!show_only) {
+			strbuf_addstr(&remove_dir_buf, fullpath);
+			remove_dir_recursively(&remove_dir_buf, 0);
+		}
+	} else {
+		if (show_only || verbose)
+			printf("Removing stale temporary file %s\n", fullpath);
+		if (!show_only)
+			unlink_or_warn(fullpath);
+	}
 	return 0;
 }
 
@@ -97,6 +107,9 @@ static int prune_cruft(const char *basename, const char *path, void *data)
 
 static int prune_subdir(unsigned int nr, const char *path, void *data)
 {
+	if (verbose)
+		printf("Removing directory %s\n", path);
+
 	if (!show_only)
 		rmdir(path);
 	return 0;
@@ -184,5 +197,6 @@ int cmd_prune(int argc, const char **argv, const char *prefix)
 		prune_shallow(show_only ? PRUNE_SHOW_ONLY : 0);
 	}
 
+	strbuf_release(&remove_dir_buf);
 	return 0;
 }

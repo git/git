@@ -10,7 +10,7 @@
  *
  * Example:
  *
- *	struct tmp_objdir *t = tmp_objdir_create();
+ *	struct tmp_objdir *t = tmp_objdir_create("incoming");
  *	if (!run_command_v_opt_cd_env(cmd, 0, NULL, tmp_objdir_env(t)) &&
  *	    !tmp_objdir_migrate(t))
  *		printf("success!\n");
@@ -22,9 +22,10 @@
 struct tmp_objdir;
 
 /*
- * Create a new temporary object directory; returns NULL on failure.
+ * Create a new temporary object directory with the specified prefix;
+ * returns NULL on failure.
  */
-struct tmp_objdir *tmp_objdir_create(void);
+struct tmp_objdir *tmp_objdir_create(const char *prefix);
 
 /*
  * Return a list of environment strings, suitable for use with
@@ -50,5 +51,12 @@ int tmp_objdir_destroy(struct tmp_objdir *);
  * current process.
  */
 void tmp_objdir_add_as_alternate(const struct tmp_objdir *);
+
+/*
+ * Replaces the main object store in the current process with the temporary
+ * object directory and makes the former main object store an alternate.
+ * If will_destroy is nonzero, the object directory may not be migrated.
+ */
+void tmp_objdir_replace_primary_odb(struct tmp_objdir *, int will_destroy);
 
 #endif /* TMP_OBJDIR_H */
