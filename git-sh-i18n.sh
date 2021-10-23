@@ -51,12 +51,6 @@ gettext_without_eval_gettext)
 		)
 	}
 
-	eval_ngettext () {
-		ngettext "$1" "$2" "$3" | (
-			export PATH $(git sh-i18n--envsubst --variables "$2");
-			git sh-i18n--envsubst "$2"
-		)
-	}
 	;;
 *)
 	gettext () {
@@ -70,12 +64,6 @@ gettext_without_eval_gettext)
 		)
 	}
 
-	eval_ngettext () {
-		(test "$3" = 1 && printf "%s" "$1" || printf "%s" "$2") | (
-			export PATH $(git sh-i18n--envsubst --variables "$2");
-			git sh-i18n--envsubst "$2"
-		)
-	}
 	;;
 esac
 
