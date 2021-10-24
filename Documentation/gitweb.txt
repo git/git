@@ -547,7 +547,7 @@ like this:
     # make the front page an internal rewrite to the gitweb script
     RewriteRule ^/$  /cgi-bin/gitweb.cgi  [QSA,L,PT]
 
-    # look for a public_git folder in unix users' home
+    # look for a public_git directory in unix users' home
     # http://git.example.org/~<user>/
     RewriteRule ^/\~([^\/]+)(/|/gitweb.cgi)?$	/cgi-bin/gitweb.cgi \
 		[QSA,E=GITWEB_PROJECTROOT:/home/$1/public_git/,L,PT]
