@@ -155,7 +155,7 @@ accessed from the index or a tree versus from the filesystem.
 EXAMPLES
 --------
 
- - The pattern `hello.*` matches any file or folder
+ - The pattern `hello.*` matches any file or directory
    whose name begins with `hello.`. If one wants to restrict
    this only to the directory and not in its subdirectories,
    one can prepend the pattern with a slash, i.e. `/hello.*`;
