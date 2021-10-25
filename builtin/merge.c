@@ -1578,6 +1578,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 
 		finish(head_commit, remoteheads, &commit->object.oid, msg.buf);
 		remove_merge_branch_state(the_repository);
+		strbuf_release(&msg);
 		goto done;
 	} else if (!remoteheads->next && common->next)
 		;
@@ -1748,6 +1749,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		ret = suggest_conflicts();
 
 done:
+	strbuf_release(&buf);
 	free(branch_to_free);
 	return ret;
 }
