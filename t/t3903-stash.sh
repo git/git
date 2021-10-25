@@ -289,6 +289,17 @@ test_expect_success 'stash --no-keep-index' '
 	test bar,bar2 = $(cat file),$(cat file2)
 '
 
+test_expect_success 'stash --staged' '
+	echo bar3 >file &&
+	echo bar4 >file2 &&
+	git add file2 &&
+	git stash --staged &&
+	test bar3,bar2 = $(cat file),$(cat file2) &&
+	git reset --hard &&
+	git stash pop &&
+	test bar,bar4 = $(cat file),$(cat file2)
+'
+
 test_expect_success 'dont assume push with non-option args' '
 	test_must_fail git stash -q drop 2>err &&
 	test_i18ngrep -e "subcommand wasn'\''t specified; '\''push'\'' can'\''t be assumed due to unexpected token '\''drop'\''" err
