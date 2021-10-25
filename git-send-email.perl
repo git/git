@@ -40,7 +40,8 @@ package main;
 
 sub usage {
 	print <<EOT;
-git send-email [options] <file | directory | rev-list options >
+git send-email' [<options>] <file|directory>
+git send-email' [<options>] <format-patch options>
 git send-email --dump-aliases
 
   Composing:
