@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2021, #05; Mon, 18)
-X-master-at: 9d530dc0024503ab4218fe6c4395b8a0aa245478
-X-next-at: d3b4e01def5a9517c919f0b815c1b12296dc3dc2
+Subject: What's cooking in git.git (Oct 2021, #06; Mon, 25)
+X-master-at: e9e5ba39a78c8f5057262d49e261b42a8660d5b9
+X-next-at: c40950c09aa26fafb743328ce2dee3ba26b22eec
 
-What's cooking in git.git (Oct 2021, #05; Mon, 18)
+What's cooking in git.git (Oct 2021, #06; Mon, 25)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -18,14 +18,9 @@ useful").  Do not read too much into a topic being in (or not in)
 'seen'.  The ones marked with '.' do not appear in any of the
 integration branches, but I am still holding onto them.
 
-The fourteenth batch of topics are in 'master'.  It has only been
-just a few days since the last batch, but I'd be offline tomorrow
-(a forced day-off), so I'm merging them a bit earlier.
-
-I expect that things will start to calm down in preparation for the
-release expected in mid November.  Topics that are not marked with
-any plans may be in that status because they didn't get much
-attention by reviewers, in which case you folks know what to do ;-)
+The fifteenth batch of topics are in 'master'.  I expect that this
+is more-or-less what we can expect in the -rc0, unless there is a
+hotfix to what's already merged.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -58,272 +53,6 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ab/align-parse-options-help (2021-09-22) 4 commits
-  (merged to 'next' on 2021-10-06 at e22da7ef85)
- + parse-options: properly align continued usage output
- + git rev-parse --parseopt tests: add more usagestr tests
- + send-pack: properly use parse_options() API for usage string
- + parse-options API users: align usage output in C-strings
-
- When "git cmd -h" shows more than one line of usage text (e.g.
- the cmd subcommand may take sub-sub-command), parse-options API
- learned to align these lines, even across i18n/l10n.
-
-
-* ab/config-based-hooks-1 (2021-09-27) 8 commits
-  (merged to 'next' on 2021-10-06 at d05325ed35)
- + hook-list.h: add a generated list of hooks, like config-list.h
- + hook.c users: use "hook_exists()" instead of "find_hook()"
- + hook.c: add a hook_exists() wrapper and use it in bugreport.c
- + hook.[ch]: move find_hook() from run-command.c to hook.c
- + Makefile: remove an out-of-date comment
- + Makefile: don't perform "mv $@+ $@" dance for $(GENERATED_H)
- + Makefile: stop hardcoding {command,config}-list.h
- + Makefile: mark "check" target as .PHONY
- (this branch is used by ab/config-based-hooks-2.)
-
- Mostly preliminary clean-up in the hook API.
-
-
-* ab/designated-initializers-more (2021-10-01) 6 commits
-  (merged to 'next' on 2021-10-11 at 9b9836c3df)
- + builtin/remote.c: add and use SHOW_INFO_INIT
- + builtin/remote.c: add and use a REF_STATES_INIT
- + urlmatch.[ch]: add and use URLMATCH_CONFIG_INIT
- + builtin/blame.c: refactor commit_info_init() to COMMIT_INFO_INIT macro
- + daemon.c: refactor hostinfo_init() to HOSTINFO_INIT macro
- + Merge branch 'ab/designated-initializers' into ab/designated-initializers-more
-
- Code clean-up.
-
-
-* ab/help-config-vars (2021-09-23) 9 commits
-  (merged to 'next' on 2021-10-06 at bf9538cfbd)
- + help: move column config discovery to help.c library
- + help / completion: make "git help" do the hard work
- + help tests: test --config-for-completion option & output
- + help: simplify by moving to OPT_CMDMODE()
- + help: correct logic error in combining --all and --guides
- + help: correct logic error in combining --all and --config
- + help tests: add test for --config output
- + help: correct usage & behavior of "git help --guides"
- + help: correct the usage string in -h and documentation
-
- Teach "git help -c" into helping the command line completion of
- configuration variables.
-
-
-* ab/lib-subtest (2021-09-22) 9 commits
-  (merged to 'next' on 2021-10-06 at e8fa261811)
- + test-lib tests: get rid of copy/pasted mock test code
- + test-lib tests: assert 1 exit code, not non-zero
- + test-lib tests: refactor common part of check_sub_test_lib_test*()
- + test-lib tests: avoid subshell for "test_cmp" for readability
- + test-lib tests: don't provide a description for the sub-tests
- + test-lib tests: split up "write and run" into two functions
- + test-lib tests: move "run_sub_test" to a new lib-subtest.sh
- + Merge branch 'ps/t0000-output-directory-fix' into ab/lib-subtest
- + Merge branch 'jk/t0000-subtests-fix' into ab/lib-subtest
-
- Updates to the tests in t0000 to test the test framework.
-
-
-* ab/make-sparse-for-real (2021-09-22) 1 commit
-  (merged to 'next' on 2021-10-06 at 10e3c31d6a)
- + Makefile: make the "sparse" target non-.PHONY
-
- Prevent "make sparse" from running for the source files that
- haven't been modified.
-
-
-* bs/doc-blame-color-lines (2021-10-08) 2 commits
-  (merged to 'next' on 2021-10-11 at a2cb7768b6)
- + blame: document --color-* options
- + blame: describe default output format
-
- The "--color-lines" and "--color-by-age" options of "git blame"
- have been missing, which are now documented.
-
-
-* cm/save-restore-terminal (2021-10-06) 2 commits
-  (merged to 'next' on 2021-10-11 at 962bb3e75b)
- + editor: save and reset terminal after calling EDITOR
- + terminal: teach git how to save/restore its terminal settings
-
- An editor session launched during a Git operation (e.g. during 'git
- commit') can leave the terminal in a funny state.  The code path
- has updated to save the terminal state before, and restore it
- after, it spawns an editor.
-
-
-* ds/add-rm-with-sparse-index (2021-09-28) 13 commits
-  (merged to 'next' on 2021-10-06 at 80a9cda797)
- + advice: update message to suggest '--sparse'
- + mv: refuse to move sparse paths
- + rm: skip sparse paths with missing SKIP_WORKTREE
- + rm: add --sparse option
- + add: update --renormalize to skip sparse paths
- + add: update --chmod to skip sparse paths
- + add: implement the --sparse option
- + add: skip tracked paths outside sparse-checkout cone
- + add: fail when adding an untracked sparse file
- + dir: fix pattern matching on dirs
- + dir: select directories correctly
- + t1092: behavior for adding sparse files
- + t3705: test that 'sparse_entry' is unstaged
-
- "git add", "git mv", and "git rm" have been adjusted to avoid
- updating paths outside of the sparse-checkout definition unless
- the user specifies a "--sparse" option.
-
-
-* en/removing-untracked-fixes (2021-09-27) 12 commits
-  (merged to 'next' on 2021-10-06 at fc4e387fda)
- + Documentation: call out commands that nuke untracked files/directories
- + Comment important codepaths regarding nuking untracked files/dirs
- + unpack-trees: avoid nuking untracked dir in way of locally deleted file
- + unpack-trees: avoid nuking untracked dir in way of unmerged file
- + Change unpack_trees' 'reset' flag into an enum
- + Remove ignored files by default when they are in the way
- + unpack-trees: make dir an internal-only struct
- + unpack-trees: introduce preserve_ignored to unpack_trees_options
- + read-tree, merge-recursive: overwrite ignored files by default
- + checkout, read-tree: fix leak of unpack_trees_options.dir
- + t2500: add various tests for nuking untracked files
- + Merge branch 'en/am-abort-fix' into en/removing-untracked-fixes
-
- Various fixes in code paths that move untracked files away to make room.
-
-
-* ja/doc-status-types-and-copies (2021-10-04) 4 commits
-  (merged to 'next' on 2021-10-06 at 4de6571bf7)
- + Documentation/git-status: mention how to detect copies
- + Documentation/git-status: document porcelain status T (typechange)
- + Documentation/diff-format: state in which cases porcelain status is T
- + Documentation/git-status: remove impossible porcelain status DR and DC
-
- A few kinds of changes "git status" can show were not documented.
-
-
-* jh/builtin-fsmonitor-part1 (2021-09-20) 7 commits
-  (merged to 'next' on 2021-10-06 at 021f633b9c)
- + t/helper/simple-ipc: convert test-simple-ipc to use start_bg_command
- + run-command: create start_bg_command
- + simple-ipc/ipc-win32: add Windows ACL to named pipe
- + simple-ipc/ipc-win32: add trace2 debugging
- + simple-ipc: move definition of ipc_active_state outside of ifdef
- + simple-ipc: preparations for supporting binary messages.
- + trace2: add trace2_child_ready() to report on background children
-
- Built-in fsmonitor (part 1).
-
-
-* jk/cat-file-batch-all-wo-replace (2021-10-08) 5 commits
-  (merged to 'next' on 2021-10-11 at 9415f7c43a)
- + cat-file: use packed_object_info() for --batch-all-objects
- + cat-file: split ordered/unordered batch-all-objects callbacks
- + cat-file: disable refs/replace with --batch-all-objects
- + cat-file: mention --unordered along with --batch-all-objects
- + t1006: clean up broken objects
-
- "git cat-file --batch" with the "--batch-all-objects" option is
- supposed to iterate over all the objects found in a repository, but
- it used to translate these object names using the replace mechanism,
- which defeats the point of enumerating all objects in the repository.
- This has been corrected.
-
-
-* js/retire-preserve-merges (2021-09-07) 11 commits
-  (merged to 'next' on 2021-09-10 at f645ffd7a3)
- + sequencer: restrict scope of a formerly public function
- + rebase: remove a no-longer-used function
- + rebase: stop mentioning the -p option in comments
- + rebase: remove obsolete code comment
- + rebase: drop the internal `rebase--interactive` command
- + git-svn: drop support for `--preserve-merges`
- + rebase: drop support for `--preserve-merges`
- + pull: remove support for `--rebase=preserve`
- + tests: stop testing `git rebase --preserve-merges`
- + remote: warn about unhandled branch.<name>.rebase values
- + t5520: do not use `pull.rebase=preserve`
-
- The "--preserve-merges" option of "git rebase" has been removed.
-
-
-* js/windows-ci-path-fix (2021-10-13) 1 commit
-  (merged to 'next' on 2021-10-14 at 3047fe56fc)
- + ci(windows): ensure that we do not pick up random executables
-
- The PATH used in CI job may be too wide and let incompatible dlls
- to be grabbed, which can cause the build&test to fail.  Tighten it.
-
-
-* mt/grep-submodule-textconv (2021-09-29) 1 commit
-  (merged to 'next' on 2021-10-06 at 1950944b8c)
- + grep: demonstrate bug with textconv attributes and submodules
-
- "git grep --recurse-submodules" takes trees and blobs from the
- submodule repository, but the textconv settings when processing a
- blob from the submodule is not taken from the submodule repository.
- A test is added to demonstrate the issue, without fixing it.
-
-
-* rs/make-verify-path-really-verify-again (2021-10-07) 3 commits
-  (merged to 'next' on 2021-10-11 at 6b4358876f)
- + read-cache: let verify_path() reject trailing dir separators again
- + read-cache: add verify_path_internal()
- + t3905: show failure to ignore sub-repo
-
- Recent sparse-index work broke safety against attempts to add paths
- with trailing slashes to the index, which has been corrected.
-
-
-* rs/mergesort (2021-10-08) 10 commits
-  (merged to 'next' on 2021-10-08 at 2e83706316)
- + test-mergesort: use repeatable random numbers
-  (merged to 'next' on 2021-10-03 at 29a672574f)
- + mergesort: use ranks stack
- + p0071: test performance of llist_mergesort()
- + p0071: measure sorting of already sorted and reversed files
- + test-mergesort: add unriffle_skewed mode
- + test-mergesort: add unriffle mode
- + test-mergesort: add generate subcommand
- + test-mergesort: add test subcommand
- + test-mergesort: add sort subcommand
- + test-mergesort: use strbuf_getline()
-
- The mergesort implementation used to sort linked list has been
- optimized.
-
-
-* tb/repack-write-midx (2021-10-07) 10 commits
-  (merged to 'next' on 2021-10-08 at ff8fec247e)
- + test-read-midx: fix leak of bitmap_index struct
-  (merged to 'next' on 2021-10-06 at ccdd5aaf2a)
- + builtin/repack.c: pass `--refs-snapshot` when writing bitmaps
- + builtin/repack.c: make largest pack preferred
- + builtin/repack.c: support writing a MIDX while repacking
- + builtin/repack.c: extract showing progress to a variable
- + builtin/repack.c: rename variables that deal with non-kept packs
- + builtin/repack.c: keep track of existing packs unconditionally
- + midx: preliminary support for `--refs-snapshot`
- + builtin/multi-pack-index.c: support `--stdin-packs` mode
- + midx: expose `write_midx_file_only()` publicly
- (this branch is used by tb/fix-midx-rename-while-mapped.)
-
- "git repack" has been taught to generate multi-pack reachability
- bitmaps.
-
-
-* tz/doc-link-to-bundle-format-fix (2021-10-13) 1 commit
-  (merged to 'next' on 2021-10-14 at dee8053d49)
- + doc: add bundle-format to TECH_DOCS
-
- Doc update.
-
---------------------------------------------------
-[New Topics]
-
 * ab/fix-commit-error-message-upon-unwritable-object-store (2021-10-12) 2 commits
   (merged to 'next' on 2021-10-14 at 08c52f5cd5)
  + commit: fix duplication regression in permission error output
@@ -331,77 +60,6 @@ Release tarballs are available at:
 
  "git commit" gave duplicated error message when the object store
  was unwritable, which has been corrected.
-
- Will merge to 'master'.
-
-
-* rs/disable-gc-during-perf-tests (2021-10-11) 1 commit
-  (merged to 'next' on 2021-10-14 at e0dd4b9bd4)
- + perf: disable automatic housekeeping
-
- Avoid performance measurements from getting ruined by gc and other
- housekeeping pauses interfering in the middle.
-
- Will merge to 'master'.
-
-
-* gc/remote-with-fewer-static-global-variables (2021-10-13) 3 commits
- - remote: add struct repository parameter to external functions
- - remote: use remote_state parameter internally
- - remote: move static variables into per-repository struct
-
- Code clean-up to eventually allow information on remotes defined
- for an arbitrary repository to be read.
-
- Will merge to 'next'?
-
-
-* jk/loosen-urlmatch (2021-10-12) 1 commit
- - urlmatch: add underscore to URL_HOST_CHARS
-
- Treat "_" as any other DNS-valid characters in an URL when matching
- the per-URL configuration variable names.
-
- Will merge to 'next'?
-
-
-* rs/add-dry-run-without-objects (2021-10-12) 1 commit
-  (merged to 'next' on 2021-10-14 at a42928e134)
- + add: don't write objects with --dry-run
-
- Stop "git add --dry-run" from creating new blob and tree objects.
-
- Will merge to 'master'.
-
-
-* ab/test-bail (2021-10-14) 2 commits
- - test-lib.sh: use "Bail out!" syntax on bad SANITIZE=leak use
- - test-lib.sh: de-duplicate error() teardown code
-
- A new feature has been added to abort early in the test framework.
-
- Will merge to 'next'.
-
-
-* ab/config-based-hooks-2 (2021-10-15) 14 commits
- - run-command: remove old run_hook_{le,ve}() hook API
- - receive-pack: convert push-to-checkout hook to hook.h
- - read-cache: convert post-index-change to use hook.h
- - commit: convert {pre-commit,prepare-commit-msg} hook to hook.h
- - git-p4: use 'git hook' to run hooks
- - send-email: use 'git hook run' for 'sendemail-validate'
- - git hook run: add an --ignore-missing flag
- - merge: convert post-merge to use hook.h
- - hooks: convert 'post-checkout' hook to hook library
- - am: convert applypatch to use hook.h
- - rebase: convert pre-rebase to use hook.h
- - gc: use hook library for pre-auto-gc hook
- - hook: add 'run' subcommand
- - Merge branch 'ab/config-based-hooks-1' into ab/config-based-hooks-2
-
- More "config-based hooks".
-
- Breaks t2400.
 
 
 * ab/fix-make-lint-docs (2021-10-15) 4 commits
@@ -413,20 +71,75 @@ Release tarballs are available at:
 
  Build fix.
 
- Will merge to 'master'.
+
+* ab/fsck-unexpected-type (2021-10-01) 17 commits
+  (merged to 'next' on 2021-10-14 at 10edc78c9c)
+ + fsck: report invalid object type-path combinations
+ + fsck: don't hard die on invalid object types
+ + object-file.c: stop dying in parse_loose_header()
+ + object-file.c: return ULHR_TOO_LONG on "header too long"
+ + object-file.c: use "enum" return type for unpack_loose_header()
+ + object-file.c: simplify unpack_loose_short_header()
+ + object-file.c: make parse_loose_header_extended() public
+ + object-file.c: return -1, not "status" from unpack_loose_header()
+ + object-file.c: don't set "typep" when returning non-zero
+ + cat-file tests: test for current --allow-unknown-type behavior
+ + cat-file tests: add corrupt loose object test
+ + cat-file tests: test for missing/bogus object with -t, -s and -p
+ + cat-file tests: move bogus_* variable declarations earlier
+ + fsck tests: test for garbage appended to a loose object
+ + fsck tests: test current hash/type mismatch behavior
+ + fsck tests: refactor one test to use a sub-repo
+ + fsck tests: add test for fsck-ing an unknown type
+
+ "git fsck" has been taught to report mismatch between expected and
+ actual types of an object better.
 
 
-* ab/ignore-replace-while-working-on-commit-graph (2021-10-15) 3 commits
- - commit-graph: don't consider "replace" objects with "verify"
- - commit-graph tests: fix another graph_git_two_modes() helper
- - commit-graph tests: fix error-hiding graph_git_two_modes() helper
- (this branch is used by gc/use-repo-settings.)
+* ab/mark-leak-free-tests (2021-10-12) 10 commits
+  (merged to 'next' on 2021-10-18 at c522807d5d)
+ + leak tests: mark some misc tests as passing with SANITIZE=leak
+ + leak tests: mark various "generic" tests as passing with SANITIZE=leak
+ + leak tests: mark some read-tree tests as passing with SANITIZE=leak
+ + leak tests: mark some ls-files tests as passing with SANITIZE=leak
+ + leak tests: mark all checkout-index tests as passing with SANITIZE=leak
+ + leak tests: mark all trace2 tests as passing with SANITIZE=leak
+ + leak tests: mark all ls-tree tests as passing with SANITIZE=leak
+ + leak tests: run various "test-tool" tests in t00*.sh SANITIZE=leak
+ + leak tests: run various built-in tests in t00*.sh SANITIZE=leak
+ + Merge branch 'ab/sanitize-leak-ci' into ab/mark-leak-free-tests
 
- Teach "git commit-graph" command not to allow using replace objects
- at all, as we do not use the commit-graph at runtime when we see
- object replacement.
+ Bunch of tests are marked as "passing leak check".
 
- Will merge to 'next'?
+
+* ab/mark-leak-free-tests-more (2021-10-07) 8 commits
+  (merged to 'next' on 2021-10-18 at fe798f77b8)
+ + merge: add missing strbuf_release()
+ + ls-files: add missing string_list_clear()
+ + ls-files: fix a trivial dir_clear() leak
+ + tests: fix test-oid-array leak, test in SANITIZE=leak
+ + tests: fix a memory leak in test-oidtree.c
+ + tests: fix a memory leak in test-parse-options.c
+ + tests: fix a memory leak in test-prio-queue.c
+ + Merge branch 'ab/sanitize-leak-ci' into ab/mark-leak-free-tests-more
+
+ Bunch of tests are marked as "passing leak check".
+
+
+* ab/parse-options-cleanup (2021-10-08) 10 commits
+  (merged to 'next' on 2021-10-18 at 305d339ad9)
+ + parse-options: change OPT_{SHORT,UNSET} to an enum
+ + parse-options tests: test optname() output
+ + parse-options.[ch]: make opt{bug,name}() "static"
+ + commit-graph: stop using optname()
+ + parse-options.c: move optname() earlier in the file
+ + parse-options.h: make the "flags" in "struct option" an enum
+ + parse-options.c: use exhaustive "case" arms for "enum parse_opt_result"
+ + parse-options.[ch]: consistently use "enum parse_opt_result"
+ + parse-options.[ch]: consistently use "enum parse_opt_flags"
+ + parse-options.h: move PARSE_OPT_SHELL_EVAL between enums
+
+ Random changes to parse-options implementation.
 
 
 * ab/pkt-line-cleanup (2021-10-15) 2 commits
@@ -436,7 +149,12 @@ Release tarballs are available at:
 
  Code clean-up.
 
- Will merge to 'master'.
+
+* ab/test-cleanly-recreate-trash-directory (2021-10-15) 1 commit
+  (merged to 'next' on 2021-10-18 at 6fdb43973b)
+ + test-lib.sh: try to re-chmod & retry on failed trash removal
+
+ Improve test framework around unwritable directories.
 
 
 * ab/test-lib-diff-cleanup (2021-10-15) 2 commits
@@ -446,16 +164,125 @@ Release tarballs are available at:
 
  Test clean-up.
 
- Will merge to 'master'.
+
+* ab/unpack-trees-leakfix (2021-10-13) 4 commits
+  (merged to 'next' on 2021-10-14 at bb54827704)
+ + sequencer: fix a memory leak in do_reset()
+ + sequencer: add a "goto cleanup" to do_reset()
+ + unpack-trees: don't leak memory in verify_clean_subdirectory()
+ + Merge branch 'ab/sanitize-leak-ci' into ab/unpack-trees-leakfix
+
+ Leakfix.
 
 
-* so/stash-staged (2021-10-18) 1 commit
- - stash: implement '--staged' option for 'push' and 'save'
+* da/mergetools-special-case-xxdiff-exit-128 (2021-10-13) 1 commit
+  (merged to 'next' on 2021-10-18 at 0dd8a08c63)
+ + mergetools/xxdiff: prevent segfaults from stopping difftool
 
- "git stash" learned the "--staged" option to stash away what has
- been added to the index (and nothing else).
+ The xxdiff difftool backend can exit with status 128, which the
+ difftool-helper that launches the backend takes as a significant
+ failure, when it is not significant at all.  Work it around.
 
- Will merge to 'next'?
+
+* fs/ssh-signing (2021-09-10) 9 commits
+  (merged to 'next' on 2021-10-11 at b456b95672)
+ + ssh signing: test that gpg fails for unknown keys
+ + ssh signing: tests for logs, tags & push certs
+ + ssh signing: duplicate t7510 tests for commits
+ + ssh signing: verify signatures using ssh-keygen
+ + ssh signing: provide a textual signing_key_id
+ + ssh signing: retrieve a default key from ssh-agent
+ + ssh signing: add ssh key format and signing code
+ + ssh signing: add test prereqs
+ + ssh signing: preliminary refactoring and clean-up
+ (this branch is used by fs/ssh-signing-fix and fs/ssh-signing-key-lifetime.)
+
+ Use ssh public crypto for object and push-cert signing.
+
+
+* fs/ssh-signing-fix (2021-10-18) 5 commits
+  (merged to 'next' on 2021-10-18 at 5ffa706433)
+ + gpg-interface: fix leak of strbufs in get_ssh_key_fingerprint()
+ + gpg-interface: fix leak of "line" in parse_ssh_output()
+  (merged to 'next' on 2021-10-14 at 97735c6091)
+ + ssh signing: clarify trustlevel usage in docs
+ + ssh signing: fmt-merge-msg tests & config parse
+ + Merge branch 'fs/ssh-signing' into fs/ssh-signing-fix
+ (this branch is used by fs/ssh-signing-key-lifetime; uses fs/ssh-signing.)
+
+ Fix-up for the other topic already in 'next'.
+
+
+* jc/doc-commit-header-continuation-line (2021-10-12) 1 commit
+  (merged to 'next' on 2021-10-18 at 99b71c0aaf)
+ + signature-format.txt: explain and illustrate multi-line headers
+
+ Doc update.
+
+
+* jh/perf-remove-test-times (2021-10-04) 1 commit
+  (merged to 'next' on 2021-10-14 at 473a26166c)
+ + t/perf/perf-lib.sh: remove test_times.* at the end test_perf_()
+
+ Perf test fix.
+
+
+* js/userdiff-cpp (2021-10-25) 7 commits
+  (merged to 'next' on 2021-10-25 at 2158813163)
+ + userdiff-cpp: back out the digit-separators in numbers
+  (merged to 'next' on 2021-10-18 at fea77f6c4e)
+ + userdiff-cpp: learn the C++ spaceship operator
+ + userdiff-cpp: permit the digit-separating single-quote in numbers
+ + userdiff-cpp: prepare test cases with yet unsupported features
+ + userdiff-cpp: tighten word regex
+ + t4034: add tests showing problematic cpp tokenizations
+ + t4034/cpp: actually test that operator tokens are not split
+
+ Userdiff patterns for the C++ language has been updated.
+
+
+* jt/no-abuse-alternate-odb-for-submodules (2021-10-08) 9 commits
+  (merged to 'next' on 2021-10-14 at ae49a2ceda)
+ + submodule: trace adding submodule ODB as alternate
+ + submodule: pass repo to check_has_commit()
+ + object-file: only register submodule ODB if needed
+ + merge-{ort,recursive}: remove add_submodule_odb()
+ + refs: peeling non-the_repository iterators is BUG
+ + refs: teach arbitrary repo support to iterators
+ + refs: plumb repo into ref stores
+ + Merge branch 'jk/ref-paranoia' into jt/no-abuse-alternate-odb-for-submodules
+ + Merge branch 'jt/add-submodule-odb-clean-up' into jt/no-abuse-alternate-odb-for-submodules
+
+ Follow through the work to use the repo interface to access
+ submodule objects in-process, instead of abusing the alternate
+ object database interface.
+
+
+* pw/sparse-cache-tree-verify-fix (2021-10-18) 2 commits
+  (merged to 'next' on 2021-10-18 at 0186a643cc)
+ + t1092: run "rebase --apply" without "-q" in testing
+  (merged to 'next' on 2021-10-11 at 2f90c87850)
+ + sparse index: fix use-after-free bug in cache_tree_verify()
+
+ Recent sparse-index addition, namely any use of index_name_pos(),
+ can expand sparse index entries and breaks any code that walks
+ cache-tree or existing index entries.  One such instance of such a
+ breakage has been corrected.
+
+
+* rs/add-dry-run-without-objects (2021-10-12) 1 commit
+  (merged to 'next' on 2021-10-14 at a42928e134)
+ + add: don't write objects with --dry-run
+
+ Stop "git add --dry-run" from creating new blob and tree objects.
+
+
+* rs/disable-gc-during-perf-tests (2021-10-11) 1 commit
+  (merged to 'next' on 2021-10-14 at e0dd4b9bd4)
+ + perf: disable automatic housekeeping
+
+ Avoid performance measurements from getting ruined by gc and other
+ housekeeping pauses interfering in the middle.
 
 
 * tb/fix-midx-rename-while-mapped (2021-10-15) 5 commits
@@ -471,58 +298,245 @@ Release tarballs are available at:
  version of .midx before removing them from the disk, as some
  platforms do not allow removal of a file that still has mapping.
 
+--------------------------------------------------
+[New Topics]
+
+* ab/generate-command-list (2021-10-23) 10 commits
+ - generate-cmdlist.sh: replace "cut", "tr" and "grep" with pure-shell
+ - generate-cmdlist.sh: replace "grep' invocation with a shell version
+ - generate-cmdlist.sh: do not shell out to "sed"
+ - generate-cmdlist.sh: stop sorting category lines
+ - generate-cmdlist.sh: replace for loop by printf's auto-repeat feature
+ - generate-cmdlist.sh: run "grep | sort", not "sort | grep"
+ - generate-cmdlist.sh: don't call get_categories() from category_list()
+ - generate-cmdlist.sh: spawn fewer processes
+ - generate-cmdlist.sh: trivial whitespace change
+ - command-list.txt: sort with "LC_ALL=C sort"
+
+ Build optimization.
+
+
+* ab/ref-filter-leakfix (2021-10-20) 3 commits
+  (merged to 'next' on 2021-10-23 at 8066971a3d)
+ + branch: use ref_sorting_release()
+ + ref-filter API user: add and use a ref_sorting_release()
+ + tag: use a "goto cleanup" pattern, leak less memory
+ (this branch is used by jc/fix-ref-sorting-parse.)
+
+ "git for-each-ref" family of commands were leaking the ref_sorting
+ instances that hold sorting keys specified by the user; this has
+ been corrected.
+
  Will merge to 'master'.
 
 
-* vd/sparse-sparsity-fix-on-read (2021-10-15) 2 commits
- - sparse-index: update index read to consider index.sparse config
- - test-read-cache.c: prepare_repo_settings after config init
+* bs/doc-blame-color-lines (2021-10-20) 1 commit
+  (merged to 'next' on 2021-10-23 at 4da10a5162)
+ + git config doc: fix recent ASCIIDOC formatting regression
 
- Ensure that the sparseness of the in-core index matches the
- index.sparse configuration specified by the repository immediately
- after the on-disk index file is read.
+ Doc fix.
 
- Under discussion.
+ Will merge to 'master'.
 
 
-* jc/fix-ref-sorting-parse (2021-10-18) 1 commit
- - for-each-ref: delay parsing of --sort=<atom> options
+* jc/fix-pull-ff-only-when-already-up-to-date (2021-10-20) 1 commit
+ - pull: --ff-only should make it a noop when already-up-to-date
 
- Things like "git -c branch.sort=bogus branch new HEAD", i.e. the
- operation modes of the "git branch" command that do not need the
- sort key information, no longer errors out by seeing a bogus sort
- key.
+ "git pull --ff-only" and "git pull --rebase --ff-only" should make
+ it a no-op to attempt pulling from a remote that is behind us, but
+ instead the command errored out by saying it was impossible to
+ fast-forward, which may technically be true, but not a useful thing
+ to diagnose as an error.  This has been corrected.
 
  Will merge to 'next'?
 
 
-* jc/tutorial-format-patch-base (2021-10-18) 1 commit
- - MyFirstContribution: teach to use "format-patch --base=auto"
+* ab/make-sparse-for-real (2021-10-21) 1 commit
+  (merged to 'next' on 2021-10-23 at f7a8389fb3)
+ + Makefile: remove redundant GIT-CFLAGS dependency from "sparse"
 
- Teach and encourage first-time contributors to this project to
- state the base commit when they submit their topic.
+ Fix-up for a recent topic.
+
+ Will merge to 'master'.
 
 
-* jk/http-push-status-fix (2021-10-18) 2 commits
- - transport-helper: recognize "expecting report" error from send-pack
- - send-pack: complain about "expecting report" with --helper-status
+* ab/plug-handle-path-exclude-leak (2021-10-21) 1 commit
+  (merged to 'next' on 2021-10-23 at 6be5d7bea8)
+ + config.c: don't leak memory in handle_path_include()
 
- "git push" client talking to an HTTP server did not diagnose the
- lack of the final status report from the other side correctly,
- which has been corrected.
+ Leakfix.
+
+ Will merge to 'master'.
+
+
+* ab/plug-random-leaks (2021-10-23) 6 commits
+  (merged to 'next' on 2021-10-23 at 9c04a95718)
+ + reflog: free() ref given to us by dwim_log()
+ + submodule--helper: fix small memory leaks
+ + clone: fix a memory leak of the "git_dir" variable
+ + grep: fix a "path_list" memory leak
+ + grep: use object_array_clear() in cmd_grep()
+ + grep: prefer "struct grep_opt" over its "void *" equivalent
+
+ Leakfix.
+
+ Will merge to 'master'.
+
+
+* ab/sh-retire-helper-functions (2021-10-21) 6 commits
+ - git-sh-setup: remove "sane_grep", it's not needed anymore
+ - git-sh-setup: remove unused sane_egrep() function
+ - git-instaweb: unconditionally assume that gitweb is mod_perl capable
+ - Makefile: remove $(NO_CURL) from $(SCRIPT_DEFINES)
+ - Makefile: remove $(GIT_VERSION) from $(SCRIPT_DEFINES)
+ - Makefile: move git-SCRIPT-DEFINES adjacent to $(SCRIPT_DEFINES)
+
+ Make a few helper functions unused and then lose them.
+
+
+* ab/sh-retire-rebase-preserve-merges (2021-10-21) 2 commits
+  (merged to 'next' on 2021-10-23 at f1fede7500)
+ + git-sh-setup: remove messaging supporting --preserve-merges
+ + git-sh-i18n: remove unused eval_ngettext()
+
+ Code clean-up to remove unused helpers.
+
+ Will merge to 'master'.
+
+
+* ow/stash-count-in-status-porcelain-output (2021-10-21) 2 commits
+ - status: print stash info with --porcelain=v2 --show-stash
+ - status: count stash entries in separate function
+
+ Allow "git status --porcelain=v2" to show the number of stash
+ entries with --show-stash like the normal output does.
 
  Will merge to 'next'.
 
 
-* js/branch-track-inherit (2021-10-18) 1 commit
- - branch: add flags and config to inherit tracking
+* tb/plug-pack-bitmap-leaks (2021-10-21) 9 commits
+ - pack-bitmap.c: more aggressively free in free_bitmap_index()
+ - pack-bitmap.c: don't leak type-level bitmaps
+ - pack-bitmap.c: avoid leaking via midx_bitmap_filename()
+ - builtin/multi-pack-index.c: don't leak concatenated options
+ - builtin/repack.c: avoid leaking child arguments
+ - builtin/pack-objects.c: don't leak memory via arguments
+ - t/helper/test-read-midx.c: free MIDX within read_midx_file()
+ - midx.c: don't leak MIDX from verify_midx_file
+ - midx.c: clean up chunkfile after reading the MIDX
 
- "git -c branch.autosetupmerge=inherit branch new old" makes "new"
- to have the same upstream as the "old" branch, instead of marking
- "old" itself as its upstream.
+ Leakfix.
 
- Under discussion.
- cf. <87a6j6tbsv.fsf@gmgdl.gmail.com>
+ Will merge to 'next'?
+
+
+* bs/archive-doc-compression-level (2021-10-25) 1 commit
+  (merged to 'next' on 2021-10-25 at 9360d864a2)
+ + archive: describe compression level option
+
+ Update "git archive" documentation and give explicit mention on the
+ compression level for both zip and tar.gz format.
+
+ Will merge to 'master'.
+
+
+* es/pretty-describe-more (2021-10-23) 3 commits
+ - pretty: add abbrev option to %(describe)
+ - pretty: add tag option to %(describe)
+ - pretty.c: rename describe options variable to more descriptive name
+
+ Extend "git log --format=%(describe)" placeholder to allow passing
+ selected command-line options to the underlying "git describe"
+ command.
+
+ Expecting a reroll.
+
+
+* fs/ssh-signing-key-lifetime (2021-10-23) 8 commits
+ - ssh signing: fmt-merge-msg/check_signature with tag date
+ - ssh signing: verify-tag/check_signature with tag date
+ - ssh signing: git log/check_signature with commit date
+ - ssh signing: verify-commit/check_signature with commit date
+ - ssh signing: add key lifetime test prereqs
+ - ssh signing: extend check_signature to accept payload metadata
+ - Merge branch 'fs/ssh-signing-fix' into fs/ssh-signing-key-lifetime
+ - Merge branch 'fs/ssh-signing' into fs/ssh-signing-key-lifetime
+
+ Extend the signing of objects with SSH keys and learn to pay
+ attention to the key validity time range when verifying.
+
+ Expecting a reroll.
+ cf. <51099904-a962-eb23-8baf-9ce15fff7d10@gigacodes.de>
+
+
+* jc/branch-copy-doc (2021-10-23) 1 commit
+ - branch (doc): -m/-c copies config and reflog
+
+ "git branch -c/-m new old" was not described to copy config, which
+ has been corrected.
+
+ Will merge to 'next'?
+
+
+* jc/doc-format-patch-clarify-auto-base (2021-10-23) 1 commit
+ - format-patch (doc): clarify --base=auto
+
+ Rephrase the description of "format-patch --base=auto".
+
+ Will merge to 'next'?
+
+
+* jc/doc-submitting-patches-choice-of-base (2021-10-25) 2 commits
+ - (wip) reword the final review part
+ - SubmittingPatchs: clarify choice of base and testing
+
+ Extend the guidance to choose the base commit to build your work
+ on, and hint/nudge contributors to read others' changes.
+
+
+* js/expand-runtime-prefix (2021-10-25) 1 commit
+  (merged to 'next' on 2021-10-25 at 7ff05e8222)
+ + config.txt: fix typo
+
+ Typofix.
+
+ Will merge to 'master'.
+
+
+* ma/doc-folder-to-directory (2021-10-25) 3 commits
+ - gitweb.txt: change "folder" to "directory"
+ - gitignore.txt: change "folder" to "directory"
+ - git-multi-pack-index.txt: change "folder" to "directory"
+
+ Consistently use 'directory', not 'folder', to call the filesystem
+ entity that collects a group of files and, eh, directories.
+
+ Will merge to 'next' and then to 'master'.
+
+
+* ma/doc-git-version (2021-10-25) 1 commit
+  (merged to 'next' on 2021-10-25 at 9f74afec0c)
+ + git.txt: fix typo
+
+ Typofix.
+
+ Will merge to 'master'.
+
+
+* rd/http-backend-code-simplification (2021-10-25) 1 commit
+ - http-backend: remove a duplicated code branch
+
+ (slight) Code simplification.
+
+ Will merge to 'next'?
+
+
+* sg/sparse-index-not-that-common-a-command (2021-10-25) 1 commit
+ - command-list.txt: remove 'sparse-index' from main help
+
+ Drop "git sparse-index" from the list of common commands.
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -580,49 +594,138 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
-* ab/test-cleanly-recreate-trash-directory (2021-10-15) 1 commit
-  (merged to 'next' on 2021-10-18 at 6fdb43973b)
- + test-lib.sh: try to re-chmod & retry on failed trash removal
+* gc/remote-with-fewer-static-global-variables (2021-10-20) 4 commits
+ - remote: add struct repository parameter to external functions
+ - remote: remove the_repository->remote_state from static methods
+ - remote: use remote_state parameter internally
+ - remote: move static variables into per-repository struct
 
- Improve test framework around unwritable directories.
+ Code clean-up to eventually allow information on remotes defined
+ for an arbitrary repository to be read.
 
- Will merge to 'master'.
+ Expecting a reroll.
 
-
-* da/mergetools-special-case-xxdiff-exit-128 (2021-10-13) 1 commit
-  (merged to 'next' on 2021-10-18 at 0dd8a08c63)
- + mergetools/xxdiff: prevent segfaults from stopping difftool
-
- The xxdiff difftool backend can exit with status 128, which the
- difftool-helper that launches the backend takes as a significant
- failure, when it is not significant at all.  Work it around.
-
- Will merge to 'master'.
+ Breaks pushremote_get() and causes "git push" to segfault; there
+ might be other similar breakages.
+ cf. <xmqqtuhbo2tn.fsf@gitster.g>
 
 
-* fs/ssh-signing-fix (2021-10-18) 5 commits
-  (merged to 'next' on 2021-10-18 at 5ffa706433)
- + gpg-interface: fix leak of strbufs in get_ssh_key_fingerprint()
- + gpg-interface: fix leak of "line" in parse_ssh_output()
-  (merged to 'next' on 2021-10-14 at 97735c6091)
- + ssh signing: clarify trustlevel usage in docs
- + ssh signing: fmt-merge-msg tests & config parse
- + Merge branch 'fs/ssh-signing' into fs/ssh-signing-fix
- (this branch uses fs/ssh-signing.)
+* jk/loosen-urlmatch (2021-10-12) 1 commit
+  (merged to 'next' on 2021-10-25 at f66ca39ebe)
+ + urlmatch: add underscore to URL_HOST_CHARS
 
- Fix-up for the other topic already in 'next'.
+ Treat "_" as any other URL-valid characters in an URL when matching
+ the per-URL configuration variable names.
 
  Will merge to 'master'.
 
 
-* jc/doc-commit-header-continuation-line (2021-10-12) 1 commit
-  (merged to 'next' on 2021-10-18 at 99b71c0aaf)
- + signature-format.txt: explain and illustrate multi-line headers
+* ab/test-bail (2021-10-14) 2 commits
+  (merged to 'next' on 2021-10-23 at 4a16ebdb74)
+ + test-lib.sh: use "Bail out!" syntax on bad SANITIZE=leak use
+ + test-lib.sh: de-duplicate error() teardown code
 
- Doc update.
+ A new feature has been added to abort early in the test framework.
 
  Will merge to 'master'.
- cf. <87sfx1hnp4.fsf@trouble.defaultvalue.org>
+
+
+* ab/config-based-hooks-2 (2021-10-20) 14 commits
+ - run-command: remove old run_hook_{le,ve}() hook API
+ - receive-pack: convert push-to-checkout hook to hook.h
+ - read-cache: convert post-index-change to use hook.h
+ - commit: convert {pre-commit,prepare-commit-msg} hook to hook.h
+ - git-p4: use 'git hook' to run hooks
+ - send-email: use 'git hook run' for 'sendemail-validate'
+ - git hook run: add an --ignore-missing flag
+ - merge: convert post-merge to use hook.h
+ - hooks: convert 'post-checkout' hook to hook library
+ - am: convert applypatch to use hook.h
+ - rebase: convert pre-rebase to use hook.h
+ - gc: use hook library for pre-auto-gc hook
+ - hook: add 'run' subcommand
+ - Merge branch 'ab/config-based-hooks-1' into ab/config-based-hooks-2
+
+ More "config-based hooks".
+
+
+* ab/ignore-replace-while-working-on-commit-graph (2021-10-15) 3 commits
+  (merged to 'next' on 2021-10-25 at 5ed4266a96)
+ + commit-graph: don't consider "replace" objects with "verify"
+ + commit-graph tests: fix another graph_git_two_modes() helper
+ + commit-graph tests: fix error-hiding graph_git_two_modes() helper
+ (this branch is used by gc/use-repo-settings.)
+
+ Teach "git commit-graph" command not to allow using replace objects
+ at all, as we do not use the commit-graph at runtime when we see
+ object replacement.
+
+ Will merge to 'master'.
+
+
+* so/stash-staged (2021-10-18) 1 commit
+  (merged to 'next' on 2021-10-25 at 68b88e35c4)
+ + stash: implement '--staged' option for 'push' and 'save'
+
+ "git stash" learned the "--staged" option to stash away what has
+ been added to the index (and nothing else).
+
+ Will merge to 'master'.
+
+
+* vd/sparse-sparsity-fix-on-read (2021-10-21) 3 commits
+ - sparse-index: update do_read_index to ensure correct sparsity
+ - sparse-index: add ensure_correct_sparsity function
+ - test-read-cache.c: prepare_repo_settings after config init
+
+ Ensure that the sparseness of the in-core index matches the
+ index.sparse configuration specified by the repository immediately
+ after the on-disk index file is read.
+
+
+* jc/fix-ref-sorting-parse (2021-10-20) 2 commits
+ - for-each-ref: delay parsing of --sort=<atom> options
+ - Merge branch 'ab/ref-filter-leakfix' into jc/fix-ref-sorting-parse
+ (this branch uses ab/ref-filter-leakfix.)
+
+ Things like "git -c branch.sort=bogus branch new HEAD", i.e. the
+ operation modes of the "git branch" command that do not need the
+ sort key information, no longer errors out by seeing a bogus sort
+ key.
+
+ Will merge to 'next'.
+
+
+* jc/tutorial-format-patch-base (2021-10-23) 1 commit
+ - MyFirstContribution: teach to use "format-patch --base=auto"
+
+ Teach and encourage first-time contributors to this project to
+ state the base commit when they submit their topic.
+
+ Will merge to 'next'.
+
+
+* jk/http-push-status-fix (2021-10-18) 2 commits
+  (merged to 'next' on 2021-10-23 at 9704ff261d)
+ + transport-helper: recognize "expecting report" error from send-pack
+ + send-pack: complain about "expecting report" with --helper-status
+
+ "git push" client talking to an HTTP server did not diagnose the
+ lack of the final status report from the other side correctly,
+ which has been corrected.
+
+ Will merge to 'master'.
+
+
+* js/branch-track-inherit (2021-10-18) 1 commit
+ - branch: add flags and config to inherit tracking
+
+ "git -c branch.autosetupmerge=inherit branch new old" makes "new"
+ to have the same upstream as the "old" branch, instead of marking
+ "old" itself as its upstream.
+
+ Under discussion.
+ cf. <87a6j6tbsv.fsf@gmgdl.gmail.com>
 
 
 * rb/doc-commit-header-continuation-line (2021-10-11) 1 commit
@@ -638,16 +741,38 @@ Release tarballs are available at:
  Superseded by the jc/doc-commit-header-continuation-line topic.
 
 
-* jh/builtin-fsmonitor-part2 (2021-10-14) 5 commits
- - fsmonitor: update fsmonitor config documentation
+* jh/builtin-fsmonitor-part2 (2021-10-21) 29 commits
+ - t7527: test status with untracked-cache and fsmonitor--daemon
+ - fsmonitor: force update index after large responses
+ - fsmonitor--daemon: use a cookie file to sync with file system
+ - fsmonitor--daemon: periodically truncate list of modified files
+ - t/perf/p7519: add fsmonitor--daemon test cases
+ - t/perf/p7519: speed up test on Windows
+ - t/helper/test-chmtime: skip directories on Windows
+ - t/perf: avoid copying builtin fsmonitor files into test repo
+ - t7527: create test for fsmonitor--daemon
+ - t/helper/fsmonitor-client: create IPC client to talk to FSMonitor Daemon
+ - help: include fsmonitor--daemon feature flag in version info
+ - fsmonitor--daemon: implement handle_client callback
+ - compat/fsmonitor/fsm-listen-darwin: implement FSEvent listener on MacOS
+ - compat/fsmonitor/fsm-listen-darwin: add macos header files for FSEvent
+ - compat/fsmonitor/fsm-listen-win32: implement FSMonitor backend on Windows
+ - fsmonitor--daemon: create token-based changed path cache
+ - fsmonitor--daemon: define token-ids
+ - fsmonitor--daemon: add pathname classification
+ - fsmonitor--daemon: implement 'start' command
+ - fsmonitor--daemon: implement 'run' command
+ - compat/fsmonitor/fsm-listen-darwin: stub in backend for Darwin
+ - compat/fsmonitor/fsm-listen-win32: stub in backend for Windows
+ - fsmonitor--daemon: implement 'stop' and 'status' commands
+ - fsmonitor--daemon: add a built-in fsmonitor daemon
+ - fsmonitor: document builtin fsmonitor
  - fsmonitor: use IPC to query the builtin FSMonitor daemon
  - fsmonitor: config settings are repository-specific
  - fsmonitor-ipc: create client routines for git-fsmonitor--daemon
  - fsmonitor: enhance existing comments
 
  Built-in fsmonitor (part 2).
-
- Breaks check-docs lint.
 
 
 * ld/sparse-diff-blame (2021-10-15) 3 commits
@@ -657,66 +782,6 @@ Release tarballs are available at:
  (this branch uses vd/sparse-reset.)
 
  Teach diff and blame to work well with sparse index.
-
-
-* ab/mark-leak-free-tests (2021-10-12) 10 commits
-  (merged to 'next' on 2021-10-18 at c522807d5d)
- + leak tests: mark some misc tests as passing with SANITIZE=leak
- + leak tests: mark various "generic" tests as passing with SANITIZE=leak
- + leak tests: mark some read-tree tests as passing with SANITIZE=leak
- + leak tests: mark some ls-files tests as passing with SANITIZE=leak
- + leak tests: mark all checkout-index tests as passing with SANITIZE=leak
- + leak tests: mark all trace2 tests as passing with SANITIZE=leak
- + leak tests: mark all ls-tree tests as passing with SANITIZE=leak
- + leak tests: run various "test-tool" tests in t00*.sh SANITIZE=leak
- + leak tests: run various built-in tests in t00*.sh SANITIZE=leak
- + Merge branch 'ab/sanitize-leak-ci' into ab/mark-leak-free-tests
-
- Bunch of tests are marked as "passing leak check".
-
- Will merge to 'master'.
-
-
-* ab/mark-leak-free-tests-more (2021-10-07) 8 commits
-  (merged to 'next' on 2021-10-18 at fe798f77b8)
- + merge: add missing strbuf_release()
- + ls-files: add missing string_list_clear()
- + ls-files: fix a trivial dir_clear() leak
- + tests: fix test-oid-array leak, test in SANITIZE=leak
- + tests: fix a memory leak in test-oidtree.c
- + tests: fix a memory leak in test-parse-options.c
- + tests: fix a memory leak in test-prio-queue.c
- + Merge branch 'ab/sanitize-leak-ci' into ab/mark-leak-free-tests-more
-
- Bunch of tests are marked as "passing leak check".
-
- Will merge to 'master'.
-
-
-* ab/unpack-trees-leakfix (2021-10-13) 4 commits
-  (merged to 'next' on 2021-10-14 at bb54827704)
- + sequencer: fix a memory leak in do_reset()
- + sequencer: add a "goto cleanup" to do_reset()
- + unpack-trees: don't leak memory in verify_clean_subdirectory()
- + Merge branch 'ab/sanitize-leak-ci' into ab/unpack-trees-leakfix
-
- Leakfix.
-
- Will merge to 'master'.
-
-
-* js/userdiff-cpp (2021-10-10) 6 commits
-  (merged to 'next' on 2021-10-18 at fea77f6c4e)
- + userdiff-cpp: learn the C++ spaceship operator
- + userdiff-cpp: permit the digit-separating single-quote in numbers
- + userdiff-cpp: prepare test cases with yet unsupported features
- + userdiff-cpp: tighten word regex
- + t4034: add tests showing problematic cpp tokenizations
- + t4034/cpp: actually test that operator tokens are not split
-
- Userdiff patterns for the C++ language has been updated.
-
- Will merge to 'master'.
 
 
 * mp/absorb-submodule-git-dir-upon-deinit (2021-10-07) 1 commit
@@ -756,26 +821,13 @@ Release tarballs are available at:
 
 
 * ns/tmp-objdir (2021-10-04) 2 commits
- - tmp-objdir: disable ref updates when replacing the primary odb
- - tmp-objdir: new API for creating temporary writable databases
+  (merged to 'next' on 2021-10-23 at 358d376f61)
+ + tmp-objdir: disable ref updates when replacing the primary odb
+ + tmp-objdir: new API for creating temporary writable databases
  (this branch is used by ns/batched-fsync and ns/remerge-diff.)
 
  New interface into the tmp-objdir API to help in-core use of the
  quarantine feature.
-
- Will merge to 'next'.
-
-
-* pw/sparse-cache-tree-verify-fix (2021-10-18) 2 commits
-  (merged to 'next' on 2021-10-18 at 0186a643cc)
- + t1092: run "rebase --apply" without "-q" in testing
-  (merged to 'next' on 2021-10-11 at 2f90c87850)
- + sparse index: fix use-after-free bug in cache_tree_verify()
-
- Recent sparse-index addition, namely any use of index_name_pos(),
- can expand sparse index entries and breaks any code that walks
- cache-tree or existing index entries.  One such instance of such a
- breakage has been corrected.
 
  Will merge to 'master'.
 
@@ -798,24 +850,16 @@ Release tarballs are available at:
 
 
 * gc/use-repo-settings (2021-10-15) 4 commits
- - gc: perform incremental repack when implictly enabled
- - fsck: verify multi-pack-index when implictly enabled
- - fsck: verify commit graph when implicitly enabled
- - Merge branch 'ab/ignore-replace-while-working-on-commit-graph' into gc/use-repo-settings
+  (merged to 'next' on 2021-10-25 at 3d38c09a8d)
+ + gc: perform incremental repack when implictly enabled
+ + fsck: verify multi-pack-index when implictly enabled
+ + fsck: verify commit graph when implicitly enabled
+ + Merge branch 'ab/ignore-replace-while-working-on-commit-graph' into gc/use-repo-settings
  (this branch uses ab/ignore-replace-while-working-on-commit-graph.)
 
  It is wrong to read some settings directly from the config
  subsystem, as things like feature.experimental can affect their
  default values.
-
- Will merge to 'next'?
-
-
-* jh/perf-remove-test-times (2021-10-04) 1 commit
-  (merged to 'next' on 2021-10-14 at 473a26166c)
- + t/perf/perf-lib.sh: remove test_times.* at the end test_perf_()
-
- Perf test fix.
 
  Will merge to 'master'.
 
@@ -842,24 +886,6 @@ Release tarballs are available at:
  protect the fixes.
 
 
-* ab/parse-options-cleanup (2021-10-08) 10 commits
-  (merged to 'next' on 2021-10-18 at 305d339ad9)
- + parse-options: change OPT_{SHORT,UNSET} to an enum
- + parse-options tests: test optname() output
- + parse-options.[ch]: make opt{bug,name}() "static"
- + commit-graph: stop using optname()
- + parse-options.c: move optname() earlier in the file
- + parse-options.h: make the "flags" in "struct option" an enum
- + parse-options.c: use exhaustive "case" arms for "enum parse_opt_result"
- + parse-options.[ch]: consistently use "enum parse_opt_result"
- + parse-options.[ch]: consistently use "enum parse_opt_flags"
- + parse-options.h: move PARSE_OPT_SHELL_EVAL between enums
-
- Random changes to parse-options implementation.
-
- Will merge to 'master'.
-
-
 * es/superproject-aware-submodules (2021-10-14) 4 commits
  - submodule: record superproject gitdir during 'update'
  - submodule: record superproject gitdir during absorbgitdirs
@@ -869,52 +895,8 @@ Release tarballs are available at:
  A configuration variable in a submodule points at the location of
  the superproject it is bound to (RFC).
 
- Will merge to 'next'?
-
-
-* ab/fsck-unexpected-type (2021-10-01) 17 commits
-  (merged to 'next' on 2021-10-14 at 10edc78c9c)
- + fsck: report invalid object type-path combinations
- + fsck: don't hard die on invalid object types
- + object-file.c: stop dying in parse_loose_header()
- + object-file.c: return ULHR_TOO_LONG on "header too long"
- + object-file.c: use "enum" return type for unpack_loose_header()
- + object-file.c: simplify unpack_loose_short_header()
- + object-file.c: make parse_loose_header_extended() public
- + object-file.c: return -1, not "status" from unpack_loose_header()
- + object-file.c: don't set "typep" when returning non-zero
- + cat-file tests: test for current --allow-unknown-type behavior
- + cat-file tests: add corrupt loose object test
- + cat-file tests: test for missing/bogus object with -t, -s and -p
- + cat-file tests: move bogus_* variable declarations earlier
- + fsck tests: test for garbage appended to a loose object
- + fsck tests: test current hash/type mismatch behavior
- + fsck tests: refactor one test to use a sub-repo
- + fsck tests: add test for fsck-ing an unknown type
-
- "git fsck" has been taught to report mismatch between expected and
- actual types of an object better.
-
- Will merge to 'master'.
-
-
-* jt/no-abuse-alternate-odb-for-submodules (2021-10-08) 9 commits
-  (merged to 'next' on 2021-10-14 at ae49a2ceda)
- + submodule: trace adding submodule ODB as alternate
- + submodule: pass repo to check_has_commit()
- + object-file: only register submodule ODB if needed
- + merge-{ort,recursive}: remove add_submodule_odb()
- + refs: peeling non-the_repository iterators is BUG
- + refs: teach arbitrary repo support to iterators
- + refs: plumb repo into ref stores
- + Merge branch 'jk/ref-paranoia' into jt/no-abuse-alternate-odb-for-submodules
- + Merge branch 'jt/add-submodule-odb-clean-up' into jt/no-abuse-alternate-odb-for-submodules
-
- Follow through the work to use the repo interface to access
- submodule objects in-process, instead of abusing the alternate
- object database interface.
-
- Will merge to 'master'.
+ Under discussion.
+ cf. <911ab2c1-8a11-d9d0-4b28-fc801112f6da@gmail.com>
 
 
 * tp/send-email-completion (2021-10-07) 3 commits
@@ -930,42 +912,43 @@ Release tarballs are available at:
 
 
 * hm/paint-hits-in-log-grep (2021-10-15) 4 commits
- - grep/pcre2: fix an edge case concerning ascii patterns and UTF-8 data
- - pretty: colorize pattern matches in commit messages
- - grep: refactor next_match() and match_one_pattern() for external use
- - Merge branch 'jk/grep-haystack-is-read-only' into hm/paint-hits-in-log-grep
+  (merged to 'next' on 2021-10-25 at e3edea3fa9)
+ + grep/pcre2: fix an edge case concerning ascii patterns and UTF-8 data
+ + pretty: colorize pattern matches in commit messages
+ + grep: refactor next_match() and match_one_pattern() for external use
+ + Merge branch 'jk/grep-haystack-is-read-only' into hm/paint-hits-in-log-grep
 
  "git log --grep=string --author=name" learns to highlight hits just
  like "git grep string" does.
 
- Will merge to 'next'?
- cf. <xmqq1r4vjji3.fsf@gitster.g>
+ Will merge to 'master'.
 
 
-* ks/submodule-add-message-fix (2021-09-20) 1 commit
- - submodule--helper: fix incorrect newlines in an error message
+* ks/submodule-add-message-fix (2021-10-23) 1 commit
+  (merged to 'next' on 2021-10-25 at 377e759528)
+ + submodule--helper: fix incorrect newlines in an error message
 
  Message regression fix.
 
- Waiting for a response.
- cf. <m27df9lvm1.fsf@gmail.com>
+ Will merge to 'master'.
 
 
 * ns/batched-fsync (2021-10-08) 8 commits
- - core.fsyncobjectfiles: performance tests for add and stash
- - core.fsyncobjectfiles: tests for batch mode
- - unpack-objects: use the bulk-checkin infrastructure
- - update-index: use the bulk-checkin infrastructure
- - core.fsyncobjectfiles: add windows support for batch mode
- - core.fsyncobjectfiles: batched disk flushes
- - bulk-checkin: rename 'state' variable and separate 'plugged' boolean
- - Merge branch 'ns/tmp-objdir' into ns/batched-fsync
+  (merged to 'next' on 2021-10-25 at e45c907d41)
+ + core.fsyncobjectfiles: performance tests for add and stash
+ + core.fsyncobjectfiles: tests for batch mode
+ + unpack-objects: use the bulk-checkin infrastructure
+ + update-index: use the bulk-checkin infrastructure
+ + core.fsyncobjectfiles: add windows support for batch mode
+ + core.fsyncobjectfiles: batched disk flushes
+ + bulk-checkin: rename 'state' variable and separate 'plugged' boolean
+ + Merge branch 'ns/tmp-objdir' into ns/batched-fsync
  (this branch uses ns/tmp-objdir.)
 
  The "core.fsyncobjectfiles" configuration variable can now be set
  to "batch" for improved performance.
 
- Will merge to 'next'?
+ Will merge to 'master'.
 
 
 * en/zdiff3 (2021-09-20) 2 commits
@@ -1031,7 +1014,7 @@ Release tarballs are available at:
 
  The "remainder" of hn/refs-errno-cleanup topic.
 
- Will merge to 'next'?
+ Will merge to 'next'.
 
 
 * ab/only-single-progress-at-once (2021-10-13) 10 commits
@@ -1048,25 +1031,8 @@ Release tarballs are available at:
 
  Further tweaks on progress API.
 
- Will merge to 'next'?
-
-
-* fs/ssh-signing (2021-09-10) 9 commits
-  (merged to 'next' on 2021-10-11 at b456b95672)
- + ssh signing: test that gpg fails for unknown keys
- + ssh signing: tests for logs, tags & push certs
- + ssh signing: duplicate t7510 tests for commits
- + ssh signing: verify signatures using ssh-keygen
- + ssh signing: provide a textual signing_key_id
- + ssh signing: retrieve a default key from ssh-agent
- + ssh signing: add ssh key format and signing code
- + ssh signing: add test prereqs
- + ssh signing: preliminary refactoring and clean-up
- (this branch is used by fs/ssh-signing-fix.)
-
- Use ssh public crypto for object and push-cert signing.
-
- Will merge to 'master'.
+ Need to pick up an updated version.
+ cf. <cover-v4-0.8-00000000000-20211025T111915Z-avarab@gmail.com>
 
 
 * hn/reftable (2021-10-08) 19 commits
