@@ -1862,7 +1862,7 @@ static int create_tmpfile(struct strbuf *tmp, const char *filename)
 
 static int write_loose_object(const struct object_id *oid, char *hdr,
 			      int hdrlen, const void *buf, unsigned long len,
-			      time_t mtime)
+			      time_t mtime, unsigned flags)
 {
 	int fd, ret;
 	unsigned char compressed[4096];
@@ -1876,7 +1876,9 @@ static int write_loose_object(const struct object_id *oid, char *hdr,
 
 	fd = create_tmpfile(&tmp_file, filename.buf);
 	if (fd < 0) {
-		if (errno == EACCES)
+		if (flags & HASH_SILENT)
+			return -1;
+		else if (errno == EACCES)
 			return error(_("insufficient permission for adding an object to repository database %s"), get_object_directory());
 		else
 			return error_errno(_("unable to create temporary file"));
@@ -1926,7 +1928,8 @@ static int write_loose_object(const struct object_id *oid, char *hdr,
 		struct utimbuf utb;
 		utb.actime = mtime;
 		utb.modtime = mtime;
-		if (utime(tmp_file.buf, &utb) < 0)
+		if (utime(tmp_file.buf, &utb) < 0 &&
+		    !(flags & HASH_SILENT))
 			warning_errno(_("failed utime() on %s"), tmp_file.buf);
 	}
 
@@ -1951,8 +1954,9 @@ static int freshen_packed_object(const struct object_id *oid)
 	return 1;
 }
 
-int write_object_file(const void *buf, unsigned long len, const char *type,
-		      struct object_id *oid)
+int write_object_file_flags(const void *buf, unsigned long len,
+			    const char *type, struct object_id *oid,
+			    unsigned flags)
 {
 	char hdr[MAX_HEADER_LEN];
 	int hdrlen = sizeof(hdr);
@@ -1964,7 +1968,7 @@ int write_object_file(const void *buf, unsigned long len, const char *type,
 				  &hdrlen);
 	if (freshen_packed_object(oid) || freshen_loose_object(oid))
 		return 0;
-	return write_loose_object(oid, hdr, hdrlen, buf, len, 0);
+	return write_loose_object(oid, hdr, hdrlen, buf, len, 0, flags);
 }
 
 int hash_object_file_literally(const void *buf, unsigned long len,
@@ -1984,7 +1988,7 @@ int hash_object_file_literally(const void *buf, unsigned long len,
 		goto cleanup;
 	if (freshen_packed_object(oid) || freshen_loose_object(oid))
 		goto cleanup;
-	status = write_loose_object(oid, header, hdrlen, buf, len, 0);
+	status = write_loose_object(oid, header, hdrlen, buf, len, 0, 0);
 
 cleanup:
 	free(header);
@@ -2006,7 +2010,7 @@ int force_object_loose(const struct object_id *oid, time_t mtime)
 	if (!buf)
 		return error(_("cannot read object for %s"), oid_to_hex(oid));
 	hdrlen = xsnprintf(hdr, sizeof(hdr), "%s %"PRIuMAX , type_name(type), (uintmax_t)len) + 1;
-	ret = write_loose_object(oid, hdr, hdrlen, buf, len, mtime);
+	ret = write_loose_object(oid, hdr, hdrlen, buf, len, mtime, 0);
 	free(buf);
 
 	return ret;
