@@ -214,6 +214,7 @@ struct ref_entry *find_ref_entry(struct ref_dir *dir, const char *refname);
  */
 struct ref_iterator *cache_ref_iterator_begin(struct ref_cache *cache,
 					      const char *prefix,
+					      struct repository *repo,
 					      int prime_dir);
 
 #endif /* REFS_REF_CACHE_H */

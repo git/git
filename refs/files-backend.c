@@ -79,13 +79,15 @@ static void clear_loose_ref_cache(struct files_ref_store *refs)
  * Create a new submodule ref cache and add it to the internal
  * set of caches.
  */
-static struct ref_store *files_ref_store_create(const char *gitdir,
+static struct ref_store *files_ref_store_create(struct repository *repo,
+						const char *gitdir,
 						unsigned int flags)
 {
 	struct files_ref_store *refs = xcalloc(1, sizeof(*refs));
 	struct ref_store *ref_store = (struct ref_store *)refs;
 	struct strbuf sb = STRBUF_INIT;
 
+	ref_store->repo = repo;
 	ref_store->gitdir = xstrdup(gitdir);
 	base_ref_store_init(ref_store, &refs_be_files);
 	refs->store_flags = flags;
@@ -93,7 +95,7 @@ static struct ref_store *files_ref_store_create(const char *gitdir,
 	get_common_dir_noenv(&sb, gitdir);
 	refs->gitcommondir = strbuf_detach(&sb, NULL);
 	strbuf_addf(&sb, "%s/packed-refs", refs->gitcommondir);
-	refs->packed_ref_store = packed_ref_store_create(sb.buf, flags);
+	refs->packed_ref_store = packed_ref_store_create(repo, sb.buf, flags);
 	strbuf_release(&sb);
 
 	chdir_notify_reparent("files-backend $GIT_DIR", &refs->base.gitdir);
@@ -730,6 +732,7 @@ struct files_ref_iterator {
 	struct ref_iterator base;
 
 	struct ref_iterator *iter0;
+	struct repository *repo;
 	unsigned int flags;
 };
 
@@ -751,6 +754,7 @@ static int files_ref_iterator_advance(struct ref_iterator *ref_iterator)
 
 		if (!(iter->flags & DO_FOR_EACH_INCLUDE_BROKEN) &&
 		    !ref_resolves_to_object(iter->iter0->refname,
+					    iter->repo,
 					    iter->iter0->oid,
 					    iter->iter0->flags))
 			continue;
@@ -829,7 +833,7 @@ static struct ref_iterator *files_ref_iterator_begin(
 	 */
 
 	loose_iter = cache_ref_iterator_begin(get_loose_ref_cache(refs),
-					      prefix, 1);
+					      prefix, ref_store->repo, 1);
 
 	/*
 	 * The packed-refs file might contain broken references, for
@@ -853,6 +857,7 @@ static struct ref_iterator *files_ref_iterator_begin(
 	base_ref_iterator_init(ref_iterator, &files_ref_iterator_vtable,
 			       overlay_iter->ordered);
 	iter->iter0 = overlay_iter;
+	iter->repo = ref_store->repo;
 	iter->flags = flags;
 
 	return ref_iterator;
@@ -1169,7 +1174,7 @@ static int should_pack_ref(const char *refname,
 		return 0;
 
 	/* Do not pack broken refs: */
-	if (!ref_resolves_to_object(refname, oid, ref_flags))
+	if (!ref_resolves_to_object(refname, the_repository, oid, ref_flags))
 		return 0;
 
 	return 1;
@@ -1192,7 +1197,8 @@ static int files_pack_refs(struct ref_store *ref_store, unsigned int flags)
 
 	packed_refs_lock(refs->packed_ref_store, LOCK_DIE_ON_ERROR, &err);
 
-	iter = cache_ref_iterator_begin(get_loose_ref_cache(refs), NULL, 0);
+	iter = cache_ref_iterator_begin(get_loose_ref_cache(refs), NULL,
+					the_repository, 0);
 	while ((ok = ref_iterator_advance(iter)) == ITER_OK) {
 		/*
 		 * If the loose reference can be packed, add an entry

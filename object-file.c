@@ -1528,7 +1528,14 @@ static int do_oid_object_info_extended(struct repository *r,
 				break;
 		}
 
-		if (register_all_submodule_odb_as_alternates())
+		/*
+		 * If r is the_repository, this might be an attempt at
+		 * accessing a submodule object as if it were in the_repository
+		 * (having called add_submodule_odb() on that submodule's ODB).
+		 * If any such ODBs exist, register them and try again.
+		 */
+		if (r == the_repository &&
+		    register_all_submodule_odb_as_alternates())
 			/* We added some alternates; retry */
 			continue;
 

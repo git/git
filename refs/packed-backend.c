@@ -193,13 +193,15 @@ static int release_snapshot(struct snapshot *snapshot)
 	}
 }
 
-struct ref_store *packed_ref_store_create(const char *path,
+struct ref_store *packed_ref_store_create(struct repository *repo,
+					  const char *path,
 					  unsigned int store_flags)
 {
 	struct packed_ref_store *refs = xcalloc(1, sizeof(*refs));
 	struct ref_store *ref_store = (struct ref_store *)refs;
 
 	base_ref_store_init(ref_store, &refs_be_packed);
+	ref_store->repo = repo;
 	ref_store->gitdir = xstrdup(path);
 	refs->store_flags = store_flags;
 
@@ -776,6 +778,7 @@ struct packed_ref_iterator {
 	struct object_id oid, peeled;
 	struct strbuf refname_buf;
 
+	struct repository *repo;
 	unsigned int flags;
 };
 
@@ -864,8 +867,8 @@ static int packed_ref_iterator_advance(struct ref_iterator *ref_iterator)
 			continue;
 
 		if (!(iter->flags & DO_FOR_EACH_INCLUDE_BROKEN) &&
-		    !ref_resolves_to_object(iter->base.refname, &iter->oid,
-					    iter->flags))
+		    !ref_resolves_to_object(iter->base.refname, iter->repo,
+					    &iter->oid, iter->flags))
 			continue;
 
 		return ITER_OK;
@@ -882,6 +885,9 @@ static int packed_ref_iterator_peel(struct ref_iterator *ref_iterator,
 {
 	struct packed_ref_iterator *iter =
 		(struct packed_ref_iterator *)ref_iterator;
+
+	if (iter->repo != the_repository)
+		BUG("peeling for non-the_repository is not supported");
 
 	if ((iter->base.flags & REF_KNOWS_PEELED)) {
 		oidcpy(peeled, &iter->peeled);
@@ -954,6 +960,7 @@ static struct ref_iterator *packed_ref_iterator_begin(
 
 	iter->base.oid = &iter->oid;
 
+	iter->repo = ref_store->repo;
 	iter->flags = flags;
 
 	if (prefix && *prefix)
