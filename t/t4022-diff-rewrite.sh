@@ -3,15 +3,17 @@
 test_description='rewrite diff'
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-diff-data.sh
 
 test_expect_success setup '
 
-	cat "$TEST_DIRECTORY"/../COPYING >test &&
+	COPYING_test_data >test.data &&
+	cp test.data test &&
 	git add test &&
 	tr \
 	  "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" \
 	  "nopqrstuvwxyzabcdefghijklmNOPQRSTUVWXYZABCDEFGHIJKLM" \
-	  <"$TEST_DIRECTORY"/../COPYING >test &&
+	  <test.data >test &&
 	echo "to be deleted" >test2 &&
 	blob=$(git hash-object test2) &&
 	blob=$(git rev-parse --short $blob) &&
