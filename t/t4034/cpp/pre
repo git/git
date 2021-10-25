@@ -2,15 +2,15 @@ Foo():x(0&&1){ foo0( x.find); }
 cout<<"Hello World!\n"<<endl;
 1 -1e10 0xabcdef 'x'
 // long double
-3.141'592'653e-10l
+3.141592653e-10l
 // float
 120E5f
 // hex
-0xdead'beaf+8ULL
+0xdead'1eaF+8ULL
 // octal
-0123'4567
+01234567
 // binary
-0b10'00+e1
+0b1000+e1
 // expression
 1.5-e+2+f
 // another one
