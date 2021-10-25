@@ -11,13 +11,13 @@ gpg.program::
 
 gpg.format::
 	Specifies which key format to use when signing with `--gpg-sign`.
-	Default is "openpgp" and another possible value is "x509".
+	Default is "openpgp". Other possible values are "x509", "ssh".
 
 gpg.<format>.program::
 	Use this to customize the program used for the signing format you
 	chose. (see `gpg.program` and `gpg.format`) `gpg.program` can still
 	be used as a legacy synonym for `gpg.openpgp.program`. The default
-	value for `gpg.x509.program` is "gpgsm".
+	value for `gpg.x509.program` is "gpgsm" and `gpg.ssh.program` is "ssh-keygen".
 
 gpg.minTrustLevel::
 	Specifies a minimum trust level for signature verification.  If
@@ -33,3 +33,44 @@ gpg.minTrustLevel::
 * `marginal`
 * `fully`
 * `ultimate`
+
+gpg.ssh.defaultKeyCommand:
+	This command that will be run when user.signingkey is not set and a ssh
+	signature is requested. On successful exit a valid ssh public key is
+	expected in the	first line of its output. To automatically use the first
+	available key from your ssh-agent set this to "ssh-add -L".
+
+gpg.ssh.allowedSignersFile::
+	A file containing ssh public keys which you are willing to trust.
+	The file consists of one or more lines of principals followed by an ssh
+	public key.
+	e.g.: user1@example.com,user2@example.com ssh-rsa AAAAX1...
+	See ssh-keygen(1) "ALLOWED SIGNERS" for details.
+	The principal is only used to identify the key and is available when
+	verifying a signature.
++
+SSH has no concept of trust levels like gpg does. To be able to differentiate
+between valid signatures and trusted signatures the trust level of a signature
+verification is set to `fully` when the public key is present in the allowedSignersFile.
+Therefore to only mark fully trusted keys as verified set gpg.minTrustLevel to `fully`.
+Otherwise valid but untrusted signatures will still verify but show no principal
+name of the signer.
++
+This file can be set to a location outside of the repository and every developer
+maintains their own trust store. A central repository server could generate this
+file automatically from ssh keys with push access to verify the code against.
+In a corporate setting this file is probably generated at a global location
+from automation that already handles developer ssh keys.
++
+A repository that only allows signed commits can store the file
+in the repository itself using a path relative to the top-level of the working tree.
+This way only committers with an already valid key can add or change keys in the keyring.
++
+Using a SSH CA key with the cert-authority option
+(see ssh-keygen(1) "CERTIFICATES") is also valid.
+
+gpg.ssh.revocationFile::
+	Either a SSH KRL or a list of revoked public keys (without the principal prefix).
+	See ssh-keygen(1) for details.
+	If a public key is found in this file then it will always be treated
+	as having trust level "never" and signatures will show as invalid.
