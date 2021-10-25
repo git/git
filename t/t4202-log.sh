@@ -449,6 +449,57 @@ test_expect_success !FAIL_PREREQS 'log with various grep.patternType configurati
 	)
 '
 
+test_expect_success 'log --author' '
+	cat >expect <<-\EOF &&
+	Author: <BOLD;RED>A U<RESET> Thor <author@example.com>
+	EOF
+	git log -1 --color=always --author="A U" >log &&
+	grep Author log >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --committer' '
+	cat >expect <<-\EOF &&
+	Commit:     C O Mitter <committer@<BOLD;RED>example<RESET>.com>
+	EOF
+	git log -1 --color=always --pretty=fuller --committer="example" >log &&
+	grep "Commit:" log >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log -i --grep with color' '
+	cat >expect <<-\EOF &&
+	    <BOLD;RED>Sec<RESET>ond
+	    <BOLD;RED>sec<RESET>ond
+	EOF
+	git log --color=always -i --grep=^sec >log &&
+	grep -i sec log >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '-c color.grep.selected log --grep' '
+	cat >expect <<-\EOF &&
+	    <GREEN>th<RESET><BOLD;RED>ir<RESET><GREEN>d<RESET>
+	EOF
+	git -c color.grep.selected="green" log --color=always --grep=ir >log &&
+	grep ir log >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '-c color.grep.matchSelected log --grep' '
+	cat >expect <<-\EOF &&
+	    <BLUE>i<RESET>n<BLUE>i<RESET>t<BLUE>i<RESET>al
+	EOF
+	git -c color.grep.matchSelected="blue" log --color=always --grep=i >log &&
+	grep al log >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	test_cmp expect actual
+'
+
 cat > expect <<EOF
 * Second
 * sixth
