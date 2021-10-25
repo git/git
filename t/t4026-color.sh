@@ -4,6 +4,8 @@
 #
 
 test_description='Test diff/status color escape codes'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 ESC=$(printf '\033')

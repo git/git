@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='basic sanity checks for git var'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'get GIT_AUTHOR_IDENT' '
