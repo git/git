@@ -365,6 +365,7 @@ static int verify_gpg_signed_buffer(struct signature_check *sigc,
 static void parse_ssh_output(struct signature_check *sigc)
 {
 	const char *line, *principal, *search;
+	char *to_free;
 	char *key = NULL;
 
 	/*
@@ -383,7 +384,7 @@ static void parse_ssh_output(struct signature_check *sigc)
 	sigc->result = 'B';
 	sigc->trust_level = TRUST_NEVER;
 
-	line = xmemdupz(sigc->output, strcspn(sigc->output, "\n"));
+	line = to_free = xmemdupz(sigc->output, strcspn(sigc->output, "\n"));
 
 	if (skip_prefix(line, "Good \"git\" signature for ", &line)) {
 		/* Valid signature and known principal */
@@ -403,7 +404,7 @@ static void parse_ssh_output(struct signature_check *sigc)
 		sigc->result = 'G';
 		sigc->trust_level = TRUST_UNDEFINED;
 	} else {
-		return;
+		goto cleanup;
 	}
 
 	key = strstr(line, "key");
@@ -417,6 +418,9 @@ static void parse_ssh_output(struct signature_check *sigc)
 		 */
 		sigc->result = 'B';
 	}
+
+cleanup:
+	free(to_free);
 }
 
 static int verify_ssh_signed_buffer(struct signature_check *sigc,
@@ -707,6 +711,7 @@ static char *get_ssh_key_fingerprint(const char *signing_key)
 	int ret = -1;
 	struct strbuf fingerprint_stdout = STRBUF_INIT;
 	struct strbuf **fingerprint;
+	char *fingerprint_ret;
 
 	/*
 	 * With SSH Signing this can contain a filename or a public key
@@ -733,7 +738,10 @@ static char *get_ssh_key_fingerprint(const char *signing_key)
 		die_errno(_("failed to get the ssh fingerprint for key '%s'"),
 			  signing_key);
 
-	return strbuf_detach(fingerprint[1], NULL);
+	fingerprint_ret = strbuf_detach(fingerprint[1], NULL);
+	strbuf_list_free(fingerprint);
+	strbuf_release(&fingerprint_stdout);
+	return fingerprint_ret;
 }
 
 /* Returns the first public key from an ssh-agent to use for signing */
