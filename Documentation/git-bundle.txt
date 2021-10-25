@@ -42,7 +42,7 @@ BUNDLE FORMAT
 Bundles are `.pack` files (see linkgit:git-pack-objects[1]) with a
 header indicating what references are contained within the bundle.
 
-Like the the packed archive format itself bundles can either be
+Like the packed archive format itself bundles can either be
 self-contained, or be created using exclusions.
 See the "OBJECT PREREQUISITES" section below.
 
