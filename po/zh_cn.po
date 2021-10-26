@@ -2,6 +2,7 @@
 # Copyright (C) 2007 Shawn Pearce
 # This file is distributed under the same license as the git-gui package.
 # Xudong Guan <xudong.guan@gmail.com>, 2007.
+# Yifei Ding <dingyifeiair@gmail.com>, 2021.
 #
 # Please use the following translation throughout the file for consistence:
 #
@@ -20,46 +21,49 @@
 # 2008-01-06 Eric Miao <eric.y.miao@gmail.com>
 # FIXME: checkout 的标准翻译
 #
-#, fuzzy
+# 2021-10-23
+#   checkout    签出
 msgid ""
 msgstr ""
 "Project-Id-Version: git-gui\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-03-14 07:18+0100\n"
-"PO-Revision-Date: 2007-07-21 01:23-0700\n"
-"Last-Translator: Eric Miao <eric.y.miao@gmail.com>\n"
+"POT-Creation-Date: 2020-02-08 22:54+0100\n"
+"PO-Revision-Date: 2021-10-26 14:14-0700\n"
+"Last-Translator: Yifei Ding <dingyifeiair@gmail.com>, 2021\n"
 "Language-Team: Chinese\n"
+"Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.0\n"
 
-#: git-gui.sh:41 git-gui.sh:634 git-gui.sh:648 git-gui.sh:661 git-gui.sh:744
-#: git-gui.sh:763
-msgid "git-gui: fatal error"
-msgstr "git-gui: 致命错误"
-
-#: git-gui.sh:593
+#: git-gui.sh:847
 #, tcl-format
 msgid "Invalid font specified in %s:"
 msgstr "%s 中指定的字体无效:"
 
-#: git-gui.sh:620
+#: git-gui.sh:901
 msgid "Main Font"
 msgstr "主要字体"
 
-#: git-gui.sh:621
+#: git-gui.sh:902
 msgid "Diff/Console Font"
 msgstr "Diff/控制终端字体"
 
-#: git-gui.sh:635
-msgid "Cannot find git in PATH."
-msgstr "PATH 中没有找到 git"
+#: git-gui.sh:917 git-gui.sh:931 git-gui.sh:944 git-gui.sh:1034 git-gui.sh:1053
+#: git-gui.sh:3212
+msgid "git-gui: fatal error"
+msgstr "git-gui: 致命错误"
 
-#: git-gui.sh:662
+#: git-gui.sh:918
+msgid "Cannot find git in PATH."
+msgstr "PATH 中没有找到 git。"
+
+#: git-gui.sh:945
 msgid "Cannot parse Git version string:"
 msgstr "无法解析 Git 的版本信息:"
 
-#: git-gui.sh:680
+#: git-gui.sh:970
 #, tcl-format
 msgid ""
 "Git version cannot be determined.\n"
@@ -78,378 +82,518 @@ msgstr ""
 "\n"
 "是否假定 '%s' 为版本 1.5.0?\n"
 
-#: git-gui.sh:918
+#: git-gui.sh:1267
 msgid "Git directory not found:"
 msgstr "Git 目录无法找到:"
 
-#: git-gui.sh:925
+#: git-gui.sh:1301
 msgid "Cannot move to top of working directory:"
 msgstr "无法移动到工作根目录:"
 
-#: git-gui.sh:932
-msgid "Cannot use funny .git directory:"
-msgstr "无法使用 .git 目录:"
+#: git-gui.sh:1309
+msgid "Cannot use bare repository:"
+msgstr "不能使用bare的版本库："
 
-#: git-gui.sh:937
+#: git-gui.sh:1317
 msgid "No working directory"
 msgstr "没有工作目录"
 
-#: git-gui.sh:1084 lib/checkout_op.tcl:283
+#: git-gui.sh:1491 lib/checkout_op.tcl:306
 msgid "Refreshing file status..."
 msgstr "更新文件状态..."
 
-#: git-gui.sh:1149
+#: git-gui.sh:1551
 msgid "Scanning for modified files ..."
 msgstr "扫描修改过的文件 ..."
 
-#: git-gui.sh:1324 lib/browser.tcl:246
-msgid "Ready."
-msgstr "就绪"
+#: git-gui.sh:1629
+msgid "Calling prepare-commit-msg hook..."
+msgstr ""
 
-#: git-gui.sh:1590
+#: git-gui.sh:1646
+msgid "Commit declined by prepare-commit-msg hook."
+msgstr ""
+
+#: git-gui.sh:1804 lib/browser.tcl:252
+msgid "Ready."
+msgstr "就绪。"
+
+#: git-gui.sh:1968
+#, tcl-format
+msgid ""
+"Display limit (gui.maxfilesdisplayed = %s) reached, not showing all %s files."
+msgstr ""
+
+#: git-gui.sh:2091
 msgid "Unmodified"
 msgstr "未修改"
 
-#: git-gui.sh:1592
+#: git-gui.sh:2093
 msgid "Modified, not staged"
 msgstr "修改但未缓存"
 
-#: git-gui.sh:1593 git-gui.sh:1598
+#: git-gui.sh:2094 git-gui.sh:2106
 msgid "Staged for commit"
 msgstr "缓存为提交"
 
-#: git-gui.sh:1594 git-gui.sh:1599
+#: git-gui.sh:2095 git-gui.sh:2107
 msgid "Portions staged for commit"
 msgstr "部分缓存为提交"
 
-#: git-gui.sh:1595 git-gui.sh:1600
+#: git-gui.sh:2096 git-gui.sh:2108
 msgid "Staged for commit, missing"
 msgstr "缓存为提交, 不存在"
 
-#: git-gui.sh:1597
+#: git-gui.sh:2098
+msgid "File type changed, not staged"
+msgstr "文件类型发生变化，未缓存"
+
+#: git-gui.sh:2099 git-gui.sh:2100
+msgid "File type changed, old type staged for commit"
+msgstr "文件类型发送变化，旧类型已缓存用于提交"
+
+#: git-gui.sh:2101
+msgid "File type changed, staged"
+msgstr "文件类型变化，已缓存"
+
+#: git-gui.sh:2102
+msgid "File type change staged, modification not staged"
+msgstr "文件类型变化已缓存，修改未缓存"
+
+#: git-gui.sh:2103
+msgid "File type change staged, file missing"
+msgstr "文件类型变化已缓存，文件不存在"
+
+#: git-gui.sh:2105
 msgid "Untracked, not staged"
 msgstr "未跟踪, 未缓存"
 
-#: git-gui.sh:1602
+#: git-gui.sh:2110
 msgid "Missing"
 msgstr "不存在"
 
-#: git-gui.sh:1603
+#: git-gui.sh:2111
 msgid "Staged for removal"
 msgstr "缓存为删除"
 
-#: git-gui.sh:1604
+#: git-gui.sh:2112
 msgid "Staged for removal, still present"
 msgstr "缓存为删除, 但仍存在"
 
-#: git-gui.sh:1606 git-gui.sh:1607 git-gui.sh:1608 git-gui.sh:1609
+#: git-gui.sh:2114 git-gui.sh:2115 git-gui.sh:2116 git-gui.sh:2117
+#: git-gui.sh:2118 git-gui.sh:2119
 msgid "Requires merge resolution"
 msgstr "需要解决合并冲突"
 
-#: git-gui.sh:1644
-msgid "Starting gitk... please wait..."
-msgstr "启动 gitk... 请等待..."
+#: git-gui.sh:2164
+msgid "Couldn't find gitk in PATH"
+msgstr "PATH 中没有找到 gitk"
 
-#: git-gui.sh:1653
+#: git-gui.sh:2210 git-gui.sh:2245
 #, tcl-format
-msgid ""
-"Unable to start gitk:\n"
-"\n"
-"%s does not exist"
-msgstr ""
-"无法启动 gitk:\n"
-"\n"
-"%s 不存在"
+msgid "Starting %s... please wait..."
+msgstr "正在启动 %s... 请等待..."
 
-#: git-gui.sh:1860 lib/choose_repository.tcl:36
+#: git-gui.sh:2224
+msgid "Couldn't find git gui in PATH"
+msgstr "PATH 中没有找到 git gui"
+
+#: git-gui.sh:2726 lib/choose_repository.tcl:53
 msgid "Repository"
 msgstr "版本库(repository)"
 
-#: git-gui.sh:1861
+#: git-gui.sh:2727
 msgid "Edit"
 msgstr "编辑"
 
-#: git-gui.sh:1863 lib/choose_rev.tcl:561
+#: git-gui.sh:2729 lib/choose_rev.tcl:567
 msgid "Branch"
 msgstr "分支(branch)"
 
-#: git-gui.sh:1866 lib/choose_rev.tcl:548
+#: git-gui.sh:2732 lib/choose_rev.tcl:554
 msgid "Commit@@noun"
 msgstr "提交(commit)"
 
-#: git-gui.sh:1869 lib/merge.tcl:120 lib/merge.tcl:149 lib/merge.tcl:167
+#: git-gui.sh:2735 lib/merge.tcl:127 lib/merge.tcl:174
 msgid "Merge"
 msgstr "合并(merge)"
 
-#: git-gui.sh:1870 lib/choose_rev.tcl:557
+#: git-gui.sh:2736 lib/choose_rev.tcl:563
 msgid "Remote"
 msgstr "远端(remote)"
 
-#: git-gui.sh:1879
+#: git-gui.sh:2739
+msgid "Tools"
+msgstr "工具"
+
+#: git-gui.sh:2748
+msgid "Explore Working Copy"
+msgstr ""
+
+#: git-gui.sh:2763
+msgid "Git Bash"
+msgstr "Git Bash"
+
+#: git-gui.sh:2772
 msgid "Browse Current Branch's Files"
 msgstr "浏览当前分支上的文件"
 
-#: git-gui.sh:1883
+#: git-gui.sh:2776
 msgid "Browse Branch Files..."
 msgstr "浏览分支上的文件..."
 
-#: git-gui.sh:1888
+#: git-gui.sh:2781
 msgid "Visualize Current Branch's History"
 msgstr "图示当前分支的历史"
 
-#: git-gui.sh:1892
+#: git-gui.sh:2785
 msgid "Visualize All Branch History"
 msgstr "图示所有分支的历史"
 
-#: git-gui.sh:1899
+#: git-gui.sh:2792
 #, tcl-format
 msgid "Browse %s's Files"
 msgstr "浏览 %s 上的文件"
 
-#: git-gui.sh:1901
+#: git-gui.sh:2794
 #, tcl-format
 msgid "Visualize %s's History"
 msgstr "图示 %s 分支的历史"
 
-#: git-gui.sh:1906 lib/database.tcl:27 lib/database.tcl:67
+#: git-gui.sh:2799 lib/database.tcl:40
 msgid "Database Statistics"
 msgstr "数据库统计信息"
 
-#: git-gui.sh:1909 lib/database.tcl:34
+#: git-gui.sh:2802 lib/database.tcl:33
 msgid "Compress Database"
 msgstr "压缩数据库"
 
-#: git-gui.sh:1912
+#: git-gui.sh:2805
 msgid "Verify Database"
 msgstr "验证数据库"
 
-#: git-gui.sh:1919 git-gui.sh:1923 git-gui.sh:1927 lib/shortcut.tcl:7
-#: lib/shortcut.tcl:39 lib/shortcut.tcl:71
+#: git-gui.sh:2812 git-gui.sh:2816 git-gui.sh:2820
 msgid "Create Desktop Icon"
 msgstr "创建桌面图标"
 
-#: git-gui.sh:1932 lib/choose_repository.tcl:177 lib/choose_repository.tcl:185
+#: git-gui.sh:2828 lib/choose_repository.tcl:209 lib/choose_repository.tcl:217
 msgid "Quit"
 msgstr "退出"
 
-#: git-gui.sh:1939
+#: git-gui.sh:2836
 msgid "Undo"
 msgstr "撤销"
 
-#: git-gui.sh:1942
+#: git-gui.sh:2839
 msgid "Redo"
 msgstr "重做"
 
-#: git-gui.sh:1946 git-gui.sh:2443
+#: git-gui.sh:2843 git-gui.sh:3461
 msgid "Cut"
 msgstr "剪切"
 
-#: git-gui.sh:1949 git-gui.sh:2446 git-gui.sh:2520 git-gui.sh:2614
+#: git-gui.sh:2846 git-gui.sh:3464 git-gui.sh:3540 git-gui.sh:3633
 #: lib/console.tcl:69
 msgid "Copy"
 msgstr "复制"
 
-#: git-gui.sh:1952 git-gui.sh:2449
+#: git-gui.sh:2849 git-gui.sh:3467
 msgid "Paste"
 msgstr "粘贴"
 
-#: git-gui.sh:1955 git-gui.sh:2452 lib/branch_delete.tcl:26
-#: lib/remote_branch_delete.tcl:38
+#: git-gui.sh:2852 git-gui.sh:3470 lib/remote_branch_delete.tcl:39
+#: lib/branch_delete.tcl:28
 msgid "Delete"
 msgstr "删除"
 
-#: git-gui.sh:1959 git-gui.sh:2456 git-gui.sh:2618 lib/console.tcl:71
+#: git-gui.sh:2856 git-gui.sh:3474 git-gui.sh:3637 lib/console.tcl:71
 msgid "Select All"
 msgstr "全选"
 
-#: git-gui.sh:1968
+#: git-gui.sh:2865
 msgid "Create..."
 msgstr "新建..."
 
-#: git-gui.sh:1974
+#: git-gui.sh:2871
 msgid "Checkout..."
-msgstr "Checkout..."
+msgstr "签出（checkout）..."
 
-#: git-gui.sh:1980
+#: git-gui.sh:2877
 msgid "Rename..."
 msgstr "更名..."
 
-#: git-gui.sh:1985 git-gui.sh:2085
+#: git-gui.sh:2882
 msgid "Delete..."
 msgstr "删除..."
 
-#: git-gui.sh:1990
+#: git-gui.sh:2887
 msgid "Reset..."
 msgstr "复位(Reset)..."
 
-#: git-gui.sh:2002 git-gui.sh:2389
-msgid "New Commit"
-msgstr "新建提交"
+#: git-gui.sh:2897
+msgid "Done"
+msgstr "完成"
 
-#: git-gui.sh:2010 git-gui.sh:2396
-msgid "Amend Last Commit"
-msgstr "修正上次提交"
-
-#: git-gui.sh:2019 git-gui.sh:2356 lib/remote_branch_delete.tcl:99
-msgid "Rescan"
-msgstr "重新扫描"
-
-#: git-gui.sh:2025
-msgid "Stage To Commit"
-msgstr "缓存为提交"
-
-#: git-gui.sh:2031
-msgid "Stage Changed Files To Commit"
-msgstr "缓存修改的文件为提交"
-
-#: git-gui.sh:2037
-msgid "Unstage From Commit"
-msgstr "从本次提交撤除"
-
-#: git-gui.sh:2042 lib/index.tcl:395
-msgid "Revert Changes"
-msgstr "撤销修改"
-
-#: git-gui.sh:2049 git-gui.sh:2368 git-gui.sh:2467
-msgid "Sign Off"
-msgstr "签名(Sign Off)"
-
-#: git-gui.sh:2053 git-gui.sh:2372
+#: git-gui.sh:2899
 msgid "Commit@@verb"
 msgstr "提交"
 
-#: git-gui.sh:2064
+#: git-gui.sh:2908 git-gui.sh:3400
+msgid "Amend Last Commit"
+msgstr "修正上次提交"
+
+#: git-gui.sh:2918 git-gui.sh:3361 lib/remote_branch_delete.tcl:101
+msgid "Rescan"
+msgstr "重新扫描"
+
+#: git-gui.sh:2924
+msgid "Stage To Commit"
+msgstr "缓存为提交"
+
+#: git-gui.sh:2930
+msgid "Stage Changed Files To Commit"
+msgstr "缓存修改的文件为提交"
+
+#: git-gui.sh:2936
+msgid "Unstage From Commit"
+msgstr "从本次提交撤除"
+
+#: git-gui.sh:2942 lib/index.tcl:521
+msgid "Revert Changes"
+msgstr "撤销修改"
+
+#: git-gui.sh:2950 git-gui.sh:3700 git-gui.sh:3731
+msgid "Show Less Context"
+msgstr "显示更少上下文"
+
+#: git-gui.sh:2954 git-gui.sh:3704 git-gui.sh:3735
+msgid "Show More Context"
+msgstr "显示更多上下文"
+
+#: git-gui.sh:2961 git-gui.sh:3374 git-gui.sh:3485
+msgid "Sign Off"
+msgstr "签名(Sign Off)"
+
+#: git-gui.sh:2977
 msgid "Local Merge..."
 msgstr "本地合并..."
 
-#: git-gui.sh:2069
+#: git-gui.sh:2982
 msgid "Abort Merge..."
 msgstr "中止合并..."
 
-#: git-gui.sh:2081
+#: git-gui.sh:2994 git-gui.sh:3022
+msgid "Add..."
+msgstr "添加..."
+
+#: git-gui.sh:2998
 msgid "Push..."
 msgstr "上传..."
 
-#: git-gui.sh:2092 lib/choose_repository.tcl:41
-msgid "Apple"
-msgstr "苹果"
+#: git-gui.sh:3002
+msgid "Delete Branch..."
+msgstr "删除分支..."
 
-#: git-gui.sh:2095 git-gui.sh:2117 lib/about.tcl:14
-#: lib/choose_repository.tcl:44 lib/choose_repository.tcl:50
+#: git-gui.sh:3012 git-gui.sh:3666
+msgid "Options..."
+msgstr "选项..."
+
+#: git-gui.sh:3023
+msgid "Remove..."
+msgstr "删除..."
+
+#: git-gui.sh:3032 lib/choose_repository.tcl:67
+msgid "Help"
+msgstr "帮助"
+
+#: git-gui.sh:3036 git-gui.sh:3040 lib/choose_repository.tcl:61
+#: lib/choose_repository.tcl:70 lib/about.tcl:14
 #, tcl-format
 msgid "About %s"
 msgstr "关于 %s"
 
-#: git-gui.sh:2099
-msgid "Preferences..."
-msgstr "首选项..."
-
-#: git-gui.sh:2107 git-gui.sh:2639
-msgid "Options..."
-msgstr "选项..."
-
-#: git-gui.sh:2113 lib/choose_repository.tcl:47
-msgid "Help"
-msgstr "帮助"
-
-#: git-gui.sh:2154
+#: git-gui.sh:3064
 msgid "Online Documentation"
 msgstr "在线文档"
 
-#: git-gui.sh:2238
+#: git-gui.sh:3067 lib/choose_repository.tcl:64 lib/choose_repository.tcl:73
+msgid "Show SSH Key"
+msgstr "显示SSH密钥"
+
+#: git-gui.sh:3097 git-gui.sh:3229
+msgid "usage:"
+msgstr "使用方法："
+
+#: git-gui.sh:3101 git-gui.sh:3233
+msgid "Usage"
+msgstr "使用方法"
+
+#: git-gui.sh:3182 lib/blame.tcl:575
+msgid "Error"
+msgstr "错误"
+
+#: git-gui.sh:3213
 #, tcl-format
 msgid "fatal: cannot stat path %s: No such file or directory"
 msgstr "致命错误: 无法获取路径 %s 的信息: 该文件或目录不存在"
 
-#: git-gui.sh:2271
+#: git-gui.sh:3246
 msgid "Current Branch:"
 msgstr "当前分支:"
 
-#: git-gui.sh:2292
-msgid "Staged Changes (Will Commit)"
-msgstr "已缓存的改动 (将被提交)"
-
-#: git-gui.sh:2312
+#: git-gui.sh:3271
 msgid "Unstaged Changes"
 msgstr "未缓存的改动"
 
-#: git-gui.sh:2362
+#: git-gui.sh:3293
+msgid "Staged Changes (Will Commit)"
+msgstr "已缓存的改动 (将被提交)"
+
+#: git-gui.sh:3367
 msgid "Stage Changed"
 msgstr "缓存改动"
 
-#: git-gui.sh:2378 lib/transport.tcl:93 lib/transport.tcl:182
+#: git-gui.sh:3386 lib/transport.tcl:137
 msgid "Push"
 msgstr "上传"
 
-#: git-gui.sh:2408
+#: git-gui.sh:3413
 msgid "Initial Commit Message:"
 msgstr "初始的提交描述:"
 
-#: git-gui.sh:2409
+#: git-gui.sh:3414
 msgid "Amended Commit Message:"
 msgstr "修正的提交描述:"
 
-#: git-gui.sh:2410
+#: git-gui.sh:3415
 msgid "Amended Initial Commit Message:"
 msgstr "修正的初始提交描述:"
 
-#: git-gui.sh:2411
+#: git-gui.sh:3416
 msgid "Amended Merge Commit Message:"
 msgstr "修正的合并提交描述:"
 
-#: git-gui.sh:2412
+#: git-gui.sh:3417
 msgid "Merge Commit Message:"
 msgstr "合并提交描述:"
 
-#: git-gui.sh:2413
+#: git-gui.sh:3418
 msgid "Commit Message:"
 msgstr "提交描述:"
 
-#: git-gui.sh:2459 git-gui.sh:2622 lib/console.tcl:73
+#: git-gui.sh:3477 git-gui.sh:3641 lib/console.tcl:73
 msgid "Copy All"
 msgstr "全部复制"
 
-#: git-gui.sh:2483 lib/blame.tcl:107
+#: git-gui.sh:3501 lib/blame.tcl:106
 msgid "File:"
 msgstr "文件:"
 
-#: git-gui.sh:2589
-msgid "Apply/Reverse Hunk"
-msgstr "应用/撤消此修改块"
+#: git-gui.sh:3549 lib/choose_repository.tcl:1100
+msgid "Open"
+msgstr "打开"
 
-#: git-gui.sh:2595
-msgid "Show Less Context"
-msgstr "显示更少上下文"
-
-#: git-gui.sh:2602
-msgid "Show More Context"
-msgstr "显示更多上下文"
-
-#: git-gui.sh:2610
+#: git-gui.sh:3629
 msgid "Refresh"
 msgstr "刷新"
 
-#: git-gui.sh:2631
+#: git-gui.sh:3650
 msgid "Decrease Font Size"
 msgstr "缩小字体"
 
-#: git-gui.sh:2635
+#: git-gui.sh:3654
 msgid "Increase Font Size"
 msgstr "放大字体"
 
-#: git-gui.sh:2646
+#: git-gui.sh:3662 lib/blame.tcl:296
+msgid "Encoding"
+msgstr "编码"
+
+#: git-gui.sh:3673
+msgid "Apply/Reverse Hunk"
+msgstr "应用/撤消此修改块"
+
+#: git-gui.sh:3678
+msgid "Apply/Reverse Line"
+msgstr "应用/撤消此行"
+
+#: git-gui.sh:3684 git-gui.sh:3794 git-gui.sh:3805
+msgid "Revert Hunk"
+msgstr "撤消此块"
+
+#: git-gui.sh:3689 git-gui.sh:3801 git-gui.sh:3812
+msgid "Revert Line"
+msgstr "撤销此行"
+
+#: git-gui.sh:3694 git-gui.sh:3791
+msgid "Undo Last Revert"
+msgstr "撤销上一次撤销"
+
+#: git-gui.sh:3713
+msgid "Run Merge Tool"
+msgstr "运行合并工具"
+
+#: git-gui.sh:3718
+msgid "Use Remote Version"
+msgstr "使用远端版本"
+
+#: git-gui.sh:3722
+msgid "Use Local Version"
+msgstr "使用本地版本"
+
+#: git-gui.sh:3726
+msgid "Revert To Base"
+msgstr "撤销到base"
+
+#: git-gui.sh:3744
+msgid "Visualize These Changes In The Submodule"
+msgstr "图示在子模块中的修改"
+
+#: git-gui.sh:3748
+msgid "Visualize Current Branch History In The Submodule"
+msgstr "图示在子模块中当前分支的历史"
+
+#: git-gui.sh:3752
+msgid "Visualize All Branch History In The Submodule"
+msgstr "图示在子模块中所有分支的历史"
+
+#: git-gui.sh:3757
+msgid "Start git gui In The Submodule"
+msgstr "在子模块中运行git gui"
+
+#: git-gui.sh:3793
 msgid "Unstage Hunk From Commit"
 msgstr "从提交中撤除修改块"
 
-#: git-gui.sh:2648
+#: git-gui.sh:3797
+msgid "Unstage Lines From Commit"
+msgstr "从提交中撤除修改行"
+
+#: git-gui.sh:3798 git-gui.sh:3809
+msgid "Revert Lines"
+msgstr "撤销行"
+
+#: git-gui.sh:3800
+msgid "Unstage Line From Commit"
+msgstr "从本次提交撤除行"
+
+#: git-gui.sh:3804
 msgid "Stage Hunk For Commit"
 msgstr "缓存修改块为提交"
 
-#: git-gui.sh:2667
+#: git-gui.sh:3808
+msgid "Stage Lines For Commit"
+msgstr "缓存修改行为提交"
+
+#: git-gui.sh:3811
+msgid "Stage Line For Commit"
+msgstr "缓存行为提交"
+
+#: git-gui.sh:3861
 msgid "Initializing..."
 msgstr "初始化..."
 
-#: git-gui.sh:2762
+#: git-gui.sh:4017
 #, tcl-format
 msgid ""
 "Possible environment issues exist.\n"
@@ -464,7 +608,7 @@ msgstr ""
 "由 %s 执行的 Git 子进程可能忽略下列环境变量:\n"
 "\n"
 
-#: git-gui.sh:2792
+#: git-gui.sh:4046
 msgid ""
 "\n"
 "This is due to a known issue with the\n"
@@ -474,7 +618,7 @@ msgstr ""
 "这是由 Cygwin 发布的 Tcl 代码中一个\n"
 "已知问题所引起."
 
-#: git-gui.sh:2797
+#: git-gui.sh:4051
 #, tcl-format
 msgid ""
 "\n"
@@ -489,123 +633,1657 @@ msgstr ""
 "%s 的一个很好的替代方案是将 user.name 以及\n"
 "user.email 设置放在你的个人 ~/.gitconfig 文件中.\n"
 
+#: lib/spellcheck.tcl:57
+msgid "Unsupported spell checker"
+msgstr "不支持的拼写检查"
+
+#: lib/spellcheck.tcl:65
+msgid "Spell checking is unavailable"
+msgstr "拼写检查不可用"
+
+#: lib/spellcheck.tcl:68
+msgid "Invalid spell checking configuration"
+msgstr "非法拼写检查配置"
+
+#: lib/spellcheck.tcl:70
+#, tcl-format
+msgid "Reverting dictionary to %s."
+msgstr ""
+
+#: lib/spellcheck.tcl:73
+msgid "Spell checker silently failed on startup"
+msgstr ""
+
+#: lib/spellcheck.tcl:80
+msgid "Unrecognized spell checker"
+msgstr ""
+
+#: lib/spellcheck.tcl:186
+msgid "No Suggestions"
+msgstr "没有建议"
+
+#: lib/spellcheck.tcl:388
+msgid "Unexpected EOF from spell checker"
+msgstr ""
+
+#: lib/spellcheck.tcl:392
+msgid "Spell Checker Failed"
+msgstr "拼写检查失败"
+
+#: lib/transport.tcl:6 lib/remote_add.tcl:132
+#, tcl-format
+msgid "fetch %s"
+msgstr "获取(fetch) %s"
+
+#: lib/transport.tcl:7
+#, tcl-format
+msgid "Fetching new changes from %s"
+msgstr "从 %s 处获取新的改动"
+
+#: lib/transport.tcl:18
+#, tcl-format
+msgid "remote prune %s"
+msgstr "清除远端 %s"
+
+#: lib/transport.tcl:19
+#, tcl-format
+msgid "Pruning tracking branches deleted from %s"
+msgstr "清除已在%s删除的跟踪分支"
+
+#: lib/transport.tcl:25
+msgid "fetch all remotes"
+msgstr ""
+
+#: lib/transport.tcl:26
+msgid "Fetching new changes from all remotes"
+msgstr "从全部远端中获取新的改动"
+
+#: lib/transport.tcl:40
+msgid "remote prune all remotes"
+msgstr "远端清除全部远端"
+
+#: lib/transport.tcl:41
+msgid "Pruning tracking branches deleted from all remotes"
+msgstr "清除在全部远端中删除的跟踪分支"
+
+#: lib/transport.tcl:54 lib/transport.tcl:92 lib/transport.tcl:110
+#: lib/remote_add.tcl:162
+#, tcl-format
+msgid "push %s"
+msgstr "上传 %s"
+
+#: lib/transport.tcl:55
+#, tcl-format
+msgid "Pushing changes to %s"
+msgstr "上传改动到 %s"
+
+#: lib/transport.tcl:93
+#, tcl-format
+msgid "Mirroring to %s"
+msgstr "镜像到 %s"
+
+#: lib/transport.tcl:111
+#, tcl-format
+msgid "Pushing %s %s to %s"
+msgstr "上传 %s %s 到 %s"
+
+#: lib/transport.tcl:132
+msgid "Push Branches"
+msgstr "上传分支"
+
+#: lib/transport.tcl:141 lib/checkout_op.tcl:580 lib/remote_add.tcl:34
+#: lib/browser.tcl:292 lib/branch_checkout.tcl:30 lib/branch_rename.tcl:32
+#: lib/choose_font.tcl:45 lib/option.tcl:127 lib/tools_dlg.tcl:41
+#: lib/tools_dlg.tcl:202 lib/tools_dlg.tcl:345 lib/remote_branch_delete.tcl:43
+#: lib/branch_create.tcl:37 lib/branch_delete.tcl:34 lib/merge.tcl:178
+msgid "Cancel"
+msgstr "取消"
+
+#: lib/transport.tcl:147
+msgid "Source Branches"
+msgstr "源端分支"
+
+#: lib/transport.tcl:162
+msgid "Destination Repository"
+msgstr "目标版本库"
+
+#: lib/transport.tcl:165 lib/remote_branch_delete.tcl:51
+msgid "Remote:"
+msgstr "远端："
+
+#: lib/transport.tcl:187 lib/remote_branch_delete.tcl:72
+msgid "Arbitrary Location:"
+msgstr "任意位置："
+
+#: lib/transport.tcl:205
+msgid "Transfer Options"
+msgstr "传输选项"
+
+#: lib/transport.tcl:207
+msgid "Force overwrite existing branch (may discard changes)"
+msgstr "强制覆盖已有的分支 (可能会丢失改动)"
+
+#: lib/transport.tcl:211
+msgid "Use thin pack (for slow network connections)"
+msgstr "使用 thin pack (适用于低速网络连接)"
+
+#: lib/transport.tcl:215
+msgid "Include tags"
+msgstr "包含标签"
+
+#: lib/transport.tcl:229
+#, tcl-format
+msgid "%s (%s): Push"
+msgstr "%s (%s)：上传"
+
+#: lib/checkout_op.tcl:85
+#, tcl-format
+msgid "Fetching %s from %s"
+msgstr "获取 %s 自 %s"
+
+#: lib/checkout_op.tcl:133
+#, tcl-format
+msgid "fatal: Cannot resolve %s"
+msgstr "致命错误: 无法解决 %s"
+
+#: lib/checkout_op.tcl:146 lib/sshkey.tcl:58 lib/console.tcl:81
+#: lib/database.tcl:30
+msgid "Close"
+msgstr "关闭"
+
+#: lib/checkout_op.tcl:175
+#, tcl-format
+msgid "Branch '%s' does not exist."
+msgstr "分支 '%s' 并不存在."
+
+#: lib/checkout_op.tcl:194
+#, tcl-format
+msgid "Failed to configure simplified git-pull for '%s'."
+msgstr "无法为'%s'配置简化的git-pull。"
+
+#: lib/checkout_op.tcl:202 lib/branch_rename.tcl:102
+#, tcl-format
+msgid "Branch '%s' already exists."
+msgstr "分支 '%s' 已经存在."
+
+#: lib/checkout_op.tcl:229
+#, tcl-format
+msgid ""
+"Branch '%s' already exists.\n"
+"\n"
+"It cannot fast-forward to %s.\n"
+"A merge is required."
+msgstr ""
+"分支 '%s' 已经存在.\n"
+"\n"
+"无法快速合并到 %s.\n"
+"需要普通合并."
+
+#: lib/checkout_op.tcl:243
+#, tcl-format
+msgid "Merge strategy '%s' not supported."
+msgstr "合并策略 '%s' 不支持."
+
+#: lib/checkout_op.tcl:262
+#, tcl-format
+msgid "Failed to update '%s'."
+msgstr "无法更新 '%s'."
+
+#: lib/checkout_op.tcl:274
+msgid "Staging area (index) is already locked."
+msgstr "缓存区域 (index) 已被锁定."
+
+#: lib/checkout_op.tcl:289
+msgid ""
+"Last scanned state does not match repository state.\n"
+"\n"
+"Another Git program has modified this repository since the last scan.  A "
+"rescan must be performed before the current branch can be changed.\n"
+"\n"
+"The rescan will be automatically started now.\n"
+msgstr ""
+"最后一次扫描的状态和当前版本库状态不符.\n"
+"\n"
+"另一 Git 程序自上次扫描后修改了本版本库. 在修改当前分支之前需要重新做一次扫"
+"描.\n"
+"\n"
+"重新扫描将自动开始.\n"
+
+#: lib/checkout_op.tcl:345
+#, tcl-format
+msgid "Updating working directory to '%s'..."
+msgstr "更新工作目录到 '%s'..."
+
+#: lib/checkout_op.tcl:346
+msgid "files checked out"
+msgstr "文件已签出"
+
+#: lib/checkout_op.tcl:377
+#, tcl-format
+msgid "Aborted checkout of '%s' (file level merging is required)."
+msgstr "中止 '%s' 的签出（checkout）操作 (需要做文件级合并)."
+
+#: lib/checkout_op.tcl:378
+msgid "File level merge required."
+msgstr "需要文件级合并。"
+
+#: lib/checkout_op.tcl:382
+#, tcl-format
+msgid "Staying on branch '%s'."
+msgstr "停留在分支 '%s'。"
+
+#: lib/checkout_op.tcl:453
+msgid ""
+"You are no longer on a local branch.\n"
+"\n"
+"If you wanted to be on a branch, create one now starting from 'This Detached "
+"Checkout'."
+msgstr ""
+"你不在某个本地分支上.\n"
+"\n"
+"如果你想位于某分支上, 从当前脱节的Checkout中创建一个新分支."
+
+#: lib/checkout_op.tcl:504 lib/checkout_op.tcl:508
+#, tcl-format
+msgid "Checked out '%s'."
+msgstr "’%s‘ 已被签出（checkout）。"
+
+#: lib/checkout_op.tcl:536
+#, tcl-format
+msgid "Resetting '%s' to '%s' will lose the following commits:"
+msgstr "复位 '%s' 到 '%s' 将导致下列提交的丢失:"
+
+#: lib/checkout_op.tcl:558
+msgid "Recovering lost commits may not be easy."
+msgstr "恢复丢失的提交是比较困难的."
+
+#: lib/checkout_op.tcl:563
+#, tcl-format
+msgid "Reset '%s'?"
+msgstr "复位 '%s'?"
+
+#: lib/checkout_op.tcl:568 lib/tools_dlg.tcl:336 lib/merge.tcl:170
+msgid "Visualize"
+msgstr "图示"
+
+#: lib/checkout_op.tcl:572 lib/branch_create.tcl:85
+msgid "Reset"
+msgstr "复位"
+
+#: lib/checkout_op.tcl:636
+#, tcl-format
+msgid ""
+"Failed to set current branch.\n"
+"\n"
+"This working directory is only partially switched.  We successfully updated "
+"your files, but failed to update an internal Git file.\n"
+"\n"
+"This should not have occurred.  %s will now close and give up."
+msgstr ""
+"无法设定当前分支.\n"
+"\n"
+"当前工作目录仅有部分被切换出, 我们已成功的更新了您的文件但是无法更新某个内部"
+"的Git文件.\n"
+"\n"
+"这本不该发生, %s 将关闭并放弃."
+
+#: lib/remote_add.tcl:20
+#, tcl-format
+msgid "%s (%s): Add Remote"
+msgstr "%s (%s)：添加远端(remote)"
+
+#: lib/remote_add.tcl:25
+msgid "Add New Remote"
+msgstr "添加新远端(remote)"
+
+#: lib/remote_add.tcl:30 lib/tools_dlg.tcl:37
+msgid "Add"
+msgstr "添加"
+
+#: lib/remote_add.tcl:39
+msgid "Remote Details"
+msgstr "远端详情"
+
+#: lib/remote_add.tcl:41 lib/tools_dlg.tcl:51 lib/branch_create.tcl:44
+msgid "Name:"
+msgstr "名字："
+
+#: lib/remote_add.tcl:50
+msgid "Location:"
+msgstr "位置："
+
+#: lib/remote_add.tcl:60
+msgid "Further Action"
+msgstr ""
+
+#: lib/remote_add.tcl:63
+msgid "Fetch Immediately"
+msgstr "立即获取"
+
+#: lib/remote_add.tcl:69
+msgid "Initialize Remote Repository and Push"
+msgstr "初始化远端版本库并上传"
+
+#: lib/remote_add.tcl:75
+msgid "Do Nothing Else Now"
+msgstr "现在不做任何其他操作"
+
+#: lib/remote_add.tcl:100
+msgid "Please supply a remote name."
+msgstr "请提供一个远端名称。"
+
+#: lib/remote_add.tcl:113
+#, tcl-format
+msgid "'%s' is not an acceptable remote name."
+msgstr "'%s'不是一个可接受的远端名称."
+
+#: lib/remote_add.tcl:124
+#, tcl-format
+msgid "Failed to add remote '%s' of location '%s'."
+msgstr ""
+
+#: lib/remote_add.tcl:133
+#, tcl-format
+msgid "Fetching the %s"
+msgstr "获取 %s"
+
+#: lib/remote_add.tcl:156
+#, tcl-format
+msgid "Do not know how to initialize repository at location '%s'."
+msgstr ""
+
+#: lib/remote_add.tcl:163
+#, tcl-format
+msgid "Setting up the %s (at %s)"
+msgstr ""
+
+#: lib/browser.tcl:17
+msgid "Starting..."
+msgstr "开始..."
+
+#: lib/browser.tcl:27
+#, tcl-format
+msgid "%s (%s): File Browser"
+msgstr "%s (%s)：文件浏览器"
+
+#: lib/browser.tcl:132 lib/browser.tcl:149
+#, tcl-format
+msgid "Loading %s..."
+msgstr "装载 %s..."
+
+#: lib/browser.tcl:193
+msgid "[Up To Parent]"
+msgstr "[上层目录]"
+
+#: lib/browser.tcl:275
+#, tcl-format
+msgid "%s (%s): Browse Branch Files"
+msgstr "%s (%s)：浏览分支文件"
+
+#: lib/browser.tcl:282
+msgid "Browse Branch Files"
+msgstr "浏览分支文件"
+
+#: lib/browser.tcl:288 lib/choose_repository.tcl:437
+#: lib/choose_repository.tcl:524 lib/choose_repository.tcl:533
+#: lib/choose_repository.tcl:1115
+msgid "Browse"
+msgstr "浏览"
+
+#: lib/browser.tcl:297 lib/branch_checkout.tcl:35 lib/tools_dlg.tcl:321
+msgid "Revision"
+msgstr "版本"
+
+#: lib/index.tcl:6
+msgid "Unable to unlock the index."
+msgstr "无法解锁缓存 (index)"
+
+#: lib/index.tcl:30
+msgid "Index Error"
+msgstr "缓存(Index)错误"
+
+#: lib/index.tcl:32
+msgid ""
+"Updating the Git index failed.  A rescan will be automatically started to "
+"resynchronize git-gui."
+msgstr "更新 Git 缓存(Index)失败, 重新扫描将自动开始以重新同步 git-gui."
+
+#: lib/index.tcl:43
+msgid "Continue"
+msgstr "继续"
+
+#: lib/index.tcl:46
+msgid "Unlock Index"
+msgstr "解锁 Index"
+
+#: lib/index.tcl:77 lib/index.tcl:146 lib/index.tcl:220 lib/index.tcl:587
+#: lib/choose_repository.tcl:999
+msgid "files"
+msgstr "文件"
+
+#: lib/index.tcl:326
+msgid "Unstaging selected files from commit"
+msgstr "从提交缓存中删除选中的文件"
+
+#: lib/index.tcl:330
+#, tcl-format
+msgid "Unstaging %s from commit"
+msgstr "从提交缓存中删除 %s"
+
+#: lib/index.tcl:369
+msgid "Ready to commit."
+msgstr "提交已就绪。"
+
+#: lib/index.tcl:378
+msgid "Adding selected files"
+msgstr "添加选中的文件"
+
+#: lib/index.tcl:382
+#, tcl-format
+msgid "Adding %s"
+msgstr "添加 %s"
+
+#: lib/index.tcl:412
+#, tcl-format
+msgid "Stage %d untracked files?"
+msgstr ""
+
+#: lib/index.tcl:420
+msgid "Adding all changed files"
+msgstr "添加所有改动了的文件"
+
+#: lib/index.tcl:503
+#, tcl-format
+msgid "Revert changes in file %s?"
+msgstr "撤销文件 %s 中的改动?"
+
+#: lib/index.tcl:508
+#, tcl-format
+msgid "Revert changes in these %i files?"
+msgstr "撤销这些 (%i个) 文件的改动?"
+
+#: lib/index.tcl:517
+msgid "Any unstaged changes will be permanently lost by the revert."
+msgstr "任何未缓存的改动将在这次撤销中永久丢失."
+
+#: lib/index.tcl:520 lib/index.tcl:563
+msgid "Do Nothing"
+msgstr "不做操作"
+
+#: lib/index.tcl:545
+#, tcl-format
+msgid "Delete untracked file %s?"
+msgstr ""
+
+#: lib/index.tcl:550
+#, tcl-format
+msgid "Delete these %i untracked files?"
+msgstr ""
+
+#: lib/index.tcl:560
+msgid "Files will be permanently deleted."
+msgstr "文件将被永久删除。"
+
+#: lib/index.tcl:564
+msgid "Delete Files"
+msgstr "删除文件"
+
+#: lib/index.tcl:586
+msgid "Deleting"
+msgstr "正在删除"
+
+#: lib/index.tcl:665
+msgid "Encountered errors deleting files:\n"
+msgstr "在删除文件时遇到了一些错误：\n"
+
+#: lib/index.tcl:674
+#, tcl-format
+msgid "None of the %d selected files could be deleted."
+msgstr ""
+
+#: lib/index.tcl:679
+#, tcl-format
+msgid "%d of the %d selected files could not be deleted."
+msgstr ""
+
+#: lib/index.tcl:726
+msgid "Reverting selected files"
+msgstr "撤销选中的文件"
+
+#: lib/index.tcl:730
+#, tcl-format
+msgid "Reverting %s"
+msgstr "正在撤销 %s"
+
+#: lib/branch_checkout.tcl:16
+#, tcl-format
+msgid "%s (%s): Checkout Branch"
+msgstr "%s (%s)：签出（Checkout）分支"
+
+#: lib/branch_checkout.tcl:21
+msgid "Checkout Branch"
+msgstr "签出（Checkout）分支"
+
+#: lib/branch_checkout.tcl:26
+msgid "Checkout"
+msgstr "签出（Checkout）"
+
+#: lib/branch_checkout.tcl:39 lib/option.tcl:310 lib/branch_create.tcl:69
+msgid "Options"
+msgstr "选项"
+
+#: lib/branch_checkout.tcl:42 lib/branch_create.tcl:92
+msgid "Fetch Tracking Branch"
+msgstr "获取跟踪分支"
+
+#: lib/branch_checkout.tcl:47
+msgid "Detach From Local Branch"
+msgstr "从本地分支脱离"
+
+#: lib/status_bar.tcl:263
+#, tcl-format
+msgid "%s ... %*i of %*i %s (%3i%%)"
+msgstr "%s ... %*i of %*i %s (%3i%%)"
+
+#: lib/remote.tcl:200
+msgid "Push to"
+msgstr "上传到(push)"
+
+#: lib/remote.tcl:218
+msgid "Remove Remote"
+msgstr "删除远端(remote)"
+
+#: lib/remote.tcl:223
+msgid "Prune from"
+msgstr "从..清除(prune)"
+
+#: lib/remote.tcl:228
+msgid "Fetch from"
+msgstr "从..获取(fetch)"
+
+#: lib/remote.tcl:249 lib/remote.tcl:253 lib/remote.tcl:258 lib/remote.tcl:264
+msgid "All"
+msgstr "全部"
+
+#: lib/branch_rename.tcl:15
+#, tcl-format
+msgid "%s (%s): Rename Branch"
+msgstr "%s (%s): 更改分支名"
+
+#: lib/branch_rename.tcl:23
+msgid "Rename Branch"
+msgstr "更改分支名"
+
+#: lib/branch_rename.tcl:28
+msgid "Rename"
+msgstr "更名"
+
+#: lib/branch_rename.tcl:38
+msgid "Branch:"
+msgstr "分支:"
+
+#: lib/branch_rename.tcl:46
+msgid "New Name:"
+msgstr "新名字:"
+
+#: lib/branch_rename.tcl:81
+msgid "Please select a branch to rename."
+msgstr "请选择分支更名."
+
+#: lib/branch_rename.tcl:92 lib/branch_create.tcl:154
+msgid "Please supply a branch name."
+msgstr "请提供分支名字."
+
+#: lib/branch_rename.tcl:112 lib/branch_create.tcl:165
+#, tcl-format
+msgid "'%s' is not an acceptable branch name."
+msgstr "'%s'不是一个可接受的分支名."
+
+#: lib/branch_rename.tcl:123
+#, tcl-format
+msgid "Failed to rename '%s'."
+msgstr "无法更名 '%s'."
+
+#: lib/choose_font.tcl:41
+msgid "Select"
+msgstr "选择"
+
+#: lib/choose_font.tcl:55
+msgid "Font Family"
+msgstr "字体族"
+
+#: lib/choose_font.tcl:76
+msgid "Font Size"
+msgstr "字体大小"
+
+#: lib/choose_font.tcl:93
+msgid "Font Example"
+msgstr "字体样例"
+
+#: lib/choose_font.tcl:105
+msgid ""
+"This is example text.\n"
+"If you like this text, it can be your font."
+msgstr ""
+"这是样例文本.\n"
+"如果你喜欢, 你可以设置该字体."
+
+#: lib/option.tcl:11
+#, tcl-format
+msgid "Invalid global encoding '%s'"
+msgstr "无效全局编码‘%s’"
+
+#: lib/option.tcl:19
+#, tcl-format
+msgid "Invalid repo encoding '%s'"
+msgstr "无效版本库编码‘%s’"
+
+#: lib/option.tcl:119
+msgid "Restore Defaults"
+msgstr "恢复默认值"
+
+#: lib/option.tcl:123
+msgid "Save"
+msgstr "保存"
+
+#: lib/option.tcl:133
+#, tcl-format
+msgid "%s Repository"
+msgstr "%s 版本库"
+
+#: lib/option.tcl:134
+msgid "Global (All Repositories)"
+msgstr "全局 (所有版本库)"
+
+#: lib/option.tcl:140
+msgid "User Name"
+msgstr "用户名"
+
+#: lib/option.tcl:141
+msgid "Email Address"
+msgstr "邮件地址"
+
+#: lib/option.tcl:143
+msgid "Summarize Merge Commits"
+msgstr "概述合并提交"
+
+#: lib/option.tcl:144
+msgid "Merge Verbosity"
+msgstr "合并冗余度"
+
+#: lib/option.tcl:145
+msgid "Show Diffstat After Merge"
+msgstr "在合并后显示 Diffstat"
+
+#: lib/option.tcl:146
+msgid "Use Merge Tool"
+msgstr "使用合并工具"
+
+#: lib/option.tcl:148
+msgid "Trust File Modification Timestamps"
+msgstr "相信文件的改动时间"
+
+#: lib/option.tcl:149
+msgid "Prune Tracking Branches During Fetch"
+msgstr "获取时清除跟踪分支"
+
+#: lib/option.tcl:150
+msgid "Match Tracking Branches"
+msgstr "匹配跟踪分支"
+
+#: lib/option.tcl:151
+msgid "Use Textconv For Diffs and Blames"
+msgstr ""
+
+#: lib/option.tcl:152
+msgid "Blame Copy Only On Changed Files"
+msgstr ""
+
+#: lib/option.tcl:153
+msgid "Maximum Length of Recent Repositories List"
+msgstr ""
+
+#: lib/option.tcl:154
+msgid "Minimum Letters To Blame Copy On"
+msgstr ""
+
+#: lib/option.tcl:155
+msgid "Blame History Context Radius (days)"
+msgstr ""
+
+#: lib/option.tcl:156
+msgid "Number of Diff Context Lines"
+msgstr "Diff 上下文行数"
+
+#: lib/option.tcl:157
+msgid "Additional Diff Parameters"
+msgstr "额外 Diff 参数"
+
+#: lib/option.tcl:158
+msgid "Commit Message Text Width"
+msgstr "提交描述文字宽度"
+
+#: lib/option.tcl:159
+msgid "New Branch Name Template"
+msgstr "新建分支命名模板"
+
+#: lib/option.tcl:160
+msgid "Default File Contents Encoding"
+msgstr "默认文件内容编码"
+
+#: lib/option.tcl:161
+msgid "Warn before committing to a detached head"
+msgstr ""
+
+#: lib/option.tcl:162
+msgid "Staging of untracked files"
+msgstr ""
+
+#: lib/option.tcl:163
+msgid "Show untracked files"
+msgstr ""
+
+#: lib/option.tcl:164
+msgid "Tab spacing"
+msgstr ""
+
+#: lib/option.tcl:182 lib/option.tcl:197 lib/option.tcl:220 lib/option.tcl:282
+#: lib/database.tcl:57
+#, tcl-format
+msgid "%s:"
+msgstr "%s："
+
+#: lib/option.tcl:210
+msgid "Change"
+msgstr "更改"
+
+#: lib/option.tcl:254
+msgid "Spelling Dictionary:"
+msgstr "拼写字典："
+
+#: lib/option.tcl:284
+msgid "Change Font"
+msgstr "更改字体"
+
+#: lib/option.tcl:288
+#, tcl-format
+msgid "Choose %s"
+msgstr "选择 %s"
+
+#: lib/option.tcl:294
+msgid "pt."
+msgstr "磅"
+
+#: lib/option.tcl:308
+msgid "Preferences"
+msgstr "首选项"
+
+#: lib/option.tcl:345
+msgid "Failed to completely save options:"
+msgstr "无法完全保存选项:"
+
+#: lib/encoding.tcl:443
+msgid "Default"
+msgstr "默认值"
+
+#: lib/encoding.tcl:448
+#, tcl-format
+msgid "System (%s)"
+msgstr "系统 (%s)"
+
+#: lib/encoding.tcl:459 lib/encoding.tcl:465
+msgid "Other"
+msgstr "其他"
+
+#: lib/tools.tcl:76
+#, tcl-format
+msgid "Running %s requires a selected file."
+msgstr ""
+
+#: lib/tools.tcl:92
+#, tcl-format
+msgid "Are you sure you want to run %1$s on file \"%2$s\"?"
+msgstr ""
+
+#: lib/tools.tcl:96
+#, tcl-format
+msgid "Are you sure you want to run %s?"
+msgstr "你确定你希望运行%s？"
+
+#: lib/tools.tcl:118
+#, tcl-format
+msgid "Tool: %s"
+msgstr "工具：%s"
+
+#: lib/tools.tcl:119
+#, tcl-format
+msgid "Running: %s"
+msgstr "正在运行：%s"
+
+#: lib/tools.tcl:158
+#, tcl-format
+msgid "Tool completed successfully: %s"
+msgstr "工具成功完成：%s"
+
+#: lib/tools.tcl:160
+#, tcl-format
+msgid "Tool failed: %s"
+msgstr "工具失败：%s"
+
+#: lib/mergetool.tcl:8
+msgid "Force resolution to the base version?"
+msgstr ""
+
+#: lib/mergetool.tcl:9
+msgid "Force resolution to this branch?"
+msgstr ""
+
+#: lib/mergetool.tcl:10
+msgid "Force resolution to the other branch?"
+msgstr ""
+
+#: lib/mergetool.tcl:14
+#, tcl-format
+msgid ""
+"Note that the diff shows only conflicting changes.\n"
+"\n"
+"%s will be overwritten.\n"
+"\n"
+"This operation can be undone only by restarting the merge."
+msgstr ""
+
+#: lib/mergetool.tcl:45
+#, tcl-format
+msgid "File %s seems to have unresolved conflicts, still stage?"
+msgstr ""
+
+#: lib/mergetool.tcl:60
+#, tcl-format
+msgid "Adding resolution for %s"
+msgstr ""
+
+#: lib/mergetool.tcl:141
+msgid "Cannot resolve deletion or link conflicts using a tool"
+msgstr ""
+
+#: lib/mergetool.tcl:146
+msgid "Conflict file does not exist"
+msgstr "冲突文件不存在"
+
+#: lib/mergetool.tcl:246
+#, tcl-format
+msgid "Not a GUI merge tool: '%s'"
+msgstr "不是一个 GUI 合并工具：%s"
+
+#: lib/mergetool.tcl:275
+#, tcl-format
+msgid "Unsupported merge tool '%s'"
+msgstr ""
+
+#: lib/mergetool.tcl:310
+msgid "Merge tool is already running, terminate it?"
+msgstr ""
+
+#: lib/mergetool.tcl:330
+#, tcl-format
+msgid ""
+"Error retrieving versions:\n"
+"%s"
+msgstr ""
+"在获取版本时遇到错误：\n"
+"%s"
+
+#: lib/mergetool.tcl:350
+#, tcl-format
+msgid ""
+"Could not start the merge tool:\n"
+"\n"
+"%s"
+msgstr ""
+"无法启动合并工具：\n"
+"\n"
+"%s"
+
+#: lib/mergetool.tcl:354
+msgid "Running merge tool..."
+msgstr "运行合并工具..."
+
+#: lib/mergetool.tcl:382 lib/mergetool.tcl:390
+msgid "Merge tool failed."
+msgstr "合并工具失败。"
+
+#: lib/tools_dlg.tcl:22
+#, tcl-format
+msgid "%s (%s): Add Tool"
+msgstr "%s (%s)：添加工具"
+
+#: lib/tools_dlg.tcl:28
+msgid "Add New Tool Command"
+msgstr "添加新工具命令"
+
+#: lib/tools_dlg.tcl:34
+msgid "Add globally"
+msgstr "全局添加"
+
+#: lib/tools_dlg.tcl:46
+msgid "Tool Details"
+msgstr "工具细节"
+
+#: lib/tools_dlg.tcl:49
+msgid "Use '/' separators to create a submenu tree:"
+msgstr ""
+
+#: lib/tools_dlg.tcl:60
+msgid "Command:"
+msgstr "命令："
+
+#: lib/tools_dlg.tcl:71
+msgid "Show a dialog before running"
+msgstr ""
+
+#: lib/tools_dlg.tcl:77
+msgid "Ask the user to select a revision (sets $REVISION)"
+msgstr ""
+
+#: lib/tools_dlg.tcl:82
+msgid "Ask the user for additional arguments (sets $ARGS)"
+msgstr ""
+
+#: lib/tools_dlg.tcl:89
+msgid "Don't show the command output window"
+msgstr "不要显示命令输出窗口"
+
+#: lib/tools_dlg.tcl:94
+msgid "Run only if a diff is selected ($FILENAME not empty)"
+msgstr ""
+
+#: lib/tools_dlg.tcl:118
+msgid "Please supply a name for the tool."
+msgstr "请提供工具名称。"
+
+#: lib/tools_dlg.tcl:126
+#, tcl-format
+msgid "Tool '%s' already exists."
+msgstr "工具 %s 已经存在。"
+
+#: lib/tools_dlg.tcl:148
+#, tcl-format
+msgid ""
+"Could not add tool:\n"
+"%s"
+msgstr ""
+"无法添加工具：\n"
+"%s"
+
+#: lib/tools_dlg.tcl:187
+#, tcl-format
+msgid "%s (%s): Remove Tool"
+msgstr "%s (%s):：删除工具"
+
+#: lib/tools_dlg.tcl:193
+msgid "Remove Tool Commands"
+msgstr "删除工具命令"
+
+#: lib/tools_dlg.tcl:198
+msgid "Remove"
+msgstr "删除"
+
+#: lib/tools_dlg.tcl:231
+msgid "(Blue denotes repository-local tools)"
+msgstr ""
+
+#: lib/tools_dlg.tcl:283
+#, tcl-format
+msgid "%s (%s):"
+msgstr "%s (%s)："
+
+#: lib/tools_dlg.tcl:292
+#, tcl-format
+msgid "Run Command: %s"
+msgstr "运行命令：%s"
+
+#: lib/tools_dlg.tcl:306
+msgid "Arguments"
+msgstr "参数"
+
+#: lib/tools_dlg.tcl:341
+msgid "OK"
+msgstr "好的"
+
+#: lib/search.tcl:48
+msgid "Find:"
+msgstr "寻找："
+
+#: lib/search.tcl:50
+msgid "Next"
+msgstr "下一个"
+
+#: lib/search.tcl:51
+msgid "Prev"
+msgstr "上一个"
+
+#: lib/search.tcl:52
+msgid "RegExp"
+msgstr ""
+
+#: lib/search.tcl:54
+msgid "Case"
+msgstr ""
+
+#: lib/shortcut.tcl:8 lib/shortcut.tcl:43 lib/shortcut.tcl:75
+#, tcl-format
+msgid "%s (%s): Create Desktop Icon"
+msgstr "%s (%s)：创建桌面图标"
+
+#: lib/shortcut.tcl:24 lib/shortcut.tcl:65
+msgid "Cannot write shortcut:"
+msgstr "无法修改快捷方式:"
+
+#: lib/shortcut.tcl:140
+msgid "Cannot write icon:"
+msgstr "无法修改图标:"
+
+#: lib/remote_branch_delete.tcl:29
+#, tcl-format
+msgid "%s (%s): Delete Branch Remotely"
+msgstr ""
+
+#: lib/remote_branch_delete.tcl:34
+msgid "Delete Branch Remotely"
+msgstr "在远端删除分支"
+
+#: lib/remote_branch_delete.tcl:48
+msgid "From Repository"
+msgstr "从版本库"
+
+#: lib/remote_branch_delete.tcl:88
+msgid "Branches"
+msgstr "分支"
+
+#: lib/remote_branch_delete.tcl:110
+msgid "Delete Only If"
+msgstr "删除仅当"
+
+#: lib/remote_branch_delete.tcl:112
+msgid "Merged Into:"
+msgstr "合并到："
+
+#: lib/remote_branch_delete.tcl:120 lib/branch_delete.tcl:53
+msgid "Always (Do not perform merge checks)"
+msgstr "总是合并 (不作合并检查)"
+
+#: lib/remote_branch_delete.tcl:153
+msgid "A branch is required for 'Merged Into'."
+msgstr "'合并到' 需要指定某个分支。"
+
+#: lib/remote_branch_delete.tcl:185
+#, tcl-format
+msgid ""
+"The following branches are not completely merged into %s:\n"
+"\n"
+" - %s"
+msgstr ""
+"下列分支没有被全部合并到 %s 中:\n"
+"\n"
+" - %s"
+
+#: lib/remote_branch_delete.tcl:190
+#, tcl-format
+msgid ""
+"One or more of the merge tests failed because you have not fetched the "
+"necessary commits.  Try fetching from %s first."
+msgstr ""
+"由于没有获取到必要的提交，一个或多个合并测试失败。请尝试从 %s 处先获取。"
+
+#: lib/remote_branch_delete.tcl:208
+msgid "Please select one or more branches to delete."
+msgstr "请选择某个或多个分支来删除。"
+
+#: lib/remote_branch_delete.tcl:218 lib/branch_delete.tcl:115
+msgid ""
+"Recovering deleted branches is difficult.\n"
+"\n"
+"Delete the selected branches?"
+msgstr ""
+"恢复被删除的分支非常困难.\n"
+"\n"
+"是否要删除所选分支?"
+
+#: lib/remote_branch_delete.tcl:227
+#, tcl-format
+msgid "Deleting branches from %s"
+msgstr "从 %s 中删除分支"
+
+#: lib/remote_branch_delete.tcl:300
+msgid "No repository selected."
+msgstr "没有选择版本库。"
+
+#: lib/remote_branch_delete.tcl:305
+#, tcl-format
+msgid "Scanning %s..."
+msgstr "正在扫描 %s..."
+
+#: lib/choose_repository.tcl:45
+msgid "Git Gui"
+msgstr "Git Gui"
+
+#: lib/choose_repository.tcl:104 lib/choose_repository.tcl:427
+msgid "Create New Repository"
+msgstr "创建新的版本库"
+
+#: lib/choose_repository.tcl:110
+msgid "New..."
+msgstr "新建..."
+
+#: lib/choose_repository.tcl:117 lib/choose_repository.tcl:511
+msgid "Clone Existing Repository"
+msgstr "克隆已有版本库"
+
+#: lib/choose_repository.tcl:128
+msgid "Clone..."
+msgstr "克隆..."
+
+#: lib/choose_repository.tcl:135 lib/choose_repository.tcl:1105
+msgid "Open Existing Repository"
+msgstr "打开已有版本库"
+
+#: lib/choose_repository.tcl:141
+msgid "Open..."
+msgstr "打开..."
+
+#: lib/choose_repository.tcl:154
+msgid "Recent Repositories"
+msgstr "最近版本库"
+
+#: lib/choose_repository.tcl:164
+msgid "Open Recent Repository:"
+msgstr "打开最近版本库："
+
+#: lib/choose_repository.tcl:331 lib/choose_repository.tcl:338
+#: lib/choose_repository.tcl:345
+#, tcl-format
+msgid "Failed to create repository %s:"
+msgstr "无法创建版本库 %s:"
+
+#: lib/choose_repository.tcl:422 lib/branch_create.tcl:33
+msgid "Create"
+msgstr "新建"
+
+#: lib/choose_repository.tcl:432
+msgid "Directory:"
+msgstr "目录:"
+
+#: lib/choose_repository.tcl:462 lib/choose_repository.tcl:588
+#: lib/choose_repository.tcl:1139
+msgid "Git Repository"
+msgstr "Git 版本库"
+
+#: lib/choose_repository.tcl:487
+#, tcl-format
+msgid "Directory %s already exists."
+msgstr "目录 %s 已经存在."
+
+#: lib/choose_repository.tcl:491
+#, tcl-format
+msgid "File %s already exists."
+msgstr "文件 %s 已经存在."
+
+#: lib/choose_repository.tcl:506
+msgid "Clone"
+msgstr "克隆"
+
+#: lib/choose_repository.tcl:519
+msgid "Source Location:"
+msgstr "源位置："
+
+#: lib/choose_repository.tcl:528
+msgid "Target Directory:"
+msgstr "目标目录:"
+
+#: lib/choose_repository.tcl:538
+msgid "Clone Type:"
+msgstr "克隆类型:"
+
+#: lib/choose_repository.tcl:543
+msgid "Standard (Fast, Semi-Redundant, Hardlinks)"
+msgstr "标准方式 (快速, 部分备份, 作硬连接)"
+
+#: lib/choose_repository.tcl:548
+msgid "Full Copy (Slower, Redundant Backup)"
+msgstr "全部复制 (较慢, 做备份)"
+
+#: lib/choose_repository.tcl:553
+msgid "Shared (Fastest, Not Recommended, No Backup)"
+msgstr "共享方式 (最快, 不推荐, 不做备份)"
+
+#: lib/choose_repository.tcl:560
+msgid "Recursively clone submodules too"
+msgstr "同时递归的克隆子模块"
+
+#: lib/choose_repository.tcl:594 lib/choose_repository.tcl:641
+#: lib/choose_repository.tcl:790 lib/choose_repository.tcl:864
+#: lib/choose_repository.tcl:1145 lib/choose_repository.tcl:1153
+#, tcl-format
+msgid "Not a Git repository: %s"
+msgstr "不是一个 Git 版本库: %s"
+
+#: lib/choose_repository.tcl:630
+msgid "Standard only available for local repository."
+msgstr "标准方式仅当是本地版本库时有效."
+
+#: lib/choose_repository.tcl:634
+msgid "Shared only available for local repository."
+msgstr "共享方式仅当是本地版本库时有效."
+
+#: lib/choose_repository.tcl:655
+#, tcl-format
+msgid "Location %s already exists."
+msgstr "位置 %s 已经存在."
+
+#: lib/choose_repository.tcl:666
+msgid "Failed to configure origin"
+msgstr "无法配置 origin"
+
+#: lib/choose_repository.tcl:678
+msgid "Counting objects"
+msgstr "清点对象"
+
+#: lib/choose_repository.tcl:679
+msgid "buckets"
+msgstr ""
+
+#: lib/choose_repository.tcl:703
+#, tcl-format
+msgid "Unable to copy objects/info/alternates: %s"
+msgstr "无法复制 objects/info/alternates: %s"
+
+#: lib/choose_repository.tcl:740
+#, tcl-format
+msgid "Nothing to clone from %s."
+msgstr "没有东西可从 %s 克隆."
+
+#: lib/choose_repository.tcl:742 lib/choose_repository.tcl:962
+#: lib/choose_repository.tcl:974
+msgid "The 'master' branch has not been initialized."
+msgstr "'master'分支尚未初始化."
+
+#: lib/choose_repository.tcl:755
+msgid "Hardlinks are unavailable.  Falling back to copying."
+msgstr "硬连接不可用. 使用复制."
+
+#: lib/choose_repository.tcl:769
+#, tcl-format
+msgid "Cloning from %s"
+msgstr "从 %s 克隆"
+
+#: lib/choose_repository.tcl:800
+msgid "Copying objects"
+msgstr "复制 objects"
+
+#: lib/choose_repository.tcl:801
+msgid "KiB"
+msgstr "KiB"
+
+#: lib/choose_repository.tcl:825
+#, tcl-format
+msgid "Unable to copy object: %s"
+msgstr "无法复制 object: %s"
+
+#: lib/choose_repository.tcl:837
+msgid "Linking objects"
+msgstr "链接 objects"
+
+#: lib/choose_repository.tcl:838
+msgid "objects"
+msgstr "objects"
+
+#: lib/choose_repository.tcl:846
+#, tcl-format
+msgid "Unable to hardlink object: %s"
+msgstr "无法硬链接 object: %s"
+
+#: lib/choose_repository.tcl:903
+msgid "Cannot fetch branches and objects.  See console output for details."
+msgstr "无法获取分支和对象. 请查看控制终端的输出."
+
+#: lib/choose_repository.tcl:914
+msgid "Cannot fetch tags.  See console output for details."
+msgstr "无法获取标签. 请查看控制终端的输出."
+
+#: lib/choose_repository.tcl:938
+msgid "Cannot determine HEAD.  See console output for details."
+msgstr "无法确定 HEAD. 请查看控制终端的输出."
+
+#: lib/choose_repository.tcl:947
+#, tcl-format
+msgid "Unable to cleanup %s"
+msgstr "无法清理 %s"
+
+#: lib/choose_repository.tcl:953
+msgid "Clone failed."
+msgstr "克隆失败."
+
+#: lib/choose_repository.tcl:960
+msgid "No default branch obtained."
+msgstr "没有获取缺省分支。"
+
+#: lib/choose_repository.tcl:971
+#, tcl-format
+msgid "Cannot resolve %s as a commit."
+msgstr "无法解析 %s 为提交."
+
+#: lib/choose_repository.tcl:998
+msgid "Creating working directory"
+msgstr "创建工作目录"
+
+#: lib/choose_repository.tcl:1028
+msgid "Initial file checkout failed."
+msgstr "初始的文件签出（checkout）失败。"
+
+#: lib/choose_repository.tcl:1072
+msgid "Cloning submodules"
+msgstr "克隆子模块"
+
+#: lib/choose_repository.tcl:1087
+msgid "Cannot clone submodules."
+msgstr "无法克隆子模块。"
+
+#: lib/choose_repository.tcl:1110
+msgid "Repository:"
+msgstr "版本库："
+
+#: lib/choose_repository.tcl:1159
+#, tcl-format
+msgid "Failed to open repository %s:"
+msgstr "无法打开版本库 %s:"
+
 #: lib/about.tcl:26
 msgid "git-gui - a graphical user interface for Git."
-msgstr "git-gui - Git 的图形化用户界面"
+msgstr "git-gui - Git 的图形化用户界面。"
 
-#: lib/blame.tcl:77
-msgid "File Viewer"
-msgstr "文件查看器"
+#: lib/blame.tcl:74
+#, tcl-format
+msgid "%s (%s): File Viewer"
+msgstr "%s (%s)：文件查看器"
 
-#: lib/blame.tcl:81
+#: lib/blame.tcl:80
 msgid "Commit:"
 msgstr "提交:"
 
-#: lib/blame.tcl:264
+#: lib/blame.tcl:282
 msgid "Copy Commit"
 msgstr "复制提交"
 
-#: lib/blame.tcl:384
+#: lib/blame.tcl:286
+msgid "Find Text..."
+msgstr "查找文本..."
+
+#: lib/blame.tcl:290
+msgid "Goto Line..."
+msgstr "跳转到行..."
+
+#: lib/blame.tcl:299
+msgid "Do Full Copy Detection"
+msgstr ""
+
+#: lib/blame.tcl:303
+msgid "Show History Context"
+msgstr "显示历史上下文"
+
+#: lib/blame.tcl:306
+msgid "Blame Parent Commit"
+msgstr ""
+
+#: lib/blame.tcl:468
 #, tcl-format
 msgid "Reading %s..."
 msgstr "读取 %s..."
 
-#: lib/blame.tcl:488
+#: lib/blame.tcl:596
 msgid "Loading copy/move tracking annotations..."
 msgstr "装载复制/移动跟踪标注..."
 
-#: lib/blame.tcl:508
+#: lib/blame.tcl:613
 msgid "lines annotated"
 msgstr "标注行"
 
-#: lib/blame.tcl:689
+#: lib/blame.tcl:815
 msgid "Loading original location annotations..."
 msgstr "装载原始位置标注..."
 
-#: lib/blame.tcl:692
+#: lib/blame.tcl:818
 msgid "Annotation complete."
 msgstr "标注完成."
 
-#: lib/blame.tcl:746
+#: lib/blame.tcl:849
+msgid "Busy"
+msgstr "正忙"
+
+#: lib/blame.tcl:850
+msgid "Annotation process is already running."
+msgstr ""
+
+#: lib/blame.tcl:889
+msgid "Running thorough copy detection..."
+msgstr ""
+
+#: lib/blame.tcl:957
 msgid "Loading annotation..."
 msgstr "裝載标注..."
 
-#: lib/blame.tcl:802
+#: lib/blame.tcl:1010
 msgid "Author:"
 msgstr "作者:"
 
-#: lib/blame.tcl:806
+#: lib/blame.tcl:1014
 msgid "Committer:"
 msgstr "提交者:"
 
-#: lib/blame.tcl:811
+#: lib/blame.tcl:1019
 msgid "Original File:"
 msgstr "原始文件:"
 
-#: lib/blame.tcl:925
+#: lib/blame.tcl:1067
+msgid "Cannot find HEAD commit:"
+msgstr ""
+
+#: lib/blame.tcl:1122
+msgid "Cannot find parent commit:"
+msgstr ""
+
+#: lib/blame.tcl:1137
+msgid "Unable to display parent"
+msgstr ""
+
+#: lib/blame.tcl:1138 lib/diff.tcl:345
+msgid "Error loading diff:"
+msgstr "装载 diff 错误:"
+
+#: lib/blame.tcl:1279
 msgid "Originally By:"
 msgstr "最初由:"
 
-#: lib/blame.tcl:931
+#: lib/blame.tcl:1285
 msgid "In File:"
 msgstr "在文件:"
 
-#: lib/blame.tcl:936
+#: lib/blame.tcl:1290
 msgid "Copied Or Moved Here By:"
 msgstr "由复制或移动至此:"
 
-#: lib/branch_checkout.tcl:14 lib/branch_checkout.tcl:19
-msgid "Checkout Branch"
-msgstr "Checkout 分支"
+#: lib/diff.tcl:77
+#, tcl-format
+msgid ""
+"No differences detected.\n"
+"\n"
+"%s has no changes.\n"
+"\n"
+"The modification date of this file was updated by another application, but "
+"the content within the file was not changed.\n"
+"\n"
+"A rescan will be automatically started to find other files which may have "
+"the same state."
+msgstr ""
+"未检测到改动。\n"
+"\n"
+"%s 没有发生变化。\n"
+"\n"
+"该文件的修改日期被另一个程序所更新, 但其内容并没有变化。\n"
+"\n"
+"对于类似情况的其他文件的重新扫描将自动开始。"
 
-#: lib/branch_checkout.tcl:23
-msgid "Checkout"
-msgstr "Checkout"
+#: lib/diff.tcl:117
+#, tcl-format
+msgid "Loading diff of %s..."
+msgstr "装载 %s 的 Diff ..."
 
-#: lib/branch_checkout.tcl:27 lib/branch_create.tcl:35
-#: lib/branch_delete.tcl:32 lib/branch_rename.tcl:30 lib/browser.tcl:282
-#: lib/checkout_op.tcl:522 lib/choose_font.tcl:43 lib/merge.tcl:171
-#: lib/option.tcl:103 lib/remote_branch_delete.tcl:42 lib/transport.tcl:97
-msgid "Cancel"
-msgstr "取消"
+#: lib/diff.tcl:143
+msgid ""
+"LOCAL: deleted\n"
+"REMOTE:\n"
+msgstr ""
+"本地：已删除\n"
+"远端：\n"
 
-#: lib/branch_checkout.tcl:32 lib/browser.tcl:287
-msgid "Revision"
-msgstr "版本"
+#: lib/diff.tcl:148
+msgid ""
+"REMOTE: deleted\n"
+"LOCAL:\n"
+msgstr ""
+"远端：已删除\n"
+"本地：\n"
 
-#: lib/branch_checkout.tcl:36 lib/branch_create.tcl:69 lib/option.tcl:242
-msgid "Options"
-msgstr "选项..."
+#: lib/diff.tcl:155
+msgid "LOCAL:\n"
+msgstr "本地：\n"
 
-#: lib/branch_checkout.tcl:39 lib/branch_create.tcl:92
-msgid "Fetch Tracking Branch"
-msgstr "获取跟踪分支"
+#: lib/diff.tcl:158
+msgid "REMOTE:\n"
+msgstr "远端：\n"
 
-#: lib/branch_checkout.tcl:44
-msgid "Detach From Local Branch"
-msgstr "从本地分支脱离"
+#: lib/diff.tcl:220 lib/diff.tcl:344
+#, tcl-format
+msgid "Unable to display %s"
+msgstr "无法显示 %s"
 
-#: lib/branch_create.tcl:22
-msgid "Create Branch"
-msgstr "创建分支"
+#: lib/diff.tcl:221
+msgid "Error loading file:"
+msgstr "装载文件出错:"
 
-#: lib/branch_create.tcl:27
+#: lib/diff.tcl:227
+msgid "Git Repository (subproject)"
+msgstr "Git 版本库 (子项目)"
+
+#: lib/diff.tcl:239
+msgid "* Binary file (not showing content)."
+msgstr "* 二进制文件 (不显示内容)."
+
+#: lib/diff.tcl:244
+#, tcl-format
+msgid ""
+"* Untracked file is %d bytes.\n"
+"* Showing only first %d bytes.\n"
+msgstr ""
+
+#: lib/diff.tcl:250
+#, tcl-format
+msgid ""
+"\n"
+"* Untracked file clipped here by %s.\n"
+"* To see the entire file, use an external editor.\n"
+msgstr ""
+
+#: lib/diff.tcl:583
+msgid "Failed to unstage selected hunk."
+msgstr "无法将选择的代码段从缓存中删除."
+
+#: lib/diff.tcl:591
+msgid "Failed to revert selected hunk."
+msgstr "无法撤销所选代码段."
+
+#: lib/diff.tcl:594
+msgid "Failed to stage selected hunk."
+msgstr "无法缓存所选代码段."
+
+#: lib/diff.tcl:687
+msgid "Failed to unstage selected line."
+msgstr "无法将所选段从缓存中删除。"
+
+#: lib/diff.tcl:696
+msgid "Failed to revert selected line."
+msgstr "无法撤销所选行."
+
+#: lib/diff.tcl:700
+msgid "Failed to stage selected line."
+msgstr "无法缓存所选段."
+
+#: lib/diff.tcl:889
+msgid "Failed to undo last revert."
+msgstr "未能撤消上次撤销。"
+
+#: lib/sshkey.tcl:34
+msgid "No keys found."
+msgstr "找不到密钥。"
+
+#: lib/sshkey.tcl:37
+#, tcl-format
+msgid "Found a public key in: %s"
+msgstr "在%s中找到了一个公钥"
+
+#: lib/sshkey.tcl:43
+msgid "Generate Key"
+msgstr "生成密钥"
+
+#: lib/sshkey.tcl:61
+msgid "Copy To Clipboard"
+msgstr "复制到剪切板"
+
+#: lib/sshkey.tcl:75
+msgid "Your OpenSSH Public Key"
+msgstr "您的OpenSSH公钥"
+
+#: lib/sshkey.tcl:83
+msgid "Generating..."
+msgstr "正在生成..."
+
+#: lib/sshkey.tcl:89
+#, tcl-format
+msgid ""
+"Could not start ssh-keygen:\n"
+"\n"
+"%s"
+msgstr ""
+"无法启动 ssh-keygen：\n"
+"\n"
+"%s"
+
+#: lib/sshkey.tcl:116
+msgid "Generation failed."
+msgstr "生成失败。"
+
+#: lib/sshkey.tcl:123
+msgid "Generation succeeded, but no keys found."
+msgstr "生成成功，但是没有找到密钥。"
+
+#: lib/sshkey.tcl:126
+#, tcl-format
+msgid "Your key is in: %s"
+msgstr "你的密钥在：%s"
+
+#: lib/branch_create.tcl:23
+#, tcl-format
+msgid "%s (%s): Create Branch"
+msgstr "%s (%s)：创建分支"
+
+#: lib/branch_create.tcl:28
 msgid "Create New Branch"
 msgstr "新建分支"
 
-#: lib/branch_create.tcl:31 lib/choose_repository.tcl:371
-msgid "Create"
-msgstr "新建"
-
-#: lib/branch_create.tcl:40
+#: lib/branch_create.tcl:42
 msgid "Branch Name"
 msgstr "分支名"
 
-#: lib/branch_create.tcl:43
-msgid "Name:"
-msgstr "名字:"
-
-#: lib/branch_create.tcl:58
+#: lib/branch_create.tcl:57
 msgid "Match Tracking Branch Name"
 msgstr "匹配跟踪分支名字"
 
@@ -625,508 +2303,40 @@ msgstr "号码"
 msgid "Fast Forward Only"
 msgstr "仅快速合并"
 
-#: lib/branch_create.tcl:85 lib/checkout_op.tcl:514
-msgid "Reset"
-msgstr "复位"
-
 #: lib/branch_create.tcl:97
 msgid "Checkout After Creation"
 msgstr "在创建后Checkout"
 
-#: lib/branch_create.tcl:131
+#: lib/branch_create.tcl:132
 msgid "Please select a tracking branch."
 msgstr "请选择某个跟踪分支."
 
-#: lib/branch_create.tcl:140
+#: lib/branch_create.tcl:141
 #, tcl-format
 msgid "Tracking branch %s is not a branch in the remote repository."
-msgstr "跟踪分支 %s 并不是远端版本库中的一个分支"
+msgstr "跟踪分支 %s 并不是远端版本库中的一个分支。"
 
-#: lib/branch_create.tcl:153 lib/branch_rename.tcl:86
-msgid "Please supply a branch name."
-msgstr "请提供分支名字."
+#: lib/console.tcl:59
+msgid "Working... please wait..."
+msgstr "工作中... 请等待..."
 
-#: lib/branch_create.tcl:164 lib/branch_rename.tcl:106
-#, tcl-format
-msgid "'%s' is not an acceptable branch name."
-msgstr "'%s'不是一个可接受的分支名."
+#: lib/console.tcl:186
+msgid "Success"
+msgstr "成功"
 
-#: lib/branch_delete.tcl:15
-msgid "Delete Branch"
-msgstr "删除分支"
+#: lib/console.tcl:200
+msgid "Error: Command Failed"
+msgstr "错误: 命令失败"
 
-#: lib/branch_delete.tcl:20
-msgid "Delete Local Branch"
-msgstr "删除本地分支"
+#: lib/line.tcl:17
+msgid "Goto Line:"
+msgstr "跳转到行："
 
-#: lib/branch_delete.tcl:37
-msgid "Local Branches"
-msgstr "本地分支"
+#: lib/line.tcl:23
+msgid "Go"
+msgstr "去"
 
-#: lib/branch_delete.tcl:52
-msgid "Delete Only If Merged Into"
-msgstr "仅在合并后删除"
-
-#: lib/branch_delete.tcl:54
-msgid "Always (Do not perform merge test.)"
-msgstr "总是合并 (不作合并测试.)"
-
-#: lib/branch_delete.tcl:103
-#, tcl-format
-msgid "The following branches are not completely merged into %s:"
-msgstr "下列分支没有完全被合并到 %s:"
-
-#: lib/branch_delete.tcl:141
-#, tcl-format
-msgid ""
-"Failed to delete branches:\n"
-"%s"
-msgstr ""
-"无法删除分支:\n"
-"%s"
-
-#: lib/branch_rename.tcl:14 lib/branch_rename.tcl:22
-msgid "Rename Branch"
-msgstr "更改分支名:"
-
-#: lib/branch_rename.tcl:26
-msgid "Rename"
-msgstr "更名..."
-
-#: lib/branch_rename.tcl:36
-msgid "Branch:"
-msgstr "分支:"
-
-#: lib/branch_rename.tcl:39
-msgid "New Name:"
-msgstr "新名字:"
-
-#: lib/branch_rename.tcl:75
-msgid "Please select a branch to rename."
-msgstr "请选择分支更名."
-
-#: lib/branch_rename.tcl:96 lib/checkout_op.tcl:179
-#, tcl-format
-msgid "Branch '%s' already exists."
-msgstr "分支 '%s' 已经存在."
-
-#: lib/branch_rename.tcl:117
-#, tcl-format
-msgid "Failed to rename '%s'."
-msgstr "无法更名 '%s'."
-
-#: lib/browser.tcl:17
-msgid "Starting..."
-msgstr "开始..."
-
-#: lib/browser.tcl:26
-msgid "File Browser"
-msgstr "文件浏览器"
-
-#: lib/browser.tcl:126 lib/browser.tcl:143
-#, tcl-format
-msgid "Loading %s..."
-msgstr "装载 %s..."
-
-#: lib/browser.tcl:187
-msgid "[Up To Parent]"
-msgstr "[上层目录]"
-
-#: lib/browser.tcl:267 lib/browser.tcl:273
-msgid "Browse Branch Files"
-msgstr "浏览分支文件"
-
-#: lib/browser.tcl:278 lib/choose_repository.tcl:387
-#: lib/choose_repository.tcl:474 lib/choose_repository.tcl:484
-#: lib/choose_repository.tcl:987
-msgid "Browse"
-msgstr "浏览"
-
-#: lib/checkout_op.tcl:79
-#, tcl-format
-msgid "Fetching %s from %s"
-msgstr "获取 %s 自 %s"
-
-#: lib/checkout_op.tcl:127
-#, tcl-format
-msgid "fatal: Cannot resolve %s"
-msgstr "致命错误: 无法解决 %s"
-
-#: lib/checkout_op.tcl:140 lib/console.tcl:81 lib/database.tcl:31
-msgid "Close"
-msgstr "关闭"
-
-#: lib/checkout_op.tcl:169
-#, tcl-format
-msgid "Branch '%s' does not exist."
-msgstr "分支 '%s' 并不存在."
-
-#: lib/checkout_op.tcl:206
-#, tcl-format
-msgid ""
-"Branch '%s' already exists.\n"
-"\n"
-"It cannot fast-forward to %s.\n"
-"A merge is required."
-msgstr ""
-"分支 '%s' 已经存在.\n"
-"\n"
-"无法快速合并到 %s.\n"
-"需要普通合并."
-
-#: lib/checkout_op.tcl:220
-#, tcl-format
-msgid "Merge strategy '%s' not supported."
-msgstr "合并策略 '%s' 不支持."
-
-#: lib/checkout_op.tcl:239
-#, tcl-format
-msgid "Failed to update '%s'."
-msgstr "无法更新 '%s'."
-
-#: lib/checkout_op.tcl:251
-msgid "Staging area (index) is already locked."
-msgstr "缓存区域 (index) 已被锁定."
-
-#: lib/checkout_op.tcl:266
-msgid ""
-"Last scanned state does not match repository state.\n"
-"\n"
-"Another Git program has modified this repository since the last scan.  A "
-"rescan must be performed before the current branch can be changed.\n"
-"\n"
-"The rescan will be automatically started now.\n"
-msgstr ""
-"最后一次扫描的状态和当前版本库状态不符.\n"
-"\n"
-"另一 Git 程序自上次扫描后修改了本版本库. 在修改当前分支之前需要重新做一次扫"
-"描.\n"
-"\n"
-"重新扫描将自动开始.\n"
-
-#: lib/checkout_op.tcl:322
-#, tcl-format
-msgid "Updating working directory to '%s'..."
-msgstr "更新工作目录到 '%s'..."
-
-#: lib/checkout_op.tcl:323
-msgid "files checked out"
-msgstr ""
-
-#: lib/checkout_op.tcl:353
-#, tcl-format
-msgid "Aborted checkout of '%s' (file level merging is required)."
-msgstr "中止 '%s' 的 checkout 操作 (需要做文件级合并)."
-
-#: lib/checkout_op.tcl:354
-msgid "File level merge required."
-msgstr "需要文件级合并."
-
-#: lib/checkout_op.tcl:358
-#, tcl-format
-msgid "Staying on branch '%s'."
-msgstr "停留在分支 '%s'."
-
-#: lib/checkout_op.tcl:429
-msgid ""
-"You are no longer on a local branch.\n"
-"\n"
-"If you wanted to be on a branch, create one now starting from 'This Detached "
-"Checkout'."
-msgstr ""
-"你不在某个本地分支上.\n"
-"\n"
-"如果你想位于某分支上, 从当前脱节的Checkout中创建一个新分支."
-
-#: lib/checkout_op.tcl:446 lib/checkout_op.tcl:450
-#, tcl-format
-msgid "Checked out '%s'."
-msgstr "'%s' 已被 checkout"
-
-#: lib/checkout_op.tcl:478
-#, tcl-format
-msgid "Resetting '%s' to '%s' will lose the following commits:"
-msgstr "复位 '%s' 到 '%s' 将导致下列提交的丢失:"
-
-#: lib/checkout_op.tcl:500
-msgid "Recovering lost commits may not be easy."
-msgstr "恢复丢失的提交是比较困难的."
-
-#: lib/checkout_op.tcl:505
-#, tcl-format
-msgid "Reset '%s'?"
-msgstr "复位 '%s'?"
-
-#: lib/checkout_op.tcl:510 lib/merge.tcl:163
-msgid "Visualize"
-msgstr "图示"
-
-#: lib/checkout_op.tcl:578
-#, tcl-format
-msgid ""
-"Failed to set current branch.\n"
-"\n"
-"This working directory is only partially switched.  We successfully updated "
-"your files, but failed to update an internal Git file.\n"
-"\n"
-"This should not have occurred.  %s will now close and give up."
-msgstr ""
-"无法设定当前分支.\n"
-"\n"
-"当前工作目录仅有部分被切换出, 我们已成功的更新了您的文件但是无法更新某个内部"
-"的Git文件.\n"
-"\n"
-"这本不该发生, %s 将关闭并放弃."
-
-#: lib/choose_font.tcl:39
-msgid "Select"
-msgstr "选择"
-
-#: lib/choose_font.tcl:53
-msgid "Font Family"
-msgstr "字体族"
-
-#: lib/choose_font.tcl:74
-msgid "Font Size"
-msgstr "字体大小"
-
-#: lib/choose_font.tcl:91
-msgid "Font Example"
-msgstr "字体样例"
-
-#: lib/choose_font.tcl:103
-msgid ""
-"This is example text.\n"
-"If you like this text, it can be your font."
-msgstr ""
-"这是样例文本.\n"
-"如果你喜欢, 你可以设置该字体."
-
-#: lib/choose_repository.tcl:28
-msgid "Git Gui"
-msgstr "Git Gui"
-
-#: lib/choose_repository.tcl:81 lib/choose_repository.tcl:376
-msgid "Create New Repository"
-msgstr "创建新的版本库"
-
-#: lib/choose_repository.tcl:87
-msgid "New..."
-msgstr "新建..."
-
-#: lib/choose_repository.tcl:94 lib/choose_repository.tcl:460
-msgid "Clone Existing Repository"
-msgstr "克隆已有版本库"
-
-#: lib/choose_repository.tcl:100
-msgid "Clone..."
-msgstr "克隆..."
-
-#: lib/choose_repository.tcl:107 lib/choose_repository.tcl:976
-msgid "Open Existing Repository"
-msgstr "打开已有版本库"
-
-#: lib/choose_repository.tcl:113
-msgid "Open..."
-msgstr "打开..."
-
-#: lib/choose_repository.tcl:126
-msgid "Recent Repositories"
-msgstr "最近版本库"
-
-#: lib/choose_repository.tcl:132
-msgid "Open Recent Repository:"
-msgstr "打开最近版本库"
-
-#: lib/choose_repository.tcl:296 lib/choose_repository.tcl:303
-#: lib/choose_repository.tcl:310
-#, tcl-format
-msgid "Failed to create repository %s:"
-msgstr "无法创建版本库 %s:"
-
-#: lib/choose_repository.tcl:381 lib/choose_repository.tcl:478
-msgid "Directory:"
-msgstr "目录:"
-
-#: lib/choose_repository.tcl:412 lib/choose_repository.tcl:537
-#: lib/choose_repository.tcl:1011
-msgid "Git Repository"
-msgstr "Git 版本库"
-
-#: lib/choose_repository.tcl:437
-#, tcl-format
-msgid "Directory %s already exists."
-msgstr "目录 %s 已经存在."
-
-#: lib/choose_repository.tcl:441
-#, tcl-format
-msgid "File %s already exists."
-msgstr "文件 %s 已经存在."
-
-#: lib/choose_repository.tcl:455
-msgid "Clone"
-msgstr "克隆"
-
-#: lib/choose_repository.tcl:468
-msgid "URL:"
-msgstr "URL:"
-
-#: lib/choose_repository.tcl:489
-msgid "Clone Type:"
-msgstr "克隆类型:"
-
-#: lib/choose_repository.tcl:495
-msgid "Standard (Fast, Semi-Redundant, Hardlinks)"
-msgstr "标准方式 (快速, 部分备份, 作硬连接)"
-
-#: lib/choose_repository.tcl:501
-msgid "Full Copy (Slower, Redundant Backup)"
-msgstr "全部复制 (较慢, 做备份)"
-
-#: lib/choose_repository.tcl:507
-msgid "Shared (Fastest, Not Recommended, No Backup)"
-msgstr "共享方式 (最快, 不推荐, 不做备份)"
-
-#: lib/choose_repository.tcl:543 lib/choose_repository.tcl:590
-#: lib/choose_repository.tcl:736 lib/choose_repository.tcl:806
-#: lib/choose_repository.tcl:1017 lib/choose_repository.tcl:1025
-#, tcl-format
-msgid "Not a Git repository: %s"
-msgstr "不是一个 Git 版本库: %s"
-
-#: lib/choose_repository.tcl:579
-msgid "Standard only available for local repository."
-msgstr "标准方式仅当是本地版本库时有效."
-
-#: lib/choose_repository.tcl:583
-msgid "Shared only available for local repository."
-msgstr "共享方式仅当是本地版本库时有效."
-
-#: lib/choose_repository.tcl:604
-#, tcl-format
-msgid "Location %s already exists."
-msgstr "位置 %s 已经存在."
-
-#: lib/choose_repository.tcl:615
-msgid "Failed to configure origin"
-msgstr "无法配置 origin"
-
-#: lib/choose_repository.tcl:627
-msgid "Counting objects"
-msgstr "清点对象"
-
-#: lib/choose_repository.tcl:628
-#, fuzzy
-msgid "buckets"
-msgstr "水桶??"
-
-#: lib/choose_repository.tcl:652
-#, tcl-format
-msgid "Unable to copy objects/info/alternates: %s"
-msgstr "无法复制 objects/info/alternates: %s"
-
-#: lib/choose_repository.tcl:688
-#, tcl-format
-msgid "Nothing to clone from %s."
-msgstr "没有东西可从 %s 克隆."
-
-#: lib/choose_repository.tcl:690 lib/choose_repository.tcl:904
-#: lib/choose_repository.tcl:916
-msgid "The 'master' branch has not been initialized."
-msgstr "'master'分支尚未初始化."
-
-#: lib/choose_repository.tcl:703
-msgid "Hardlinks are unavailable.  Falling back to copying."
-msgstr "硬连接不可用. 使用复制."
-
-#: lib/choose_repository.tcl:715
-#, tcl-format
-msgid "Cloning from %s"
-msgstr "从 %s 克隆"
-
-#: lib/choose_repository.tcl:746
-msgid "Copying objects"
-msgstr "复制 objects"
-
-#: lib/choose_repository.tcl:747
-msgid "KiB"
-msgstr "KiB"
-
-#: lib/choose_repository.tcl:771
-#, tcl-format
-msgid "Unable to copy object: %s"
-msgstr "无法复制 object: %s"
-
-#: lib/choose_repository.tcl:781
-msgid "Linking objects"
-msgstr "链接 objects"
-
-#: lib/choose_repository.tcl:782
-msgid "objects"
-msgstr "objects"
-
-#: lib/choose_repository.tcl:790
-#, tcl-format
-msgid "Unable to hardlink object: %s"
-msgstr "无法硬链接 object: %s"
-
-#: lib/choose_repository.tcl:845
-msgid "Cannot fetch branches and objects.  See console output for details."
-msgstr "无法获取分支和对象. 请查看控制终端的输出."
-
-#: lib/choose_repository.tcl:856
-msgid "Cannot fetch tags.  See console output for details."
-msgstr "无法获取标签. 请查看控制终端的输出."
-
-#: lib/choose_repository.tcl:880
-msgid "Cannot determine HEAD.  See console output for details."
-msgstr "无法确定 HEAD. 请查看控制终端的输出."
-
-#: lib/choose_repository.tcl:889
-#, tcl-format
-msgid "Unable to cleanup %s"
-msgstr "无法清理 %s"
-
-#: lib/choose_repository.tcl:895
-msgid "Clone failed."
-msgstr "克隆失败."
-
-#: lib/choose_repository.tcl:902
-msgid "No default branch obtained."
-msgstr "没有获取缺省分支"
-
-#: lib/choose_repository.tcl:913
-#, tcl-format
-msgid "Cannot resolve %s as a commit."
-msgstr "无法解析 %s 为提交."
-
-#: lib/choose_repository.tcl:925
-msgid "Creating working directory"
-msgstr "创建工作目录"
-
-#: lib/choose_repository.tcl:926 lib/index.tcl:65 lib/index.tcl:127
-#: lib/index.tcl:193
-msgid "files"
-msgstr "文件"
-
-#: lib/choose_repository.tcl:955
-msgid "Initial file checkout failed."
-msgstr "初始的文件checkout失败"
-
-#: lib/choose_repository.tcl:971
-msgid "Open"
-msgstr "打开"
-
-#: lib/choose_repository.tcl:981
-msgid "Repository:"
-msgstr "版本库"
-
-#: lib/choose_repository.tcl:1031
-#, tcl-format
-msgid "Failed to open repository %s:"
-msgstr "无法打开版本库 %s:"
-
-#: lib/choose_rev.tcl:53
+#: lib/choose_rev.tcl:52
 msgid "This Detached Checkout"
 msgstr "该脱节的Checkout"
 
@@ -1134,38 +2344,38 @@ msgstr "该脱节的Checkout"
 msgid "Revision Expression:"
 msgstr "版本表达式:"
 
-#: lib/choose_rev.tcl:74
+#: lib/choose_rev.tcl:72
 msgid "Local Branch"
 msgstr "本地分支"
 
-#: lib/choose_rev.tcl:79
+#: lib/choose_rev.tcl:77
 msgid "Tracking Branch"
-msgstr "跟踪分支:"
+msgstr "跟踪分支"
 
-#: lib/choose_rev.tcl:84 lib/choose_rev.tcl:538
+#: lib/choose_rev.tcl:82 lib/choose_rev.tcl:544
 msgid "Tag"
 msgstr "标签"
 
-#: lib/choose_rev.tcl:317
+#: lib/choose_rev.tcl:321
 #, tcl-format
 msgid "Invalid revision: %s"
 msgstr "无效版本: %s"
 
-#: lib/choose_rev.tcl:338
+#: lib/choose_rev.tcl:342
 msgid "No revision selected."
 msgstr "没有选择版本."
 
-#: lib/choose_rev.tcl:346
+#: lib/choose_rev.tcl:350
 msgid "Revision expression is empty."
 msgstr "版本表达式为空."
 
-#: lib/choose_rev.tcl:531
+#: lib/choose_rev.tcl:537
 msgid "Updated"
 msgstr "已更新"
 
-#: lib/choose_rev.tcl:559
+#: lib/choose_rev.tcl:565
 msgid "URL"
-msgstr "URL"
+msgstr "链接"
 
 #: lib/commit.tcl:9
 msgid ""
@@ -1191,19 +2401,24 @@ msgstr ""
 "你当前正在一次尚未完成的合并操作过程中. 除非中止当前合并活动,\n"
 "否则无法修正之前的提交.\n"
 
-#: lib/commit.tcl:49
+#: lib/commit.tcl:56
 msgid "Error loading commit data for amend:"
 msgstr "为修正装载提交数据出错:"
 
-#: lib/commit.tcl:76
+#: lib/commit.tcl:83
 msgid "Unable to obtain your identity:"
 msgstr "无法获知你的身份:"
 
-#: lib/commit.tcl:81
+#: lib/commit.tcl:88
 msgid "Invalid GIT_COMMITTER_IDENT:"
-msgstr "无效的 GIT_COMMITTER_IDENT"
+msgstr "无效的 GIT_COMMITTER_IDENT："
 
-#: lib/commit.tcl:133
+#: lib/commit.tcl:138
+#, tcl-format
+msgid "warning: Tcl does not support encoding '%s'."
+msgstr "警告: Tcl 不支持编码方式 '%s'."
+
+#: lib/commit.tcl:158
 msgid ""
 "Last scanned state does not match repository state.\n"
 "\n"
@@ -1219,7 +2434,7 @@ msgstr ""
 "\n"
 "重新扫描将自动开始.\n"
 
-#: lib/commit.tcl:154
+#: lib/commit.tcl:182
 #, tcl-format
 msgid ""
 "Unmerged files cannot be committed.\n"
@@ -1231,7 +2446,7 @@ msgstr ""
 "\n"
 "文件 %s 有合并冲突, 你必须解决这些冲突并缓存该文件作提交.\n"
 
-#: lib/commit.tcl:162
+#: lib/commit.tcl:190
 #, tcl-format
 msgid ""
 "Unknown file state %s detected.\n"
@@ -1242,7 +2457,7 @@ msgstr ""
 "\n"
 "文件 %s 无法由该程序提交.\n"
 
-#: lib/commit.tcl:170
+#: lib/commit.tcl:198
 msgid ""
 "No changes to commit.\n"
 "\n"
@@ -1252,7 +2467,7 @@ msgstr ""
 "\n"
 "提交前你必须首先缓存至少一个文件.\n"
 
-#: lib/commit.tcl:183
+#: lib/commit.tcl:213
 msgid ""
 "Please supply a commit message.\n"
 "\n"
@@ -1270,46 +2485,50 @@ msgstr ""
 "- 第二行: 空行\n"
 "- 剩余行: 请描述为什么你做的这些改动是好的.\n"
 
-#: lib/commit.tcl:207
-#, tcl-format
-msgid "warning: Tcl does not support encoding '%s'."
-msgstr "警告: Tcl 不支持编码方式 '%s'."
-
-#: lib/commit.tcl:221
+#: lib/commit.tcl:244
 msgid "Calling pre-commit hook..."
 msgstr ""
 
-#: lib/commit.tcl:236
+#: lib/commit.tcl:259
 msgid "Commit declined by pre-commit hook."
 msgstr ""
 
-#: lib/commit.tcl:259
+#: lib/commit.tcl:278
+msgid ""
+"You are about to commit on a detached head. This is a potentially dangerous "
+"thing to do because if you switch to another branch you will lose your "
+"changes and it can be difficult to retrieve them later from the reflog. You "
+"should probably cancel this commit and create a new branch to continue.\n"
+" \n"
+" Do you really want to proceed with your Commit?"
+msgstr ""
+
+#: lib/commit.tcl:299
 msgid "Calling commit-msg hook..."
 msgstr ""
 
-#: lib/commit.tcl:274
+#: lib/commit.tcl:314
 msgid "Commit declined by commit-msg hook."
 msgstr ""
 
-#: lib/commit.tcl:287
+#: lib/commit.tcl:327
 msgid "Committing changes..."
-msgstr ""
+msgstr "正在提交修改..。"
 
-#: lib/commit.tcl:303
+#: lib/commit.tcl:344
 msgid "write-tree failed:"
 msgstr "write-tree 失败:"
 
-#: lib/commit.tcl:304 lib/commit.tcl:348 lib/commit.tcl:368
-#, fuzzy
+#: lib/commit.tcl:345 lib/commit.tcl:395 lib/commit.tcl:422
 msgid "Commit failed."
-msgstr "克隆失败."
+msgstr "提交失败。"
 
-#: lib/commit.tcl:321
+#: lib/commit.tcl:362
 #, tcl-format
 msgid "Commit %s appears to be corrupt"
 msgstr "提交 %s 似乎已损坏"
 
-#: lib/commit.tcl:326
+#: lib/commit.tcl:367
 msgid ""
 "No changes to commit.\n"
 "\n"
@@ -1323,62 +2542,96 @@ msgstr ""
 "\n"
 "重新扫描将自动开始.\n"
 
-#: lib/commit.tcl:333
+#: lib/commit.tcl:374
 msgid "No changes to commit."
 msgstr "没有改动要提交."
 
-#: lib/commit.tcl:347
+#: lib/commit.tcl:394
 msgid "commit-tree failed:"
 msgstr "commit-tree 失败:"
 
-#: lib/commit.tcl:367
+#: lib/commit.tcl:421
 msgid "update-ref failed:"
 msgstr "update-ref 失败:"
 
-#: lib/commit.tcl:454
+#: lib/commit.tcl:514
 #, tcl-format
 msgid "Created commit %s: %s"
 msgstr "创建了 commit %s: %s"
 
-#: lib/console.tcl:59
-msgid "Working... please wait..."
-msgstr "工作中... 请等待..."
+#: lib/branch_delete.tcl:16
+#, tcl-format
+msgid "%s (%s): Delete Branch"
+msgstr "%s (%s)：删除分支"
 
-#: lib/console.tcl:186
-msgid "Success"
-msgstr "成功"
+#: lib/branch_delete.tcl:21
+msgid "Delete Local Branch"
+msgstr "删除本地分支"
 
-#: lib/console.tcl:200
-msgid "Error: Command Failed"
-msgstr "错误: 命令失败"
+#: lib/branch_delete.tcl:39
+msgid "Local Branches"
+msgstr "本地分支"
 
-#: lib/database.tcl:43
+#: lib/branch_delete.tcl:51
+msgid "Delete Only If Merged Into"
+msgstr "仅在合并后删除"
+
+#: lib/branch_delete.tcl:103
+#, tcl-format
+msgid "The following branches are not completely merged into %s:"
+msgstr "下列分支没有完全被合并到 %s:"
+
+#: lib/branch_delete.tcl:131
+#, tcl-format
+msgid " - %s:"
+msgstr " - %s："
+
+#: lib/branch_delete.tcl:141
+#, tcl-format
+msgid ""
+"Failed to delete branches:\n"
+"%s"
+msgstr ""
+"无法删除分支:\n"
+"%s"
+
+#: lib/date.tcl:25
+#, tcl-format
+msgid "Invalid date from Git: %s"
+msgstr "无效的日期: %s"
+
+#: lib/database.tcl:42
 msgid "Number of loose objects"
 msgstr "松散对象的数量"
 
-#: lib/database.tcl:44
+#: lib/database.tcl:43
 msgid "Disk space used by loose objects"
 msgstr "松散对象所使用的磁盘空间"
 
-#: lib/database.tcl:45
+#: lib/database.tcl:44
 msgid "Number of packed objects"
 msgstr "压缩对象数量"
 
-#: lib/database.tcl:46
+#: lib/database.tcl:45
 msgid "Number of packs"
 msgstr "压缩包数量"
 
-#: lib/database.tcl:47
+#: lib/database.tcl:46
 msgid "Disk space used by packed objects"
 msgstr "压缩对象所使用的磁盘空间"
 
-#: lib/database.tcl:48
+#: lib/database.tcl:47
 msgid "Packed objects waiting for pruning"
 msgstr "压缩对象等待清理"
 
-#: lib/database.tcl:49
+#: lib/database.tcl:48
 msgid "Garbage files"
 msgstr "垃圾文件"
+
+#: lib/database.tcl:66
+#, tcl-format
+msgid "%s (%s): Database Statistics"
+msgstr "%s (%s)：数据库统计信息"
 
 #: lib/database.tcl:72
 msgid "Compressing the object database"
@@ -1388,146 +2641,45 @@ msgstr "压缩对象数据库"
 msgid "Verifying the object database with fsck-objects"
 msgstr "使用 fsck-objects 验证对象数据库"
 
-#: lib/database.tcl:108
+#: lib/database.tcl:107
 #, tcl-format
 msgid ""
 "This repository currently has approximately %i loose objects.\n"
 "\n"
 "To maintain optimal performance it is strongly recommended that you compress "
-"the database when more than %i loose objects exist.\n"
+"the database.\n"
 "\n"
 "Compress the database now?"
 msgstr ""
-"该版本库当前约有 %i 个松散对象.\n"
+"该版本库当前约有 %i 个松散对象。\n"
 "\n"
-"为达到较优的性能，强烈建议你在松散对象多于 %i 时压缩数据库.\n"
+"为维持最佳性能，强烈建议你压缩数据库。\n"
 "\n"
 "现在就压缩数据库么?"
 
-#: lib/date.tcl:25
+#: lib/error.tcl:20
 #, tcl-format
-msgid "Invalid date from Git: %s"
-msgstr "无效的日期: %s"
-
-#: lib/diff.tcl:42
-#, tcl-format
-msgid ""
-"No differences detected.\n"
-"\n"
-"%s has no changes.\n"
-"\n"
-"The modification date of this file was updated by another application, but "
-"the content within the file was not changed.\n"
-"\n"
-"A rescan will be automatically started to find other files which may have "
-"the same state."
-msgstr ""
-"未检测到改动.\n"
-"\n"
-"该文件的修改日期被另一个程序所更新, 但其内容并没有变化.\n"
-"\n"
-"对于类似情况的其他文件的重新扫描将自动开始."
-
-#: lib/diff.tcl:81
-#, fuzzy, tcl-format
-msgid "Loading diff of %s..."
-msgstr "装载 %s 的 diff ..."
-
-#: lib/diff.tcl:114 lib/diff.tcl:184
-#, tcl-format
-msgid "Unable to display %s"
-msgstr "无法显示 %s"
-
-#: lib/diff.tcl:115
-msgid "Error loading file:"
-msgstr "装载文件出错:"
-
-#: lib/diff.tcl:122
-msgid "Git Repository (subproject)"
-msgstr "Git 版本库 (子项目)"
-
-#: lib/diff.tcl:134
-msgid "* Binary file (not showing content)."
-msgstr "* 二进制文件 (不显示内容)."
-
-#: lib/diff.tcl:185
-msgid "Error loading diff:"
-msgstr "装载 diff 错误:"
-
-#: lib/diff.tcl:303
-msgid "Failed to unstage selected hunk."
-msgstr "无法将选择的代码段从缓存中删除."
-
-#: lib/diff.tcl:310
-msgid "Failed to stage selected hunk."
-msgstr "无法缓存所选代码段."
-
-#: lib/error.tcl:20 lib/error.tcl:114
-msgid "error"
-msgstr "错误"
+msgid "%s: error"
+msgstr "%s：错误"
 
 #: lib/error.tcl:36
-msgid "warning"
-msgstr "警告"
+#, tcl-format
+msgid "%s: warning"
+msgstr "%s：警告"
 
-#: lib/error.tcl:94
+#: lib/error.tcl:80
+#, tcl-format
+msgid "%s hook failed:"
+msgstr ""
+
+#: lib/error.tcl:96
 msgid "You must correct the above errors before committing."
 msgstr "你必须在提交前修正上述错误."
 
-#: lib/index.tcl:6
-msgid "Unable to unlock the index."
-msgstr "无法解锁缓存 (index)"
-
-#: lib/index.tcl:15
-msgid "Index Error"
-msgstr "缓存(Index)错误"
-
-#: lib/index.tcl:21
-msgid ""
-"Updating the Git index failed.  A rescan will be automatically started to "
-"resynchronize git-gui."
-msgstr "更新 Git 缓存(Index)失败, 重新扫描将自动开始以重新同步 git-gui."
-
-#: lib/index.tcl:27
-msgid "Continue"
-msgstr "继续"
-
-#: lib/index.tcl:31
-msgid "Unlock Index"
-msgstr "解锁 Index"
-
-#: lib/index.tcl:282
+#: lib/error.tcl:116
 #, tcl-format
-msgid "Unstaging %s from commit"
-msgstr "从提交缓存中删除 %s"
-
-#: lib/index.tcl:313
-#, fuzzy
-msgid "Ready to commit."
-msgstr "缓存为提交"
-
-#: lib/index.tcl:326
-#, tcl-format
-msgid "Adding %s"
-msgstr "添加 %s"
-
-#: lib/index.tcl:381
-#, tcl-format
-msgid "Revert changes in file %s?"
-msgstr "撤销文件 %s 中的改动?"
-
-#: lib/index.tcl:383
-#, tcl-format
-msgid "Revert changes in these %i files?"
-msgstr "撤销这些 (%i个) 文件的改动?"
-
-#: lib/index.tcl:391
-msgid "Any unstaged changes will be permanently lost by the revert."
-msgstr "任何未缓存的改动将在这次撤销中永久丢失."
-
-#: lib/index.tcl:394
-msgid "Do Nothing"
-msgstr "不做操作"
+msgid "%s (%s): error"
+msgstr "%s (%s)：错误"
 
 #: lib/merge.tcl:13
 msgid ""
@@ -1555,7 +2707,7 @@ msgstr ""
 "\n"
 "重新扫描将自动开始.\n"
 
-#: lib/merge.tcl:44
+#: lib/merge.tcl:45
 #, tcl-format
 msgid ""
 "You are in the middle of a conflicted merge.\n"
@@ -1572,7 +2724,7 @@ msgstr ""
 "你必须解决这些冲突, 缓存该文件, 并提交来完成当前的合并.仅当这样后才能开始下一"
 "个合并操作.\n"
 
-#: lib/merge.tcl:54
+#: lib/merge.tcl:55
 #, tcl-format
 msgid ""
 "You are in the middle of a change.\n"
@@ -1589,34 +2741,39 @@ msgstr ""
 "你必须完成当前的提交后才能开始合并. 如果需要, 这么做将有助于中止一次失败的合"
 "并.\n"
 
-#: lib/merge.tcl:106
+#: lib/merge.tcl:108
 #, tcl-format
 msgid "%s of %s"
 msgstr ""
 
-#: lib/merge.tcl:119
-#, fuzzy, tcl-format
+#: lib/merge.tcl:126
+#, tcl-format
 msgid "Merging %s and %s..."
-msgstr "合并 %s 和 %s"
+msgstr "合并 %s 和 %s..."
 
-#: lib/merge.tcl:130
+#: lib/merge.tcl:137
 msgid "Merge completed successfully."
 msgstr "合并成功完成."
 
-#: lib/merge.tcl:132
+#: lib/merge.tcl:139
 msgid "Merge failed.  Conflict resolution is required."
 msgstr "合并失败. 需要解决冲突."
 
-#: lib/merge.tcl:157
+#: lib/merge.tcl:156
+#, tcl-format
+msgid "%s (%s): Merge"
+msgstr "%s (%s)：合并"
+
+#: lib/merge.tcl:164
 #, tcl-format
 msgid "Merge Into %s"
 msgstr "合并到 %s"
 
-#: lib/merge.tcl:176
+#: lib/merge.tcl:183
 msgid "Revision To Merge"
 msgstr "要合并的版本"
 
-#: lib/merge.tcl:211
+#: lib/merge.tcl:218
 msgid ""
 "Cannot abort while amending.\n"
 "\n"
@@ -1626,7 +2783,7 @@ msgstr ""
 "\n"
 "你必须先完成本次修正操作.\n"
 
-#: lib/merge.tcl:221
+#: lib/merge.tcl:228
 msgid ""
 "Abort merge?\n"
 "\n"
@@ -1640,7 +2797,7 @@ msgstr ""
 "\n"
 "是否要继续中止当前的合并操作?"
 
-#: lib/merge.tcl:227
+#: lib/merge.tcl:234
 msgid ""
 "Reset changes?\n"
 "\n"
@@ -1654,314 +2811,49 @@ msgstr ""
 "\n"
 "是否要继续复位当前的改动?"
 
-#: lib/merge.tcl:238
+#: lib/merge.tcl:246
 msgid "Aborting"
 msgstr "中止"
 
-#: lib/merge.tcl:238
-#, fuzzy
+#: lib/merge.tcl:247
 msgid "files reset"
-msgstr "文件"
+msgstr "文件重置"
 
-#: lib/merge.tcl:265
+#: lib/merge.tcl:277
 msgid "Abort failed."
-msgstr "中止失败"
+msgstr "中止失败。"
 
-#: lib/merge.tcl:267
+#: lib/merge.tcl:279
 msgid "Abort completed.  Ready."
 msgstr "中止完成. 就绪."
 
-#: lib/option.tcl:95
-msgid "Restore Defaults"
-msgstr "恢复默认值"
+#~ msgid "Cannot use funny .git directory:"
+#~ msgstr "无法使用 .git 目录:"
 
-#: lib/option.tcl:99
-msgid "Save"
-msgstr "保存"
-
-#: lib/option.tcl:109
 #, tcl-format
-msgid "%s Repository"
-msgstr "%s 版本库"
+#~ msgid ""
+#~ "Unable to start gitk:\n"
+#~ "\n"
+#~ "%s does not exist"
+#~ msgstr ""
+#~ "无法启动 gitk:\n"
+#~ "\n"
+#~ "%s 不存在"
 
-#: lib/option.tcl:110
-msgid "Global (All Repositories)"
-msgstr "全局 (所有版本库)"
+#~ msgid "New Commit"
+#~ msgstr "新建提交"
 
-#: lib/option.tcl:116
-msgid "User Name"
-msgstr "用户名"
+#~ msgid "Apple"
+#~ msgstr "苹果"
 
-#: lib/option.tcl:117
-msgid "Email Address"
-msgstr "Email 地址"
+#~ msgid "Preferences..."
+#~ msgstr "首选项..."
 
-#: lib/option.tcl:119
-msgid "Summarize Merge Commits"
-msgstr "概述合并提交:"
+#~ msgid "Always (Do not perform merge test.)"
+#~ msgstr "总是合并 (不作合并测试.)"
 
-#: lib/option.tcl:120
-msgid "Merge Verbosity"
-msgstr "合并冗余度"
+#~ msgid "URL:"
+#~ msgstr "URL:"
 
-#: lib/option.tcl:121
-msgid "Show Diffstat After Merge"
-msgstr "在合并后显示 Diffstat"
-
-#: lib/option.tcl:123
-msgid "Trust File Modification Timestamps"
-msgstr "相信文件的改动时间"
-
-#: lib/option.tcl:124
-msgid "Prune Tracking Branches During Fetch"
-msgstr "获取时清除跟踪分支"
-
-#: lib/option.tcl:125
-msgid "Match Tracking Branches"
-msgstr "匹配跟踪分支"
-
-#: lib/option.tcl:126
-msgid "Number of Diff Context Lines"
-msgstr "Diff 上下文行数"
-
-#: lib/option.tcl:127
-#, fuzzy
-msgid "Commit Message Text Width"
-msgstr "提交描述:"
-
-#: lib/option.tcl:128
-msgid "New Branch Name Template"
-msgstr "新建分支命名模板"
-
-#: lib/option.tcl:192
-msgid "Spelling Dictionary:"
-msgstr ""
-
-#: lib/option.tcl:216
-msgid "Change Font"
-msgstr "更改字体"
-
-#: lib/option.tcl:220
-#, tcl-format
-msgid "Choose %s"
-msgstr "选择 %s"
-
-#: lib/option.tcl:226
-msgid "pt."
-msgstr "磅"
-
-#: lib/option.tcl:240
-msgid "Preferences"
-msgstr "首选项"
-
-#: lib/option.tcl:275
-msgid "Failed to completely save options:"
-msgstr "无法完全保存选项:"
-
-#: lib/remote_branch_delete.tcl:29 lib/remote_branch_delete.tcl:34
-msgid "Delete Remote Branch"
-msgstr "删除远端分支"
-
-#: lib/remote_branch_delete.tcl:47
-msgid "From Repository"
-msgstr "从版本库"
-
-#: lib/remote_branch_delete.tcl:50 lib/transport.tcl:123
-msgid "Remote:"
-msgstr "Remote:"
-
-#: lib/remote_branch_delete.tcl:66 lib/transport.tcl:138
-msgid "Arbitrary URL:"
-msgstr "任意 URL:"
-
-#: lib/remote_branch_delete.tcl:84
-msgid "Branches"
-msgstr "分支"
-
-#: lib/remote_branch_delete.tcl:109
-msgid "Delete Only If"
-msgstr "删除仅当"
-
-#: lib/remote_branch_delete.tcl:111
-msgid "Merged Into:"
-msgstr "合并到"
-
-#: lib/remote_branch_delete.tcl:119
-msgid "Always (Do not perform merge checks)"
-msgstr "总是合并 (不作合并检查)"
-
-#: lib/remote_branch_delete.tcl:152
-msgid "A branch is required for 'Merged Into'."
-msgstr "'合并到' 需要指定某个分支"
-
-#: lib/remote_branch_delete.tcl:184
-#, tcl-format
-msgid ""
-"The following branches are not completely merged into %s:\n"
-"\n"
-" - %s"
-msgstr ""
-"下列分支没有被全部合并到 %s 中:\n"
-"\n"
-" - %s"
-
-#: lib/remote_branch_delete.tcl:189
-#, tcl-format
-msgid ""
-"One or more of the merge tests failed because you have not fetched the "
-"necessary commits.  Try fetching from %s first."
-msgstr ""
-"由于没有获取到必要的提交，一个或多个合并测试失败。请尝试从 %s 处先获取。"
-
-#: lib/remote_branch_delete.tcl:207
-msgid "Please select one or more branches to delete."
-msgstr "请选择某个或多个分支来删除"
-
-#: lib/remote_branch_delete.tcl:216
-msgid ""
-"Recovering deleted branches is difficult.\n"
-"\n"
-"Delete the selected branches?"
-msgstr ""
-"恢复被删除的分支非常困难.\n"
-"\n"
-"是否要删除所选分支?"
-
-#: lib/remote_branch_delete.tcl:226
-#, tcl-format
-msgid "Deleting branches from %s"
-msgstr "从 %s 中删除分支"
-
-#: lib/remote_branch_delete.tcl:286
-msgid "No repository selected."
-msgstr "没有选择版本库"
-
-#: lib/remote_branch_delete.tcl:291
-#, tcl-format
-msgid "Scanning %s..."
-msgstr "正在扫描 %s..."
-
-#: lib/remote.tcl:165
-msgid "Prune from"
-msgstr "从..清除(prune)"
-
-#: lib/remote.tcl:170
-msgid "Fetch from"
-msgstr "从..获取(fetch)"
-
-#: lib/remote.tcl:213
-msgid "Push to"
-msgstr "上传到(push)"
-
-#: lib/shortcut.tcl:20 lib/shortcut.tcl:61
-msgid "Cannot write shortcut:"
-msgstr "无法修改快捷方式:"
-
-#: lib/shortcut.tcl:136
-msgid "Cannot write icon:"
-msgstr "无法修改图标:"
-
-#: lib/spellcheck.tcl:57
-msgid "Unsupported spell checker"
-msgstr ""
-
-#: lib/spellcheck.tcl:65
-msgid "Spell checking is unavailable"
-msgstr ""
-
-#: lib/spellcheck.tcl:68
-msgid "Invalid spell checking configuration"
-msgstr ""
-
-#: lib/spellcheck.tcl:70
-#, tcl-format
-msgid "Reverting dictionary to %s."
-msgstr ""
-
-#: lib/spellcheck.tcl:73
-msgid "Spell checker silently failed on startup"
-msgstr ""
-
-#: lib/spellcheck.tcl:80
-msgid "Unrecognized spell checker"
-msgstr ""
-
-#: lib/spellcheck.tcl:180
-msgid "No Suggestions"
-msgstr ""
-
-#: lib/spellcheck.tcl:381
-msgid "Unexpected EOF from spell checker"
-msgstr ""
-
-#: lib/spellcheck.tcl:385
-msgid "Spell Checker Failed"
-msgstr ""
-
-#: lib/status_bar.tcl:83
-#, tcl-format
-msgid "%s ... %*i of %*i %s (%3i%%)"
-msgstr "%s ... %*i of %*i %s (%3i%%)"
-
-#: lib/transport.tcl:6
-#, tcl-format
-msgid "fetch %s"
-msgstr "获取(fetch)"
-
-#: lib/transport.tcl:7
-#, tcl-format
-msgid "Fetching new changes from %s"
-msgstr "从 %s 处获取新的改动"
-
-#: lib/transport.tcl:18
-#, tcl-format
-msgid "remote prune %s"
-msgstr "清除远端 %s"
-
-#: lib/transport.tcl:19
-#, tcl-format
-msgid "Pruning tracking branches deleted from %s"
-msgstr "清除"
-
-#: lib/transport.tcl:25 lib/transport.tcl:71
-#, tcl-format
-msgid "push %s"
-msgstr "上传 %s"
-
-#: lib/transport.tcl:26
-#, tcl-format
-msgid "Pushing changes to %s"
-msgstr "上传改动到 %s"
-
-#: lib/transport.tcl:72
-#, tcl-format
-msgid "Pushing %s %s to %s"
-msgstr "上传 %s %s 到 %s"
-
-#: lib/transport.tcl:89
-msgid "Push Branches"
-msgstr "上传分支"
-
-#: lib/transport.tcl:103
-msgid "Source Branches"
-msgstr "源端分支:"
-
-#: lib/transport.tcl:120
-msgid "Destination Repository"
-msgstr "目标版本库"
-
-#: lib/transport.tcl:158
-msgid "Transfer Options"
-msgstr "传输选项"
-
-#: lib/transport.tcl:160
-msgid "Force overwrite existing branch (may discard changes)"
-msgstr "强制覆盖已有的分支 (可能会丢失改动)"
-
-#: lib/transport.tcl:164
-msgid "Use thin pack (for slow network connections)"
-msgstr "使用 thin pack (适用于低速网络连接)"
-
-#: lib/transport.tcl:168
-msgid "Include tags"
-msgstr "包含标签"
+#~ msgid "Delete Remote Branch"
+#~ msgstr "删除远端分支"
