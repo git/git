@@ -2776,7 +2776,7 @@ struct add_data {
 };
 #define ADD_DATA_INIT { .depth = -1 }
 
-static void append_fetch_remotes(struct strbuf *msg, const char *sm_name, const char *git_dir_path)
+static void append_fetch_remotes(struct strbuf *msg, const char *git_dir_path)
 {
 	struct child_process cp_remote = CHILD_PROCESS_INIT;
 	struct strbuf sb_remote_out = STRBUF_INIT;
@@ -2831,8 +2831,7 @@ static int add_submodule(const struct add_data *add_data)
 						    "locally with remote(s):\n"),
 					    add_data->sm_name);
 
-				append_fetch_remotes(&msg, add_data->sm_name,
-						     submod_gitdir_path);
+				append_fetch_remotes(&msg, submod_gitdir_path);
 				free(submod_gitdir_path);
 
 				strbuf_addf(&msg, _("If you want to reuse this local git "
