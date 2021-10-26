@@ -1726,6 +1726,12 @@ void test_bitmap_walk(struct rev_info *revs)
 	else
 		die("mismatch in bitmap results");
 
+	bitmap_free(result);
+	bitmap_free(tdata.base);
+	bitmap_free(tdata.commits);
+	bitmap_free(tdata.trees);
+	bitmap_free(tdata.blobs);
+	bitmap_free(tdata.tags);
 	free_bitmap_index(bitmap_git);
 }
 
