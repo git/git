@@ -255,6 +255,7 @@ int color_parse_mem(const char *value, int value_len, char *dst)
 	const char *ptr = value;
 	int len = value_len;
 	char *end = dst + COLOR_MAXLEN;
+	unsigned int has_reset = 0;
 	unsigned int attr = 0;
 	struct color fg = { COLOR_UNSPECIFIED };
 	struct color bg = { COLOR_UNSPECIFIED };
@@ -269,12 +270,7 @@ int color_parse_mem(const char *value, int value_len, char *dst)
 		return 0;
 	}
 
-	if (!strncasecmp(ptr, "reset", len)) {
-		xsnprintf(dst, end - dst, GIT_COLOR_RESET);
-		return 0;
-	}
-
-	/* [fg [bg]] [attr]... */
+	/* [reset] [fg [bg]] [attr]... */
 	while (len > 0) {
 		const char *word = ptr;
 		struct color c = { COLOR_UNSPECIFIED };
@@ -289,6 +285,11 @@ int color_parse_mem(const char *value, int value_len, char *dst)
 		while (len > 0 && isspace(*ptr)) {
 			ptr++;
 			len--;
+		}
+
+		if (match_word(word, wordlen, "reset")) {
+			has_reset = 1;
+			continue;
 		}
 
 		if (!parse_color(&c, word, wordlen)) {
@@ -316,12 +317,15 @@ int color_parse_mem(const char *value, int value_len, char *dst)
 	*dst++ = (x); \
 } while(0)
 
-	if (attr || !color_empty(&fg) || !color_empty(&bg)) {
+	if (has_reset || attr || !color_empty(&fg) || !color_empty(&bg)) {
 		int sep = 0;
 		int i;
 
 		OUT('\033');
 		OUT('[');
+
+		if (has_reset)
+			sep++;
 
 		for (i = 0; attr; i++) {
 			unsigned bit = (1 << i);
