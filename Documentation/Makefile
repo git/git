@@ -493,9 +493,9 @@ print-man1:
 ## Lint: gitlink
 .build/lint-docs/gitlink: | .build/lint-docs
 	$(QUIET)mkdir $@
-.build/lint-docs/gitlink/howto: | .build/lint-docs
+.build/lint-docs/gitlink/howto: | .build/lint-docs/gitlink
 	$(QUIET)mkdir $@
-.build/lint-docs/gitlink/config: | .build/lint-docs
+.build/lint-docs/gitlink/config: | .build/lint-docs/gitlink
 	$(QUIET)mkdir $@
 LINT_DOCS_GITLINK = $(patsubst %.txt,.build/lint-docs/gitlink/%.ok,$(HOWTO_TXT) $(DOC_DEP_TXT))
 $(LINT_DOCS_GITLINK): | .build/lint-docs/gitlink
