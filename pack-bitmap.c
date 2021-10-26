@@ -1859,9 +1859,17 @@ void free_bitmap_index(struct bitmap_index *b)
 	ewah_pool_free(b->trees);
 	ewah_pool_free(b->blobs);
 	ewah_pool_free(b->tags);
+	if (b->bitmaps) {
+		struct stored_bitmap *sb;
+		kh_foreach_value(b->bitmaps, sb, {
+			ewah_pool_free(sb->root);
+			free(sb);
+		});
+	}
 	kh_destroy_oid_map(b->bitmaps);
 	free(b->ext_index.objects);
 	free(b->ext_index.hashes);
+	kh_destroy_oid_pos(b->ext_index.positions);
 	bitmap_free(b->result);
 	bitmap_free(b->haves);
 	if (bitmap_is_midx(b)) {
