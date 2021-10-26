@@ -1603,7 +1603,7 @@ int verify_midx_file(struct repository *r, const char *object_dir, unsigned flag
 		 * Remaining tests assume that we have objects, so we can
 		 * return here.
 		 */
-		return verify_midx_error;
+		goto cleanup;
 	}
 
 	if (flags & MIDX_PROGRESS)
@@ -1681,7 +1681,9 @@ int verify_midx_file(struct repository *r, const char *object_dir, unsigned flag
 	}
 	stop_progress(&progress);
 
+cleanup:
 	free(pairs);
+	close_midx(m);
 
 	return verify_midx_error;
 }
