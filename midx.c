@@ -57,15 +57,15 @@ const unsigned char *get_midx_checksum(struct multi_pack_index *m)
 	return m->data + m->data_len - the_hash_algo->rawsz;
 }
 
-char *get_midx_filename(const char *object_dir)
+void get_midx_filename(struct strbuf *out, const char *object_dir)
 {
-	return xstrfmt("%s/pack/multi-pack-index", object_dir);
+	strbuf_addf(out, "%s/pack/multi-pack-index", object_dir);
 }
 
-char *get_midx_rev_filename(struct multi_pack_index *m)
+void get_midx_rev_filename(struct strbuf *out, struct multi_pack_index *m)
 {
-	return xstrfmt("%s/pack/multi-pack-index-%s.rev",
-		       m->object_dir, hash_to_hex(get_midx_checksum(m)));
+	get_midx_filename(out, m->object_dir);
+	strbuf_addf(out, "-%s.rev", hash_to_hex(get_midx_checksum(m)));
 }
 
 static int midx_read_oid_fanout(const unsigned char *chunk_start,
@@ -89,28 +89,30 @@ struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local
 	size_t midx_size;
 	void *midx_map = NULL;
 	uint32_t hash_version;
-	char *midx_name = get_midx_filename(object_dir);
+	struct strbuf midx_name = STRBUF_INIT;
 	uint32_t i;
 	const char *cur_pack_name;
 	struct chunkfile *cf = NULL;
 
-	fd = git_open(midx_name);
+	get_midx_filename(&midx_name, object_dir);
+
+	fd = git_open(midx_name.buf);
 
 	if (fd < 0)
 		goto cleanup_fail;
 	if (fstat(fd, &st)) {
-		error_errno(_("failed to read %s"), midx_name);
+		error_errno(_("failed to read %s"), midx_name.buf);
 		goto cleanup_fail;
 	}
 
 	midx_size = xsize_t(st.st_size);
 
 	if (midx_size < MIDX_MIN_SIZE) {
-		error(_("multi-pack-index file %s is too small"), midx_name);
+		error(_("multi-pack-index file %s is too small"), midx_name.buf);
 		goto cleanup_fail;
 	}
 
-	FREE_AND_NULL(midx_name);
+	strbuf_release(&midx_name);
 
 	midx_map = xmmap(NULL, midx_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	close(fd);
@@ -184,7 +186,7 @@ struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local
 
 cleanup_fail:
 	free(m);
-	free(midx_name);
+	strbuf_release(&midx_name);
 	free_chunkfile(cf);
 	if (midx_map)
 		munmap(midx_map, midx_size);
@@ -1115,7 +1117,7 @@ static int write_midx_internal(const char *object_dir,
 			       const char *refs_snapshot,
 			       unsigned flags)
 {
-	char *midx_name;
+	struct strbuf midx_name = STRBUF_INIT;
 	unsigned char midx_hash[GIT_MAX_RAWSZ];
 	uint32_t i;
 	struct hashfile *f = NULL;
@@ -1130,10 +1132,10 @@ static int write_midx_internal(const char *object_dir,
 	/* Ensure the given object_dir is local, or a known alternate. */
 	find_odb(the_repository, object_dir);
 
-	midx_name = get_midx_filename(object_dir);
-	if (safe_create_leading_directories(midx_name))
+	get_midx_filename(&midx_name, object_dir);
+	if (safe_create_leading_directories(midx_name.buf))
 		die_errno(_("unable to create leading directories of %s"),
-			  midx_name);
+			  midx_name.buf);
 
 	if (!packs_to_include) {
 		/*
@@ -1367,7 +1369,7 @@ static int write_midx_internal(const char *object_dir,
 		pack_name_concat_len += MIDX_CHUNK_ALIGNMENT -
 					(pack_name_concat_len % MIDX_CHUNK_ALIGNMENT);
 
-	hold_lock_file_for_update(&lk, midx_name, LOCK_DIE_ON_ERROR);
+	hold_lock_file_for_update(&lk, midx_name.buf, LOCK_DIE_ON_ERROR);
 	f = hashfd(get_lock_file_fd(&lk), get_lock_file_path(&lk));
 
 	if (ctx.nr - dropped_packs == 0) {
@@ -1404,9 +1406,9 @@ static int write_midx_internal(const char *object_dir,
 		ctx.pack_order = midx_pack_order(&ctx);
 
 	if (flags & MIDX_WRITE_REV_INDEX)
-		write_midx_reverse_index(midx_name, midx_hash, &ctx);
+		write_midx_reverse_index(midx_name.buf, midx_hash, &ctx);
 	if (flags & MIDX_WRITE_BITMAP) {
-		if (write_midx_bitmap(midx_name, midx_hash, &ctx,
+		if (write_midx_bitmap(midx_name.buf, midx_hash, &ctx,
 				      refs_snapshot, flags) < 0) {
 			error(_("could not write multi-pack bitmap"));
 			result = 1;
@@ -1435,7 +1437,7 @@ cleanup:
 	free(ctx.entries);
 	free(ctx.pack_perm);
 	free(ctx.pack_order);
-	free(midx_name);
+	strbuf_release(&midx_name);
 
 	return result;
 }
@@ -1499,20 +1501,22 @@ static void clear_midx_files_ext(const char *object_dir, const char *ext,
 
 void clear_midx_file(struct repository *r)
 {
-	char *midx = get_midx_filename(r->objects->odb->path);
+	struct strbuf midx = STRBUF_INIT;
+
+	get_midx_filename(&midx, r->objects->odb->path);
 
 	if (r->objects && r->objects->multi_pack_index) {
 		close_midx(r->objects->multi_pack_index);
 		r->objects->multi_pack_index = NULL;
 	}
 
-	if (remove_path(midx))
-		die(_("failed to clear multi-pack-index at %s"), midx);
+	if (remove_path(midx.buf))
+		die(_("failed to clear multi-pack-index at %s"), midx.buf);
 
 	clear_midx_files_ext(r->objects->odb->path, ".bitmap", NULL);
 	clear_midx_files_ext(r->objects->odb->path, ".rev", NULL);
 
-	free(midx);
+	strbuf_release(&midx);
 }
 
 static int verify_midx_error;
@@ -1565,12 +1569,15 @@ int verify_midx_file(struct repository *r, const char *object_dir, unsigned flag
 	if (!m) {
 		int result = 0;
 		struct stat sb;
-		char *filename = get_midx_filename(object_dir);
-		if (!stat(filename, &sb)) {
+		struct strbuf filename = STRBUF_INIT;
+
+		get_midx_filename(&filename, object_dir);
+
+		if (!stat(filename.buf, &sb)) {
 			error(_("multi-pack-index file exists, but failed to parse"));
 			result = 1;
 		}
-		free(filename);
+		strbuf_release(&filename);
 		return result;
 	}
 

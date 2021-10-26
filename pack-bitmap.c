@@ -292,9 +292,12 @@ static int load_bitmap_entries_v1(struct bitmap_index *index)
 
 char *midx_bitmap_filename(struct multi_pack_index *midx)
 {
-	return xstrfmt("%s-%s.bitmap",
-		       get_midx_filename(midx->object_dir),
-		       hash_to_hex(get_midx_checksum(midx)));
+	struct strbuf buf = STRBUF_INIT;
+
+	get_midx_filename(&buf, midx->object_dir);
+	strbuf_addf(&buf, "-%s.bitmap", hash_to_hex(get_midx_checksum(midx)));
+
+	return strbuf_detach(&buf, NULL);
 }
 
 char *pack_bitmap_filename(struct packed_git *p)
@@ -324,10 +327,12 @@ static int open_midx_bitmap_1(struct bitmap_index *bitmap_git,
 	}
 
 	if (bitmap_git->pack || bitmap_git->midx) {
+		struct strbuf buf = STRBUF_INIT;
+		get_midx_filename(&buf, midx->object_dir);
 		/* ignore extra bitmap file; we can only handle one */
-		warning("ignoring extra bitmap file: %s",
-			get_midx_filename(midx->object_dir));
+		warning("ignoring extra bitmap file: %s", buf.buf);
 		close(fd);
+		strbuf_release(&buf);
 		return -1;
 	}
 
