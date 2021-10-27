@@ -472,6 +472,23 @@ test_expect_success '--mixed refreshes the index' '
 	test_cmp expect output
 '
 
+test_expect_success '--mixed preserves skip-worktree' '
+	echo 123 >>file2 &&
+	git add file2 &&
+	git update-index --skip-worktree file2 &&
+	git reset --mixed HEAD >output &&
+	test_must_be_empty output &&
+
+	cat >expect <<-\EOF &&
+	Unstaged changes after reset:
+	M	file2
+	EOF
+	git update-index --no-skip-worktree file2 &&
+	git add file2 &&
+	git reset --mixed HEAD >output &&
+	test_cmp expect output
+'
+
 test_expect_success 'resetting specific path that is unmerged' '
 	git rm --cached file2 &&
 	F1=$(git rev-parse HEAD:file1) &&

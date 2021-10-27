@@ -459,26 +459,20 @@ test_expect_failure 'blame with pathspec outside sparse definition' '
 	test_all_match git blame deep/deeper2/deepest/a
 '
 
-# NEEDSWORK: a sparse-checkout behaves differently from a full checkout
-# in this scenario, but it shouldn't.
-test_expect_failure 'checkout and reset (mixed)' '
+test_expect_success 'checkout and reset (mixed)' '
 	init_repos &&
 
 	test_all_match git checkout -b reset-test update-deep &&
 	test_all_match git reset deepest &&
-	test_all_match git reset update-folder1 &&
-	test_all_match git reset update-folder2
-'
 
-# NEEDSWORK: a sparse-checkout behaves differently from a full checkout
-# in this scenario, but it shouldn't.
-test_expect_success 'checkout and reset (mixed) [sparse]' '
-	init_repos &&
-
-	test_sparse_match git checkout -b reset-test update-deep &&
-	test_sparse_match git reset deepest &&
+	# Because skip-worktree is preserved, resetting to update-folder1
+	# will show worktree changes for folder1/a in full-checkout, but not
+	# in sparse-checkout or sparse-index.
+	git -C full-checkout reset update-folder1 >full-checkout-out &&
 	test_sparse_match git reset update-folder1 &&
-	test_sparse_match git reset update-folder2
+	grep "M	folder1/a" full-checkout-out &&
+	! grep "M	folder1/a" sparse-checkout-out &&
+	run_on_sparse test_path_is_missing folder1
 '
 
 test_expect_success 'merge, cherry-pick, and rebase' '
