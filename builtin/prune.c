@@ -31,6 +31,7 @@ static int prune_tmp_file(const char *fullpath)
 		if (show_only || verbose)
 			printf("Removing stale temporary directory %s\n", fullpath);
 		if (!show_only) {
+			strbuf_reset(&remove_dir_buf);
 			strbuf_addstr(&remove_dir_buf, fullpath);
 			remove_dir_recursively(&remove_dir_buf, 0);
 		}
