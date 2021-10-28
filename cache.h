@@ -993,7 +993,13 @@ void reset_shared_repository(void);
 extern int read_replace_refs;
 extern char *git_replace_ref_base;
 
-extern int fsync_object_files;
+enum fsync_object_files_mode {
+    FSYNC_OBJECT_FILES_OFF,
+    FSYNC_OBJECT_FILES_ON,
+    FSYNC_OBJECT_FILES_BATCH
+};
+
+extern enum fsync_object_files_mode fsync_object_files;
 extern int use_fsync;
 extern int core_preload_index;
 extern int precomposed_unicode;
