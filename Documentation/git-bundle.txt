@@ -51,10 +51,10 @@ using the `--thin` option to linkgit:git-pack-objects[1], and
 unbundled using the `--fix-thin` option to linkgit:git-index-pack[1].
 
 There is no option to create a "thick pack" when using revision
-exclusions, users should not be concerned about the difference. By
-using "thin packs" bundles created using exclusions are smaller in
+exclusions, and users should not be concerned about the difference. By
+using "thin packs", bundles created using exclusions are smaller in
 size. That they're "thin" under the hood is merely noted here as a
-curiosity, and as a reference to other documentation
+curiosity, and as a reference to other documentation.
 
 See link:technical/bundle-format.html[the `bundle-format`
 documentation] for more details and the discussion of "thin pack" in
@@ -144,7 +144,7 @@ unbundle <file>::
 SPECIFYING REFERENCES
 ---------------------
 
-Revisions must accompanied by reference names to be packaged in a
+Revisions must be accompanied by reference names to be packaged in a
 bundle.
 
 More than one reference may be packaged, and more than one set of prerequisite objects can
