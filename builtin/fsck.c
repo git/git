@@ -593,18 +593,43 @@ static void get_default_heads(void)
 	}
 }
 
+struct for_each_loose_cb
+{
+	struct progress *progress;
+	struct strbuf obj_type;
+};
+
 static int fsck_loose(const struct object_id *oid, const char *path, void *data)
 {
+	struct for_each_loose_cb *cb_data = data;
 	struct object *obj;
-	enum object_type type;
+	enum object_type type = OBJ_NONE;
 	unsigned long size;
 	void *contents;
 	int eaten;
+	struct object_info oi = OBJECT_INFO_INIT;
+	struct object_id real_oid = *null_oid();
+	int err = 0;
 
-	if (read_loose_object(path, oid, &type, &size, &contents) < 0) {
+	strbuf_reset(&cb_data->obj_type);
+	oi.type_name = &cb_data->obj_type;
+	oi.sizep = &size;
+	oi.typep = &type;
+
+	if (read_loose_object(path, oid, &real_oid, &contents, &oi) < 0) {
+		if (contents && !oideq(&real_oid, oid))
+			err = error(_("%s: hash-path mismatch, found at: %s"),
+				    oid_to_hex(&real_oid), path);
+		else
+			err = error(_("%s: object corrupt or missing: %s"),
+				    oid_to_hex(oid), path);
+	}
+	if (type != OBJ_NONE && type < 0)
+		err = error(_("%s: object is of unknown type '%s': %s"),
+			    oid_to_hex(&real_oid), cb_data->obj_type.buf,
+			    path);
+	if (err < 0) {
 		errors_found |= ERROR_OBJECT;
-		error(_("%s: object corrupt or missing: %s"),
-		      oid_to_hex(oid), path);
 		return 0; /* keep checking other objects */
 	}
 
@@ -640,8 +665,10 @@ static int fsck_cruft(const char *basename, const char *path, void *data)
 	return 0;
 }
 
-static int fsck_subdir(unsigned int nr, const char *path, void *progress)
+static int fsck_subdir(unsigned int nr, const char *path, void *data)
 {
+	struct for_each_loose_cb *cb_data = data;
+	struct progress *progress = cb_data->progress;
 	display_progress(progress, nr + 1);
 	return 0;
 }
@@ -649,6 +676,10 @@ static int fsck_subdir(unsigned int nr, const char *path, void *progress)
 static void fsck_object_dir(const char *path)
 {
 	struct progress *progress = NULL;
+	struct for_each_loose_cb cb_data = {
+		.obj_type = STRBUF_INIT,
+		.progress = progress,
+	};
 
 	if (verbose)
 		fprintf_ln(stderr, _("Checking object directory"));
@@ -657,9 +688,10 @@ static void fsck_object_dir(const char *path)
 		progress = start_progress(_("Checking object directories"), 256);
 
 	for_each_loose_file_in_objdir(path, fsck_loose, fsck_cruft, fsck_subdir,
-				      progress);
+				      &cb_data);
 	display_progress(progress, 256);
 	stop_progress(&progress);
+	strbuf_release(&cb_data.obj_type);
 }
 
 static int fsck_head_link(const char *head_ref_name,

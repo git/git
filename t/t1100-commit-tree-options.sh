@@ -12,6 +12,7 @@ Also make sure that command line parser understands the normal
 "flags first and then non flag arguments" command line.
 '
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 cat >expected <<EOF

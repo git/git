@@ -3,6 +3,13 @@ diff_cmd () {
 		-R 'Accel.Search: "Ctrl+F"' \
 		-R 'Accel.SearchForward: "Ctrl+G"' \
 		"$LOCAL" "$REMOTE"
+
+	# xxdiff can segfault on binary files which are often uninteresting.
+	# Do not allow segfaults to stop us from continuing on to the next file.
+	if test $? = 128
+	then
+		return 1
+	fi
 }
 
 merge_cmd () {

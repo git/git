@@ -2,6 +2,7 @@
 
 test_description='Test parse_pathspec_file()'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'one item from stdin' '

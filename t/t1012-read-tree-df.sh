@@ -2,6 +2,7 @@
 
 test_description='read-tree D/F conflict corner cases'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-read-tree.sh
 

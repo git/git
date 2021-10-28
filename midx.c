@@ -1107,6 +1107,22 @@ cleanup:
 	return ret;
 }
 
+static struct multi_pack_index *lookup_multi_pack_index(struct repository *r,
+							const char *object_dir)
+{
+	struct multi_pack_index *cur;
+
+	/* Ensure the given object_dir is local, or a known alternate. */
+	find_odb(r, object_dir);
+
+	for (cur = get_multi_pack_index(r); cur; cur = cur->next) {
+		if (!strcmp(object_dir, cur->object_dir))
+			return cur;
+	}
+
+	return NULL;
+}
+
 static int write_midx_internal(const char *object_dir,
 			       struct string_list *packs_to_include,
 			       struct string_list *packs_to_drop,
@@ -1120,14 +1136,10 @@ static int write_midx_internal(const char *object_dir,
 	struct hashfile *f = NULL;
 	struct lock_file lk;
 	struct write_midx_context ctx = { 0 };
-	struct multi_pack_index *cur;
 	int pack_name_concat_len = 0;
 	int dropped_packs = 0;
 	int result = 0;
 	struct chunkfile *cf;
-
-	/* Ensure the given object_dir is local, or a known alternate. */
-	find_odb(the_repository, object_dir);
 
 	midx_name = get_midx_filename(object_dir);
 	if (safe_create_leading_directories(midx_name))
@@ -1140,12 +1152,7 @@ static int write_midx_internal(const char *object_dir,
 		 * packs to include, since all packs and objects are copied
 		 * blindly from an existing MIDX if one is present.
 		 */
-		for (cur = get_multi_pack_index(the_repository); cur; cur = cur->next) {
-			if (!strcmp(object_dir, cur->object_dir)) {
-				ctx.m = cur;
-				break;
-			}
-		}
+		ctx.m = lookup_multi_pack_index(the_repository, object_dir);
 	}
 
 	if (ctx.m && !midx_checksum_valid(ctx.m)) {
@@ -1416,7 +1423,8 @@ static int write_midx_internal(const char *object_dir,
 	if (ctx.m)
 		close_object_store(the_repository->objects);
 
-	commit_lock_file(&lk);
+	if (commit_lock_file(&lk) < 0)
+		die_errno(_("could not write multi-pack-index"));
 
 	clear_midx_files_ext(object_dir, ".bitmap", midx_hash);
 	clear_midx_files_ext(object_dir, ".rev", midx_hash);
@@ -1689,7 +1697,7 @@ int expire_midx_packs(struct repository *r, const char *object_dir, unsigned fla
 {
 	uint32_t i, *count, result = 0;
 	struct string_list packs_to_drop = STRING_LIST_INIT_DUP;
-	struct multi_pack_index *m = load_multi_pack_index(object_dir, 1);
+	struct multi_pack_index *m = lookup_multi_pack_index(r, object_dir);
 	struct progress *progress = NULL;
 
 	if (!m)
@@ -1734,12 +1742,11 @@ int expire_midx_packs(struct repository *r, const char *object_dir, unsigned fla
 
 	free(count);
 
-	if (packs_to_drop.nr) {
+	if (packs_to_drop.nr)
 		result = write_midx_internal(object_dir, NULL, &packs_to_drop, NULL, NULL, flags);
-		m = NULL;
-	}
 
 	string_list_clear(&packs_to_drop, 0);
+
 	return result;
 }
 
@@ -1855,7 +1862,7 @@ int midx_repack(struct repository *r, const char *object_dir, size_t batch_size,
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	FILE *cmd_in;
 	struct strbuf base_name = STRBUF_INIT;
-	struct multi_pack_index *m = load_multi_pack_index(object_dir, 1);
+	struct multi_pack_index *m = lookup_multi_pack_index(r, object_dir);
 
 	/*
 	 * When updating the default for these configuration
@@ -1927,11 +1934,8 @@ int midx_repack(struct repository *r, const char *object_dir, size_t batch_size,
 	}
 
 	result = write_midx_internal(object_dir, NULL, NULL, NULL, NULL, flags);
-	m = NULL;
 
 cleanup:
-	if (m)
-		close_midx(m);
 	free(include_pack);
 	return result;
 }

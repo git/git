@@ -74,6 +74,11 @@ UI, Workflows & Features
  * "git repack" has been taught to generate multi-pack reachability
    bitmaps.
 
+ * "git fsck" has been taught to report mismatch between expected and
+   actual types of an object better.
+
+ * Use ssh public crypto for object and push-cert signing.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -172,6 +177,11 @@ Performance, Internal Implementation, Development Support etc.
 
  * Prevent "make sparse" from running for the source files that
    haven't been modified.
+
+ * The codepath to write a new version of .midx multi-pack index files
+   has learned to release the mmaped memory holding the current
+   version of .midx before removing them from the disk, as some
+   platforms do not allow removal of a file that still has mapping.
 
 
 Fixes since v2.33
@@ -334,6 +344,30 @@ Fixes since v2.33
    to be grabbed, which can cause the build&test to fail.  Tighten it.
    (merge 7491ef6198 js/windows-ci-path-fix later to maint).
 
+ * Avoid performance measurements from getting ruined by gc and other
+   housekeeping pauses interfering in the middle.
+   (merge be79131a53 rs/disable-gc-during-perf-tests later to maint).
+
+ * Stop "git add --dry-run" from creating new blob and tree objects.
+   (merge e578d0311d rs/add-dry-run-without-objects later to maint).
+
+ * "git commit" gave duplicated error message when the object store
+   was unwritable, which has been corrected.
+   (merge 4ef91a2d79 ab/fix-commit-error-message-upon-unwritable-object-store later to maint).
+
+ * Recent sparse-index addition, namely any use of index_name_pos(),
+   can expand sparse index entries and breaks any code that walks
+   cache-tree or existing index entries.  One such instance of such a
+   breakage has been corrected.
+
+ * The xxdiff difftool backend can exit with status 128, which the
+   difftool-helper that launches the backend takes as a significant
+   failure, when it is not significant at all.  Work it around.
+   (merge 571f4348dd da/mergetools-special-case-xxdiff-exit-128 later to maint).
+
+ * Improve test framework around unwritable directories.
+   (merge 5d22e18965 ab/test-cleanly-recreate-trash-directory later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge f188160be9 ab/bundle-remove-verbose-option later to maint).
    (merge 8c6b4332b4 rs/close-pack-leakfix later to maint).
@@ -343,3 +377,7 @@ Fixes since v2.33
    (merge 100c2da2d3 rs/p3400-lose-tac later to maint).
    (merge 76f3b69896 tb/aggregate-ignore-leading-whitespaces later to maint).
    (merge 6e4fd8bfcd tz/doc-link-to-bundle-format-fix later to maint).
+   (merge f6c013dfa1 jc/doc-commit-header-continuation-line later to maint).
+   (merge ec9a37d69b ab/pkt-line-cleanup later to maint).
+   (merge 8650c6298c ab/fix-make-lint-docs later to maint).
+   (merge 1c720357ce ab/test-lib-diff-cleanup later to maint).

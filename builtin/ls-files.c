@@ -672,6 +672,7 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 			 N_("suppress duplicate entries")),
 		OPT_END()
 	};
+	int ret = 0;
 
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage_with_options(ls_files_usage, builtin_ls_files_options);
@@ -775,16 +776,13 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 	if (show_resolve_undo)
 		show_ru_info(the_repository->index);
 
-	if (ps_matched) {
-		int bad;
-		bad = report_path_error(ps_matched, &pathspec);
-		if (bad)
-			fprintf(stderr, "Did you forget to 'git add'?\n");
-
-		return bad ? 1 : 0;
+	if (ps_matched && report_path_error(ps_matched, &pathspec)) {
+		fprintf(stderr, "Did you forget to 'git add'?\n");
+		ret = 1;
 	}
 
+	string_list_clear(&exclude_list, 0);
 	dir_clear(&dir);
 	free(max_prefix);
-	return 0;
+	return ret;
 }

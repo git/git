@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='signed commit tests'
+test_description='ssh signed commit tests'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
@@ -8,13 +8,15 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 GNUPGHOME_NOT_USED=$GNUPGHOME
 . "$TEST_DIRECTORY/lib-gpg.sh"
 
-test_expect_success GPG 'create signed commits' '
+test_expect_success GPGSSH 'create signed commits' '
 	test_oid_cache <<-\EOF &&
 	header sha1:gpgsig
 	header sha256:gpgsig-sha256
 	EOF
 
 	test_when_finished "test_unconfig commit.gpgsign" &&
+	test_config gpg.format ssh &&
+	test_config user.signingkey "${GPGSSH_KEY_PRIMARY}" &&
 
 	echo 1 >file && git add file &&
 	test_tick && git commit -S -m initial &&
@@ -53,7 +55,7 @@ test_expect_success GPG 'create signed commits' '
 	test_tick && git rebase -f HEAD^^ && git tag sixth-signed HEAD^ &&
 	git tag seventh-signed &&
 
-	echo 8 >file && test_tick && git commit -a -m eighth -SB7227189 &&
+	echo 8 >file && test_tick && git commit -a -m eighth -S"${GPGSSH_KEY_UNTRUSTED}" &&
 	git tag eighth-signed-alt &&
 
 	# commit.gpgsign is still on but this must not be signed
@@ -69,30 +71,14 @@ test_expect_success GPG 'create signed commits' '
 	echo 11 | git commit-tree --gpg-sign HEAD^{tree} >oid &&
 	test_line_count = 1 oid &&
 	git tag eleventh-signed $(cat oid) &&
-	echo 12 | git commit-tree --gpg-sign=B7227189 HEAD^{tree} >oid &&
+	echo 12 | git commit-tree --gpg-sign="${GPGSSH_KEY_UNTRUSTED}" HEAD^{tree} >oid &&
 	test_line_count = 1 oid &&
-	git tag twelfth-signed-alt $(cat oid) &&
-
-	cat >keydetails <<-\EOF &&
-	Key-Type: RSA
-	Key-Length: 2048
-	Subkey-Type: RSA
-	Subkey-Length: 2048
-	Name-Real: Unknown User
-	Name-Email: unknown@git.com
-	Expire-Date: 0
-	%no-ask-passphrase
-	%no-protection
-	EOF
-	gpg --batch --gen-key keydetails &&
-	echo 13 >file && git commit -a -S"unknown@git.com" -m thirteenth &&
-	git tag thirteenth-signed &&
-	DELETE_FINGERPRINT=$(gpg -K --with-colons --fingerprint --batch unknown@git.com | grep "^fpr" | head -n 1 | awk -F ":" "{print \$10;}") &&
-	gpg --batch --yes --delete-secret-keys $DELETE_FINGERPRINT &&
-	gpg --batch --yes --delete-keys unknown@git.com
+	git tag twelfth-signed-alt $(cat oid)
 '
 
-test_expect_success GPG 'verify and show signatures' '
+test_expect_success GPGSSH 'verify and show signatures' '
+	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
+	test_config gpg.mintrustlevel UNDEFINED &&
 	(
 		for commit in initial second merge fourth-signed \
 			fifth-signed sixth-signed seventh-signed tenth-signed \
@@ -100,8 +86,8 @@ test_expect_success GPG 'verify and show signatures' '
 		do
 			git verify-commit $commit &&
 			git show --pretty=short --show-signature $commit >actual &&
-			grep "Good signature from" actual &&
-			! grep "BAD signature from" actual &&
+			grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
+			! grep "${GPGSSH_BAD_SIGNATURE}" actual &&
 			echo $commit OK || exit 1
 		done
 	) &&
@@ -111,8 +97,8 @@ test_expect_success GPG 'verify and show signatures' '
 		do
 			test_must_fail git verify-commit $commit &&
 			git show --pretty=short --show-signature $commit >actual &&
-			! grep "Good signature from" actual &&
-			! grep "BAD signature from" actual &&
+			! grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
+			! grep "${GPGSSH_BAD_SIGNATURE}" actual &&
 			echo $commit OK || exit 1
 		done
 	) &&
@@ -120,50 +106,47 @@ test_expect_success GPG 'verify and show signatures' '
 		for commit in eighth-signed-alt twelfth-signed-alt
 		do
 			git show --pretty=short --show-signature $commit >actual &&
-			grep "Good signature from" actual &&
-			! grep "BAD signature from" actual &&
-			grep "not certified" actual &&
+			grep "${GPGSSH_GOOD_SIGNATURE_UNTRUSTED}" actual &&
+			! grep "${GPGSSH_BAD_SIGNATURE}" actual &&
+			grep "${GPGSSH_KEY_NOT_TRUSTED}" actual &&
 			echo $commit OK || exit 1
 		done
 	)
 '
 
-test_expect_success GPG 'verify-commit exits failure on unknown signature' '
-	test_must_fail git verify-commit thirteenth-signed 2>actual &&
-	! grep "Good signature from" actual &&
-	! grep "BAD signature from" actual &&
-	grep -q -F -e "No public key" -e "public key not found" actual
+test_expect_success GPGSSH 'verify-commit exits failure on untrusted signature' '
+	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
+	test_must_fail git verify-commit eighth-signed-alt 2>actual &&
+	grep "${GPGSSH_GOOD_SIGNATURE_UNTRUSTED}" actual &&
+	! grep "${GPGSSH_BAD_SIGNATURE}" actual &&
+	grep "${GPGSSH_KEY_NOT_TRUSTED}" actual
 '
 
-test_expect_success GPG 'verify-commit exits success on untrusted signature' '
-	git verify-commit eighth-signed-alt 2>actual &&
-	grep "Good signature from" actual &&
-	! grep "BAD signature from" actual &&
-	grep "not certified" actual
-'
-
-test_expect_success GPG 'verify-commit exits success with matching minTrustLevel' '
-	test_config gpg.minTrustLevel ultimate &&
-	git verify-commit sixth-signed
-'
-
-test_expect_success GPG 'verify-commit exits success with low minTrustLevel' '
+test_expect_success GPGSSH 'verify-commit exits success with matching minTrustLevel' '
+	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
 	test_config gpg.minTrustLevel fully &&
 	git verify-commit sixth-signed
 '
 
-test_expect_success GPG 'verify-commit exits failure with high minTrustLevel' '
+test_expect_success GPGSSH 'verify-commit exits success with low minTrustLevel' '
+	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
+	test_config gpg.minTrustLevel marginal &&
+	git verify-commit sixth-signed
+'
+
+test_expect_success GPGSSH 'verify-commit exits failure with high minTrustLevel' '
 	test_config gpg.minTrustLevel ultimate &&
 	test_must_fail git verify-commit eighth-signed-alt
 '
 
-test_expect_success GPG 'verify signatures with --raw' '
+test_expect_success GPGSSH 'verify signatures with --raw' '
+	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
 	(
 		for commit in initial second merge fourth-signed fifth-signed sixth-signed seventh-signed
 		do
 			git verify-commit --raw $commit 2>actual &&
-			grep "GOODSIG" actual &&
-			! grep "BADSIG" actual &&
+			grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
+			! grep "${GPGSSH_BAD_SIGNATURE}" actual &&
 			echo $commit OK || exit 1
 		done
 	) &&
@@ -171,88 +154,98 @@ test_expect_success GPG 'verify signatures with --raw' '
 		for commit in merge^2 fourth-unsigned sixth-unsigned seventh-unsigned
 		do
 			test_must_fail git verify-commit --raw $commit 2>actual &&
-			! grep "GOODSIG" actual &&
-			! grep "BADSIG" actual &&
+			! grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
+			! grep "${GPGSSH_BAD_SIGNATURE}" actual &&
 			echo $commit OK || exit 1
 		done
 	) &&
 	(
 		for commit in eighth-signed-alt
 		do
-			git verify-commit --raw $commit 2>actual &&
-			grep "GOODSIG" actual &&
-			! grep "BADSIG" actual &&
-			grep "TRUST_UNDEFINED" actual &&
+			test_must_fail git verify-commit --raw $commit 2>actual &&
+			grep "${GPGSSH_GOOD_SIGNATURE_UNTRUSTED}" actual &&
+			! grep "${GPGSSH_BAD_SIGNATURE}" actual &&
 			echo $commit OK || exit 1
 		done
 	)
 '
 
-test_expect_success GPG 'proper header is used for hash algorithm' '
+test_expect_success GPGSSH 'proper header is used for hash algorithm' '
 	git cat-file commit fourth-signed >output &&
-	grep "^$(test_oid header) -----BEGIN PGP SIGNATURE-----" output
+	grep "^$(test_oid header) -----BEGIN SSH SIGNATURE-----" output
 '
 
-test_expect_success GPG 'show signed commit with signature' '
+test_expect_success GPGSSH 'show signed commit with signature' '
+	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
 	git show -s initial >commit &&
 	git show -s --show-signature initial >show &&
 	git verify-commit -v initial >verify.1 2>verify.2 &&
 	git cat-file commit initial >cat &&
-	grep -v -e "gpg: " -e "Warning: " show >show.commit &&
-	grep -e "gpg: " -e "Warning: " show >show.gpg &&
+	grep -v -e "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" -e "Warning: " show >show.commit &&
+	grep -e "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" -e "Warning: " show >show.gpg &&
 	grep -v "^ " cat | grep -v "^gpgsig.* " >cat.commit &&
 	test_cmp show.commit commit &&
 	test_cmp show.gpg verify.2 &&
 	test_cmp cat.commit verify.1
 '
 
-test_expect_success GPG 'detect fudged signature' '
+test_expect_success GPGSSH 'detect fudged signature' '
+	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
 	git cat-file commit seventh-signed >raw &&
 	sed -e "s/^seventh/7th forged/" raw >forged1 &&
 	git hash-object -w -t commit forged1 >forged1.commit &&
 	test_must_fail git verify-commit $(cat forged1.commit) &&
 	git show --pretty=short --show-signature $(cat forged1.commit) >actual1 &&
-	grep "BAD signature from" actual1 &&
-	! grep "Good signature from" actual1
+	grep "${GPGSSH_BAD_SIGNATURE}" actual1 &&
+	! grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual1 &&
+	! grep "${GPGSSH_GOOD_SIGNATURE_UNTRUSTED}" actual1
 '
 
-test_expect_success GPG 'detect fudged signature with NUL' '
+test_expect_success GPGSSH 'detect fudged signature with NUL' '
+	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
 	git cat-file commit seventh-signed >raw &&
 	cat raw >forged2 &&
 	echo Qwik | tr "Q" "\000" >>forged2 &&
 	git hash-object -w -t commit forged2 >forged2.commit &&
 	test_must_fail git verify-commit $(cat forged2.commit) &&
 	git show --pretty=short --show-signature $(cat forged2.commit) >actual2 &&
-	grep "BAD signature from" actual2 &&
-	! grep "Good signature from" actual2
+	grep "${GPGSSH_BAD_SIGNATURE}" actual2 &&
+	! grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual2
 '
 
-test_expect_success GPG 'amending already signed commit' '
+test_expect_success GPGSSH 'amending already signed commit' '
+	test_config gpg.format ssh &&
+	test_config user.signingkey "${GPGSSH_KEY_PRIMARY}" &&
+	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
 	git checkout fourth-signed^0 &&
 	git commit --amend -S --no-edit &&
 	git verify-commit HEAD &&
 	git show -s --show-signature HEAD >actual &&
-	grep "Good signature from" actual &&
-	! grep "BAD signature from" actual
+	grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
+	! grep "${GPGSSH_BAD_SIGNATURE}" actual
 '
 
-test_expect_success GPG 'show good signature with custom format' '
-	cat >expect <<-\EOF &&
+test_expect_success GPGSSH 'show good signature with custom format' '
+	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
+	FINGERPRINT=$(ssh-keygen -lf "${GPGSSH_KEY_PRIMARY}" | awk "{print \$2;}") &&
+	cat >expect.tmpl <<-\EOF &&
 	G
-	13B6F51ECDDE430D
-	C O Mitter <committer@example.com>
-	73D758744BE721698EC54E8713B6F51ECDDE430D
-	73D758744BE721698EC54E8713B6F51ECDDE430D
+	FINGERPRINT
+	principal with number 1
+	FINGERPRINT
+
 	EOF
+	sed "s|FINGERPRINT|$FINGERPRINT|g" expect.tmpl >expect &&
 	git log -1 --format="%G?%n%GK%n%GS%n%GF%n%GP" sixth-signed >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success GPG 'show bad signature with custom format' '
+test_expect_success GPGSSH 'show bad signature with custom format' '
+	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
 	cat >expect <<-\EOF &&
 	B
-	13B6F51ECDDE430D
-	C O Mitter <committer@example.com>
+
+
 
 
 	EOF
@@ -260,55 +253,52 @@ test_expect_success GPG 'show bad signature with custom format' '
 	test_cmp expect actual
 '
 
-test_expect_success GPG 'show untrusted signature with custom format' '
-	cat >expect <<-\EOF &&
+test_expect_success GPGSSH 'show untrusted signature with custom format' '
+	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
+	cat >expect.tmpl <<-\EOF &&
 	U
-	65A0EEA02E30CAD7
-	Eris Discordia <discord@example.net>
-	F8364A59E07FFE9F4D63005A65A0EEA02E30CAD7
-	D4BE22311AD3131E5EDA29A461092E85B7227189
+	FINGERPRINT
+
+	FINGERPRINT
+
 	EOF
 	git log -1 --format="%G?%n%GK%n%GS%n%GF%n%GP" eighth-signed-alt >actual &&
+	FINGERPRINT=$(ssh-keygen -lf "${GPGSSH_KEY_UNTRUSTED}" | awk "{print \$2;}") &&
+	sed "s|FINGERPRINT|$FINGERPRINT|g" expect.tmpl >expect &&
 	test_cmp expect actual
 '
 
-test_expect_success GPG 'show untrusted signature with undefined trust level' '
-	cat >expect <<-\EOF &&
+test_expect_success GPGSSH 'show untrusted signature with undefined trust level' '
+	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
+	cat >expect.tmpl <<-\EOF &&
 	undefined
-	65A0EEA02E30CAD7
-	Eris Discordia <discord@example.net>
-	F8364A59E07FFE9F4D63005A65A0EEA02E30CAD7
-	D4BE22311AD3131E5EDA29A461092E85B7227189
+	FINGERPRINT
+
+	FINGERPRINT
+
 	EOF
 	git log -1 --format="%GT%n%GK%n%GS%n%GF%n%GP" eighth-signed-alt >actual &&
+	FINGERPRINT=$(ssh-keygen -lf "${GPGSSH_KEY_UNTRUSTED}" | awk "{print \$2;}") &&
+	sed "s|FINGERPRINT|$FINGERPRINT|g" expect.tmpl >expect &&
 	test_cmp expect actual
 '
 
-test_expect_success GPG 'show untrusted signature with ultimate trust level' '
-	cat >expect <<-\EOF &&
-	ultimate
-	13B6F51ECDDE430D
-	C O Mitter <committer@example.com>
-	73D758744BE721698EC54E8713B6F51ECDDE430D
-	73D758744BE721698EC54E8713B6F51ECDDE430D
+test_expect_success GPGSSH 'show untrusted signature with ultimate trust level' '
+	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
+	cat >expect.tmpl <<-\EOF &&
+	fully
+	FINGERPRINT
+	principal with number 1
+	FINGERPRINT
+
 	EOF
 	git log -1 --format="%GT%n%GK%n%GS%n%GF%n%GP" sixth-signed >actual &&
+	FINGERPRINT=$(ssh-keygen -lf "${GPGSSH_KEY_PRIMARY}" | awk "{print \$2;}") &&
+	sed "s|FINGERPRINT|$FINGERPRINT|g" expect.tmpl >expect &&
 	test_cmp expect actual
 '
 
-test_expect_success GPG 'show unknown signature with custom format' '
-	cat >expect <<-\EOF &&
-	E
-	65A0EEA02E30CAD7
-
-
-
-	EOF
-	GNUPGHOME="$GNUPGHOME_NOT_USED" git log -1 --format="%G?%n%GK%n%GS%n%GF%n%GP" eighth-signed-alt >actual &&
-	test_cmp expect actual
-'
-
-test_expect_success GPG 'show lack of signature with custom format' '
+test_expect_success GPGSSH 'show lack of signature with custom format' '
 	cat >expect <<-\EOF &&
 	N
 
@@ -320,21 +310,23 @@ test_expect_success GPG 'show lack of signature with custom format' '
 	test_cmp expect actual
 '
 
-test_expect_success GPG 'log.showsignature behaves like --show-signature' '
+test_expect_success GPGSSH 'log.showsignature behaves like --show-signature' '
+	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
 	test_config log.showsignature true &&
 	git show initial >actual &&
-	grep "gpg: Signature made" actual &&
-	grep "gpg: Good signature" actual
+	grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual
 '
 
-test_expect_success GPG 'check config gpg.format values' '
-	test_config gpg.format openpgp &&
+test_expect_success GPGSSH 'check config gpg.format values' '
+	test_config gpg.format ssh &&
+	test_config user.signingkey "${GPGSSH_KEY_PRIMARY}" &&
+	test_config gpg.format ssh &&
 	git commit -S --amend -m "success" &&
 	test_config gpg.format OpEnPgP &&
 	test_must_fail git commit -S --amend -m "fail"
 '
 
-test_expect_success GPG 'detect fudged commit with double signature' '
+test_expect_failure GPGSSH 'detect fudged commit with double signature (TODO)' '
 	sed -e "/gpgsig/,/END PGP/d" forged1 >double-base &&
 	sed -n -e "/gpgsig/,/END PGP/p" forged1 | \
 		sed -e "s/^$(test_oid header)//;s/^ //" | gpg --dearmor >double-sig1.sig &&
@@ -350,7 +342,7 @@ test_expect_success GPG 'detect fudged commit with double signature' '
 	grep "Good signature from" double-actual
 '
 
-test_expect_success GPG 'show double signature with custom format' '
+test_expect_failure GPGSSH 'show double signature with custom format (TODO)' '
 	cat >expect <<-\EOF &&
 	E
 
@@ -363,9 +355,7 @@ test_expect_success GPG 'show double signature with custom format' '
 '
 
 
-# NEEDSWORK: This test relies on the test_tick commit/author dates from the first
-# 'create signed commits' test even though it creates its own
-test_expect_success GPG 'verify-commit verifies multiply signed commits' '
+test_expect_failure GPGSSH 'verify-commit verifies multiply signed commits (TODO)' '
 	git init multiply-signed &&
 	cd multiply-signed &&
 	test_commit first &&

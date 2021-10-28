@@ -223,8 +223,14 @@ int hash_object_file(const struct git_hash_algo *algo, const void *buf,
 		     unsigned long len, const char *type,
 		     struct object_id *oid);
 
-int write_object_file(const void *buf, unsigned long len,
-		      const char *type, struct object_id *oid);
+int write_object_file_flags(const void *buf, unsigned long len,
+			    const char *type, struct object_id *oid,
+			    unsigned flags);
+static inline int write_object_file(const void *buf, unsigned long len,
+				    const char *type, struct object_id *oid)
+{
+	return write_object_file_flags(buf, len, type, oid, 0);
+}
 
 int hash_object_file_literally(const void *buf, unsigned long len,
 			       const char *type, struct object_id *oid,
@@ -245,6 +251,7 @@ int force_object_loose(const struct object_id *oid, time_t mtime);
 
 /*
  * Open the loose object at path, check its hash, and return the contents,
+ * use the "oi" argument to assert things about the object, or e.g. populate its
  * type, and size. If the object is a blob, then "contents" may return NULL,
  * to allow streaming of large blobs.
  *
@@ -252,9 +259,9 @@ int force_object_loose(const struct object_id *oid, time_t mtime);
  */
 int read_loose_object(const char *path,
 		      const struct object_id *expected_oid,
-		      enum object_type *type,
-		      unsigned long *size,
-		      void **contents);
+		      struct object_id *real_oid,
+		      void **contents,
+		      struct object_info *oi);
 
 /* Retry packed storage after checking packed and loose storage */
 #define HAS_OBJECT_RECHECK_PACKED 1

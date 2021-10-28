@@ -46,5 +46,7 @@ int cmd__prio_queue(int argc, const char **argv)
 		}
 	}
 
+	clear_prio_queue(&pq);
+
 	return 0;
 }
