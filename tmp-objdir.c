@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "tmp-objdir.h"
+#include "chdir-notify.h"
 #include "dir.h"
 #include "sigchain.h"
 #include "string-list.h"
@@ -12,6 +13,7 @@ struct tmp_objdir {
 	struct strbuf path;
 	struct strvec env;
 	struct object_directory *prev_odb;
+	int will_destroy;
 };
 
 /*
@@ -315,4 +317,27 @@ void tmp_objdir_replace_primary_odb(struct tmp_objdir *t, int will_destroy)
 	if (t->prev_odb)
 		BUG("the primary object database is already replaced");
 	t->prev_odb = set_temporary_primary_odb(t->path.buf, will_destroy);
+	t->will_destroy = will_destroy;
+}
+
+struct tmp_objdir *tmp_objdir_unapply_primary_odb(void)
+{
+	if (!the_tmp_objdir || !the_tmp_objdir->prev_odb)
+		return NULL;
+
+	restore_primary_odb(the_tmp_objdir->prev_odb, the_tmp_objdir->path.buf);
+	the_tmp_objdir->prev_odb = NULL;
+	return the_tmp_objdir;
+}
+
+void tmp_objdir_reapply_primary_odb(struct tmp_objdir *t, const char *old_cwd,
+		const char *new_cwd)
+{
+	char *path;
+
+	path = reparent_relative_path(old_cwd, new_cwd, t->path.buf);
+	strbuf_reset(&t->path);
+	strbuf_addstr(&t->path, path);
+	free(path);
+	tmp_objdir_replace_primary_odb(t, t->will_destroy);
 }

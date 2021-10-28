@@ -59,4 +59,19 @@ void tmp_objdir_add_as_alternate(const struct tmp_objdir *);
  */
 void tmp_objdir_replace_primary_odb(struct tmp_objdir *, int will_destroy);
 
+/*
+ * If the primary object database was replaced by a temporary object directory,
+ * restore it to its original value while keeping the directory contents around.
+ * Returns NULL if the primary object database was not replaced.
+ */
+struct tmp_objdir *tmp_objdir_unapply_primary_odb(void);
+
+/*
+ * Reapplies the former primary temporary object database, after protentially
+ * changing its relative path.
+ */
+void tmp_objdir_reapply_primary_odb(struct tmp_objdir *, const char *old_cwd,
+		const char *new_cwd);
+
+
 #endif /* TMP_OBJDIR_H */
