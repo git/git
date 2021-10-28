@@ -228,4 +228,28 @@ test_expect_success 'git pull --no-signoff flag cancels --signoff flag' '
 	test_must_be_empty actual
 '
 
+test_expect_success 'git pull --no-verify flag passed to merge' '
+	test_when_finished "rm -fr src dst actual" &&
+	git init src &&
+	test_commit -C src one &&
+	git clone src dst &&
+	write_script dst/.git/hooks/commit-msg <<-\EOF &&
+	false
+	EOF
+	test_commit -C src two &&
+	git -C dst pull --no-ff --no-verify
+'
+
+test_expect_success 'git pull --no-verify --verify passed to merge' '
+	test_when_finished "rm -fr src dst actual" &&
+	git init src &&
+	test_commit -C src one &&
+	git clone src dst &&
+	write_script dst/.git/hooks/commit-msg <<-\EOF &&
+	false
+	EOF
+	test_commit -C src two &&
+	test_must_fail git -C dst pull --no-ff --no-verify --verify
+'
+
 test_done
