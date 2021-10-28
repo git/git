@@ -3,14 +3,14 @@
 
 int cmd__genzeros(int argc, const char **argv)
 {
-	long count;
+	intmax_t count;
 
 	if (argc > 2) {
 		fprintf(stderr, "usage: %s [<count>]\n", argv[0]);
 		return 1;
 	}
 
-	count = argc > 1 ? strtol(argv[1], NULL, 0) : -1L;
+	count = argc > 1 ? strtoimax(argv[1], NULL, 0) : -1;
 
 	while (count < 0 || count--) {
 		if (putchar(0) == EOF)
