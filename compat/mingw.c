@@ -1241,8 +1241,11 @@ char *mingw_mktemp(char *template)
 	int offset = 0;
 
 	/* we need to return the path, thus no long paths here! */
-	if (xutftowcs_path(wtemplate, template) < 0)
+	if (xutftowcsn(wtemplate, template, MAX_PATH, -1) < 0) {
+		if (errno == ERANGE)
+			errno = ENAMETOOLONG;
 		return NULL;
+	}
 
 	if (is_dir_sep(template[0]) && !is_dir_sep(template[1]) &&
 	    iswalpha(wtemplate[0]) && wtemplate[1] == L':') {
@@ -3760,7 +3763,7 @@ int wmain(int argc, const wchar_t **wargv)
 
 	maybe_redirect_std_handles();
 	adjust_symlink_flags();
-	fsync_object_files = 1;
+	fsync_object_files = FSYNC_OBJECT_FILES_ON;
 
 	/* determine size of argv and environ conversion buffer */
 	maxlen = wcslen(wargv[0]);
