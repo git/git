@@ -151,12 +151,6 @@ void xsetenv(const char *name, const char *value, int overwrite)
 		die_errno(_("could not setenv '%s'"), name ? name : "(null)");
 }
 
-void xunsetenv(const char *name)
-{
-	if (!unsetenv(name))
-		die_errno(_("could not unsetenv '%s'"), name ? name : "(null)");
-}
-
 /*
  * Limit size of IO chunks, because huge chunks only cause pain.  OS X
  * 64-bit is buggy, returning EINVAL if len >= INT_MAX; and even in
