@@ -199,8 +199,8 @@ static void *run(void *arg)
 		grep_source_clear_data(&w->source);
 		work_done(w);
 	}
-	free_grep_patterns(arg);
-	free(arg);
+	free_grep_patterns(opt);
+	free(opt);
 
 	return (void*) (intptr_t) hit;
 }
@@ -401,7 +401,7 @@ static void append_path(struct grep_opt *opt, const void *data, size_t len)
 
 	if (len == 1 && *(const char *)data == '\0')
 		return;
-	string_list_append(path_list, xstrndup(data, len));
+	string_list_append_nodup(path_list, xstrndup(data, len));
 }
 
 static void run_pager(struct grep_opt *opt, const char *prefix)
@@ -839,7 +839,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	struct grep_opt opt;
 	struct object_array list = OBJECT_ARRAY_INIT;
 	struct pathspec pathspec;
-	struct string_list path_list = STRING_LIST_INIT_NODUP;
+	struct string_list path_list = STRING_LIST_INIT_DUP;
 	int i;
 	int dummy;
 	int use_index = 1;
@@ -1159,8 +1159,8 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			strbuf_addf(&buf, "+/%s%s",
 					strcmp("less", pager) ? "" : "*",
 					opt.pattern_list->pattern);
-			string_list_append(&path_list,
-					   strbuf_detach(&buf, NULL));
+			string_list_append_nodup(&path_list,
+						 strbuf_detach(&buf, NULL));
 		}
 	}
 
@@ -1195,7 +1195,9 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	if (hit && show_in_pager)
 		run_pager(&opt, prefix);
 	clear_pathspec(&pathspec);
+	string_list_clear(&path_list, 0);
 	free_grep_patterns(&opt);
+	object_array_clear(&list);
 	free_repos();
 	return !hit;
 }

@@ -3220,6 +3220,7 @@ static void die_on_index_match(const char *path, int force)
 		}
 		free(ps_matched);
 	}
+	clear_pathspec(&ps);
 }
 
 static void die_on_repo_without_commits(const char *path)
@@ -3231,6 +3232,7 @@ static void die_on_repo_without_commits(const char *path)
 		if (resolve_gitlink_ref(path, "HEAD", &oid) < 0)
 			die(_("'%s' does not have a commit checked out"), path);
 	}
+	strbuf_release(&sb);
 }
 
 static int module_add(int argc, const char **argv, const char *prefix)
