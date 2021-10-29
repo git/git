@@ -40,14 +40,20 @@ done
 test_expect_success 'recursive rm does not remove sparse entries' '
 	git reset --hard &&
 	git sparse-checkout set sub/dir &&
-	test_must_fail git rm -r sub &&
-	git rm --sparse -r sub &&
+	git rm -r sub &&
 	git status --porcelain -uno >actual &&
 	cat >expected <<-\EOF &&
+	D  sub/dir/e
+	EOF
+	test_cmp expected actual &&
+
+	git rm --sparse -r sub &&
+	git status --porcelain -uno >actual2 &&
+	cat >expected2 <<-\EOF &&
 	D  sub/d
 	D  sub/dir/e
 	EOF
-	test_cmp expected actual
+	test_cmp expected2 actual2
 '
 
 test_expect_success 'recursive rm --sparse removes sparse entries' '
@@ -103,6 +109,31 @@ test_expect_success 'refuse to rm a non-skip-worktree path outside sparse cone' 
 	git rm --sparse b 2>stderr &&
 	test_must_be_empty stderr &&
 	test_path_is_missing b
+'
+
+test_expect_success 'can remove files from non-sparse dir' '
+	git reset --hard &&
+	git sparse-checkout disable &&
+	mkdir -p w x/y &&
+	test_commit w/f &&
+	test_commit x/y/f &&
+
+	git sparse-checkout set w !/x y/ &&
+	git rm w/f.t x/y/f.t 2>stderr &&
+	test_must_be_empty stderr
+'
+
+test_expect_success 'refuse to remove non-skip-worktree file from sparse dir' '
+	git reset --hard &&
+	git sparse-checkout disable &&
+	mkdir -p x/y/z &&
+	test_commit x/y/z/f &&
+	git sparse-checkout set !/x y/ !x/y/z &&
+
+	git update-index --no-skip-worktree x/y/z/f.t &&
+	test_must_fail git rm x/y/z/f.t 2>stderr &&
+	echo x/y/z/f.t | cat sparse_error_header - sparse_hint >expect &&
+	test_cmp expect stderr
 '
 
 test_done
