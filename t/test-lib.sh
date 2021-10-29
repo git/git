@@ -489,6 +489,13 @@ then
 	export GIT_PERL_FATAL_WARNINGS
 fi
 
+case $GIT_TEST_FSYNC in
+'')
+	GIT_TEST_FSYNC=0
+	export GIT_TEST_FSYNC
+	;;
+esac
+
 # Add libc MALLOC and MALLOC_PERTURB test
 # only if we are not executing the test with valgrind
 if test -n "$valgrind" ||

@@ -985,6 +985,7 @@ extern int read_replace_refs;
 extern char *git_replace_ref_base;
 
 extern int fsync_object_files;
+extern int use_fsync;
 extern int core_preload_index;
 extern int precomposed_unicode;
 extern int protect_hfs;

@@ -3607,6 +3607,22 @@ package GITCVS::updater;
 use strict;
 use warnings;
 use DBI;
+our $_use_fsync;
+
+# n.b. consider using Git.pm
+sub use_fsync {
+    if (!defined($_use_fsync)) {
+        my $x = $ENV{GIT_TEST_FSYNC};
+        if (defined $x) {
+            local $ENV{GIT_CONFIG};
+            delete $ENV{GIT_CONFIG};
+            my $v = ::safe_pipe_capture('git', '-c', "test.fsync=$x",
+                                        qw(config --type=bool test.fsync));
+            $_use_fsync = defined($v) ? ($v eq "true\n") : 1;
+        }
+    }
+    $_use_fsync;
+}
 
 =head1 METHODS
 
@@ -3676,6 +3692,9 @@ sub new
                                 $self->{dbuser},
                                 $self->{dbpass});
     die "Error connecting to database\n" unless defined $self->{dbh};
+    if ($self->{dbdriver} eq 'SQLite' && !use_fsync()) {
+        $self->{dbh}->do('PRAGMA synchronous = OFF');
+    }
 
     $self->{tables} = {};
     foreach my $table ( keys %{$self->{dbh}->table_info(undef,undef,undef,'TABLE')->fetchall_hashref('TABLE_NAME')} )
