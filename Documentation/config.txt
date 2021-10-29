@@ -304,7 +304,7 @@ path relative to Git's "runtime prefix", i.e. relative to the location
 where Git itself was installed. For example, `%(prefix)/bin/` refers to
 the directory in which the Git executable itself lives. If Git was
 compiled without runtime prefix support, the compiled-in prefix will be
-subsituted instead. In the unlikely event that a literal path needs to
+substituted instead. In the unlikely event that a literal path needs to
 be specified that should _not_ be expanded, it needs to be prefixed by
 `./`, like so: `./%(prefix)/bin`.
 
