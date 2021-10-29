@@ -2,7 +2,7 @@
 
 test_description='git merge
 
-Testing pull.* configuration parsing.'
+Testing pull.* configuration parsing and other things.'
 
 . ./test-lib.sh
 
@@ -385,6 +385,20 @@ test_expect_success 'pull prevents non-fast-forward with "only" in pull.ff' '
 	git reset --hard c1 &&
 	test_config pull.ff only &&
 	test_must_fail git pull . c3
+'
+
+test_expect_success 'already-up-to-date pull succeeds with "only" in pull.ff' '
+	git reset --hard c1 &&
+	test_config pull.ff only &&
+	git pull . c0 &&
+	test "$(git rev-parse HEAD)" = "$(git rev-parse c1)"
+'
+
+test_expect_success 'already-up-to-date pull/rebase succeeds with "only" in pull.ff' '
+	git reset --hard c1 &&
+	test_config pull.ff only &&
+	git -c pull.rebase=true pull . c0 &&
+	test "$(git rev-parse HEAD)" = "$(git rev-parse c1)"
 '
 
 test_expect_success 'merge c1 with c2 (ours in pull.twohead)' '

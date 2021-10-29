@@ -931,6 +931,33 @@ static int get_can_ff(struct object_id *orig_head,
 	return ret;
 }
 
+/*
+ * Is orig_head a descendant of _all_ merge_heads?
+ * Unfortunately is_descendant_of() cannot be used as it asks
+ * if orig_head is a descendant of at least one of them.
+ */
+static int already_up_to_date(struct object_id *orig_head,
+			      struct oid_array *merge_heads)
+{
+	int i;
+	struct commit *ours;
+
+	ours = lookup_commit_reference(the_repository, orig_head);
+	for (i = 0; i < merge_heads->nr; i++) {
+		struct commit_list *list = NULL;
+		struct commit *theirs;
+		int ok;
+
+		theirs = lookup_commit_reference(the_repository, &merge_heads->oid[i]);
+		commit_list_insert(theirs, &list);
+		ok = repo_is_descendant_of(the_repository, ours, list);
+		free_commit_list(list);
+		if (!ok)
+			return 0;
+	}
+	return 1;
+}
+
 static void show_advice_pull_non_ff(void)
 {
 	advise(_("You have divergent branches and need to specify how to reconcile them.\n"
@@ -1072,7 +1099,7 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 
 	/* ff-only takes precedence over rebase */
 	if (opt_ff && !strcmp(opt_ff, "--ff-only")) {
-		if (!can_ff)
+		if (!can_ff && !already_up_to_date(&orig_head, &merge_heads))
 			die_ff_impossible();
 		opt_rebase = REBASE_FALSE;
 	}
