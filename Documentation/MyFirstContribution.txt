@@ -905,19 +905,34 @@ Sending emails with Git is a two-part process; before you can prepare the emails
 themselves, you'll need to prepare the patches. Luckily, this is pretty simple:
 
 ----
-$ git format-patch --cover-letter -o psuh/ master..psuh
+$ git format-patch --cover-letter -o psuh/ --base=auto psuh@{u}..psuh
 ----
 
-The `--cover-letter` parameter tells `format-patch` to create a cover letter
-template for you. You will need to fill in the template before you're ready
-to send - but for now, the template will be next to your other patches.
+ . The `--cover-letter` option tells `format-patch` to create a
+   cover letter template for you. You will need to fill in the
+   template before you're ready to send - but for now, the template
+   will be next to your other patches.
 
-The `-o psuh/` parameter tells `format-patch` to place the patch files into a
-directory. This is useful because `git send-email` can take a directory and
-send out all the patches from there.
+ . The `-o psuh/` option tells `format-patch` to place the patch
+   files into a directory. This is useful because `git send-email`
+   can take a directory and send out all the patches from there.
 
-`master..psuh` tells `format-patch` to generate patches for the difference
-between `master` and `psuh`. It will make one patch file per commit. After you
+ . The `--base=auto` option tells the command to record the "base
+   commit", on which the recipient is expected to apply the patch
+   series.  The `auto` value will cause `format-patch` to compute
+   the base commit automatically, which is the merge base of tip
+   commit of the remote-tracking branch and the specified revision
+   range.
+
+ . The `psuh@{u}..psuh` option tells `format-patch` to generate
+   patches for the commits you created on the `psuh` branch since it
+   forked from its upstream (which is `origin/master` if you
+   followed the example in the "Set up your workspace" section).  If
+   you are already on the `psuh` branch, you can just say `@{u}`,
+   which means "commits on the current branch since it forked from
+   its upstream", which is the same thing.
+
+The command will make one patch file per commit. After you
 run, you can go have a look at each of the patches with your favorite text
 editor and make sure everything looks alright; however, it's not recommended to
 make code fixups via the patch file. It's a better idea to make the change the
