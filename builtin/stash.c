@@ -1132,8 +1132,8 @@ done:
 	return ret;
 }
 
-static int stash_staged(struct stash_info *info, const struct pathspec *ps,
-			struct strbuf *out_patch, int quiet)
+static int stash_staged(struct stash_info *info, struct strbuf *out_patch,
+			int quiet)
 {
 	int ret = 0;
 	struct child_process cp_diff_tree = CHILD_PROCESS_INIT;
@@ -1370,7 +1370,7 @@ static int do_create_stash(const struct pathspec *ps, struct strbuf *stash_msg_b
 			goto done;
 		}
 	} else if (only_staged) {
-		ret = stash_staged(info, ps, patch, quiet);
+		ret = stash_staged(info, patch, quiet);
 		if (ret < 0) {
 			if (!quiet)
 				fprintf_ln(stderr, _("Cannot save the current "
