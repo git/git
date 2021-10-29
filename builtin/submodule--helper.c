@@ -2999,7 +2999,7 @@ struct add_data {
 };
 #define ADD_DATA_INIT { .depth = -1 }
 
-static void show_fetch_remotes(FILE *output, const char *git_dir_path)
+static void append_fetch_remotes(struct strbuf *msg, const char *git_dir_path)
 {
 	struct child_process cp_remote = CHILD_PROCESS_INIT;
 	struct strbuf sb_remote_out = STRBUF_INIT;
@@ -3015,7 +3015,7 @@ static void show_fetch_remotes(FILE *output, const char *git_dir_path)
 		while ((next_line = strchr(line, '\n')) != NULL) {
 			size_t len = next_line - line;
 			if (strip_suffix_mem(line, &len, " (fetch)"))
-				fprintf(output, "  %.*s\n", (int)len, line);
+				strbuf_addf(msg, "  %.*s\n", (int)len, line);
 			line = next_line + 1;
 		}
 	}
@@ -3047,19 +3047,27 @@ static int add_submodule(const struct add_data *add_data)
 
 		if (is_directory(submod_gitdir_path)) {
 			if (!add_data->force) {
-				fprintf(stderr, _("A git directory for '%s' is found "
-						  "locally with remote(s):"),
-					add_data->sm_name);
-				show_fetch_remotes(stderr, submod_gitdir_path);
+				struct strbuf msg = STRBUF_INIT;
+				char *die_msg;
+
+				strbuf_addf(&msg, _("A git directory for '%s' is found "
+						    "locally with remote(s):\n"),
+					    add_data->sm_name);
+
+				append_fetch_remotes(&msg, submod_gitdir_path);
 				free(submod_gitdir_path);
-				die(_("If you want to reuse this local git "
-				      "directory instead of cloning again from\n"
-				      "  %s\n"
-				      "use the '--force' option. If the local git "
-				      "directory is not the correct repo\n"
-				      "or if you are unsure what this means, choose "
-				      "another name with the '--name' option.\n"),
-				    add_data->realrepo);
+
+				strbuf_addf(&msg, _("If you want to reuse this local git "
+						    "directory instead of cloning again from\n"
+						    "  %s\n"
+						    "use the '--force' option. If the local git "
+						    "directory is not the correct repo\n"
+						    "or you are unsure what this means choose "
+						    "another name with the '--name' option."),
+					    add_data->realrepo);
+
+				die_msg = strbuf_detach(&msg, NULL);
+				die("%s", die_msg);
 			} else {
 				printf(_("Reactivating local git directory for "
 					 "submodule '%s'\n"), add_data->sm_name);
