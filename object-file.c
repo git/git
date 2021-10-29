@@ -1349,7 +1349,7 @@ static void *unpack_loose_rest(git_zstream *stream,
 int parse_loose_header(const char *hdr, struct object_info *oi)
 {
 	const char *type_buf = hdr;
-	unsigned long size;
+	size_t size;
 	int type, type_len = 0;
 
 	/*
@@ -1384,12 +1384,12 @@ int parse_loose_header(const char *hdr, struct object_info *oi)
 			if (c > 9)
 				break;
 			hdr++;
-			size = size * 10 + c;
+			size = st_add(st_mult(size, 10), c);
 		}
 	}
 
 	if (oi->sizep)
-		*oi->sizep = size;
+		*oi->sizep = cast_size_t_to_ulong(size);
 
 	/*
 	 * The length must be followed by a zero byte
