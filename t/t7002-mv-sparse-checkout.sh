@@ -143,8 +143,6 @@ test_expect_success 'recursive mv refuses to move (possible) sparse' '
 	cat >>expect <<-\EOF &&
 	sub/d
 	sub2/d
-	sub/dir/e
-	sub2/dir/e
 	sub/dir2/e
 	sub2/dir2/e
 	EOF
@@ -184,6 +182,28 @@ test_expect_success 'recursive mv refuses to move sparse' '
 	git rev-parse HEAD:sub2 >actual &&
 	test_cmp expect actual &&
 	git reset --hard HEAD~1
+'
+
+test_expect_success 'can move files to non-sparse dir' '
+	git reset --hard &&
+	git sparse-checkout init --no-cone &&
+	git sparse-checkout set a b c w !/x y/ &&
+	mkdir -p w x/y &&
+
+	git mv a w/new-a 2>stderr &&
+	git mv b x/y/new-b 2>stderr &&
+	test_must_be_empty stderr
+'
+
+test_expect_success 'refuse to move file to non-skip-worktree sparse path' '
+	git reset --hard &&
+	git sparse-checkout init --no-cone &&
+	git sparse-checkout set a !/x y/ !x/y/z &&
+	mkdir -p x/y/z &&
+
+	test_must_fail git mv a x/y/z/new-a 2>stderr &&
+	echo x/y/z/new-a | cat sparse_error_header - sparse_hint >expect &&
+	test_cmp expect stderr
 '
 
 test_done
