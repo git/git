@@ -65,7 +65,7 @@ int cmd_walken(int argc, const char **argv, const char *prefix)
 	const char * const walken_usage[] = {
 		N_("git walken"),
 		NULL,
-	}
+	};
 	struct option options[] = {
 		OPT_END()
 	};
@@ -697,7 +697,7 @@ First, we'll need to `#include "list-objects-filter-options.h"` and set up the
 ----
 static void walken_object_walk(struct rev_info *rev)
 {
-	struct list_objects_filter_options filter_options = {};
+	struct list_objects_filter_options filter_options = { 0 };
 
 	...
 ----
