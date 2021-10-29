@@ -726,7 +726,7 @@ char *gitmkdtemp(char *);
 
 #ifdef NO_UNSETENV
 #define unsetenv gitunsetenv
-void gitunsetenv(const char *);
+int gitunsetenv(const char *);
 #endif
 
 #ifdef NO_STRCASESTR
