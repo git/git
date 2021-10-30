@@ -214,4 +214,21 @@ test_expect_success 'add allows sparse entries with --sparse' '
 	test_must_be_empty stderr
 '
 
+test_expect_success 'can add files from non-sparse dir' '
+	git sparse-checkout set w !/x y/ &&
+	mkdir -p w x/y &&
+	touch w/f x/y/f &&
+	git add w/f x/y/f 2>stderr &&
+	test_must_be_empty stderr
+'
+
+test_expect_success 'refuse to add non-skip-worktree file from sparse dir' '
+	git sparse-checkout set !/x y/ !x/y/z &&
+	mkdir -p x/y/z &&
+	touch x/y/z/f &&
+	test_must_fail git add x/y/z/f 2>stderr &&
+	echo x/y/z/f | cat sparse_error_header - sparse_hint >expect &&
+	test_cmp expect stderr
+'
+
 test_done

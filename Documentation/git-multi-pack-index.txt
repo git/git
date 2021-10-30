@@ -99,13 +99,13 @@ associated `.keep` file will not be selected for the batch to repack.
 EXAMPLES
 --------
 
-* Write a MIDX file for the packfiles in the current .git folder.
+* Write a MIDX file for the packfiles in the current `.git` directory.
 +
 -----------------------------------------------
 $ git multi-pack-index write
 -----------------------------------------------
 
-* Write a MIDX file for the packfiles in the current .git folder with a
+* Write a MIDX file for the packfiles in the current `.git` directory with a
 corresponding bitmap.
 +
 -------------------------------------------------------------
@@ -118,7 +118,7 @@ $ git multi-pack-index write --preferred-pack=<pack> --bitmap
 $ git multi-pack-index --object-dir <alt> write
 -----------------------------------------------
 
-* Verify the MIDX file for the packfiles in the current .git folder.
+* Verify the MIDX file for the packfiles in the current `.git` directory.
 +
 -----------------------------------------------
 $ git multi-pack-index verify

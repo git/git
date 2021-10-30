@@ -845,6 +845,10 @@ static int push_update_ref_status(struct strbuf *buf,
 			forced = 1;
 			FREE_AND_NULL(msg);
 		}
+		else if (!strcmp(msg, "expecting report")) {
+			status = REF_STATUS_EXPECTING_REPORT;
+			FREE_AND_NULL(msg);
+		}
 	}
 
 	if (state->hint)

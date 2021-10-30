@@ -183,6 +183,8 @@ Performance, Internal Implementation, Development Support etc.
    version of .midx before removing them from the disk, as some
    platforms do not allow removal of a file that still has mapping.
 
+ * A new feature has been added to abort early in the test framework.
+
 
 Fixes since v2.33
 -----------------
@@ -368,6 +370,28 @@ Fixes since v2.33
  * Improve test framework around unwritable directories.
    (merge 5d22e18965 ab/test-cleanly-recreate-trash-directory later to maint).
 
+ * "git push" client talking to an HTTP server did not diagnose the
+   lack of the final status report from the other side correctly,
+   which has been corrected.
+   (merge c5c3486f38 jk/http-push-status-fix later to maint).
+
+ * Update "git archive" documentation and give explicit mention on the
+   compression level for both zip and tar.gz format.
+   (merge c4b208c309 bs/archive-doc-compression-level later to maint).
+
+ * Drop "git sparse-index" from the list of common commands.
+   (merge 6a9a50a8af sg/sparse-index-not-that-common-a-command later to maint).
+
+ * "git branch -c/-m new old" was not described to copy config, which
+   has been corrected.
+   (merge 8252ec300e jc/branch-copy-doc later to maint).
+
+ * Squelch over-eager warning message added during this cycle.
+   (merge 9e8fe7b1c7 jk/log-warn-on-bogus-encoding later to maint).
+
+ * Fix long-standing shell syntax error in the completion script.
+   (merge 46b0585286 re/completion-fix-test-equality later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge f188160be9 ab/bundle-remove-verbose-option later to maint).
    (merge 8c6b4332b4 rs/close-pack-leakfix later to maint).
@@ -381,3 +405,5 @@ Fixes since v2.33
    (merge ec9a37d69b ab/pkt-line-cleanup later to maint).
    (merge 8650c6298c ab/fix-make-lint-docs later to maint).
    (merge 1c720357ce ab/test-lib-diff-cleanup later to maint).
+   (merge 6b615dbece ks/submodule-add-message-fix later to maint).
+   (merge 82a57cd13f ma/doc-git-version later to maint).
