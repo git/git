@@ -5,6 +5,7 @@
 
 test_description='Perl gettext interface (Git::I18N)'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./lib-gettext.sh
 
 if ! test_have_prereq PERL; then

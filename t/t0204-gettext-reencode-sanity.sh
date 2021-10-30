@@ -5,6 +5,7 @@
 
 test_description="Gettext reencoding of our *.po/*.mo files works"
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./lib-gettext.sh
 
 # The constants used in a tricky observation for undefined behaviour
