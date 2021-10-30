@@ -2,6 +2,8 @@
 
 test_description='apply a patch that is larger than the preimage'
 
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 cat >F  <<\EOF
