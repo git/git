@@ -9,6 +9,8 @@ The rename detection logic should be able to detect pure rename or
 copy of symbolic links, but should not produce rename/copy followed
 by an edit for them.
 '
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-diff.sh
 

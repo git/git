@@ -2,6 +2,7 @@
 
 test_description='common tail optimization'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 z=zzzzzzzz ;# 8

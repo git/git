@@ -2,6 +2,8 @@
 # Copyright (c) 2011, Google Inc.
 
 test_description='diff --stat-count'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '

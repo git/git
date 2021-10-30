@@ -2,6 +2,7 @@
 
 test_description='external diff interface test'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '

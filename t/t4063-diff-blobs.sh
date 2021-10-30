@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='test direct comparison of blobs via git-diff'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 run_diff () {
