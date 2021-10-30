@@ -14,7 +14,6 @@ static int dry_run = 0, quiet = 0;
 static char *string = NULL;
 static char *file = NULL;
 static int ambiguous;
-static struct string_list list = STRING_LIST_INIT_NODUP;
 
 static struct {
 	int called;
@@ -107,6 +106,8 @@ int cmd__parse_options(int argc, const char **argv)
 		NULL
 	};
 	struct string_list expect = STRING_LIST_INIT_NODUP;
+	struct string_list list = STRING_LIST_INIT_NODUP;
+
 	struct option options[] = {
 		OPT_BOOL(0, "yes", &boolean, "get a boolean"),
 		OPT_BOOL('D', "no-doubt", &boolean, "begins with 'no-'"),
@@ -134,7 +135,6 @@ int cmd__parse_options(int argc, const char **argv)
 		OPT_NOOP_NOARG(0, "obsolete"),
 		OPT_STRING_LIST(0, "list", &list, "str", "add str to list"),
 		OPT_GROUP("Magic arguments"),
-		OPT_ARGUMENT("quux", NULL, "means --quux"),
 		OPT_NUMBER_CALLBACK(&integer, "set integer to NUM",
 			number_callback),
 		{ OPTION_COUNTUP, '+', NULL, &boolean, NULL, "same as -b",
@@ -185,6 +185,10 @@ int cmd__parse_options(int argc, const char **argv)
 
 	for (i = 0; i < argc; i++)
 		show(&expect, &ret, "arg %02d: %s", i, argv[i]);
+
+	expect.strdup_strings = 1;
+	string_list_clear(&expect, 0);
+	string_list_clear(&list, 0);
 
 	return ret;
 }

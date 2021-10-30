@@ -1,6 +1,5 @@
 t[0-9][0-9][0-9][0-9]/* -whitespace
 /chainlint/*.expect eol=lf
-/lib-diff/* eol=lf
 /t0110/url-* binary
 /t3206/* eol=lf
 /t3900/*.txt eol=lf

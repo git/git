@@ -339,6 +339,7 @@ void close_pack(struct packed_git *p)
 	close_pack_fd(p);
 	close_pack_index(p);
 	close_pack_revindex(p);
+	oidset_clear(&p->bad_objects);
 }
 
 void close_object_store(struct raw_object_store *o)
@@ -860,7 +861,7 @@ static void prepare_pack(const char *full_name, size_t full_name_len,
 	if (!strcmp(file_name, "multi-pack-index"))
 		return;
 	if (starts_with(file_name, "multi-pack-index") &&
-	    ends_with(file_name, ".rev"))
+	    (ends_with(file_name, ".bitmap") || ends_with(file_name, ".rev")))
 		return;
 	if (ends_with(file_name, ".idx") ||
 	    ends_with(file_name, ".rev") ||
@@ -1161,31 +1162,19 @@ int unpack_object_header(struct packed_git *p,
 	return type;
 }
 
-void mark_bad_packed_object(struct packed_git *p, const unsigned char *sha1)
+void mark_bad_packed_object(struct packed_git *p, const struct object_id *oid)
 {
-	unsigned i;
-	const unsigned hashsz = the_hash_algo->rawsz;
-	for (i = 0; i < p->num_bad_objects; i++)
-		if (hasheq(sha1, p->bad_object_sha1 + hashsz * i))
-			return;
-	p->bad_object_sha1 = xrealloc(p->bad_object_sha1,
-				      st_mult(GIT_MAX_RAWSZ,
-					      st_add(p->num_bad_objects, 1)));
-	hashcpy(p->bad_object_sha1 + hashsz * p->num_bad_objects, sha1);
-	p->num_bad_objects++;
+	oidset_insert(&p->bad_objects, oid);
 }
 
 const struct packed_git *has_packed_and_bad(struct repository *r,
-					    const unsigned char *sha1)
+					    const struct object_id *oid)
 {
 	struct packed_git *p;
-	unsigned i;
 
 	for (p = r->objects->packed_git; p; p = p->next)
-		for (i = 0; i < p->num_bad_objects; i++)
-			if (hasheq(sha1,
-				   p->bad_object_sha1 + the_hash_algo->rawsz * i))
-				return p;
+		if (oidset_contains(&p->bad_objects, oid))
+			return p;
 	return NULL;
 }
 
@@ -1272,7 +1261,7 @@ static int retry_bad_packed_offset(struct repository *r,
 	if (offset_to_pack_pos(p, obj_offset, &pos) < 0)
 		return OBJ_BAD;
 	nth_packed_object_id(&oid, p, pack_pos_to_index(p, pos));
-	mark_bad_packed_object(p, oid.hash);
+	mark_bad_packed_object(p, &oid);
 	type = oid_object_info(r, &oid, NULL);
 	if (type <= OBJ_NONE)
 		return OBJ_BAD;
@@ -1722,7 +1711,7 @@ void *unpack_entry(struct repository *r, struct packed_git *p, off_t obj_offset,
 				nth_packed_object_id(&oid, p, index_pos);
 				error("bad packed object CRC for %s",
 				      oid_to_hex(&oid));
-				mark_bad_packed_object(p, oid.hash);
+				mark_bad_packed_object(p, &oid);
 				data = NULL;
 				goto out;
 			}
@@ -1811,7 +1800,7 @@ void *unpack_entry(struct repository *r, struct packed_git *p, off_t obj_offset,
 				      " at offset %"PRIuMAX" from %s",
 				      oid_to_hex(&base_oid), (uintmax_t)obj_offset,
 				      p->pack_name);
-				mark_bad_packed_object(p, base_oid.hash);
+				mark_bad_packed_object(p, &base_oid);
 				base = read_object(r, &base_oid, &type, &base_size);
 				external_base = base;
 			}
@@ -2016,13 +2005,9 @@ static int fill_pack_entry(const struct object_id *oid,
 {
 	off_t offset;
 
-	if (p->num_bad_objects) {
-		unsigned i;
-		for (i = 0; i < p->num_bad_objects; i++)
-			if (hasheq(oid->hash,
-				   p->bad_object_sha1 + the_hash_algo->rawsz * i))
-				return 0;
-	}
+	if (oidset_size(&p->bad_objects) &&
+	    oidset_contains(&p->bad_objects, oid))
+		return 0;
 
 	offset = find_pack_entry_one(oid->hash, p);
 	if (!offset)
@@ -2204,6 +2189,12 @@ int for_each_packed_object(each_packed_object_fn cb, void *data,
 			continue;
 		if ((flags & FOR_EACH_OBJECT_PROMISOR_ONLY) &&
 		    !p->pack_promisor)
+			continue;
+		if ((flags & FOR_EACH_OBJECT_SKIP_IN_CORE_KEPT_PACKS) &&
+		    p->pack_keep_in_core)
+			continue;
+		if ((flags & FOR_EACH_OBJECT_SKIP_ON_DISK_KEPT_PACKS) &&
+		    p->pack_keep)
 			continue;
 		if (open_pack_index(p)) {
 			pack_errors = 1;

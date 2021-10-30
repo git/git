@@ -100,6 +100,98 @@ static int sparse_checkout_list(int argc, const char **argv)
 	return 0;
 }
 
+static void clean_tracked_sparse_directories(struct repository *r)
+{
+	int i, was_full = 0;
+	struct strbuf path = STRBUF_INIT;
+	size_t pathlen;
+	struct string_list_item *item;
+	struct string_list sparse_dirs = STRING_LIST_INIT_DUP;
+
+	/*
+	 * If we are not using cone mode patterns, then we cannot
+	 * delete directories outside of the sparse cone.
+	 */
+	if (!r || !r->index || !r->worktree)
+		return;
+	if (init_sparse_checkout_patterns(r->index) ||
+	    !r->index->sparse_checkout_patterns->use_cone_patterns)
+		return;
+
+	/*
+	 * Use the sparse index as a data structure to assist finding
+	 * directories that are safe to delete. This conversion to a
+	 * sparse index will not delete directories that contain
+	 * conflicted entries or submodules.
+	 */
+	if (!r->index->sparse_index) {
+		/*
+		 * If something, such as a merge conflict or other concern,
+		 * prevents us from converting to a sparse index, then do
+		 * not try deleting files.
+		 */
+		if (convert_to_sparse(r->index, SPARSE_INDEX_MEMORY_ONLY))
+			return;
+		was_full = 1;
+	}
+
+	strbuf_addstr(&path, r->worktree);
+	strbuf_complete(&path, '/');
+	pathlen = path.len;
+
+	/*
+	 * Collect directories that have gone out of scope but also
+	 * exist on disk, so there is some work to be done. We need to
+	 * store the entries in a list before exploring, since that might
+	 * expand the sparse-index again.
+	 */
+	for (i = 0; i < r->index->cache_nr; i++) {
+		struct cache_entry *ce = r->index->cache[i];
+
+		if (S_ISSPARSEDIR(ce->ce_mode) &&
+		    repo_file_exists(r, ce->name))
+			string_list_append(&sparse_dirs, ce->name);
+	}
+
+	for_each_string_list_item(item, &sparse_dirs) {
+		struct dir_struct dir = DIR_INIT;
+		struct pathspec p = { 0 };
+		struct strvec s = STRVEC_INIT;
+
+		strbuf_setlen(&path, pathlen);
+		strbuf_addstr(&path, item->string);
+
+		dir.flags |= DIR_SHOW_IGNORED_TOO;
+
+		setup_standard_excludes(&dir);
+		strvec_push(&s, path.buf);
+
+		parse_pathspec(&p, PATHSPEC_GLOB, 0, NULL, s.v);
+		fill_directory(&dir, r->index, &p);
+
+		if (dir.nr) {
+			warning(_("directory '%s' contains untracked files,"
+				  " but is not in the sparse-checkout cone"),
+				item->string);
+		} else if (remove_dir_recursively(&path, 0)) {
+			/*
+			 * Removal is "best effort". If something blocks
+			 * the deletion, then continue with a warning.
+			 */
+			warning(_("failed to remove directory '%s'"),
+				item->string);
+		}
+
+		dir_clear(&dir);
+	}
+
+	string_list_clear(&sparse_dirs, 0);
+	strbuf_release(&path);
+
+	if (was_full)
+		ensure_full_index(r->index);
+}
+
 static int update_working_directory(struct pattern_list *pl)
 {
 	enum update_sparsity_result result;
@@ -140,6 +232,8 @@ static int update_working_directory(struct pattern_list *pl)
 		write_locked_index(r->index, &lock_file, COMMIT_LOCK);
 	else
 		rollback_lock_file(&lock_file);
+
+	clean_tracked_sparse_directories(r);
 
 	r->index->sparse_checkout_patterns = NULL;
 	return result;

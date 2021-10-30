@@ -25,8 +25,8 @@ Further, with -B and -M together, these should turn into two renames.
 . "$TEST_DIRECTORY"/lib-diff.sh ;# test-lib chdir's into trash
 
 test_expect_success setup '
-	cat "$TEST_DIRECTORY"/lib-diff/README >file0 &&
-	cat "$TEST_DIRECTORY"/lib-diff/COPYING >file1 &&
+	echo some dissimilar content >file0 &&
+	COPYING_test_data >file1 &&
 	blob0_id=$(git hash-object file0) &&
 	blob1_id=$(git hash-object file1) &&
 	git update-index --add file0 file1 &&

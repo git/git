@@ -88,7 +88,7 @@ jobs:
       env:
         HOME: ${{runner.workspace}}
         NO_PERL: 1
-      run: ci/make-test-artifacts.sh artifacts
+      run: . /etc/profile && ci/make-test-artifacts.sh artifacts
     - name: zip up tracked files
       run: git archive -o artifacts/tracked.tar.gz HEAD
     - name: upload tracked files and build artifacts
@@ -115,7 +115,7 @@ jobs:
     - uses: git-for-windows/setup-git-for-windows-sdk@v1
     - name: test
       shell: bash
-      run: ci/run-test-slice.sh ${{matrix.nr}} 10
+      run: . /etc/profile && ci/run-test-slice.sh ${{matrix.nr}} 10
     - name: ci/print-test-failures.sh
       if: failure()
       shell: bash
@@ -198,8 +198,7 @@ jobs:
       shell: bash
       env:
         NO_SVN_TESTS: 1
-        GIT_TEST_SKIP_REBASE_P: 1
-      run: ci/run-test-slice.sh ${{matrix.nr}} 10
+      run: . /etc/profile && ci/run-test-slice.sh ${{matrix.nr}} 10
     - name: ci/print-test-failures.sh
       if: failure()
       shell: bash
@@ -232,6 +231,9 @@ jobs:
           - jobname: linux-gcc-default
             cc: gcc
             pool: ubuntu-latest
+          - jobname: linux-leaks
+            cc: gcc
+            pool: ubuntu-latest
     env:
       CC: ${{matrix.vector.cc}}
       jobname: ${{matrix.vector.jobname}}
@@ -259,6 +261,8 @@ jobs:
           image: alpine
         - jobname: Linux32
           image: daald/ubuntu32:xenial
+        - jobname: pedantic
+          image: fedora
     env:
       jobname: ${{matrix.vector.jobname}}
     runs-on: ubuntu-latest
@@ -271,7 +275,7 @@ jobs:
       if: failure()
     - name: Upload failed tests' directories
       if: failure() && env.FAILED_TEST_ARTIFACTS != ''
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v1
       with:
         name: failed-tests-${{matrix.vector.jobname}}
         path: ${{env.FAILED_TEST_ARTIFACTS}}

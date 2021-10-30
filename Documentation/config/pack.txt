@@ -159,6 +159,10 @@ pack.writeBitmapHashCache::
 	between an older, bitmapped pack and objects that have been
 	pushed since the last gc). The downside is that it consumes 4
 	bytes per object of disk space. Defaults to true.
++
+When writing a multi-pack reachability bitmap, no new namehashes are
+computed; instead, any namehashes stored in an existing bitmap are
+permuted into their appropriate location when writing a new bitmap.
 
 pack.writeReverseIndex::
 	When true, git will write a corresponding .rev file (see:

@@ -887,6 +887,7 @@ int ie_modified(struct index_state *, const struct cache_entry *, struct stat *,
 #define HASH_WRITE_OBJECT 1
 #define HASH_FORMAT_CHECK 2
 #define HASH_RENORMALIZE  4
+#define HASH_SILENT 8
 int index_fd(struct index_state *istate, struct object_id *oid, int fd, struct stat *st, enum object_type type, const char *path, unsigned flags);
 int index_path(struct index_state *istate, struct object_id *oid, const char *path, struct stat *st, unsigned flags);
 
@@ -958,7 +959,6 @@ extern char *apply_default_ignorewhitespace;
 extern const char *git_attributes_file;
 extern const char *git_hooks_path;
 extern int zlib_compression_level;
-extern int core_compression_level;
 extern int pack_compression_level;
 extern size_t packed_git_window_size;
 extern size_t packed_git_limit;
@@ -994,14 +994,6 @@ extern const char *core_fsmonitor;
 
 extern int core_apply_sparse_checkout;
 extern int core_sparse_checkout_cone;
-
-/*
- * Include broken refs in all ref iterations, which will
- * generally choke dangerous operations rather than letting
- * them silently proceed without taking the broken ref into
- * account.
- */
-extern int ref_paranoia;
 
 /*
  * Returns the boolean value of $GIT_OPTIONAL_LOCKS (or the default value).
@@ -1211,51 +1203,10 @@ enum scld_error safe_create_leading_directories(char *path);
 enum scld_error safe_create_leading_directories_const(const char *path);
 enum scld_error safe_create_leading_directories_no_share(char *path);
 
-/*
- * Callback function for raceproof_create_file(). This function is
- * expected to do something that makes dirname(path) permanent despite
- * the fact that other processes might be cleaning up empty
- * directories at the same time. Usually it will create a file named
- * path, but alternatively it could create another file in that
- * directory, or even chdir() into that directory. The function should
- * return 0 if the action was completed successfully. On error, it
- * should return a nonzero result and set errno.
- * raceproof_create_file() treats two errno values specially:
- *
- * - ENOENT -- dirname(path) does not exist. In this case,
- *             raceproof_create_file() tries creating dirname(path)
- *             (and any parent directories, if necessary) and calls
- *             the function again.
- *
- * - EISDIR -- the file already exists and is a directory. In this
- *             case, raceproof_create_file() removes the directory if
- *             it is empty (and recursively any empty directories that
- *             it contains) and calls the function again.
- *
- * Any other errno causes raceproof_create_file() to fail with the
- * callback's return value and errno.
- *
- * Obviously, this function should be OK with being called again if it
- * fails with ENOENT or EISDIR. In other scenarios it will not be
- * called again.
- */
-typedef int create_file_fn(const char *path, void *cb);
-
-/*
- * Create a file in dirname(path) by calling fn, creating leading
- * directories if necessary. Retry a few times in case we are racing
- * with another process that is trying to clean up the directory that
- * contains path. See the documentation for create_file_fn for more
- * details.
- *
- * Return the value and set the errno that resulted from the most
- * recent call of fn. fn is always called at least once, and will be
- * called more than once if it returns ENOENT or EISDIR.
- */
-int raceproof_create_file(const char *path, create_file_fn fn, void *cb);
-
 int mkdir_in_gitdir(const char *path);
-char *expand_user_path(const char *path, int real_home);
+char *interpolate_path(const char *path, int real_home);
+/* NEEDSWORK: remove this synonym once in-flight topics have migrated */
+#define expand_user_path interpolate_path
 const char *enter_repo(const char *path, int strict);
 static inline int is_absolute_path(const char *path)
 {
@@ -1297,6 +1248,13 @@ int looks_like_command_line_option(const char *str);
 
 /**
  * Return a newly allocated string with the evaluation of
+ * "$XDG_CONFIG_HOME/$subdir/$filename" if $XDG_CONFIG_HOME is non-empty, otherwise
+ * "$HOME/.config/$subdir/$filename". Return NULL upon error.
+ */
+char *xdg_config_home_for(const char *subdir, const char *filename);
+
+/**
+ * Return a newly allocated string with the evaluation of
  * "$XDG_CONFIG_HOME/git/$filename" if $XDG_CONFIG_HOME is non-empty, otherwise
  * "$HOME/.config/git/$filename". Return NULL upon error.
  */
@@ -1311,11 +1269,50 @@ char *xdg_cache_home(const char *filename);
 
 int git_open_cloexec(const char *name, int flags);
 #define git_open(name) git_open_cloexec(name, O_RDONLY)
-int unpack_loose_header(git_zstream *stream, unsigned char *map, unsigned long mapsize, void *buffer, unsigned long bufsiz);
-int parse_loose_header(const char *hdr, unsigned long *sizep);
+
+/**
+ * unpack_loose_header() initializes the data stream needed to unpack
+ * a loose object header.
+ *
+ * Returns:
+ *
+ * - ULHR_OK on success
+ * - ULHR_BAD on error
+ * - ULHR_TOO_LONG if the header was too long
+ *
+ * It will only parse up to MAX_HEADER_LEN bytes unless an optional
+ * "hdrbuf" argument is non-NULL. This is intended for use with
+ * OBJECT_INFO_ALLOW_UNKNOWN_TYPE to extract the bad type for (error)
+ * reporting. The full header will be extracted to "hdrbuf" for use
+ * with parse_loose_header(), ULHR_TOO_LONG will still be returned
+ * from this function to indicate that the header was too long.
+ */
+enum unpack_loose_header_result {
+	ULHR_OK,
+	ULHR_BAD,
+	ULHR_TOO_LONG,
+};
+enum unpack_loose_header_result unpack_loose_header(git_zstream *stream,
+						    unsigned char *map,
+						    unsigned long mapsize,
+						    void *buffer,
+						    unsigned long bufsiz,
+						    struct strbuf *hdrbuf);
+
+/**
+ * parse_loose_header() parses the starting "<type> <len>\0" of an
+ * object. If it doesn't follow that format -1 is returned. To check
+ * the validity of the <type> populate the "typep" in the "struct
+ * object_info". It will be OBJ_BAD if the object type is unknown. The
+ * parsed <len> can be retrieved via "oi->sizep", and from there
+ * passed to unpack_loose_rest().
+ */
+struct object_info;
+int parse_loose_header(const char *hdr, struct object_info *oi);
 
 int check_object_signature(struct repository *r, const struct object_id *oid,
-			   void *buf, unsigned long size, const char *type);
+			   void *buf, unsigned long size, const char *type,
+			   struct object_id *real_oidp);
 
 int finalize_object_file(const char *tmpfile, const char *filename);
 
@@ -1660,7 +1657,9 @@ struct cache_def {
 	int track_flags;
 	int prefix_len_stat_func;
 };
-#define CACHE_DEF_INIT { STRBUF_INIT, 0, 0, 0 }
+#define CACHE_DEF_INIT { \
+	.path = STRBUF_INIT, \
+}
 static inline void cache_def_clear(struct cache_def *cache)
 {
 	strbuf_release(&cache->path);
@@ -1717,13 +1716,6 @@ int update_server_info(int);
 const char *get_log_output_encoding(void);
 const char *get_commit_output_encoding(void);
 
-/*
- * This is a hack for test programs like test-dump-untracked-cache to
- * ensure that they do not modify the untracked cache when reading it.
- * Do not use it otherwise!
- */
-extern int ignore_untracked_cache_config;
-
 int committer_ident_sufficiently_given(void);
 int author_ident_sufficiently_given(void);
 
@@ -1736,6 +1728,8 @@ extern const char *git_mailmap_blob;
 void maybe_flush_or_die(FILE *, const char *);
 __attribute__((format (printf, 2, 3)))
 void fprintf_or_die(FILE *, const char *fmt, ...);
+void fwrite_or_die(FILE *f, const void *buf, size_t count);
+void fflush_or_die(FILE *f);
 
 #define COPY_READ_ERROR (-2)
 #define COPY_WRITE_ERROR (-3)

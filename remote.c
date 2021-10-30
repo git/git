@@ -135,7 +135,7 @@ static inline void init_remotes_hash(void)
 
 static struct remote *make_remote(const char *name, int len)
 {
-	struct remote *ret, *replaced;
+	struct remote *ret;
 	struct remotes_hash_key lookup;
 	struct hashmap_entry lookup_entry, *e;
 
@@ -162,8 +162,8 @@ static struct remote *make_remote(const char *name, int len)
 	remotes[remotes_nr++] = ret;
 
 	hashmap_entry_init(&ret->ent, lookup_entry.hash);
-	replaced = hashmap_put_entry(&remotes_hash, ret, ent);
-	assert(replaced == NULL);  /* no previous entry overwritten */
+	if (hashmap_put_entry(&remotes_hash, ret, ent))
+		BUG("hashmap_put overwrote entry after hashmap_get returned NULL");
 	return ret;
 }
 
@@ -1111,7 +1111,7 @@ static void show_push_unqualified_ref_name_error(const char *dst_value,
 		"Neither worked, so we gave up. You must fully qualify the ref."),
 	      dst_value, matched_src_name);
 
-	if (!advice_push_unqualified_ref_name)
+	if (!advice_enabled(ADVICE_PUSH_UNQUALIFIED_REF_NAME))
 		return;
 
 	if (get_oid(matched_src_name, &oid))
@@ -2118,7 +2118,7 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb,
 		strbuf_addf(sb,
 			_("Your branch is based on '%s', but the upstream is gone.\n"),
 			base);
-		if (advice_status_hints)
+		if (advice_enabled(ADVICE_STATUS_HINTS))
 			strbuf_addstr(sb,
 				_("  (use \"git branch --unset-upstream\" to fixup)\n"));
 	} else if (!sti) {
@@ -2129,7 +2129,7 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb,
 		strbuf_addf(sb,
 			    _("Your branch and '%s' refer to different commits.\n"),
 			    base);
-		if (advice_status_hints)
+		if (advice_enabled(ADVICE_STATUS_HINTS))
 			strbuf_addf(sb, _("  (use \"%s\" for details)\n"),
 				    "git status --ahead-behind");
 	} else if (!theirs) {
@@ -2138,7 +2138,7 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb,
 			   "Your branch is ahead of '%s' by %d commits.\n",
 			   ours),
 			base, ours);
-		if (advice_status_hints)
+		if (advice_enabled(ADVICE_STATUS_HINTS))
 			strbuf_addstr(sb,
 				_("  (use \"git push\" to publish your local commits)\n"));
 	} else if (!ours) {
@@ -2149,7 +2149,7 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb,
 			       "and can be fast-forwarded.\n",
 			   theirs),
 			base, theirs);
-		if (advice_status_hints)
+		if (advice_enabled(ADVICE_STATUS_HINTS))
 			strbuf_addstr(sb,
 				_("  (use \"git pull\" to update your local branch)\n"));
 	} else {
@@ -2162,7 +2162,7 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb,
 			       "respectively.\n",
 			   ours + theirs),
 			base, ours, theirs);
-		if (advice_status_hints)
+		if (advice_enabled(ADVICE_STATUS_HINTS))
 			strbuf_addstr(sb,
 				_("  (use \"git pull\" to merge the remote branch into yours)\n"));
 	}
@@ -2403,7 +2403,7 @@ struct reflog_commit_array {
 	size_t nr, alloc;
 };
 
-#define REFLOG_COMMIT_ARRAY_INIT { NULL, 0, 0 }
+#define REFLOG_COMMIT_ARRAY_INIT { 0 }
 
 /* Append a commit to the array. */
 static void append_commit(struct reflog_commit_array *arr,

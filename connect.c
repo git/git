@@ -164,6 +164,8 @@ enum protocol_version discover_version(struct packet_reader *reader)
 		BUG("unknown protocol version");
 	}
 
+	trace2_data_intmax("transfer", NULL, "negotiated-version", version);
+
 	return version;
 }
 
@@ -555,6 +557,8 @@ const char *parse_feature_value(const char *feature_list, const char *feature, i
 			if (!*value || isspace(*value)) {
 				if (lenp)
 					*lenp = 0;
+				if (offset)
+					*offset = found + len - feature_list;
 				return value;
 			}
 			/* feature with a value (e.g., "agent=git/1.2.3") */

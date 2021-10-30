@@ -79,10 +79,6 @@ struct rev_cmdline_info {
 	} *rev;
 };
 
-#define REVISION_WALK_WALK 0
-#define REVISION_WALK_NO_WALK_SORTED 1
-#define REVISION_WALK_NO_WALK_UNSORTED 2
-
 struct oidset;
 struct topo_walk_info;
 
@@ -129,7 +125,8 @@ struct rev_info {
 	/* Traversal flags */
 	unsigned int	dense:1,
 			prune:1,
-			no_walk:2,
+			no_walk:1,
+			unsorted_input:1,
 			remove_empty_trees:1,
 			simplify_history:1,
 			show_pulls:1,
@@ -339,7 +336,6 @@ extern volatile show_early_output_fn_t show_early_output;
 struct setup_revision_opt {
 	const char *def;
 	void (*tweak)(struct rev_info *, struct setup_revision_opt *);
-	const char *submodule;	/* TODO: drop this and use rev_info->repo */
 	unsigned int	assume_dashdash:1,
 			allow_exclude_promisor_objects:1;
 	unsigned revarg_opt;

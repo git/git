@@ -13,6 +13,16 @@ static int drivers_alloc;
 #define IPATTERN(name, pattern, word_regex)			\
 	{ name, NULL, -1, { pattern, REG_EXTENDED | REG_ICASE }, \
 	  word_regex "|[^[:space:]]|[\xc0-\xff][\x80-\xbf]+" }
+
+/*
+ * Built-in drivers for various languages, sorted by their names
+ * (except that the "default" is left at the end).
+ *
+ * When writing or updating patterns, assume that the contents these
+ * patterns are applied to are syntactically correct.  The patterns
+ * can be simple without implementing all syntactical corner cases, as
+ * long as they are sufficiently permissive.
+ */
 static struct userdiff_driver builtin_drivers[] = {
 IPATTERN("ada",
 	 "!^(.*[ \t])?(is[ \t]+new|renames|is[ \t]+separate)([ \t].*)?$\n"
@@ -54,9 +64,15 @@ PATTERNS("cpp",
 	 /* functions/methods, variables, and compounds at top level */
 	 "^((::[[:space:]]*)?[A-Za-z_].*)$",
 	 /* -- */
+	 /* identifiers and keywords */
 	 "[a-zA-Z_][a-zA-Z0-9_]*"
-	 "|[-+0-9.e]+[fFlL]?|0[xXbB]?[0-9a-fA-F]+[lLuU]*"
-	 "|[-+*/<>%&^|=!]=|--|\\+\\+|<<=?|>>=?|&&|\\|\\||::|->\\*?|\\.\\*"),
+	 /* decimal and octal integers as well as floatingpoint numbers */
+	 "|[0-9][0-9.]*([Ee][-+]?[0-9]+)?[fFlLuU]*"
+	 /* hexadecimal and binary integers */
+	 "|0[xXbB][0-9a-fA-F]+[lLuU]*"
+	 /* floatingpoint numbers that begin with a decimal point */
+	 "|\\.[0-9][0-9]*([Ee][-+]?[0-9]+)?[fFlL]?"
+	 "|[-+*/<>%&^|=!]=|--|\\+\\+|<<=?|>>=?|&&|\\|\\||::|->\\*?|\\.\\*|<=>"),
 PATTERNS("csharp",
 	 /* Keywords */
 	 "!^[ \t]*(do|while|for|if|else|instanceof|new|return|switch|case|throw|catch|using)\n"
@@ -142,7 +158,11 @@ PATTERNS("html",
 	 "[^<>= \t]+"),
 PATTERNS("java",
 	 "!^[ \t]*(catch|do|for|if|instanceof|new|return|switch|throw|while)\n"
-	 "^[ \t]*(([A-Za-z_][A-Za-z_0-9]*[ \t]+)+[A-Za-z_][A-Za-z_0-9]*[ \t]*\\([^;]*)$",
+	 /* Class, enum, and interface declarations */
+	 "^[ \t]*(([a-z]+[ \t]+)*(class|enum|interface)[ \t]+[A-Za-z][A-Za-z0-9_$]*[ \t]+.*)$\n"
+	 /* Method definitions; note that constructor signatures are not */
+	 /* matched because they are indistinguishable from method calls. */
+	 "^[ \t]*(([A-Za-z_<>&][][?&<>.,A-Za-z_0-9]*[ \t]+)+[A-Za-z_][A-Za-z_0-9]*[ \t]*\\([^;]*)$",
 	 /* -- */
 	 "[a-zA-Z_][a-zA-Z0-9_]*"
 	 "|[-+0-9.e]+[fFlL]?|0[xXbB]?[0-9a-fA-F]+[lL]?"
@@ -214,7 +234,7 @@ PATTERNS("perl",
 	 "|<<|<>|<=>|>>"),
 PATTERNS("php",
 	 "^[\t ]*(((public|protected|private|static|abstract|final)[\t ]+)*function.*)$\n"
-	 "^[\t ]*((((final|abstract)[\t ]+)?class|interface|trait).*)$",
+	 "^[\t ]*((((final|abstract)[\t ]+)?class|enum|interface|trait).*)$",
 	 /* -- */
 	 "[a-zA-Z_][a-zA-Z0-9_]*"
 	 "|[-+0-9.e]+|0[xXbB]?[0-9a-fA-F]+"

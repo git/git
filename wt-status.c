@@ -787,7 +787,7 @@ static void wt_status_collect_untracked(struct wt_status *s)
 
 	dir_clear(&dir);
 
-	if (advice_status_u_option)
+	if (advice_enabled(ADVICE_STATUS_U_OPTION))
 		s->untracked_in_ms = (getnanotime() - t_begin) / 1000000;
 }
 
@@ -1158,7 +1158,7 @@ static void wt_longstatus_print_tracking(struct wt_status *s)
 	if (!format_tracking_info(branch, &sb, s->ahead_behind_flags))
 		return;
 
-	if (advice_status_ahead_behind_warning &&
+	if (advice_enabled(ADVICE_STATUS_AHEAD_BEHIND_WARNING) &&
 	    s->ahead_behind_flags == AHEAD_BEHIND_FULL) {
 		uint64_t t_delta_in_ms = (getnanotime() - t_begin) / 1000000;
 		if (t_delta_in_ms > AB_DELAY_WARNING_IN_MS) {
@@ -1845,7 +1845,7 @@ static void wt_longstatus_print(struct wt_status *s)
 		wt_longstatus_print_other(s, &s->untracked, _("Untracked files"), "add");
 		if (s->show_ignored_mode)
 			wt_longstatus_print_other(s, &s->ignored, _("Ignored files"), "add -f");
-		if (advice_status_u_option && 2000 < s->untracked_in_ms) {
+		if (advice_enabled(ADVICE_STATUS_U_OPTION) && 2000 < s->untracked_in_ms) {
 			status_printf_ln(s, GIT_COLOR_NORMAL, "%s", "");
 			status_printf_ln(s, GIT_COLOR_NORMAL,
 					 _("It took %.2f seconds to enumerate untracked files. 'status -uno'\n"

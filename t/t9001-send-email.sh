@@ -1533,6 +1533,21 @@ test_expect_success $PREREQ 'sendemail.8bitEncoding works' '
 	test_cmp content-type-decl actual
 '
 
+test_expect_success $PREREQ 'sendemail.8bitEncoding in .git/config overrides --global .gitconfig' '
+	clean_fake_sendmail &&
+	git config sendemail.assume8bitEncoding UTF-8 &&
+	test_when_finished "rm -rf home" &&
+	mkdir home &&
+	git config -f home/.gitconfig sendemail.assume8bitEncoding "bogus too" &&
+	echo bogus |
+	env HOME="$(pwd)/home" DEBUG=1 \
+	git send-email --from=author@example.com --to=nobody@example.com \
+			--smtp-server="$(pwd)/fake.sendmail" \
+			email-using-8bit >stdout &&
+	egrep "Content|MIME" msgtxt1 >actual &&
+	test_cmp content-type-decl actual
+'
+
 test_expect_success $PREREQ '--8bit-encoding overrides sendemail.8bitEncoding' '
 	clean_fake_sendmail &&
 	git config sendemail.assume8bitEncoding "bogus too" &&
@@ -2198,7 +2213,7 @@ test_expect_success $PREREQ 'leading and trailing whitespaces are removed' '
 
 test_expect_success $PREREQ 'test using command name with --sendmail-cmd' '
 	clean_fake_sendmail &&
-	PATH="$(pwd):$PATH" \
+	PATH="$PWD:$PATH" \
 	git send-email \
 		--from="Example <nobody@example.com>" \
 		--to=nobody@example.com \
@@ -2225,6 +2240,51 @@ test_expect_success $PREREQ 'test shell expression with --sendmail-cmd' '
 		--sendmail-cmd='\''f() { "$(pwd)/fake.sendmail" "$@"; };f'\'' \
 		HEAD^ &&
 	test_path_is_file commandline1
+'
+
+test_expect_success $PREREQ 'set up in-reply-to/references patches' '
+	cat >has-reply.patch <<-\EOF &&
+	From: A U Thor <author@example.com>
+	Subject: patch with in-reply-to
+	Message-ID: <patch.with.in.reply.to@example.com>
+	In-Reply-To: <replied.to@example.com>
+	References: <replied.to@example.com>
+
+	This is the body.
+	EOF
+	cat >no-reply.patch <<-\EOF
+	From: A U Thor <author@example.com>
+	Subject: patch without in-reply-to
+	Message-ID: <patch.without.in.reply.to@example.com>
+
+	This is the body.
+	EOF
+'
+
+test_expect_success $PREREQ 'patch reply headers correct with --no-thread' '
+	clean_fake_sendmail &&
+	git send-email \
+		--no-thread \
+		--to=nobody@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		has-reply.patch no-reply.patch &&
+	grep "In-Reply-To: <replied.to@example.com>" msgtxt1 &&
+	grep "References: <replied.to@example.com>" msgtxt1 &&
+	! grep replied.to@example.com msgtxt2
+'
+
+test_expect_success $PREREQ 'cmdline in-reply-to used with --no-thread' '
+	clean_fake_sendmail &&
+	git send-email \
+		--no-thread \
+		--in-reply-to="<cmdline.reply@example.com>" \
+		--to=nobody@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		has-reply.patch no-reply.patch &&
+	grep "In-Reply-To: <cmdline.reply@example.com>" msgtxt1 &&
+	grep "References: <cmdline.reply@example.com>" msgtxt1 &&
+	grep "In-Reply-To: <cmdline.reply@example.com>" msgtxt2 &&
+	grep "References: <cmdline.reply@example.com>" msgtxt2
 '
 
 test_expect_success $PREREQ 'invoke hook' '

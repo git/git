@@ -116,10 +116,11 @@ struct todo_list {
 	struct todo_item *items;
 	int nr, alloc, current;
 	int done_nr, total_nr;
-	struct stat_data stat;
 };
 
-#define TODO_LIST_INIT { STRBUF_INIT }
+#define TODO_LIST_INIT { \
+	.buf = STRBUF_INIT, \
+}
 
 int todo_list_parse_insn_buffer(struct repository *r, char *buf,
 				struct todo_list *todo_list);
@@ -156,12 +157,11 @@ int sequencer_remove_state(struct replay_opts *opts);
  */
 #define TODO_LIST_ROOT_WITH_ONTO (1U << 6)
 #define TODO_LIST_REAPPLY_CHERRY_PICKS (1U << 7)
+#define TODO_LIST_WARN_SKIPPED_CHERRY_PICKS (1U << 8)
 
 int sequencer_make_script(struct repository *r, struct strbuf *out, int argc,
 			  const char **argv, unsigned flags);
 
-void todo_list_add_exec_commands(struct todo_list *todo_list,
-				 struct string_list *commands);
 int complete_action(struct repository *r, struct replay_opts *opts, unsigned flags,
 		    const char *shortrevisions, const char *onto_name,
 		    struct commit *onto, const struct object_id *orig_head,

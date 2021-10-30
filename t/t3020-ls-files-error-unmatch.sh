@@ -9,6 +9,8 @@ This test runs git ls-files --error-unmatch to ensure it correctly
 returns an error when a non-existent path is provided on the command
 line.
 '
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '

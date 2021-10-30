@@ -291,6 +291,7 @@ test_expect_success 'prune: handle HEAD reflog in multiple worktrees' '
 		cat ../expected >blob &&
 		git add blob &&
 		git commit -m "second commit in third" &&
+		git clean -f && # Remove untracked left behind by deleting index
 		git reset --hard HEAD^
 	) &&
 	git prune --expire=now &&

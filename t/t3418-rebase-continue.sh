@@ -21,7 +21,7 @@ test_expect_success 'setup' '
 	git checkout main
 '
 
-test_expect_success 'interactive rebase --continue works with touched file' '
+test_expect_success 'merge based rebase --continue with works with touched file' '
 	rm -fr .git/rebase-* &&
 	git reset --hard &&
 	git checkout main &&
@@ -31,12 +31,22 @@ test_expect_success 'interactive rebase --continue works with touched file' '
 	git rebase --continue
 '
 
-test_expect_success 'non-interactive rebase --continue works with touched file' '
+test_expect_success 'merge based rebase --continue removes .git/MERGE_MSG' '
+	git checkout -f --detach topic &&
+
+	test_must_fail git rebase --onto main HEAD^ &&
+	git read-tree --reset -u HEAD &&
+	test_path_is_file .git/MERGE_MSG &&
+	git rebase --continue &&
+	test_path_is_missing .git/MERGE_MSG
+'
+
+test_expect_success 'apply based rebase --continue works with touched file' '
 	rm -fr .git/rebase-* &&
 	git reset --hard &&
 	git checkout main &&
 
-	test_must_fail git rebase --onto main main topic &&
+	test_must_fail git rebase --apply --onto main main topic &&
 	echo "Resolved" >F2 &&
 	git add F2 &&
 	test-tool chmtime =-60 F1 &&
@@ -107,20 +117,6 @@ test_expect_success 'rebase -i --continue handles merge strategy and options' '
 		git rebase --continue
 	) &&
 	test -f funny.was.run
-'
-
-test_expect_success REBASE_P 'rebase passes merge strategy options correctly' '
-	rm -fr .git/rebase-* &&
-	git reset --hard commit-new-file-F3-on-topic-branch &&
-	test_commit theirs-to-merge &&
-	git reset --hard HEAD^ &&
-	test_commit some-commit &&
-	test_tick &&
-	git merge --no-ff theirs-to-merge &&
-	FAKE_LINES="1 edit 2 3" git rebase -i -f -p -m \
-		-s recursive --strategy-option=theirs HEAD~2 &&
-	test_commit force-change &&
-	git rebase --continue
 '
 
 test_expect_success 'rebase -r passes merge strategy options correctly' '
@@ -254,11 +250,10 @@ test_rerere_autoupdate () {
 	'
 }
 
-test_rerere_autoupdate
+test_rerere_autoupdate --apply
 test_rerere_autoupdate -m
 GIT_SEQUENCE_EDITOR=: && export GIT_SEQUENCE_EDITOR
 test_rerere_autoupdate -i
-test_have_prereq !REBASE_P || test_rerere_autoupdate --preserve-merges
 unset GIT_SEQUENCE_EDITOR
 
 test_expect_success 'the todo command "break" works' '

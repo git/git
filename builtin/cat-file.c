@@ -355,18 +355,34 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 	}
 }
 
+/*
+ * If "pack" is non-NULL, then "offset" is the byte offset within the pack from
+ * which the object may be accessed (though note that we may also rely on
+ * data->oid, too). If "pack" is NULL, then offset is ignored.
+ */
 static void batch_object_write(const char *obj_name,
 			       struct strbuf *scratch,
 			       struct batch_options *opt,
-			       struct expand_data *data)
+			       struct expand_data *data,
+			       struct packed_git *pack,
+			       off_t offset)
 {
-	if (!data->skip_object_info &&
-	    oid_object_info_extended(the_repository, &data->oid, &data->info,
-				     OBJECT_INFO_LOOKUP_REPLACE) < 0) {
-		printf("%s missing\n",
-		       obj_name ? obj_name : oid_to_hex(&data->oid));
-		fflush(stdout);
-		return;
+	if (!data->skip_object_info) {
+		int ret;
+
+		if (pack)
+			ret = packed_object_info(the_repository, pack, offset,
+						 &data->info);
+		else
+			ret = oid_object_info_extended(the_repository,
+						       &data->oid, &data->info,
+						       OBJECT_INFO_LOOKUP_REPLACE);
+		if (ret < 0) {
+			printf("%s missing\n",
+			       obj_name ? obj_name : oid_to_hex(&data->oid));
+			fflush(stdout);
+			return;
+		}
 	}
 
 	strbuf_reset(scratch);
@@ -428,7 +444,7 @@ static void batch_one_object(const char *obj_name,
 		return;
 	}
 
-	batch_object_write(obj_name, scratch, opt, data);
+	batch_object_write(obj_name, scratch, opt, data, NULL, 0);
 }
 
 struct object_cb_data {
@@ -442,7 +458,8 @@ static int batch_object_cb(const struct object_id *oid, void *vdata)
 {
 	struct object_cb_data *data = vdata;
 	oidcpy(&data->expand->oid, oid);
-	batch_object_write(NULL, data->scratch, data->opt, data->expand);
+	batch_object_write(NULL, data->scratch, data->opt, data->expand,
+			   NULL, 0);
 	return 0;
 }
 
@@ -463,21 +480,26 @@ static int collect_packed_object(const struct object_id *oid,
 	return 0;
 }
 
-static int batch_unordered_object(const struct object_id *oid, void *vdata)
+static int batch_unordered_object(const struct object_id *oid,
+				  struct packed_git *pack, off_t offset,
+				  void *vdata)
 {
 	struct object_cb_data *data = vdata;
 
 	if (oidset_insert(data->seen, oid))
 		return 0;
 
-	return batch_object_cb(oid, data);
+	oidcpy(&data->expand->oid, oid);
+	batch_object_write(NULL, data->scratch, data->opt, data->expand,
+			   pack, offset);
+	return 0;
 }
 
 static int batch_unordered_loose(const struct object_id *oid,
 				 const char *path,
 				 void *data)
 {
-	return batch_unordered_object(oid, data);
+	return batch_unordered_object(oid, NULL, 0, data);
 }
 
 static int batch_unordered_packed(const struct object_id *oid,
@@ -485,7 +507,9 @@ static int batch_unordered_packed(const struct object_id *oid,
 				  uint32_t pos,
 				  void *data)
 {
-	return batch_unordered_object(oid, data);
+	return batch_unordered_object(oid, pack,
+				      nth_packed_object_offset(pack, pos),
+				      data);
 }
 
 static int batch_objects(struct batch_options *opt)
@@ -528,6 +552,8 @@ static int batch_objects(struct batch_options *opt)
 
 		if (has_promisor_remote())
 			warning("This repository uses promisor remotes. Some objects may not be loaded.");
+
+		read_replace_refs = 0;
 
 		cb.opt = opt;
 		cb.expand = &data;

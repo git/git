@@ -13,11 +13,6 @@ my $body_data;
 defined read($body_fh, $body_data, $body_size) or die "Cannot read $body_filename: $!";
 close($body_fh);
 
-my $exited = 0;
-$SIG{"CHLD"} = sub {
-        $exited = 1;
-};
-
 # write data
 my $pid = open(my $out, "|-", @command);
 {
@@ -29,8 +24,13 @@ my $pid = open(my $out, "|-", @command);
 }
 print $out $body_data or die "Cannot write data: $!";
 
-sleep 60; # is interrupted by SIGCHLD
-if (!$exited) {
-        close($out);
+$SIG{ALRM} = sub {
+        kill 'KILL', $pid;
         die "Command did not exit after reading whole body";
+};
+alarm 60;
+
+my $ret = waitpid($pid, 0);
+if ($ret != $pid) {
+        die "confusing return from waitpid: $ret";
 }

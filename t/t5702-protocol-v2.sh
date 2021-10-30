@@ -27,9 +27,9 @@ test_expect_success 'list refs with git:// using protocol v2' '
 		ls-remote --symref "$GIT_DAEMON_URL/parent" >actual &&
 
 	# Client requested to use protocol v2
-	grep "git> .*\\\0\\\0version=2\\\0$" log &&
+	grep "ls-remote> .*\\\0\\\0version=2\\\0$" log &&
 	# Server responded using protocol v2
-	grep "git< version 2" log &&
+	grep "ls-remote< version 2" log &&
 
 	git ls-remote --symref "$GIT_DAEMON_URL/parent" >expect &&
 	test_cmp expect actual
@@ -151,7 +151,7 @@ test_expect_success 'list refs with file:// using protocol v2' '
 		ls-remote --symref "file://$(pwd)/file_parent" >actual &&
 
 	# Server responded using protocol v2
-	grep "git< version 2" log &&
+	grep "ls-remote< version 2" log &&
 
 	git ls-remote --symref "file://$(pwd)/file_parent" >expect &&
 	test_cmp expect actual
@@ -235,6 +235,19 @@ test_expect_success '...but not if explicitly forbidden by config' '
 	git -c init.defaultBranch=main -c protocol.version=2 \
 		clone "file://$(pwd)/file_empty_parent" file_empty_child &&
 	! grep "refs/heads/mydefaultbranch" file_empty_child/.git/HEAD
+'
+
+test_expect_success 'bare clone propagates empty default branch' '
+	test_when_finished "rm -rf file_empty_parent file_empty_child.git" &&
+
+	GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME= \
+	git -c init.defaultBranch=mydefaultbranch init file_empty_parent &&
+
+	GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME= \
+	git -c init.defaultBranch=main -c protocol.version=2 \
+		clone --bare \
+		"file://$(pwd)/file_empty_parent" file_empty_child.git &&
+	grep "refs/heads/mydefaultbranch" file_empty_child.git/HEAD
 '
 
 test_expect_success 'fetch with file:// using protocol v2' '

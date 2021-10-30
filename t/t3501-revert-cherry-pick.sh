@@ -158,4 +158,20 @@ test_expect_success 'cherry-pick works with dirty renamed file' '
 	grep -q "^modified$" renamed
 '
 
+test_expect_success 'advice from failed revert' '
+	test_commit --no-tag "add dream" dream dream &&
+	dream_oid=$(git rev-parse --short HEAD) &&
+	cat <<-EOF >expected &&
+	error: could not revert $dream_oid... add dream
+	hint: After resolving the conflicts, mark them with
+	hint: "git add/rm <pathspec>", then run
+	hint: "git revert --continue".
+	hint: You can instead skip this commit with "git revert --skip".
+	hint: To abort and get back to the state before "git revert",
+	hint: run "git revert --abort".
+	EOF
+	test_commit --append --no-tag "double-add dream" dream dream &&
+	test_must_fail git revert HEAD^ 2>actual &&
+	test_cmp expected actual
+'
 test_done

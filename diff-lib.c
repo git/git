@@ -117,6 +117,10 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 		if (!ce_path_match(istate, ce, &revs->prune_data, NULL))
 			continue;
 
+		if (revs->diffopt.prefix &&
+		    strncmp(ce->name, revs->diffopt.prefix, revs->diffopt.prefix_length))
+			continue;
+
 		if (ce_stage(ce)) {
 			struct combine_diff_path *dpath;
 			struct diff_filepair *pair;

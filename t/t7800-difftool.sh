@@ -453,6 +453,13 @@ run_dir_diff_test 'difftool --dir-diff' '
 	grep "^file$" output
 '
 
+run_dir_diff_test 'difftool --dir-diff avoids repeated slashes in TMPDIR' '
+	TMPDIR="${TMPDIR:-/tmp}////" \
+		git difftool --dir-diff $symlinks --extcmd echo branch >output &&
+	grep -v // output >actual &&
+	test_line_count = 1 actual
+'
+
 run_dir_diff_test 'difftool --dir-diff ignores --prompt' '
 	git difftool --dir-diff $symlinks --prompt --extcmd ls branch >output &&
 	grep "^sub$" output &&
@@ -674,7 +681,6 @@ test_expect_success SYMLINKS 'difftool --dir-diff handles modified symlinks' '
 	rm c &&
 	ln -s d c &&
 	cat >expect <<-EOF &&
-		b
 		c
 
 		c
@@ -710,7 +716,6 @@ test_expect_success SYMLINKS 'difftool --dir-diff handles modified symlinks' '
 	# Deleted symlinks
 	rm -f c &&
 	cat >expect <<-EOF &&
-		b
 		c
 
 	EOF
@@ -721,6 +726,71 @@ test_expect_success SYMLINKS 'difftool --dir-diff handles modified symlinks' '
 	git difftool --no-symlinks --dir-diff --extcmd ls >output &&
 	grep -v ^/ output >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success SYMLINKS 'difftool --dir-diff writes symlinks as raw text' '
+	# Start out on a branch called "branch-init".
+	git init -b branch-init symlink-files &&
+	(
+		cd symlink-files &&
+		# This test ensures that symlinks are written as raw text.
+		# The "cat" tools output link and file contents.
+		git config difftool.cat-left-link.cmd "cat \"\$LOCAL/link\"" &&
+		git config difftool.cat-left-a.cmd "cat \"\$LOCAL/file-a\"" &&
+		git config difftool.cat-right-link.cmd "cat \"\$REMOTE/link\"" &&
+		git config difftool.cat-right-b.cmd "cat \"\$REMOTE/file-b\"" &&
+
+		# Record the empty initial state so that we can come back here
+		# later and not have to consider the any cases where difftool
+		# will create symlinks back into the worktree.
+		test_tick &&
+		git commit --allow-empty -m init &&
+
+		# Create a file called "file-a" with a symlink pointing to it.
+		git switch -c branch-a &&
+		echo a >file-a &&
+		ln -s file-a link &&
+		git add file-a link &&
+		test_tick &&
+		git commit -m link-to-file-a &&
+
+		# Create a file called "file-b" and point the symlink to it.
+		git switch -c branch-b &&
+		echo b >file-b &&
+		rm link &&
+		ln -s file-b link &&
+		git add file-b link &&
+		git rm file-a &&
+		test_tick &&
+		git commit -m link-to-file-b &&
+
+		# Checkout the initial branch so that the --symlinks behavior is
+		# not activated. The two directories should be completely
+		# independent with no symlinks pointing back here.
+		git switch branch-init &&
+
+		# The left link must be "file-a" and "file-a" must contain "a".
+		echo file-a >expect &&
+		git difftool --symlinks --dir-diff --tool cat-left-link \
+			branch-a branch-b >actual &&
+		test_cmp expect actual &&
+
+		echo a >expect &&
+		git difftool --symlinks --dir-diff --tool cat-left-a \
+			branch-a branch-b >actual &&
+		test_cmp expect actual &&
+
+		# The right link must be "file-b" and "file-b" must contain "b".
+		echo file-b >expect &&
+		git difftool --symlinks --dir-diff --tool cat-right-link \
+			branch-a branch-b >actual &&
+		test_cmp expect actual &&
+
+		echo b >expect &&
+		git difftool --symlinks --dir-diff --tool cat-right-b \
+			branch-a branch-b >actual &&
+		test_cmp expect actual
+	)
 '
 
 test_expect_success 'add -N and difftool -d' '

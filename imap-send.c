@@ -1441,7 +1441,7 @@ static CURL *setup_curl(struct imap_server_conf *srvc, struct credential *cred)
 	curl_easy_setopt(curl, CURLOPT_PORT, server.port);
 
 	if (server.auth_method) {
-#if LIBCURL_VERSION_NUM < 0x072200
+#ifndef GIT_CURL_HAVE_CURLOPT_LOGIN_OPTIONS
 		warning("No LOGIN_OPTIONS support in this cURL version");
 #else
 		struct strbuf auth = STRBUF_INIT;
@@ -1517,11 +1517,7 @@ static int curl_append_msgs_to_imap(struct imap_server_conf *server,
 	if (cred.username) {
 		if (res == CURLE_OK)
 			credential_approve(&cred);
-#if LIBCURL_VERSION_NUM >= 0x070d01
 		else if (res == CURLE_LOGIN_DENIED)
-#else
-		else
-#endif
 			credential_reject(&cred);
 	}
 

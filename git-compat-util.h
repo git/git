@@ -160,6 +160,9 @@
 # endif
 #define WIN32_LEAN_AND_MEAN  /* stops windows.h including winsock.h */
 #include <winsock2.h>
+#ifndef NO_UNIX_SOCKETS
+#include <afunix.h>
+#endif
 #include <windows.h>
 #define GIT_WINDOWS_NATIVE
 #endif
@@ -875,6 +878,7 @@ void *xmemdupz(const void *data, size_t len);
 char *xstrndup(const char *str, size_t len);
 void *xrealloc(void *ptr, size_t size);
 void *xcalloc(size_t nmemb, size_t size);
+void xsetenv(const char *name, const char *value, int overwrite);
 void *xmmap(void *start, size_t length, int prot, int flags, int fd, off_t offset);
 const char *mmap_os_err(void);
 void *xmmap_gently(void *start, size_t length, int prot, int flags, int fd, off_t offset);
@@ -1252,10 +1256,6 @@ int warn_on_fopen_errors(const char *path);
  * simultaneously create paths.
  */
 int open_nofollow(const char *path, int flags);
-
-#if !defined(USE_PARENS_AROUND_GETTEXT_N) && defined(__GNUC__)
-#define USE_PARENS_AROUND_GETTEXT_N 1
-#endif
 
 #ifndef SHELL_PATH
 # define SHELL_PATH "/bin/sh"

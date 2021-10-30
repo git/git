@@ -11,6 +11,7 @@
 #include "parse-options.h"
 #include "dir.h"
 #include "run-command.h"
+#include "hook.h"
 #include "quote.h"
 #include "tempfile.h"
 #include "lockfile.h"
@@ -1820,7 +1821,7 @@ static void am_run(struct am_state *state, int resume)
 			printf_ln(_("Patch failed at %s %.*s"), msgnum(state),
 				linelen(state->msg), state->msg);
 
-			if (advice_amworkdir)
+			if (advice_enabled(ADVICE_AM_WORK_DIR))
 				advise(_("Use 'git am --show-current-patch=diff' to see the failed patch"));
 
 			die_user_resolve(state);
@@ -1848,7 +1849,6 @@ next:
 	 */
 	if (!state->rebasing) {
 		am_destroy(state);
-		close_object_store(the_repository->objects);
 		run_auto_maintenance(state->quiet);
 	}
 }
@@ -1918,7 +1918,8 @@ static int fast_forward_to(struct tree *head, struct tree *remote, int reset)
 	opts.dst_index = &the_index;
 	opts.update = 1;
 	opts.merge = 1;
-	opts.reset = reset;
+	opts.reset = reset ? UNPACK_RESET_PROTECT_UNTRACKED : 0;
+	opts.preserve_ignored = 0; /* FIXME: !overwrite_ignore */
 	opts.fn = twoway_merge;
 	init_tree_desc(&t[0], head->buffer, head->size);
 	init_tree_desc(&t[1], remote->buffer, remote->size);
@@ -2106,7 +2107,8 @@ static void am_abort(struct am_state *state)
 	if (!has_orig_head)
 		oidcpy(&orig_head, the_hash_algo->empty_tree);
 
-	clean_index(&curr_head, &orig_head);
+	if (clean_index(&curr_head, &orig_head))
+		die(_("failed to clean index"));
 
 	if (has_orig_head)
 		update_ref("am --abort", "HEAD", &orig_head,

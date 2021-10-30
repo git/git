@@ -19,6 +19,7 @@
 #include "revision.h"
 #include "wt-status.h"
 #include "run-command.h"
+#include "hook.h"
 #include "refs.h"
 #include "log-tree.h"
 #include "strbuf.h"
@@ -203,7 +204,7 @@ static void status_init_config(struct wt_status *s, config_fn_t fn)
 	init_diff_ui_defaults();
 	git_config(fn, s);
 	determine_whence(s);
-	s->hints = advice_status_hints; /* must come after git_config() */
+	s->hints = advice_enabled(ADVICE_STATUS_HINTS); /* must come after git_config() */
 }
 
 static void rollback_index_files(void)
@@ -1033,7 +1034,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 	 */
 	if (!committable && whence != FROM_MERGE && !allow_empty &&
 	    !(amend && is_a_merge(current_head))) {
-		s->hints = advice_status_hints;
+		s->hints = advice_enabled(ADVICE_STATUS_HINTS);
 		s->display_comment_prefix = old_display_comment_prefix;
 		run_status(stdout, index_file, prefix, 0, s);
 		if (amend)
@@ -1051,7 +1052,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		return 0;
 	}
 
-	if (!no_verify && find_hook("pre-commit")) {
+	if (!no_verify && hook_exists("pre-commit")) {
 		/*
 		 * Re-read the index as pre-commit hook could have updated it,
 		 * and write it out as a tree.  We must do this before we invoke
@@ -1253,8 +1254,6 @@ static int parse_and_validate_options(int argc, const char *argv[],
 
 	if (logfile || have_option_m || use_message)
 		use_editor = 0;
-	if (0 <= edit_flag)
-		use_editor = edit_flag;
 
 	/* Sanity check options */
 	if (amend && !current_head)
@@ -1343,6 +1342,9 @@ static int parse_and_validate_options(int argc, const char *argv[],
 			use_editor = 0;
 		}
 	}
+
+	if (0 <= edit_flag)
+		use_editor = edit_flag;
 
 	cleanup_mode = get_cleanup_mode(cleanup_arg, use_editor);
 

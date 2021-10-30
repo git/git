@@ -356,7 +356,7 @@ __gitcomp ()
 	local cur_="${3-$cur}"
 
 	case "$cur_" in
-	--*=)
+	*=)
 		;;
 	--no-*)
 		local c i=0 IFS=$' \t\n'
@@ -421,7 +421,7 @@ __gitcomp_builtin ()
 	local incl="${2-}"
 	local excl="${3-}"
 
-	local var=__gitcomp_builtin_"${cmd/-/_}"
+	local var=__gitcomp_builtin_"${cmd//-/_}"
 	local options
 	eval "options=\${$var-}"
 
@@ -515,7 +515,7 @@ __gitcomp_file ()
 # argument, and using the options specified in the second argument.
 __git_ls_files_helper ()
 {
-	if [ "$2" == "--committable" ]; then
+	if [ "$2" = "--committable" ]; then
 		__git -C "$1" -c core.quotePath=false diff-index \
 			--name-only --relative HEAD -- "${3//\\/\\\\}*"
 	else
@@ -2503,7 +2503,14 @@ __git_config_vars=
 __git_compute_config_vars ()
 {
 	test -n "$__git_config_vars" ||
-	__git_config_vars="$(git help --config-for-completion | sort -u)"
+	__git_config_vars="$(git help --config-for-completion)"
+}
+
+__git_config_sections=
+__git_compute_config_sections ()
+{
+	test -n "$__git_config_sections" ||
+	__git_config_sections="$(git help --config-sections-for-completion)"
 }
 
 # Completes possible values of various configuration variables.
@@ -2543,7 +2550,7 @@ __git_complete_config_variable_value ()
 		return
 		;;
 	branch.*.rebase)
-		__gitcomp "false true merges preserve interactive" "" "$cur_"
+		__gitcomp "false true merges interactive" "" "$cur_"
 		return
 		;;
 	remote.pushdefault)
@@ -2650,10 +2657,10 @@ __git_complete_config_variable_name ()
 		return
 		;;
 	branch.*)
-		local pfx="${cur%.*}."
-		cur_="${cur#*.}"
+		local pfx="${cur_%.*}."
+		cur_="${cur_#*.}"
 		__gitcomp_direct "$(__git_heads "$pfx" "$cur_" ".")"
-		__gitcomp_nl_append $'autoSetupMerge\nautoSetupRebase\n' "$pfx" "$cur_" "$sfx"
+		__gitcomp_nl_append $'autoSetupMerge\nautoSetupRebase\n' "$pfx" "$cur_" "${sfx- }"
 		return
 		;;
 	guitool.*.*)
@@ -2687,7 +2694,7 @@ __git_complete_config_variable_name ()
 		local pfx="${cur_%.*}."
 		cur_="${cur_#*.}"
 		__git_compute_all_commands
-		__gitcomp_nl "$__git_all_commands" "$pfx" "$cur_" "$sfx"
+		__gitcomp_nl "$__git_all_commands" "$pfx" "$cur_" "${sfx- }"
 		return
 		;;
 	remote.*.*)
@@ -2703,7 +2710,7 @@ __git_complete_config_variable_name ()
 		local pfx="${cur_%.*}."
 		cur_="${cur_#*.}"
 		__gitcomp_nl "$(__git_remotes)" "$pfx" "$cur_" "."
-		__gitcomp_nl_append "pushDefault" "$pfx" "$cur_" "$sfx"
+		__gitcomp_nl_append "pushDefault" "$pfx" "$cur_" "${sfx- }"
 		return
 		;;
 	url.*.*)
@@ -2717,16 +2724,8 @@ __git_complete_config_variable_name ()
 		__gitcomp "$__git_config_vars" "" "$cur_" "$sfx"
 		;;
 	*)
-		__git_compute_config_vars
-		__gitcomp "$(echo "$__git_config_vars" |
-				awk -F . '{
-					sections[$1] = 1
-				}
-				END {
-					for (s in sections)
-						print s "."
-				}
-				')" "" "$cur_"
+		__git_compute_config_sections
+		__gitcomp "$__git_config_sections" "" "$cur_" "."
 		;;
 	esac
 }

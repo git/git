@@ -25,7 +25,7 @@ struct cb_node {
 	 */
 	uint32_t byte;
 	uint8_t otherbits;
-	uint8_t k[FLEX_ARRAY]; /* arbitrary data */
+	uint8_t k[FLEX_ARRAY]; /* arbitrary data, unaligned */
 };
 
 struct cb_tree {
@@ -37,11 +37,12 @@ enum cb_next {
 	CB_BREAK = 1
 };
 
-#define CBTREE_INIT { .root = NULL }
+#define CBTREE_INIT { 0 }
 
 static inline void cb_init(struct cb_tree *t)
 {
-	t->root = NULL;
+	struct cb_tree blank = CBTREE_INIT;
+	memcpy(t, &blank, sizeof(*t));
 }
 
 struct cb_node *cb_lookup(struct cb_tree *, const uint8_t *k, size_t klen);

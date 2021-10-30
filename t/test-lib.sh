@@ -534,7 +534,7 @@ SQ=\'
 # when case-folding filenames
 u200c=$(printf '\342\200\214')
 
-export _x05 _x35 _x40 _z40 LF u200c EMPTY_TREE EMPTY_BLOB ZERO_OID OID_REGEX
+export _x05 _x35 LF u200c EMPTY_TREE EMPTY_BLOB ZERO_OID OID_REGEX
 
 # Each test should start with something like this, after copyright notices:
 #
@@ -585,18 +585,35 @@ else
 	}
 fi
 
+USER_TERM="$TERM"
 TERM=dumb
-export TERM
+export TERM USER_TERM
 
-error () {
-	say_color error "error: $*"
+_error_exit () {
 	finalize_junit_xml
 	GIT_EXIT_OK=t
 	exit 1
 }
 
+error () {
+	say_color error "error: $*"
+	_error_exit
+}
+
 BUG () {
 	error >&7 "bug in the test script: $*"
+}
+
+BAIL_OUT () {
+	test $# -ne 1 && BUG "1 param"
+
+	# Do not change "Bail out! " string. It's part of TAP syntax:
+	# https://testanything.org/tap-specification.html
+	local bail_out="Bail out! "
+	local message="$1"
+
+	say_color error $bail_out "$message"
+	_error_exit
 }
 
 say () {
@@ -607,9 +624,7 @@ if test -n "$HARNESS_ACTIVE"
 then
 	if test "$verbose" = t || test -n "$verbose_only"
 	then
-		printf 'Bail out! %s\n' \
-		 'verbose mode forbidden under TAP harness; try --verbose-log'
-		exit 1
+		BAIL_OUT 'verbose mode forbidden under TAP harness; try --verbose-log'
 	fi
 fi
 
@@ -719,7 +734,7 @@ test_failure_ () {
 	say_color error "not ok $test_count - $1"
 	shift
 	printf '%s\n' "$*" | sed -e 's/^/#	/'
-	test "$immediate" = "" || { finalize_junit_xml; GIT_EXIT_OK=t; exit 1; }
+	test "$immediate" = "" || _error_exit
 }
 
 test_known_broken_ok_ () {
@@ -1343,7 +1358,8 @@ fi
 GIT_TEMPLATE_DIR="$GIT_BUILD_DIR"/templates/blt
 GIT_CONFIG_NOSYSTEM=1
 GIT_ATTR_NOSYSTEM=1
-export PATH GIT_EXEC_PATH GIT_TEMPLATE_DIR GIT_CONFIG_NOSYSTEM GIT_ATTR_NOSYSTEM
+GIT_CEILING_DIRECTORIES="$TRASH_DIRECTORY/.."
+export PATH GIT_EXEC_PATH GIT_TEMPLATE_DIR GIT_CONFIG_NOSYSTEM GIT_ATTR_NOSYSTEM GIT_CEILING_DIRECTORIES
 
 if test -z "$GIT_TEST_CMP"
 then
@@ -1379,13 +1395,46 @@ then
 	test_done
 fi
 
+# skip non-whitelisted tests when compiled with SANITIZE=leak
+if test -n "$SANITIZE_LEAK"
+then
+	if test_bool_env GIT_TEST_PASSING_SANITIZE_LEAK false
+	then
+		# We need to see it in "git env--helper" (via
+		# test_bool_env)
+		export TEST_PASSES_SANITIZE_LEAK
+
+		if ! test_bool_env TEST_PASSES_SANITIZE_LEAK false
+		then
+			skip_all="skipping $this_test under GIT_TEST_PASSING_SANITIZE_LEAK=true"
+			test_done
+		fi
+	fi
+elif test_bool_env GIT_TEST_PASSING_SANITIZE_LEAK false
+then
+	BAIL_OUT "GIT_TEST_PASSING_SANITIZE_LEAK=true has no effect except when compiled with SANITIZE=leak"
+fi
+
 # Last-minute variable setup
+USER_HOME="$HOME"
 HOME="$TRASH_DIRECTORY"
 GNUPGHOME="$HOME/gnupg-home-not-used"
-export HOME GNUPGHOME
+export HOME GNUPGHOME USER_HOME
+
+# "rm -rf" existing trash directory, even if a previous run left it
+# with bad permissions.
+remove_trash_directory () {
+	dir="$1"
+	if ! rm -rf "$dir" 2>/dev/null
+	then
+		chmod -R u+rwx "$dir"
+		rm -rf "$dir"
+	fi
+	! test -d "$dir"
+}
 
 # Test repository
-rm -fr "$TRASH_DIRECTORY" || {
+remove_trash_directory "$TRASH_DIRECTORY" || {
 	GIT_EXIT_OK=t
 	echo >&5 "FATAL: Cannot prepare test area"
 	exit 1
@@ -1422,10 +1471,9 @@ then
 fi
 
 # Convenience
-# A regexp to match 5, 35 and 40 hexdigits
+# A regexp to match 5 and 35 hexdigits
 _x05='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x35="$_x05$_x05$_x05$_x05$_x05$_x05$_x05"
-_x40="$_x35$_x05"
 
 test_oid_init
 
@@ -1434,7 +1482,6 @@ OID_REGEX=$(echo $ZERO_OID | sed -e 's/0/[0-9a-f]/g')
 OIDPATH_REGEX=$(test_oid_to_path $ZERO_OID | sed -e 's/0/[0-9a-f]/g')
 EMPTY_TREE=$(test_oid empty_tree)
 EMPTY_BLOB=$(test_oid empty_blob)
-_z40=$ZERO_OID
 
 # Provide an implementation of the 'yes' utility; the upper bound
 # limit is there to help Windows that cannot stop this loop from
@@ -1533,6 +1580,7 @@ test -z "$NO_PYTHON" && test_set_prereq PYTHON
 test -n "$USE_LIBPCRE2" && test_set_prereq PCRE
 test -n "$USE_LIBPCRE2" && test_set_prereq LIBPCRE2
 test -z "$NO_GETTEXT" && test_set_prereq GETTEXT
+test -n "$SANITIZE_LEAK" && test_set_prereq SANITIZE_LEAK
 
 if test -z "$GIT_TEST_CHECK_CACHE_TREE"
 then
@@ -1706,10 +1754,6 @@ test_lazy_prereq SHA1 '
 	"") test $(git hash-object /dev/null) = e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 ;;
 	*) false ;;
 	esac
-'
-
-test_lazy_prereq REBASE_P '
-	test -z "$GIT_TEST_SKIP_REBASE_P"
 '
 
 # Ensure that no test accidentally triggers a Git command

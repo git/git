@@ -11,7 +11,7 @@ struct rev_info;
 
 int diff_merges_config(const char *value);
 
-void diff_merges_suppress_options_parsing(void);
+void diff_merges_suppress_m_parsing(void);
 
 int diff_merges_parse_opts(struct rev_info *revs, const char **argv);
 

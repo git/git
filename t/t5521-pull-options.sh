@@ -113,7 +113,7 @@ test_expect_success 'git pull --force' '
 	git pull two &&
 	test_commit A &&
 	git branch -f origin &&
-	git pull --all --force
+	git pull --no-rebase --all --force
 	)
 '
 
@@ -179,7 +179,7 @@ test_expect_success 'git pull --allow-unrelated-histories' '
 	(
 		cd dst &&
 		test_must_fail git pull ../src side &&
-		git pull --allow-unrelated-histories ../src side
+		git pull --no-rebase --allow-unrelated-histories ../src side
 	)
 '
 

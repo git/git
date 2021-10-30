@@ -8,6 +8,8 @@
 #include "string-list.h"
 #include "quote.h"
 #include "config.h"
+#include "packfile.h"
+#include "hook.h"
 
 void child_process_init(struct child_process *child)
 {
@@ -210,9 +212,9 @@ static char *locate_in_PATH(const char *file)
 	return NULL;
 }
 
-static int exists_in_PATH(const char *file)
+int exists_in_PATH(const char *command)
 {
-	char *r = locate_in_PATH(file);
+	char *r = locate_in_PATH(command);
 	int found = r != NULL;
 	free(r);
 	return found;
@@ -740,6 +742,9 @@ fail_pipe:
 
 	fflush(NULL);
 
+	if (cmd->close_object_store)
+		close_object_store(the_repository->objects);
+
 #ifndef GIT_WINDOWS_NATIVE
 {
 	int notify_pipe[2];
@@ -761,9 +766,7 @@ fail_pipe:
 		notify_pipe[0] = notify_pipe[1] = -1;
 
 	if (cmd->no_stdin || cmd->no_stdout || cmd->no_stderr) {
-		null_fd = open("/dev/null", O_RDWR | O_CLOEXEC);
-		if (null_fd < 0)
-			die_errno(_("open /dev/null failed"));
+		null_fd = xopen("/dev/null", O_RDWR | O_CLOEXEC);
 		set_cloexec(null_fd);
 	}
 
@@ -1044,6 +1047,7 @@ int run_command_v_opt_cd_env_tr2(const char **argv, int opt, const char *dir,
 	cmd.use_shell = opt & RUN_USING_SHELL ? 1 : 0;
 	cmd.clean_on_exit = opt & RUN_CLEAN_ON_EXIT ? 1 : 0;
 	cmd.wait_after_clean = opt & RUN_WAIT_AFTER_CLEAN ? 1 : 0;
+	cmd.close_object_store = opt & RUN_CLOSE_OBJECT_STORE ? 1 : 0;
 	cmd.dir = dir;
 	cmd.env = env;
 	cmd.trace2_child_class = tr2_class;
@@ -1317,40 +1321,6 @@ int async_with_fork(void)
 #else
 	return 0;
 #endif
-}
-
-const char *find_hook(const char *name)
-{
-	static struct strbuf path = STRBUF_INIT;
-
-	strbuf_reset(&path);
-	strbuf_git_path(&path, "hooks/%s", name);
-	if (access(path.buf, X_OK) < 0) {
-		int err = errno;
-
-#ifdef STRIP_EXTENSION
-		strbuf_addstr(&path, STRIP_EXTENSION);
-		if (access(path.buf, X_OK) >= 0)
-			return path.buf;
-		if (errno == EACCES)
-			err = errno;
-#endif
-
-		if (err == EACCES && advice_ignored_hook) {
-			static struct string_list advise_given = STRING_LIST_INIT_DUP;
-
-			if (!string_list_lookup(&advise_given, name)) {
-				string_list_insert(&advise_given, name);
-				advise(_("The '%s' hook was ignored because "
-					 "it's not set as executable.\n"
-					 "You can disable this warning with "
-					 "`git config advice.ignoredHook false`."),
-				       path.buf);
-			}
-		}
-		return NULL;
-	}
-	return path.buf;
 }
 
 int run_hook_ve(const char *const *env, const char *name, va_list args)
@@ -1886,6 +1856,7 @@ int run_auto_maintenance(int quiet)
 		return 0;
 
 	maint.git_cmd = 1;
+	maint.close_object_store = 1;
 	strvec_pushl(&maint.args, "maintenance", "run", "--auto", NULL);
 	strvec_push(&maint.args, quiet ? "--quiet" : "--no-quiet");
 
@@ -1902,4 +1873,133 @@ void prepare_other_repo_env(struct strvec *env_array, const char *new_git_dir)
 			strvec_push(env_array, *var);
 	}
 	strvec_pushf(env_array, "%s=%s", GIT_DIR_ENVIRONMENT, new_git_dir);
+}
+
+enum start_bg_result start_bg_command(struct child_process *cmd,
+				      start_bg_wait_cb *wait_cb,
+				      void *cb_data,
+				      unsigned int timeout_sec)
+{
+	enum start_bg_result sbgr = SBGR_ERROR;
+	int ret;
+	int wait_status;
+	pid_t pid_seen;
+	time_t time_limit;
+
+	/*
+	 * We do not allow clean-on-exit because the child process
+	 * should persist in the background and possibly/probably
+	 * after this process exits.  So we don't want to kill the
+	 * child during our atexit routine.
+	 */
+	if (cmd->clean_on_exit)
+		BUG("start_bg_command() does not allow non-zero clean_on_exit");
+
+	if (!cmd->trace2_child_class)
+		cmd->trace2_child_class = "background";
+
+	ret = start_command(cmd);
+	if (ret) {
+		/*
+		 * We assume that if `start_command()` fails, we
+		 * either get a complete `trace2_child_start() /
+		 * trace2_child_exit()` pair or it fails before the
+		 * `trace2_child_start()` is emitted, so we do not
+		 * need to worry about it here.
+		 *
+		 * We also assume that `start_command()` does not add
+		 * us to the cleanup list.  And that it calls
+		 * calls `child_process_clear()`.
+		 */
+		sbgr = SBGR_ERROR;
+		goto done;
+	}
+
+	time(&time_limit);
+	time_limit += timeout_sec;
+
+wait:
+	pid_seen = waitpid(cmd->pid, &wait_status, WNOHANG);
+
+	if (!pid_seen) {
+		/*
+		 * The child is currently running.  Ask the callback
+		 * if the child is ready to do work or whether we
+		 * should keep waiting for it to boot up.
+		 */
+		ret = (*wait_cb)(cmd, cb_data);
+		if (!ret) {
+			/*
+			 * The child is running and "ready".
+			 */
+			trace2_child_ready(cmd, "ready");
+			sbgr = SBGR_READY;
+			goto done;
+		} else if (ret > 0) {
+			/*
+			 * The callback said to give it more time to boot up
+			 * (subject to our timeout limit).
+			 */
+			time_t now;
+
+			time(&now);
+			if (now < time_limit)
+				goto wait;
+
+			/*
+			 * Our timeout has expired.  We don't try to
+			 * kill the child, but rather let it continue
+			 * (hopefully) trying to startup.
+			 */
+			trace2_child_ready(cmd, "timeout");
+			sbgr = SBGR_TIMEOUT;
+			goto done;
+		} else {
+			/*
+			 * The cb gave up on this child.  It is still running,
+			 * but our cb got an error trying to probe it.
+			 */
+			trace2_child_ready(cmd, "error");
+			sbgr = SBGR_CB_ERROR;
+			goto done;
+		}
+	}
+
+	else if (pid_seen == cmd->pid) {
+		int child_code = -1;
+
+		/*
+		 * The child started, but exited or was terminated
+		 * before becoming "ready".
+		 *
+		 * We try to match the behavior of `wait_or_whine()`
+		 * WRT the handling of WIFSIGNALED() and WIFEXITED()
+		 * and convert the child's status to a return code for
+		 * tracing purposes and emit the `trace2_child_exit()`
+		 * event.
+		 *
+		 * We do not want the wait_or_whine() error message
+		 * because we will be called by client-side library
+		 * routines.
+		 */
+		if (WIFEXITED(wait_status))
+			child_code = WEXITSTATUS(wait_status);
+		else if (WIFSIGNALED(wait_status))
+			child_code = WTERMSIG(wait_status) + 128;
+		trace2_child_exit(cmd, child_code);
+
+		sbgr = SBGR_DIED;
+		goto done;
+	}
+
+	else if (pid_seen < 0 && errno == EINTR)
+		goto wait;
+
+	trace2_child_exit(cmd, -1);
+	sbgr = SBGR_ERROR;
+
+done:
+	child_process_clear(cmd);
+	invalidate_lstat_cache();
+	return sbgr;
 }

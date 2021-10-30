@@ -66,6 +66,7 @@ int refname_is_safe(const char *refname);
  * referred-to object does not exist, emit a warning and return false.
  */
 int ref_resolves_to_object(const char *refname,
+			   struct repository *repo,
 			   const struct object_id *oid,
 			   unsigned int flags);
 
@@ -245,8 +246,36 @@ int refs_rename_ref_available(struct ref_store *refs,
 /* We allow "recursive" symbolic refs. Only within reason, though */
 #define SYMREF_MAXDEPTH 5
 
-/* Include broken references in a do_for_each_ref*() iteration: */
-#define DO_FOR_EACH_INCLUDE_BROKEN 0x01
+/*
+ * These flags are passed to refs_ref_iterator_begin() (and do_for_each_ref(),
+ * which feeds it).
+ */
+enum do_for_each_ref_flags {
+	/*
+	 * Include broken references in a do_for_each_ref*() iteration, which
+	 * would normally be omitted. This includes both refs that point to
+	 * missing objects (a true repository corruption), ones with illegal
+	 * names (which we prefer not to expose to callers), as well as
+	 * dangling symbolic refs (i.e., those that point to a non-existent
+	 * ref; this is not a corruption, but as they have no valid oid, we
+	 * omit them from normal iteration results).
+	 */
+	DO_FOR_EACH_INCLUDE_BROKEN = (1 << 0),
+
+	/*
+	 * Only include per-worktree refs in a do_for_each_ref*() iteration.
+	 * Normally this will be used with a files ref_store, since that's
+	 * where all reference backends will presumably store their
+	 * per-worktree refs.
+	 */
+	DO_FOR_EACH_PER_WORKTREE_ONLY = (1 << 1),
+
+	/*
+	 * Omit dangling symrefs from output; this only has an effect with
+	 * INCLUDE_BROKEN, since they are otherwise not included at all.
+	 */
+	DO_FOR_EACH_OMIT_DANGLING_SYMREFS = (1 << 2),
+};
 
 /*
  * Reference iterators
@@ -349,16 +378,12 @@ int is_empty_ref_iterator(struct ref_iterator *ref_iterator);
  * Return an iterator that goes over each reference in `refs` for
  * which the refname begins with prefix. If trim is non-zero, then
  * trim that many characters off the beginning of each refname.
- * The output is ordered by refname. The following flags are supported:
- *
- * DO_FOR_EACH_INCLUDE_BROKEN: include broken references in
- *         the iteration.
- *
- * DO_FOR_EACH_PER_WORKTREE_ONLY: only produce REF_TYPE_PER_WORKTREE refs.
+ * The output is ordered by refname.
  */
 struct ref_iterator *refs_ref_iterator_begin(
 		struct ref_store *refs,
-		const char *prefix, int trim, int flags);
+		const char *prefix, int trim,
+		enum do_for_each_ref_flags flags);
 
 /*
  * A callback function used to instruct merge_ref_iterator how to
@@ -446,10 +471,8 @@ void base_ref_iterator_free(struct ref_iterator *iter);
 /*
  * backend-specific implementation of ref_iterator_advance. For symrefs, the
  * function should set REF_ISSYMREF, and it should also dereference the symref
- * to provide the OID referent. If DO_FOR_EACH_INCLUDE_BROKEN is set, symrefs
- * with non-existent referents and refs pointing to non-existent object names
- * should also be returned. If DO_FOR_EACH_PER_WORKTREE_ONLY, only
- * REF_TYPE_PER_WORKTREE refs should be returned.
+ * to provide the OID referent. It should respect do_for_each_ref_flags
+ * that were passed to refs_ref_iterator_begin().
  */
 typedef int ref_iterator_advance_fn(struct ref_iterator *ref_iterator);
 
@@ -498,14 +521,6 @@ int do_for_each_repo_ref_iterator(struct repository *r,
 				  struct ref_iterator *iter,
 				  each_repo_ref_fn fn, void *cb_data);
 
-/*
- * Only include per-worktree refs in a do_for_each_ref*() iteration.
- * Normally this will be used with a files ref_store, since that's
- * where all reference backends will presumably store their
- * per-worktree refs.
- */
-#define DO_FOR_EACH_PER_WORKTREE_ONLY 0x02
-
 struct ref_store;
 
 /* refs backends */
@@ -525,7 +540,8 @@ struct ref_store;
  * should call base_ref_store_init() to initialize the shared part of
  * the ref_store and to record the ref_store for later lookup.
  */
-typedef struct ref_store *ref_store_init_fn(const char *gitdir,
+typedef struct ref_store *ref_store_init_fn(struct repository *repo,
+					    const char *gitdir,
 					    unsigned int flags);
 
 typedef int ref_init_db_fn(struct ref_store *refs, struct strbuf *err);
@@ -593,7 +609,7 @@ typedef int create_reflog_fn(struct ref_store *ref_store, const char *refname,
 			     int force_create, struct strbuf *err);
 typedef int delete_reflog_fn(struct ref_store *ref_store, const char *refname);
 typedef int reflog_expire_fn(struct ref_store *ref_store,
-			     const char *refname, const struct object_id *oid,
+			     const char *refname,
 			     unsigned int flags,
 			     reflog_expiry_prepare_fn prepare_fn,
 			     reflog_expiry_should_prune_fn should_prune_fn,
@@ -620,11 +636,15 @@ typedef int reflog_expire_fn(struct ref_store *ref_store,
  * properly-formatted or even safe reference name. NEITHER INPUT NOR
  * OUTPUT REFERENCE NAMES ARE VALIDATED WITHIN THIS FUNCTION.
  *
- * Return 0 on success. If the ref doesn't exist, set errno to ENOENT
- * and return -1. If the ref exists but is neither a symbolic ref nor
- * an object ID, it is broken; set REF_ISBROKEN in type, set errno to
- * EINVAL, and return -1. If there is another error reading the ref,
- * set errno appropriately and return -1.
+ * Return 0 on success, or -1 on failure. If the ref exists but is neither a
+ * symbolic ref nor an object ID, it is broken. In this case set REF_ISBROKEN in
+ * type, and return -1 (failure_errno should not be ENOENT)
+ *
+ * failure_errno provides errno codes that are interpreted beyond error
+ * reporting. The following error codes have special meaning:
+ *    * ENOENT: the ref doesn't exist
+ *    * EISDIR: ref name is a directory
+ *    * ENOTDIR: ref prefix is not a directory
  *
  * Backend-specific flags might be set in type as well, regardless of
  * outcome.
@@ -638,9 +658,9 @@ typedef int reflog_expire_fn(struct ref_store *ref_store,
  * - in all other cases, referent will be untouched, and therefore
  *   refname will still be valid and unchanged.
  */
-typedef int read_raw_ref_fn(struct ref_store *ref_store,
-			    const char *refname, struct object_id *oid,
-			    struct strbuf *referent, unsigned int *type);
+typedef int read_raw_ref_fn(struct ref_store *ref_store, const char *refname,
+			    struct object_id *oid, struct strbuf *referent,
+			    unsigned int *type, int *failure_errno);
 
 struct ref_storage_be {
 	struct ref_storage_be *next;
@@ -683,7 +703,12 @@ struct ref_store {
 	/* The backend describing this ref_store's storage scheme: */
 	const struct ref_storage_be *be;
 
-	/* The gitdir that this ref_store applies to: */
+	struct repository *repo;
+
+	/*
+	 * The gitdir that this ref_store applies to. Note that this is not
+	 * necessarily repo->gitdir if the repo has multiple worktrees.
+	 */
 	char *gitdir;
 };
 

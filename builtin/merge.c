@@ -13,6 +13,7 @@
 #include "builtin.h"
 #include "lockfile.h"
 #include "run-command.h"
+#include "hook.h"
 #include "diff.h"
 #include "diff-merges.h"
 #include "refs.h"
@@ -88,9 +89,9 @@ static int autostash;
 static int no_verify;
 
 static struct strategy all_strategy[] = {
-	{ "recursive",  DEFAULT_TWOHEAD | NO_TRIVIAL },
+	{ "recursive",  NO_TRIVIAL },
 	{ "octopus",    DEFAULT_OCTOPUS },
-	{ "ort",        NO_TRIVIAL },
+	{ "ort",        DEFAULT_TWOHEAD | NO_TRIVIAL },
 	{ "resolve",    0 },
 	{ "ours",       NO_FAST_FORWARD | NO_TRIVIAL },
 	{ "subtree",    NO_FAST_FORWARD | NO_TRIVIAL },
@@ -469,7 +470,6 @@ static void finish(struct commit *head_commit,
 			 * We ignore errors in 'gc --auto', since the
 			 * user should see them.
 			 */
-			close_object_store(the_repository->objects);
 			run_auto_maintenance(verbosity < 0);
 		}
 	}
@@ -681,6 +681,7 @@ static int read_tree_trivial(struct object_id *common, struct object_id *head,
 	opts.verbose_update = 1;
 	opts.trivial_merges_only = 1;
 	opts.merge = 1;
+	opts.preserve_ignored = 0; /* FIXME: !overwrite_ignore */
 	trees[nr_trees] = parse_tree_indirect(common);
 	if (!trees[nr_trees++])
 		return -1;
@@ -739,7 +740,7 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 
 		for (x = 0; x < xopts_nr; x++)
 			if (parse_merge_opt(&o, xopts[x]))
-				die(_("Unknown option for merge-recursive: -X%s"), xopts[x]);
+				die(_("unknown strategy option: -X%s"), xopts[x]);
 
 		o.branch1 = head_arg;
 		o.branch2 = merge_remote_util(remoteheads->item)->name;
@@ -849,7 +850,7 @@ static void prepare_to_commit(struct commit_list *remoteheads)
 	 * and write it out as a tree.  We must do this before we invoke
 	 * the editor and after we invoke run_status above.
 	 */
-	if (find_hook("pre-merge-commit"))
+	if (hook_exists("pre-merge-commit"))
 		discard_cache();
 	read_cache_from(index_file);
 	strbuf_addbuf(&msg, &merge_msg);
@@ -862,9 +863,11 @@ static void prepare_to_commit(struct commit_list *remoteheads)
 			strbuf_commented_addf(&msg, "\n");
 		}
 		strbuf_commented_addf(&msg, _(merge_editor_comment));
-		strbuf_commented_addf(&msg, _(cleanup_mode == COMMIT_MSG_CLEANUP_SCISSORS ?
-			scissors_editor_comment :
-			no_scissors_editor_comment), comment_line_char);
+		if (cleanup_mode == COMMIT_MSG_CLEANUP_SCISSORS)
+			strbuf_commented_addf(&msg, _(scissors_editor_comment));
+		else
+			strbuf_commented_addf(&msg,
+				_(no_scissors_editor_comment), comment_line_char);
 	}
 	if (signoff)
 		append_signoff(&msg, ignore_non_trailer(msg.buf, msg.len), 0);
@@ -1136,9 +1139,7 @@ static void handle_fetch_head(struct commit_list **remotes, struct strbuf *merge
 		merge_names = &fetch_head_file;
 
 	filename = git_path_fetch_head(the_repository);
-	fd = open(filename, O_RDONLY);
-	if (fd < 0)
-		die_errno(_("could not open '%s' for reading"), filename);
+	fd = xopen(filename, O_RDONLY);
 
 	if (strbuf_read(merge_names, fd, 0) < 0)
 		die_errno(_("could not read '%s'"), filename);
@@ -1276,6 +1277,9 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage_with_options(builtin_merge_usage, builtin_merge_options);
 
+	prepare_repo_settings(the_repository);
+	the_repository->settings.command_requires_full_index = 0;
+
 	/*
 	 * Check if we are _not_ on a detached HEAD, i.e. if there is a
 	 * current branch.
@@ -1368,14 +1372,14 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		 * There is no unmerged entry, don't advise 'git
 		 * add/rm <file>', just 'git commit'.
 		 */
-		if (advice_resolve_conflict)
+		if (advice_enabled(ADVICE_RESOLVE_CONFLICT))
 			die(_("You have not concluded your merge (MERGE_HEAD exists).\n"
 				  "Please, commit your changes before you merge."));
 		else
 			die(_("You have not concluded your merge (MERGE_HEAD exists)."));
 	}
 	if (ref_exists("CHERRY_PICK_HEAD")) {
-		if (advice_resolve_conflict)
+		if (advice_enabled(ADVICE_RESOLVE_CONFLICT))
 			die(_("You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists).\n"
 			    "Please, commit your changes before you merge."));
 		else
@@ -1485,6 +1489,12 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			fast_forward = FF_NO;
 	}
 
+	if (!use_strategies && !pull_twohead &&
+	    remoteheads && !remoteheads->next) {
+		char *default_strategy = getenv("GIT_TEST_MERGE_ALGORITHM");
+		if (default_strategy)
+			append_strategy(get_strategy(default_strategy));
+	}
 	if (!use_strategies) {
 		if (!remoteheads)
 			; /* already up-to-date */
@@ -1568,6 +1578,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 
 		finish(head_commit, remoteheads, &commit->object.oid, msg.buf);
 		remove_merge_branch_state(the_repository);
+		strbuf_release(&msg);
 		goto done;
 	} else if (!remoteheads->next && common->next)
 		;
@@ -1622,7 +1633,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	}
 
 	if (fast_forward == FF_ONLY)
-		die(_("Not possible to fast-forward, aborting."));
+		die_ff_impossible();
 
 	if (autostash)
 		create_autostash(the_repository,
@@ -1738,6 +1749,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		ret = suggest_conflicts();
 
 done:
+	strbuf_release(&buf);
 	free(branch_to_free);
 	return ret;
 }

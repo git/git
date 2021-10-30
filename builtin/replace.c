@@ -507,7 +507,7 @@ static int convert_graft_file(int force)
 	if (!fp)
 		return -1;
 
-	advice_graft_file_deprecated = 0;
+	no_graft_file_deprecated_advice = 1;
 	while (strbuf_getline(&buf, fp) != EOF) {
 		if (*buf.buf == '#')
 			continue;

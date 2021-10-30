@@ -42,7 +42,8 @@ Initial Client Request
 In general a client can request to speak protocol v2 by sending
 `version=2` through the respective side-channel for the transport being
 used which inevitably sets `GIT_PROTOCOL`.  More information can be
-found in `pack-protocol.txt` and `http-protocol.txt`.  In all cases the
+found in `pack-protocol.txt` and `http-protocol.txt`, as well as the
+`GIT_PROTOCOL` definition in `git.txt`. In all cases the
 response from the server is the capability advertisement.
 
 Git Transport
@@ -58,6 +59,8 @@ SSH and File Transport
 
 When using either the ssh:// or file:// transport, the GIT_PROTOCOL
 environment variable must be set explicitly to include "version=2".
+The server may need to be configured to allow this environment variable
+to pass.
 
 HTTP Transport
 ~~~~~~~~~~~~~~
@@ -80,6 +83,12 @@ A v2 server would reply:
 
 Subsequent requests are then made directly to the service
 `$GIT_URL/git-upload-pack`. (This works the same for git-receive-pack).
+
+Uses the `--http-backend-info-refs` option to
+linkgit:git-upload-pack[1].
+
+The server may need to be configured to pass this header's contents via
+the `GIT_PROTOCOL` variable. See the discussion in `git-http-backend.txt`.
 
 Capability Advertisement
 ------------------------
@@ -190,7 +199,11 @@ ls-refs takes in the following arguments:
 	Show peeled tags.
     ref-prefix <prefix>
 	When specified, only references having a prefix matching one of
-	the provided prefixes are displayed.
+	the provided prefixes are displayed. Multiple instances may be
+	given, in which case references matching any prefix will be
+	shown. Note that this is purely for optimization; a server MAY
+	show refs not matching the prefix if it chooses, and clients
+	should filter the result themselves.
 
 If the 'unborn' feature is advertised the following argument can be
 included in the client's request.

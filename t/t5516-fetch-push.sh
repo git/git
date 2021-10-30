@@ -201,6 +201,7 @@ test_expect_success 'push with negotiation' '
 	# Without negotiation
 	mk_empty testrepo &&
 	git push testrepo $the_first_commit:refs/remotes/origin/first_commit &&
+	test_commit -C testrepo unrelated_commit &&
 	git -C testrepo config receive.hideRefs refs/remotes/origin/first_commit &&
 	echo now pushing without negotiation &&
 	GIT_TRACE2_EVENT="$(pwd)/event" git -c protocol.version=2 push testrepo refs/heads/main:refs/remotes/origin/main &&
@@ -210,6 +211,7 @@ test_expect_success 'push with negotiation' '
 	rm event &&
 	mk_empty testrepo &&
 	git push testrepo $the_first_commit:refs/remotes/origin/first_commit &&
+	test_commit -C testrepo unrelated_commit &&
 	git -C testrepo config receive.hideRefs refs/remotes/origin/first_commit &&
 	GIT_TRACE2_EVENT="$(pwd)/event" git -c protocol.version=2 -c push.negotiate=1 push testrepo refs/heads/main:refs/remotes/origin/main &&
 	grep_wrote 2 event # 1 commit, 1 tree
@@ -219,6 +221,7 @@ test_expect_success 'push with negotiation proceeds anyway even if negotiation f
 	rm event &&
 	mk_empty testrepo &&
 	git push testrepo $the_first_commit:refs/remotes/origin/first_commit &&
+	test_commit -C testrepo unrelated_commit &&
 	git -C testrepo config receive.hideRefs refs/remotes/origin/first_commit &&
 	GIT_TEST_PROTOCOL_VERSION=0 GIT_TRACE2_EVENT="$(pwd)/event" \
 		git -c push.negotiate=1 push testrepo refs/heads/main:refs/remotes/origin/main 2>err &&
@@ -659,10 +662,10 @@ test_expect_success 'push does not update local refs on failure' '
 
 test_expect_success 'allow deleting an invalid remote ref' '
 
-	mk_test testrepo heads/main &&
+	mk_test testrepo heads/branch &&
 	rm -f testrepo/.git/objects/??/* &&
-	git push testrepo :refs/heads/main &&
-	(cd testrepo && test_must_fail git rev-parse --verify refs/heads/main)
+	git push testrepo :refs/heads/branch &&
+	(cd testrepo && test_must_fail git rev-parse --verify refs/heads/branch)
 
 '
 
@@ -703,25 +706,26 @@ test_expect_success 'pushing valid refs triggers post-receive and post-update ho
 '
 
 test_expect_success 'deleting dangling ref triggers hooks with correct args' '
-	mk_test_with_hooks testrepo heads/main &&
+	mk_test_with_hooks testrepo heads/branch &&
+	orig=$(git -C testrepo rev-parse refs/heads/branch) &&
 	rm -f testrepo/.git/objects/??/* &&
-	git push testrepo :refs/heads/main &&
+	git push testrepo :refs/heads/branch &&
 	(
 		cd testrepo/.git &&
 		cat >pre-receive.expect <<-EOF &&
-		$ZERO_OID $ZERO_OID refs/heads/main
+		$orig $ZERO_OID refs/heads/branch
 		EOF
 
 		cat >update.expect <<-EOF &&
-		refs/heads/main $ZERO_OID $ZERO_OID
+		refs/heads/branch $orig $ZERO_OID
 		EOF
 
 		cat >post-receive.expect <<-EOF &&
-		$ZERO_OID $ZERO_OID refs/heads/main
+		$orig $ZERO_OID refs/heads/branch
 		EOF
 
 		cat >post-update.expect <<-EOF &&
-		refs/heads/main
+		refs/heads/branch
 		EOF
 
 		test_cmp pre-receive.expect pre-receive.actual &&
@@ -1767,5 +1771,4 @@ test_expect_success 'denyCurrentBranch and worktrees' '
 	git -C cloned push origin HEAD:new-wt &&
 	test_must_fail git -C cloned push --delete origin new-wt
 '
-
 test_done

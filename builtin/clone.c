@@ -217,120 +217,6 @@ static char *get_repo_path(const char *repo, int *is_bundle)
 	return canon;
 }
 
-static char *guess_dir_name(const char *repo, int is_bundle, int is_bare)
-{
-	const char *end = repo + strlen(repo), *start, *ptr;
-	size_t len;
-	char *dir;
-
-	/*
-	 * Skip scheme.
-	 */
-	start = strstr(repo, "://");
-	if (start == NULL)
-		start = repo;
-	else
-		start += 3;
-
-	/*
-	 * Skip authentication data. The stripping does happen
-	 * greedily, such that we strip up to the last '@' inside
-	 * the host part.
-	 */
-	for (ptr = start; ptr < end && !is_dir_sep(*ptr); ptr++) {
-		if (*ptr == '@')
-			start = ptr + 1;
-	}
-
-	/*
-	 * Strip trailing spaces, slashes and /.git
-	 */
-	while (start < end && (is_dir_sep(end[-1]) || isspace(end[-1])))
-		end--;
-	if (end - start > 5 && is_dir_sep(end[-5]) &&
-	    !strncmp(end - 4, ".git", 4)) {
-		end -= 5;
-		while (start < end && is_dir_sep(end[-1]))
-			end--;
-	}
-
-	/*
-	 * Strip trailing port number if we've got only a
-	 * hostname (that is, there is no dir separator but a
-	 * colon). This check is required such that we do not
-	 * strip URI's like '/foo/bar:2222.git', which should
-	 * result in a dir '2222' being guessed due to backwards
-	 * compatibility.
-	 */
-	if (memchr(start, '/', end - start) == NULL
-	    && memchr(start, ':', end - start) != NULL) {
-		ptr = end;
-		while (start < ptr && isdigit(ptr[-1]) && ptr[-1] != ':')
-			ptr--;
-		if (start < ptr && ptr[-1] == ':')
-			end = ptr - 1;
-	}
-
-	/*
-	 * Find last component. To remain backwards compatible we
-	 * also regard colons as path separators, such that
-	 * cloning a repository 'foo:bar.git' would result in a
-	 * directory 'bar' being guessed.
-	 */
-	ptr = end;
-	while (start < ptr && !is_dir_sep(ptr[-1]) && ptr[-1] != ':')
-		ptr--;
-	start = ptr;
-
-	/*
-	 * Strip .{bundle,git}.
-	 */
-	len = end - start;
-	strip_suffix_mem(start, &len, is_bundle ? ".bundle" : ".git");
-
-	if (!len || (len == 1 && *start == '/'))
-		die(_("No directory name could be guessed.\n"
-		      "Please specify a directory on the command line"));
-
-	if (is_bare)
-		dir = xstrfmt("%.*s.git", (int)len, start);
-	else
-		dir = xstrndup(start, len);
-	/*
-	 * Replace sequences of 'control' characters and whitespace
-	 * with one ascii space, remove leading and trailing spaces.
-	 */
-	if (*dir) {
-		char *out = dir;
-		int prev_space = 1 /* strip leading whitespace */;
-		for (end = dir; *end; ++end) {
-			char ch = *end;
-			if ((unsigned char)ch < '\x20')
-				ch = '\x20';
-			if (isspace(ch)) {
-				if (prev_space)
-					continue;
-				prev_space = 1;
-			} else
-				prev_space = 0;
-			*out++ = ch;
-		}
-		*out = '\0';
-		if (out > dir && prev_space)
-			out[-1] = '\0';
-	}
-	return dir;
-}
-
-static void strip_trailing_slashes(char *dir)
-{
-	char *end = dir + strlen(dir);
-
-	while (dir < end - 1 && is_dir_sep(end[-1]))
-		end--;
-	*end = '\0';
-}
-
 static int add_one_reference(struct string_list_item *item, void *cb_data)
 {
 	struct strbuf err = STRBUF_INIT;
@@ -657,7 +543,7 @@ static void write_followtags(const struct ref *refs, const char *msg)
 	}
 }
 
-static int iterate_ref_map(void *cb_data, struct object_id *oid)
+static const struct object_id *iterate_ref_map(void *cb_data)
 {
 	struct ref **rm = cb_data;
 	struct ref *ref = *rm;
@@ -668,13 +554,11 @@ static int iterate_ref_map(void *cb_data, struct object_id *oid)
 	 */
 	while (ref && !ref->peer_ref)
 		ref = ref->next;
-	/* Returning -1 notes "end of list" to the caller. */
 	if (!ref)
-		return -1;
+		return NULL;
 
-	oidcpy(oid, &ref->old_oid);
 	*rm = ref->next;
-	return 0;
+	return &ref->old_oid;
 }
 
 static void update_remote_refs(const struct ref *refs,
@@ -786,7 +670,7 @@ static int checkout(int submodule_progress)
 		return 0;
 	}
 	if (!strcmp(head, "HEAD")) {
-		if (advice_detached_head)
+		if (advice_enabled(ADVICE_DETACHED_HEAD))
 			detach_advice(oid_to_hex(&oid));
 		FREE_AND_NULL(head);
 	} else {
@@ -803,6 +687,7 @@ static int checkout(int submodule_progress)
 	opts.update = 1;
 	opts.merge = 1;
 	opts.clone = 1;
+	opts.preserve_ignored = 0;
 	opts.fn = oneway_merge;
 	opts.verbose_update = (option_verbosity >= 0);
 	opts.src_index = &the_index;
@@ -1041,8 +926,8 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	if (argc == 2)
 		dir = xstrdup(argv[1]);
 	else
-		dir = guess_dir_name(repo_name, is_bundle, option_bare);
-	strip_trailing_slashes(dir);
+		dir = git_url_basename(repo_name, is_bundle, option_bare);
+	strip_dir_trailing_slashes(dir);
 
 	dest_exists = path_exists(dir);
 	if (dest_exists && !is_empty_dir(dir))
@@ -1114,6 +999,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	if (option_recurse_submodules.nr > 0) {
 		struct string_list_item *item;
 		struct strbuf sb = STRBUF_INIT;
+		int val;
 
 		/* remove duplicates */
 		string_list_sort(&option_recurse_submodules);
@@ -1129,6 +1015,10 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 			string_list_append(&option_config,
 					   strbuf_detach(&sb, NULL));
 		}
+
+		if (!git_config_get_bool("submodule.stickyRecursiveClone", &val) &&
+		    val)
+			string_list_append(&option_config, "submodule.recurse=true");
 
 		if (option_required_reference.nr &&
 		    option_optional_reference.nr)
@@ -1150,8 +1040,10 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	init_db(git_dir, real_git_dir, option_template, GIT_HASH_UNKNOWN, NULL,
 		INIT_DB_QUIET);
 
-	if (real_git_dir)
+	if (real_git_dir) {
+		free((char *)git_dir);
 		git_dir = real_git_dir;
+	}
 
 	/*
 	 * additional config can be injected with -c, make sure it's included
@@ -1340,6 +1232,9 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 			our_head_points_at = remote_head_points_at;
 	}
 	else {
+		const char *branch;
+		char *ref;
+
 		if (option_branch)
 			die(_("Remote branch %s not found in upstream %s"),
 					option_branch, remote_name);
@@ -1350,24 +1245,22 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		remote_head_points_at = NULL;
 		remote_head = NULL;
 		option_no_checkout = 1;
-		if (!option_bare) {
-			const char *branch;
-			char *ref;
 
-			if (transport_ls_refs_options.unborn_head_target &&
-			    skip_prefix(transport_ls_refs_options.unborn_head_target,
-					"refs/heads/", &branch)) {
-				ref = transport_ls_refs_options.unborn_head_target;
-				transport_ls_refs_options.unborn_head_target = NULL;
-				create_symref("HEAD", ref, reflog_msg.buf);
-			} else {
-				branch = git_default_branch_name(0);
-				ref = xstrfmt("refs/heads/%s", branch);
-			}
-
-			install_branch_config(0, branch, remote_name, ref);
-			free(ref);
+		if (transport_ls_refs_options.unborn_head_target &&
+		    skip_prefix(transport_ls_refs_options.unborn_head_target,
+				"refs/heads/", &branch)) {
+			ref = transport_ls_refs_options.unborn_head_target;
+			transport_ls_refs_options.unborn_head_target = NULL;
+			create_symref("HEAD", ref, reflog_msg.buf);
+		} else {
+			branch = git_default_branch_name(0);
+			ref = xstrfmt("refs/heads/%s", branch);
 		}
+
+		if (!option_bare)
+			install_branch_config(0, branch, remote_name, ref);
+
+		free(ref);
 	}
 
 	write_refspec_config(src_ref_prefix, our_head_points_at,

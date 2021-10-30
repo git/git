@@ -120,7 +120,20 @@ struct grep_opt {
 	struct grep_pat *header_list;
 	struct grep_pat **header_tail;
 	struct grep_expr *pattern_expression;
+
+	/*
+	 * NEEDSWORK: See if we can remove this field, because the repository
+	 * should probably be per-source. That is, grep.c functions using this
+	 * field should probably start using "repo" in "struct grep_source"
+	 * instead.
+	 *
+	 * This is potentially the cause of at least one bug - "git grep"
+	 * using the textconv attributes from the superproject on the
+	 * submodules. See the failing "git grep --textconv" tests in
+	 * t7814-grep-recurse-submodules.sh for more information.
+	 */
 	struct repository *repo;
+
 	const char *prefix;
 	int prefix_length;
 	regex_t regexp;
@@ -176,7 +189,7 @@ void append_grep_pattern(struct grep_opt *opt, const char *pat, const char *orig
 void append_header_grep_pattern(struct grep_opt *, enum grep_header_field, const char *);
 void compile_grep_patterns(struct grep_opt *opt);
 void free_grep_patterns(struct grep_opt *opt);
-int grep_buffer(struct grep_opt *opt, char *buf, unsigned long size);
+int grep_buffer(struct grep_opt *opt, const char *buf, unsigned long size);
 
 struct grep_source {
 	char *name;
@@ -187,17 +200,20 @@ struct grep_source {
 		GREP_SOURCE_BUF,
 	} type;
 	void *identifier;
+	struct repository *repo; /* if GREP_SOURCE_OID */
 
-	char *buf;
+	const char *buf;
 	unsigned long size;
 
 	char *path; /* for attribute lookups */
 	struct userdiff_driver *driver;
 };
 
-void grep_source_init(struct grep_source *gs, enum grep_source_type type,
-		      const char *name, const char *path,
-		      const void *identifier);
+void grep_source_init_file(struct grep_source *gs, const char *name,
+			   const char *path);
+void grep_source_init_oid(struct grep_source *gs, const char *name,
+			  const char *path, const struct object_id *oid,
+			  struct repository *repo);
 void grep_source_clear_data(struct grep_source *gs);
 void grep_source_clear(struct grep_source *gs);
 void grep_source_load_driver(struct grep_source *gs,
@@ -207,7 +223,6 @@ void grep_source_load_driver(struct grep_source *gs,
 int grep_source(struct grep_opt *opt, struct grep_source *gs);
 
 struct grep_opt *grep_opt_dup(const struct grep_opt *opt);
-int grep_threads_ok(const struct grep_opt *opt);
 
 /*
  * Mutex used around access to the attributes machinery if

@@ -10,6 +10,7 @@
 #include "refs.h"
 #include "refs/refs-internal.h"
 #include "run-command.h"
+#include "hook.h"
 #include "object-store.h"
 #include "object.h"
 #include "tag.h"
@@ -31,11 +32,6 @@ static struct ref_storage_be *find_ref_storage_backend(const char *name)
 		if (!strcmp(be->name, name))
 			return be;
 	return NULL;
-}
-
-int ref_storage_backend_exists(const char *name)
-{
-	return find_ref_storage_backend(name) != NULL;
 }
 
 /*
@@ -255,12 +251,13 @@ int refname_is_safe(const char *refname)
  * does not exist, emit a warning and return false.
  */
 int ref_resolves_to_object(const char *refname,
+			   struct repository *repo,
 			   const struct object_id *oid,
 			   unsigned int flags)
 {
 	if (flags & REF_ISBROKEN)
 		return 0;
-	if (!has_object_file(oid)) {
+	if (!repo_has_object_file(repo, oid)) {
 		error(_("%s does not point to a valid object!"), refname);
 		return 0;
 	}
@@ -698,7 +695,7 @@ int repo_dwim_log(struct repository *r, const char *str, int len,
 		strbuf_addf(&path, *p, len, str);
 		ref = refs_resolve_ref_unsafe(refs, path.buf,
 					      RESOLVE_REF_READING,
-					      &hash, NULL);
+					      oid ? &hash : NULL, NULL);
 		if (!ref)
 			continue;
 		if (refs_reflog_exists(refs, path.buf))
@@ -710,7 +707,8 @@ int repo_dwim_log(struct repository *r, const char *str, int len,
 			continue;
 		if (!logs_found++) {
 			*log = xstrdup(it);
-			oidcpy(oid, &hash);
+			if (oid)
+				oidcpy(oid, &hash);
 		}
 		if (!warn_ambiguous_refs)
 			break;
@@ -1413,14 +1411,21 @@ int head_ref(each_ref_fn fn, void *cb_data)
 
 struct ref_iterator *refs_ref_iterator_begin(
 		struct ref_store *refs,
-		const char *prefix, int trim, int flags)
+		const char *prefix, int trim,
+		enum do_for_each_ref_flags flags)
 {
 	struct ref_iterator *iter;
 
-	if (ref_paranoia < 0)
-		ref_paranoia = git_env_bool("GIT_REF_PARANOIA", 0);
-	if (ref_paranoia)
-		flags |= DO_FOR_EACH_INCLUDE_BROKEN;
+	if (!(flags & DO_FOR_EACH_INCLUDE_BROKEN)) {
+		static int ref_paranoia = -1;
+
+		if (ref_paranoia < 0)
+			ref_paranoia = git_env_bool("GIT_REF_PARANOIA", 1);
+		if (ref_paranoia) {
+			flags |= DO_FOR_EACH_INCLUDE_BROKEN;
+			flags |= DO_FOR_EACH_OMIT_DANGLING_SYMREFS;
+		}
+	}
 
 	iter = refs->be->iterator_begin(refs, prefix, flags);
 
@@ -1479,7 +1484,8 @@ static int do_for_each_ref_helper(struct repository *r,
 }
 
 static int do_for_each_ref(struct ref_store *refs, const char *prefix,
-			   each_ref_fn fn, int trim, int flags, void *cb_data)
+			   each_ref_fn fn, int trim,
+			   enum do_for_each_ref_flags flags, void *cb_data)
 {
 	struct ref_iterator *iter;
 	struct do_for_each_ref_help hp = { fn, cb_data };
@@ -1514,25 +1520,16 @@ int for_each_ref_in(const char *prefix, each_ref_fn fn, void *cb_data)
 	return refs_for_each_ref_in(get_main_ref_store(the_repository), prefix, fn, cb_data);
 }
 
-int for_each_fullref_in(const char *prefix, each_ref_fn fn, void *cb_data, unsigned int broken)
+int for_each_fullref_in(const char *prefix, each_ref_fn fn, void *cb_data)
 {
-	unsigned int flag = 0;
-
-	if (broken)
-		flag = DO_FOR_EACH_INCLUDE_BROKEN;
 	return do_for_each_ref(get_main_ref_store(the_repository),
-			       prefix, fn, 0, flag, cb_data);
+			       prefix, fn, 0, 0, cb_data);
 }
 
 int refs_for_each_fullref_in(struct ref_store *refs, const char *prefix,
-			     each_ref_fn fn, void *cb_data,
-			     unsigned int broken)
+			     each_ref_fn fn, void *cb_data)
 {
-	unsigned int flag = 0;
-
-	if (broken)
-		flag = DO_FOR_EACH_INCLUDE_BROKEN;
-	return do_for_each_ref(refs, prefix, fn, 0, flag, cb_data);
+	return do_for_each_ref(refs, prefix, fn, 0, 0, cb_data);
 }
 
 int for_each_replace_ref(struct repository *r, each_repo_ref_fn fn, void *cb_data)
@@ -1624,8 +1621,7 @@ static void find_longest_prefixes(struct string_list *out,
 
 int for_each_fullref_in_prefixes(const char *namespace,
 				 const char **patterns,
-				 each_ref_fn fn, void *cb_data,
-				 unsigned int broken)
+				 each_ref_fn fn, void *cb_data)
 {
 	struct string_list prefixes = STRING_LIST_INIT_DUP;
 	struct string_list_item *prefix;
@@ -1640,7 +1636,7 @@ int for_each_fullref_in_prefixes(const char *namespace,
 
 	for_each_string_list_item(prefix, &prefixes) {
 		strbuf_addstr(&buf, prefix->string);
-		ret = for_each_fullref_in(buf.buf, fn, cb_data, broken);
+		ret = for_each_fullref_in(buf.buf, fn, cb_data);
 		if (ret)
 			break;
 		strbuf_setlen(&buf, namespace_len);
@@ -1681,7 +1677,7 @@ int refs_read_raw_ref(struct ref_store *ref_store,
 	}
 
 	return ref_store->be->read_raw_ref(ref_store, refname, oid, referent,
-					   type);
+					   type, &errno);
 }
 
 /* This function needs to return a meaningful errno on failure */
@@ -1875,7 +1871,8 @@ static struct ref_store *lookup_ref_store_map(struct hashmap *map,
  * Create, record, and return a ref_store instance for the specified
  * gitdir.
  */
-static struct ref_store *ref_store_init(const char *gitdir,
+static struct ref_store *ref_store_init(struct repository *repo,
+					const char *gitdir,
 					unsigned int flags)
 {
 	const char *be_name = "files";
@@ -1885,7 +1882,7 @@ static struct ref_store *ref_store_init(const char *gitdir,
 	if (!be)
 		BUG("reference backend %s is unknown", be_name);
 
-	refs = be->init(gitdir, flags);
+	refs = be->init(repo, gitdir, flags);
 	return refs;
 }
 
@@ -1897,7 +1894,7 @@ struct ref_store *get_main_ref_store(struct repository *r)
 	if (!r->gitdir)
 		BUG("attempting to get main_ref_store outside of repository");
 
-	r->refs_private = ref_store_init(r->gitdir, REF_STORE_ALL_CAPS);
+	r->refs_private = ref_store_init(r, r->gitdir, REF_STORE_ALL_CAPS);
 	r->refs_private = maybe_debug_wrap_ref_store(r->gitdir, r->refs_private);
 	return r->refs_private;
 }
@@ -1927,6 +1924,7 @@ struct ref_store *get_submodule_ref_store(const char *submodule)
 	struct ref_store *refs;
 	char *to_free = NULL;
 	size_t len;
+	struct repository *subrepo;
 
 	if (!submodule)
 		return NULL;
@@ -1952,8 +1950,19 @@ struct ref_store *get_submodule_ref_store(const char *submodule)
 	if (submodule_to_gitdir(&submodule_sb, submodule))
 		goto done;
 
-	/* assume that add_submodule_odb() has been called */
-	refs = ref_store_init(submodule_sb.buf,
+	subrepo = xmalloc(sizeof(*subrepo));
+	/*
+	 * NEEDSWORK: Make get_submodule_ref_store() work with arbitrary
+	 * superprojects other than the_repository. This probably should be
+	 * done by making it take a struct repository * parameter instead of a
+	 * submodule path.
+	 */
+	if (repo_submodule_init(subrepo, the_repository, submodule,
+				null_oid())) {
+		free(subrepo);
+		goto done;
+	}
+	refs = ref_store_init(subrepo, submodule_sb.buf,
 			      REF_STORE_READ | REF_STORE_ODB);
 	register_ref_store_map(&submodule_ref_stores, "submodule",
 			       refs, submodule);
@@ -1979,10 +1988,12 @@ struct ref_store *get_worktree_ref_store(const struct worktree *wt)
 		return refs;
 
 	if (wt->id)
-		refs = ref_store_init(git_common_path("worktrees/%s", wt->id),
+		refs = ref_store_init(the_repository,
+				      git_common_path("worktrees/%s", wt->id),
 				      REF_STORE_ALL_CAPS);
 	else
-		refs = ref_store_init(get_git_common_dir(),
+		refs = ref_store_init(the_repository,
+				      get_git_common_dir(),
 				      REF_STORE_ALL_CAPS);
 
 	if (refs)
@@ -2370,19 +2381,19 @@ int delete_reflog(const char *refname)
 }
 
 int refs_reflog_expire(struct ref_store *refs,
-		       const char *refname, const struct object_id *oid,
+		       const char *refname,
 		       unsigned int flags,
 		       reflog_expiry_prepare_fn prepare_fn,
 		       reflog_expiry_should_prune_fn should_prune_fn,
 		       reflog_expiry_cleanup_fn cleanup_fn,
 		       void *policy_cb_data)
 {
-	return refs->be->reflog_expire(refs, refname, oid, flags,
+	return refs->be->reflog_expire(refs, refname, flags,
 				       prepare_fn, should_prune_fn,
 				       cleanup_fn, policy_cb_data);
 }
 
-int reflog_expire(const char *refname, const struct object_id *oid,
+int reflog_expire(const char *refname,
 		  unsigned int flags,
 		  reflog_expiry_prepare_fn prepare_fn,
 		  reflog_expiry_should_prune_fn should_prune_fn,
@@ -2390,7 +2401,7 @@ int reflog_expire(const char *refname, const struct object_id *oid,
 		  void *policy_cb_data)
 {
 	return refs_reflog_expire(get_main_ref_store(the_repository),
-				  refname, oid, flags,
+				  refname, flags,
 				  prepare_fn, should_prune_fn,
 				  cleanup_fn, policy_cb_data);
 }

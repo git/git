@@ -1124,6 +1124,11 @@ static void write_reused_pack(struct hashfile *f)
 				break;
 
 			offset += ewah_bit_ctz64(word >> offset);
+			/*
+			 * Can use bit positions directly, even for MIDX
+			 * bitmaps. See comment in try_partial_reuse()
+			 * for why.
+			 */
 			write_reused_pack_one(pos + offset, f, &w_curs);
 			display_progress(progress_state, ++written);
 		}
@@ -1217,6 +1222,7 @@ static void write_pack_file(void)
 		if (!pack_to_stdout) {
 			struct stat st;
 			struct strbuf tmpname = STRBUF_INIT;
+			char *idx_tmp_name = NULL;
 
 			/*
 			 * Packs are runtime accessed in their mtime
@@ -1237,7 +1243,8 @@ static void write_pack_file(void)
 					warning_errno(_("failed utime() on %s"), pack_tmp_name);
 			}
 
-			strbuf_addf(&tmpname, "%s-", base_name);
+			strbuf_addf(&tmpname, "%s-%s.", base_name,
+				    hash_to_hex(hash));
 
 			if (write_bitmap_index) {
 				bitmap_writer_set_checksum(hash);
@@ -1245,23 +1252,29 @@ static void write_pack_file(void)
 					&to_pack, written_list, nr_written);
 			}
 
-			finish_tmp_packfile(&tmpname, pack_tmp_name,
+			stage_tmp_packfiles(&tmpname, pack_tmp_name,
 					    written_list, nr_written,
-					    &pack_idx_opts, hash);
+					    &pack_idx_opts, hash, &idx_tmp_name);
 
 			if (write_bitmap_index) {
-				strbuf_addf(&tmpname, "%s.bitmap", hash_to_hex(hash));
+				size_t tmpname_len = tmpname.len;
 
+				strbuf_addstr(&tmpname, "bitmap");
 				stop_progress(&progress_state);
 
 				bitmap_writer_show_progress(progress);
 				bitmap_writer_select_commits(indexed_commits, indexed_commits_nr, -1);
-				bitmap_writer_build(&to_pack);
+				if (bitmap_writer_build(&to_pack) < 0)
+					die(_("failed to write bitmap index"));
 				bitmap_writer_finish(written_list, nr_written,
 						     tmpname.buf, write_bitmap_options);
 				write_bitmap_index = 0;
+				strbuf_setlen(&tmpname, tmpname_len);
 			}
 
+			rename_tmp_packfile_idx(&tmpname, &idx_tmp_name);
+
+			free(idx_tmp_name);
 			strbuf_release(&tmpname);
 			free(pack_tmp_name);
 			puts(hash_to_hex(hash));
@@ -3311,9 +3324,26 @@ static void read_packs_list_from_stdin(void)
 	}
 
 	/*
-	 * First handle all of the excluded packs, marking them as kept in-core
-	 * so that later calls to add_object_entry() discards any objects that
-	 * are also found in excluded packs.
+	 * Arguments we got on stdin may not even be packs. First
+	 * check that to avoid segfaulting later on in
+	 * e.g. pack_mtime_cmp(), excluded packs are handled below.
+	 *
+	 * Since we first parsed our STDIN and then sorted the input
+	 * lines the pack we error on will be whatever line happens to
+	 * sort first. This is lazy, it's enough that we report one
+	 * bad case here, we don't need to report the first/last one,
+	 * or all of them.
+	 */
+	for_each_string_list_item(item, &include_packs) {
+		struct packed_git *p = item->util;
+		if (!p)
+			die(_("could not find pack '%s'"), item->string);
+	}
+
+	/*
+	 * Then, handle all of the excluded packs, marking them as
+	 * kept in-core so that later calls to add_object_entry()
+	 * discards any objects that are also found in excluded packs.
 	 */
 	for_each_string_list_item(item, &exclude_packs) {
 		struct packed_git *p = item->util;
@@ -3388,13 +3418,9 @@ static void read_object_list_from_stdin(void)
 	}
 }
 
-/* Remember to update object flag allocation in object.h */
-#define OBJECT_ADDED (1u<<20)
-
 static void show_commit(struct commit *commit, void *data)
 {
 	add_object_entry(&commit->object.oid, OBJ_COMMIT, NULL, 0);
-	commit->object.flags |= OBJECT_ADDED;
 
 	if (write_bitmap_index)
 		index_commit_for_bitmap(commit);
@@ -3407,7 +3433,6 @@ static void show_object(struct object *obj, const char *name, void *data)
 {
 	add_preferred_base_object(name);
 	add_object_entry(&obj->oid, obj->type, name, 0);
-	obj->flags |= OBJECT_ADDED;
 
 	if (use_delta_islands) {
 		const char *p;
@@ -3488,79 +3513,23 @@ static void show_edge(struct commit *commit)
 	add_preferred_base(&commit->object.oid);
 }
 
-struct in_pack_object {
-	off_t offset;
-	struct object *object;
-};
-
-struct in_pack {
-	unsigned int alloc;
-	unsigned int nr;
-	struct in_pack_object *array;
-};
-
-static void mark_in_pack_object(struct object *object, struct packed_git *p, struct in_pack *in_pack)
+static int add_object_in_unpacked_pack(const struct object_id *oid,
+				       struct packed_git *pack,
+				       uint32_t pos,
+				       void *_data)
 {
-	in_pack->array[in_pack->nr].offset = find_pack_entry_one(object->oid.hash, p);
-	in_pack->array[in_pack->nr].object = object;
-	in_pack->nr++;
-}
-
-/*
- * Compare the objects in the offset order, in order to emulate the
- * "git rev-list --objects" output that produced the pack originally.
- */
-static int ofscmp(const void *a_, const void *b_)
-{
-	struct in_pack_object *a = (struct in_pack_object *)a_;
-	struct in_pack_object *b = (struct in_pack_object *)b_;
-
-	if (a->offset < b->offset)
-		return -1;
-	else if (a->offset > b->offset)
-		return 1;
-	else
-		return oidcmp(&a->object->oid, &b->object->oid);
+	add_object_entry(oid, OBJ_NONE, "", 0);
+	return 0;
 }
 
 static void add_objects_in_unpacked_packs(void)
 {
-	struct packed_git *p;
-	struct in_pack in_pack;
-	uint32_t i;
-
-	memset(&in_pack, 0, sizeof(in_pack));
-
-	for (p = get_all_packs(the_repository); p; p = p->next) {
-		struct object_id oid;
-		struct object *o;
-
-		if (!p->pack_local || p->pack_keep || p->pack_keep_in_core)
-			continue;
-		if (open_pack_index(p))
-			die(_("cannot open pack index"));
-
-		ALLOC_GROW(in_pack.array,
-			   in_pack.nr + p->num_objects,
-			   in_pack.alloc);
-
-		for (i = 0; i < p->num_objects; i++) {
-			nth_packed_object_id(&oid, p, i);
-			o = lookup_unknown_object(the_repository, &oid);
-			if (!(o->flags & OBJECT_ADDED))
-				mark_in_pack_object(o, p, &in_pack);
-			o->flags |= OBJECT_ADDED;
-		}
-	}
-
-	if (in_pack.nr) {
-		QSORT(in_pack.array, in_pack.nr, ofscmp);
-		for (i = 0; i < in_pack.nr; i++) {
-			struct object *o = in_pack.array[i].object;
-			add_object_entry(&o->oid, o->type, "", 0);
-		}
-	}
-	free(in_pack.array);
+	if (for_each_packed_object(add_object_in_unpacked_pack, NULL,
+				   FOR_EACH_OBJECT_PACK_ORDER |
+				   FOR_EACH_OBJECT_LOCAL_ONLY |
+				   FOR_EACH_OBJECT_SKIP_IN_CORE_KEPT_PACKS |
+				   FOR_EACH_OBJECT_SKIP_ON_DISK_KEPT_PACKS))
+		die(_("cannot open pack index"));
 }
 
 static int add_loose_object(const struct object_id *oid, const char *path,

@@ -738,7 +738,7 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 	int intent_only = flags & ADD_CACHE_INTENT;
 	int add_option = (ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE|
 			  (intent_only ? ADD_CACHE_NEW_ONLY : 0));
-	int hash_flags = HASH_WRITE_OBJECT;
+	unsigned hash_flags = pretend ? 0 : HASH_WRITE_OBJECT;
 	struct object_id oid;
 
 	if (flags & ADD_CACHE_RENORMALIZE)
@@ -849,6 +849,19 @@ struct cache_entry *make_empty_transient_cache_entry(size_t len,
 	return xcalloc(1, cache_entry_size(len));
 }
 
+enum verify_path_result {
+	PATH_OK,
+	PATH_INVALID,
+	PATH_DIR_WITH_SEP,
+};
+
+static enum verify_path_result verify_path_internal(const char *, unsigned);
+
+int verify_path(const char *path, unsigned mode)
+{
+	return verify_path_internal(path, mode) == PATH_OK;
+}
+
 struct cache_entry *make_cache_entry(struct index_state *istate,
 				     unsigned int mode,
 				     const struct object_id *oid,
@@ -859,7 +872,7 @@ struct cache_entry *make_cache_entry(struct index_state *istate,
 	struct cache_entry *ce, *ret;
 	int len;
 
-	if (!verify_path(path, mode)) {
+	if (verify_path_internal(path, mode) == PATH_INVALID) {
 		error(_("invalid path '%s'"), path);
 		return NULL;
 	}
@@ -993,60 +1006,62 @@ static int verify_dotfile(const char *rest, unsigned mode)
 	return 1;
 }
 
-int verify_path(const char *path, unsigned mode)
+static enum verify_path_result verify_path_internal(const char *path,
+						    unsigned mode)
 {
 	char c = 0;
 
 	if (has_dos_drive_prefix(path))
-		return 0;
+		return PATH_INVALID;
 
 	if (!is_valid_path(path))
-		return 0;
+		return PATH_INVALID;
 
 	goto inside;
 	for (;;) {
 		if (!c)
-			return 1;
+			return PATH_OK;
 		if (is_dir_sep(c)) {
 inside:
 			if (protect_hfs) {
 
 				if (is_hfs_dotgit(path))
-					return 0;
+					return PATH_INVALID;
 				if (S_ISLNK(mode)) {
 					if (is_hfs_dotgitmodules(path))
-						return 0;
+						return PATH_INVALID;
 				}
 			}
 			if (protect_ntfs) {
 #if defined GIT_WINDOWS_NATIVE || defined __CYGWIN__
 				if (c == '\\')
-					return 0;
+					return PATH_INVALID;
 #endif
 				if (is_ntfs_dotgit(path))
-					return 0;
+					return PATH_INVALID;
 				if (S_ISLNK(mode)) {
 					if (is_ntfs_dotgitmodules(path))
-						return 0;
+						return PATH_INVALID;
 				}
 			}
 
 			c = *path++;
 			if ((c == '.' && !verify_dotfile(path, mode)) ||
 			    is_dir_sep(c))
-				return 0;
+				return PATH_INVALID;
 			/*
 			 * allow terminating directory separators for
 			 * sparse directory entries.
 			 */
 			if (c == '\0')
-				return S_ISDIR(mode);
+				return S_ISDIR(mode) ? PATH_DIR_WITH_SEP :
+						       PATH_INVALID;
 		} else if (c == '\\' && protect_ntfs) {
 			if (is_ntfs_dotgit(path))
-				return 0;
+				return PATH_INVALID;
 			if (S_ISLNK(mode)) {
 				if (is_ntfs_dotgitmodules(path))
-					return 0;
+					return PATH_INVALID;
 			}
 		}
 
@@ -1349,7 +1364,7 @@ static int add_index_entry_with_check(struct index_state *istate, struct cache_e
 
 	if (!ok_to_add)
 		return -1;
-	if (!verify_path(ce->name, ce->ce_mode))
+	if (verify_path_internal(ce->name, ce->ce_mode) == PATH_INVALID)
 		return error(_("invalid path '%s'"), ce->name);
 
 	if (!skip_df_check &&
@@ -1944,13 +1959,22 @@ static void tweak_untracked_cache(struct index_state *istate)
 
 	prepare_repo_settings(r);
 
-	if (r->settings.core_untracked_cache  == UNTRACKED_CACHE_REMOVE) {
+	switch (r->settings.core_untracked_cache) {
+	case UNTRACKED_CACHE_REMOVE:
 		remove_untracked_cache(istate);
-		return;
-	}
-
-	if (r->settings.core_untracked_cache == UNTRACKED_CACHE_WRITE)
+		break;
+	case UNTRACKED_CACHE_WRITE:
 		add_untracked_cache(istate);
+		break;
+	case UNTRACKED_CACHE_KEEP:
+		/*
+		 * Either an explicit "core.untrackedCache=keep", the
+		 * default if "core.untrackedCache" isn't configured,
+		 * or a fallback on an unknown "core.untrackedCache"
+		 * value.
+		 */
+		break;
+	}
 }
 
 static void tweak_split_index(struct index_state *istate)
@@ -2391,9 +2415,21 @@ int read_index_from(struct index_state *istate, const char *path,
 	base_path = xstrfmt("%s/sharedindex.%s", gitdir, base_oid_hex);
 	trace2_region_enter_printf("index", "shared/do_read_index",
 				   the_repository, "%s", base_path);
-	ret = do_read_index(split_index->base, base_path, 1);
+	ret = do_read_index(split_index->base, base_path, 0);
 	trace2_region_leave_printf("index", "shared/do_read_index",
 				   the_repository, "%s", base_path);
+	if (!ret) {
+		char *path_copy = xstrdup(path);
+		const char *base_path2 = xstrfmt("%s/sharedindex.%s",
+						 dirname(path_copy),
+						 base_oid_hex);
+		free(path_copy);
+		trace2_region_enter_printf("index", "shared/do_read_index",
+					   the_repository, "%s", base_path2);
+		ret = do_read_index(split_index->base, base_path2, 1);
+		trace2_region_leave_printf("index", "shared/do_read_index",
+					   the_repository, "%s", base_path2);
+	}
 	if (!oideq(&split_index->base_oid, &split_index->base->oid))
 		die(_("broken index, expect %s in %s, got %s"),
 		    base_oid_hex, base_path,
@@ -2812,11 +2848,8 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 		}
 	}
 
-	if (!istate->version) {
+	if (!istate->version)
 		istate->version = get_index_format_default(the_repository);
-		if (git_env_bool("GIT_TEST_SPLIT_INDEX", 0))
-			init_split_index(istate);
-	}
 
 	/* demote version 3 to version 2 when the latter suffices */
 	if (istate->version == 3 || istate->version == 2)
@@ -3069,7 +3102,7 @@ static int do_write_locked_index(struct index_state *istate, struct lock_file *l
 	int ret;
 	int was_full = !istate->sparse_index;
 
-	ret = convert_to_sparse(istate);
+	ret = convert_to_sparse(istate, 0);
 
 	if (ret) {
 		warning(_("failed to convert to a sparse-index"));
@@ -3182,7 +3215,7 @@ static int write_shared_index(struct index_state *istate,
 	int ret, was_full = !istate->sparse_index;
 
 	move_cache_to_base_index(istate);
-	convert_to_sparse(istate);
+	convert_to_sparse(istate, 0);
 
 	trace2_region_enter_printf("index", "shared/do_write_index",
 				   the_repository, "%s", get_tempfile_path(*temp));
@@ -3243,7 +3276,7 @@ static int too_many_not_shared_entries(struct index_state *istate)
 int write_locked_index(struct index_state *istate, struct lock_file *lock,
 		       unsigned flags)
 {
-	int new_shared_index, ret;
+	int new_shared_index, ret, test_split_index_env;
 	struct split_index *si = istate->split_index;
 
 	if (git_env_bool("GIT_TEST_CHECK_CACHE_TREE", 0))
@@ -3258,7 +3291,10 @@ int write_locked_index(struct index_state *istate, struct lock_file *lock,
 	if (istate->fsmonitor_last_update)
 		fill_fsmonitor_bitmap(istate);
 
-	if (!si || alternate_index_output ||
+	test_split_index_env = git_env_bool("GIT_TEST_SPLIT_INDEX", 0);
+
+	if ((!si && !test_split_index_env) ||
+	    alternate_index_output ||
 	    (istate->cache_changed & ~EXTMASK)) {
 		if (si)
 			oidclr(&si->base_oid);
@@ -3266,10 +3302,15 @@ int write_locked_index(struct index_state *istate, struct lock_file *lock,
 		goto out;
 	}
 
-	if (git_env_bool("GIT_TEST_SPLIT_INDEX", 0)) {
-		int v = si->base_oid.hash[0];
-		if ((v & 15) < 6)
+	if (test_split_index_env) {
+		if (!si) {
+			si = init_split_index(istate);
 			istate->cache_changed |= SPLIT_INDEX_ORDERED;
+		} else {
+			int v = si->base_oid.hash[0];
+			if ((v & 15) < 6)
+				istate->cache_changed |= SPLIT_INDEX_ORDERED;
+		}
 	}
 	if (too_many_not_shared_entries(istate))
 		istate->cache_changed |= SPLIT_INDEX_ORDERED;

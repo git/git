@@ -60,8 +60,10 @@ struct testsuite {
 	int next;
 	int quiet, immediate, verbose, verbose_log, trace, write_junit_xml;
 };
-#define TESTSUITE_INIT \
-	{ STRING_LIST_INIT_DUP, STRING_LIST_INIT_DUP, -1, 0, 0, 0, 0, 0, 0 }
+#define TESTSUITE_INIT { \
+	.tests = STRING_LIST_INIT_DUP, \
+	.failed = STRING_LIST_INIT_DUP, \
+}
 
 static int next_test(struct child_process *cp, struct strbuf *err, void *cb,
 		     void **task_cb)
@@ -141,9 +143,6 @@ static int testsuite(int argc, const char **argv)
 			 "write JUnit-style XML files"),
 		OPT_END()
 	};
-
-	memset(&suite, 0, sizeof(suite));
-	suite.tests.strdup_strings = suite.failed.strdup_strings = 1;
 
 	argc = parse_options(argc, argv, NULL, options,
 			testsuite_usage, PARSE_OPT_STOP_AT_NON_OPTION);

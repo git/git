@@ -29,11 +29,21 @@ void packet_buf_delim(struct strbuf *buf);
 void set_packet_header(char *buf, int size);
 void packet_write(int fd_out, const char *buf, size_t size);
 void packet_buf_write(struct strbuf *buf, const char *fmt, ...) __attribute__((format (printf, 2, 3)));
-void packet_buf_write_len(struct strbuf *buf, const char *data, size_t len);
 int packet_flush_gently(int fd);
 int packet_write_fmt_gently(int fd, const char *fmt, ...) __attribute__((format (printf, 2, 3)));
 int write_packetized_from_fd_no_flush(int fd_in, int fd_out);
 int write_packetized_from_buf_no_flush(const char *src_in, size_t len, int fd_out);
+
+/*
+ * Stdio versions of packet_write functions. When mixing these with fd
+ * based functions, take care to call fflush(3) before doing fd writes or
+ * closing the fd.
+ */
+void packet_fwrite(FILE *f, const char *buf, size_t size);
+void packet_fwrite_fmt(FILE *f, const char *fmt, ...) __attribute__((format (printf, 2, 3)));
+
+/* packet_fflush writes a flush packet and flushes the stdio buffer of f */
+void packet_fflush(FILE *f);
 
 /*
  * Read a packetized line into the buffer, which must be at least size bytes
@@ -77,8 +87,7 @@ int write_packetized_from_buf_no_flush(const char *src_in, size_t len, int fd_ou
 #define PACKET_READ_CHOMP_NEWLINE        (1u<<1)
 #define PACKET_READ_DIE_ON_ERR_PACKET    (1u<<2)
 #define PACKET_READ_GENTLE_ON_READ_ERROR (1u<<3)
-int packet_read(int fd, char **src_buffer, size_t *src_len, char
-		*buffer, unsigned size, int options);
+int packet_read(int fd, char *buffer, unsigned size, int options);
 
 /*
  * Convert a four hex digit packet line length header into its numeric
@@ -126,12 +135,6 @@ char *packet_read_line(int fd, int *size);
  * length of the packet is written to it.
  */
 int packet_read_line_gently(int fd, int *size, char **dst_line);
-
-/*
- * Same as packet_read_line, but read from a buf rather than a descriptor;
- * see packet_read for details on how src_* is used.
- */
-char *packet_read_line_buf(char **src_buf, size_t *src_len, int *size);
 
 /*
  * Reads a stream of variable sized packets until a flush packet is detected.

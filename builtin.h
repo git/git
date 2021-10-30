@@ -225,7 +225,6 @@ int cmd_submodule__helper(int argc, const char **argv, const char *prefix);
 int cmd_switch(int argc, const char **argv, const char *prefix);
 int cmd_symbolic_ref(int argc, const char **argv, const char *prefix);
 int cmd_tag(int argc, const char **argv, const char *prefix);
-int cmd_tar_tree(int argc, const char **argv, const char *prefix);
 int cmd_unpack_file(int argc, const char **argv, const char *prefix);
 int cmd_unpack_objects(int argc, const char **argv, const char *prefix);
 int cmd_update_index(int argc, const char **argv, const char *prefix);

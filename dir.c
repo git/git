@@ -1294,13 +1294,51 @@ int match_pathname(const char *pathname, int pathlen,
 		 * then our prefix match is all we need; we
 		 * do not need to call fnmatch at all.
 		 */
-		if (!patternlen && !namelen)
+		if (!patternlen && (!namelen || (flags & PATTERN_FLAG_MUSTBEDIR)))
 			return 1;
 	}
 
 	return fnmatch_icase_mem(pattern, patternlen,
 				 name, namelen,
 				 WM_PATHNAME) == 0;
+}
+
+static int path_matches_dir_pattern(const char *pathname,
+				    int pathlen,
+				    struct strbuf **path_parent,
+				    int *dtype,
+				    struct path_pattern *pattern,
+				    struct index_state *istate)
+{
+	if (!*path_parent) {
+		char *slash;
+		CALLOC_ARRAY(*path_parent, 1);
+		strbuf_add(*path_parent, pathname, pathlen);
+		slash = find_last_dir_sep((*path_parent)->buf);
+
+		if (slash)
+			strbuf_setlen(*path_parent, slash - (*path_parent)->buf);
+		else
+			strbuf_setlen(*path_parent, 0);
+	}
+
+	/*
+	 * If the parent directory matches the pattern, then we do not
+	 * need to check for dtype.
+	 */
+	if ((*path_parent)->len &&
+	    match_pathname((*path_parent)->buf, (*path_parent)->len,
+			   pattern->base,
+			   pattern->baselen ? pattern->baselen - 1 : 0,
+			   pattern->pattern, pattern->nowildcardlen,
+			   pattern->patternlen, pattern->flags))
+		return 1;
+
+	*dtype = resolve_dtype(*dtype, istate, pathname, pathlen);
+	if (*dtype != DT_DIR)
+		return 0;
+
+	return 1;
 }
 
 /*
@@ -1318,6 +1356,7 @@ static struct path_pattern *last_matching_pattern_from_list(const char *pathname
 {
 	struct path_pattern *res = NULL; /* undecided */
 	int i;
+	struct strbuf *path_parent = NULL;
 
 	if (!pl->nr)
 		return NULL;	/* undefined */
@@ -1327,11 +1366,10 @@ static struct path_pattern *last_matching_pattern_from_list(const char *pathname
 		const char *exclude = pattern->pattern;
 		int prefix = pattern->nowildcardlen;
 
-		if (pattern->flags & PATTERN_FLAG_MUSTBEDIR) {
-			*dtype = resolve_dtype(*dtype, istate, pathname, pathlen);
-			if (*dtype != DT_DIR)
-				continue;
-		}
+		if (pattern->flags & PATTERN_FLAG_MUSTBEDIR &&
+		    !path_matches_dir_pattern(pathname, pathlen, &path_parent,
+					      dtype, pattern, istate))
+			continue;
 
 		if (pattern->flags & PATTERN_FLAG_NODIR) {
 			if (match_basename(basename,
@@ -1355,6 +1393,12 @@ static struct path_pattern *last_matching_pattern_from_list(const char *pathname
 			break;
 		}
 	}
+
+	if (path_parent) {
+		strbuf_release(path_parent);
+		free(path_parent);
+	}
+
 	return res;
 }
 
@@ -1437,6 +1481,75 @@ enum pattern_match_result path_matches_pattern_list(
 done:
 	strbuf_release(&parent_pathname);
 	return result;
+}
+
+int init_sparse_checkout_patterns(struct index_state *istate)
+{
+	if (!core_apply_sparse_checkout)
+		return 1;
+	if (istate->sparse_checkout_patterns)
+		return 0;
+
+	CALLOC_ARRAY(istate->sparse_checkout_patterns, 1);
+
+	if (get_sparse_checkout_patterns(istate->sparse_checkout_patterns) < 0) {
+		FREE_AND_NULL(istate->sparse_checkout_patterns);
+		return -1;
+	}
+
+	return 0;
+}
+
+static int path_in_sparse_checkout_1(const char *path,
+				     struct index_state *istate,
+				     int require_cone_mode)
+{
+	int dtype = DT_REG;
+	enum pattern_match_result match = UNDECIDED;
+	const char *end, *slash;
+
+	/*
+	 * We default to accepting a path if there are no patterns or
+	 * they are of the wrong type.
+	 */
+	if (init_sparse_checkout_patterns(istate) ||
+	    (require_cone_mode &&
+	     !istate->sparse_checkout_patterns->use_cone_patterns))
+		return 1;
+
+	/*
+	 * If UNDECIDED, use the match from the parent dir (recursively), or
+	 * fall back to NOT_MATCHED at the topmost level. Note that cone mode
+	 * never returns UNDECIDED, so we will execute only one iteration in
+	 * this case.
+	 */
+	for (end = path + strlen(path);
+	     end > path && match == UNDECIDED;
+	     end = slash) {
+
+		for (slash = end - 1; slash > path && *slash != '/'; slash--)
+			; /* do nothing */
+
+		match = path_matches_pattern_list(path, end - path,
+				slash > path ? slash + 1 : path, &dtype,
+				istate->sparse_checkout_patterns, istate);
+
+		/* We are going to match the parent dir now */
+		dtype = DT_DIR;
+	}
+	return match > 0;
+}
+
+int path_in_sparse_checkout(const char *path,
+			    struct index_state *istate)
+{
+	return path_in_sparse_checkout_1(path, istate, 0);
+}
+
+int path_in_cone_mode_sparse_checkout(const char *path,
+				     struct index_state *istate)
+{
+	return path_in_sparse_checkout_1(path, istate, 1);
 }
 
 static struct path_pattern *last_matching_pattern_from_lists(
@@ -2970,6 +3083,120 @@ int is_empty_dir(const char *path)
 	return ret;
 }
 
+char *git_url_basename(const char *repo, int is_bundle, int is_bare)
+{
+	const char *end = repo + strlen(repo), *start, *ptr;
+	size_t len;
+	char *dir;
+
+	/*
+	 * Skip scheme.
+	 */
+	start = strstr(repo, "://");
+	if (start == NULL)
+		start = repo;
+	else
+		start += 3;
+
+	/*
+	 * Skip authentication data. The stripping does happen
+	 * greedily, such that we strip up to the last '@' inside
+	 * the host part.
+	 */
+	for (ptr = start; ptr < end && !is_dir_sep(*ptr); ptr++) {
+		if (*ptr == '@')
+			start = ptr + 1;
+	}
+
+	/*
+	 * Strip trailing spaces, slashes and /.git
+	 */
+	while (start < end && (is_dir_sep(end[-1]) || isspace(end[-1])))
+		end--;
+	if (end - start > 5 && is_dir_sep(end[-5]) &&
+	    !strncmp(end - 4, ".git", 4)) {
+		end -= 5;
+		while (start < end && is_dir_sep(end[-1]))
+			end--;
+	}
+
+	/*
+	 * Strip trailing port number if we've got only a
+	 * hostname (that is, there is no dir separator but a
+	 * colon). This check is required such that we do not
+	 * strip URI's like '/foo/bar:2222.git', which should
+	 * result in a dir '2222' being guessed due to backwards
+	 * compatibility.
+	 */
+	if (memchr(start, '/', end - start) == NULL
+	    && memchr(start, ':', end - start) != NULL) {
+		ptr = end;
+		while (start < ptr && isdigit(ptr[-1]) && ptr[-1] != ':')
+			ptr--;
+		if (start < ptr && ptr[-1] == ':')
+			end = ptr - 1;
+	}
+
+	/*
+	 * Find last component. To remain backwards compatible we
+	 * also regard colons as path separators, such that
+	 * cloning a repository 'foo:bar.git' would result in a
+	 * directory 'bar' being guessed.
+	 */
+	ptr = end;
+	while (start < ptr && !is_dir_sep(ptr[-1]) && ptr[-1] != ':')
+		ptr--;
+	start = ptr;
+
+	/*
+	 * Strip .{bundle,git}.
+	 */
+	len = end - start;
+	strip_suffix_mem(start, &len, is_bundle ? ".bundle" : ".git");
+
+	if (!len || (len == 1 && *start == '/'))
+		die(_("No directory name could be guessed.\n"
+		      "Please specify a directory on the command line"));
+
+	if (is_bare)
+		dir = xstrfmt("%.*s.git", (int)len, start);
+	else
+		dir = xstrndup(start, len);
+	/*
+	 * Replace sequences of 'control' characters and whitespace
+	 * with one ascii space, remove leading and trailing spaces.
+	 */
+	if (*dir) {
+		char *out = dir;
+		int prev_space = 1 /* strip leading whitespace */;
+		for (end = dir; *end; ++end) {
+			char ch = *end;
+			if ((unsigned char)ch < '\x20')
+				ch = '\x20';
+			if (isspace(ch)) {
+				if (prev_space)
+					continue;
+				prev_space = 1;
+			} else
+				prev_space = 0;
+			*out++ = ch;
+		}
+		*out = '\0';
+		if (out > dir && prev_space)
+			out[-1] = '\0';
+	}
+	return dir;
+}
+
+void strip_dir_trailing_slashes(char *dir)
+{
+	char *end = dir + strlen(dir);
+
+	while (dir < end - 1 && is_dir_sep(end[-1]))
+		end--;
+	*end = '\0';
+}
+
 static int remove_dir_recurse(struct strbuf *path, int flag, int *kept_up)
 {
 	DIR *dir;
@@ -3633,7 +3860,7 @@ static void connect_wt_gitdir_in_nested(const char *sub_worktree,
 		strbuf_reset(&sub_wt);
 		strbuf_reset(&sub_gd);
 		strbuf_addf(&sub_wt, "%s/%s", sub_worktree, sub->path);
-		strbuf_addf(&sub_gd, "%s/modules/%s", sub_gitdir, sub->name);
+		submodule_name_to_gitdir(&sub_gd, &subrepo, sub->name);
 
 		connect_work_tree_and_git_dir(sub_wt.buf, sub_gd.buf, 1);
 	}

@@ -76,7 +76,6 @@ static struct key_value_info *current_config_kvi;
  */
 static enum config_scope current_parsing_scope;
 
-static int core_compression_seen;
 static int pack_compression_seen;
 static int zlib_compression_seen;
 
@@ -137,7 +136,7 @@ static int handle_path_include(const char *path, struct config_include_data *inc
 	if (!path)
 		return config_error_nonbool("include.path");
 
-	expanded = expand_user_path(path, 0);
+	expanded = interpolate_path(path, 0);
 	if (!expanded)
 		return error(_("could not expand include path '%s'"), path);
 	path = expanded;
@@ -149,8 +148,10 @@ static int handle_path_include(const char *path, struct config_include_data *inc
 	if (!is_absolute_path(path)) {
 		char *slash;
 
-		if (!cf || !cf->path)
-			return error(_("relative config includes must come from files"));
+		if (!cf || !cf->path) {
+			ret = error(_("relative config includes must come from files"));
+			goto cleanup;
+		}
 
 		slash = find_last_dir_sep(cf->path);
 		if (slash)
@@ -168,6 +169,7 @@ static int handle_path_include(const char *path, struct config_include_data *inc
 		ret = git_config_from_file(git_config_include, path, inc);
 		inc->depth--;
 	}
+cleanup:
 	strbuf_release(&buf);
 	free(expanded);
 	return ret;
@@ -185,7 +187,7 @@ static int prepare_include_condition_pattern(struct strbuf *pat)
 	char *expanded;
 	int prefix = 0;
 
-	expanded = expand_user_path(pat->buf, 1);
+	expanded = interpolate_path(pat->buf, 1);
 	if (expanded) {
 		strbuf_reset(pat);
 		strbuf_addstr(pat, expanded);
@@ -426,7 +428,7 @@ static inline int iskeychar(int c)
  * baselen - pointer to size_t which will hold the length of the
  *           section + subsection part, can be NULL
  */
-static int git_config_parse_key_1(const char *key, char **store_key, size_t *baselen_, int quiet)
+int git_config_parse_key(const char *key, char **store_key, size_t *baselen_)
 {
 	size_t i, baselen;
 	int dot;
@@ -438,14 +440,12 @@ static int git_config_parse_key_1(const char *key, char **store_key, size_t *bas
 	 */
 
 	if (last_dot == NULL || last_dot == key) {
-		if (!quiet)
-			error(_("key does not contain a section: %s"), key);
+		error(_("key does not contain a section: %s"), key);
 		return -CONFIG_NO_SECTION_OR_NAME;
 	}
 
 	if (!last_dot[1]) {
-		if (!quiet)
-			error(_("key does not contain variable name: %s"), key);
+		error(_("key does not contain variable name: %s"), key);
 		return -CONFIG_NO_SECTION_OR_NAME;
 	}
 
@@ -456,8 +456,7 @@ static int git_config_parse_key_1(const char *key, char **store_key, size_t *bas
 	/*
 	 * Validate the key and while at it, lower case it for matching.
 	 */
-	if (store_key)
-		*store_key = xmallocz(strlen(key));
+	*store_key = xmallocz(strlen(key));
 
 	dot = 0;
 	for (i = 0; key[i]; i++) {
@@ -468,37 +467,22 @@ static int git_config_parse_key_1(const char *key, char **store_key, size_t *bas
 		if (!dot || i > baselen) {
 			if (!iskeychar(c) ||
 			    (i == baselen + 1 && !isalpha(c))) {
-				if (!quiet)
-					error(_("invalid key: %s"), key);
+				error(_("invalid key: %s"), key);
 				goto out_free_ret_1;
 			}
 			c = tolower(c);
 		} else if (c == '\n') {
-			if (!quiet)
-				error(_("invalid key (newline): %s"), key);
+			error(_("invalid key (newline): %s"), key);
 			goto out_free_ret_1;
 		}
-		if (store_key)
-			(*store_key)[i] = c;
+		(*store_key)[i] = c;
 	}
 
 	return 0;
 
 out_free_ret_1:
-	if (store_key) {
-		FREE_AND_NULL(*store_key);
-	}
+	FREE_AND_NULL(*store_key);
 	return -CONFIG_INVALID_KEY;
-}
-
-int git_config_parse_key(const char *key, char **store_key, size_t *baselen)
-{
-	return git_config_parse_key_1(key, store_key, baselen, 0);
-}
-
-int git_config_key_is_valid(const char *key)
-{
-	return !git_config_parse_key_1(key, NULL, NULL, 1);
 }
 
 static int config_parse_pair(const char *key, const char *value,
@@ -1270,7 +1254,7 @@ int git_config_pathname(const char **dest, const char *var, const char *value)
 {
 	if (!value)
 		return config_error_nonbool(var);
-	*dest = expand_user_path(value, 0);
+	*dest = interpolate_path(value, 0);
 	if (!*dest)
 		die(_("failed to expand user dir in: '%s'"), value);
 	return 0;
@@ -1400,8 +1384,6 @@ static int git_default_core_config(const char *var, const char *value, void *cb)
 			level = Z_DEFAULT_COMPRESSION;
 		else if (level < 0 || level > Z_BEST_COMPRESSION)
 			die(_("bad zlib compression level %d"), level);
-		core_compression_level = level;
-		core_compression_seen = 1;
 		if (!zlib_compression_seen)
 			zlib_compression_level = level;
 		if (!pack_compression_seen)
@@ -1796,6 +1778,7 @@ int git_config_from_mem(config_fn_t fn,
 
 int git_config_from_blob_oid(config_fn_t fn,
 			      const char *name,
+			      struct repository *repo,
 			      const struct object_id *oid,
 			      void *data)
 {
@@ -1804,7 +1787,7 @@ int git_config_from_blob_oid(config_fn_t fn,
 	unsigned long size;
 	int ret;
 
-	buf = read_object_file(oid, &type, &size);
+	buf = repo_read_object_file(repo, oid, &type, &size);
 	if (!buf)
 		return error(_("unable to load config blob object '%s'"), name);
 	if (type != OBJ_BLOB) {
@@ -1820,14 +1803,15 @@ int git_config_from_blob_oid(config_fn_t fn,
 }
 
 static int git_config_from_blob_ref(config_fn_t fn,
+				    struct repository *repo,
 				    const char *name,
 				    void *data)
 {
 	struct object_id oid;
 
-	if (get_oid(name, &oid) < 0)
+	if (repo_get_oid(repo, name, &oid) < 0)
 		return error(_("unable to resolve config blob '%s'"), name);
-	return git_config_from_blob_oid(fn, name, &oid, data);
+	return git_config_from_blob_oid(fn, name, repo, &oid, data);
 }
 
 char *git_system_config(void)
@@ -1845,7 +1829,7 @@ void git_global_config(char **user_out, char **xdg_out)
 	char *xdg_config = NULL;
 
 	if (!user_config) {
-		user_config = expand_user_path("~/.gitconfig", 0);
+		user_config = interpolate_path("~/.gitconfig", 0);
 		xdg_config = xdg_config_home("config");
 	}
 
@@ -1958,12 +1942,16 @@ int config_with_options(config_fn_t fn, void *data,
 	 * If we have a specific filename, use it. Otherwise, follow the
 	 * regular lookup sequence.
 	 */
-	if (config_source && config_source->use_stdin)
+	if (config_source && config_source->use_stdin) {
 		return git_config_from_stdin(fn, data);
-	else if (config_source && config_source->file)
+	} else if (config_source && config_source->file) {
 		return git_config_from_file(fn, config_source->file, data);
-	else if (config_source && config_source->blob)
-		return git_config_from_blob_ref(fn, config_source->blob, data);
+	} else if (config_source && config_source->blob) {
+		struct repository *repo = config_source->repo ?
+			config_source->repo : the_repository;
+		return git_config_from_blob_ref(fn, repo, config_source->blob,
+						data);
+	}
 
 	return do_git_config_sequence(opts, fn, data);
 }

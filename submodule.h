@@ -37,7 +37,9 @@ struct submodule_update_strategy {
 	enum submodule_update_type type;
 	const char *command;
 };
-#define SUBMODULE_UPDATE_STRATEGY_INIT {SM_UPDATE_UNSPECIFIED, NULL}
+#define SUBMODULE_UPDATE_STRATEGY_INIT { \
+	.type = SM_UPDATE_UNSPECIFIED, \
+}
 
 int is_gitmodules_unmerged(struct index_state *istate);
 int is_writing_gitmodules_ok(void);
@@ -97,7 +99,15 @@ int submodule_uses_gitfile(const char *path);
 #define SUBMODULE_REMOVAL_IGNORE_IGNORED_UNTRACKED (1<<2)
 int bad_to_remove_submodule(const char *path, unsigned flags);
 
+/*
+ * Call add_submodule_odb() to add the submodule at the given path to a list.
+ * When register_all_submodule_odb_as_alternates() is called, the object stores
+ * of all submodules in that list will be added as alternates in
+ * the_repository.
+ */
 int add_submodule_odb(const char *path);
+void add_submodule_odb_by_path(const char *path);
+int register_all_submodule_odb_as_alternates(void);
 
 /*
  * Checks if there are submodule changes in a..b. If a is the null OID,
@@ -123,6 +133,13 @@ int push_unpushed_submodules(struct repository *r,
  * submodule is not initialized.
  */
 int submodule_to_gitdir(struct strbuf *buf, const char *submodule);
+
+/*
+ * Given a submodule name, create a path to where the submodule's gitdir lives
+ * inside of the provided repository's 'modules' directory.
+ */
+void submodule_name_to_gitdir(struct strbuf *buf, struct repository *r,
+			      const char *submodule_name);
 
 /*
  * Make sure that no submodule's git dir is nested in a sibling submodule's.

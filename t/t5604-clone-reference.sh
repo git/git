@@ -87,7 +87,7 @@ test_expect_success 'updating origin' '
 '
 
 test_expect_success 'pulling changes from origin' '
-	git -C C pull origin
+	git -C C pull --no-rebase origin
 '
 
 # the 2 local objects are commit and tree from the merge
@@ -96,7 +96,7 @@ test_expect_success 'that alternate to origin gets used' '
 '
 
 test_expect_success 'pulling changes from origin' '
-	git -C D pull origin
+	git -C D pull --no-rebase origin
 '
 
 # the 5 local objects are expected; file3 blob, commit in A to add it

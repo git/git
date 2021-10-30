@@ -12,6 +12,7 @@
 #include "packfile.h"
 #include "object-store.h"
 #include "lockfile.h"
+#include "exec-cmd.h"
 
 static int get_st_mode_bits(const char *path, int *mode)
 {
@@ -719,19 +720,25 @@ static struct passwd *getpw_str(const char *username, size_t len)
 }
 
 /*
- * Return a string with ~ and ~user expanded via getpw*.  If buf != NULL,
- * then it is a newly allocated string. Returns NULL on getpw failure or
- * if path is NULL.
+ * Return a string with ~ and ~user expanded via getpw*. Returns NULL on getpw
+ * failure or if path is NULL.
  *
- * If real_home is true, strbuf_realpath($HOME) is used in the expansion.
+ * If real_home is true, strbuf_realpath($HOME) is used in the `~/` expansion.
+ *
+ * If the path starts with `%(prefix)/`, the remainder is interpreted as
+ * relative to where Git is installed, and expanded to the absolute path.
  */
-char *expand_user_path(const char *path, int real_home)
+char *interpolate_path(const char *path, int real_home)
 {
 	struct strbuf user_path = STRBUF_INIT;
 	const char *to_copy = path;
 
 	if (path == NULL)
 		goto return_null;
+
+	if (skip_prefix(path, "%(prefix)/", &path))
+		return system_path(path);
+
 	if (path[0] == '~') {
 		const char *first_slash = strchrnul(path, '/');
 		const char *username = path + 1;
@@ -812,7 +819,7 @@ const char *enter_repo(const char *path, int strict)
 		strbuf_add(&validated_path, path, len);
 
 		if (used_path.buf[0] == '~') {
-			char *newpath = expand_user_path(used_path.buf, 0);
+			char *newpath = interpolate_path(used_path.buf, 0);
 			if (!newpath)
 				return NULL;
 			strbuf_attach(&used_path, newpath, strlen(newpath),
@@ -1503,19 +1510,26 @@ int looks_like_command_line_option(const char *str)
 	return str && str[0] == '-';
 }
 
-char *xdg_config_home(const char *filename)
+char *xdg_config_home_for(const char *subdir, const char *filename)
 {
 	const char *home, *config_home;
 
+	assert(subdir);
 	assert(filename);
 	config_home = getenv("XDG_CONFIG_HOME");
 	if (config_home && *config_home)
-		return mkpathdup("%s/git/%s", config_home, filename);
+		return mkpathdup("%s/%s/%s", config_home, subdir, filename);
 
 	home = getenv("HOME");
 	if (home)
-		return mkpathdup("%s/.config/git/%s", home, filename);
+		return mkpathdup("%s/.config/%s/%s", home, subdir, filename);
+
 	return NULL;
+}
+
+char *xdg_config_home(const char *filename)
+{
+	return xdg_config_home_for("git", filename);
 }
 
 char *xdg_cache_home(const char *filename)

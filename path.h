@@ -181,10 +181,7 @@ struct path_cache {
 	const char *shallow;
 };
 
-#define PATH_CACHE_INIT                                        \
-	{                                                      \
-		NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL \
-	}
+#define PATH_CACHE_INIT { 0 }
 
 const char *git_path_squash_msg(struct repository *r);
 const char *git_path_merge_msg(struct repository *r);
