@@ -387,10 +387,6 @@ static void parse_ssh_output(struct signature_check *sigc)
 	line = to_free = xmemdupz(sigc->output, strcspn(sigc->output, "\n"));
 
 	if (skip_prefix(line, "Good \"git\" signature for ", &line)) {
-		/* Valid signature and known principal */
-		sigc->result = 'G';
-		sigc->trust_level = TRUST_FULLY;
-
 		/* Search for the last "with" to get the full principal */
 		principal = line;
 		do {
@@ -398,6 +394,12 @@ static void parse_ssh_output(struct signature_check *sigc)
 			if (search)
 				line = search + 1;
 		} while (search != NULL);
+		if (line == principal)
+			goto cleanup;
+
+		/* Valid signature and known principal */
+		sigc->result = 'G';
+		sigc->trust_level = TRUST_FULLY;
 		sigc->signer = xmemdupz(principal, line - principal - 1);
 	} else if (skip_prefix(line, "Good \"git\" signature with ", &line)) {
 		/* Valid signature, but key unknown */
