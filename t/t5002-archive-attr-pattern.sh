@@ -2,6 +2,7 @@
 
 test_description='git archive attribute pattern tests'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_exists() {
