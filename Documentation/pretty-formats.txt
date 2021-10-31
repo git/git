@@ -222,6 +222,10 @@ The placeholders are:
 +
 ** 'tags[=<bool>]': Instead of only considering annotated tags,
    consider lightweight tags as well.
+** 'abbrev=<number>': Instead of using the default number of hexadecimal digits
+   (which will vary according to the number of objects in the repository with a
+   default of 7) of the abbreviated object name, use <number> digits, or as many
+   digits as needed to form a unique object name.
 ** 'match=<pattern>': Only consider tags matching the given
    `glob(7)` pattern, excluding the "refs/tags/" prefix.
 ** 'exclude=<pattern>': Do not consider tags matching the given
