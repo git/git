@@ -50,6 +50,9 @@ test_expect_success 'setup' '
 
 	example sha1:ddd3f836d3e3fbb7ae289aa9ae83536f76956399
 	example sha256:b44fe1fe65589848253737db859bd490453510719d7424daab03daf0767b85ae
+
+	large5GB sha1:0be2be10a4c8764f32c4bf372a98edc731a4b204
+	large5GB sha256:dc18ca621300c8d3cfa505a275641ebab00de189859e022a975056882d313e64
 	EOF
 '
 
@@ -263,6 +266,14 @@ test_expect_success '--literally with extra-long type' '
 test_expect_success '--stdin outside of repository (uses SHA-1)' '
 	nongit git hash-object --stdin <hello >actual &&
 	echo "$(test_oid --hash=sha1 hello)" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_failure EXPENSIVE,SIZE_T_IS_64BIT,!LONG_IS_64BIT \
+		'files over 4GB hash literally' '
+	test-tool genzeros $((5*1024*1024*1024)) >big &&
+	test_oid large5GB >expect &&
+	git hash-object --stdin --literally <big >actual &&
 	test_cmp expect actual
 '
 
