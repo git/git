@@ -336,15 +336,15 @@ test_expect_success EXPENSIVE 'incremental-repack 2g limit' '
 		 --no-progress --batch-size=2147483647 <run-2g.txt
 '
 
-test_expect_success 'maintenance.incremental-repack.auto' '
+run_incremental_repack_and_verify () {
+	test_commit A &&
 	git repack -adk &&
-	git config core.multiPackIndex true &&
 	git multi-pack-index write &&
 	GIT_TRACE2_EVENT="$(pwd)/midx-init.txt" git \
 		-c maintenance.incremental-repack.auto=1 \
 		maintenance run --auto --task=incremental-repack 2>/dev/null &&
 	test_subcommand ! git multi-pack-index write --no-progress <midx-init.txt &&
-	test_commit A &&
+	test_commit B &&
 	git pack-objects --revs .git/objects/pack/pack <<-\EOF &&
 	HEAD
 	^HEAD~1
@@ -353,7 +353,7 @@ test_expect_success 'maintenance.incremental-repack.auto' '
 		-c maintenance.incremental-repack.auto=2 \
 		maintenance run --auto --task=incremental-repack 2>/dev/null &&
 	test_subcommand ! git multi-pack-index write --no-progress <trace-A &&
-	test_commit B &&
+	test_commit C &&
 	git pack-objects --revs .git/objects/pack/pack <<-\EOF &&
 	HEAD
 	^HEAD~1
@@ -362,6 +362,26 @@ test_expect_success 'maintenance.incremental-repack.auto' '
 		-c maintenance.incremental-repack.auto=2 \
 		maintenance run --auto --task=incremental-repack 2>/dev/null &&
 	test_subcommand git multi-pack-index write --no-progress <trace-B
+}
+
+test_expect_success 'maintenance.incremental-repack.auto' '
+	rm -rf incremental-repack-true &&
+	git init incremental-repack-true &&
+	(
+		cd incremental-repack-true &&
+		git config core.multiPackIndex true &&
+		run_incremental_repack_and_verify
+	)
+'
+
+test_expect_success 'maintenance.incremental-repack.auto (when config is unset)' '
+	rm -rf incremental-repack-unset &&
+	git init incremental-repack-unset &&
+	(
+		cd incremental-repack-unset &&
+		test_unconfig core.multiPackIndex &&
+		run_incremental_repack_and_verify
+	)
 '
 
 test_expect_success 'pack-refs task' '
