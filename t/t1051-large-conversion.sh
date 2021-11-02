@@ -98,4 +98,15 @@ test_expect_success EXPENSIVE,SIZE_T_IS_64BIT,!LONG_IS_64BIT \
 	test "$size" -eq $((5 * 1024 * 1024 * 1024 + $small_size))
 '
 
+# This clean filter writes down the size of input it receives. By checking against
+# the actual size, we ensure that cleaning doesn't mangle large files on 64-bit Windows.
+test_expect_success EXPENSIVE,SIZE_T_IS_64BIT,!LONG_IS_64BIT \
+		'files over 4GB convert on input' '
+	test-tool genzeros $((5*1024*1024*1024)) >big &&
+	test_config filter.checklarge.clean "wc -c >big.size" &&
+	echo "big filter=checklarge" >.gitattributes &&
+	git add big &&
+	test $(test_file_size big) -eq $(cat big.size)
+'
+
 test_done
