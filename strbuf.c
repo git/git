@@ -1006,7 +1006,12 @@ void strbuf_addftime(struct strbuf *sb, const char *fmt, const struct tm *tm,
 
 	/*
 	 * There is no portable way to pass timezone information to
-	 * strftime, so we handle %z and %Z here.
+	 * strftime, so we handle %z and %Z here. Likewise '%s', because
+	 * going back to an epoch time requires knowing the zone.
+	 *
+	 * Note that tz_offset is in the "[-+]HHMM" decimal form; this is what
+	 * we want for %z, but the computation for %s has to convert to number
+	 * of seconds.
 	 */
 	for (;;) {
 		const char *percent = strchrnul(fmt, '%');
@@ -1017,6 +1022,13 @@ void strbuf_addftime(struct strbuf *sb, const char *fmt, const struct tm *tm,
 		switch (*fmt) {
 		case '%':
 			strbuf_addstr(&munged_fmt, "%%");
+			fmt++;
+			break;
+		case 's':
+			strbuf_addf(&munged_fmt, "%"PRItime,
+				    (timestamp_t)tm_to_time_t(tm) -
+				    3600 * (tz_offset / 100) -
+				    60 * (tz_offset % 100));
 			fmt++;
 			break;
 		case 'z':
