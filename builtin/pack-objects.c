@@ -4148,11 +4148,10 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		read_packs_list_from_stdin();
 		if (rev_list_unpacked)
 			add_unreachable_loose_objects();
-	} else if (!use_internal_rev_list)
+	} else if (!use_internal_rev_list) {
 		read_object_list_from_stdin();
-	else {
+	} else {
 		get_object_list(rp.nr, rp.v);
-		strvec_clear(&rp);
 	}
 	cleanup_preferred_base();
 	if (include_tag && nr_result)
@@ -4162,7 +4161,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			    the_repository);
 
 	if (non_empty && !nr_result)
-		return 0;
+		goto cleanup;
 	if (nr_result) {
 		trace2_region_enter("pack-objects", "prepare-pack",
 				    the_repository);
@@ -4183,5 +4182,9 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			     " pack-reused %"PRIu32),
 			   written, written_delta, reused, reused_delta,
 			   reuse_packfile_objects);
+
+cleanup:
+	strvec_clear(&rp);
+
 	return 0;
 }

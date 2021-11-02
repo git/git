@@ -292,9 +292,12 @@ static int load_bitmap_entries_v1(struct bitmap_index *index)
 
 char *midx_bitmap_filename(struct multi_pack_index *midx)
 {
-	return xstrfmt("%s-%s.bitmap",
-		       get_midx_filename(midx->object_dir),
-		       hash_to_hex(get_midx_checksum(midx)));
+	struct strbuf buf = STRBUF_INIT;
+
+	get_midx_filename(&buf, midx->object_dir);
+	strbuf_addf(&buf, "-%s.bitmap", hash_to_hex(get_midx_checksum(midx)));
+
+	return strbuf_detach(&buf, NULL);
 }
 
 char *pack_bitmap_filename(struct packed_git *p)
@@ -324,10 +327,12 @@ static int open_midx_bitmap_1(struct bitmap_index *bitmap_git,
 	}
 
 	if (bitmap_git->pack || bitmap_git->midx) {
+		struct strbuf buf = STRBUF_INIT;
+		get_midx_filename(&buf, midx->object_dir);
 		/* ignore extra bitmap file; we can only handle one */
-		warning("ignoring extra bitmap file: %s",
-			get_midx_filename(midx->object_dir));
+		warning("ignoring extra bitmap file: %s", buf.buf);
 		close(fd);
+		strbuf_release(&buf);
 		return -1;
 	}
 
@@ -1721,6 +1726,12 @@ void test_bitmap_walk(struct rev_info *revs)
 	else
 		die("mismatch in bitmap results");
 
+	bitmap_free(result);
+	bitmap_free(tdata.base);
+	bitmap_free(tdata.commits);
+	bitmap_free(tdata.trees);
+	bitmap_free(tdata.blobs);
+	bitmap_free(tdata.tags);
 	free_bitmap_index(bitmap_git);
 }
 
@@ -1848,9 +1859,17 @@ void free_bitmap_index(struct bitmap_index *b)
 	ewah_pool_free(b->trees);
 	ewah_pool_free(b->blobs);
 	ewah_pool_free(b->tags);
+	if (b->bitmaps) {
+		struct stored_bitmap *sb;
+		kh_foreach_value(b->bitmaps, sb, {
+			ewah_pool_free(sb->root);
+			free(sb);
+		});
+	}
 	kh_destroy_oid_map(b->bitmaps);
 	free(b->ext_index.objects);
 	free(b->ext_index.hashes);
+	kh_destroy_oid_pos(b->ext_index.positions);
 	bitmap_free(b->result);
 	bitmap_free(b->haves);
 	if (bitmap_is_midx(b)) {

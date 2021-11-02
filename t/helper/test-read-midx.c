@@ -55,8 +55,9 @@ static int read_midx_file(const char *object_dir, int show_objects)
 			printf("%s %"PRIu64"\t%s\n",
 			       oid_to_hex(&oid), e.offset, e.p->pack_name);
 		}
-		return 0;
 	}
+
+	close_midx(m);
 
 	return 0;
 }
