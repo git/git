@@ -1686,6 +1686,10 @@ build_option () {
 	sed -ne "s/^$1: //p"
 }
 
+test_lazy_prereq SIZE_T_IS_64BIT '
+	test 8 -eq "$(build_option sizeof-size_t)"
+'
+
 test_lazy_prereq LONG_IS_64BIT '
 	test 8 -le "$(build_option sizeof-long)"
 '
