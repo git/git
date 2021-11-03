@@ -997,7 +997,9 @@ static int run_git_commit(const char *defmsg,
 
 	cmd.git_cmd = 1;
 
-	if (is_rebase_i(opts) && !(!defmsg && (flags & AMEND_MSG)) &&
+	if (is_rebase_i(opts) &&
+	    ((opts->committer_date_is_author_date && !opts->ignore_date) ||
+	     !(!defmsg && (flags & AMEND_MSG))) &&
 	    read_env_script(&cmd.env_array)) {
 		const char *gpg_opt = gpg_sign_opt_quoted(opts);
 
