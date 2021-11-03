@@ -777,7 +777,7 @@ static const char *get_default_ssh_signing_key(void)
 		if (keys[0] && starts_with(keys[0]->buf, "ssh-")) {
 			default_key = strbuf_detach(keys[0], NULL);
 		} else {
-			warning(_("gpg.ssh.defaultKeycommand succeeded but returned no keys: %s %s"),
+			warning(_("gpg.ssh.defaultKeyCommand succeeded but returned no keys: %s %s"),
 				key_stderr.buf, key_stdout.buf);
 		}
 
