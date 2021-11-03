@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Nov 2021, #01; Mon, 1)
-X-master-at: 0cddd84c9f3e9c3d793ec93034ef679335f35e49
-X-next-at: 6d82a21a3b699caf378cb0f89b6b0e803fc58480
+Subject: What's cooking in git.git (Nov 2021, #02; Wed, 3)
+X-master-at: 876b1423317071f43c99666f3fc3db3642dfbe14
+X-next-at: 1ee627454180a9cdee044e51a3e50dd415a92f4b
 
-What's cooking in git.git (Nov 2021, #01; Mon, 1)
+What's cooking in git.git (Nov 2021, #02; Wed, 3)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,6 +17,9 @@ another topic already in flight" or "this may turn out to be
 useful").  Do not read too much into a topic being in (or not in)
 'seen'.  The ones marked with '.' do not appear in any of the
 integration branches, but I am still holding onto them.
+
+Git 2.34-rc1 has been tagged with a handful of regression fixes.
+Thank you all for finding, reporting and fixing them so quickly.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -49,87 +52,11 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ab/ignore-replace-while-working-on-commit-graph (2021-10-15) 3 commits
-  (merged to 'next' on 2021-10-25 at 5ed4266a96)
- + commit-graph: don't consider "replace" objects with "verify"
- + commit-graph tests: fix another graph_git_two_modes() helper
- + commit-graph tests: fix error-hiding graph_git_two_modes() helper
- (this branch is used by gc/use-repo-settings.)
+* ds/add-rm-with-sparse-index (2021-11-03) 1 commit
+  (merged to 'next' on 2021-11-03 at 827a7d774b)
+ + dir: fix directory-matching bug
 
- Teach "git commit-graph" command not to allow using replace objects
- at all, as we do not use the commit-graph at runtime when we see
- object replacement.
-
-
-* ab/test-lib (2021-10-29) 1 commit
-  (merged to 'next' on 2021-10-29 at b3d23601bd)
- + t5310: drop lib-bundle.sh include
-
- Test (cosmetic) fix.
-
-
-* gc/use-repo-settings (2021-10-15) 4 commits
-  (merged to 'next' on 2021-10-25 at 3d38c09a8d)
- + gc: perform incremental repack when implictly enabled
- + fsck: verify multi-pack-index when implictly enabled
- + fsck: verify commit graph when implicitly enabled
- + Merge branch 'ab/ignore-replace-while-working-on-commit-graph' into gc/use-repo-settings
- (this branch uses ab/ignore-replace-while-working-on-commit-graph.)
-
- It is wrong to read some settings directly from the config
- subsystem, as things like feature.experimental can affect their
- default values.
-
-
-* hm/paint-hits-in-log-grep (2021-10-15) 4 commits
-  (merged to 'next' on 2021-10-25 at e3edea3fa9)
- + grep/pcre2: fix an edge case concerning ascii patterns and UTF-8 data
- + pretty: colorize pattern matches in commit messages
- + grep: refactor next_match() and match_one_pattern() for external use
- + Merge branch 'jk/grep-haystack-is-read-only' into hm/paint-hits-in-log-grep
-
- "git log --grep=string --author=name" learns to highlight hits just
- like "git grep string" does.
-
-
-* jc/doc-format-patch-clarify-auto-base (2021-10-23) 1 commit
-  (merged to 'next' on 2021-10-27 at 32c227324a)
- + format-patch (doc): clarify --base=auto
-
- Rephrase the description of "format-patch --base=auto".
-
---------------------------------------------------
-[New Topics]
-
-* ab/mark-leak-free-tests-even-more (2021-11-01) 15 commits
- - leak tests: mark some fast-import tests as passing with SANITIZE=leak
- - leak tests: mark some config tests as passing with SANITIZE=leak
- - leak tests: mark some status tests as passing with SANITIZE=leak
- - leak tests: mark some clone tests as passing with SANITIZE=leak
- - leak tests: mark some add tests as passing with SANITIZE=leak
- - leak tests: mark some diff tests as passing with SANITIZE=leak
- - leak tests: mark some apply tests as passing with SANITIZE=leak
- - leak tests: mark some notes tests as passing with SANITIZE=leak
- - leak tests: mark some update-index tests as passing with SANITIZE=leak
- - leak tests: mark some rev-parse tests as passing with SANITIZE=leak
- - leak tests: mark some rev-list tests as passing with SANITIZE=leak
- - leak tests: mark some misc tests as passing with SANITIZE=leak
- - leak tests: mark most gettext tests as passing with SANITIZE=leak
- - leak tests: mark "sort" test as passing SANITIZE=leak
- - leak tests: mark a read-tree test as passing SANITIZE=leak
- (this branch uses jx/message-fixes.)
-
- More tests are marked as leak-free.
-
-
-* rs/ssh-signing-fix (2021-11-01) 2 commits
-  (merged to 'next' on 2021-11-01 at f50e78f952)
- + gpg-interface: avoid buffer overrun in parse_ssh_output()
- + gpg-interface: handle missing " with " gracefully in parse_ssh_output()
-
- Fixes to recently merged topic. 
-
- Will merge to 'master'.
+ Regression fix.
 
 
 * jx/message-fixes (2021-10-31) 1 commit
@@ -139,7 +66,43 @@ Release tarballs are available at:
 
  Fixes to recently added messages.
 
- Will merge to 'master'.
+
+* pw/rebase-r-fixes (2021-11-03) 1 commit
+  (merged to 'next' on 2021-11-03 at 928f9c05d8)
+ + rebase -i: fix rewording with --committer-date-is-author-date
+
+ Regression fix.
+
+
+* rs/ssh-signing-fix (2021-11-01) 2 commits
+  (merged to 'next' on 2021-11-01 at f50e78f952)
+ + gpg-interface: avoid buffer overrun in parse_ssh_output()
+ + gpg-interface: handle missing " with " gracefully in parse_ssh_output()
+
+ Fixes to recently merged topic.
+
+--------------------------------------------------
+[New Topics]
+
+* jk/strbuf-addftime-seconds-since-epoch (2021-11-03) 1 commit
+ - strbuf_addftime(): handle "%s" manually
+
+ The "--date=format:<strftime>" gained a workaround for the lack of
+ system support for a non-local timezone to handle "%s" placeholder.
+
+
+* js/ci-no-directional-formatting (2021-11-03) 1 commit
+ - ci: disallow directional formatting
+
+ CI has been taught to catch some Unicode directional formatting
+ sequence that can be used in certain mischief.
+
+
+* tw/var-default-branch (2021-11-03) 1 commit
+ - var: add GIT_DEFAULT_BRANCH variable
+
+ "git var GIT_DEFAULT_BRANCH" is a way to see what name is used for
+ the newly created branch if "git init" is run.
 
 --------------------------------------------------
 [Stalled]
@@ -186,6 +149,26 @@ Release tarballs are available at:
 
 --------------------------------------------------
 [Cooking]
+
+* ab/mark-leak-free-tests-even-more (2021-11-01) 15 commits
+ - leak tests: mark some fast-import tests as passing with SANITIZE=leak
+ - leak tests: mark some config tests as passing with SANITIZE=leak
+ - leak tests: mark some status tests as passing with SANITIZE=leak
+ - leak tests: mark some clone tests as passing with SANITIZE=leak
+ - leak tests: mark some add tests as passing with SANITIZE=leak
+ - leak tests: mark some diff tests as passing with SANITIZE=leak
+ - leak tests: mark some apply tests as passing with SANITIZE=leak
+ - leak tests: mark some notes tests as passing with SANITIZE=leak
+ - leak tests: mark some update-index tests as passing with SANITIZE=leak
+ - leak tests: mark some rev-parse tests as passing with SANITIZE=leak
+ - leak tests: mark some rev-list tests as passing with SANITIZE=leak
+ - leak tests: mark some misc tests as passing with SANITIZE=leak
+ - leak tests: mark most gettext tests as passing with SANITIZE=leak
+ - leak tests: mark "sort" test as passing SANITIZE=leak
+ - leak tests: mark a read-tree test as passing SANITIZE=leak
+
+ More tests are marked as leak-free.
+
 
 * ar/fix-git-pull-no-verify (2021-10-28) 1 commit
   (merged to 'next' on 2021-11-01 at 74677b0a76)
@@ -261,7 +244,7 @@ Release tarballs are available at:
  Will cook in 'next'.
 
 
-* mc/clean-smudge-with-llp64 (2021-10-29) 8 commits
+* mc/clean-smudge-with-llp64 (2021-11-03) 8 commits
  - clean/smudge: allow clean filters to process extremely large files
  - odb: guard against data loss checking out a huge file
  - git-compat-util: introduce more size_t helpers
@@ -270,6 +253,11 @@ Release tarballs are available at:
  - test-lib: add prerequisite for 64-bit platforms
  - test-tool genzeros: generate large amounts of data more efficiently
  - test-genzeros: allow more than 2G zeros in Windows
+
+ The clean/smudge conversion code path has been prepared to better
+ work on platforms where ulong is narrower than size_t.
+
+ Will merge to 'next'.
 
 
 * pw/diff-color-moved-fix (2021-10-27) 15 commits
@@ -333,6 +321,8 @@ Release tarballs are available at:
  - Makefile: move git-SCRIPT-DEFINES adjacent to $(SCRIPT_DEFINES)
 
  Make a few helper functions unused and then lose them.
+
+ Will merge to 'next'.
 
 
 * ow/stash-count-in-status-porcelain-output (2021-10-21) 2 commits
@@ -744,9 +734,9 @@ Release tarballs are available at:
  Will cook in 'next'.
 
 
-* ab/only-single-progress-at-once (2021-11-01) 8 commits
+* ab/only-single-progress-at-once (2021-11-03) 8 commits
  - progress.c: add & assert a "global_progress" variable
- - various *.c: use isatty(1|2), not isatty(STDIN_FILENO|STDERR_FILENO)
+ - various *.c: use isatty(0|2), not isatty(STDIN_FILENO|STDERR_FILENO)
  - pack-bitmap-write.c: don't return without stop_progress()
  - progress.c: add temporary variable from progress struct
  - progress.c tests: test some invalid usage
@@ -755,10 +745,6 @@ Release tarballs are available at:
  - leak tests: fix a memory leaks in "test-progress" helper
 
  Further tweaks on progress API.
-
- Correction of the course may be required?
- cf. <211025.8635opi8om.gmgdl@evledraar.gmail.com>
- cf. <cover-v4-0.8-00000000000-20211025T111915Z-avarab@gmail.com>
 
 
 * hn/reftable (2021-10-08) 19 commits
