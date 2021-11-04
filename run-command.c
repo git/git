@@ -1099,7 +1099,7 @@ static NORETURN void die_async(const char *err, va_list params)
 static int async_die_is_recursing(void)
 {
 	void *ret = pthread_getspecific(async_die_counter);
-	pthread_setspecific(async_die_counter, (void *)1);
+	pthread_setspecific(async_die_counter, &async_die_counter); /* set to any non-NULL valid pointer */
 	return ret != NULL;
 }
 
