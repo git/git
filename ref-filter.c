@@ -1037,7 +1037,7 @@ int verify_ref_format(struct ref_format *format)
 		     format->quote_style == QUOTE_TCL) &&
 		     used_atom[at].atom_type == ATOM_RAW &&
 		     used_atom[at].u.raw_data.option == RAW_BARE)
-			die(_("--format=%.*s cannot be used with"
+			die(_("--format=%.*s cannot be used with "
 			      "--python, --shell, --tcl"), (int)(ep - sp - 2), sp + 2);
 		cp = ep + 1;
 

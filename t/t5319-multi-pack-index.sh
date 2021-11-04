@@ -467,7 +467,10 @@ test_expect_success 'verify incorrect offset' '
 test_expect_success 'git-fsck incorrect offset' '
 	corrupt_midx_and_verify $MIDX_BYTE_OFFSET "\377" $objdir \
 		"incorrect object offset" \
-		"git -c core.multipackindex=true fsck"
+		"git -c core.multiPackIndex=true fsck" &&
+	test_unconfig core.multiPackIndex &&
+	test_must_fail git fsck &&
+	git -c core.multiPackIndex=false fsck
 '
 
 test_expect_success 'corrupt MIDX is not reused' '
