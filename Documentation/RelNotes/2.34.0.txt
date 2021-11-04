@@ -401,6 +401,13 @@ Fixes since v2.33
    object replacement.
    (merge 095d112f8c ab/ignore-replace-while-working-on-commit-graph later to maint).
 
+ * "git pull --no-verify" did not affect the underlying "git merge".
+   (merge 47bfdfb3fd ar/fix-git-pull-no-verify later to maint).
+
+ * One CI task based on Fedora image noticed a not-quite-kosher
+   consturct recently, which has been corrected.
+   (merge 4b540cf913 vd/pthread-setspecific-g11-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge f188160be9 ab/bundle-remove-verbose-option later to maint).
    (merge 8c6b4332b4 rs/close-pack-leakfix later to maint).
