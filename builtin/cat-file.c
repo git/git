@@ -405,6 +405,11 @@ static void batch_one_object(const char *obj_name,
 	int flags = opt->follow_symlinks ? GET_OID_FOLLOW_SYMLINKS : 0;
 	enum get_oid_result result;
 
+	if (opt->buffer_output && obj_name[0] == '\0') {
+		fflush(stdout);
+		return;
+	}
+
 	result = get_oid_with_context(the_repository, obj_name,
 				      flags, &data->oid, &ctx);
 	if (result != FOUND) {
@@ -609,7 +614,11 @@ static int batch_objects(struct batch_options *opt)
 			data.rest = p;
 		}
 
-		batch_one_object(input.buf, &output, opt, &data);
+		 /*
+		  * When in buffer mode and input.buf is an empty string,
+		  * flush to stdout.
+		  */
+		 batch_one_object(input.buf, &output, opt, &data);
 	}
 
 	strbuf_release(&input);
