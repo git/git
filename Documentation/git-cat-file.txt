@@ -104,7 +104,8 @@ OPTIONS
 	that a process can interactively read and write from
 	`cat-file`. With this option, the output uses normal stdio
 	buffering; this is much more efficient when invoking
-	`--batch-check` on a large number of objects.
+	`--batch-check` on a large number of objects. An empty string will
+	force a flush of stdout.
 
 --unordered::
 	When `--batch-all-objects` is in use, visit objects in an
