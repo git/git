@@ -43,7 +43,7 @@
 # specified here, which can only have "guide" attribute and nothing
 # else.
 #
-### command list (do not change this line, also do not change alignment)
+### command list (do not change this line)
 # command name                          category [category] [category]
 git-add                                 mainporcelain           worktree
 git-am                                  mainporcelain

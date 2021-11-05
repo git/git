@@ -6,12 +6,28 @@ die () {
 }
 
 command_list () {
-	eval "grep -ve '^#' $exclude_programs" <"$1"
+	while read cmd rest
+	do
+		case "$cmd" in
+		"#"* | '')
+			# Ignore comments and allow empty lines
+			continue
+			;;
+		*)
+			case "$exclude_programs" in
+			*":$cmd:"*)
+				;;
+			*)
+				echo "$cmd $rest"
+				;;
+			esac
+		esac
+	done <"$1"
 }
 
 category_list () {
 	command_list "$1" |
-	cut -c 40- |
+	cut -d' ' -f2- |
 	tr ' ' '\012' |
 	grep -v '^$' |
 	LC_ALL=C sort -u
@@ -69,11 +85,11 @@ print_command_list () {
 	echo "};"
 }
 
-exclude_programs=
+exclude_programs=:
 while test "--exclude-program" = "$1"
 do
 	shift
-	exclude_programs="$exclude_programs -e \"^$1 \""
+	exclude_programs="$exclude_programs$1:"
 	shift
 done
 
