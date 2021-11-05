@@ -9,7 +9,7 @@ command_list () {
 	eval "grep -ve '^#' $exclude_programs" <"$1"
 }
 
-get_categories () {
+get_category_line () {
 	tr ' ' '\012' |
 	LC_ALL=C sort -u
 }
@@ -17,7 +17,8 @@ get_categories () {
 category_list () {
 	command_list "$1" |
 	cut -c 40- |
-	get_categories |
+	tr ' ' '\012' |
+	LC_ALL=C sort -u |
 	grep -v '^$'
 }
 
@@ -66,7 +67,7 @@ print_command_list () {
 	while read cmd rest
 	do
 		printf "	{ \"$cmd\", $(get_synopsis $cmd), 0"
-		for cat in $(echo "$rest" | get_categories)
+		for cat in $(echo "$rest" | get_category_line)
 		do
 			printf " | CAT_$cat"
 		done
