@@ -18,8 +18,8 @@ category_list () {
 	command_list "$1" |
 	cut -c 40- |
 	tr ' ' '\012' |
-	LC_ALL=C sort -u |
-	grep -v '^$'
+	grep -v '^$' |
+	LC_ALL=C sort -u
 }
 
 get_synopsis () {
