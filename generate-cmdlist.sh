@@ -17,16 +17,6 @@ category_list () {
 	LC_ALL=C sort -u
 }
 
-get_synopsis () {
-	sed -n '
-		/^NAME/,/'"$1"'/H
-		${
-			x
-			s/.*'"$1"' - \(.*\)/N_("\1")/
-			p
-		}' "Documentation/$1.txt"
-}
-
 define_categories () {
 	echo
 	echo "/* Command categories */"
@@ -61,7 +51,18 @@ print_command_list () {
 	command_list "$1" |
 	while read cmd rest
 	do
-		printf "	{ \"$cmd\", $(get_synopsis $cmd), 0"
+		synopsis=
+		while read line
+		do
+			case "$line" in
+			"$cmd - "*)
+				synopsis=${line#$cmd - }
+				break
+				;;
+			esac
+		done <"Documentation/$cmd.txt"
+
+		printf '\t{ "%s", N_("%s"), 0' "$cmd" "$synopsis"
 		printf " | CAT_%s" $rest
 		echo " },"
 	done
