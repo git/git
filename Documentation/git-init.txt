@@ -9,8 +9,8 @@ git-init - Create an empty Git repository or reinitialize an existing one
 SYNOPSIS
 --------
 [verse]
-'git init' [-q | --quiet] [--bare] [--template=<template_directory>]
-	  [--separate-git-dir <git dir>] [--object-format=<format>]
+'git init' [-q | --quiet] [--bare] [--template=<template-directory>]
+	  [--separate-git-dir <git-dir>] [--object-format=<format>]
 	  [-b <branch-name> | --initial-branch=<branch-name>]
 	  [--shared[=<permissions>]] [<directory>]
 
@@ -57,12 +57,12 @@ values are 'sha1' and (if enabled) 'sha256'.  'sha1' is the default.
 +
 include::object-format-disclaimer.txt[]
 
---template=<template_directory>::
+--template=<template-directory>::
 
 Specify the directory from which templates will be used.  (See the "TEMPLATE
 DIRECTORY" section below.)
 
---separate-git-dir=<git dir>::
+--separate-git-dir=<git-dir>::
 
 Instead of initializing the repository as a directory to either `$GIT_DIR` or
 `./.git/`, create a text file there containing the path to the actual

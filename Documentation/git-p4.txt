@@ -9,10 +9,10 @@ git-p4 - Import from and submit to Perforce repositories
 SYNOPSIS
 --------
 [verse]
-'git p4 clone' [<sync options>] [<clone options>] <p4 depot path>...
-'git p4 sync' [<sync options>] [<p4 depot path>...]
+'git p4 clone' [<sync-options>] [<clone-options>] <p4-depot-path>...
+'git p4 sync' [<sync-options>] [<p4-depot-path>...]
 'git p4 rebase'
-'git p4 submit' [<submit options>] [<master branch name>]
+'git p4 submit' [<submit-options>] [<master-branch-name>]
 
 
 DESCRIPTION

@@ -11,9 +11,9 @@ SYNOPSIS
 [verse]
 'git cvsimport' [-o <branch-for-HEAD>] [-h] [-v] [-d <CVSROOT>]
 	      [-A <author-conv-file>] [-p <options-for-cvsps>] [-P <file>]
-	      [-C <git_repository>] [-z <fuzz>] [-i] [-k] [-u] [-s <subst>]
-	      [-a] [-m] [-M <regex>] [-S <regex>] [-L <commitlimit>]
-	      [-r <remote>] [-R] [<CVS_module>]
+	      [-C <git-repository>] [-z <fuzz>] [-i] [-k] [-u] [-s <subst>]
+	      [-a] [-m] [-M <regex>] [-S <regex>] [-L <commit-limit>]
+	      [-r <remote>] [-R] [<CVS-module>]
 
 
 DESCRIPTION
@@ -59,7 +59,7 @@ OPTIONS
 	from `CVS/Root`. If no such file exists, it checks for the
 	`CVSROOT` environment variable.
 
-<CVS_module>::
+<CVS-module>::
 	The CVS module you want to import. Relative to <CVSROOT>.
 	If not given, 'git cvsimport' tries to read it from
 	`CVS/Repository`.

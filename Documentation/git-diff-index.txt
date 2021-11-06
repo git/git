@@ -9,7 +9,7 @@ git-diff-index - Compare a tree to the working tree or index
 SYNOPSIS
 --------
 [verse]
-'git diff-index' [-m] [--cached] [--merge-base] [<common diff options>] <tree-ish> [<path>...]
+'git diff-index' [-m] [--cached] [--merge-base] [<common-diff-options>] <tree-ish> [<path>...]
 
 DESCRIPTION
 -----------

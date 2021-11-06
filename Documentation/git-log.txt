@@ -9,7 +9,7 @@ git-log - Show commit logs
 SYNOPSIS
 --------
 [verse]
-'git log' [<options>] [<revision range>] [[--] <path>...]
+'git log' [<options>] [<revision-range>] [[--] <path>...]
 
 DESCRIPTION
 -----------
@@ -81,13 +81,13 @@ produced by `--stat`, etc.
 
 include::line-range-options.txt[]
 
-<revision range>::
+<revision-range>::
 	Show only commits in the specified revision range.  When no
-	<revision range> is specified, it defaults to `HEAD` (i.e. the
+	<revision-range> is specified, it defaults to `HEAD` (i.e. the
 	whole history leading to the current commit).  `origin..HEAD`
 	specifies all the commits reachable from the current commit
 	(i.e. `HEAD`), but not from `origin`. For a complete list of
-	ways to spell <revision range>, see the 'Specifying Ranges'
+	ways to spell <revision-range>, see the 'Specifying Ranges'
 	section of linkgit:gitrevisions[7].
 
 [--] <path>...::
