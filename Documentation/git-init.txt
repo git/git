@@ -79,7 +79,7 @@ repository.  If not specified, fall back to the default name (currently
 `master`, but this is subject to change in the future; the name can be
 customized via the `init.defaultBranch` configuration variable).
 
---shared[=(false|true|umask|group|all|world|everybody|0xxx)]::
+--shared[=(false|true|umask|group|all|world|everybody|<umask>)]::
 
 Specify that the Git repository is to be shared amongst several users.  This
 allows users belonging to the same group to push into that
@@ -110,13 +110,15 @@ the repository permissions.
 
 Same as 'group', but make the repository readable by all users.
 
-'0xxx'::
+'<umask>'::
 
-'0xxx' is an octal number and each file will have mode '0xxx'. '0xxx' will
-override users' umask(2) value (and not only loosen permissions as 'group' and
-'all' does). '0640' will create a repository which is group-readable, but not
-group-writable or accessible to others. '0660' will create a repo that is
-readable and writable to the current user and group, but inaccessible to others.
+'<umask>' is a 3-digit octal number prefixed with `0` and each file
+will have mode '<umask>'. '<umask>' will override users' umask(2)
+value (and not only loosen permissions as 'group' and 'all'
+does). '0640' will create a repository which is group-readable, but
+not group-writable or accessible to others. '0660' will create a repo
+that is readable and writable to the current user and group, but
+inaccessible to others.
 --
 
 By default, the configuration flag `receive.denyNonFastForwards` is enabled
