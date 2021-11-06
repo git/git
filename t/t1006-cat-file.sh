@@ -964,4 +964,76 @@ test_expect_success 'cat-file --batch-all-objects --batch-check ignores replace'
 	test_cmp expect actual
 '
 
+F='%s\0'
+
+test_expect_success 'stdin-cmd not enough arguments' '
+	echo "object " >cmd &&
+	test_expect_code 128 git cat-file --batch --stdin-cmd < cmd 2>err &&
+	grep -E "^fatal:.*too few arguments" err
+'
+
+test_expect_success 'stdin-cmd too many arguments' '
+	echo "object foo bar" >cmd &&
+	test_expect_code 128 git cat-file --batch --stdin-cmd < cmd 2>err &&
+	grep -E "^fatal:.*too many arguments" err
+'
+
+test_expect_success 'stdin-cmd unknown command' '
+	echo unknown_command >cmd &&
+	test_expect_code 128 git cat-file --batch --stdin-cmd < cmd 2>err &&
+	grep -E "^fatal:.*unknown command.*" err &&
+	test_expect_code 128 git cat-file --batch --stdin-cmd -z < cmd 2>err &&
+	grep -E "^fatal:.*unknown command.*" err
+'
+
+test_expect_success 'setup object data' '
+	content="Object Data" &&
+	size=$(strlen "$content") &&
+	sha1=$(echo_without_newline "$content" | git hash-object -w --stdin)
+'
+
+test_expect_success 'stdin-cmd calling object works' '
+	echo "object $sha1" | git cat-file --batch --stdin-cmd >actual &&
+	echo "$sha1 blob $size" >expect &&
+	echo `git cat-file -p "$sha1"` >>expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'stdin-cmd -z calling object works' '
+	printf $F "object $sha1" | git cat-file --batch --stdin-cmd -z >actual &&
+	echo "$sha1 blob $size" >expect &&
+	echo `git cat-file -p "$sha1"` >>expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'setup object data' '
+	content="Object Data" &&
+	size=$(strlen "$content") &&
+	sha1=$(echo_without_newline "$content" | git hash-object -w --stdin)
+'
+
+test_expect_success 'stdin-cmd calling object works' '
+	echo "object $sha1" | git cat-file --batch --stdin-cmd >actual &&
+	echo "$sha1 blob $size" >expect &&
+	echo `git cat-file -p "$sha1"` >>expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'stdin-cmd -z calling object works' '
+	printf $F "object $sha1" | git cat-file --batch --stdin-cmd -z >actual &&
+	echo "$sha1 blob $size" >expect &&
+	echo `git cat-file -p "$sha1"` >>expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'stdin-cmd fflush works' '
+	printf "fflush\n" > cmd &&
+	test_expect_code 0 git cat-file --batch --stdin-cmd < cmd 2>err
+'
+
+test_expect_success 'stdin-cmd -z fflush works' '
+	printf $F 'fflush' > cmd &&
+	test_expect_code 0 git cat-file --batch --stdin-cmd -z < cmd 2>err
+'
+
 test_done
