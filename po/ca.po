@@ -7785,7 +7785,7 @@ msgstr ""
 
 #: send-pack.c:528
 msgid "the receiving end does not support this repository's hash algorithm"
-msgstr "el receptor de destí no admet l'algorisme d'hash del repositori"
+msgstr "el receptor de destí no admet l'algorisme de hash del repositori"
 
 #: send-pack.c:537
 msgid "the receiving end does not support --signed push"
@@ -11112,11 +11112,11 @@ msgstr "omet el pedaç actual"
 
 #: builtin/am.c:2341
 msgid "restore the original branch and abort the patching operation"
-msgstr "restaura la branca original i interromp l'operació d'apedaçament."
+msgstr "restaura la branca original i interromp l'operació d'apedaçament"
 
 #: builtin/am.c:2344
 msgid "abort the patching operation but keep HEAD where it is"
-msgstr "interromp l'operació d'apedaçament però manté HEAD on és."
+msgstr "interromp l'operació d'apedaçament però manté HEAD on és"
 
 #: builtin/am.c:2348
 msgid "show the patch being applied"
@@ -12294,7 +12294,7 @@ msgstr "no s'ha pogut escriure a %s"
 #: builtin/bugreport.c:159
 #, c-format
 msgid "Created new report at '%s'.\n"
-msgstr "S'ha crear un nou informe a «%s».\n"
+msgstr "S'ha creat un nou informe a «%s».\n"
 
 #: builtin/bundle.c:15 builtin/bundle.c:23
 msgid "git bundle create [<options>] <file> <git-rev-list args>"
@@ -16898,7 +16898,7 @@ msgstr "format d'ajuda no reconegut «%s»"
 
 #: builtin/help.c:223
 msgid "Failed to start emacsclient."
-msgstr "S'ha produït un error'ha produït un error en iniciar emacsclient."
+msgstr "S'ha produït un error en iniciar emacsclient."
 
 #: builtin/help.c:236
 msgid "Failed to parse emacsclient version."
@@ -22430,7 +22430,7 @@ msgstr "nom de la comissió a annexar"
 
 #: builtin/revert.c:127
 msgid "preserve initially empty commits"
-msgstr "preserva les comissions inicialment buides"
+msgstr "conserva les comissions inicialment buides"
 
 #: builtin/revert.c:128
 msgid "allow commits with empty messages"
