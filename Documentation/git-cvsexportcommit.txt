@@ -9,8 +9,8 @@ git-cvsexportcommit - Export a single commit to a CVS checkout
 SYNOPSIS
 --------
 [verse]
-'git cvsexportcommit' [-h] [-u] [-v] [-c] [-P] [-p] [-a] [-d cvsroot]
-	[-w cvsworkdir] [-W] [-f] [-m msgprefix] [PARENTCOMMIT] COMMITID
+'git cvsexportcommit' [-h] [-u] [-v] [-c] [-P] [-p] [-a] [-d <cvsroot>]
+	[-w <cvs-workdir>] [-W] [-f] [-m <msgprefix>] [<parent-commit>] <commit-id>
 
 
 DESCRIPTION
