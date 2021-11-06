@@ -226,7 +226,7 @@ Workflow for a third party library
 ----------------------------------
 
   # Add a submodule
-  git submodule add <url> <path>
+  git submodule add <URL> <path>
 
   # Occasionally update the submodule to a new version:
   git -C <path> checkout <new version>

@@ -8,7 +8,7 @@ git-request-pull - Generates a summary of pending changes
 SYNOPSIS
 --------
 [verse]
-'git request-pull' [-p] <start> <url> [<end>]
+'git request-pull' [-p] <start> <URL> [<end>]
 
 DESCRIPTION
 -----------
@@ -21,7 +21,7 @@ the changes and indicates from where they can be pulled.
 The upstream project is expected to have the commit named by
 `<start>` and the output asks it to integrate the changes you made
 since that commit, up to the commit named by `<end>`, by visiting
-the repository named by `<url>`.
+the repository named by `<URL>`.
 
 
 OPTIONS
@@ -33,14 +33,14 @@ OPTIONS
 	Commit to start at.  This names a commit that is already in
 	the upstream history.
 
-<url>::
+<URL>::
 	The repository URL to be pulled from.
 
 <end>::
 	Commit to end at (defaults to HEAD).  This names the commit
 	at the tip of the history you are asking to be pulled.
 +
-When the repository named by `<url>` has the commit at a tip of a
+When the repository named by `<URL>` has the commit at a tip of a
 ref that is different from the ref you have locally, you can use the
 `<local>:<remote>` syntax, to have its local name, a colon `:`, and
 its remote name.
