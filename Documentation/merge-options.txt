@@ -132,8 +132,9 @@ ifdef::git-pull[]
 Only useful when merging.
 endif::git-pull[]
 
---no-verify::
-	This option bypasses the pre-merge and commit-msg hooks.
+--[no-]verify::
+	By default, the pre-merge and commit-msg hooks are run.
+	When `--no-verify` is given, these are bypassed.
 	See also linkgit:githooks[5].
 ifdef::git-pull[]
 	Only useful when merging.
