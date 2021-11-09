@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Nov 2021, #02; Wed, 3)
-X-master-at: 876b1423317071f43c99666f3fc3db3642dfbe14
-X-next-at: 1ee627454180a9cdee044e51a3e50dd415a92f4b
+Subject: What's cooking in git.git (Nov 2021, #03; Tue, 9)
+X-master-at: 6c220937e2b26d85920bf2d38ff2464a0d57fd6b
+X-next-at: 773e6cccef14fb4ef03dc964d7f80ceb691c12be
 
-What's cooking in git.git (Nov 2021, #02; Wed, 3)
+What's cooking in git.git (Nov 2021, #03; Tue, 9)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -18,7 +18,7 @@ useful").  Do not read too much into a topic being in (or not in)
 'seen'.  The ones marked with '.' do not appear in any of the
 integration branches, but I am still holding onto them.
 
-Git 2.34-rc1 has been tagged with a handful of regression fixes.
+Git 2.34-rc2 has been tagged with a few more regression fixes.
 Thank you all for finding, reporting and fixing them so quickly.
 
 Copies of the source code to Git live in many repositories, and the
@@ -50,59 +50,83 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* ds/add-rm-with-sparse-index (2021-11-03) 1 commit
-  (merged to 'next' on 2021-11-03 at 827a7d774b)
- + dir: fix directory-matching bug
-
- Regression fix.
-
-
-* jx/message-fixes (2021-10-31) 1 commit
-  (merged to 'next' on 2021-11-01 at f27cf92855)
- + i18n: fix typos found during l10n for git 2.34.0
- (this branch is used by ab/mark-leak-free-tests-even-more.)
-
- Fixes to recently added messages.
-
-
-* pw/rebase-r-fixes (2021-11-03) 1 commit
-  (merged to 'next' on 2021-11-03 at 928f9c05d8)
- + rebase -i: fix rewording with --committer-date-is-author-date
-
- Regression fix.
-
-
-* rs/ssh-signing-fix (2021-11-01) 2 commits
-  (merged to 'next' on 2021-11-01 at f50e78f952)
- + gpg-interface: avoid buffer overrun in parse_ssh_output()
- + gpg-interface: handle missing " with " gracefully in parse_ssh_output()
-
- Fixes to recently merged topic.
-
---------------------------------------------------
 [New Topics]
 
-* jk/strbuf-addftime-seconds-since-epoch (2021-11-03) 1 commit
- - strbuf_addftime(): handle "%s" manually
+* ak/fetch-not-overwrite-any-current-branch (2021-11-08) 2 commits
+ - receive-pack: protect current branch for bare repository worktree
+ - fetch: protect branches checked out in all worktrees
 
- The "--date=format:<strftime>" gained a workaround for the lack of
- system support for a non-local timezone to handle "%s" placeholder.
+ "git fetch" without the "--update-head-ok" option ought to protect
+ a checked out branch from getting updated, to prevent the working
+ tree that checks it out to go out of sync.  The code was written
+ before the use of "git worktree" got widespread, and only checked
+ the branch that was checked out in the current worktree, which has
+ been updated.
+
+ Reroll exists.
 
 
-* js/ci-no-directional-formatting (2021-11-03) 1 commit
- - ci: disallow directional formatting
+* jk/test-bitmap-fix (2021-11-05) 1 commit
+ - test_bitmap_hashes(): handle repository without bitmaps
 
- CI has been taught to catch some Unicode directional formatting
- sequence that can be used in certain mischief.
+ Tighten code for testing pack-bitmap.
+
+ Will merge to 'next'.
 
 
-* tw/var-default-branch (2021-11-03) 1 commit
- - var: add GIT_DEFAULT_BRANCH variable
+* jk/jump-merge-with-pathspec (2021-11-09) 1 commit
+ - git-jump: pass "merge" arguments to ls-files
 
- "git var GIT_DEFAULT_BRANCH" is a way to see what name is used for
- the newly created branch if "git init" is run.
+ The "merge" subcommand of "git jump" (in contrib/) silently ignored
+ pathspec and other parameters.
+
+ Will merge to 'next'.
+
+--------------------------------------------------
+[Graduated to 'master']
+
+* ab/parse-options-cleanup (2021-11-09) 1 commit
+  (merged to 'next' on 2021-11-09 at b2b859289b)
+ + parse-options.[ch]: revert use of "enum" for parse_options()
+
+ Last minute fix to the update already in 'master'.
+
+
+* ad/ssh-signing-testfix (2021-11-05) 1 commit
+  (merged to 'next' on 2021-11-09 at f5ff9c35ad)
+ + t/lib-git.sh: fix ACL-related permissions failure
+
+ Fix ssh-signing test to work on a platform where the default ACL is
+ overly loose to upset OpenSSH (reported on an installation of Cygwin).
+
+
+* ar/fix-git-pull-no-verify (2021-10-28) 1 commit
+  (merged to 'next' on 2021-11-01 at 74677b0a76)
+ + pull: honor --no-verify and do not call the commit-msg hook
+
+ "git pull --no-verify" did not affect the underlying "git merge".
+
+
+* ar/no-verify-doc (2021-10-29) 1 commit
+  (merged to 'next' on 2021-11-01 at f6809a9ddb)
+ + Document positive variant of commit and merge option "--no-verify"
+
+ Doc update.
+
+
+* rd/http-backend-code-simplification (2021-10-25) 1 commit
+  (merged to 'next' on 2021-11-01 at f45b33890c)
+ + http-backend: remove a duplicated code branch
+
+ Code simplification.
+
+
+* vd/pthread-setspecific-g11-fix (2021-11-03) 1 commit
+  (merged to 'next' on 2021-11-03 at b4fce69914)
+ + async_die_is_recursing: work around GCC v11.x issue on Fedora
+
+ One CI task based on Fedora image noticed a not-quite-kosher
+ consturct recently, which has been corrected.
 
 --------------------------------------------------
 [Stalled]
@@ -150,6 +174,27 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* jk/strbuf-addftime-seconds-since-epoch (2021-11-04) 1 commit
+ - strbuf_addftime(): handle "%s" manually
+
+ The "--date=format:<strftime>" gained a workaround for the lack of
+ system support for a non-local timezone to handle "%s" placeholder.
+
+
+* js/ci-no-directional-formatting (2021-11-04) 1 commit
+ - ci: disallow directional formatting
+
+ CI has been taught to catch some Unicode directional formatting
+ sequence that can be used in certain mischief.
+
+
+* tw/var-default-branch (2021-11-03) 1 commit
+ - var: add GIT_DEFAULT_BRANCH variable
+
+ "git var GIT_DEFAULT_BRANCH" is a way to see what name is used for
+ the newly created branch if "git init" is run.
+
+
 * ab/mark-leak-free-tests-even-more (2021-11-01) 15 commits
  - leak tests: mark some fast-import tests as passing with SANITIZE=leak
  - leak tests: mark some config tests as passing with SANITIZE=leak
@@ -170,29 +215,11 @@ Release tarballs are available at:
  More tests are marked as leak-free.
 
 
-* ar/fix-git-pull-no-verify (2021-10-28) 1 commit
-  (merged to 'next' on 2021-11-01 at 74677b0a76)
- + pull: honor --no-verify and do not call the commit-msg hook
-
- "git pull --no-verify" did not affect the underlying "git merge".
-
- Will merge to 'master'.
-
-
 * if/redact-packfile-uri (2021-10-29) 2 commits
  - http-fetch: redact url on die() message
  - fetch-pack: redact packfile urls in traces
 
  Redact the path part of packfile URI that appears in the trace output.
-
-
-* ar/no-verify-doc (2021-10-29) 1 commit
-  (merged to 'next' on 2021-11-01 at f6809a9ddb)
- + Document positive variant of commit and merge option "--no-verify"
-
- Doc update.
-
- Will merge to 'master'.
 
 
 * ew/test-wo-fsync (2021-10-29) 1 commit
@@ -201,7 +228,7 @@ Release tarballs are available at:
  Allow running our tests while disabling internal fsync.
 
 
-* ja/doc-cleanup (2021-10-28) 10 commits
+* ja/doc-cleanup (2021-11-09) 10 commits
  - init doc: --shared=0xxx does not give umask but perm bits
  - doc: git-init: clarify file modes in octal.
  - doc: git-http-push: describe the refs as pattern pairs
@@ -215,7 +242,7 @@ Release tarballs are available at:
 
  Doc update.
 
- Under discussion.
+ Will merge to 'next'.
 
 
 * re/color-default-reset (2021-10-28) 3 commits
@@ -245,19 +272,20 @@ Release tarballs are available at:
 
 
 * mc/clean-smudge-with-llp64 (2021-11-03) 8 commits
- - clean/smudge: allow clean filters to process extremely large files
- - odb: guard against data loss checking out a huge file
- - git-compat-util: introduce more size_t helpers
- - odb: teach read_blob_entry to use size_t
- - t1051: introduce a smudge filter test for extremely large files
- - test-lib: add prerequisite for 64-bit platforms
- - test-tool genzeros: generate large amounts of data more efficiently
- - test-genzeros: allow more than 2G zeros in Windows
+  (merged to 'next' on 2021-11-03 at fe5160a170)
+ + clean/smudge: allow clean filters to process extremely large files
+ + odb: guard against data loss checking out a huge file
+ + git-compat-util: introduce more size_t helpers
+ + odb: teach read_blob_entry to use size_t
+ + t1051: introduce a smudge filter test for extremely large files
+ + test-lib: add prerequisite for 64-bit platforms
+ + test-tool genzeros: generate large amounts of data more efficiently
+ + test-genzeros: allow more than 2G zeros in Windows
 
  The clean/smudge conversion code path has been prepared to better
  work on platforms where ulong is narrower than size_t.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * pw/diff-color-moved-fix (2021-10-27) 15 commits
@@ -281,8 +309,8 @@ Release tarballs are available at:
  --color-moved" feature.
 
 
-* ab/generate-command-list (2021-10-23) 10 commits
- - generate-cmdlist.sh: replace "cut", "tr" and "grep" with pure-shell
+* ab/generate-command-list (2021-11-05) 10 commits
+ - generate-cmdlist.sh: don't parse command-list.txt thrice
  - generate-cmdlist.sh: replace "grep' invocation with a shell version
  - generate-cmdlist.sh: do not shell out to "sed"
  - generate-cmdlist.sh: stop sorting category lines
@@ -294,9 +322,6 @@ Release tarballs are available at:
  - command-list.txt: sort with "LC_ALL=C sort"
 
  Build optimization.
-
- Getting there.
- cf. <xmqqsfwr8j66.fsf@gitster.g>
 
 
 * jc/fix-pull-ff-only-when-already-up-to-date (2021-10-29) 1 commit
@@ -313,16 +338,17 @@ Release tarballs are available at:
 
 
 * ab/sh-retire-helper-functions (2021-10-21) 6 commits
- - git-sh-setup: remove "sane_grep", it's not needed anymore
- - git-sh-setup: remove unused sane_egrep() function
- - git-instaweb: unconditionally assume that gitweb is mod_perl capable
- - Makefile: remove $(NO_CURL) from $(SCRIPT_DEFINES)
- - Makefile: remove $(GIT_VERSION) from $(SCRIPT_DEFINES)
- - Makefile: move git-SCRIPT-DEFINES adjacent to $(SCRIPT_DEFINES)
+  (merged to 'next' on 2021-11-03 at 4b49d9f4be)
+ + git-sh-setup: remove "sane_grep", it's not needed anymore
+ + git-sh-setup: remove unused sane_egrep() function
+ + git-instaweb: unconditionally assume that gitweb is mod_perl capable
+ + Makefile: remove $(NO_CURL) from $(SCRIPT_DEFINES)
+ + Makefile: remove $(GIT_VERSION) from $(SCRIPT_DEFINES)
+ + Makefile: move git-SCRIPT-DEFINES adjacent to $(SCRIPT_DEFINES)
 
  Make a few helper functions unused and then lose them.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * ow/stash-count-in-status-porcelain-output (2021-10-21) 2 commits
@@ -383,15 +409,6 @@ Release tarballs are available at:
 
  Extend the guidance to choose the base commit to build your work
  on, and hint/nudge contributors to read others' changes.
-
-
-* rd/http-backend-code-simplification (2021-10-25) 1 commit
-  (merged to 'next' on 2021-11-01 at f45b33890c)
- + http-backend: remove a duplicated code branch
-
- Code simplification.
-
- Will merge to 'master'.
 
 
 * gc/remote-with-fewer-static-global-variables (2021-10-28) 6 commits
@@ -597,7 +614,7 @@ Release tarballs are available at:
  Various operating modes of "git reset" have been made to work
  better with the sparse index.
 
- Ready?
+ Will merge to 'next'?
 
 
 * pw/fix-some-issues-in-reset-head (2021-10-01) 12 commits
@@ -622,7 +639,7 @@ Release tarballs are available at:
  protect the fixes.
 
 
-* es/superproject-aware-submodules (2021-10-14) 4 commits
+* es/superproject-aware-submodules (2021-11-04) 4 commits
  - submodule: record superproject gitdir during 'update'
  - submodule: record superproject gitdir during absorbgitdirs
  - introduce submodule.superprojectGitDir record
@@ -630,9 +647,6 @@ Release tarballs are available at:
 
  A configuration variable in a submodule points at the location of
  the superproject it is bound to (RFC).
-
- Under discussion.
- cf. <911ab2c1-8a11-d9d0-4b28-fc801112f6da@gmail.com>
 
 
 * tp/send-email-completion (2021-10-28) 2 commits
