@@ -39,7 +39,7 @@ mode_diff() {
 }
 
 mode_merge() {
-	git ls-files -u |
+	git ls-files -u "$@" |
 	perl -pe 's/^.*?\t//' |
 	sort -u |
 	while IFS= read fn; do

@@ -65,6 +65,9 @@ git jump diff --cached
 # jump to merge conflicts
 git jump merge
 
+# documentation conflicts are hard; skip past them for now
+git jump merge :^Documentation
+
 # jump to all instances of foo_bar
 git jump grep foo_bar
 
