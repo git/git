@@ -383,7 +383,7 @@ Fixes since v2.33
    compression level for both zip and tar.gz format.
    (merge c4b208c309 bs/archive-doc-compression-level later to maint).
 
- * Drop "git sparse-index" from the list of common commands.
+ * Drop "git sparse-checkout" from the list of common commands.
    (merge 6a9a50a8af sg/sparse-index-not-that-common-a-command later to maint).
 
  * "git branch -c/-m new old" was not described to copy config, which
