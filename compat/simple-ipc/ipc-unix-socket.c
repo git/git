@@ -35,6 +35,28 @@ enum ipc_active_state ipc_get_active_state(const char *path)
 		}
 	}
 
+#ifdef __CYGWIN__
+	/*
+	 * Cygwin emulates Unix sockets by writing special-crafted files whose
+	 * `system` bit is set.
+	 *
+	 * If we are too fast, Cygwin might still be in the process of marking
+	 * the underlying file as a system file. Until then, we will not see a
+	 * Unix socket here, but a plain file instead. Just in case that this
+	 * is happening, wait a little and try again.
+	 */
+	{
+		static const int delay[] = { 1, 10, 20, 40, -1 };
+		int i;
+
+		for (i = 0; S_ISREG(st.st_mode) && delay[i] > 0; i++) {
+			sleep_millisec(delay[i]);
+			if (lstat(path, &st) == -1)
+				return IPC_STATE__INVALID_PATH;
+		}
+	}
+#endif
+
 	/* also complain if a plain file is in the way */
 	if ((st.st_mode & S_IFMT) != S_IFSOCK)
 		return IPC_STATE__INVALID_PATH;
