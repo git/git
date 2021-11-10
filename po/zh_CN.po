@@ -142,8 +142,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2021-11-04 08:34+0800\n"
-"PO-Revision-Date: 2021-11-04 11:01+0000\n"
+"POT-Creation-Date: 2021-11-10 08:55+0800\n"
+"PO-Revision-Date: 2021-11-10 12:16+0000\n"
 "Last-Translator: Fangyi Zhou <me@fangyi.io>\n"
 "Language-Team: GitHub <https://github.com/jiangxin/git/>\n"
 "Language: zh_CN\n"
@@ -346,7 +346,7 @@ msgstr "未缓存"
 
 #: add-interactive.c:1148 apply.c:5016 apply.c:5019 builtin/am.c:2311
 #: builtin/am.c:2314 builtin/bugreport.c:107 builtin/clone.c:128
-#: builtin/fetch.c:152 builtin/merge.c:286 builtin/pull.c:190
+#: builtin/fetch.c:152 builtin/merge.c:286 builtin/pull.c:194
 #: builtin/submodule--helper.c:404 builtin/submodule--helper.c:1857
 #: builtin/submodule--helper.c:1860 builtin/submodule--helper.c:2503
 #: builtin/submodule--helper.c:2506 builtin/submodule--helper.c:2573
@@ -3423,7 +3423,7 @@ msgstr "-G 和 --pickaxe-regex 互斥，使用 --pickaxe-regex 和 -S"
 msgid ""
 "--pickaxe-all and --find-object are mutually exclusive, use --pickaxe-all "
 "with -G and -S"
-msgstr "---pickaxe-all 和 --find-object 互斥，使用 --pickaxe-all 与 -G 和 -S"
+msgstr "--pickaxe-all 和 --find-object 互斥，使用 --pickaxe-all 与 -G 和 -S"
 
 #: diff.c:4730
 msgid "--follow requires exactly one pathspec"
@@ -10362,7 +10362,7 @@ msgid "The following paths are ignored by one of your .gitignore files:\n"
 msgstr "下列路径根据您的一个 .gitignore 文件而被忽略：\n"
 
 #: builtin/add.c:371 builtin/clean.c:901 builtin/fetch.c:173 builtin/mv.c:124
-#: builtin/prune-packed.c:14 builtin/pull.c:204 builtin/push.c:550
+#: builtin/prune-packed.c:14 builtin/pull.c:208 builtin/push.c:550
 #: builtin/remote.c:1429 builtin/rm.c:244 builtin/send-pack.c:194
 msgid "dry run"
 msgstr "演习"
@@ -10812,11 +10812,11 @@ msgstr "传递给 git-apply"
 
 #: builtin/am.c:2317 builtin/commit.c:1514 builtin/fmt-merge-msg.c:17
 #: builtin/fmt-merge-msg.c:20 builtin/grep.c:919 builtin/merge.c:262
-#: builtin/pull.c:141 builtin/pull.c:200 builtin/pull.c:217
+#: builtin/pull.c:142 builtin/pull.c:204 builtin/pull.c:221
 #: builtin/rebase.c:1046 builtin/repack.c:651 builtin/repack.c:655
 #: builtin/repack.c:657 builtin/show-branch.c:649 builtin/show-ref.c:172
 #: builtin/tag.c:445 parse-options.h:154 parse-options.h:175
-#: parse-options.h:316
+#: parse-options.h:315
 msgid "n"
 msgstr "n"
 
@@ -10867,7 +10867,7 @@ msgid "use current timestamp for author date"
 msgstr "用当前时间作为作者日期"
 
 #: builtin/am.c:2357 builtin/commit-tree.c:118 builtin/commit.c:1642
-#: builtin/merge.c:299 builtin/pull.c:175 builtin/rebase.c:1099
+#: builtin/merge.c:299 builtin/pull.c:179 builtin/rebase.c:1099
 #: builtin/revert.c:117 builtin/tag.c:460
 msgid "key-id"
 msgstr "key-id"
@@ -11364,7 +11364,7 @@ msgstr "显示工作消耗统计"
 #: builtin/commit-graph.c:75 builtin/commit-graph.c:228 builtin/fetch.c:179
 #: builtin/merge.c:298 builtin/multi-pack-index.c:103
 #: builtin/multi-pack-index.c:154 builtin/multi-pack-index.c:178
-#: builtin/multi-pack-index.c:204 builtin/pull.c:119 builtin/push.c:566
+#: builtin/multi-pack-index.c:204 builtin/pull.c:120 builtin/push.c:566
 #: builtin/send-pack.c:202
 msgid "force progress reporting"
 msgstr "强制显示进度报告"
@@ -12625,7 +12625,7 @@ msgstr "缺少分支或提交参数"
 msgid "perform a 3-way merge with the new branch"
 msgstr "和新的分支执行三方合并"
 
-#: builtin/checkout.c:1519 builtin/log.c:1810 parse-options.h:322
+#: builtin/checkout.c:1519 builtin/log.c:1810 parse-options.h:321
 msgid "style"
 msgstr "风格"
 
@@ -13047,7 +13047,7 @@ msgid "path to git-upload-pack on the remote"
 msgstr "远程 git-upload-pack 路径"
 
 #: builtin/clone.c:130 builtin/fetch.c:180 builtin/grep.c:876
-#: builtin/pull.c:208
+#: builtin/pull.c:212
 msgid "depth"
 msgstr "深度"
 
@@ -13056,7 +13056,7 @@ msgid "create a shallow clone of that depth"
 msgstr "创建一个指定深度的浅克隆"
 
 #: builtin/clone.c:132 builtin/fetch.c:182 builtin/pack-objects.c:3933
-#: builtin/pull.c:211
+#: builtin/pull.c:215
 msgid "time"
 msgstr "时间"
 
@@ -13065,11 +13065,11 @@ msgid "create a shallow clone since a specific time"
 msgstr "从一个特定时间创建一个浅克隆"
 
 #: builtin/clone.c:134 builtin/fetch.c:184 builtin/fetch.c:207
-#: builtin/pull.c:214 builtin/pull.c:239 builtin/rebase.c:1022
+#: builtin/pull.c:218 builtin/pull.c:243 builtin/rebase.c:1022
 msgid "revision"
 msgstr "版本"
 
-#: builtin/clone.c:135 builtin/fetch.c:185 builtin/pull.c:215
+#: builtin/clone.c:135 builtin/fetch.c:185 builtin/pull.c:219
 msgid "deepen history of shallow clone, excluding rev"
 msgstr "深化浅克隆的历史，除了特定版本"
 
@@ -13103,21 +13103,21 @@ msgid "set config inside the new repository"
 msgstr "在新仓库中设置配置信息"
 
 #: builtin/clone.c:147 builtin/fetch.c:202 builtin/ls-remote.c:77
-#: builtin/pull.c:230 builtin/push.c:575 builtin/send-pack.c:200
+#: builtin/pull.c:234 builtin/push.c:575 builtin/send-pack.c:200
 msgid "server-specific"
 msgstr "server-specific"
 
 #: builtin/clone.c:147 builtin/fetch.c:202 builtin/ls-remote.c:77
-#: builtin/pull.c:231 builtin/push.c:575 builtin/send-pack.c:201
+#: builtin/pull.c:235 builtin/push.c:575 builtin/send-pack.c:201
 msgid "option to transmit"
 msgstr "传输选项"
 
-#: builtin/clone.c:148 builtin/fetch.c:203 builtin/pull.c:234
+#: builtin/clone.c:148 builtin/fetch.c:203 builtin/pull.c:238
 #: builtin/push.c:576
 msgid "use IPv4 addresses only"
 msgstr "只使用 IPv4 地址"
 
-#: builtin/clone.c:150 builtin/fetch.c:205 builtin/pull.c:237
+#: builtin/clone.c:150 builtin/fetch.c:205 builtin/pull.c:241
 #: builtin/push.c:578
 msgid "use IPv6 addresses only"
 msgstr "只使用 IPv6 地址"
@@ -13505,7 +13505,7 @@ msgid "read commit log message from file"
 msgstr "从文件中读取提交说明"
 
 #: builtin/commit-tree.c:119 builtin/commit.c:1643 builtin/merge.c:300
-#: builtin/pull.c:176 builtin/revert.c:118
+#: builtin/pull.c:180 builtin/revert.c:118
 msgid "GPG sign commit"
 msgstr "GPG 提交签名"
 
@@ -13905,7 +13905,7 @@ msgstr "条目以 NUL 字符结尾"
 
 #: builtin/commit.c:1501 builtin/commit.c:1505 builtin/commit.c:1668
 #: builtin/fast-export.c:1199 builtin/fast-export.c:1202
-#: builtin/fast-export.c:1205 builtin/rebase.c:1111 parse-options.h:336
+#: builtin/fast-export.c:1205 builtin/rebase.c:1111 parse-options.h:335
 msgid "mode"
 msgstr "模式"
 
@@ -13980,7 +13980,7 @@ msgid "override date for commit"
 msgstr "提交时覆盖日期"
 
 #: builtin/commit.c:1627 builtin/commit.c:1628 builtin/commit.c:1634
-#: parse-options.h:328 ref-filter.h:92
+#: parse-options.h:327 ref-filter.h:92
 msgid "commit"
 msgstr "提交"
 
@@ -14021,7 +14021,7 @@ msgid "add custom trailer(s)"
 msgstr "添加自定义尾注"
 
 #: builtin/commit.c:1637 builtin/log.c:1754 builtin/merge.c:303
-#: builtin/pull.c:145 builtin/revert.c:110
+#: builtin/pull.c:146 builtin/revert.c:110
 msgid "add a Signed-off-by trailer"
 msgstr "添加 Signed-off-by 尾注"
 
@@ -14982,15 +14982,15 @@ msgstr "git fetch --all [<选项>]"
 msgid "fetch.parallel cannot be negative"
 msgstr "fetch.parallel 不能为负数"
 
-#: builtin/fetch.c:145 builtin/pull.c:185
+#: builtin/fetch.c:145 builtin/pull.c:189
 msgid "fetch from all remotes"
 msgstr "从所有的远程抓取"
 
-#: builtin/fetch.c:147 builtin/pull.c:245
+#: builtin/fetch.c:147 builtin/pull.c:249
 msgid "set upstream for git pull/fetch"
 msgstr "为 git pull/fetch 设置上游"
 
-#: builtin/fetch.c:149 builtin/pull.c:188
+#: builtin/fetch.c:149 builtin/pull.c:192
 msgid "append to .git/FETCH_HEAD instead of overwriting"
 msgstr "追加到 .git/FETCH_HEAD 而不是覆盖它"
 
@@ -14998,7 +14998,7 @@ msgstr "追加到 .git/FETCH_HEAD 而不是覆盖它"
 msgid "use atomic transaction to update references"
 msgstr "使用原子事务更新引用"
 
-#: builtin/fetch.c:153 builtin/pull.c:191
+#: builtin/fetch.c:153 builtin/pull.c:195
 msgid "path to upload pack on remote end"
 msgstr "上传包到远程的路径"
 
@@ -15010,7 +15010,7 @@ msgstr "强制覆盖本地引用"
 msgid "fetch from multiple remotes"
 msgstr "从多个远程抓取"
 
-#: builtin/fetch.c:158 builtin/pull.c:195
+#: builtin/fetch.c:158 builtin/pull.c:199
 msgid "fetch all tags and associated objects"
 msgstr "抓取所有的标签和关联对象"
 
@@ -15026,7 +15026,7 @@ msgstr "子模组获取的并发数"
 msgid "modify the refspec to place all refs within refs/prefetch/"
 msgstr "修改引用规格以将所有引用放入 refs/prefetch/"
 
-#: builtin/fetch.c:166 builtin/pull.c:198
+#: builtin/fetch.c:166 builtin/pull.c:202
 msgid "prune remote-tracking branches no longer on remote"
 msgstr "清除远程已经不存在的分支的跟踪分支"
 
@@ -15035,7 +15035,7 @@ msgid "prune local tags no longer on remote and clobber changed tags"
 msgstr "清除远程不存在的本地标签，并且替换变更标签"
 
 #  译者：可选值，不能翻译
-#: builtin/fetch.c:169 builtin/fetch.c:194 builtin/pull.c:122
+#: builtin/fetch.c:169 builtin/fetch.c:194 builtin/pull.c:123
 msgid "on-demand"
 msgstr "on-demand"
 
@@ -15047,7 +15047,7 @@ msgstr "控制子模组的递归抓取"
 msgid "write fetched references to the FETCH_HEAD file"
 msgstr "将获取到的引用写入 FETCH_HEAD 文件"
 
-#: builtin/fetch.c:176 builtin/pull.c:206
+#: builtin/fetch.c:176 builtin/pull.c:210
 msgid "keep downloaded pack"
 msgstr "保持下载包"
 
@@ -15055,16 +15055,16 @@ msgstr "保持下载包"
 msgid "allow updating of HEAD ref"
 msgstr "允许更新 HEAD 引用"
 
-#: builtin/fetch.c:181 builtin/fetch.c:187 builtin/pull.c:209
-#: builtin/pull.c:218
+#: builtin/fetch.c:181 builtin/fetch.c:187 builtin/pull.c:213
+#: builtin/pull.c:222
 msgid "deepen history of shallow clone"
 msgstr "深化浅克隆的历史"
 
-#: builtin/fetch.c:183 builtin/pull.c:212
+#: builtin/fetch.c:183 builtin/pull.c:216
 msgid "deepen history of shallow repository based on time"
 msgstr "基于时间来深化浅克隆的历史"
 
-#: builtin/fetch.c:189 builtin/pull.c:221
+#: builtin/fetch.c:189 builtin/pull.c:225
 msgid "convert to a complete repository"
 msgstr "转换为一个完整的仓库"
 
@@ -15078,19 +15078,19 @@ msgid ""
 "files)"
 msgstr "递归获取子模组的缺省值（比配置文件优先级低）"
 
-#: builtin/fetch.c:199 builtin/pull.c:224
+#: builtin/fetch.c:199 builtin/pull.c:228
 msgid "accept refs that update .git/shallow"
 msgstr "接受更新 .git/shallow 的引用"
 
-#: builtin/fetch.c:200 builtin/pull.c:226
+#: builtin/fetch.c:200 builtin/pull.c:230
 msgid "refmap"
 msgstr "引用映射"
 
-#: builtin/fetch.c:201 builtin/pull.c:227
+#: builtin/fetch.c:201 builtin/pull.c:231
 msgid "specify fetch refmap"
 msgstr "指定获取操作的引用映射"
 
-#: builtin/fetch.c:208 builtin/pull.c:240
+#: builtin/fetch.c:208 builtin/pull.c:244
 msgid "report that we have only objects reachable from this object"
 msgstr "报告我们只拥有从该对象开始可达的对象"
 
@@ -15102,7 +15102,7 @@ msgstr "不获取包文件；而是打印协商的祖先提交"
 msgid "run 'maintenance --auto' after fetching"
 msgstr "获取后执行 'maintenance --auto'"
 
-#: builtin/fetch.c:217 builtin/pull.c:243
+#: builtin/fetch.c:217 builtin/pull.c:247
 msgid "check for forced-updates on all updated branches"
 msgstr "在所有更新分支上检查强制更新"
 
@@ -17745,31 +17745,31 @@ msgstr "可用的策略有："
 msgid "Available custom strategies are:"
 msgstr "可用的自定义策略有："
 
-#: builtin/merge.c:257 builtin/pull.c:133
+#: builtin/merge.c:257 builtin/pull.c:134
 msgid "do not show a diffstat at the end of the merge"
 msgstr "在合并的最后不显示差异统计"
 
-#: builtin/merge.c:260 builtin/pull.c:136
+#: builtin/merge.c:260 builtin/pull.c:137
 msgid "show a diffstat at the end of the merge"
 msgstr "在合并的最后显示差异统计"
 
-#: builtin/merge.c:261 builtin/pull.c:139
+#: builtin/merge.c:261 builtin/pull.c:140
 msgid "(synonym to --stat)"
 msgstr "（和 --stat 同义）"
 
-#: builtin/merge.c:263 builtin/pull.c:142
+#: builtin/merge.c:263 builtin/pull.c:143
 msgid "add (at most <n>) entries from shortlog to merge commit message"
 msgstr "在合并提交信息中添加（最多 <n> 条）精简提交记录"
 
-#: builtin/merge.c:266 builtin/pull.c:148
+#: builtin/merge.c:266 builtin/pull.c:149
 msgid "create a single commit instead of doing a merge"
 msgstr "创建一个单独的提交而不是做一次合并"
 
-#: builtin/merge.c:268 builtin/pull.c:151
+#: builtin/merge.c:268 builtin/pull.c:152
 msgid "perform a commit if the merge succeeds (default)"
 msgstr "如果合并成功，执行一次提交（默认）"
 
-#: builtin/merge.c:270 builtin/pull.c:154
+#: builtin/merge.c:270 builtin/pull.c:155
 msgid "edit message before committing"
 msgstr "在提交前编辑提交说明"
 
@@ -17777,28 +17777,28 @@ msgstr "在提交前编辑提交说明"
 msgid "allow fast-forward (default)"
 msgstr "允许快进（默认）"
 
-#: builtin/merge.c:274 builtin/pull.c:161
+#: builtin/merge.c:274 builtin/pull.c:162
 msgid "abort if fast-forward is not possible"
 msgstr "如果不能快进就放弃合并"
 
-#: builtin/merge.c:278 builtin/pull.c:164
+#: builtin/merge.c:278 builtin/pull.c:168
 msgid "verify that the named commit has a valid GPG signature"
 msgstr "验证指定的提交是否包含一个有效的 GPG 签名"
 
-#: builtin/merge.c:279 builtin/notes.c:785 builtin/pull.c:168
+#: builtin/merge.c:279 builtin/notes.c:785 builtin/pull.c:172
 #: builtin/rebase.c:1117 builtin/revert.c:114
 msgid "strategy"
 msgstr "策略"
 
-#: builtin/merge.c:280 builtin/pull.c:169
+#: builtin/merge.c:280 builtin/pull.c:173
 msgid "merge strategy to use"
 msgstr "要使用的合并策略"
 
-#: builtin/merge.c:281 builtin/pull.c:172
+#: builtin/merge.c:281 builtin/pull.c:176
 msgid "option=value"
 msgstr "option=value"
 
-#: builtin/merge.c:282 builtin/pull.c:173
+#: builtin/merge.c:282 builtin/pull.c:177
 msgid "option for selected merge strategy"
 msgstr "所选的合并策略的选项"
 
@@ -17819,7 +17819,7 @@ msgstr "--abort，但是保留索引和工作区"
 msgid "continue the current in-progress merge"
 msgstr "继续当前正在进行的合并"
 
-#: builtin/merge.c:297 builtin/pull.c:180
+#: builtin/merge.c:297 builtin/pull.c:184
 msgid "allow merging unrelated histories"
 msgstr "允许合并不相关的历史"
 
@@ -19199,61 +19199,65 @@ msgstr "%s 的值无效：%s"
 msgid "git pull [<options>] [<repository> [<refspec>...]]"
 msgstr "git pull [<选项>] [<仓库> [<引用规格>...]]"
 
-#: builtin/pull.c:123
+#: builtin/pull.c:124
 msgid "control for recursive fetching of submodules"
 msgstr "控制子模组的递归获取"
 
-#: builtin/pull.c:127
+#: builtin/pull.c:128
 msgid "Options related to merging"
 msgstr "和合并相关的选项"
 
-#: builtin/pull.c:130
+#: builtin/pull.c:131
 msgid "incorporate changes by rebasing rather than merging"
 msgstr "使用变基操作取代合并操作以合入修改"
 
-#: builtin/pull.c:158 builtin/revert.c:126
+#: builtin/pull.c:159 builtin/revert.c:126
 msgid "allow fast-forward"
 msgstr "允许快进式"
 
-#: builtin/pull.c:167 parse-options.h:339
+#: builtin/pull.c:165
+msgid "control use of pre-merge-commit and commit-msg hooks"
+msgstr "控制 pre-merge-commit 和 commit-msg 钩子的使用"
+
+#: builtin/pull.c:171 parse-options.h:338
 msgid "automatically stash/stash pop before and after"
 msgstr "在操作前后执行自动贮藏和弹出贮藏"
 
-#: builtin/pull.c:183
+#: builtin/pull.c:187
 msgid "Options related to fetching"
 msgstr "和获取相关的参数"
 
-#: builtin/pull.c:193
+#: builtin/pull.c:197
 msgid "force overwrite of local branch"
 msgstr "强制覆盖本地分支"
 
-#: builtin/pull.c:201
+#: builtin/pull.c:205
 msgid "number of submodules pulled in parallel"
 msgstr "并发拉取的子模组的数量"
 
-#: builtin/pull.c:317
+#: builtin/pull.c:321
 #, c-format
 msgid "Invalid value for pull.ff: %s"
 msgstr "pull.ff 的取值无效：%s"
 
-#: builtin/pull.c:445
+#: builtin/pull.c:449
 msgid ""
 "There is no candidate for rebasing against among the refs that you just "
 "fetched."
 msgstr "在您刚刚获取到的引用中没有变基操作的候选。"
 
-#: builtin/pull.c:447
+#: builtin/pull.c:451
 msgid ""
 "There are no candidates for merging among the refs that you just fetched."
 msgstr "在您刚刚获取到的引用中没有合并操作的候选。"
 
-#: builtin/pull.c:448
+#: builtin/pull.c:452
 msgid ""
 "Generally this means that you provided a wildcard refspec which had no\n"
 "matches on the remote end."
 msgstr "通常这意味着您提供了一个通配符引用规格但未能和远端匹配。"
 
-#: builtin/pull.c:451
+#: builtin/pull.c:455
 #, c-format
 msgid ""
 "You asked to pull from the remote '%s', but did not specify\n"
@@ -19263,41 +19267,41 @@ msgstr ""
 "您要求从远程 '%s' 拉取，但是未指定一个分支。因为这不是当前\n"
 "分支默认的远程仓库，您必须在命令行中指定一个分支名。"
 
-#: builtin/pull.c:456 builtin/rebase.c:951
+#: builtin/pull.c:460 builtin/rebase.c:951
 msgid "You are not currently on a branch."
 msgstr "您当前不在一个分支上。"
 
-#: builtin/pull.c:458 builtin/pull.c:473
+#: builtin/pull.c:462 builtin/pull.c:477
 msgid "Please specify which branch you want to rebase against."
 msgstr "请指定您要变基到哪一个分支。"
 
-#: builtin/pull.c:460 builtin/pull.c:475
+#: builtin/pull.c:464 builtin/pull.c:479
 msgid "Please specify which branch you want to merge with."
 msgstr "请指定您要合并哪一个分支。"
 
-#: builtin/pull.c:461 builtin/pull.c:476
+#: builtin/pull.c:465 builtin/pull.c:480
 msgid "See git-pull(1) for details."
 msgstr "详见 git-pull(1)。"
 
-#: builtin/pull.c:463 builtin/pull.c:469 builtin/pull.c:478
+#: builtin/pull.c:467 builtin/pull.c:473 builtin/pull.c:482
 #: builtin/rebase.c:957
 msgid "<remote>"
 msgstr "<远程>"
 
-#: builtin/pull.c:463 builtin/pull.c:478 builtin/pull.c:483
+#: builtin/pull.c:467 builtin/pull.c:482 builtin/pull.c:487
 msgid "<branch>"
 msgstr "<分支>"
 
-#: builtin/pull.c:471 builtin/rebase.c:949
+#: builtin/pull.c:475 builtin/rebase.c:949
 msgid "There is no tracking information for the current branch."
 msgstr "当前分支没有跟踪信息。"
 
-#: builtin/pull.c:480
+#: builtin/pull.c:484
 msgid ""
 "If you wish to set tracking information for this branch you can do so with:"
 msgstr "如果您想要为此分支创建跟踪信息，您可以执行："
 
-#: builtin/pull.c:485
+#: builtin/pull.c:489
 #, c-format
 msgid ""
 "Your configuration specifies to merge with the ref '%s'\n"
@@ -19306,16 +19310,16 @@ msgstr ""
 "您的配置中指定要合并远程的引用 '%s'，\n"
 "但是没有获取到这个引用。"
 
-#: builtin/pull.c:596
+#: builtin/pull.c:600
 #, c-format
 msgid "unable to access commit %s"
 msgstr "无法访问提交 %s"
 
-#: builtin/pull.c:902
+#: builtin/pull.c:908
 msgid "ignoring --verify-signatures for rebase"
 msgstr "为变基操作忽略 --verify-signatures"
 
-#: builtin/pull.c:936
+#: builtin/pull.c:942
 msgid ""
 "You have divergent branches and need to specify how to reconcile them.\n"
 "You can do so by running one of the following commands sometime before\n"
@@ -19342,19 +19346,19 @@ msgstr ""
 "缺省的配置项。您也可以在每次执行 pull 命令时添加 --rebase、--no-rebase，\n"
 "或者 --ff-only 参数覆盖缺省设置。\n"
 
-#: builtin/pull.c:1010
+#: builtin/pull.c:1016
 msgid "Updating an unborn branch with changes added to the index."
 msgstr "更新尚未诞生的分支，变更添加至索引。"
 
-#: builtin/pull.c:1014
+#: builtin/pull.c:1020
 msgid "pull with rebase"
 msgstr "变基式拉取"
 
-#: builtin/pull.c:1015
+#: builtin/pull.c:1021
 msgid "please commit or stash them."
 msgstr "请提交或贮藏它们。"
 
-#: builtin/pull.c:1040
+#: builtin/pull.c:1046
 #, c-format
 msgid ""
 "fetch updated the current branch head.\n"
@@ -19364,7 +19368,7 @@ msgstr ""
 "fetch 更新了当前的分支。快进您的工作区\n"
 "至提交 %s。"
 
-#: builtin/pull.c:1046
+#: builtin/pull.c:1052
 #, c-format
 msgid ""
 "Cannot fast-forward your working tree.\n"
@@ -19381,23 +19385,23 @@ msgstr ""
 "$ git reset --hard\n"
 "恢复之前的状态。"
 
-#: builtin/pull.c:1061
+#: builtin/pull.c:1067
 msgid "Cannot merge multiple branches into empty head."
 msgstr "无法将多个分支合并到空分支。"
 
-#: builtin/pull.c:1066
+#: builtin/pull.c:1072
 msgid "Cannot rebase onto multiple branches."
 msgstr "无法变基到多个分支。"
 
-#: builtin/pull.c:1068
+#: builtin/pull.c:1074
 msgid "Cannot fast-forward to multiple branches."
 msgstr "无法快进到多个分支。"
 
-#: builtin/pull.c:1082
+#: builtin/pull.c:1088
 msgid "Need to specify how to reconcile divergent branches."
 msgstr "需要指定如何调和偏离的分支。"
 
-#: builtin/pull.c:1096
+#: builtin/pull.c:1102
 msgid "cannot rebase with locally recorded submodule modifications"
 msgstr "本地子模组中有修改，无法变基"
 
@@ -24437,27 +24441,27 @@ msgstr "到期时间"
 msgid "no-op (backward compatibility)"
 msgstr "空操作（向后兼容）"
 
-#: parse-options.h:309
+#: parse-options.h:308
 msgid "be more verbose"
 msgstr "更加详细"
 
-#: parse-options.h:311
+#: parse-options.h:310
 msgid "be more quiet"
 msgstr "更加安静"
 
-#: parse-options.h:317
+#: parse-options.h:316
 msgid "use <n> digits to display object names"
 msgstr "用 <n> 位数字显示对象名"
 
-#: parse-options.h:336
+#: parse-options.h:335
 msgid "how to strip spaces and #comments from message"
 msgstr "设置如何删除提交说明里的空格和#注释"
 
-#: parse-options.h:337
+#: parse-options.h:336
 msgid "read pathspec from file"
 msgstr "从文件读取路径表达式"
 
-#: parse-options.h:338
+#: parse-options.h:337
 msgid ""
 "with --pathspec-from-file, pathspec elements are separated with NUL character"
 msgstr "使用 --pathspec-from-file，路径表达式用空字符分隔"
