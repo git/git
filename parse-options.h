@@ -213,11 +213,10 @@ struct option {
  * untouched and parse_options() returns the number of options
  * processed.
  */
-enum parse_opt_result parse_options(int argc, const char **argv,
-				    const char *prefix,
-				    const struct option *options,
-				    const char * const usagestr[],
-				    enum parse_opt_flags flags);
+int parse_options(int argc, const char **argv, const char *prefix,
+		  const struct option *options,
+		  const char * const usagestr[],
+		  enum parse_opt_flags flags);
 
 NORETURN void usage_with_options(const char * const *usagestr,
 				 const struct option *options);

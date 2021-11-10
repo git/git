@@ -383,7 +383,7 @@ Fixes since v2.33
    compression level for both zip and tar.gz format.
    (merge c4b208c309 bs/archive-doc-compression-level later to maint).
 
- * Drop "git sparse-index" from the list of common commands.
+ * Drop "git sparse-checkout" from the list of common commands.
    (merge 6a9a50a8af sg/sparse-index-not-that-common-a-command later to maint).
 
  * "git branch -c/-m new old" was not described to copy config, which
@@ -400,6 +400,13 @@ Fixes since v2.33
    at all, as we do not use the commit-graph at runtime when we see
    object replacement.
    (merge 095d112f8c ab/ignore-replace-while-working-on-commit-graph later to maint).
+
+ * "git pull --no-verify" did not affect the underlying "git merge".
+   (merge 47bfdfb3fd ar/fix-git-pull-no-verify later to maint).
+
+ * One CI task based on Fedora image noticed a not-quite-kosher
+   consturct recently, which has been corrected.
+   (merge 4b540cf913 vd/pthread-setspecific-g11-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge f188160be9 ab/bundle-remove-verbose-option later to maint).

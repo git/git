@@ -860,11 +860,11 @@ int parse_options_end(struct parse_opt_ctx_t *ctx)
 	return ctx->cpidx + ctx->argc;
 }
 
-enum parse_opt_result parse_options(int argc, const char **argv,
-				    const char *prefix,
-				    const struct option *options,
-				    const char * const usagestr[],
-				    enum parse_opt_flags flags)
+int parse_options(int argc, const char **argv,
+		  const char *prefix,
+		  const struct option *options,
+		  const char * const usagestr[],
+		  enum parse_opt_flags flags)
 {
 	struct parse_opt_ctx_t ctx;
 	struct option *real_options;

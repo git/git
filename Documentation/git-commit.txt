@@ -212,8 +212,9 @@ include::signoff-option.txt[]
 	each trailer would appear, and other details.
 
 -n::
---no-verify::
-	This option bypasses the pre-commit and commit-msg hooks.
+--[no-]verify::
+	By default, the pre-commit and commit-msg hooks are run.
+	When any of `--no-verify` or `-n` is given, these are bypassed.
 	See also linkgit:githooks[5].
 
 --allow-empty::
