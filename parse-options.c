@@ -404,8 +404,9 @@ is_abbreviated:
 	return PARSE_OPT_UNKNOWN;
 }
 
-static int parse_nodash_opt(struct parse_opt_ctx_t *p, const char *arg,
-			    const struct option *options)
+static enum parse_opt_result parse_nodash_opt(struct parse_opt_ctx_t *p,
+					      const char *arg,
+					      const struct option *options)
 {
 	const struct option *all_opts = options;
 
@@ -415,7 +416,7 @@ static int parse_nodash_opt(struct parse_opt_ctx_t *p, const char *arg,
 		if (options->short_name == arg[0] && arg[1] == '\0')
 			return get_value(p, options, all_opts, OPT_SHORT);
 	}
-	return -2;
+	return PARSE_OPT_ERROR;
 }
 
 static void check_typos(const char *arg, const struct option *options)
