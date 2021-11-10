@@ -1999,14 +1999,10 @@ static int schtasks_update_schedule(int run_maintenance, int fd)
 		return schtasks_remove_tasks();
 }
 
-static int is_crontab_available(void)
+MAYBE_UNUSED
+static int check_crontab_process(const char *cmd)
 {
-	const char *cmd = "crontab";
-	int is_available;
 	struct child_process child = CHILD_PROCESS_INIT;
-
-	if (get_schedule_cmd(&cmd, &is_available))
-		return is_available;
 
 	strvec_split(&child.args, cmd);
 	strvec_push(&child.args, "-l");
@@ -2020,6 +2016,25 @@ static int is_crontab_available(void)
 	/* Ignore exit code, as an empty crontab will return error. */
 	finish_command(&child);
 	return 1;
+}
+
+static int is_crontab_available(void)
+{
+	const char *cmd = "crontab";
+	int is_available;
+
+	if (get_schedule_cmd(&cmd, &is_available))
+		return is_available;
+
+#ifdef __APPLE__
+	/*
+	 * macOS has cron, but it requires special permissions and will
+	 * create a UI alert when attempting to run this command.
+	 */
+	return 0;
+#else
+	return check_crontab_process(cmd);
+#endif
 }
 
 #define BEGIN_LINE "# BEGIN GIT MAINTENANCE SCHEDULE"
