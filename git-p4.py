@@ -181,7 +181,7 @@ def prompt(prompt_text):
 if bytes is not str:
     # For python3, always encode and decode as appropriate
     def decode_text_stream(s):
-        return s.decode() if isinstance(s, bytes) else s
+        return s.decode('utf-8', 'backslashreplace') if isinstance(s, bytes) else s
     def encode_text_stream(s):
         return s.encode() if isinstance(s, str) else s
 else:
@@ -769,13 +769,19 @@ def p4CmdList(cmd, stdin=None, stdin_mode='w+b', cb=None, skip_info=False,
                 #   - `depotFile[0-9]*`, `path`, or `clientFile` which may contain non-UTF8 encoded text
                 decoded_entry = {}
                 for key, value in entry.items():
-                    key = key.decode()
+                    key = key.decode('utf-8', 'backslashreplace')
                     if isinstance(value, bytes) and not (key in ('data', 'path', 'clientFile') or key.startswith('depotFile')):
-                        value = value.decode()
+                        try:
+                            value = value.decode('utf-8', 'backslashreplace')
+                        except UnicodeDecodeError as e:
+                            if key == 'desc':
+                                value = str(value)[2:-1]  # work around unicode decode errors in description (hex escapes will just be printed as \x7a for instance.
+                            else:
+                                raise e
                     decoded_entry[key] = value
                 # Parse out data if it's an error response
                 if decoded_entry.get('code') == 'error' and 'data' in decoded_entry:
-                    decoded_entry['data'] = decoded_entry['data'].decode()
+                    decoded_entry['data'] = decoded_entry['data'].decode('utf-8', 'backslashreplace')
                 entry = decoded_entry
             if skip_info:
                 if 'code' in entry and entry['code'] == 'info':
@@ -978,7 +984,7 @@ def p4BranchesInGit(branchesAreInRemotes=True):
         # only import to p4/
         if not line.startswith('p4/'):
             continue
-        # special symbolic ref to p4/master
+        # special symbolic ref to p4/main
         if line == "p4/HEAD":
             continue
 
@@ -1076,7 +1082,7 @@ def createOrUpdateBranchesFromOrigin(localRefPrefix = "refs/remotes/p4/", silent
             system("git update-ref %s %s" % (remoteHead, originHead))
 
 def originP4BranchesExist():
-        return gitBranchExists("origin") or gitBranchExists("origin/p4") or gitBranchExists("origin/p4/master")
+        return gitBranchExists("origin") or gitBranchExists("origin/p4") or gitBranchExists("origin/p4/master") or gitBranchExists("origin/p4/main")
 
 
 def p4ParseNumericChangeRange(parts):
@@ -1635,9 +1641,9 @@ class P4Submit(Command, P4UserMap):
                                      help="submit only the specified commit(s), one commit or xxx..xxx"),
                 optparse.make_option("--disable-rebase", dest="disable_rebase", action="store_true",
                                      help="Disable rebase after submit is completed. Can be useful if you "
-                                     "work from a local git branch that is not master"),
+                                     "work from a local git branch that is not main"),
                 optparse.make_option("--disable-p4sync", dest="disable_p4sync", action="store_true",
-                                     help="Skip Perforce sync of p4/master after submit or shelve"),
+                                     help="Skip Perforce sync of p4/main after submit or shelve"),
                 optparse.make_option("--no-verify", dest="no_verify", action="store_true",
                                      help="Bypass p4-pre-submit and p4-changelist hooks"),
         ]
@@ -2363,11 +2369,11 @@ class P4Submit(Command, P4UserMap):
 
     def run(self, args):
         if len(args) == 0:
-            self.master = currentGitBranch()
+            self.main = currentGitBranch()
         elif len(args) == 1:
-            self.master = args[0]
-            if not branchExists(self.master):
-                die("Branch %s does not exist" % self.master)
+            self.main = args[0]
+            if not branchExists(self.main):
+                die("Branch %s does not exist" % self.main)
         else:
             return False
 
@@ -2375,10 +2381,10 @@ class P4Submit(Command, P4UserMap):
             if i <= 0:
                 sys.exit("invalid changelist %d" % i)
 
-        if self.master:
+        if self.main:
             allowSubmit = gitConfig("git-p4.allowSubmit")
-            if len(allowSubmit) > 0 and not self.master in allowSubmit.split(","):
-                die("%s is not in git-p4.allowSubmit" % self.master)
+            if len(allowSubmit) > 0 and not self.main in allowSubmit.split(","):
+                die("%s is not in git-p4.allowSubmit" % self.main)
 
         [upstream, settings] = findUpstreamBranchPoint()
         self.depotPath = settings['depot-paths'][0]
@@ -2449,8 +2455,8 @@ class P4Submit(Command, P4UserMap):
         self.check()
 
         commits = []
-        if self.master:
-            committish = self.master
+        if self.main:
+            committish = self.main
         else:
             committish = 'HEAD'
 
@@ -3513,7 +3519,7 @@ class P4Sync(Command, P4UserMap):
     def getBranchMappingFromGitBranches(self):
         branches = p4BranchesInGit(self.importIntoRemotes)
         for branch in branches.keys():
-            if branch == "master":
+            if branch in ["master", 'main']:
                 branch = "main"
             else:
                 branch = branch[len(self.projectName):]
@@ -3532,7 +3538,7 @@ class P4Sync(Command, P4UserMap):
 
     def gitRefForBranch(self, branch):
         if branch == "main":
-            return self.refPrefix + "master"
+            return self.refPrefix + "main"
 
         if len(branch) <= 0:
             return branch
@@ -3785,7 +3791,7 @@ class P4Sync(Command, P4UserMap):
                 if not self.p4BranchesInGit:
                     raise P4CommandException("No remote p4 branches.  Perhaps you never did \"git p4 clone\" in here.")
 
-                # The default branch is master, unless --branch is used to
+                # The default branch is main, unless --branch is used to
                 # specify something else.  Make sure it exists, or complain
                 # nicely about how to use --branch.
                 if not self.detectBranches:
@@ -3869,7 +3875,7 @@ class P4Sync(Command, P4UserMap):
 
         branch_arg_given = bool(self.branch)
         if len(self.branch) == 0:
-            self.branch = self.refPrefix + "master"
+            self.branch = self.refPrefix + "main"
             if gitBranchExists("refs/heads/p4") and self.importIntoRemotes:
                 system("git update-ref %s refs/heads/p4" % self.branch)
                 system("git branch -D p4")
@@ -4035,7 +4041,7 @@ class P4Sync(Command, P4UserMap):
                 print("p4-git branches: %s" % self.p4BranchesInGit)
                 print("initial parents: %s" % self.initialParents)
             for b in self.p4BranchesInGit:
-                if b != "master":
+                if b != "main":
 
                     ## FIXME
                     b = b[len(self.projectName):]
@@ -4186,14 +4192,14 @@ class P4Clone(P4Sync):
         if not P4Sync.run(self, depotPaths):
             return False
 
-        # create a master branch and check out a work tree
+        # create a main branch and check out a work tree
         if gitBranchExists(self.branch):
             system([ "git", "branch", currentGitBranch(), self.branch ])
             if not self.cloneBare:
                 system([ "git", "checkout", "-f" ])
         else:
             print('Not checking out any branch, use ' \
-                  '"git checkout -q -b master <branch>"')
+                  '"git checkout -q -b main <branch>"')
 
         # auto-set this variable if invoked with --use-client-spec
         if self.useClientSpec_from_options:
