@@ -604,7 +604,7 @@ static int fsck_loose(const struct object_id *oid, const char *path, void *data)
 	struct object *obj;
 	enum object_type type = OBJ_NONE;
 	unsigned long size;
-	void *contents;
+	void *contents = NULL;
 	int eaten;
 	struct object_info oi = OBJECT_INFO_INIT;
 	struct object_id real_oid = *null_oid();
@@ -629,6 +629,7 @@ static int fsck_loose(const struct object_id *oid, const char *path, void *data)
 			    path);
 	if (err < 0) {
 		errors_found |= ERROR_OBJECT;
+		free(contents);
 		return 0; /* keep checking other objects */
 	}
 
