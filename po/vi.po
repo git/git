@@ -7,10 +7,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: git v2.34.0 round 2\n"
+"Project-Id-Version: git v2.34.0 round 3\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2021-11-04 08:34+0800\n"
-"PO-Revision-Date: 2021-11-08 08:35+0700\n"
+"POT-Creation-Date: 2021-11-10 08:55+0800\n"
+"PO-Revision-Date: 2021-11-11 13:18+0700\n"
 "Last-Translator: Trần Ngọc Quân <vnwildman@gmail.com>\n"
 "Language-Team: Vietnamese <translation-team-vi@lists.sourceforge.net>\n"
 "Language: vi\n"
@@ -217,7 +217,7 @@ msgstr "chưa đưa lên bệ phóng"
 
 #: add-interactive.c:1148 apply.c:5016 apply.c:5019 builtin/am.c:2311
 #: builtin/am.c:2314 builtin/bugreport.c:107 builtin/clone.c:128
-#: builtin/fetch.c:152 builtin/merge.c:286 builtin/pull.c:190
+#: builtin/fetch.c:152 builtin/merge.c:286 builtin/pull.c:194
 #: builtin/submodule--helper.c:404 builtin/submodule--helper.c:1857
 #: builtin/submodule--helper.c:1860 builtin/submodule--helper.c:2503
 #: builtin/submodule--helper.c:2506 builtin/submodule--helper.c:2573
@@ -768,22 +768,24 @@ msgstr ""
 #: advice.c:180
 msgid "Committing is not possible because you have unmerged files."
 msgstr ""
-"Commit là không thể thực hiện bởi vì bạn có những tập tin chưa được hòa trộn."
+"Không thể thực hiện chuyển giao được bởi vì bạn có những tập tin chưa được "
+"hòa trộn."
 
 #: advice.c:182
 msgid "Merging is not possible because you have unmerged files."
 msgstr ""
-"Merge là không thể thực hiện bởi vì bạn có những tập tin chưa được hòa trộn."
+"Không thể thực hiện hòa trộn bởi vì bạn có những tập tin chưa được hòa trộn."
 
 #: advice.c:184
 msgid "Pulling is not possible because you have unmerged files."
 msgstr ""
-"Pull là không thể thực hiện bởi vì bạn có những tập tin chưa được hòa trộn."
+"Không thể thực hiện kéo về bởi vì bạn có những tập tin chưa được hòa trộn."
 
 #: advice.c:186
 msgid "Reverting is not possible because you have unmerged files."
 msgstr ""
-"Revert là không thể thực hiện bởi vì bạn có những tập tin chưa được hòa trộn."
+"Không thể thực hiện hoàn nguyên bởi vì bạn có những tập tin chưa được hòa "
+"trộn."
 
 #: advice.c:188
 #, c-format
@@ -1525,7 +1527,7 @@ msgstr "không thể stream blob “%s”"
 #: archive-tar.c:265 archive-zip.c:358
 #, c-format
 msgid "unsupported file mode: 0%o (SHA1: %s)"
-msgstr "chế độ tập tin lục không được hỗ trợ: 0%o (SHA1: %s)"
+msgstr "chế độ tập tin không được hỗ trợ: 0%o (SHA1: %s)"
 
 #: archive-tar.c:450
 #, c-format
@@ -10481,7 +10483,7 @@ msgstr ""
 "của bạn:\n"
 
 #: builtin/add.c:371 builtin/clean.c:901 builtin/fetch.c:173 builtin/mv.c:124
-#: builtin/prune-packed.c:14 builtin/pull.c:204 builtin/push.c:550
+#: builtin/prune-packed.c:14 builtin/pull.c:208 builtin/push.c:550
 #: builtin/remote.c:1429 builtin/rm.c:244 builtin/send-pack.c:194
 msgid "dry run"
 msgstr "chạy thử"
@@ -10950,11 +10952,11 @@ msgstr "chuyển nó qua git-apply"
 
 #: builtin/am.c:2317 builtin/commit.c:1514 builtin/fmt-merge-msg.c:17
 #: builtin/fmt-merge-msg.c:20 builtin/grep.c:919 builtin/merge.c:262
-#: builtin/pull.c:141 builtin/pull.c:200 builtin/pull.c:217
+#: builtin/pull.c:142 builtin/pull.c:204 builtin/pull.c:221
 #: builtin/rebase.c:1046 builtin/repack.c:651 builtin/repack.c:655
 #: builtin/repack.c:657 builtin/show-branch.c:649 builtin/show-ref.c:172
 #: builtin/tag.c:445 parse-options.h:154 parse-options.h:175
-#: parse-options.h:316
+#: parse-options.h:315
 msgid "n"
 msgstr "n"
 
@@ -11005,7 +11007,7 @@ msgid "use current timestamp for author date"
 msgstr "dùng dấu thời gian hiện tại cho ngày tác giả"
 
 #: builtin/am.c:2357 builtin/commit-tree.c:118 builtin/commit.c:1642
-#: builtin/merge.c:299 builtin/pull.c:175 builtin/rebase.c:1099
+#: builtin/merge.c:299 builtin/pull.c:179 builtin/rebase.c:1099
 #: builtin/revert.c:117 builtin/tag.c:460
 msgid "key-id"
 msgstr "mã-số-khóa"
@@ -11428,7 +11430,7 @@ msgstr "bỏ qua một số lần chuyển giao để lấy ra"
 
 #: builtin/bisect--helper.c:1210
 msgid "visualize the bisection"
-msgstr "Trực quan việc di chuyển nửa bước"
+msgstr "trực quan việc di chuyển nửa bước"
 
 #: builtin/bisect--helper.c:1212
 msgid "use <cmd>... to automatically bisect."
@@ -11512,7 +11514,7 @@ msgstr "hiển thị thống kê công sức làm việc"
 #: builtin/commit-graph.c:75 builtin/commit-graph.c:228 builtin/fetch.c:179
 #: builtin/merge.c:298 builtin/multi-pack-index.c:103
 #: builtin/multi-pack-index.c:154 builtin/multi-pack-index.c:178
-#: builtin/multi-pack-index.c:204 builtin/pull.c:119 builtin/push.c:566
+#: builtin/multi-pack-index.c:204 builtin/pull.c:120 builtin/push.c:566
 #: builtin/send-pack.c:202
 msgid "force progress reporting"
 msgstr "ép buộc báo cáo tiến triển công việc"
@@ -12237,7 +12239,7 @@ msgstr "với đối tượng blob, chạy lệnh textconv trên nội dung củ
 
 #: builtin/cat-file.c:671
 msgid "for blob objects, run filters on object's content"
-msgstr "với đối tượng blob, chạy lệnh filters trên nội dung của đối tượng"
+msgstr "với đối tượng blob, chạy các bộ lọc nội dung của đối tượng"
 
 #: builtin/cat-file.c:672
 msgid "blob"
@@ -12773,7 +12775,7 @@ msgstr "thiếu tham số là nhánh hoặc lần chuyển giao"
 msgid "perform a 3-way merge with the new branch"
 msgstr "thực hiện hòa trộn kiểu 3-way với nhánh mới"
 
-#: builtin/checkout.c:1519 builtin/log.c:1810 parse-options.h:322
+#: builtin/checkout.c:1519 builtin/log.c:1810 parse-options.h:321
 msgid "style"
 msgstr "kiểu"
 
@@ -13202,7 +13204,7 @@ msgid "path to git-upload-pack on the remote"
 msgstr "đường dẫn đến git-upload-pack trên máy chủ"
 
 #: builtin/clone.c:130 builtin/fetch.c:180 builtin/grep.c:876
-#: builtin/pull.c:208
+#: builtin/pull.c:212
 msgid "depth"
 msgstr "độ-sâu"
 
@@ -13211,7 +13213,7 @@ msgid "create a shallow clone of that depth"
 msgstr "tạo bản sao không đầy đủ cho mức sâu đã cho"
 
 #: builtin/clone.c:132 builtin/fetch.c:182 builtin/pack-objects.c:3933
-#: builtin/pull.c:211
+#: builtin/pull.c:215
 msgid "time"
 msgstr "thời-gian"
 
@@ -13220,11 +13222,11 @@ msgid "create a shallow clone since a specific time"
 msgstr "tạo bản sao không đầy đủ từ thời điểm đã cho"
 
 #: builtin/clone.c:134 builtin/fetch.c:184 builtin/fetch.c:207
-#: builtin/pull.c:214 builtin/pull.c:239 builtin/rebase.c:1022
+#: builtin/pull.c:218 builtin/pull.c:243 builtin/rebase.c:1022
 msgid "revision"
 msgstr "điểm xét duyệt"
 
-#: builtin/clone.c:135 builtin/fetch.c:185 builtin/pull.c:215
+#: builtin/clone.c:135 builtin/fetch.c:185 builtin/pull.c:219
 msgid "deepen history of shallow clone, excluding rev"
 msgstr "làm sâu hơn lịch sử của bản sao shallow, bằng điểm xét duyệt loại trừ"
 
@@ -13260,21 +13262,21 @@ msgid "set config inside the new repository"
 msgstr "đặt cấu hình bên trong một kho chứa mới"
 
 #: builtin/clone.c:147 builtin/fetch.c:202 builtin/ls-remote.c:77
-#: builtin/pull.c:230 builtin/push.c:575 builtin/send-pack.c:200
+#: builtin/pull.c:234 builtin/push.c:575 builtin/send-pack.c:200
 msgid "server-specific"
 msgstr "đặc-tả-máy-phục-vụ"
 
 #: builtin/clone.c:147 builtin/fetch.c:202 builtin/ls-remote.c:77
-#: builtin/pull.c:231 builtin/push.c:575 builtin/send-pack.c:201
+#: builtin/pull.c:235 builtin/push.c:575 builtin/send-pack.c:201
 msgid "option to transmit"
 msgstr "tùy chọn để chuyển giao"
 
-#: builtin/clone.c:148 builtin/fetch.c:203 builtin/pull.c:234
+#: builtin/clone.c:148 builtin/fetch.c:203 builtin/pull.c:238
 #: builtin/push.c:576
 msgid "use IPv4 addresses only"
 msgstr "chỉ dùng địa chỉ IPv4"
 
-#: builtin/clone.c:150 builtin/fetch.c:205 builtin/pull.c:237
+#: builtin/clone.c:150 builtin/fetch.c:205 builtin/pull.c:241
 #: builtin/push.c:578
 msgid "use IPv6 addresses only"
 msgstr "chỉ dùng địa chỉ IPv6"
@@ -13680,7 +13682,7 @@ msgid "read commit log message from file"
 msgstr "đọc chú thích nhật ký lần chuyển giao từ tập tin"
 
 #: builtin/commit-tree.c:119 builtin/commit.c:1643 builtin/merge.c:300
-#: builtin/pull.c:176 builtin/revert.c:118
+#: builtin/pull.c:180 builtin/revert.c:118
 msgid "GPG sign commit"
 msgstr "Ký lần chuyển giao dùng GPG"
 
@@ -14110,7 +14112,7 @@ msgstr "chấm dứt các mục bằng NUL"
 
 #: builtin/commit.c:1501 builtin/commit.c:1505 builtin/commit.c:1668
 #: builtin/fast-export.c:1199 builtin/fast-export.c:1202
-#: builtin/fast-export.c:1205 builtin/rebase.c:1111 parse-options.h:336
+#: builtin/fast-export.c:1205 builtin/rebase.c:1111 parse-options.h:335
 msgid "mode"
 msgstr "chế độ"
 
@@ -14190,7 +14192,7 @@ msgid "override date for commit"
 msgstr "ghi đè ngày tháng cho lần chuyển giao"
 
 #: builtin/commit.c:1627 builtin/commit.c:1628 builtin/commit.c:1634
-#: parse-options.h:328 ref-filter.h:92
+#: parse-options.h:327 ref-filter.h:92
 msgid "commit"
 msgstr "lần_chuyển_giao"
 
@@ -14236,7 +14238,7 @@ msgid "add custom trailer(s)"
 msgstr "thêm đuôi tự chọn"
 
 #: builtin/commit.c:1637 builtin/log.c:1754 builtin/merge.c:303
-#: builtin/pull.c:145 builtin/revert.c:110
+#: builtin/pull.c:146 builtin/revert.c:110
 msgid "add a Signed-off-by trailer"
 msgstr "thêm dòng Signed-off-by vào cuối"
 
@@ -15218,15 +15220,15 @@ msgstr "git fetch --all [<các tùy chọn>]"
 msgid "fetch.parallel cannot be negative"
 msgstr "fetch.parallel không thể âm"
 
-#: builtin/fetch.c:145 builtin/pull.c:185
+#: builtin/fetch.c:145 builtin/pull.c:189
 msgid "fetch from all remotes"
 msgstr "lấy về từ tất cả các máy chủ"
 
-#: builtin/fetch.c:147 builtin/pull.c:245
+#: builtin/fetch.c:147 builtin/pull.c:249
 msgid "set upstream for git pull/fetch"
 msgstr "đặt thượng nguồn cho git pull/fetch"
 
-#: builtin/fetch.c:149 builtin/pull.c:188
+#: builtin/fetch.c:149 builtin/pull.c:192
 msgid "append to .git/FETCH_HEAD instead of overwriting"
 msgstr "nối thêm vào .git/FETCH_HEAD thay vì ghi đè lên nó"
 
@@ -15234,7 +15236,7 @@ msgstr "nối thêm vào .git/FETCH_HEAD thay vì ghi đè lên nó"
 msgid "use atomic transaction to update references"
 msgstr "sử dụng giao dịch hạt nhân bên phía máy chủ"
 
-#: builtin/fetch.c:153 builtin/pull.c:191
+#: builtin/fetch.c:153 builtin/pull.c:195
 msgid "path to upload pack on remote end"
 msgstr "đường dẫn đến gói tải lên trên máy chủ cuối"
 
@@ -15246,7 +15248,7 @@ msgstr "ép buộc ghi đè lên tham chiếu nội bộ"
 msgid "fetch from multiple remotes"
 msgstr "lấy từ nhiều máy chủ cùng lúc"
 
-#: builtin/fetch.c:158 builtin/pull.c:195
+#: builtin/fetch.c:158 builtin/pull.c:199
 msgid "fetch all tags and associated objects"
 msgstr "lấy tất cả các thẻ cùng với các đối tượng liên quan đến nó"
 
@@ -15263,7 +15265,7 @@ msgid "modify the refspec to place all refs within refs/prefetch/"
 msgstr ""
 "sửa đặc tả đường dẫn cho các tham chiếu mọi chỗ có trong refs/prefetch/"
 
-#: builtin/fetch.c:166 builtin/pull.c:198
+#: builtin/fetch.c:166 builtin/pull.c:202
 msgid "prune remote-tracking branches no longer on remote"
 msgstr ""
 "cắt cụt (prune) các nhánh “remote-tracking” không còn tồn tại trên máy chủ "
@@ -15273,7 +15275,7 @@ msgstr ""
 msgid "prune local tags no longer on remote and clobber changed tags"
 msgstr "cắt xém các thẻ nội bộ không còn ở máy chủ và xóa các thẻ đã thay đổi"
 
-#: builtin/fetch.c:169 builtin/fetch.c:194 builtin/pull.c:122
+#: builtin/fetch.c:169 builtin/fetch.c:194 builtin/pull.c:123
 msgid "on-demand"
 msgstr "khi-cần"
 
@@ -15285,7 +15287,7 @@ msgstr "điều khiển việc lấy về đệ quy trong các mô-đun-con"
 msgid "write fetched references to the FETCH_HEAD file"
 msgstr "ghi các tham chiếu lấy về vào tập tin FETCH_HEAD"
 
-#: builtin/fetch.c:176 builtin/pull.c:206
+#: builtin/fetch.c:176 builtin/pull.c:210
 msgid "keep downloaded pack"
 msgstr "giữ lại gói đã tải về"
 
@@ -15293,16 +15295,16 @@ msgstr "giữ lại gói đã tải về"
 msgid "allow updating of HEAD ref"
 msgstr "cho phép cập nhật th.chiếu HEAD"
 
-#: builtin/fetch.c:181 builtin/fetch.c:187 builtin/pull.c:209
-#: builtin/pull.c:218
+#: builtin/fetch.c:181 builtin/fetch.c:187 builtin/pull.c:213
+#: builtin/pull.c:222
 msgid "deepen history of shallow clone"
 msgstr "làm sâu hơn lịch sử của bản sao"
 
-#: builtin/fetch.c:183 builtin/pull.c:212
+#: builtin/fetch.c:183 builtin/pull.c:216
 msgid "deepen history of shallow repository based on time"
 msgstr "làm sâu hơn lịch sử của kho bản sao shallow dựa trên thời gian"
 
-#: builtin/fetch.c:189 builtin/pull.c:221
+#: builtin/fetch.c:189 builtin/pull.c:225
 msgid "convert to a complete repository"
 msgstr "chuyển đổi hoàn toàn sang kho git"
 
@@ -15318,19 +15320,19 @@ msgstr ""
 "mặc định cho việc lấy đệ quy các mô-đun-con (có mức ưu tiên thấp hơn các tập "
 "tin cấu hình config)"
 
-#: builtin/fetch.c:199 builtin/pull.c:224
+#: builtin/fetch.c:199 builtin/pull.c:228
 msgid "accept refs that update .git/shallow"
 msgstr "chấp nhận tham chiếu cập nhật .git/shallow"
 
-#: builtin/fetch.c:200 builtin/pull.c:226
+#: builtin/fetch.c:200 builtin/pull.c:230
 msgid "refmap"
 msgstr "refmap"
 
-#: builtin/fetch.c:201 builtin/pull.c:227
+#: builtin/fetch.c:201 builtin/pull.c:231
 msgid "specify fetch refmap"
 msgstr "chỉ ra refmap cần lấy về"
 
-#: builtin/fetch.c:208 builtin/pull.c:240
+#: builtin/fetch.c:208 builtin/pull.c:244
 msgid "report that we have only objects reachable from this object"
 msgstr ""
 "báo cáo rằng chúng ta chỉ có các đối tượng tiếp cận được từ đối tượng này"
@@ -15344,7 +15346,7 @@ msgstr ""
 msgid "run 'maintenance --auto' after fetching"
 msgstr "chạy “maintenance --auto” sau khi lấy về"
 
-#: builtin/fetch.c:217 builtin/pull.c:243
+#: builtin/fetch.c:217 builtin/pull.c:247
 msgid "check for forced-updates on all updated branches"
 msgstr "kiểm cho các-cập-nhật-bắt-buộc trên mọi nhánh đã cập nhật"
 
@@ -18016,31 +18018,31 @@ msgstr "Các chiến lược sẵn sàng là:"
 msgid "Available custom strategies are:"
 msgstr "Các chiến lược tùy chỉnh sẵn sàng là:"
 
-#: builtin/merge.c:257 builtin/pull.c:133
+#: builtin/merge.c:257 builtin/pull.c:134
 msgid "do not show a diffstat at the end of the merge"
 msgstr "không hiển thị thống kê khác biệt tại cuối của lần hòa trộn"
 
-#: builtin/merge.c:260 builtin/pull.c:136
+#: builtin/merge.c:260 builtin/pull.c:137
 msgid "show a diffstat at the end of the merge"
 msgstr "hiển thị thống kê khác biệt tại cuối của hòa trộn"
 
-#: builtin/merge.c:261 builtin/pull.c:139
+#: builtin/merge.c:261 builtin/pull.c:140
 msgid "(synonym to --stat)"
 msgstr "(đồng nghĩa với --stat)"
 
-#: builtin/merge.c:263 builtin/pull.c:142
+#: builtin/merge.c:263 builtin/pull.c:143
 msgid "add (at most <n>) entries from shortlog to merge commit message"
 msgstr "thêm (ít nhất <n>) mục từ shortlog cho ghi chú chuyển giao hòa trộn"
 
-#: builtin/merge.c:266 builtin/pull.c:148
+#: builtin/merge.c:266 builtin/pull.c:149
 msgid "create a single commit instead of doing a merge"
 msgstr "tạo một lần chuyển giao đưon thay vì thực hiện việc hòa trộn"
 
-#: builtin/merge.c:268 builtin/pull.c:151
+#: builtin/merge.c:268 builtin/pull.c:152
 msgid "perform a commit if the merge succeeds (default)"
 msgstr "thực hiện chuyển giao nếu hòa trộn thành công (mặc định)"
 
-#: builtin/merge.c:270 builtin/pull.c:154
+#: builtin/merge.c:270 builtin/pull.c:155
 msgid "edit message before committing"
 msgstr "sửa chú thích trước khi chuyển giao"
 
@@ -18048,28 +18050,28 @@ msgstr "sửa chú thích trước khi chuyển giao"
 msgid "allow fast-forward (default)"
 msgstr "cho phép chuyển-tiếp-nhanh (mặc định)"
 
-#: builtin/merge.c:274 builtin/pull.c:161
+#: builtin/merge.c:274 builtin/pull.c:162
 msgid "abort if fast-forward is not possible"
 msgstr "bỏ qua nếu chuyển-tiếp-nhanh không thể được"
 
-#: builtin/merge.c:278 builtin/pull.c:164
+#: builtin/merge.c:278 builtin/pull.c:168
 msgid "verify that the named commit has a valid GPG signature"
 msgstr "thẩm tra xem lần chuyển giao có tên đó có chữ ký GPG hợp lệ hay không"
 
-#: builtin/merge.c:279 builtin/notes.c:785 builtin/pull.c:168
+#: builtin/merge.c:279 builtin/notes.c:785 builtin/pull.c:172
 #: builtin/rebase.c:1117 builtin/revert.c:114
 msgid "strategy"
 msgstr "chiến lược"
 
-#: builtin/merge.c:280 builtin/pull.c:169
+#: builtin/merge.c:280 builtin/pull.c:173
 msgid "merge strategy to use"
 msgstr "chiến lược hòa trộn sẽ dùng"
 
-#: builtin/merge.c:281 builtin/pull.c:172
+#: builtin/merge.c:281 builtin/pull.c:176
 msgid "option=value"
 msgstr "tùy_chọn=giá_trị"
 
-#: builtin/merge.c:282 builtin/pull.c:173
+#: builtin/merge.c:282 builtin/pull.c:177
 msgid "option for selected merge strategy"
 msgstr "tùy chọn cho chiến lược hòa trộn đã chọn"
 
@@ -18091,7 +18093,7 @@ msgstr "--abort nhưng để lại bảng mục lục và cây làm việc"
 msgid "continue the current in-progress merge"
 msgstr "tiếp tục quá trình hòa trộn hiện tại đang thực hiện"
 
-#: builtin/merge.c:297 builtin/pull.c:180
+#: builtin/merge.c:297 builtin/pull.c:184
 msgid "allow merging unrelated histories"
 msgstr "cho phép hòa trộn lịch sử không liên quan"
 
@@ -19513,44 +19515,48 @@ msgstr "Giá trị không hợp lệ %s: %s"
 msgid "git pull [<options>] [<repository> [<refspec>...]]"
 msgstr "git pull [<các tùy chọn>] [<kho-chứa> [<refspec>…]]"
 
-#: builtin/pull.c:123
+#: builtin/pull.c:124
 msgid "control for recursive fetching of submodules"
 msgstr "điều khiển việc lấy về đệ quy của các mô-đun-con"
 
-#: builtin/pull.c:127
+#: builtin/pull.c:128
 msgid "Options related to merging"
 msgstr "Các tùy chọn liên quan đến hòa trộn"
 
-#: builtin/pull.c:130
+#: builtin/pull.c:131
 msgid "incorporate changes by rebasing rather than merging"
 msgstr "các thay đổi hợp nhất bằng cải tổ thay vì hòa trộn"
 
-#: builtin/pull.c:158 builtin/revert.c:126
+#: builtin/pull.c:159 builtin/revert.c:126
 msgid "allow fast-forward"
 msgstr "cho phép chuyển-tiếp-nhanh"
 
-#: builtin/pull.c:167 parse-options.h:339
+#: builtin/pull.c:165
+msgid "control use of pre-merge-commit and commit-msg hooks"
+msgstr "điều khiển cách dùng các móc (hook) pre-merge-commit và commit-msg"
+
+#: builtin/pull.c:171 parse-options.h:338
 msgid "automatically stash/stash pop before and after"
 msgstr "tự động stash/stash pop trước và sau"
 
-#: builtin/pull.c:183
+#: builtin/pull.c:187
 msgid "Options related to fetching"
 msgstr "Các tùy chọn liên quan đến lệnh lấy về"
 
-#: builtin/pull.c:193
+#: builtin/pull.c:197
 msgid "force overwrite of local branch"
 msgstr "ép buộc ghi đè lên nhánh nội bộ"
 
-#: builtin/pull.c:201
+#: builtin/pull.c:205
 msgid "number of submodules pulled in parallel"
 msgstr "số lượng mô-đun-con được đẩy lên đồng thời"
 
-#: builtin/pull.c:317
+#: builtin/pull.c:321
 #, c-format
 msgid "Invalid value for pull.ff: %s"
 msgstr "Giá trị không hợp lệ cho pull.ff: %s"
 
-#: builtin/pull.c:445
+#: builtin/pull.c:449
 msgid ""
 "There is no candidate for rebasing against among the refs that you just "
 "fetched."
@@ -19558,14 +19564,14 @@ msgstr ""
 "Ở đây không có ứng cử nào để cải tổ lại trong số các tham chiếu mà bạn vừa "
 "lấy về."
 
-#: builtin/pull.c:447
+#: builtin/pull.c:451
 msgid ""
 "There are no candidates for merging among the refs that you just fetched."
 msgstr ""
 "Ở đây không có ứng cử nào để hòa trộn trong số các tham chiếu mà bạn vừa lấy "
 "về."
 
-#: builtin/pull.c:448
+#: builtin/pull.c:452
 msgid ""
 "Generally this means that you provided a wildcard refspec which had no\n"
 "matches on the remote end."
@@ -19574,7 +19580,7 @@ msgstr ""
 "tự\n"
 "đại diện mà nó lại không khớp trên điểm cuối máy phục vụ."
 
-#: builtin/pull.c:451
+#: builtin/pull.c:455
 #, c-format
 msgid ""
 "You asked to pull from the remote '%s', but did not specify\n"
@@ -19586,42 +19592,42 @@ msgstr ""
 "theo mặc định cho nhánh hiện tại của bạn, bạn phải chỉ định\n"
 "một nhánh trên dòng lệnh."
 
-#: builtin/pull.c:456 builtin/rebase.c:951
+#: builtin/pull.c:460 builtin/rebase.c:951
 msgid "You are not currently on a branch."
 msgstr "Hiện tại bạn chẳng ở nhánh nào cả."
 
-#: builtin/pull.c:458 builtin/pull.c:473
+#: builtin/pull.c:462 builtin/pull.c:477
 msgid "Please specify which branch you want to rebase against."
 msgstr "Vui lòng chỉ định nhánh nào bạn muốn cải tổ lại."
 
-#: builtin/pull.c:460 builtin/pull.c:475
+#: builtin/pull.c:464 builtin/pull.c:479
 msgid "Please specify which branch you want to merge with."
 msgstr "Vui lòng chỉ định nhánh nào bạn muốn hòa trộn vào."
 
-#: builtin/pull.c:461 builtin/pull.c:476
+#: builtin/pull.c:465 builtin/pull.c:480
 msgid "See git-pull(1) for details."
 msgstr "Xem git-pull(1) để biết thêm chi tiết."
 
-#: builtin/pull.c:463 builtin/pull.c:469 builtin/pull.c:478
+#: builtin/pull.c:467 builtin/pull.c:473 builtin/pull.c:482
 #: builtin/rebase.c:957
 msgid "<remote>"
 msgstr "<máy chủ>"
 
-#: builtin/pull.c:463 builtin/pull.c:478 builtin/pull.c:483
+#: builtin/pull.c:467 builtin/pull.c:482 builtin/pull.c:487
 msgid "<branch>"
 msgstr "<nhánh>"
 
-#: builtin/pull.c:471 builtin/rebase.c:949
+#: builtin/pull.c:475 builtin/rebase.c:949
 msgid "There is no tracking information for the current branch."
 msgstr "Ở đây không có thông tin theo dõi cho nhánh hiện hành."
 
-#: builtin/pull.c:480
+#: builtin/pull.c:484
 msgid ""
 "If you wish to set tracking information for this branch you can do so with:"
 msgstr ""
 "Nếu bạn muốn theo dõi thông tin cho nhánh này bạn có thể thực hiện bằng lệnh:"
 
-#: builtin/pull.c:485
+#: builtin/pull.c:489
 #, c-format
 msgid ""
 "Your configuration specifies to merge with the ref '%s'\n"
@@ -19630,16 +19636,16 @@ msgstr ""
 "Các đặc tả cấu hình của bạn để hòa trộn với tham chiếu “%s”\n"
 "từ máy dịch vụ, nhưng không có nhánh nào như thế được lấy về."
 
-#: builtin/pull.c:596
+#: builtin/pull.c:600
 #, c-format
 msgid "unable to access commit %s"
 msgstr "không thể truy cập lần chuyển giao “%s”"
 
-#: builtin/pull.c:902
+#: builtin/pull.c:908
 msgid "ignoring --verify-signatures for rebase"
 msgstr "bỏ qua --verify-signatures khi rebase"
 
-#: builtin/pull.c:936
+#: builtin/pull.c:942
 msgid ""
 "You have divergent branches and need to specify how to reconcile them.\n"
 "You can do so by running one of the following commands sometime before\n"
@@ -19670,21 +19676,21 @@ msgstr ""
 "hoặc --ff-only trên dòng lệnh để ghi đè các mặc định đã cấu hình cho mỗi\n"
 "lần gọi.\n"
 
-#: builtin/pull.c:1010
+#: builtin/pull.c:1016
 msgid "Updating an unborn branch with changes added to the index."
 msgstr ""
 "Đang cập nhật một nhánh chưa được sinh ra với các thay đổi được thêm vào "
 "bảng mục lục."
 
-#: builtin/pull.c:1014
+#: builtin/pull.c:1020
 msgid "pull with rebase"
 msgstr "pull với rebase"
 
-#: builtin/pull.c:1015
+#: builtin/pull.c:1021
 msgid "please commit or stash them."
 msgstr "xin hãy chuyển giao hoặc tạm cất (stash) chúng."
 
-#: builtin/pull.c:1040
+#: builtin/pull.c:1046
 #, c-format
 msgid ""
 "fetch updated the current branch head.\n"
@@ -19695,7 +19701,7 @@ msgstr ""
 "đang chuyển-tiếp-nhanh cây làm việc của bạn từ\n"
 "lần chuyển giaot %s."
 
-#: builtin/pull.c:1046
+#: builtin/pull.c:1052
 #, c-format
 msgid ""
 "Cannot fast-forward your working tree.\n"
@@ -19713,23 +19719,23 @@ msgstr ""
 "$ git reset --hard\n"
 "để khôi phục lại."
 
-#: builtin/pull.c:1061
+#: builtin/pull.c:1067
 msgid "Cannot merge multiple branches into empty head."
 msgstr "Không thể hòa trộn nhiều nhánh vào trong một head trống rỗng."
 
-#: builtin/pull.c:1066
+#: builtin/pull.c:1072
 msgid "Cannot rebase onto multiple branches."
 msgstr "Không thể thực hiện lệnh rebase (cải tổ) trên nhiều nhánh."
 
-#: builtin/pull.c:1068
+#: builtin/pull.c:1074
 msgid "Cannot fast-forward to multiple branches."
 msgstr "Không thể thực hiện chuyển tiếp nhanh trên nhiều nhánh."
 
-#: builtin/pull.c:1082
+#: builtin/pull.c:1088
 msgid "Need to specify how to reconcile divergent branches."
 msgstr "Caanfchir định làm thế nào để giải quyết các nhánh phân kỳ."
 
-#: builtin/pull.c:1096
+#: builtin/pull.c:1102
 msgid "cannot rebase with locally recorded submodule modifications"
 msgstr ""
 "không thể cải tổ với các thay đổi mô-đun-con được ghi lại một cách cục bộ"
@@ -24898,27 +24904,27 @@ msgstr "ngày hết hạn"
 msgid "no-op (backward compatibility)"
 msgstr "no-op (tương thích ngược)"
 
-#: parse-options.h:309
+#: parse-options.h:308
 msgid "be more verbose"
 msgstr "chi tiết hơn nữa"
 
-#: parse-options.h:311
+#: parse-options.h:310
 msgid "be more quiet"
 msgstr "im lặng hơn nữa"
 
-#: parse-options.h:317
+#: parse-options.h:316
 msgid "use <n> digits to display object names"
 msgstr "sử dụng <n> chữ số để hiển thị tên đối tượng"
 
-#: parse-options.h:336
+#: parse-options.h:335
 msgid "how to strip spaces and #comments from message"
 msgstr "làm thế nào để cắt bỏ khoảng trắng và #ghichú từ mẩu tin nhắn"
 
-#: parse-options.h:337
+#: parse-options.h:336
 msgid "read pathspec from file"
 msgstr "đọc đặc tả đường dẫn từ tập tin"
 
-#: parse-options.h:338
+#: parse-options.h:337
 msgid ""
 "with --pathspec-from-file, pathspec elements are separated with NUL character"
 msgstr ""
