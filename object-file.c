@@ -1779,7 +1779,7 @@ static void write_object_file_prepare(const struct git_hash_algo *algo,
 	/* Generate the header */
 	*hdrlen = xsnprintf(hdr, *hdrlen, "%s %"PRIuMAX , type, (uintmax_t)len)+1;
 
-	/* Sha1.. */
+	/* Hash (function pointers) computation */
 	algo->init_fn(&c);
 	algo->update_fn(&c, hdr, *hdrlen);
 	algo->update_fn(&c, buf, len);
