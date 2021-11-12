@@ -269,7 +269,7 @@ test_expect_success '--stdin outside of repository (uses SHA-1)' '
 	test_cmp expect actual
 '
 
-test_expect_failure EXPENSIVE,SIZE_T_IS_64BIT,!LONG_IS_64BIT \
+test_expect_success EXPENSIVE,SIZE_T_IS_64BIT,!LONG_IS_64BIT \
 		'files over 4GB hash literally' '
 	test-tool genzeros $((5*1024*1024*1024)) >big &&
 	test_oid large5GB >expect &&
