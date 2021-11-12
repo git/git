@@ -1770,9 +1770,9 @@ void *read_object_with_reference(struct repository *r,
 }
 
 static void write_object_file_prepare(const struct git_hash_algo *algo,
-				      const void *buf, unsigned long len,
+				      const void *buf, size_t len,
 				      const char *type, struct object_id *oid,
-				      char *hdr, int *hdrlen)
+				      char *hdr, size_t *hdrlen)
 {
 	git_hash_ctx c;
 
@@ -1837,11 +1837,11 @@ static int write_buffer(int fd, const void *buf, size_t len)
 }
 
 int hash_object_file(const struct git_hash_algo *algo, const void *buf,
-		     unsigned long len, const char *type,
+		     size_t len, const char *type,
 		     struct object_id *oid)
 {
 	char hdr[MAX_HEADER_LEN];
-	int hdrlen = sizeof(hdr);
+	size_t hdrlen = sizeof(hdr);
 	write_object_file_prepare(algo, buf, len, type, oid, hdr, &hdrlen);
 	return 0;
 }
@@ -1997,12 +1997,12 @@ static int freshen_packed_object(const struct object_id *oid)
 	return 1;
 }
 
-int write_object_file_flags(const void *buf, unsigned long len,
+int write_object_file_flags(const void *buf, size_t len,
 			    const char *type, struct object_id *oid,
 			    unsigned flags)
 {
 	char hdr[MAX_HEADER_LEN];
-	int hdrlen = sizeof(hdr);
+	size_t hdrlen = sizeof(hdr);
 
 	/* Normally if we have it in the pack then we do not bother writing
 	 * it out into .git/objects/??/?{38} file.
@@ -2019,7 +2019,8 @@ int hash_object_file_literally(const void *buf, size_t len,
 			       unsigned flags)
 {
 	char *header;
-	int hdrlen, status = 0;
+	size_t hdrlen;
+	int status = 0;
 
 	/* type string, SP, %lu of the length plus NUL must fit this */
 	hdrlen = strlen(type) + MAX_HEADER_LEN;
