@@ -534,7 +534,7 @@ out:
 }
 
 static void hash_object_body(const struct git_hash_algo *algo, struct git_hash_ctx *c,
-			     const void *buf, unsigned long len,
+			     const void *buf, size_t len,
 			     struct object_id *oid,
 			     char *hdr, size_t *hdrlen)
 {
@@ -554,7 +554,7 @@ static void write_object_file_prepare(const struct git_hash_algo *algo,
 	/* Generate the header */
 	*hdrlen = format_object_header(hdr, *hdrlen, type, len);
 
-	/* Sha1.. */
+	/* Hash (function pointers) computation */
 	hash_object_body(algo, &c, buf, len, oid, hdr, hdrlen);
 }
 
