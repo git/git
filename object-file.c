@@ -1867,7 +1867,7 @@ void *read_object_with_reference(struct repository *r,
 static void hash_object_body(const struct git_hash_algo *algo, git_hash_ctx *c,
 			     const void *buf, unsigned long len,
 			     struct object_id *oid,
-			     char *hdr, int *hdrlen)
+			     char *hdr, size_t *hdrlen)
 {
 	algo->init_fn(c);
 	algo->update_fn(c, hdr, *hdrlen);
@@ -1876,9 +1876,9 @@ static void hash_object_body(const struct git_hash_algo *algo, git_hash_ctx *c,
 }
 
 static void write_object_file_prepare(const struct git_hash_algo *algo,
-				      const void *buf, unsigned long len,
+				      const void *buf, size_t len,
 				      enum object_type type, struct object_id *oid,
-				      char *hdr, int *hdrlen)
+				      char *hdr, size_t *hdrlen)
 {
 	git_hash_ctx c;
 
@@ -1892,7 +1892,7 @@ static void write_object_file_prepare(const struct git_hash_algo *algo,
 static void write_object_file_prepare_literally(const struct git_hash_algo *algo,
 				      const void *buf, size_t len,
 				      const char *type, struct object_id *oid,
-				      char *hdr, int *hdrlen)
+				      char *hdr, size_t *hdrlen)
 {
 	git_hash_ctx c;
 
@@ -1944,17 +1944,17 @@ out:
 }
 
 static void hash_object_file_literally(const struct git_hash_algo *algo,
-				       const void *buf, unsigned long len,
+				       const void *buf, size_t len,
 				       const char *type, struct object_id *oid)
 {
 	char hdr[MAX_HEADER_LEN];
-	int hdrlen = sizeof(hdr);
+	size_t hdrlen = sizeof(hdr);
 
 	write_object_file_prepare_literally(algo, buf, len, type, oid, hdr, &hdrlen);
 }
 
 void hash_object_file(const struct git_hash_algo *algo, const void *buf,
-		      unsigned long len, enum object_type type,
+		      size_t len, enum object_type type,
 		      struct object_id *oid)
 {
 	hash_object_file_literally(algo, buf, len, type_name(type), oid);
@@ -2318,7 +2318,7 @@ cleanup:
 	return err;
 }
 
-int write_object_file_flags(const void *buf, unsigned long len,
+int write_object_file_flags(const void *buf, size_t len,
 			    enum object_type type, struct object_id *oid,
 			    struct object_id *compat_oid_in, unsigned flags)
 {
@@ -2327,7 +2327,7 @@ int write_object_file_flags(const void *buf, unsigned long len,
 	const struct git_hash_algo *compat = repo->compat_hash_algo;
 	struct object_id compat_oid;
 	char hdr[MAX_HEADER_LEN];
-	int hdrlen = sizeof(hdr);
+	size_t hdrlen = sizeof(hdr);
 
 	/* Generate compat_oid */
 	if (compat) {
@@ -2367,8 +2367,8 @@ int write_object_file_literally(const void *buf, size_t len,
 	const struct git_hash_algo *algo = repo->hash_algo;
 	const struct git_hash_algo *compat = repo->compat_hash_algo;
 	struct object_id compat_oid;
-	int hdrlen, status = 0;
-	int compat_type = -1;
+	size_t hdrlen;
+	int status = 0, compat_type = -1;
 
 	if (compat) {
 		compat_type = type_from_string_gently(type, -1, 1);
