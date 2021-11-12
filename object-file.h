@@ -65,7 +65,7 @@ int odb_source_loose_freshen_object(struct odb_source *source,
 				    const struct object_id *oid);
 
 int odb_source_loose_write_object(struct odb_source *source,
-				  const void *buf, unsigned long len,
+				  const void *buf, size_t len,
 				  enum object_type type, struct object_id *oid,
 				  struct object_id *compat_oid_in, unsigned flags);
 
@@ -177,7 +177,7 @@ int finalize_object_file_flags(struct repository *repo,
 			       enum finalize_object_file_flags flags);
 
 void hash_object_file(const struct git_hash_algo *algo, const void *buf,
-		      unsigned long len, enum object_type type,
+		      size_t len, enum object_type type,
 		      struct object_id *oid);
 
 /* Helper to check and "touch" a file */
