@@ -1810,7 +1810,7 @@ static void write_object_file_prepare(const struct git_hash_algo *algo,
 }
 
 static void write_object_file_prepare_literally(const struct git_hash_algo *algo,
-				      const void *buf, unsigned long len,
+				      const void *buf, size_t len,
 				      const char *type, struct object_id *oid,
 				      char *hdr, int *hdrlen)
 {
@@ -2060,7 +2060,7 @@ int write_object_file_flags(const void *buf, unsigned long len,
 	return write_loose_object(oid, hdr, hdrlen, buf, len, 0, flags);
 }
 
-int write_object_file_literally(const void *buf, unsigned long len,
+int write_object_file_literally(const void *buf, size_t len,
 				const char *type, struct object_id *oid,
 				unsigned flags)
 {
