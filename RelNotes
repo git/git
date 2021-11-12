@@ -1,1 +1,395 @@
-Documentation/RelNotes/2.34.0.txt
+Git 2.34 Release Notes
+
+======================
+
+Updates since Git 2.33
+
+----------------------
+
+UI, Workflows & Features
+
+ * Pathname expansion (like "~username/") learned a way to specify a
+
+   location relative to Git installation (e.g. its $sharedir which is
+
+   $(prefix)/share), with "%(prefix)".
+
+ * Use `ort` instead of `recursive` as the default merge strategy.
+
+ * The userdiff pattern for "java" language has been updated.
+
+ * "git rebase" by default skips changes that are equivalent to
+
+   commits that are already in the history the branch is rebased onto;
+
+   give messages when this happens to let the users be aware of
+
+   skipped commits, and also teach them how to tell "rebase" to keep
+
+   duplicated changes.
+
+ * The advice message that "git cherry-pick" gives when it asks
+
+   conflicted replay of a commit to be resolved by the end user has
+
+   been updated.
+
+ * After "git clone --recurse-submodules", all submodules are cloned
+
+   but they are not by default recursed into by other commands.  With
+
+   submodule.stickyRecursiveClone configuration set, submodule.recurse
+
+   configuration is set to true in a repository created by "clone"
+
+   with "--recurse-submodules" option.
+
+ * The logic for auto-correction of misspelt subcommands learned to go
+
+   interactive when the help.autocorrect configuration variable is set
+
+   to 'prompt'.
+
+ * "git maintenance" scheduler learned to use systemd timers as a
+
+   possible backend.
+
+ * "git diff --submodule=diff" showed failure from run_command() when
+
+   trying to run diff inside a submodule, when the user manually
+
+   removes the submodule directory.
+
+ * "git bundle unbundle" learned to show progress display.
+
+ * In cone mode, the sparse-index code path learned to remove ignored
+
+   files (like build artifacts) outside the sparse cone, allowing the
+
+   entire directory outside the sparse cone to be removed, which is
+
+   especially useful when the sparse patterns change.
+
+ * Taking advantage of the CGI interface, http-backend has been
+
+   updated to enable protocol v2 automatically when the other side
+
+   asks for it.
+
+ * The credential-cache helper has been adjusted to Windows.
+
+ * The error in "git help no-such-git-command" is handled better.
+
+ * The unicode character width table (used for output alignment) has
+
+   been updated.
+
+ * The ref iteration code used to optionally allow dangling refs to be
+
+   shown, which has been tightened up.
+
+Performance, Internal Implementation, Development Support etc.
+
+ * "git bisect" spawned "git show-branch" only to pretty-print the
+
+   title of the commit after checking out the next version to be
+
+   tested; this has been rewritten in C.
+
+ * "git add" can work better with the sparse index.
+
+ * Support for ancient versions of cURL library (pre 7.19.4) has been
+
+   dropped.
+
+ * A handful of tests that assumed implementation details of files
+
+   backend for refs have been cleaned up.
+
+ * trace2 logs learned to show parent process name to see in what
+
+   context Git was invoked.
+
+ * Loading of ref tips to prepare for common ancestry negotiation in
+
+   "git fetch-pack" has been optimized by taking advantage of the
+
+   commit graph when available.
+
+ * Remind developers that the userdiff patterns should be kept simple
+
+   and permissive, assuming that the contents they apply are always
+
+   syntactically correct.
+
+ * The current implementation of GIT_TEST_FAIL_PREREQS is broken in
+
+   that checking for the lack of a prerequisite would not work.  Avoid
+
+   the use of "if ! test_have_prereq X" in a test script.
+
+ * The revision traversal API has been optimized by taking advantage
+
+   of the commit-graph, when available, to determine if a commit is
+
+   reachable from any of the existing refs.
+
+ * "git fetch --quiet" optimization to avoid useless computation of
+
+   info that will never be displayed.
+
+ * Callers from older advice_config[] based API has been updated to
+
+   use the newer advice_if_enabled() and advice_enabled() API.
+
+ * Teach "test_pause" and "debug" helpers to allow using the HOME and
+
+   TERM environment variables the user usually uses.
+
+ * "make INSTALL_STRIP=-s install" allows the installation step to use
+
+   "install -s" to strip the binaries as they get installed.
+
+ * Code that handles large number of refs in the "git fetch" code
+
+   path has been optimized.
+
+ * The reachability bitmap file used to be generated only for a single
+
+   pack, but now we've learned to generate bitmaps for history that
+
+   span across multiple packfiles.
+
+ * The code to make "git grep" recurse into submodules has been
+
+   updated to migrate away from the "add submodule's object store as
+
+   an alternate object store" mechanism (which is suboptimal).
+
+ * The tracing of process ancestry information has been enhanced.
+
+ * Reduce number of write(2) system calls while sending the
+
+   ref advertisement.
+
+ * Update the build procedure to use the "-pedantic" build when
+
+   DEVELOPER makefile macro is in effect.
+
+ * Large part of "git submodule add" gets rewritten in C.
+
+ * The run-command API has been updated so that the callers can easily
+
+   ask the file descriptors open for packfiles to be closed immediately
+
+   before spawning commands that may trigger auto-gc.
+
+ * An oddball OPTION_ARGUMENT feature has been removed from the
+
+   parse-options API.
+
+ * The mergesort implementation used to sort linked list has been
+
+   optimized.
+
+ * Remove external declaration of functions that no longer exist.
+
+ * "git multi-pack-index write --bitmap" learns to propagate the
+
+   hashcache from original bitmap to resulting bitmap.
+
+ * CI learns to run the leak sanitizer builds.
+
+Fixes since v2.33
+
+-----------------
+
+ * Input validation of "git pack-objects --stdin-packs" has been
+
+   corrected.
+
+ * Bugfix for common ancestor negotiation recently introduced in "git
+
+   push" code path.
+
+ * "git pull" had various corner cases that were not well thought out
+
+   around its --rebase backend, e.g. "git pull --ff-only" did not stop
+
+   but went ahead and rebased when the history on other side is not a
+
+   descendant of our history.  The series tries to fix them up.
+
+ * "git apply" miscounted the bytes and failed to read to the end of
+
+   binary hunks.
+
+ * "git range-diff" code clean-up.
+
+ * "git commit --fixup" now works with "--edit" again, after it was
+
+   broken in v2.32.
+
+ * Use upload-artifacts v1 (instead of v2) for 32-bit linux, as the
+
+   new version has a blocker bug for that architecture.
+
+ * Checking out all the paths from HEAD during the last conflicted
+
+   step in "git rebase" and continuing would cause the step to be
+
+   skipped (which is expected), but leaves MERGE_MSG file behind in
+
+   $GIT_DIR and confuses the next "git commit", which has been
+
+   corrected.
+
+ * Various bugs in "git rebase -r" have been fixed.
+
+ * mmap() imitation used to call xmalloc() that dies upon malloc()
+
+   failure, which has been corrected to just return an error to the
+
+   caller to be handled.
+
+ * "git diff --relative" segfaulted and/or produced incorrect result
+
+   when there are unmerged paths.
+
+ * The delayed checkout code path in "git checkout" etc. were chatty
+
+   even when --quiet and/or --no-progress options were given.
+
+ * "git branch -D <branch>" used to refuse to remove a broken branch
+
+   ref that points at a missing commit, which has been corrected.
+
+ * Build update for Apple clang.
+
+ * The parser for the "--nl" option of "git column" has been
+
+   corrected.
+
+ * "git upload-pack" which runs on the other side of "git fetch"
+
+   forgot to take the ref namespaces into account when handling
+
+   want-ref requests.
+
+ * The sparse-index support can corrupt the index structure by storing
+
+   a stale and/or uninitialized data, which has been corrected.
+
+ * Buggy tests could damage repositories outside the throw-away test
+
+   area we created.  We now by default export GIT_CEILING_DIRECTORIES
+
+   to limit the damage from such a stray test.
+
+ * Even when running "git send-email" without its own threaded
+
+   discussion support, a threading related header in one message is
+
+   carried over to the subsequent message to result in an unwanted
+
+   threading, which has been corrected.
+
+ * The output from "git fast-export", when its anonymization feature
+
+   is in use, showed an annotated tag incorrectly.
+
+ * Doc update plus improved error reporting.
+
+ * Recent "diff -m" changes broke "gitk", which has been corrected.
+
+ * Regression fix.
+
+ * The "git apply -3" code path learned not to bother the lower level
+
+   merge machinery when the three-way merge can be trivially resolved
+
+   without the content level merge.  This fixes a regression caused by
+
+   recent "-3way first and fall back to direct application" change.
+
+ * The code that optionally creates the *.rev reverse index file has
+
+   been optimized to avoid needless computation when it is not writing
+
+   the file out.
+
+ * "git range-diff -I... <range> <range>" segfaulted, which has been
+
+   corrected.
+
+ * The order in which various files that make up a single (conceptual)
+
+   packfile has been reevaluated and straightened up.  This matters in
+
+   correctness, as an incomplete set of files must not be shown to a
+
+   running Git.
+
+ * The "mode" word is useless in a call to open(2) that does not
+
+   create a new file.  Such a call in the files backend of the ref
+
+   subsystem has been cleaned up.
+
+ * "git update-ref --stdin" failed to flush its output as needed,
+
+   which potentially led the conversation to a deadlock.
+
+ * When "git am --abort" fails to abort correctly, it still exited
+
+   with exit status of 0, which has been corrected.
+
+ * Correct nr and alloc members of strvec struct to be of type size_t.
+
+ * "git stash", where the tentative change involves changing a
+
+   directory to a file (or vice versa), was confused, which has been
+
+   corrected.
+
+ * "git clone" from a repository whose HEAD is unborn into a bare
+
+   repository didn't follow the branch name the other side used, which
+
+   is corrected.
+
+ * "git cvsserver" had a long-standing bug in its authentication code,
+
+   which has finally been corrected (it is unclear and is a separate
+
+   question if anybody is seriously using it, though).
+
+ * "git difftool --dir-diff" mishandled symbolic links.
+
+ * Sensitive data in the HTTP trace were supposed to be redacted, but
+
+   we failed to do so in HTTP/2 requests.
+
+ * "make clean" has been updated to remove leftover .depend/
+
+   directories, even when it is not told to use them to compute header
+
+   dependencies.
+
+ * Protocol v0 clients can get stuck parsing a malformed feature line.
+
+ * Other code cleanup, docfix, build fix, etc.
+
+   (merge f188160be9 ab/bundle-remove-verbose-option later to maint).
+
+   (merge 8c6b4332b4 rs/close-pack-leakfix later to maint).
+
+   (merge 51b04c05b7 bs/difftool-msg-tweak later to maint).
+
+   (merge dd20e4a6db ab/make-compdb-fix later to maint).
+
+   (merge 6ffb990dc4 os/status-docfix later to maint).
+
+   (merge 100c2da2d3 rs/p3400-lose-tac later to maint).
+
+   (merge 76f3b69896 tb/aggregate-ignore-leading-whitespaces later to maint).
