@@ -246,10 +246,10 @@ static inline void *repo_read_object_file(struct repository *r,
 int oid_object_info(struct repository *r, const struct object_id *, unsigned long *);
 
 int hash_object_file(const struct git_hash_algo *algo, const void *buf,
-		     unsigned long len, const char *type,
+		     size_t len, const char *type,
 		     struct object_id *oid);
 
-int write_object_file_flags(const void *buf, unsigned long len,
+int write_object_file_flags(const void *buf, size_t len,
 			    const char *type, struct object_id *oid,
 			    unsigned flags);
 static inline int write_object_file(const void *buf, unsigned long len,
