@@ -258,7 +258,7 @@ static inline int write_object_file(const void *buf, unsigned long len,
 	return write_object_file_flags(buf, len, type, oid, 0);
 }
 
-int hash_object_file_literally(const void *buf, unsigned long len,
+int hash_object_file_literally(const void *buf, size_t len,
 			       const char *type, struct object_id *oid,
 			       unsigned flags);
 
