@@ -2557,10 +2557,9 @@ int read_loose_object(const char *path,
 			goto out;
 		}
 		if (check_object_signature(the_repository, expected_oid,
-					   *contents, *size, oi->type_name->buf, real_oid)) {
-			free(*contents);
+					   *contents, *size,
+					   oi->type_name->buf, real_oid))
 			goto out;
-		}
 	}
 
 	ret = 0; /* everything checks out */

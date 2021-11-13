@@ -17,6 +17,14 @@ test_expect_success setup '
 	export GIT_ALLOC_LIMIT
 '
 
+test_expect_success 'enter "large" codepath, with small core.bigFileThreshold' '
+	test_when_finished "rm -rf repo" &&
+
+	git init --bare repo &&
+	echo large | git -C repo hash-object -w --stdin &&
+	git -C repo -c core.bigfilethreshold=4 fsck
+'
+
 # add a large file with different settings
 while read expect config
 do

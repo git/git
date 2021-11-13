@@ -20,7 +20,7 @@ static struct tr2_dst tr2dst_event = { TR2_SYSENV_EVENT, 0, 0, 0, 0 };
  * a new field to an existing event, do not require an increment to the EVENT
  * format version.
  */
-#define TR2_EVENT_VERSION "2"
+#define TR2_EVENT_VERSION "3"
 
 /*
  * Region nesting limit for messages written to the event target.
