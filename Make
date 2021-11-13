@@ -251,6 +251,7 @@ set	MAN_BASE_URL='"http://www.kernel.org/pub/software/scm/git/docs/"' \
 	MAN_BOLD_LITERAL=YesPlease \
 	$SHA1IMPLEMENTATION \
 	GNU_ROFF=YesPlease \
+	USE_LIBPCRE=YesPlease \
 	"$@"
 
 # Platform hack
