@@ -909,8 +909,8 @@ msgstr ""
 "Avís: s'està canviant a «%s».\n"
 "\n"
 "Esteu en un estat de «HEAD separat». Podeu donar un cop d'ull, fer canvis\n"
-"experimentals i cometre'ls, i podeu descartar qualsevol comissió que feu\n"
-"en aquest estat sense impactar a cap branca tornant a una branca.\n"
+"experimentals i cometre'ls. Podeu descartar qualsevol comissió que feu\n"
+"en aquest estat, sense impactar a cap branca, tornant a una branca.\n"
 "\n"
 "Si voleu crear una branca nova per a conservar les comissions que creeu,\n"
 "poder fer-ho (ara o més tard) usant -c amb l'ordre switch. Exemple:\n"
@@ -10033,7 +10033,7 @@ msgstr "  (useu «git add/rm <fitxer>...» per a actualitzar què es cometrà)"
 #: wt-status.c:241
 msgid "  (use \"git restore <file>...\" to discard changes in working directory)"
 msgstr ""
-"  (useu «git restore <file>...» per a descartar els canvis en el directori "
+"  (useu «git restore <file>...» per a descartar canvis en el directori "
 "de treball)"
 
 #: wt-status.c:243
@@ -10676,9 +10676,8 @@ msgid "warn when adding an embedded repository"
 msgstr "avisa'm quan s'afegeixi un repositori incrustat"
 
 #: builtin/add.c:395
-#, fuzzy
 msgid "backend for `git stash -p`"
-msgstr "backend per a «git stash -p»"
+msgstr "rerefons per a «git stash -p»"
 
 #: builtin/add.c:413
 #, c-format
@@ -10855,11 +10854,10 @@ msgstr ""
 "--abort»."
 
 #: builtin/am.c:1224
-#, fuzzy
 msgid ""
 "Patch sent with format=flowed; space at the end of lines might be lost."
 msgstr ""
-"Pedaç enviat amb format=flux; es pot perdre espai al final de les línies."
+"Pedaç enviat amb format=flowed; es pot perdre l'espai al final de les línies."
 
 #: builtin/am.c:1252
 msgid "Patch is empty."
@@ -10948,10 +10946,8 @@ msgid "Patch failed at %s %.*s"
 msgstr "El pedaç ha fallat a %s %.*s"
 
 #: builtin/am.c:1825
-#, fuzzy
 msgid "Use 'git am --show-current-patch=diff' to see the failed patch"
-msgstr ""
-"Utilitzeu 'git am --show-current-patch=diff' per veure el pedaç fallit"
+msgstr "Useu «git am --show-current-patch=diff» per veure el pedaç que ha fallat"
 
 #: builtin/am.c:1868
 msgid ""
@@ -11214,13 +11210,12 @@ msgid "git bisect--helper --bisect-reset [<commit>]"
 msgstr "git bisect--helper --bisect-reset [<comissió>]"
 
 #: builtin/bisect--helper.c:25
-#, fuzzy
 msgid ""
 "git bisect--helper --bisect-terms [--term-good | --term-old | --term-bad | "
 "--term-new]"
 msgstr ""
 "git bisect--helper --bisect-terms [--term-good | --term-old | --term-bad | "
-"--term-bad | --term-new]"
+"--term-new]"
 
 #: builtin/bisect--helper.c:26
 msgid ""
@@ -11253,14 +11248,12 @@ msgid "git bisect--helper --bisect-skip [(<rev>|<range>)...]"
 msgstr "git bisect--helper --bisect-skip [(<rev>|<range>)...]"
 
 #: builtin/bisect--helper.c:33
-#, fuzzy
 msgid "git bisect--helper --bisect-visualize"
-msgstr "git bisect--helper --bisect-next"
+msgstr "git bisect--helper --bisect-visualize"
 
 #: builtin/bisect--helper.c:34
-#, fuzzy
 msgid "git bisect--helper --bisect-run <cmd>..."
-msgstr "git bisect--helper --bisect-reset [<comissió>]"
+msgstr "git bisect--helper --bisect-run <ordre>..."
 
 #: builtin/bisect--helper.c:109
 #, c-format
@@ -11273,9 +11266,9 @@ msgid "could not write to file '%s'"
 msgstr "no s'ha pogut escriure el fitxer «%s»"
 
 #: builtin/bisect--helper.c:154
-#, fuzzy, c-format
+#, c-format
 msgid "cannot open file '%s' for reading"
-msgstr "no es pot llegir «%s» per a reproducció"
+msgstr "no es pot obrir «%s» per a lectura"
 
 #: builtin/bisect--helper.c:170
 #, c-format
@@ -11325,7 +11318,7 @@ msgid "couldn't get the oid of the rev '%s'"
 msgstr "no s'ha pogut obtenir l'oid de la revisió «%s»"
 
 #: builtin/bisect--helper.c:288
-#, fuzzy, c-format
+#, c-format
 msgid "couldn't open the file '%s'"
 msgstr "no s'ha pogut obrir el fitxer «%s»"
 
@@ -11483,9 +11476,9 @@ msgid "bisect run failed: no command provided."
 msgstr "ha fallat l'execució de bisect: no s'ha proporcionat cap ordre."
 
 #: builtin/bisect--helper.c:1116
-#, fuzzy, c-format
+#, c-format
 msgid "running %s\n"
-msgstr "S'està podant %s"
+msgstr "s'està executant %s\n"
 
 #: builtin/bisect--helper.c:1120
 #, fuzzy, c-format
@@ -11495,9 +11488,9 @@ msgstr ""
 "el codi de sortida $res de «$command» és < 0 o bé >= 128"
 
 #: builtin/bisect--helper.c:1136
-#, fuzzy, c-format
+#, c-format
 msgid "cannot open file '%s' for writing"
-msgstr "no s'ha pogut obrir «%s» per a escriptura"
+msgstr "no es pot obrir «%s» per a escriptura"
 
 #: builtin/bisect--helper.c:1152
 msgid "bisect run cannot continue any more"
@@ -11743,9 +11736,8 @@ msgstr ""
 "color les metadades redundants de la línia anterior de manera diferent"
 
 #: builtin/blame.c:882
-#, fuzzy
 msgid "color lines by age"
-msgstr "coloreja les línies per edat"
+msgstr "acoloreix les línies per antiguitat"
 
 #: builtin/blame.c:883
 msgid "spend extra cycles to find better match"
@@ -12692,13 +12684,13 @@ msgid "you need to resolve your current index first"
 msgstr "heu de primer resoldre el vostre índex actual"
 
 #: builtin/checkout.c:786
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "cannot continue with staged changes in the following files:\n"
 "%s"
 msgstr ""
-"no es poden continuar amb els canvis «staged» als fitxers següents "
-"percentatges"
+"no es pot continuar amb els canvis «staged» als fitxers següents:\n"
+"%s"
 
 #: builtin/checkout.c:879
 #, c-format
@@ -13660,9 +13652,8 @@ msgid "--local is ignored"
 msgstr "--local s'ignora"
 
 #: builtin/clone.c:1216 builtin/clone.c:1276
-#, fuzzy
 msgid "remote transport reported error"
-msgstr "«%s» error reportat pel filtre"
+msgstr "el transport remot ha informat d'un error"
 
 #: builtin/clone.c:1228 builtin/clone.c:1239
 #, c-format
@@ -13690,19 +13681,16 @@ msgid "maximum width"
 msgstr "amplada màxima"
 
 #: builtin/column.c:31
-#, fuzzy
 msgid "padding space on left border"
-msgstr "Espai d'encoixinada en el marge esquerre"
+msgstr "espai de farciment al marge esquerre"
 
 #: builtin/column.c:32
-#, fuzzy
 msgid "padding space on right border"
-msgstr "Espai d'encoixinada en el marge dret"
+msgstr "espai de farciment al marge dret"
 
 #: builtin/column.c:33
-#, fuzzy
 msgid "padding space between columns"
-msgstr "Espai d'encoixinada entre columnes"
+msgstr "espai de farciment entre columnes"
 
 #: builtin/column.c:51
 msgid "--command must be the first argument"
@@ -13925,7 +13913,6 @@ msgid "Otherwise, please use 'git cherry-pick --skip'\n"
 msgstr "Altrament, si us plau useu «git cherry-pick --skip»\n"
 
 #: builtin/commit.c:70
-#, fuzzy
 msgid ""
 "and then use:\n"
 "\n"
@@ -13937,9 +13924,15 @@ msgid ""
 "    git cherry-pick --skip\n"
 "\n"
 msgstr ""
-"i després utilitzeu git cherry-pick --continue per tornar a seleccionar les "
-"comissions restants. Si voleu ometre aquesta publicació utilitzeu git "
-"cherry-pick --skip"
+"i després utilitzeu:\n"
+"\n"
+"    git cherry-pick --continue\n"
+"\n"
+"per continuar seleccionant les comissions restants.\n"
+"Si voleu ometre aquesta comissió, useu:\n"
+"\n"
+"    git cherry-pick --skip\n"
+"\n"
 
 #: builtin/commit.c:325
 msgid "failed to unpack HEAD tree object"
@@ -14072,14 +14065,13 @@ msgstr ""
 "comissió buit avorta la comissió.\n"
 
 #: builtin/commit.c:900
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Please enter the commit message for your changes. Lines starting\n"
 "with '%c' will be kept; you may remove them yourself if you want to.\n"
 msgstr ""
-"Introduïu el missatge de comissió dels vostres canvis.\n"
-"Es mantindran les línies que comencin amb «%c»; podeu eliminar-les vosaltres\n"
-"mateixos si voleu. Un missatge buit avorta la comissió.\n"
+"Introduïu el missatge de comissió pels vostres canvis. Es mantindran\n"
+"les línies que comencin amb «%c»; podeu eliminar-les si voleu.\n"
 
 #: builtin/commit.c:904
 #, c-format
@@ -17402,9 +17394,8 @@ msgid "Cannot access work tree '%s'"
 msgstr "No es pot accedir a l'arbre de treball «%s»"
 
 #: builtin/init-db.c:684
-#, fuzzy
 msgid "--separate-git-dir incompatible with bare repository"
-msgstr "--separate-git-dir és incompatible amb --bisect"
+msgstr "--separate-git-dir és incompatible amb un repositori nu"
 
 #: builtin/interpret-trailers.c:16
 msgid ""
@@ -17846,9 +17837,8 @@ msgid "--check does not make sense"
 msgstr "--check no té sentit"
 
 #: builtin/log.c:1967
-#, fuzzy
 msgid "--stdout, --output, and --output-directory are mutually exclusive"
-msgstr "-b, -B i --detach són mútuament excloents"
+msgstr "--stdout, --output, i --output-directory són mútuament excloents"
 
 #: builtin/log.c:2089
 msgid "--interdiff requires --cover-letter or single patch"
@@ -17912,9 +17902,8 @@ msgid "git ls-files [<options>] [<file>...]"
 msgstr "git ls-files [<opcions>] [<fitxer>...]"
 
 #: builtin/ls-files.c:615
-#, fuzzy
 msgid "separate paths with the NUL character"
-msgstr "els camins se separen amb el caràcter NUL"
+msgstr "separa els camins amb el caràcter NUL"
 
 #: builtin/ls-files.c:617
 msgid "identify the file status with tags"
@@ -17982,9 +17971,9 @@ msgid "skip files matching pattern"
 msgstr "omet els fitxers coincidents amb el patró"
 
 #: builtin/ls-files.c:652
-#, fuzzy
+
 msgid "read exclude patterns from <file>"
-msgstr "llegeix els patrons des d'un fitxer"
+msgstr "llegeix els patrons des de <file>"
 
 #: builtin/ls-files.c:655
 msgid "read additional per-directory exclude patterns in <file>"
