@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2021-11-04 08:34+0800\n"
+"POT-Creation-Date: 2021-11-10 08:55+0800\n"
 "PO-Revision-Date: 2021-08-14 09:35+0700\n"
 "Last-Translator: Bagas Sanjaya <bagasdotme@gmail.com>\n"
 "Language-Team: Indonesian\n"
@@ -210,7 +210,7 @@ msgstr "tak tergelar"
 
 #: add-interactive.c:1148 apply.c:5016 apply.c:5019 builtin/am.c:2311
 #: builtin/am.c:2314 builtin/bugreport.c:107 builtin/clone.c:128
-#: builtin/fetch.c:152 builtin/merge.c:286 builtin/pull.c:190
+#: builtin/fetch.c:152 builtin/merge.c:286 builtin/pull.c:194
 #: builtin/submodule--helper.c:404 builtin/submodule--helper.c:1857
 #: builtin/submodule--helper.c:1860 builtin/submodule--helper.c:2503
 #: builtin/submodule--helper.c:2506 builtin/submodule--helper.c:2573
@@ -4132,7 +4132,8 @@ msgstr "berkas pak diharapkan dikirim setelah 'ready'"
 
 #: fetch-pack.c:1415
 msgid "expected no other sections to be sent after no 'ready'"
-msgstr "tidak ada seksi lainnya yang diharapkan dikirim setelah tidak ada 'ready'"
+msgstr ""
+"tidak ada seksi lainnya yang diharapkan dikirim setelah tidak ada 'ready'"
 
 #: fetch-pack.c:1456
 #, c-format
@@ -4203,13 +4204,14 @@ msgid ""
 "ssh-keygen -Y find-principals/verify is needed for ssh signature "
 "verification (available in openssh version 8.2p1+)"
 msgstr ""
-"ssh-keygen -Y find-principals/verify diperlukan untuk verifikasi "
-"tandatangan ssh (tersedia di openssh versi 8.2p1+)"
+"ssh-keygen -Y find-principals/verify diperlukan untuk verifikasi tandatangan "
+"ssh (tersedia di openssh versi 8.2p1+)"
 
 #: gpg-interface.c:523
 #, c-format
 msgid "ssh signing revocation file configured but not found: %s"
-msgstr "berkas pencabutan penandatanganan ssh terkonfigurasi tapi tidak ada: %s"
+msgstr ""
+"berkas pencabutan penandatanganan ssh terkonfigurasi tapi tidak ada: %s"
 
 #: gpg-interface.c:576
 #, c-format
@@ -4260,8 +4262,8 @@ msgid ""
 "ssh-keygen -Y sign is needed for ssh signing (available in openssh version "
 "8.2p1+)"
 msgstr ""
-"ssh-keygen -Y sign diperlukan untuk penandatanganan ssh (tersedia di openssh  "
-"versi 8.2p1+)"
+"ssh-keygen -Y sign diperlukan untuk penandatanganan ssh (tersedia di "
+"openssh  versi 8.2p1+)"
 
 #: gpg-interface.c:954
 #, c-format
@@ -5103,82 +5105,82 @@ msgstr ""
 
 #: merge.c:41
 msgid "failed to read the cache"
-msgstr ""
+msgstr "gagal membaca tembolok"
 
 #: merge.c:102 rerere.c:704 builtin/am.c:1933 builtin/am.c:1967
 #: builtin/checkout.c:590 builtin/checkout.c:842 builtin/clone.c:706
 #: builtin/stash.c:269
 msgid "unable to write new index file"
-msgstr ""
+msgstr "gagal menulis berkas indeks baru"
 
 #: midx.c:78
 msgid "multi-pack-index OID fanout is of the wrong size"
-msgstr ""
+msgstr "OID kipas-keluar indeks multipak salah ukuran"
 
 #: midx.c:109
 #, c-format
 msgid "multi-pack-index file %s is too small"
-msgstr ""
+msgstr "berkas indeks multipak %s terlalu kecil"
 
 #: midx.c:125
 #, c-format
 msgid "multi-pack-index signature 0x%08x does not match signature 0x%08x"
-msgstr ""
+msgstr "tanda tangan indeks multipak 0x%08x tidak cocok dengan tanda tangan 0x%08x"
 
 #: midx.c:130
 #, c-format
 msgid "multi-pack-index version %d not recognized"
-msgstr ""
+msgstr "versi indeks multipak %d tidak dikenal"
 
 #: midx.c:135
 #, c-format
 msgid "multi-pack-index hash version %u does not match version %u"
-msgstr ""
+msgstr "versi hash indeks multipak %u tidak cocok dengan versi %u"
 
 #: midx.c:152
 msgid "multi-pack-index missing required pack-name chunk"
-msgstr ""
+msgstr "indeks multipak kehilangan bingkah pack-name yang diperlukan"
 
 #: midx.c:154
 msgid "multi-pack-index missing required OID fanout chunk"
-msgstr ""
+msgstr "indeks multipak kehilangan bingkah OID kipas keluar yang diperlukan"
 
 #: midx.c:156
 msgid "multi-pack-index missing required OID lookup chunk"
-msgstr ""
+msgstr "indeks multipak kehilangan bingkah pencarian OID yang diperlukan"
 
 #: midx.c:158
 msgid "multi-pack-index missing required object offsets chunk"
-msgstr ""
+msgstr "indeks multipak kehilangan bingkah offset objek yang diperlukan"
 
 #: midx.c:174
 #, c-format
 msgid "multi-pack-index pack names out of order: '%s' before '%s'"
-msgstr ""
+msgstr "nama pak indeks multipak tidak berurutan: '%s' sebelum '%s'"
 
 #: midx.c:221
 #, c-format
 msgid "bad pack-int-id: %u (%u total packs)"
-msgstr ""
+msgstr "pack-int-id jelek: %u (total pak %u)"
 
 #: midx.c:271
 msgid "multi-pack-index stores a 64-bit offset, but off_t is too small"
-msgstr ""
+msgstr "indeks multipak simpan offset 64-bit, tapi off_t terlalu kecil"
 
 #: midx.c:502
 #, c-format
 msgid "failed to add packfile '%s'"
-msgstr ""
+msgstr "gagal menambah berkas pak '%s'"
 
 #: midx.c:508
 #, c-format
 msgid "failed to open pack-index '%s'"
-msgstr ""
+msgstr "gagal membuka indeks pak '%s'"
 
 #: midx.c:576
 #, c-format
 msgid "failed to locate object %d in packfile"
-msgstr ""
+msgstr "gagal melokasi objek %d di dalam berkas pak"
 
 #: midx.c:892
 msgid "cannot store reverse index file"
@@ -5196,11 +5198,11 @@ msgstr "baris jelek '%s'."
 
 #: midx.c:1159
 msgid "ignoring existing multi-pack-index; checksum mismatch"
-msgstr ""
+msgstr "abaikan indeks multipak yang sudah ada; checksum tidak cocok"
 
 #: midx.c:1184
 msgid "could not load pack"
-msgstr ""
+msgstr "tidak dapat memuat pak"
 
 #: midx.c:1190
 #, c-format
@@ -5209,35 +5211,35 @@ msgstr "tidak dapat membuka indeks untuk %s"
 
 #: midx.c:1201
 msgid "Adding packfiles to multi-pack-index"
-msgstr ""
+msgstr "Menambahkan berkas pak ke indeks multipak"
 
 #: midx.c:1244
 #, c-format
 msgid "unknown preferred pack: '%s'"
-msgstr ""
+msgstr "pak yang disukai tidak dikenal: '%s'"
 
 #: midx.c:1289
 #, c-format
 msgid "cannot select preferred pack %s with no objects"
-msgstr ""
+msgstr "tidak dapat memilih pak yang disukai %s tanpa objek"
 
 #: midx.c:1321
 #, c-format
 msgid "did not see pack-file %s to drop"
-msgstr ""
+msgstr "tidak melihat berkas pak %s untuk dijeblokkan"
 
 #: midx.c:1367
 #, c-format
 msgid "preferred pack '%s' is expired"
-msgstr ""
+msgstr "pak yang disukai '%s' kadaluarsa"
 
 #: midx.c:1380
 msgid "no pack files to index."
-msgstr ""
+msgstr "tidak ada berkas pak untuk diindeks."
 
 #: midx.c:1417
 msgid "could not write multi-pack bitmap"
-msgstr ""
+msgstr "tidak dapat menulis bitmap multipak"
 
 #: midx.c:1427
 msgid "could not write multi-pack-index"
@@ -5251,77 +5253,78 @@ msgstr "gagal menghapus %s"
 #: midx.c:1517
 #, c-format
 msgid "failed to clear multi-pack-index at %s"
-msgstr ""
+msgstr "gagal membersihkan indeks multipak pada %s"
 
 #: midx.c:1577
 msgid "multi-pack-index file exists, but failed to parse"
-msgstr ""
+msgstr "berkas indeks multipak ada, tetapi gagal diurai"
 
 #: midx.c:1585
 msgid "incorrect checksum"
-msgstr ""
+msgstr "checksum salah"
 
 #: midx.c:1588
 msgid "Looking for referenced packfiles"
-msgstr ""
+msgstr "Mencari berkas pak yang direferensikan"
 
 #: midx.c:1603
 #, c-format
 msgid ""
 "oid fanout out of order: fanout[%d] = %<PRIx32> > %<PRIx32> = fanout[%d]"
 msgstr ""
+"kipas-keluar oid tidak berurutan: fanout[%d] =%<PRIx32> > %<PRIx32> = fanout[%d]"
 
 #: midx.c:1608
 msgid "the midx contains no oid"
-msgstr ""
+msgstr "midx tidak berisi oid"
 
 #: midx.c:1617
 msgid "Verifying OID order in multi-pack-index"
-msgstr ""
+msgstr "Memverifikasi urutan OID di dalam indeks multipak"
 
 #: midx.c:1626
 #, c-format
 msgid "oid lookup out of order: oid[%d] = %s >= %s = oid[%d]"
-msgstr ""
+msgstr "urutan pencarian oid tidak berurutan: oid[%d] = %s >= %s = oid[%d]"
 
 #: midx.c:1646
 msgid "Sorting objects by packfile"
-msgstr ""
+msgstr "Mengurutkan objek oleh berkas pak"
 
 #: midx.c:1653
 msgid "Verifying object offsets"
-msgstr ""
+msgstr "Memverifikasi offset objek"
 
 #: midx.c:1669
 #, c-format
 msgid "failed to load pack entry for oid[%d] = %s"
-msgstr ""
+msgstr "gagal memuat entri pak untuk oid[%d] = %s"
 
 #: midx.c:1675
 #, c-format
 msgid "failed to load pack-index for packfile %s"
-msgstr ""
+msgstr "gagal memuat indeks pak untuk berkas pak %s"
 
 #: midx.c:1684
 #, c-format
 msgid "incorrect object offset for oid[%d] = %s: %<PRIx64> != %<PRIx64>"
-msgstr ""
+msgstr "offset objek salah untuk oid[%d] = %s: %<PRIx64> != %<PRIx64>"
 
 #: midx.c:1709
 msgid "Counting referenced objects"
-msgstr ""
+msgstr "Menghitung objek tereferensi"
 
 #: midx.c:1719
 msgid "Finding and deleting unreferenced packfiles"
-msgstr ""
+msgstr "Mencari dan menghapus berkas pak tak tereferensi"
 
 #: midx.c:1911
 msgid "could not start pack-objects"
-msgstr ""
+msgstr "tidak dapat memulai pack-objects"
 
 #: midx.c:1931
 msgid "could not finish pack-objects"
-msgstr ""
+msgstr "tidak dapat menyelesaikan pack-objects"
 
 #: name-hash.c:542
 #, c-format
@@ -6369,12 +6372,16 @@ msgid ""
 "continue'.\n"
 "Or you can abort the rebase with 'git rebase --abort'.\n"
 msgstr ""
+"Anda dapat memperbaiki ini dengan 'git rebase --edit-todo' lalu jalankan 'git "
+"rebase --continue'.\n"
+"Atau Anda dapat membatalkan pendasaran ulang dengan 'git rebase --abort'.\n"
 
 #: rebase-interactive.c:33
 #, c-format
 msgid ""
 "unrecognized setting %s for option rebase.missingCommitsCheck. Ignoring."
 msgstr ""
+"setelan %s tidak dikenal untuk opsi rebase.missingCommitsCheck. Abaikan."
 
 #: rebase-interactive.c:42
 msgid ""
@@ -6400,25 +6407,50 @@ msgid ""
 "\n"
 "These lines can be re-ordered; they are executed from top to bottom.\n"
 msgstr ""
+"\n"
+"Perintah:\n"
+"p, pick <komit> = gunakan komit\n"
+"r, reword <komit> = gunakan komit, tapi sunting pesan komit\n"
+"e, edit <komit> = gunakan komit, tapi berhenti untuk amandemen\n"
+"s, squash <komit> = gunakan komit, tapi lebur ke komit sebelumnya\n"
+"f, fixup [-C | -c] <komit> = seperti \"squash\" tapi hanya pertahankan\n"
+"                   pesan komit sebelumnya, kecuali -C digunakan, dimana\n"
+"                   hanya pertahankan pesan komit ini; -c sama dengan -C tapi\n"
+"                   buka penyunting"
+"x, exec <perintah> = jalankan perintah (sisa baris) menggunakan cangkang\n"
+"b, break = berhenti disini (lanjutkan pendasaran ulang nanti dengan 'git rebase --continue')\n"
+"d, drop <komit> = hapus komit\n"
+"l, label <label> = tandai HEAD saat ini dengan nama\n"
+"t, reset <label> = setel ulang HEAD ke sebuah label\n"
+"m, merge [-C <komit> | -c <komit>] <label> [# <satu baris>]\n"
+".       buat komit penggabungan dengan pesan komit penggabungan asli\n"
+".       (atau satu baris, jika tidak ada komit penggabungan asli yang\n"
+".       disebutkan); gunakan -c <komit> untuk menulis ulang pesan komit\n"
+"\n"
+"Baris diatas dapat disusun ulang; hal itu dieksekusi dari atas ke bawah.\n"
 
 #: rebase-interactive.c:66
 #, c-format
 msgid "Rebase %s onto %s (%d command)"
 msgid_plural "Rebase %s onto %s (%d commands)"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Dasarkan ulang %s kepada %s (%d perintah)"
+msgstr[1] "Dasarkan ulang %s kepada %s (%d perintah)"
 
 #: rebase-interactive.c:75
 msgid ""
 "\n"
 "Do not remove any line. Use 'drop' explicitly to remove a commit.\n"
 msgstr ""
+"\n"
+"Jangan hapus baris apapun. Gunakan 'drop' secara eksplisit untuk menghapus komit.\n"
 
 #: rebase-interactive.c:78
 msgid ""
 "\n"
 "If you remove a line here THAT COMMIT WILL BE LOST.\n"
 msgstr ""
+"\n"
+"Jika Anda menghapus sebaris disini KOMIT TERSEBUT AKAN HILANG.\n"
 
 #: rebase-interactive.c:84
 msgid ""
@@ -6428,6 +6460,11 @@ msgid ""
 "    git rebase --continue\n"
 "\n"
 msgstr ""
+"\n"
+"Anda sedang menyunting berkas todo dari pendasaran ulang interaktif yang sedang berjalan.\n"
+"Untuk melanjutkan pendasaran ulang setelah menyunting, jalankan:\n"
+"    git rebase --continue\n"
+"\n"
 
 #: rebase-interactive.c:89
 msgid ""
@@ -6435,18 +6472,21 @@ msgid ""
 "However, if you remove everything, the rebase will be aborted.\n"
 "\n"
 msgstr ""
+"\n"
+"Bagaimanapun, jika Anda menghapus semuanya, pendasaran ulang akan dibatalkan.\n"
+"\n"
 
 #: rebase-interactive.c:113 rerere.c:469 rerere.c:676 sequencer.c:3888
 #: sequencer.c:3914 sequencer.c:5711 builtin/fsck.c:328 builtin/gc.c:1789
 #: builtin/rebase.c:190
 #, c-format
 msgid "could not write '%s'"
-msgstr ""
+msgstr "tidak dapat menulis '%s'"
 
 #: rebase-interactive.c:119
 #, c-format
 msgid "could not write '%s'."
-msgstr ""
+msgstr "tidak dapat menulis '%s'."
 
 #: rebase-interactive.c:196
 #, c-format
@@ -6454,6 +6494,8 @@ msgid ""
 "Warning: some commits may have been dropped accidentally.\n"
 "Dropped commits (newer to older):\n"
 msgstr ""
+"Peringatan: beberapa komit mungkin sudah tidak sengaja dihapus.\n"
+"Komit terhapus (terbaru ke terlama):\n"
 
 #: rebase-interactive.c:203
 #, c-format
@@ -6465,11 +6507,16 @@ msgid ""
 "The possible behaviours are: ignore, warn, error.\n"
 "\n"
 msgstr ""
+"Untuk menghindari pesan ini, gunakan \"drop\" untuk menghapus sebuah komit eksplisit.\n"
+"Gunakan 'git config rebase.missingCommitsCheck untuk' mengganti tingkat "
+"peringatan.\n"
+"Kelakuan yang mungkin adalah: ignore, warn, error.\n"
+"\n"
 
 #: rebase.c:29
 #, c-format
 msgid "%s: 'preserve' superseded by 'merges'"
-msgstr ""
+msgstr "%s: 'preserve' digantikan oleh 'merges'"
 
 #: ref-filter.c:42 wt-status.c:2036
 msgid "gone"
@@ -9936,7 +9983,7 @@ msgid "The following paths are ignored by one of your .gitignore files:\n"
 msgstr "Jalur berikut diabaikan oleh salah satu dari berkas .gitignore Anda:\n"
 
 #: builtin/add.c:371 builtin/clean.c:901 builtin/fetch.c:173 builtin/mv.c:124
-#: builtin/prune-packed.c:14 builtin/pull.c:204 builtin/push.c:550
+#: builtin/prune-packed.c:14 builtin/pull.c:208 builtin/push.c:550
 #: builtin/remote.c:1429 builtin/rm.c:244 builtin/send-pack.c:194
 msgid "dry run"
 msgstr "latihan"
@@ -10404,11 +10451,11 @@ msgstr "lewatkannya melalui git-apply"
 
 #: builtin/am.c:2317 builtin/commit.c:1514 builtin/fmt-merge-msg.c:17
 #: builtin/fmt-merge-msg.c:20 builtin/grep.c:919 builtin/merge.c:262
-#: builtin/pull.c:141 builtin/pull.c:200 builtin/pull.c:217
+#: builtin/pull.c:142 builtin/pull.c:204 builtin/pull.c:221
 #: builtin/rebase.c:1046 builtin/repack.c:651 builtin/repack.c:655
 #: builtin/repack.c:657 builtin/show-branch.c:649 builtin/show-ref.c:172
 #: builtin/tag.c:445 parse-options.h:154 parse-options.h:175
-#: parse-options.h:316
+#: parse-options.h:315
 msgid "n"
 msgstr "n"
 
@@ -10459,7 +10506,7 @@ msgid "use current timestamp for author date"
 msgstr "gunakan stempel waktu saat ini untuk tanggal pengarang"
 
 #: builtin/am.c:2357 builtin/commit-tree.c:118 builtin/commit.c:1642
-#: builtin/merge.c:299 builtin/pull.c:175 builtin/rebase.c:1099
+#: builtin/merge.c:299 builtin/pull.c:179 builtin/rebase.c:1099
 #: builtin/revert.c:117 builtin/tag.c:460
 msgid "key-id"
 msgstr "key-id"
@@ -10963,7 +11010,7 @@ msgstr "perlihatkan statistik biaya usaha"
 #: builtin/commit-graph.c:75 builtin/commit-graph.c:228 builtin/fetch.c:179
 #: builtin/merge.c:298 builtin/multi-pack-index.c:103
 #: builtin/multi-pack-index.c:154 builtin/multi-pack-index.c:178
-#: builtin/multi-pack-index.c:204 builtin/pull.c:119 builtin/push.c:566
+#: builtin/multi-pack-index.c:204 builtin/pull.c:120 builtin/push.c:566
 #: builtin/send-pack.c:202
 msgid "force progress reporting"
 msgstr "paksa laporkan perkembangan"
@@ -12220,7 +12267,7 @@ msgstr "kehilangan argumen cabang atau komit"
 msgid "perform a 3-way merge with the new branch"
 msgstr "lakukan penggabungan 3 arah dengan cabang baru"
 
-#: builtin/checkout.c:1519 builtin/log.c:1810 parse-options.h:322
+#: builtin/checkout.c:1519 builtin/log.c:1810 parse-options.h:321
 msgid "style"
 msgstr "gaya"
 
@@ -12646,7 +12693,7 @@ msgid "path to git-upload-pack on the remote"
 msgstr "jalur ke git-upload-pack pada remote"
 
 #: builtin/clone.c:130 builtin/fetch.c:180 builtin/grep.c:876
-#: builtin/pull.c:208
+#: builtin/pull.c:212
 msgid "depth"
 msgstr "kedalaman"
 
@@ -12655,7 +12702,7 @@ msgid "create a shallow clone of that depth"
 msgstr "buat klon dangkal sedalam kedalaman tersebut"
 
 #: builtin/clone.c:132 builtin/fetch.c:182 builtin/pack-objects.c:3933
-#: builtin/pull.c:211
+#: builtin/pull.c:215
 msgid "time"
 msgstr "waktu"
 
@@ -12664,11 +12711,11 @@ msgid "create a shallow clone since a specific time"
 msgstr "buat klon dangkal sejak waktu yang disebutkan"
 
 #: builtin/clone.c:134 builtin/fetch.c:184 builtin/fetch.c:207
-#: builtin/pull.c:214 builtin/pull.c:239 builtin/rebase.c:1022
+#: builtin/pull.c:218 builtin/pull.c:243 builtin/rebase.c:1022
 msgid "revision"
 msgstr "revisi"
 
-#: builtin/clone.c:135 builtin/fetch.c:185 builtin/pull.c:215
+#: builtin/clone.c:135 builtin/fetch.c:185 builtin/pull.c:219
 msgid "deepen history of shallow clone, excluding rev"
 msgstr "perdalam riwayat klon dangkal, tidak termasuk rev"
 
@@ -12702,21 +12749,21 @@ msgid "set config inside the new repository"
 msgstr "setel konfigurasi di dalam repositori baru"
 
 #: builtin/clone.c:147 builtin/fetch.c:202 builtin/ls-remote.c:77
-#: builtin/pull.c:230 builtin/push.c:575 builtin/send-pack.c:200
+#: builtin/pull.c:234 builtin/push.c:575 builtin/send-pack.c:200
 msgid "server-specific"
 msgstr "spesifik ke server"
 
 #: builtin/clone.c:147 builtin/fetch.c:202 builtin/ls-remote.c:77
-#: builtin/pull.c:231 builtin/push.c:575 builtin/send-pack.c:201
+#: builtin/pull.c:235 builtin/push.c:575 builtin/send-pack.c:201
 msgid "option to transmit"
 msgstr "opsi untuk transmisi"
 
-#: builtin/clone.c:148 builtin/fetch.c:203 builtin/pull.c:234
+#: builtin/clone.c:148 builtin/fetch.c:203 builtin/pull.c:238
 #: builtin/push.c:576
 msgid "use IPv4 addresses only"
 msgstr "gunakan hanya alamat IPv4"
 
-#: builtin/clone.c:150 builtin/fetch.c:205 builtin/pull.c:237
+#: builtin/clone.c:150 builtin/fetch.c:205 builtin/pull.c:241
 #: builtin/push.c:578
 msgid "use IPv6 addresses only"
 msgstr "gunakan hanya alamat IPv6"
@@ -13105,7 +13152,7 @@ msgid "read commit log message from file"
 msgstr "baca pesan log komit dari berkas"
 
 #: builtin/commit-tree.c:119 builtin/commit.c:1643 builtin/merge.c:300
-#: builtin/pull.c:176 builtin/revert.c:118
+#: builtin/pull.c:180 builtin/revert.c:118
 msgid "GPG sign commit"
 msgstr "Tandatangani komit dengan GPG"
 
@@ -13514,7 +13561,7 @@ msgstr "akhiri entri dengan NUL"
 
 #: builtin/commit.c:1501 builtin/commit.c:1505 builtin/commit.c:1668
 #: builtin/fast-export.c:1199 builtin/fast-export.c:1202
-#: builtin/fast-export.c:1205 builtin/rebase.c:1111 parse-options.h:336
+#: builtin/fast-export.c:1205 builtin/rebase.c:1111 parse-options.h:335
 msgid "mode"
 msgstr "mode"
 
@@ -13592,7 +13639,7 @@ msgid "override date for commit"
 msgstr "timpa tanggal komit"
 
 #: builtin/commit.c:1627 builtin/commit.c:1628 builtin/commit.c:1634
-#: parse-options.h:328 ref-filter.h:92
+#: parse-options.h:327 ref-filter.h:92
 msgid "commit"
 msgstr "komit"
 
@@ -13635,7 +13682,7 @@ msgid "add custom trailer(s)"
 msgstr ""
 
 #: builtin/commit.c:1637 builtin/log.c:1754 builtin/merge.c:303
-#: builtin/pull.c:145 builtin/revert.c:110
+#: builtin/pull.c:146 builtin/revert.c:110
 msgid "add a Signed-off-by trailer"
 msgstr "tambahkan trailer Signed-off-by"
 
@@ -14607,15 +14654,15 @@ msgstr "git fetch --all [<opsi>]"
 msgid "fetch.parallel cannot be negative"
 msgstr "fetch.parallel tidak dapat bernilai negatif"
 
-#: builtin/fetch.c:145 builtin/pull.c:185
+#: builtin/fetch.c:145 builtin/pull.c:189
 msgid "fetch from all remotes"
 msgstr "ambil dari semua remote"
 
-#: builtin/fetch.c:147 builtin/pull.c:245
+#: builtin/fetch.c:147 builtin/pull.c:249
 msgid "set upstream for git pull/fetch"
 msgstr "setel hulu untuk git pull/fetch"
 
-#: builtin/fetch.c:149 builtin/pull.c:188
+#: builtin/fetch.c:149 builtin/pull.c:192
 msgid "append to .git/FETCH_HEAD instead of overwriting"
 msgstr "tambah ke .git/FETCH_HEAD daripada timpa"
 
@@ -14623,7 +14670,7 @@ msgstr "tambah ke .git/FETCH_HEAD daripada timpa"
 msgid "use atomic transaction to update references"
 msgstr ""
 
-#: builtin/fetch.c:153 builtin/pull.c:191
+#: builtin/fetch.c:153 builtin/pull.c:195
 msgid "path to upload pack on remote end"
 msgstr "jalur ke paket unggah pada sisi remote"
 
@@ -14635,7 +14682,7 @@ msgstr "paksa timpa referensi lokal"
 msgid "fetch from multiple remotes"
 msgstr "ambil dari banyak remote"
 
-#: builtin/fetch.c:158 builtin/pull.c:195
+#: builtin/fetch.c:158 builtin/pull.c:199
 msgid "fetch all tags and associated objects"
 msgstr "ambil semua tag dan objek yang bersesuaian"
 
@@ -14651,7 +14698,7 @@ msgstr "jumlah submodul yang diambil secara bersamaan"
 msgid "modify the refspec to place all refs within refs/prefetch/"
 msgstr ""
 
-#: builtin/fetch.c:166 builtin/pull.c:198
+#: builtin/fetch.c:166 builtin/pull.c:202
 msgid "prune remote-tracking branches no longer on remote"
 msgstr "buang cabang pelacak remote yang tidak ada pada remote"
 
@@ -14659,7 +14706,7 @@ msgstr "buang cabang pelacak remote yang tidak ada pada remote"
 msgid "prune local tags no longer on remote and clobber changed tags"
 msgstr "buang tag lokal yang tidak ada pada remote dan klob tag yang berubah"
 
-#: builtin/fetch.c:169 builtin/fetch.c:194 builtin/pull.c:122
+#: builtin/fetch.c:169 builtin/fetch.c:194 builtin/pull.c:123
 msgid "on-demand"
 msgstr "sesuai permintaan"
 
@@ -14671,7 +14718,7 @@ msgstr "kontrol pengambilan submodul rekursif"
 msgid "write fetched references to the FETCH_HEAD file"
 msgstr "tulis referensi yang diambil ke berkas FETCH_HEAD"
 
-#: builtin/fetch.c:176 builtin/pull.c:206
+#: builtin/fetch.c:176 builtin/pull.c:210
 msgid "keep downloaded pack"
 msgstr "simpan paket yang diunduh"
 
@@ -14679,16 +14726,16 @@ msgstr "simpan paket yang diunduh"
 msgid "allow updating of HEAD ref"
 msgstr "bolehkan perbarui referensi HEAD"
 
-#: builtin/fetch.c:181 builtin/fetch.c:187 builtin/pull.c:209
-#: builtin/pull.c:218
+#: builtin/fetch.c:181 builtin/fetch.c:187 builtin/pull.c:213
+#: builtin/pull.c:222
 msgid "deepen history of shallow clone"
 msgstr "perdalam riwayat klon dangkal"
 
-#: builtin/fetch.c:183 builtin/pull.c:212
+#: builtin/fetch.c:183 builtin/pull.c:216
 msgid "deepen history of shallow repository based on time"
 msgstr "perdalam riwayat repositori dangkal berdasarkan waktu"
 
-#: builtin/fetch.c:189 builtin/pull.c:221
+#: builtin/fetch.c:189 builtin/pull.c:225
 msgid "convert to a complete repository"
 msgstr "ubah ke repositori penuh"
 
@@ -14704,19 +14751,19 @@ msgstr ""
 "default untuk ambil submodul secara rekursif (prioritas lebih rendah "
 "dariberkas konfigurasi)"
 
-#: builtin/fetch.c:199 builtin/pull.c:224
+#: builtin/fetch.c:199 builtin/pull.c:228
 msgid "accept refs that update .git/shallow"
 msgstr "terima referensi yang memperbarui .git/shallow"
 
-#: builtin/fetch.c:200 builtin/pull.c:226
+#: builtin/fetch.c:200 builtin/pull.c:230
 msgid "refmap"
 msgstr "peta referensi"
 
-#: builtin/fetch.c:201 builtin/pull.c:227
+#: builtin/fetch.c:201 builtin/pull.c:231
 msgid "specify fetch refmap"
 msgstr "sebutkan ambil peta referensi"
 
-#: builtin/fetch.c:208 builtin/pull.c:240
+#: builtin/fetch.c:208 builtin/pull.c:244
 msgid "report that we have only objects reachable from this object"
 msgstr ""
 "laporkan bahwa kami hanya punya object yang bisa dicapai dari objek ini"
@@ -14730,7 +14777,7 @@ msgstr ""
 msgid "run 'maintenance --auto' after fetching"
 msgstr "lakukan 'maintenance --auto' setelah pengambilan"
 
-#: builtin/fetch.c:217 builtin/pull.c:243
+#: builtin/fetch.c:217 builtin/pull.c:247
 msgid "check for forced-updates on all updated branches"
 msgstr "periksa pembaruan terpaksa pada semua cabang"
 
@@ -17400,32 +17447,32 @@ msgstr "Strategi yang tersedia:"
 msgid "Available custom strategies are:"
 msgstr "Strategi kustom yang tersedia:"
 
-#: builtin/merge.c:257 builtin/pull.c:133
+#: builtin/merge.c:257 builtin/pull.c:134
 msgid "do not show a diffstat at the end of the merge"
 msgstr "jangan perlihatkan diffstat pada akhir penggabungan"
 
-#: builtin/merge.c:260 builtin/pull.c:136
+#: builtin/merge.c:260 builtin/pull.c:137
 msgid "show a diffstat at the end of the merge"
 msgstr "perlihatkan diffstat pada akhir penggabungan"
 
-#: builtin/merge.c:261 builtin/pull.c:139
+#: builtin/merge.c:261 builtin/pull.c:140
 msgid "(synonym to --stat)"
 msgstr "(sinonim untuk --stat)"
 
-#: builtin/merge.c:263 builtin/pull.c:142
+#: builtin/merge.c:263 builtin/pull.c:143
 msgid "add (at most <n>) entries from shortlog to merge commit message"
 msgstr ""
 "tambah (paling banyak <n>) entri dari log pendek ke pesan komit penggabungan"
 
-#: builtin/merge.c:266 builtin/pull.c:148
+#: builtin/merge.c:266 builtin/pull.c:149
 msgid "create a single commit instead of doing a merge"
 msgstr "buat satu komit daripada melakukan penggabungan"
 
-#: builtin/merge.c:268 builtin/pull.c:151
+#: builtin/merge.c:268 builtin/pull.c:152
 msgid "perform a commit if the merge succeeds (default)"
 msgstr "lakukan komit jika penggabungan sukses (asali)"
 
-#: builtin/merge.c:270 builtin/pull.c:154
+#: builtin/merge.c:270 builtin/pull.c:155
 msgid "edit message before committing"
 msgstr "sunting pesan sebelum komit"
 
@@ -17433,28 +17480,28 @@ msgstr "sunting pesan sebelum komit"
 msgid "allow fast-forward (default)"
 msgstr "perbolehkan maju cepat (asali)"
 
-#: builtin/merge.c:274 builtin/pull.c:161
+#: builtin/merge.c:274 builtin/pull.c:162
 msgid "abort if fast-forward is not possible"
 msgstr "batalkan jika maju cepat tidak dimungkinkan"
 
-#: builtin/merge.c:278 builtin/pull.c:164
+#: builtin/merge.c:278 builtin/pull.c:168
 msgid "verify that the named commit has a valid GPG signature"
 msgstr "periksa bahwa komit bernama punya tandatangan GPG yang valid"
 
-#: builtin/merge.c:279 builtin/notes.c:785 builtin/pull.c:168
+#: builtin/merge.c:279 builtin/notes.c:785 builtin/pull.c:172
 #: builtin/rebase.c:1117 builtin/revert.c:114
 msgid "strategy"
 msgstr "strategi"
 
-#: builtin/merge.c:280 builtin/pull.c:169
+#: builtin/merge.c:280 builtin/pull.c:173
 msgid "merge strategy to use"
 msgstr "strategi penggabungan yang digunakan"
 
-#: builtin/merge.c:281 builtin/pull.c:172
+#: builtin/merge.c:281 builtin/pull.c:176
 msgid "option=value"
 msgstr "opsi=nilai"
 
-#: builtin/merge.c:282 builtin/pull.c:173
+#: builtin/merge.c:282 builtin/pull.c:177
 msgid "option for selected merge strategy"
 msgstr "opsi untuk strategi penggabungan yang dipilih"
 
@@ -17474,7 +17521,7 @@ msgstr "--abort tapi biarkan indeks dan pohon kerja"
 msgid "continue the current in-progress merge"
 msgstr "lanjutkan penggabungan yang sedang berlangsung saat ini"
 
-#: builtin/merge.c:297 builtin/pull.c:180
+#: builtin/merge.c:297 builtin/pull.c:184
 msgid "allow merging unrelated histories"
 msgstr "perbolehkan penggabungan riwayat yang tak terkait"
 
@@ -18839,44 +18886,48 @@ msgstr "Nilai tidak valid untuk %s: %s"
 msgid "git pull [<options>] [<repository> [<refspec>...]]"
 msgstr "git pull [<opsi>] [<repositori> [<spek referensi>]]"
 
-#: builtin/pull.c:123
+#: builtin/pull.c:124
 msgid "control for recursive fetching of submodules"
 msgstr "kontrol pengambilan rekursif submodul"
 
-#: builtin/pull.c:127
+#: builtin/pull.c:128
 msgid "Options related to merging"
 msgstr "Opsi yang berkaitan dengan penggabungan"
 
-#: builtin/pull.c:130
+#: builtin/pull.c:131
 msgid "incorporate changes by rebasing rather than merging"
 msgstr "masukkan perubahan dengan pendasaran ulang daripada penggabungan"
 
-#: builtin/pull.c:158 builtin/revert.c:126
+#: builtin/pull.c:159 builtin/revert.c:126
 msgid "allow fast-forward"
 msgstr "perbolehkan maju cepat"
 
-#: builtin/pull.c:167 parse-options.h:339
+#: builtin/pull.c:165
+msgid "control use of pre-merge-commit and commit-msg hooks"
+msgstr "kontrol penggunaan kail pre-merge-commit dan commit-msg"
+
+#: builtin/pull.c:171 parse-options.h:338
 msgid "automatically stash/stash pop before and after"
 msgstr "stash/stash pop otomatis sebelum dan sesudah"
 
-#: builtin/pull.c:183
+#: builtin/pull.c:187
 msgid "Options related to fetching"
 msgstr "Opsi yang berkaitan dengan pengambilan"
 
-#: builtin/pull.c:193
+#: builtin/pull.c:197
 msgid "force overwrite of local branch"
 msgstr "paksa timpa cabang lokal"
 
-#: builtin/pull.c:201
+#: builtin/pull.c:205
 msgid "number of submodules pulled in parallel"
 msgstr "nomor submodul ditarik dalam paralel"
 
-#: builtin/pull.c:317
+#: builtin/pull.c:321
 #, c-format
 msgid "Invalid value for pull.ff: %s"
 msgstr "Nilai tidak valid untuk pull.ff: %s"
 
-#: builtin/pull.c:445
+#: builtin/pull.c:449
 msgid ""
 "There is no candidate for rebasing against among the refs that you just "
 "fetched."
@@ -18884,14 +18935,14 @@ msgstr ""
 "Tidak ada kandidat untuk didasarkan ulang diantara referensi yang baru saja "
 "Anda ambil."
 
-#: builtin/pull.c:447
+#: builtin/pull.c:451
 msgid ""
 "There are no candidates for merging among the refs that you just fetched."
 msgstr ""
 "Tidak ada kandidat untuk digabungkan diantara referensi yang baru sajaAnda "
 "ambil."
 
-#: builtin/pull.c:448
+#: builtin/pull.c:452
 msgid ""
 "Generally this means that you provided a wildcard refspec which had no\n"
 "matches on the remote end."
@@ -18899,7 +18950,7 @@ msgstr ""
 "Umumnya itu berarti Anda memberikan spek referensi wildcard yang tidak\n"
 "cocok pada ujung remote."
 
-#: builtin/pull.c:451
+#: builtin/pull.c:455
 #, c-format
 msgid ""
 "You asked to pull from the remote '%s', but did not specify\n"
@@ -18910,43 +18961,43 @@ msgstr ""
 "satu cabang. Oleh karena ini bukan remote terkonfigurasi asali untuk\n"
 "cabang Anda saat ini, Anda harus sebutkan satu cabang pada baris perintah."
 
-#: builtin/pull.c:456 builtin/rebase.c:951
+#: builtin/pull.c:460 builtin/rebase.c:951
 msgid "You are not currently on a branch."
 msgstr "Anda tidak berada pada sebuah cabang."
 
-#: builtin/pull.c:458 builtin/pull.c:473
+#: builtin/pull.c:462 builtin/pull.c:477
 msgid "Please specify which branch you want to rebase against."
 msgstr "Mohon sebutkan cabang mana yang Anda ingin didasarkan ulang."
 
-#: builtin/pull.c:460 builtin/pull.c:475
+#: builtin/pull.c:464 builtin/pull.c:479
 msgid "Please specify which branch you want to merge with."
 msgstr "Mohon sebutkan cabang mana yang Anda ingin digabungkan."
 
-#: builtin/pull.c:461 builtin/pull.c:476
+#: builtin/pull.c:465 builtin/pull.c:480
 msgid "See git-pull(1) for details."
 msgstr "Lihat git-pull(1) untuk selengkapnya."
 
-#: builtin/pull.c:463 builtin/pull.c:469 builtin/pull.c:478
+#: builtin/pull.c:467 builtin/pull.c:473 builtin/pull.c:482
 #: builtin/rebase.c:957
 msgid "<remote>"
 msgstr "<remote>"
 
-#: builtin/pull.c:463 builtin/pull.c:478 builtin/pull.c:483
+#: builtin/pull.c:467 builtin/pull.c:482 builtin/pull.c:487
 msgid "<branch>"
 msgstr "<cabang>"
 
-#: builtin/pull.c:471 builtin/rebase.c:949
+#: builtin/pull.c:475 builtin/rebase.c:949
 msgid "There is no tracking information for the current branch."
 msgstr "Tidak ada informasi pelacakan untuk cabang saat ini."
 
-#: builtin/pull.c:480
+#: builtin/pull.c:484
 msgid ""
 "If you wish to set tracking information for this branch you can do so with:"
 msgstr ""
 "Jika Anda ingin menyetel informasi pelacakan untuk cabang ini Anda bisa "
 "melakukannya dengan:"
 
-#: builtin/pull.c:485
+#: builtin/pull.c:489
 #, c-format
 msgid ""
 "Your configuration specifies to merge with the ref '%s'\n"
@@ -18955,16 +19006,16 @@ msgstr ""
 "Konfigurasi Anda menyebutkan untuk menggabungkan dengan referensi '%s'\n"
 "dari remote, tapi tidak ada referensi seperti itu yang diambil."
 
-#: builtin/pull.c:596
+#: builtin/pull.c:600
 #, c-format
 msgid "unable to access commit %s"
 msgstr "Tidak dapat mengakses komit %s"
 
-#: builtin/pull.c:902
+#: builtin/pull.c:908
 msgid "ignoring --verify-signatures for rebase"
 msgstr "mengabaikan --verify-signatures untuk pendasaran ulang"
 
-#: builtin/pull.c:936
+#: builtin/pull.c:942
 msgid ""
 "You have divergent branches and need to specify how to reconcile them.\n"
 "You can do so by running one of the following commands sometime before\n"
@@ -18994,21 +19045,21 @@ msgstr ""
 "--rebase, --no-rebase, atau --ff-only pada baris perintah untuk menimpa\n"
 "asali terkonfigurasi untuk setiap invokasi.\n"
 
-#: builtin/pull.c:1010
+#: builtin/pull.c:1016
 msgid "Updating an unborn branch with changes added to the index."
 msgstr ""
 "Memperbarui cabang yang belum lahir dengan perubahan yang ditambahkan ke "
 "indeks."
 
-#: builtin/pull.c:1014
+#: builtin/pull.c:1020
 msgid "pull with rebase"
 msgstr "tarik dengan pendasaran ulang"
 
-#: builtin/pull.c:1015
+#: builtin/pull.c:1021
 msgid "please commit or stash them."
 msgstr "mohon komit atau stase itu."
 
-#: builtin/pull.c:1040
+#: builtin/pull.c:1046
 #, c-format
 msgid ""
 "fetch updated the current branch head.\n"
@@ -19018,7 +19069,7 @@ msgstr ""
 "fetch memperbarui kepala cabang saat ini.\n"
 "memajukan-cepat pohon kerja Anda dari komit %s."
 
-#: builtin/pull.c:1046
+#: builtin/pull.c:1052
 #, c-format
 msgid ""
 "Cannot fast-forward your working tree.\n"
@@ -19035,23 +19086,23 @@ msgstr ""
 "$ git reset --hard\n"
 "untuk memulihkan."
 
-#: builtin/pull.c:1061
+#: builtin/pull.c:1067
 msgid "Cannot merge multiple branches into empty head."
 msgstr "Tidak dapat menggabungkan banyak cabang ke kepala kosong."
 
-#: builtin/pull.c:1066
+#: builtin/pull.c:1072
 msgid "Cannot rebase onto multiple branches."
 msgstr "Tidak dapat mendasarkan ulang pada banyak cabang."
 
-#: builtin/pull.c:1068
+#: builtin/pull.c:1074
 msgid "Cannot fast-forward to multiple branches."
 msgstr "Tidak dapat maju cepat ke banyak cabang."
 
-#: builtin/pull.c:1082
+#: builtin/pull.c:1088
 msgid "Need to specify how to reconcile divergent branches."
 msgstr "Perlu sebutkan cara merujukkan cabang yang berlainan."
 
-#: builtin/pull.c:1096
+#: builtin/pull.c:1102
 msgid "cannot rebase with locally recorded submodule modifications"
 msgstr ""
 "tidak dapat mendasarkan ulang dengan modifikasi submodul yang terekam lokal."
@@ -24155,27 +24206,27 @@ msgstr ""
 msgid "no-op (backward compatibility)"
 msgstr ""
 
-#: parse-options.h:309
+#: parse-options.h:308
 msgid "be more verbose"
 msgstr ""
 
-#: parse-options.h:311
+#: parse-options.h:310
 msgid "be more quiet"
 msgstr ""
 
-#: parse-options.h:317
+#: parse-options.h:316
 msgid "use <n> digits to display object names"
 msgstr ""
 
-#: parse-options.h:336
+#: parse-options.h:335
 msgid "how to strip spaces and #comments from message"
 msgstr ""
 
-#: parse-options.h:337
+#: parse-options.h:336
 msgid "read pathspec from file"
 msgstr ""
 
-#: parse-options.h:338
+#: parse-options.h:337
 msgid ""
 "with --pathspec-from-file, pathspec elements are separated with NUL character"
 msgstr ""
@@ -25612,165 +25663,3 @@ msgstr "Melewati %s dengan akhiran cadangan '%s'.\n"
 #, perl-format
 msgid "Do you really want to send %s? [y|N]: "
 msgstr "Anda benar-benar ingin mengirim %s? [y|N]: "
-
-#~ msgid "unusable todo list: '%s'"
-#~ msgstr "daftar todo tidak dapat digunakan: '%s'"
-
-#~ msgid "git rebase--interactive [<options>]"
-#~ msgstr "git rebase--interactive [<opsi>]"
-
-#~ msgid "rebase merge commits"
-#~ msgstr "dasarkan ulang komit penggabungan"
-
-#~ msgid "keep original branch points of cousins"
-#~ msgstr "simpan titik cabang sepupu asal "
-
-#~ msgid "move commits that begin with squash!/fixup!"
-#~ msgstr "pindahkan komit yang diawali dengan squash!/fixup!"
-
-#~ msgid "sign commits"
-#~ msgstr "tandatangani komit"
-
-#~ msgid "continue rebase"
-#~ msgstr "lanjutkan pendasaran ulang"
-
-#~ msgid "skip commit"
-#~ msgstr "lewatkan komit"
-
-#~ msgid "edit the todo list"
-#~ msgstr "sunting daftar todo"
-
-#~ msgid "show the current patch"
-#~ msgstr "perlihatkan tambalan saat ini"
-
-#~ msgid "shorten commit ids in the todo list"
-#~ msgstr "pendekkan id komit dalam daftar todo"
-
-#~ msgid "expand commit ids in the todo list"
-#~ msgstr "jabarkan id komit dalam daftar todo"
-
-#~ msgid "check the todo list"
-#~ msgstr "periksa daftar todo"
-
-#~ msgid "rearrange fixup/squash lines"
-#~ msgstr "susun ulang baris fixup/squash"
-
-#~ msgid "insert exec commands in todo list"
-#~ msgstr "masukkan perintah exec ke dalam daftar todo"
-
-#~ msgid "onto"
-#~ msgstr "ke"
-
-#~ msgid "restrict-revision"
-#~ msgstr "restrict-revision"
-
-#~ msgid "restrict revision"
-#~ msgstr "batasi revisi"
-
-#~ msgid "squash-onto"
-#~ msgstr "squash-onto"
-
-#~ msgid "squash onto"
-#~ msgstr "lumat ke"
-
-#~ msgid "the upstream commit"
-#~ msgstr "komit hulu"
-
-#~ msgid "head-name"
-#~ msgstr "head-name"
-
-#~ msgid "head name"
-#~ msgstr "nama kepala"
-
-#~ msgid "rebase strategy"
-#~ msgstr "strategi pendasaran"
-
-#~ msgid "strategy-opts"
-#~ msgstr "strategy-opts"
-
-#~ msgid "strategy options"
-#~ msgstr "opsi strategi"
-
-#~ msgid "switch-to"
-#~ msgstr "switch-to"
-
-#~ msgid "the branch or commit to checkout"
-#~ msgstr "cabang atau komit untuk di-checkout"
-
-#~ msgid "onto-name"
-#~ msgstr "onto-name"
-
-#~ msgid "onto name"
-#~ msgstr "nama ke"
-
-#~ msgid "cmd"
-#~ msgstr "cmd"
-
-#~ msgid "the command to run"
-#~ msgstr "perintah untuk dijalankan"
-
-#~ msgid "--[no-]rebase-cousins has no effect without --rebase-merges"
-#~ msgstr "--[no-]rebase-cousins tidak ada efek tanpa --rebase-merges"
-
-#~ msgid "cannot combine '--preserve-merges' with '--rebase-merges'"
-#~ msgstr ""
-#~ "tidak dapat menggabungkan '--preserve-merges' dengan '--rebase-merges'"
-
-#~ msgid ""
-#~ "error: cannot combine '--preserve-merges' with '--reschedule-failed-exec'"
-#~ msgstr ""
-#~ "error: tidak dapat menggabungkan '--preserve-merges' dengan '--reschedule-"
-#~ "failed-exec'"
-
-#~ msgid "exclude patterns are read from <file>"
-#~ msgstr "pola pengecualian dibaca dari <berkas>"
-
-#~ msgid ""
-#~ "git bisect--helper --bisect-next-check <good_term> <bad_term> [<term>]"
-#~ msgstr ""
-#~ "git bisect--helper --bisect-next-check <istilah bagus> <istilah jelek> "
-#~ "[<istilah>]"
-
-#~ msgid "--bisect-next-check requires 2 or 3 arguments"
-#~ msgstr "--bisect-next-check butuh 2 atau 3 argumen"
-
-#~ msgid "cannot store pack file"
-#~ msgstr "tidak dapat menyimpan berkas paket"
-
-#~ msgid "cannot store index file"
-#~ msgstr "tidak dapat menyimpan berkas indeks"
-
-#~ msgid ""
-#~ "git submodule--helper add-clone [<options>...] --url <url> --path <path> "
-#~ "--name <name>"
-#~ msgstr ""
-#~ "git submodule--helper add-clone [<opsi>...] --url <url> --path <path> --"
-#~ "name <nama>"
-
-#~ msgid "Could not open '%s' for writing."
-#~ msgstr "Tidak dapat membuka '%s' untuk ditulis."
-
-#~ msgid "cannot open packfile '%s'"
-#~ msgstr "tidak dapat membuka berkas paket '%s'"
-
-#~ msgid "Unknown option for merge-recursive: -X%s"
-#~ msgstr "Opsi merge-recursive tak dikenal: -X%s"
-
-#~ msgid "git merge --abort"
-#~ msgstr "git merge --abort"
-
-#~ msgid "git merge --continue"
-#~ msgstr "git merge --continue"
-
-#~ msgid "git stash clear"
-#~ msgstr "git stash clear"
-
-#~ msgid "Already up to date. Yeeah!"
-#~ msgstr "Sudah terbaru. Ya!"
-
-#~ msgid ""
-#~ "the rebase.useBuiltin support has been removed!\n"
-#~ "See its entry in 'git help config' for details."
-#~ msgstr ""
-#~ "dukungan untuk rebase.useBuiltin sudah dihapus!\n"
-#~ "Lihat entri itu di 'git help config' untuk selengkapnya."
