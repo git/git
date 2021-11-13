@@ -351,10 +351,10 @@ jobs:
     - run: ci/install-dependencies.sh
     - run: ci/run-static-analysis.sh
   documentation:
-    needs: ci-config
+    needs: ci-config 
     if: needs.ci-config.outputs.enabled == 'yes'
     env:
-      jobname: Documentation
+      jobname: Documentation 
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
