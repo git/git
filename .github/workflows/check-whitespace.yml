@@ -1,8 +1,9 @@
 name: check-whitespace
 
-# Get the repo with the commits(+1) in the series.
+# Get the repository with all commits to ensure that we can analyze
+# all of the commits contributed via the Pull Request.
 # Process `git log --check` output to extract just the check errors.
-# Add a comment to the pull request with the check errors.
+# Exit with failure upon white-space issues.
 
 on:
   pull_request:
