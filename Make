@@ -282,7 +282,7 @@ ${make-make} \
      $jobs \
      ETC_GITCONFIG=$prefix/etc/gitconfig \
      ${DEVELOPER:+"DEVELOPER=YesPlease"} \
-     ${O:+CFLAGS="-g -Wall $O"} \
+     ${O:+CFLAGS="-g -Wall -Wdeclaration-after-statement $O"} \
      ${tests:+"T=$tests"} \
      "$@"
 status=$?
