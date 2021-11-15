@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Nov 2021, #03; Tue, 9)
-X-master-at: 6c220937e2b26d85920bf2d38ff2464a0d57fd6b
-X-next-at: 773e6cccef14fb4ef03dc964d7f80ceb691c12be
+Subject: What's cooking in git.git (Nov 2021, #04; Sun, 14)
+X-master-at: cd3e606211bb1cf8bc57f7d76bab98cc17a150bc
+X-next-at: ca35af825273b98fc8dc11527488952f5db8eb80
 
-What's cooking in git.git (Nov 2021, #03; Tue, 9)
+What's cooking in git.git (Nov 2021, #04; Sun, 14)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -18,8 +18,19 @@ useful").  Do not read too much into a topic being in (or not in)
 'seen'.  The ones marked with '.' do not appear in any of the
 integration branches, but I am still holding onto them.
 
-Git 2.34-rc2 has been tagged with a few more regression fixes.
+Git 2.34 (final) has been tagged with a few more regression fixes.
+
+As we have been fairly aggressive to deliberately merge down many
+topics that are under-reviewed, mostly due to reviewer fatigue and
+limited reviewer bandwidth, it was expected that we'd see unexpected
+breakages after things are in 'master', and it was quite nice to see
+people found and squashed these problems fairly quickly.
+
 Thank you all for finding, reporting and fixing them so quickly.
+Before starting to queue new topics for the next cycle or merging
+down topics in-flight, we'd wait about a week to see if people
+encounter any more issues, and after that we'd restart the usual
+cycle.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -50,101 +61,139 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[New Topics]
-
-* ak/fetch-not-overwrite-any-current-branch (2021-11-08) 2 commits
- - receive-pack: protect current branch for bare repository worktree
- - fetch: protect branches checked out in all worktrees
-
- "git fetch" without the "--update-head-ok" option ought to protect
- a checked out branch from getting updated, to prevent the working
- tree that checks it out to go out of sync.  The code was written
- before the use of "git worktree" got widespread, and only checked
- the branch that was checked out in the current worktree, which has
- been updated.
-
- Reroll exists.
-
-
-* jk/test-bitmap-fix (2021-11-05) 1 commit
- - test_bitmap_hashes(): handle repository without bitmaps
-
- Tighten code for testing pack-bitmap.
-
- Will merge to 'next'.
-
-
-* jk/jump-merge-with-pathspec (2021-11-09) 1 commit
- - git-jump: pass "merge" arguments to ls-files
-
- The "merge" subcommand of "git jump" (in contrib/) silently ignored
- pathspec and other parameters.
-
- Will merge to 'next'.
-
---------------------------------------------------
 [Graduated to 'master']
 
-* ab/parse-options-cleanup (2021-11-09) 1 commit
-  (merged to 'next' on 2021-11-09 at b2b859289b)
- + parse-options.[ch]: revert use of "enum" for parse_options()
+* ab/fsck-unexpected-type (2021-11-11) 2 commits
+  (merged to 'next' on 2021-11-11 at f8c9666880)
+ + object-file: free(*contents) only in read_loose_object() caller
+ + object-file: fix SEGV on free() regression in v2.34.0-rc2
 
- Last minute fix to the update already in 'master'.
-
-
-* ad/ssh-signing-testfix (2021-11-05) 1 commit
-  (merged to 'next' on 2021-11-09 at f5ff9c35ad)
- + t/lib-git.sh: fix ACL-related permissions failure
-
- Fix ssh-signing test to work on a platform where the default ACL is
- overly loose to upset OpenSSH (reported on an installation of Cygwin).
+ Regression fix.
 
 
-* ar/fix-git-pull-no-verify (2021-10-28) 1 commit
-  (merged to 'next' on 2021-11-01 at 74677b0a76)
- + pull: honor --no-verify and do not call the commit-msg hook
+* ds/no-usable-cron-on-macos (2021-11-10) 1 commit
+  (merged to 'next' on 2021-11-10 at 18eb9c13bc)
+ + maintenance: disable cron on macOS
 
- "git pull --no-verify" did not affect the underlying "git merge".
+ "git maintenance run" learned to use system supplied scheduler
+ backend, but cron on macOS turns out to be unusable for this
+ purpose.
 
 
-* ar/no-verify-doc (2021-10-29) 1 commit
-  (merged to 'next' on 2021-11-01 at f6809a9ddb)
- + Document positive variant of commit and merge option "--no-verify"
+* jc/fix-pull-ff-only-when-already-up-to-date (2021-10-29) 1 commit
+  (merged to 'next' on 2021-10-29 at ad4753e668)
+ + pull: --ff-only should make it a noop when already-up-to-date
+
+ "git pull --ff-only" and "git pull --rebase --ff-only" should make
+ it a no-op to attempt pulling from a remote that is behind us, but
+ instead the command errored out by saying it was impossible to
+ fast-forward, which may technically be true, but not a useful thing
+ to diagnose as an error.  This has been corrected.
+
+
+* jk/ssh-signing-fix (2021-11-10) 1 commit
+  (merged to 'next' on 2021-11-10 at b6195caa04)
+ + t/lib-gpg: avoid broken versions of ssh-keygen
+
+ Reject OpenSSH 8.7 whose "ssh-keygen -Y find-principals" is
+ unusable from running the ssh signature tests.
+
+
+* js/simple-ipc-cygwin-socket-fix (2021-11-10) 1 commit
+  (merged to 'next' on 2021-11-10 at 00788f076f)
+ + simple-ipc: work around issues with Cygwin's Unix socket emulation
+
+ The way Cygwin emulates a unix-domain socket, on top of which the
+ simple-ipc mechanism is implemented, can race with the program on
+ the other side that wants to use the socket, and briefly make it
+ appear as a regular file before lstat(2) starts reporting it as a
+ socket.  We now have a workaround on the side that connects to a
+ unix domain socket.
+
+
+* js/trace2-raise-format-version (2021-11-11) 1 commit
+  (merged to 'next' on 2021-11-11 at e7144ad963)
+ + trace2: increment event format version
+
+ When we added a new event type to trace2 event stream, we forgot to
+ raise the format version number, which has been corrected.
+
+
+* ps/connectivity-optim (2021-11-11) 1 commit
+  (merged to 'next' on 2021-11-11 at 8b3dccbd68)
+ + Revert "connected: do not sort input revisions"
+
+ Regression fix.
+
+--------------------------------------------------
+[New Topics]
+
+* rj/receive-pack-avoid-sigpipe-during-status-reporting (2021-11-10) 1 commit
+ - receive-pack: ignore SIGPIPE while reporting status to client
+
+ When the "git push" command is killed while the receiving end is
+ trying to report what happened to the ref update proposals, the
+ latter used to die, due to SIGPIPE.  The code now ignores SIGPIPE
+ to increase our chances to run the post-receive hook after it
+ happens.
+
+
+* ab/parse-options-cleanup (2021-11-10) 1 commit
+ - parse-options.c: use "enum parse_opt_result" for parse_nodash_opt()
+
+ Change the type of an internal function to return an enum (instead
+ of int) and replace -2 that was used to signal an error with -1.
+
+
+* cw/protocol-v2-doc-fix (2021-11-11) 1 commit
+ - protocol-v2.txt: align delim-pkt spec with usage
 
  Doc update.
 
-
-* rd/http-backend-code-simplification (2021-10-25) 1 commit
-  (merged to 'next' on 2021-11-01 at f45b33890c)
- + http-backend: remove a duplicated code branch
-
- Code simplification.
+ Will merge to 'next'.
 
 
-* vd/pthread-setspecific-g11-fix (2021-11-03) 1 commit
-  (merged to 'next' on 2021-11-03 at b4fce69914)
- + async_die_is_recursing: work around GCC v11.x issue on Fedora
+* jt/pack-header-lshift-overflow (2021-11-11) 1 commit
+ - packfile: avoid overflowing shift during decode
 
- One CI task based on Fedora image noticed a not-quite-kosher
- consturct recently, which has been corrected.
+ The code to decode the length of packed object size has been
+ corrected.
+
+ Will merge to 'next'.
+
+
+* ab/update-submitting-patches (2021-11-13) 1 commit
+ - SubmittingPatches: fix Asciidoc syntax in "GitHub CI" section
+
+ Doc fix.
+
+ Will merge to 'next'.
+
+
+* bc/require-c99 (2021-11-14) 1 commit
+ - git-compat-util: add a test balloon for C99 support
+
+ Weather balloon to break people with compilers that do not support
+ C99.
+
+
+* jc/c99-var-decl-in-for-loop (2021-11-14) 1 commit
+ - revision: use C99 declaration of variable in for() loop
+
+ Weather balloon to break comiplers that do not grok variable
+ declaration in the for() loop.
+
+
+
+* tl/midx-docfix (2021-11-14) 1 commit
+ - midx: fix a formatting issue in "multi-pack-index.txt"
+
+ Doc mark-up fix.
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
-
-* mp/absorb-submodule-git-dir-upon-deinit (2021-10-07) 1 commit
- - submodule: absorb git dir instead of dying on deinit
-
- "git submodule deinit" for a submodule whose .git metadata
- directory is embedded in its working tree refused to work, until
- the submodule gets converted to use the "absorbed" form where the
- metadata directory is stored in superproject, and a gitfile at the
- top-level of the working tree of the submodule points at it.  The
- command is taught to convert such submodules to the absorbed form
- as needed.
-
- Expecting a reroll.
- cf. <xmqqwnmopqqk.fsf@gitster.g>
-
 
 * ar/submodule-update (2021-10-13) 9 commits
  . submodule--helper: rename helper functions
@@ -163,6 +212,21 @@ Release tarballs are available at:
  which is among the topics this topic stomps on.
 
 
+* mp/absorb-submodule-git-dir-upon-deinit (2021-10-07) 1 commit
+ - submodule: absorb git dir instead of dying on deinit
+
+ "git submodule deinit" for a submodule whose .git metadata
+ directory is embedded in its working tree refused to work, until
+ the submodule gets converted to use the "absorbed" form where the
+ metadata directory is stored in superproject, and a gitfile at the
+ top-level of the working tree of the submodule points at it.  The
+ command is taught to convert such submodules to the absorbed form
+ as needed.
+
+ Getting tired of waiting for a reroll; will discard.
+ cf. <xmqqwnmopqqk.fsf@gitster.g>
+
+
 * cf/fetch-set-upstream-while-detached (2021-07-06) 1 commit
  - fetch: fix segfault on --set-upstream while on a detached HEAD
 
@@ -174,11 +238,44 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* ak/fetch-not-overwrite-any-current-branch (2021-11-09) 4 commits
+ - branch: protect branches checked out in all worktrees
+ - receive-pack: protect current branch for bare repository worktree
+ - receive-pack: clean dead code from update_worktree()
+ - fetch: protect branches checked out in all worktrees
+
+ "git fetch" without the "--update-head-ok" option ought to protect
+ a checked out branch from getting updated, to prevent the working
+ tree that checks it out to go out of sync.  The code was written
+ before the use of "git worktree" got widespread, and only checked
+ the branch that was checked out in the current worktree, which has
+ been updated.
+
+
+* jk/test-bitmap-fix (2021-11-05) 1 commit
+ - test_bitmap_hashes(): handle repository without bitmaps
+
+ Tighten code for testing pack-bitmap.
+
+ Will merge to 'next'.
+
+
+* jk/jump-merge-with-pathspec (2021-11-09) 1 commit
+ - git-jump: pass "merge" arguments to ls-files
+
+ The "merge" subcommand of "git jump" (in contrib/) silently ignored
+ pathspec and other parameters.
+
+ Will merge to 'next'.
+
+
 * jk/strbuf-addftime-seconds-since-epoch (2021-11-04) 1 commit
  - strbuf_addftime(): handle "%s" manually
 
  The "--date=format:<strftime>" gained a workaround for the lack of
  system support for a non-local timezone to handle "%s" placeholder.
+
+ Will merge to 'next'.
 
 
 * js/ci-no-directional-formatting (2021-11-04) 1 commit
@@ -187,12 +284,16 @@ Release tarballs are available at:
  CI has been taught to catch some Unicode directional formatting
  sequence that can be used in certain mischief.
 
+ Will merge to 'next'.
+
 
 * tw/var-default-branch (2021-11-03) 1 commit
  - var: add GIT_DEFAULT_BRANCH variable
 
  "git var GIT_DEFAULT_BRANCH" is a way to see what name is used for
  the newly created branch if "git init" is run.
+
+ Will merge to 'next'.
 
 
 * ab/mark-leak-free-tests-even-more (2021-11-01) 15 commits
@@ -214,12 +315,16 @@ Release tarballs are available at:
 
  More tests are marked as leak-free.
 
+ Will merge to 'next'?
 
-* if/redact-packfile-uri (2021-10-29) 2 commits
+
+* if/redact-packfile-uri (2021-11-11) 2 commits
  - http-fetch: redact url on die() message
  - fetch-pack: redact packfile urls in traces
 
  Redact the path part of packfile URI that appears in the trace output.
+
+ Will merge to 'next'.
 
 
 * ew/test-wo-fsync (2021-10-29) 1 commit
@@ -252,12 +357,16 @@ Release tarballs are available at:
 
  "default" and "reset" colors have been added to our palette.
 
+ Will merge to 'next'?
+
 
 * jc/fix-first-object-walk (2021-10-29) 2 commits
  - docs: add headers in MyFirstObjectWalk
  - docs: fix places that break compilation in MyFirstObjectWalk
 
  Doc update.
+
+ Will merge to 'next'?
 
 
 * jc/unsetenv-returns-an-int (2021-10-29) 1 commit
@@ -324,19 +433,6 @@ Release tarballs are available at:
  Build optimization.
 
 
-* jc/fix-pull-ff-only-when-already-up-to-date (2021-10-29) 1 commit
-  (merged to 'next' on 2021-10-29 at ad4753e668)
- + pull: --ff-only should make it a noop when already-up-to-date
-
- "git pull --ff-only" and "git pull --rebase --ff-only" should make
- it a no-op to attempt pulling from a remote that is behind us, but
- instead the command errored out by saying it was impossible to
- fast-forward, which may technically be true, but not a useful thing
- to diagnose as an error.  This has been corrected.
-
- Will cook in 'next'.
-
-
 * ab/sh-retire-helper-functions (2021-10-21) 6 commits
   (merged to 'next' on 2021-11-03 at 4b49d9f4be)
  + git-sh-setup: remove "sane_grep", it's not needed anymore
@@ -388,6 +484,8 @@ Release tarballs are available at:
  selected command-line options to the underlying "git describe"
  command.
 
+ Will merge to 'next'?
+
 
 * fs/ssh-signing-key-lifetime (2021-10-27) 8 commits
  - ssh signing: make fmt-merge-msg consider key lifetime
@@ -401,6 +499,8 @@ Release tarballs are available at:
 
  Extend the signing of objects with SSH keys and learn to pay
  attention to the key validity time range when verifying.
+
+ Will merge to 'next'?
 
 
 * jc/doc-submitting-patches-choice-of-base (2021-10-25) 2 commits
@@ -687,6 +787,8 @@ Release tarballs are available at:
 
  "Zealous diff3" style of merge conflict presentation has been added.
 
+ What's the status of this thing?
+
 
 * js/scalar (2021-10-27) 15 commits
  - scalar: accept -C and -c options before the subcommand
@@ -707,16 +809,12 @@ Release tarballs are available at:
 
  Add pieces from "scalar" to contrib/.
 
- What's the status of this thing?
-
 
 * ms/customizable-ident-expansion (2021-09-01) 1 commit
  - keyword expansion: make "$Id$" string configurable
 
  Instead of "$Id$", user-specified string (like $FreeBSD$) can be
  used as an in-blob placeholder for keyword expansion.
-
- What's the status of this one?  Meh?
 
 
 * ab/refs-errno-cleanup (2021-10-16) 21 commits
@@ -784,3 +882,5 @@ Release tarballs are available at:
 
  The "reftable" backend for the refs API, without integrating into
  the refs subsystem.
+
+ Will merge to 'next'?
