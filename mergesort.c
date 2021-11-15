@@ -63,7 +63,7 @@ void *llist_mergesort(void *list,
 		void *next = get_next_fn(list);
 		if (next)
 			set_next_fn(list, NULL);
-		for (i = 0; n & (1 << i); i++)
+		for (i = 0; n & ((size_t)1 << i); i++)
 			list = llist_merge(ranks[i], list, get_next_fn,
 					   set_next_fn, compare_fn);
 		n++;
