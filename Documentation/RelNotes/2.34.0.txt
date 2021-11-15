@@ -15,7 +15,8 @@ UI, Workflows & Features
    location relative to Git installation (e.g. its $sharedir which is
    $(prefix)/share), with "%(prefix)".
 
- * Use `ort` instead of `recursive` as the default merge strategy.
+ * The `ort` strategy is used instead of `recursive` as the default
+   merge strategy.
 
  * The userdiff pattern for "java" language has been updated.
 
@@ -390,7 +391,6 @@ Fixes since v2.33
    (merge 8252ec300e jc/branch-copy-doc later to maint).
 
  * Squelch over-eager warning message added during this cycle.
-   (merge 9e8fe7b1c7 jk/log-warn-on-bogus-encoding later to maint).
 
  * Fix long-standing shell syntax error in the completion script.
    (merge 46b0585286 re/completion-fix-test-equality later to maint).
@@ -405,7 +405,6 @@ Fixes since v2.33
 
  * One CI task based on Fedora image noticed a not-quite-kosher
    construct recently, which has been corrected.
-   (merge 4b540cf913 vd/pthread-setspecific-g11-fix later to maint).
 
  * "git pull --ff-only" and "git pull --rebase --ff-only" should make
    it a no-op to attempt pulling from a remote that is behind us, but
@@ -435,6 +434,5 @@ Fixes since v2.33
    (merge 8650c6298c ab/fix-make-lint-docs later to maint).
    (merge 1c720357ce ab/test-lib-diff-cleanup later to maint).
    (merge 6b615dbece ks/submodule-add-message-fix later to maint).
-   (merge 82a57cd13f ma/doc-git-version later to maint).
    (merge 203eb8381a jc/doc-format-patch-clarify-auto-base later to maint).
    (merge 559664c792 ab/test-lib later to maint).
