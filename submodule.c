@@ -2224,7 +2224,7 @@ void absorb_git_dir_into_superproject(const char *path,
 	}
 }
 
-int get_superproject_working_tree(struct strbuf *buf)
+static int get_superproject_working_tree_from_fs(struct strbuf *buf)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
 	struct strbuf sb = STRBUF_INIT;
@@ -2306,6 +2306,89 @@ int get_superproject_working_tree(struct strbuf *buf)
 		die(_("ls-tree returned unexpected return code %d"), code);
 
 	return ret;
+}
+
+int get_superproject_working_tree(struct strbuf *buf)
+{
+	char *super_gitdir = NULL;
+	const char *cwd = xgetcwd();
+	struct child_process cp = CHILD_PROCESS_INIT;
+	struct strbuf absolute_super_gitdir = STRBUF_INIT;
+	struct strbuf out = STRBUF_INIT;
+	struct string_list lines = STRING_LIST_INIT_NODUP;
+	struct string_list_item *it = NULL;
+	const char *wt_prefix = "worktree ";
+	int rc = 0;
+
+
+	/* Do we know we have a superproject? */
+	if (git_config_get_string("submodule.superprojectgitdir", &super_gitdir))
+		goto fallback;
+
+	strbuf_addf(&absolute_super_gitdir, "%s/%s", get_git_dir(), super_gitdir);
+
+	/*
+	 * NEEDSWORK: This is a child process call because worktree.c still
+	 * relies heavily on the_repository. If we can make worktree.c work with
+	 * a repository object - or, better yet, a gitdir path alone - then we
+	 * can drop the child process and ask worktree.c directly.
+	 *
+	 * Alternatively, if 'git worktree' learns a way to say 'the worktree
+	 * associated with this gitdir' instead of 'all worktrees', that would
+	 * be clearer because we could skip the foreach below.
+	 */
+
+	/* Get the output of `git worktree list` from that superproject */
+	prepare_other_repo_env(&cp.env_array, absolute_super_gitdir.buf);
+	strvec_pushl(&cp.args, "-C", absolute_super_gitdir.buf, "worktree", "list",
+		    "--porcelain", NULL);
+
+	cp.git_cmd = 1;
+	if (capture_command(&cp, &out, 0) ||
+	    !string_list_split_in_place(&lines, out.buf, '\n', -1))
+		die("submodule.superprojectGitDir is stale; run 'git submodule "
+		    "update' from the superproject.");
+
+	for_each_string_list_item(it, &lines) {
+		char *trimmed;
+		/*
+		 * Lines containing worktree dirs look like
+		 * 'worktree /some/path'
+		 */
+		if (strncmp(it->string, wt_prefix, strlen(wt_prefix)))
+			continue;
+		trimmed = it->string + strlen(wt_prefix);
+
+		/*
+		 * '/some/path/to/sub' is a prefix of '/some/path' - that's our
+		 * worktree
+		 */
+		if (!strncmp(cwd, trimmed, strlen(trimmed))) {
+			strbuf_addstr(buf, trimmed);
+			rc = 1;
+			goto cleanup;
+		}
+	}
+
+fallback:
+	/*
+	 * Because a submodule may have been created before
+	 * submodule.superprojectGitDir was introduced, fall back on checking
+	 * whether ../ is the superproject.
+	 */
+	trace2_data_intmax("submodule", the_repository,
+			   "get_superproject_wt/config_missing", rc);
+	rc = get_superproject_working_tree_from_fs(buf);
+
+	/*
+	 * NEEDSWORK: Is it possible to teach a submodule the path to its
+	 * superproject when this happens?
+	 */
+
+cleanup:
+	string_list_clear(&lines, 0);
+	strbuf_release(&out);
+	return rc;
 }
 
 /*
