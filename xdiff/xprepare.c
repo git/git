@@ -213,10 +213,13 @@ static int xdl_prepare_ctx(unsigned int pass, mmfile_t *mf, long narec, xpparam_
 		goto abort;
 	memset(rchg, 0, (nrec + 2) * sizeof(char));
 
-	if (!(rindex = (long *) xdl_malloc((nrec + 1) * sizeof(long))))
-		goto abort;
-	if (!(ha = (unsigned long *) xdl_malloc((nrec + 1) * sizeof(unsigned long))))
-		goto abort;
+	if ((XDF_DIFF_ALG(xpp->flags) != XDF_PATIENCE_DIFF) &&
+	    (XDF_DIFF_ALG(xpp->flags) != XDF_HISTOGRAM_DIFF)) {
+		if (!(rindex = xdl_malloc((nrec + 1) * sizeof(*rindex))))
+			goto abort;
+		if (!(ha = xdl_malloc((nrec + 1) * sizeof(*ha))))
+			goto abort;
+	}
 
 	xdf->nrec = nrec;
 	xdf->recs = recs;
