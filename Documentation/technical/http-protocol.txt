@@ -314,8 +314,9 @@ Clients MUST first perform ref discovery with
    C: Content-Type: application/x-git-upload-pack-request
    C:
    C: 0032want 0a53e9ddeaddad63ad106860237bbf53411d11a7\n
-   C: 0032have 441b40d833fdfa93eb2908e52742248faf0ee993\n
    C: 0000
+   C: 0032have 441b40d833fdfa93eb2908e52742248faf0ee993\n
+   C: done
 
    S: 200 OK
    S: Content-Type: application/x-git-upload-pack-result
@@ -337,9 +338,9 @@ server advertises capability `allow-tip-sha1-in-want` or
 `allow-reachable-sha1-in-want`.
 
   compute_request   =  want_list
+		       "0000"
 		       have_list
-		       request_end
-  request_end       =  "0000" / "done"
+		       "done"
 
   want_list         =  PKT-LINE(want SP cap_list LF)
 		       *(want_pkt)
