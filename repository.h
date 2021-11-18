@@ -11,6 +11,7 @@ struct pathspec;
 struct raw_object_store;
 struct submodule_cache;
 struct promisor_remote_config;
+struct remote_state;
 
 enum untracked_cache_setting {
 	UNTRACKED_CACHE_KEEP,
@@ -126,6 +127,9 @@ struct repository {
 	 * 'repo_read_index()' can be used to populate 'index'.
 	 */
 	struct index_state *index;
+
+	/* Repository's remotes and associated structures. */
+	struct remote_state *remote_state;
 
 	/* Repository's current hash algorithm, as serialized on disk. */
 	const struct git_hash_algo *hash_algo;
