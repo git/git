@@ -166,25 +166,74 @@ static void add_merge(struct branch *branch, const char *name)
 	branch->merge_name[branch->merge_nr++] = name;
 }
 
+struct branches_hash_key {
+	const char *str;
+	int len;
+};
+
+static int branches_hash_cmp(const void *unused_cmp_data,
+			     const struct hashmap_entry *eptr,
+			     const struct hashmap_entry *entry_or_key,
+			     const void *keydata)
+{
+	const struct branch *a, *b;
+	const struct branches_hash_key *key = keydata;
+
+	a = container_of(eptr, const struct branch, ent);
+	b = container_of(entry_or_key, const struct branch, ent);
+
+	if (key)
+		return strncmp(a->name, key->str, key->len) ||
+		       a->name[key->len];
+	else
+		return strcmp(a->name, b->name);
+}
+
+static struct branch *find_branch(struct remote_state *remote_state,
+				  const char *name, size_t len)
+{
+	struct branches_hash_key lookup;
+	struct hashmap_entry lookup_entry, *e;
+
+	if (!len)
+		len = strlen(name);
+
+	lookup.str = name;
+	lookup.len = len;
+	hashmap_entry_init(&lookup_entry, memhash(name, len));
+
+	e = hashmap_get(&remote_state->branches_hash, &lookup_entry, &lookup);
+	if (e)
+		return container_of(e, struct branch, ent);
+
+	return NULL;
+}
+
+static void die_on_missing_branch(struct repository *repo,
+				  struct branch *branch)
+{
+	/* branch == NULL is always valid because it represents detached HEAD. */
+	if (branch &&
+	    branch != find_branch(repo->remote_state, branch->name, 0))
+		die("branch %s was not found in the repository", branch->name);
+}
+
 static struct branch *make_branch(struct remote_state *remote_state,
 				  const char *name, size_t len)
 {
 	struct branch *ret;
-	int i;
 
-	for (i = 0; i < remote_state->branches_nr; i++) {
-		if (!strncmp(name, remote_state->branches[i]->name, len) &&
-		    !remote_state->branches[i]->name[len])
-			return remote_state->branches[i];
-	}
+	ret = find_branch(remote_state, name, len);
+	if (ret)
+		return ret;
 
-	ALLOC_GROW(remote_state->branches, remote_state->branches_nr + 1,
-		   remote_state->branches_alloc);
 	CALLOC_ARRAY(ret, 1);
-	remote_state->branches[remote_state->branches_nr++] = ret;
 	ret->name = xstrndup(name, len);
 	ret->refname = xstrfmt("refs/heads/%s", ret->name);
 
+	hashmap_entry_init(&ret->ent, memhash(name, len));
+	if (hashmap_put_entry(&remote_state->branches_hash, ret, ent))
+		BUG("hashmap_put overwrote entry after hashmap_get returned NULL");
 	return ret;
 }
 
@@ -500,6 +549,8 @@ static const char *remotes_remote_for_branch(struct remote_state *remote_state,
 const char *remote_for_branch(struct branch *branch, int *explicit)
 {
 	read_config(the_repository);
+	die_on_missing_branch(the_repository, branch);
+
 	return remotes_remote_for_branch(the_repository->remote_state, branch,
 					 explicit);
 }
@@ -524,6 +575,8 @@ remotes_pushremote_for_branch(struct remote_state *remote_state,
 const char *pushremote_for_branch(struct branch *branch, int *explicit)
 {
 	read_config(the_repository);
+	die_on_missing_branch(the_repository, branch);
+
 	return remotes_pushremote_for_branch(the_repository->remote_state,
 					     branch, explicit);
 }
@@ -534,6 +587,8 @@ static struct remote *remotes_remote_get(struct remote_state *remote_state,
 const char *remote_ref_for_branch(struct branch *branch, int for_push)
 {
 	read_config(the_repository);
+	die_on_missing_branch(the_repository, branch);
+
 	if (branch) {
 		if (!for_push) {
 			if (branch->merge_nr) {
@@ -1879,6 +1934,8 @@ static const char *branch_get_push_1(struct remote_state *remote_state,
 const char *branch_get_push(struct branch *branch, struct strbuf *err)
 {
 	read_config(the_repository);
+	die_on_missing_branch(the_repository, branch);
+
 	if (!branch)
 		return error_buf(err, _("HEAD does not point to a branch"));
 
@@ -2652,6 +2709,7 @@ struct remote_state *remote_state_new(void)
 	memset(r, 0, sizeof(*r));
 
 	hashmap_init(&r->remotes_hash, remotes_hash_cmp, NULL, 0);
+	hashmap_init(&r->branches_hash, branches_hash_cmp, NULL, 0);
 	return r;
 }
 
@@ -2667,11 +2725,5 @@ void remote_state_clear(struct remote_state *remote_state)
 	remote_state->remotes_nr = 0;
 
 	hashmap_clear_and_free(&remote_state->remotes_hash, struct remote, ent);
-
-	for (i = 0; i < remote_state->branches_nr; i++) {
-		FREE_AND_NULL(remote_state->branches[i]);
-	}
-	FREE_AND_NULL(remote_state->branches);
-	remote_state->branches_alloc = 0;
-	remote_state->branches_nr = 0;
+	hashmap_clear_and_free(&remote_state->branches_hash, struct remote, ent);
 }

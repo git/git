@@ -43,9 +43,7 @@ struct remote_state {
 	int remotes_nr;
 	struct hashmap remotes_hash;
 
-	struct branch **branches;
-	int branches_alloc;
-	int branches_nr;
+	struct hashmap branches_hash;
 
 	struct branch *current_branch;
 	const char *pushremote_name;
@@ -292,6 +290,7 @@ int remote_find_tracking(struct remote *remote, struct refspec_item *refspec);
  * branch_get(name) for "refs/heads/{name}", or with branch_get(NULL) for HEAD.
  */
 struct branch {
+	struct hashmap_entry ent;
 
 	/* The short name of the branch. */
 	const char *name;
