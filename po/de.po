@@ -16983,7 +16983,7 @@ msgstr "kein Informations-Betrachter konnte mit dieser Anfrage umgehen"
 #: builtin/help.c:551 builtin/help.c:562 git.c:348
 #, c-format
 msgid "'%s' is aliased to '%s'"
-msgstr "Für '%s' wurde der Alias '%s' angelegt."
+msgstr "'%s' ist ein Alias für '%s'"
 
 #: builtin/help.c:565 git.c:380
 #, c-format
