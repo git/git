@@ -52,6 +52,8 @@ struct remote_state {
 
 	struct rewrites rewrites;
 	struct rewrites rewrites_push;
+
+	int initialized;
 };
 
 void remote_state_clear(struct remote_state *remote_state);
