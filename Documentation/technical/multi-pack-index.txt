@@ -17,12 +17,12 @@ is not feasible due to storage space or excessive repack times.
 The multi-pack-index (MIDX for short) stores a list of objects
 and their offsets into multiple packfiles. It contains:
 
-- A list of packfile names.
-- A sorted list of object IDs.
-- A list of metadata for the ith object ID including:
-  - A value j referring to the jth packfile.
-  - An offset within the jth packfile for the object.
-- If large offsets are required, we use another list of large
+* A list of packfile names.
+* A sorted list of object IDs.
+* A list of metadata for the ith object ID including:
+** A value j referring to the jth packfile.
+** An offset within the jth packfile for the object.
+* If large offsets are required, we use another list of large
   offsets similar to version 2 pack-indexes.
 
 Thus, we can provide O(log N) lookup time for any number
