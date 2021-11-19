@@ -239,7 +239,7 @@ test_expect_success GPGSSH 'amending already signed commit' '
 	test_config gpg.format ssh &&
 	test_config user.signingkey "${GPGSSH_KEY_PRIMARY}" &&
 	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
-	git checkout fourth-signed^0 &&
+	git checkout -f fourth-signed^0 &&
 	git commit --amend -S --no-edit &&
 	git verify-commit HEAD &&
 	git show -s --show-signature HEAD >actual &&
