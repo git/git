@@ -3,25 +3,26 @@
 test_description='typechange rename detection'
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-diff.sh
 
 test_expect_success setup '
 
 	rm -f foo bar &&
-	cat "$TEST_DIRECTORY"/../COPYING >foo &&
+	COPYING_test_data >foo &&
 	test_ln_s_add linklink bar &&
 	git add foo &&
 	git commit -a -m Initial &&
 	git tag one &&
 
 	git rm -f foo bar &&
-	cat "$TEST_DIRECTORY"/../COPYING >bar &&
+	COPYING_test_data >bar &&
 	test_ln_s_add linklink foo &&
 	git add bar &&
 	git commit -a -m Second &&
 	git tag two &&
 
 	git rm -f foo bar &&
-	cat "$TEST_DIRECTORY"/../COPYING >foo &&
+	COPYING_test_data >foo &&
 	git add foo &&
 	git commit -a -m Third &&
 	git tag three &&
@@ -35,7 +36,7 @@ test_expect_success setup '
 	# This is purely for sanity check
 
 	git rm -f foo bar &&
-	cat "$TEST_DIRECTORY"/../COPYING >foo &&
+	COPYING_test_data >foo &&
 	cat "$TEST_DIRECTORY"/../Makefile >bar &&
 	git add foo bar &&
 	git commit -a -m Fifth &&
@@ -43,7 +44,7 @@ test_expect_success setup '
 
 	git rm -f foo bar &&
 	cat "$TEST_DIRECTORY"/../Makefile >foo &&
-	cat "$TEST_DIRECTORY"/../COPYING >bar &&
+	COPYING_test_data >bar &&
 	git add foo bar &&
 	git commit -a -m Sixth &&
 	git tag six

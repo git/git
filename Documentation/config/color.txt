@@ -9,26 +9,27 @@ color.advice.hint::
 	Use customized color for hints.
 
 color.blame.highlightRecent::
-	This can be used to color the metadata of a blame line depending
-	on age of the line.
+	Specify the line annotation color for `git blame --color-by-age`
+	depending upon the age of the line.
 +
-This setting should be set to a comma-separated list of color and date settings,
-starting and ending with a color, the dates should be set from oldest to newest.
-The metadata will be colored given the colors if the line was introduced
-before the given timestamp, overwriting older timestamped colors.
+This setting should be set to a comma-separated list of color and
+date settings, starting and ending with a color, the dates should be
+set from oldest to newest. The metadata will be colored with the
+specified colors if the line was introduced before the given
+timestamp, overwriting older timestamped colors.
 +
-Instead of an absolute timestamp relative timestamps work as well, e.g.
-2.weeks.ago is valid to address anything older than 2 weeks.
+Instead of an absolute timestamp relative timestamps work as well,
+e.g. `2.weeks.ago` is valid to address anything older than 2 weeks.
 +
-It defaults to 'blue,12 month ago,white,1 month ago,red', which colors
-everything older than one year blue, recent changes between one month and
-one year old are kept white, and lines introduced within the last month are
-colored red.
+It defaults to `blue,12 month ago,white,1 month ago,red`, which
+colors everything older than one year blue, recent changes between
+one month and one year old are kept white, and lines introduced
+within the last month are colored red.
 
 color.blame.repeatedLines::
-	Use the customized color for the part of git-blame output that
-	is repeated meta information per line (such as commit id,
-	author name, date and timezone). Defaults to cyan.
+	Use the specified color to colorize line annotations for
+	`git blame --color-lines`, if they come from the same commit as the
+	preceding line. Defaults to cyan.
 
 color.branch::
 	A boolean to enable/disable color in the output of
@@ -104,9 +105,12 @@ color.grep.<slot>::
 `matchContext`;;
 	matching text in context lines
 `matchSelected`;;
-	matching text in selected lines
+	matching text in selected lines. Also, used to customize the following
+	linkgit:git-log[1] subcommands: `--grep`, `--author` and `--committer`.
 `selected`;;
-	non-matching text in selected lines
+	non-matching text in selected lines. Also, used to customize the
+	following linkgit:git-log[1] subcommands: `--grep`, `--author` and
+	`--committer`.
 `separator`;;
 	separators between fields on a line (`:`, `-`, and `=`)
 	and between hunks (`--`)
@@ -127,8 +131,9 @@ color.interactive.<slot>::
 	interactive commands.
 
 color.pager::
-	A boolean to enable/disable colored output when the pager is in
-	use (default is true).
+	A boolean to specify whether `auto` color modes should colorize
+	output going to the pager. Defaults to true; set this to false
+	if your pager does not understand ANSI color codes.
 
 color.push::
 	A boolean to enable/disable color in push errors. May be set to

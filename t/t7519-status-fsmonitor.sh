@@ -73,6 +73,7 @@ test_expect_success 'setup' '
 	expect*
 	actual*
 	marker*
+	trace2*
 	EOF
 '
 
@@ -380,6 +381,62 @@ test_expect_success 'status succeeds after staging/unstaging' '
 		git config core.fsmonitor "$TEST_DIRECTORY/t7519/fsmonitor-env" &&
 		FSMONITOR_LIST="$removed" git restore -S $removed &&
 		FSMONITOR_LIST="$removed" git status
+	)
+'
+
+# Usage:
+# check_sparse_index_behavior [!]
+# If "!" is supplied, then we verify that we do not call ensure_full_index
+# during a call to 'git status'. Otherwise, we verify that we _do_ call it.
+check_sparse_index_behavior () {
+	git -C full status --porcelain=v2 >expect &&
+	GIT_TRACE2_EVENT="$(pwd)/trace2.txt" GIT_TRACE2_EVENT_NESTING=10 \
+		git -C sparse status --porcelain=v2 >actual &&
+	test_region $1 index ensure_full_index trace2.txt &&
+	test_region fsm_hook query trace2.txt &&
+	test_cmp expect actual &&
+	rm trace2.txt
+}
+
+test_expect_success 'status succeeds with sparse index' '
+	(
+		sane_unset GIT_TEST_SPLIT_INDEX &&
+
+		git clone . full &&
+		git clone --sparse . sparse &&
+		git -C sparse sparse-checkout init --cone --sparse-index &&
+		git -C sparse sparse-checkout set dir1 dir2 &&
+
+		write_script .git/hooks/fsmonitor-test <<-\EOF &&
+			printf "last_update_token\0"
+		EOF
+		git -C full config core.fsmonitor ../.git/hooks/fsmonitor-test &&
+		git -C sparse config core.fsmonitor ../.git/hooks/fsmonitor-test &&
+		check_sparse_index_behavior ! &&
+
+		write_script .git/hooks/fsmonitor-test <<-\EOF &&
+			printf "last_update_token\0"
+			printf "dir1/modified\0"
+		EOF
+		check_sparse_index_behavior ! &&
+
+		git -C sparse sparse-checkout add dir1a &&
+
+		for repo in full sparse
+		do
+			cp -r $repo/dir1 $repo/dir1a &&
+			git -C $repo add dir1a &&
+			git -C $repo commit -m "add dir1a" || return 1
+		done &&
+		git -C sparse sparse-checkout set dir1 dir2 &&
+
+		# This one modifies outside the sparse-checkout definition
+		# and hence we expect to expand the sparse-index.
+		write_script .git/hooks/fsmonitor-test <<-\EOF &&
+			printf "last_update_token\0"
+			printf "dir1a/modified\0"
+		EOF
+		check_sparse_index_behavior
 	)
 '
 

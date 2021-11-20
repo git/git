@@ -62,8 +62,17 @@ The argument to this option may be a glob on ref names, a ref, or the (possibly
 abbreviated) SHA-1 of a commit. Specifying a glob is equivalent to specifying
 this option multiple times, one for each matching ref name.
 +
-See also the `fetch.negotiationAlgorithm` configuration variable
-documented in linkgit:git-config[1].
+See also the `fetch.negotiationAlgorithm` and `push.negotiate`
+configuration variables documented in linkgit:git-config[1], and the
+`--negotiate-only` option below.
+
+--negotiate-only::
+	Do not fetch anything from the server, and instead print the
+	ancestors of the provided `--negotiation-tip=*` arguments,
+	which we have in common with the server.
++
+Internally this is used to implement the `push.negotiate` option, see
+linkgit:git-config[1].
 
 --dry-run::
 	Show what would be done, without making any changes.

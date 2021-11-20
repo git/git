@@ -138,12 +138,15 @@ Issues of note:
 	  BLK_SHA1.  Also included is a version optimized for PowerPC
 	  (PPC_SHA1).
 
-	- "libcurl" library is used by git-http-fetch, git-fetch, and, if
-	  the curl version >= 7.34.0, for git-imap-send.  You might also
-	  want the "curl" executable for debugging purposes. If you do not
-	  use http:// or https:// repositories, and do not want to put
-	  patches into an IMAP mailbox, you do not have to have them
-	  (use NO_CURL).
+	- "libcurl" library is used for fetching and pushing
+	  repositories over http:// or https://, as well as by
+	  git-imap-send if the curl version is >= 7.34.0. If you do
+	  not need that functionality, use NO_CURL to build without
+	  it.
+
+	  Git requires version "7.19.4" or later of "libcurl" to build
+	  without NO_CURL. This version requirement may be bumped in
+	  the future.
 
 	- "expat" library; git-http-push uses it for remote lock
 	  management over DAV.  Similar to "curl" above, this is optional

@@ -253,7 +253,7 @@ test_expect_success SYMLINKS 'pack symlinked packed-refs' '
 	git for-each-ref >all-refs-packed &&
 	test_cmp all-refs-before all-refs-packed &&
 	test -h .git/packed-refs &&
-	test "$(readlink .git/packed-refs)" = "my-deviant-packed-refs"
+	test "$(test_readlink .git/packed-refs)" = "my-deviant-packed-refs"
 '
 
 test_done

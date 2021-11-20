@@ -101,9 +101,9 @@ int init_apply_state(struct apply_state *state,
 	state->ws_error_action = warn_on_ws_error;
 	state->ws_ignore_action = ignore_ws_none;
 	state->linenr = 1;
-	string_list_init(&state->fn_table, 0);
-	string_list_init(&state->limit_by_name, 0);
-	string_list_init(&state->symlink_changes, 0);
+	string_list_init_nodup(&state->fn_table);
+	string_list_init_nodup(&state->limit_by_name);
+	string_list_init_nodup(&state->symlink_changes);
 	strbuf_init(&state->root, 0);
 
 	git_apply_config();
@@ -1917,6 +1917,7 @@ static struct fragment *parse_binary_hunk(struct apply_state *state,
 
 	state->linenr++;
 	buffer += llen;
+	size -= llen;
 	while (1) {
 		int byte_length, max_byte_length, newsize;
 		llen = linelen(buffer, size);
@@ -3467,6 +3468,21 @@ static int load_preimage(struct apply_state *state,
 	return 0;
 }
 
+static int resolve_to(struct image *image, const struct object_id *result_id)
+{
+	unsigned long size;
+	enum object_type type;
+
+	clear_image(image);
+
+	image->buf = read_object_file(result_id, &type, &size);
+	if (!image->buf || type != OBJ_BLOB)
+		die("unable to read blob object %s", oid_to_hex(result_id));
+	image->len = size;
+
+	return 0;
+}
+
 static int three_way_merge(struct apply_state *state,
 			   struct image *image,
 			   char *path,
@@ -3477,6 +3493,12 @@ static int three_way_merge(struct apply_state *state,
 	mmfile_t base_file, our_file, their_file;
 	mmbuffer_t result = { NULL };
 	int status;
+
+	/* resolve trivial cases first */
+	if (oideq(base, ours))
+		return resolve_to(image, theirs);
+	else if (oideq(base, theirs) || oideq(ours, theirs))
+		return resolve_to(image, ours);
 
 	read_mmblob(&base_file, base);
 	read_mmblob(&our_file, ours);

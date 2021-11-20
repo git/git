@@ -6,6 +6,7 @@ GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-terminal.sh
 
 TEST_ROOT="$PWD"
 PATH=$TEST_ROOT:$PATH
@@ -1060,5 +1061,75 @@ test_expect_success PERL,SYMLINKS,CASE_INSENSITIVE_FS \
 		test_path_is_missing target-dir/y
 	)
 '
+
+test_expect_success PERL 'setup for progress tests' '
+	git init progress &&
+	(
+		cd progress &&
+		git config filter.delay.process "rot13-filter.pl delay-progress.log clean smudge delay" &&
+		git config filter.delay.required true &&
+
+		echo "*.a filter=delay" >.gitattributes &&
+		touch test-delay10.a &&
+		git add . &&
+		git commit -m files
+	)
+'
+
+test_delayed_checkout_progress () {
+	if test "$1" = "!"
+	then
+		local expect_progress=N &&
+		shift
+	else
+		local expect_progress=
+	fi &&
+
+	if test $# -lt 1
+	then
+		BUG "no command given to test_delayed_checkout_progress"
+	fi &&
+
+	(
+		cd progress &&
+		GIT_PROGRESS_DELAY=0 &&
+		export GIT_PROGRESS_DELAY &&
+		rm -f *.a delay-progress.log &&
+
+		"$@" 2>err &&
+		grep "IN: smudge test-delay10.a .* \\[DELAYED\\]" delay-progress.log &&
+		if test "$expect_progress" = N
+		then
+			! grep "Filtering content" err
+		else
+			grep "Filtering content" err
+		fi
+	)
+}
+
+for mode in pathspec branch
+do
+	case "$mode" in
+	pathspec) opt='.' ;;
+	branch) opt='-f HEAD' ;;
+	esac
+
+	test_expect_success PERL,TTY "delayed checkout shows progress by default on tty ($mode checkout)" '
+		test_delayed_checkout_progress test_terminal git checkout $opt
+	'
+
+	test_expect_success PERL "delayed checkout ommits progress on non-tty ($mode checkout)" '
+		test_delayed_checkout_progress ! git checkout $opt
+	'
+
+	test_expect_success PERL,TTY "delayed checkout ommits progress with --quiet ($mode checkout)" '
+		test_delayed_checkout_progress ! test_terminal git checkout --quiet $opt
+	'
+
+	test_expect_success PERL,TTY "delayed checkout honors --[no]-progress ($mode checkout)" '
+		test_delayed_checkout_progress ! test_terminal git checkout --no-progress $opt &&
+		test_delayed_checkout_progress test_terminal git checkout --quiet --progress $opt
+	'
+done
 
 test_done

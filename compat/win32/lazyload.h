@@ -15,10 +15,12 @@
  *                        source, target);
  */
 
+typedef void (*FARVOIDPROC)(void);
+
 struct proc_addr {
 	const char *const dll;
 	const char *const function;
-	FARPROC pfunction;
+	FARVOIDPROC pfunction;
 	unsigned initialized : 1;
 };
 
@@ -26,7 +28,8 @@ struct proc_addr {
 #define DECLARE_PROC_ADDR(dll, rettype, function, ...) \
 	static struct proc_addr proc_addr_##function = \
 	{ #dll, #function, NULL, 0 }; \
-	static rettype (WINAPI *function)(__VA_ARGS__)
+	typedef rettype (WINAPI *proc_type_##function)(__VA_ARGS__); \
+	static proc_type_##function function
 
 /*
  * Loads a function from a DLL (once-only).
@@ -35,9 +38,9 @@ struct proc_addr {
  * This function is not thread-safe.
  */
 #define INIT_PROC_ADDR(function) \
-	(function = get_proc_addr(&proc_addr_##function))
+	(function = (proc_type_##function)get_proc_addr(&proc_addr_##function))
 
-static inline void *get_proc_addr(struct proc_addr *proc)
+static inline FARVOIDPROC get_proc_addr(struct proc_addr *proc)
 {
 	/* only do this once */
 	if (!proc->initialized) {
@@ -46,7 +49,8 @@ static inline void *get_proc_addr(struct proc_addr *proc)
 		hnd = LoadLibraryExA(proc->dll, NULL,
 				     LOAD_LIBRARY_SEARCH_SYSTEM32);
 		if (hnd)
-			proc->pfunction = GetProcAddress(hnd, proc->function);
+			proc->pfunction = (FARVOIDPROC)GetProcAddress(hnd,
+							proc->function);
 	}
 	/* set ENOSYS if DLL or function was not found */
 	if (!proc->pfunction)

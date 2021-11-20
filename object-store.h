@@ -7,6 +7,10 @@
 #include "oid-array.h"
 #include "strbuf.h"
 #include "thread-utils.h"
+#include "khash.h"
+#include "dir.h"
+#include "oidtree.h"
+#include "oidset.h"
 
 struct object_directory {
 	struct object_directory *next;
@@ -20,8 +24,8 @@ struct object_directory {
 	 *
 	 * Be sure to call odb_load_loose_cache() before using.
 	 */
-	char loose_objects_subdir_seen[256];
-	struct oid_array loose_objects_cache[256];
+	uint32_t loose_objects_subdir_seen[8]; /* 256 bits */
+	struct oidtree *loose_objects_cache;
 
 	/*
 	 * Path to the alternative object store. If this is a relative path,
@@ -30,8 +34,12 @@ struct object_directory {
 	char *path;
 };
 
+KHASH_INIT(odb_path_map, const char * /* key: odb_path */,
+	struct object_directory *, 1, fspathhash, fspatheq)
+
 void prepare_alt_odb(struct repository *r);
 char *compute_alternate_path(const char *path, struct strbuf *err);
+struct object_directory *find_odb(struct repository *r, const char *obj_dir);
 typedef int alt_odb_fn(struct object_directory *, void *);
 int foreach_alt_odb(alt_odb_fn, void*);
 typedef void alternate_ref_fn(const struct object_id *oid, void *);
@@ -54,7 +62,7 @@ void add_to_alternates_memory(const char *dir);
  * Populate and return the loose object cache array corresponding to the
  * given object ID.
  */
-struct oid_array *odb_loose_cache(struct object_directory *odb,
+struct oidtree *odb_loose_cache(struct object_directory *odb,
 				  const struct object_id *oid);
 
 /* Empty the loose object cache for the specified object directory. */
@@ -69,9 +77,8 @@ struct packed_git {
 	const void *index_data;
 	size_t index_size;
 	uint32_t num_objects;
-	uint32_t num_bad_objects;
 	uint32_t crc_offset;
-	unsigned char *bad_object_sha1;
+	struct oidset bad_objects;
 	int index_version;
 	time_t mtime;
 	int pack_fd;
@@ -116,6 +123,8 @@ struct raw_object_store {
 	 */
 	struct object_directory *odb;
 	struct object_directory **odb_tail;
+	kh_odb_path_map_t *odb_by_path;
+
 	int loaded_alternates;
 
 	/*
@@ -214,8 +223,14 @@ int hash_object_file(const struct git_hash_algo *algo, const void *buf,
 		     unsigned long len, const char *type,
 		     struct object_id *oid);
 
-int write_object_file(const void *buf, unsigned long len,
-		      const char *type, struct object_id *oid);
+int write_object_file_flags(const void *buf, unsigned long len,
+			    const char *type, struct object_id *oid,
+			    unsigned flags);
+static inline int write_object_file(const void *buf, unsigned long len,
+				    const char *type, struct object_id *oid)
+{
+	return write_object_file_flags(buf, len, type, oid, 0);
+}
 
 int hash_object_file_literally(const void *buf, unsigned long len,
 			       const char *type, struct object_id *oid,
@@ -236,6 +251,7 @@ int force_object_loose(const struct object_id *oid, time_t mtime);
 
 /*
  * Open the loose object at path, check its hash, and return the contents,
+ * use the "oi" argument to assert things about the object, or e.g. populate its
  * type, and size. If the object is a blob, then "contents" may return NULL,
  * to allow streaming of large blobs.
  *
@@ -243,9 +259,9 @@ int force_object_loose(const struct object_id *oid, time_t mtime);
  */
 int read_loose_object(const char *path,
 		      const struct object_id *expected_oid,
-		      enum object_type *type,
-		      unsigned long *size,
-		      void **contents);
+		      struct object_id *real_oid,
+		      void **contents,
+		      struct object_info *oi);
 
 /* Retry packed storage after checking packed and loose storage */
 #define HAS_OBJECT_RECHECK_PACKED 1
@@ -362,7 +378,7 @@ struct object_info {
  * Initializer for a "struct object_info" that wants no items. You may
  * also memset() the memory to all-zeroes.
  */
-#define OBJECT_INFO_INIT {NULL}
+#define OBJECT_INFO_INIT { 0 }
 
 /* Invoke lookup_replace_object() on the given hash */
 #define OBJECT_INFO_LOOKUP_REPLACE 1
@@ -447,6 +463,12 @@ enum for_each_object_flags {
 	 * Visit objects within a pack in packfile order rather than .idx order
 	 */
 	FOR_EACH_OBJECT_PACK_ORDER = (1<<2),
+
+	/* Only iterate over packs that are not marked as kept in-core. */
+	FOR_EACH_OBJECT_SKIP_IN_CORE_KEPT_PACKS = (1<<3),
+
+	/* Only iterate over packs that do not have .keep files. */
+	FOR_EACH_OBJECT_SKIP_ON_DISK_KEPT_PACKS = (1<<4),
 };
 
 /*

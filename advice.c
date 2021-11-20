@@ -4,37 +4,6 @@
 #include "help.h"
 #include "string-list.h"
 
-int advice_fetch_show_forced_updates = 1;
-int advice_push_update_rejected = 1;
-int advice_push_non_ff_current = 1;
-int advice_push_non_ff_matching = 1;
-int advice_push_already_exists = 1;
-int advice_push_fetch_first = 1;
-int advice_push_needs_force = 1;
-int advice_push_unqualified_ref_name = 1;
-int advice_push_ref_needs_update = 1;
-int advice_status_hints = 1;
-int advice_status_u_option = 1;
-int advice_status_ahead_behind_warning = 1;
-int advice_commit_before_merge = 1;
-int advice_reset_quiet_warning = 1;
-int advice_resolve_conflict = 1;
-int advice_sequencer_in_use = 1;
-int advice_implicit_identity = 1;
-int advice_detached_head = 1;
-int advice_set_upstream_failure = 1;
-int advice_object_name_warning = 1;
-int advice_amworkdir = 1;
-int advice_rm_hints = 1;
-int advice_add_embedded_repo = 1;
-int advice_ignored_hook = 1;
-int advice_waiting_for_editor = 1;
-int advice_graft_file_deprecated = 1;
-int advice_checkout_ambiguous_remote_branch_name = 1;
-int advice_submodule_alternate_error_strategy_die = 1;
-int advice_add_ignored_file = 1;
-int advice_add_empty_pathspec = 1;
-
 static int advice_use_color = -1;
 static char advice_colors[][COLOR_MAXLEN] = {
 	GIT_COLOR_RESET,
@@ -63,49 +32,12 @@ static const char *advise_get_color(enum color_advice ix)
 }
 
 static struct {
-	const char *name;
-	int *preference;
-} advice_config[] = {
-	{ "fetchShowForcedUpdates", &advice_fetch_show_forced_updates },
-	{ "pushUpdateRejected", &advice_push_update_rejected },
-	{ "pushNonFFCurrent", &advice_push_non_ff_current },
-	{ "pushNonFFMatching", &advice_push_non_ff_matching },
-	{ "pushAlreadyExists", &advice_push_already_exists },
-	{ "pushFetchFirst", &advice_push_fetch_first },
-	{ "pushNeedsForce", &advice_push_needs_force },
-	{ "pushUnqualifiedRefName", &advice_push_unqualified_ref_name },
-	{ "pushRefNeedsUpdate", &advice_push_ref_needs_update },
-	{ "statusHints", &advice_status_hints },
-	{ "statusUoption", &advice_status_u_option },
-	{ "statusAheadBehindWarning", &advice_status_ahead_behind_warning },
-	{ "commitBeforeMerge", &advice_commit_before_merge },
-	{ "resetQuiet", &advice_reset_quiet_warning },
-	{ "resolveConflict", &advice_resolve_conflict },
-	{ "sequencerInUse", &advice_sequencer_in_use },
-	{ "implicitIdentity", &advice_implicit_identity },
-	{ "detachedHead", &advice_detached_head },
-	{ "setUpstreamFailure", &advice_set_upstream_failure },
-	{ "objectNameWarning", &advice_object_name_warning },
-	{ "amWorkDir", &advice_amworkdir },
-	{ "rmHints", &advice_rm_hints },
-	{ "addEmbeddedRepo", &advice_add_embedded_repo },
-	{ "ignoredHook", &advice_ignored_hook },
-	{ "waitingForEditor", &advice_waiting_for_editor },
-	{ "graftFileDeprecated", &advice_graft_file_deprecated },
-	{ "checkoutAmbiguousRemoteBranchName", &advice_checkout_ambiguous_remote_branch_name },
-	{ "submoduleAlternateErrorStrategyDie", &advice_submodule_alternate_error_strategy_die },
-	{ "addIgnoredFile", &advice_add_ignored_file },
-	{ "addEmptyPathspec", &advice_add_empty_pathspec },
-
-	/* make this an alias for backward compatibility */
-	{ "pushNonFastForward", &advice_push_update_rejected }
-};
-
-static struct {
 	const char *key;
 	int enabled;
 } advice_setting[] = {
 	[ADVICE_ADD_EMBEDDED_REPO]			= { "addEmbeddedRepo", 1 },
+	[ADVICE_ADD_EMPTY_PATHSPEC]			= { "addEmptyPathspec", 1 },
+	[ADVICE_ADD_IGNORED_FILE]			= { "addIgnoredFile", 1 },
 	[ADVICE_AM_WORK_DIR] 				= { "amWorkDir", 1 },
 	[ADVICE_CHECKOUT_AMBIGUOUS_REMOTE_BRANCH_NAME] 	= { "checkoutAmbiguousRemoteBranchName", 1 },
 	[ADVICE_COMMIT_BEFORE_MERGE]			= { "commitBeforeMerge", 1 },
@@ -133,6 +65,7 @@ static struct {
 	[ADVICE_RM_HINTS]				= { "rmHints", 1 },
 	[ADVICE_SEQUENCER_IN_USE]			= { "sequencerInUse", 1 },
 	[ADVICE_SET_UPSTREAM_FAILURE]			= { "setUpstreamFailure", 1 },
+	[ADVICE_SKIPPED_CHERRY_PICKS]			= { "skippedCherryPicks", 1 },
 	[ADVICE_STATUS_AHEAD_BEHIND_WARNING]		= { "statusAheadBehindWarning", 1 },
 	[ADVICE_STATUS_HINTS]				= { "statusHints", 1 },
 	[ADVICE_STATUS_U_OPTION]			= { "statusUoption", 1 },
@@ -221,13 +154,6 @@ int git_default_advice_config(const char *var, const char *value)
 	if (!skip_prefix(var, "advice.", &k))
 		return 0;
 
-	for (i = 0; i < ARRAY_SIZE(advice_config); i++) {
-		if (strcasecmp(k, advice_config[i].name))
-			continue;
-		*advice_config[i].preference = git_config_bool(var, value);
-		break;
-	}
-
 	for (i = 0; i < ARRAY_SIZE(advice_setting); i++) {
 		if (strcasecmp(k, advice_setting[i].key))
 			continue;
@@ -262,7 +188,7 @@ int error_resolve_conflict(const char *me)
 		error(_("It is not possible to %s because you have unmerged files."),
 			me);
 
-	if (advice_resolve_conflict)
+	if (advice_enabled(ADVICE_RESOLVE_CONFLICT))
 		/*
 		 * Message used both when 'git commit' fails and when
 		 * other commands doing a merge do.
@@ -281,9 +207,14 @@ void NORETURN die_resolve_conflict(const char *me)
 void NORETURN die_conclude_merge(void)
 {
 	error(_("You have not concluded your merge (MERGE_HEAD exists)."));
-	if (advice_resolve_conflict)
+	if (advice_enabled(ADVICE_RESOLVE_CONFLICT))
 		advise(_("Please, commit your changes before merging."));
 	die(_("Exiting because of unfinished merge."));
+}
+
+void NORETURN die_ff_impossible(void)
+{
+	die(_("Not possible to fast-forward, aborting."));
 }
 
 void advise_on_updating_sparse_paths(struct string_list *pathspec_list)
@@ -293,15 +224,16 @@ void advise_on_updating_sparse_paths(struct string_list *pathspec_list)
 	if (!pathspec_list->nr)
 		return;
 
-	fprintf(stderr, _("The following pathspecs didn't match any"
-			  " eligible path, but they do match index\n"
-			  "entries outside the current sparse checkout:\n"));
+	fprintf(stderr, _("The following paths and/or pathspecs matched paths that exist\n"
+			  "outside of your sparse-checkout definition, so will not be\n"
+			  "updated in the index:\n"));
 	for_each_string_list_item(item, pathspec_list)
 		fprintf(stderr, "%s\n", item->string);
 
 	advise_if_enabled(ADVICE_UPDATE_SPARSE_PATH,
-			  _("Disable or modify the sparsity rules if you intend"
-			    " to update such entries."));
+			  _("If you intend to update such entries, try one of the following:\n"
+			    "* Use the --sparse option.\n"
+			    "* Disable or modify the sparsity rules."));
 }
 
 void detach_advice(const char *new_name)

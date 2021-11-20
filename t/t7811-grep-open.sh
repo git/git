@@ -3,6 +3,7 @@
 test_description='git grep --open-files-in-pager
 '
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-pager.sh
 unset PAGER GIT_PAGER
@@ -114,8 +115,8 @@ test_expect_success 'modified file' '
 	unrelated
 	EOF
 
+	test_when_finished "git reset --hard" &&
 	echo "enum grep_pat_token" >unrelated &&
-	test_when_finished "git checkout HEAD unrelated" &&
 	GIT_PAGER=./less git grep -F -O "enum grep_pat_token" >out &&
 	test_cmp expect actual &&
 	test_must_be_empty out

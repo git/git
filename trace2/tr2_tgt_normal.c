@@ -160,6 +160,24 @@ static void fn_command_path_fl(const char *file, int line, const char *pathname)
 	strbuf_release(&buf_payload);
 }
 
+static void fn_command_ancestry_fl(const char *file, int line, const char **parent_names)
+{
+	const char *parent_name = NULL;
+	struct strbuf buf_payload = STRBUF_INIT;
+
+	/* cmd_ancestry parent <- grandparent <- great-grandparent */
+	strbuf_addstr(&buf_payload, "cmd_ancestry ");
+	while ((parent_name = *parent_names++)) {
+		strbuf_addstr(&buf_payload, parent_name);
+		/* if we'll write another one after this, add a delimiter */
+		if (parent_names && *parent_names)
+			strbuf_addstr(&buf_payload, " <- ");
+	}
+
+	normal_io_write_fl(file, line, &buf_payload);
+	strbuf_release(&buf_payload);
+}
+
 static void fn_command_name_fl(const char *file, int line, const char *name,
 			       const char *hierarchy)
 {
@@ -229,6 +247,19 @@ static void fn_child_exit_fl(const char *file, int line,
 
 	strbuf_addf(&buf_payload, "child_exit[%d] pid:%d code:%d elapsed:%.6f",
 		    cid, pid, code, elapsed);
+	normal_io_write_fl(file, line, &buf_payload);
+	strbuf_release(&buf_payload);
+}
+
+static void fn_child_ready_fl(const char *file, int line,
+			      uint64_t us_elapsed_absolute, int cid, int pid,
+			      const char *ready, uint64_t us_elapsed_child)
+{
+	struct strbuf buf_payload = STRBUF_INIT;
+	double elapsed = (double)us_elapsed_child / 1000000.0;
+
+	strbuf_addf(&buf_payload, "child_ready[%d] pid:%d ready:%s elapsed:%.6f",
+		    cid, pid, ready, elapsed);
 	normal_io_write_fl(file, line, &buf_payload);
 	strbuf_release(&buf_payload);
 }
@@ -306,11 +337,13 @@ struct tr2_tgt tr2_tgt_normal = {
 	fn_atexit,
 	fn_error_va_fl,
 	fn_command_path_fl,
+	fn_command_ancestry_fl,
 	fn_command_name_fl,
 	fn_command_mode_fl,
 	fn_alias_fl,
 	fn_child_start_fl,
 	fn_child_exit_fl,
+	fn_child_ready_fl,
 	NULL, /* thread_start */
 	NULL, /* thread_exit */
 	fn_exec_fl,

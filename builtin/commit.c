@@ -19,6 +19,7 @@
 #include "revision.h"
 #include "wt-status.h"
 #include "run-command.h"
+#include "hook.h"
 #include "refs.h"
 #include "log-tree.h"
 #include "strbuf.h"
@@ -203,7 +204,7 @@ static void status_init_config(struct wt_status *s, config_fn_t fn)
 	init_diff_ui_defaults();
 	git_config(fn, s);
 	determine_whence(s);
-	s->hints = advice_status_hints; /* must come after git_config() */
+	s->hints = advice_enabled(ADVICE_STATUS_HINTS); /* must come after git_config() */
 }
 
 static void rollback_index_files(void)
@@ -889,7 +890,22 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		int ident_shown = 0;
 		int saved_color_setting;
 		struct ident_split ci, ai;
-
+		const char *hint_cleanup_all = allow_empty_message ?
+			_("Please enter the commit message for your changes."
+			  " Lines starting\nwith '%c' will be ignored.\n") :
+			_("Please enter the commit message for your changes."
+			  " Lines starting\nwith '%c' will be ignored, and an empty"
+			  " message aborts the commit.\n");
+		const char *hint_cleanup_space = allow_empty_message ?
+			_("Please enter the commit message for your changes."
+			  " Lines starting\n"
+			  "with '%c' will be kept; you may remove them"
+			  " yourself if you want to.\n") :
+			_("Please enter the commit message for your changes."
+			  " Lines starting\n"
+			  "with '%c' will be kept; you may remove them"
+			  " yourself if you want to.\n"
+			  "An empty message aborts the commit.\n");
 		if (whence != FROM_COMMIT) {
 			if (cleanup_mode == COMMIT_MSG_CLEANUP_SCISSORS &&
 				!merge_contains_scissors)
@@ -911,20 +927,12 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 
 		fprintf(s->fp, "\n");
 		if (cleanup_mode == COMMIT_MSG_CLEANUP_ALL)
-			status_printf(s, GIT_COLOR_NORMAL,
-				_("Please enter the commit message for your changes."
-				  " Lines starting\nwith '%c' will be ignored, and an empty"
-				  " message aborts the commit.\n"), comment_line_char);
+			status_printf(s, GIT_COLOR_NORMAL, hint_cleanup_all, comment_line_char);
 		else if (cleanup_mode == COMMIT_MSG_CLEANUP_SCISSORS) {
 			if (whence == FROM_COMMIT && !merge_contains_scissors)
 				wt_status_add_cut_line(s->fp);
 		} else /* COMMIT_MSG_CLEANUP_SPACE, that is. */
-			status_printf(s, GIT_COLOR_NORMAL,
-				_("Please enter the commit message for your changes."
-				  " Lines starting\n"
-				  "with '%c' will be kept; you may remove them"
-				  " yourself if you want to.\n"
-				  "An empty message aborts the commit.\n"), comment_line_char);
+			status_printf(s, GIT_COLOR_NORMAL, hint_cleanup_space, comment_line_char);
 
 		/*
 		 * These should never fail because they come from our own
@@ -1026,7 +1034,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 	 */
 	if (!committable && whence != FROM_MERGE && !allow_empty &&
 	    !(amend && is_a_merge(current_head))) {
-		s->hints = advice_status_hints;
+		s->hints = advice_enabled(ADVICE_STATUS_HINTS);
 		s->display_comment_prefix = old_display_comment_prefix;
 		run_status(stdout, index_file, prefix, 0, s);
 		if (amend)
@@ -1044,7 +1052,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		return 0;
 	}
 
-	if (!no_verify && find_hook("pre-commit")) {
+	if (!no_verify && hook_exists("pre-commit")) {
 		/*
 		 * Re-read the index as pre-commit hook could have updated it,
 		 * and write it out as a tree.  We must do this before we invoke
@@ -1246,8 +1254,6 @@ static int parse_and_validate_options(int argc, const char *argv[],
 
 	if (logfile || have_option_m || use_message)
 		use_editor = 0;
-	if (0 <= edit_flag)
-		use_editor = edit_flag;
 
 	/* Sanity check options */
 	if (amend && !current_head)
@@ -1336,6 +1342,9 @@ static int parse_and_validate_options(int argc, const char *argv[],
 			use_editor = 0;
 		}
 	}
+
+	if (0 <= edit_flag)
+		use_editor = edit_flag;
 
 	cleanup_mode = get_cleanup_mode(cleanup_arg, use_editor);
 
@@ -1510,6 +1519,9 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage_with_options(builtin_status_usage, builtin_status_options);
 
+	prepare_repo_settings(the_repository);
+	the_repository->settings.command_requires_full_index = 0;
+
 	status_init_config(&s, git_status_config);
 	argc = parse_options(argc, argv, prefix,
 			     builtin_status_options,
@@ -1678,6 +1690,9 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage_with_options(builtin_commit_usage, builtin_commit_options);
+
+	prepare_repo_settings(the_repository);
+	the_repository->settings.command_requires_full_index = 0;
 
 	status_init_config(&s, git_commit_config);
 	s.commit_template = 1;

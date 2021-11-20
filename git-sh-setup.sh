@@ -217,14 +217,8 @@ require_clean_work_tree () {
 	then
 		action=$1
 		case "$action" in
-		rebase)
-			gettextln "Cannot rebase: You have unstaged changes." >&2
-			;;
 		"rewrite branches")
 			gettextln "Cannot rewrite branches: You have unstaged changes." >&2
-			;;
-		"pull with rebase")
-			gettextln "Cannot pull with rebase: You have unstaged changes." >&2
 			;;
 		*)
 			eval_gettextln "Cannot \$action: You have unstaged changes." >&2
@@ -238,17 +232,7 @@ require_clean_work_tree () {
 		if test $err = 0
 		then
 			action=$1
-			case "$action" in
-			rebase)
-				gettextln "Cannot rebase: Your index contains uncommitted changes." >&2
-				;;
-			"pull with rebase")
-				gettextln "Cannot pull with rebase: Your index contains uncommitted changes." >&2
-				;;
-			*)
-				eval_gettextln "Cannot \$action: Your index contains uncommitted changes." >&2
-				;;
-			esac
+			eval_gettextln "Cannot \$action: Your index contains uncommitted changes." >&2
 		else
 		    gettextln "Additionally, your index contains uncommitted changes." >&2
 		fi

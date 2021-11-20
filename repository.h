@@ -10,20 +10,18 @@ struct lock_file;
 struct pathspec;
 struct raw_object_store;
 struct submodule_cache;
+struct promisor_remote_config;
 
 enum untracked_cache_setting {
-	UNTRACKED_CACHE_UNSET = -1,
-	UNTRACKED_CACHE_REMOVE = 0,
-	UNTRACKED_CACHE_KEEP = 1,
-	UNTRACKED_CACHE_WRITE = 2
+	UNTRACKED_CACHE_KEEP,
+	UNTRACKED_CACHE_REMOVE,
+	UNTRACKED_CACHE_WRITE,
 };
 
 enum fetch_negotiation_setting {
-	FETCH_NEGOTIATION_UNSET = -1,
-	FETCH_NEGOTIATION_NONE = 0,
-	FETCH_NEGOTIATION_DEFAULT = 1,
-	FETCH_NEGOTIATION_SKIPPING = 2,
-	FETCH_NEGOTIATION_NOOP = 3,
+	FETCH_NEGOTIATION_DEFAULT,
+	FETCH_NEGOTIATION_SKIPPING,
+	FETCH_NEGOTIATION_NOOP,
 };
 
 struct repo_settings {
@@ -33,6 +31,8 @@ struct repo_settings {
 	int commit_graph_read_changed_paths;
 	int gc_write_commit_graph;
 	int fetch_write_commit_graph;
+	int command_requires_full_index;
+	int sparse_index;
 
 	int index_version;
 	enum untracked_cache_setting core_untracked_cache;
@@ -41,9 +41,6 @@ struct repo_settings {
 	enum fetch_negotiation_setting fetch_negotiation_algorithm;
 
 	int core_multi_pack_index;
-
-	unsigned command_requires_full_index:1,
-		 sparse_index:1;
 };
 
 struct repository {
@@ -139,6 +136,10 @@ struct repository {
 	/* True if commit-graph has been disabled within this process. */
 	int commit_graph_disabled;
 
+	/* Configurations related to promisor remotes. */
+	char *repository_format_partial_clone;
+	struct promisor_remote_config *promisor_remote_config;
+
 	/* Configurations */
 
 	/* Indicate if a repository has a different 'commondir' from 'gitdir' */
@@ -167,15 +168,18 @@ void initialize_the_repository(void);
 int repo_init(struct repository *r, const char *gitdir, const char *worktree);
 
 /*
- * Initialize the repository 'subrepo' as the submodule given by the
- * struct submodule 'sub' in parent repository 'superproject'.
- * Return 0 upon success and a non-zero value upon failure, which may happen
- * if the submodule is not found, or 'sub' is NULL.
+ * Initialize the repository 'subrepo' as the submodule at the given path. If
+ * the submodule's gitdir cannot be found at <path>/.git, this function calls
+ * submodule_from_path() to try to find it. treeish_name is only used if
+ * submodule_from_path() needs to be called; see its documentation for more
+ * information.
+ * Return 0 upon success and a non-zero value upon failure.
  */
-struct submodule;
+struct object_id;
 int repo_submodule_init(struct repository *subrepo,
 			struct repository *superproject,
-			const struct submodule *sub);
+			const char *path,
+			const struct object_id *treeish_name);
 void repo_clear(struct repository *repo);
 
 /*

@@ -449,6 +449,57 @@ test_expect_success !FAIL_PREREQS 'log with various grep.patternType configurati
 	)
 '
 
+test_expect_success 'log --author' '
+	cat >expect <<-\EOF &&
+	Author: <BOLD;RED>A U<RESET> Thor <author@example.com>
+	EOF
+	git log -1 --color=always --author="A U" >log &&
+	grep Author log >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --committer' '
+	cat >expect <<-\EOF &&
+	Commit:     C O Mitter <committer@<BOLD;RED>example<RESET>.com>
+	EOF
+	git log -1 --color=always --pretty=fuller --committer="example" >log &&
+	grep "Commit:" log >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log -i --grep with color' '
+	cat >expect <<-\EOF &&
+	    <BOLD;RED>Sec<RESET>ond
+	    <BOLD;RED>sec<RESET>ond
+	EOF
+	git log --color=always -i --grep=^sec >log &&
+	grep -i sec log >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '-c color.grep.selected log --grep' '
+	cat >expect <<-\EOF &&
+	    <GREEN>th<RESET><BOLD;RED>ir<RESET><GREEN>d<RESET>
+	EOF
+	git -c color.grep.selected="green" log --color=always --grep=ir >log &&
+	grep ir log >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '-c color.grep.matchSelected log --grep' '
+	cat >expect <<-\EOF &&
+	    <BLUE>i<RESET>n<BLUE>i<RESET>t<BLUE>i<RESET>al
+	EOF
+	git -c color.grep.matchSelected="blue" log --color=always --grep=i >log &&
+	grep al log >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	test_cmp expect actual
+'
+
 cat > expect <<EOF
 * Second
 * sixth
@@ -1616,6 +1667,16 @@ test_expect_success GPGSM 'setup signed branch x509' '
 	git commit -S -m signed_commit
 '
 
+test_expect_success GPGSSH 'setup sshkey signed branch' '
+	test_config gpg.format ssh &&
+	test_config user.signingkey "${GPGSSH_KEY_PRIMARY}" &&
+	test_when_finished "git reset --hard && git checkout main" &&
+	git checkout -b signed-ssh main &&
+	echo foo >foo &&
+	git add foo &&
+	git commit -S -m signed_commit
+'
+
 test_expect_success GPGSM 'log x509 fingerprint' '
 	echo "F8BF62E0693D0694816377099909C779FA23FD65 | " >expect &&
 	git log -n1 --format="%GF | %GP" signed-x509 >actual &&
@@ -1625,6 +1686,13 @@ test_expect_success GPGSM 'log x509 fingerprint' '
 test_expect_success GPGSM 'log OpenPGP fingerprint' '
 	echo "D4BE22311AD3131E5EDA29A461092E85B7227189" > expect &&
 	git log -n1 --format="%GP" signed-subkey >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success GPGSSH 'log ssh key fingerprint' '
+	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
+	ssh-keygen -lf  "${GPGSSH_KEY_PRIMARY}" | awk "{print \$2\" | \"}" >expect &&
+	git log -n1 --format="%GF | %GP" signed-ssh >actual &&
 	test_cmp expect actual
 '
 
@@ -1638,6 +1706,12 @@ test_expect_success GPGSM 'log --graph --show-signature x509' '
 	git log --graph --show-signature -n1 signed-x509 >actual &&
 	grep "^| gpgsm: Signature made" actual &&
 	grep "^| gpgsm: Good signature" actual
+'
+
+test_expect_success GPGSSH 'log --graph --show-signature ssh' '
+	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
+	git log --graph --show-signature -n1 signed-ssh >actual &&
+	grep "${GOOD_SIGNATURE_TRUSTED}" actual
 '
 
 test_expect_success GPG 'log --graph --show-signature for merged tag' '
@@ -1834,14 +1908,24 @@ test_expect_success 'log --graph --no-walk is forbidden' '
 	test_must_fail git log --graph --no-walk
 '
 
-test_expect_success 'log diagnoses bogus HEAD' '
+test_expect_success 'log on empty repo fails' '
 	git init empty &&
+	test_when_finished "rm -rf empty" &&
 	test_must_fail git -C empty log 2>stderr &&
-	test_i18ngrep does.not.have.any.commits stderr &&
+	test_i18ngrep does.not.have.any.commits stderr
+'
+
+test_expect_success REFFILES 'log diagnoses bogus HEAD hash' '
+	git init empty &&
+	test_when_finished "rm -rf empty" &&
 	echo 1234abcd >empty/.git/refs/heads/main &&
 	test_must_fail git -C empty log 2>stderr &&
-	test_i18ngrep broken stderr &&
-	echo "ref: refs/heads/invalid.lock" >empty/.git/HEAD &&
+	test_i18ngrep broken stderr
+'
+
+test_expect_success 'log diagnoses bogus HEAD symref' '
+	git init empty &&
+	git --git-dir empty/.git symbolic-ref HEAD refs/heads/invalid.lock &&
 	test_must_fail git -C empty log 2>stderr &&
 	test_i18ngrep broken stderr &&
 	test_must_fail git -C empty log --default totally-bogus 2>stderr &&
@@ -1903,6 +1987,20 @@ test_expect_success 'log --source paints symmetric ranges' '
 
 test_expect_success '--exclude-promisor-objects does not BUG-crash' '
 	test_must_fail git log --exclude-promisor-objects source-a
+'
+
+test_expect_success 'log --decorate includes all levels of tag annotated tags' '
+	git checkout -b branch &&
+	git commit --allow-empty -m "new commit" &&
+	git tag lightweight HEAD &&
+	git tag -m annotated annotated HEAD &&
+	git tag -m double-0 double-0 HEAD &&
+	git tag -m double-1 double-1 double-0 &&
+	cat >expect <<-\EOF &&
+	HEAD -> branch, tag: lightweight, tag: double-1, tag: double-0, tag: annotated
+	EOF
+	git log -1 --format="%D" >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'log --end-of-options' '

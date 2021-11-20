@@ -14,15 +14,15 @@ test_expect_success "proc-receive: report unknown reference ($PROTOCOL)" '
 		HEAD:refs/for/a/b/c/my/topic \
 		>out-$test_count 2>&1 &&
 	make_user_friendly_and_stable_output <out-$test_count >actual &&
-	cat >expect <<-EOF &&
-	remote: # pre-receive hook
-	remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/a/b/c/my/topic
-	remote: # proc-receive hook
-	remote: proc-receive< <ZERO-OID> <COMMIT-A> refs/for/a/b/c/my/topic
-	remote: proc-receive> ok refs/for/main/topic
-	remote: error: proc-receive reported status on unknown ref: refs/for/main/topic
-	To <URL/of/upstream.git>
-	 ! [remote rejected] HEAD -> refs/for/a/b/c/my/topic (proc-receive failed to report status)
+	format_and_save_expect <<-EOF &&
+	> remote: # pre-receive hook        Z
+	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/a/b/c/my/topic        Z
+	> remote: # proc-receive hook        Z
+	> remote: proc-receive< <ZERO-OID> <COMMIT-A> refs/for/a/b/c/my/topic        Z
+	> remote: proc-receive> ok refs/for/main/topic        Z
+	> remote: error: proc-receive reported status on unknown ref: refs/for/main/topic        Z
+	> To <URL/of/upstream.git>
+	>  ! [remote rejected] HEAD -> refs/for/a/b/c/my/topic (proc-receive failed to report status)
 	EOF
 	test_cmp expect actual &&
 

@@ -2,6 +2,7 @@
 
 test_description='grep icase on non-English locales'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./lib-gettext.sh
 
 test_expect_success GETTEXT_ISO_LOCALE 'setup' '

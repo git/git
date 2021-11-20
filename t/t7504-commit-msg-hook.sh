@@ -133,6 +133,14 @@ test_expect_success '--no-verify with failing hook' '
 
 '
 
+test_expect_success '-n followed by --verify with failing hook' '
+
+	echo "even more" >> file &&
+	git add file &&
+	test_must_fail git commit -n --verify -m "even more"
+
+'
+
 test_expect_success '--no-verify with failing hook (editor)' '
 
 	echo "more stuff" >> file &&

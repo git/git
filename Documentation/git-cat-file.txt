@@ -94,8 +94,10 @@ OPTIONS
 	Instead of reading a list of objects on stdin, perform the
 	requested batch operation on all objects in the repository and
 	any alternate object stores (not just reachable objects).
-	Requires `--batch` or `--batch-check` be specified. Note that
-	the objects are visited in order sorted by their hashes.
+	Requires `--batch` or `--batch-check` be specified. By default,
+	the objects are visited in order sorted by their hashes; see
+	also `--unordered` below. Objects are presented as-is, without
+	respecting the "replace" mechanism of linkgit:git-replace[1].
 
 --buffer::
 	Normally batch output is flushed after each object is output, so

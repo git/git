@@ -81,6 +81,16 @@ test_expect_success GPG 'set up a signed tag' '
 	git tag -s -m signed-tag-msg signed-good-tag left
 '
 
+test_expect_success GPGSSH 'created ssh signed commit and tag' '
+	test_config gpg.format ssh &&
+	git checkout -b signed-ssh &&
+	touch file &&
+	git add file &&
+	git commit -m "ssh signed" -S"${GPGSSH_KEY_PRIMARY}" &&
+	git tag -s -u"${GPGSSH_KEY_PRIMARY}" -m signed-ssh-tag-msg signed-good-ssh-tag left &&
+	git tag -s -u"${GPGSSH_KEY_UNTRUSTED}" -m signed-ssh-tag-msg-untrusted signed-untrusted-ssh-tag left
+'
+
 test_expect_success 'message for merging local branch' '
 	echo "Merge branch ${apos}left${apos}" >expected &&
 
@@ -109,6 +119,24 @@ test_expect_success GPG 'message for merging local tag signed by unknown key' '
 	grep -E "^# gpg: Can${apos}t check signature: (public key not found|No public key)" actual
 '
 
+test_expect_success GPGSSH 'message for merging local tag signed by good ssh key' '
+	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
+	git checkout main &&
+	git fetch . signed-good-ssh-tag &&
+	git fmt-merge-msg <.git/FETCH_HEAD >actual 2>&1 &&
+	grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
+	! grep "${GPGSSH_BAD_SIGNATURE}" actual
+'
+
+test_expect_success GPGSSH 'message for merging local tag signed by unknown ssh key' '
+	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
+	git checkout main &&
+	git fetch . signed-untrusted-ssh-tag &&
+	git fmt-merge-msg <.git/FETCH_HEAD >actual 2>&1 &&
+	grep "${GPGSSH_GOOD_SIGNATURE_UNTRUSTED}" actual &&
+	! grep "${GPGSSH_BAD_SIGNATURE}" actual &&
+	grep "${GPGSSH_KEY_NOT_TRUSTED}" actual
+'
 test_expect_success 'message for merging external branch' '
 	echo "Merge branch ${apos}left${apos} of $(pwd)" >expected &&
 

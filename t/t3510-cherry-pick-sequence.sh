@@ -238,6 +238,7 @@ test_expect_success 'allow skipping commit but not abort for a new history' '
 '
 
 test_expect_success 'allow skipping stopped cherry-pick because of untracked file modifications' '
+	test_when_finished "rm unrelated" &&
 	pristine_detach initial &&
 	git rm --cached unrelated &&
 	git commit -m "untrack unrelated" &&

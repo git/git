@@ -260,6 +260,19 @@ void trace2_cmd_path_fl(const char *file, int line, const char *pathname)
 			tgt_j->pfn_command_path_fl(file, line, pathname);
 }
 
+void trace2_cmd_ancestry_fl(const char *file, int line, const char **parent_names)
+{
+	struct tr2_tgt *tgt_j;
+	int j;
+
+	if (!trace2_enabled)
+		return;
+
+	for_each_wanted_builtin (j, tgt_j)
+		if (tgt_j->pfn_command_ancestry_fl)
+			tgt_j->pfn_command_ancestry_fl(file, line, parent_names);
+}
+
 void trace2_cmd_name_fl(const char *file, int line, const char *name)
 {
 	struct tr2_tgt *tgt_j;
@@ -379,6 +392,37 @@ void trace2_child_exit_fl(const char *file, int line, struct child_process *cmd,
 						 cmd->trace2_child_id, cmd->pid,
 						 child_exit_code,
 						 us_elapsed_child);
+}
+
+void trace2_child_ready_fl(const char *file, int line,
+			   struct child_process *cmd,
+			   const char *ready)
+{
+	struct tr2_tgt *tgt_j;
+	int j;
+	uint64_t us_now;
+	uint64_t us_elapsed_absolute;
+	uint64_t us_elapsed_child;
+
+	if (!trace2_enabled)
+		return;
+
+	us_now = getnanotime() / 1000;
+	us_elapsed_absolute = tr2tls_absolute_elapsed(us_now);
+
+	if (cmd->trace2_child_us_start)
+		us_elapsed_child = us_now - cmd->trace2_child_us_start;
+	else
+		us_elapsed_child = 0;
+
+	for_each_wanted_builtin (j, tgt_j)
+		if (tgt_j->pfn_child_ready_fl)
+			tgt_j->pfn_child_ready_fl(file, line,
+						  us_elapsed_absolute,
+						  cmd->trace2_child_id,
+						  cmd->pid,
+						  ready,
+						  us_elapsed_child);
 }
 
 int trace2_exec_fl(const char *file, int line, const char *exe,

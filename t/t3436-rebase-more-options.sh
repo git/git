@@ -82,6 +82,20 @@ test_expect_success '--committer-date-is-author-date works with merge backend' '
 	test_ctime_is_atime -1
 '
 
+test_expect_success '--committer-date-is-author-date works when rewording' '
+	GIT_AUTHOR_DATE="@1234 +0300" git commit --amend --reset-author &&
+	(
+		set_fake_editor &&
+		FAKE_COMMIT_MESSAGE=edited \
+			FAKE_LINES="reword 1" \
+			git rebase -i --committer-date-is-author-date HEAD^
+	) &&
+	test_write_lines edited "" >expect &&
+	git log --format="%B" -1 >actual &&
+	test_cmp expect actual &&
+	test_ctime_is_atime -1
+'
+
 test_expect_success '--committer-date-is-author-date works with rebase -r' '
 	git checkout side &&
 	GIT_AUTHOR_DATE="@1234 +0300" git merge --no-ff commit3 &&
@@ -153,6 +167,21 @@ test_expect_success '--reset-author-date with --committer-date-is-author-date wo
 	git rebase --continue &&
 	test_ctime_is_atime -2 &&
 	test_atime_is_ignored -2
+'
+
+test_expect_success 'reset-author-date with --committer-date-is-author-date works when rewording' '
+	GIT_AUTHOR_DATE="@1234 +0300" git commit --amend --reset-author &&
+	(
+		set_fake_editor &&
+		FAKE_COMMIT_MESSAGE=edited \
+			FAKE_LINES="reword 1" \
+			git rebase -i --committer-date-is-author-date \
+				--reset-author-date HEAD^
+	) &&
+	test_write_lines edited "" >expect &&
+	git log --format="%B" -1 >actual &&
+	test_cmp expect actual &&
+	test_atime_is_ignored -1
 '
 
 test_expect_success '--reset-author-date --committer-date-is-author-date works when forking merge' '

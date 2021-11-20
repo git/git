@@ -134,6 +134,14 @@ struct child_process {
 	 */
 	unsigned use_shell:1;
 
+	/**
+	 * Release any open file handles to the object store before running
+	 * the command; This is necessary e.g. when the spawned process may
+	 * want to repack because that would delete `.pack` files (and on
+	 * Windows, you cannot delete files that are still in use).
+	 */
+	unsigned close_object_store:1;
+
 	unsigned stdout_to_stderr:1;
 	unsigned clean_on_exit:1;
 	unsigned wait_after_clean:1;
@@ -141,7 +149,10 @@ struct child_process {
 	void *clean_on_exit_handler_cbdata;
 };
 
-#define CHILD_PROCESS_INIT { NULL, STRVEC_INIT, STRVEC_INIT }
+#define CHILD_PROCESS_INIT { \
+	.args = STRVEC_INIT, \
+	.env_array = STRVEC_INIT, \
+}
 
 /**
  * The functions: child_process_init, start_command, finish_command,
@@ -180,6 +191,18 @@ void child_process_clear(struct child_process *);
 int is_executable(const char *name);
 
 /**
+ * Check if the command exists on $PATH. This emulates the path search that
+ * execvp would perform, without actually executing the command so it
+ * can be used before fork() to prepare to run a command using
+ * execve() or after execvp() to diagnose why it failed.
+ *
+ * The caller should ensure that command contains no directory separators.
+ *
+ * Returns 1 if it is found in $PATH or 0 if the command could not be found.
+ */
+int exists_in_PATH(const char *command);
+
+/**
  * Start a sub-process. Takes a pointer to a `struct child_process`
  * that specifies the details and returns pipe FDs (if requested).
  * See below for details.
@@ -200,13 +223,6 @@ int finish_command_in_signal(struct child_process *);
  * to a `struct child_process` that specifies the details.
  */
 int run_command(struct child_process *);
-
-/*
- * Returns the path to the hook file, or NULL if the hook is missing
- * or disabled. Note that this points to static storage that will be
- * overwritten by further calls to find_hook and run_hook_*.
- */
-const char *find_hook(const char *name);
 
 /**
  * Run a hook.
@@ -230,13 +246,14 @@ int run_hook_ve(const char *const *env, const char *name, va_list args);
  */
 int run_auto_maintenance(int quiet);
 
-#define RUN_COMMAND_NO_STDIN 1
-#define RUN_GIT_CMD	     2	/*If this is to be git sub-command */
-#define RUN_COMMAND_STDOUT_TO_STDERR 4
-#define RUN_SILENT_EXEC_FAILURE 8
-#define RUN_USING_SHELL 16
-#define RUN_CLEAN_ON_EXIT 32
-#define RUN_WAIT_AFTER_CLEAN 64
+#define RUN_COMMAND_NO_STDIN		(1<<0)
+#define RUN_GIT_CMD			(1<<1)
+#define RUN_COMMAND_STDOUT_TO_STDERR	(1<<2)
+#define RUN_SILENT_EXEC_FAILURE		(1<<3)
+#define RUN_USING_SHELL			(1<<4)
+#define RUN_CLEAN_ON_EXIT		(1<<5)
+#define RUN_WAIT_AFTER_CLEAN		(1<<6)
+#define RUN_CLOSE_OBJECT_STORE		(1<<7)
 
 /**
  * Convenience functions that encapsulate a sequence of
@@ -482,5 +499,72 @@ int run_processes_parallel(int n,
 int run_processes_parallel_tr2(int n, get_next_task_fn, start_failure_fn,
 			       task_finished_fn, void *pp_cb,
 			       const char *tr2_category, const char *tr2_label);
+
+/**
+ * Convenience function which prepares env_array for a command to be run in a
+ * new repo. This adds all GIT_* environment variables to env_array with the
+ * exception of GIT_CONFIG_PARAMETERS and GIT_CONFIG_COUNT (which cause the
+ * corresponding environment variables to be unset in the subprocess) and adds
+ * an environment variable pointing to new_git_dir. See local_repo_env in
+ * cache.h for more information.
+ */
+void prepare_other_repo_env(struct strvec *env_array, const char *new_git_dir);
+
+/**
+ * Possible return values for start_bg_command().
+ */
+enum start_bg_result {
+	/* child process is "ready" */
+	SBGR_READY = 0,
+
+	/* child process could not be started */
+	SBGR_ERROR,
+
+	/* callback error when testing for "ready" */
+	SBGR_CB_ERROR,
+
+	/* timeout expired waiting for child to become "ready" */
+	SBGR_TIMEOUT,
+
+	/* child process exited or was signalled before becomming "ready" */
+	SBGR_DIED,
+};
+
+/**
+ * Callback used by start_bg_command() to ask whether the
+ * child process is ready or needs more time to become "ready".
+ *
+ * The callback will receive the cmd and cb_data arguments given to
+ * start_bg_command().
+ *
+ * Returns 1 is child needs more time (subject to the requested timeout).
+ * Returns 0 if child is "ready".
+ * Returns -1 on any error and cause start_bg_command() to also error out.
+ */
+typedef int(start_bg_wait_cb)(const struct child_process *cmd, void *cb_data);
+
+/**
+ * Start a command in the background.  Wait long enough for the child
+ * to become "ready" (as defined by the provided callback).  Capture
+ * immediate errors (like failure to start) and any immediate exit
+ * status (such as a shutdown/signal before the child became "ready")
+ * and return this like start_command().
+ *
+ * We run a custom wait loop using the provided callback to wait for
+ * the child to start and become "ready".  This is limited by the given
+ * timeout value.
+ *
+ * If the child does successfully start and become "ready", we orphan
+ * it into the background.
+ *
+ * The caller must not call finish_command().
+ *
+ * The opaque cb_data argument will be forwarded to the callback for
+ * any instance data that it might require.  This may be NULL.
+ */
+enum start_bg_result start_bg_command(struct child_process *cmd,
+				      start_bg_wait_cb *wait_cb,
+				      void *cb_data,
+				      unsigned int timeout_sec);
 
 #endif

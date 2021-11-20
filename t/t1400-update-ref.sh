@@ -1598,6 +1598,40 @@ test_expect_success 'transaction cannot restart ongoing transaction' '
 	test_must_fail git show-ref --verify refs/heads/restart
 '
 
+test_expect_success PIPE 'transaction flushes status updates' '
+	mkfifo in out &&
+	(git update-ref --stdin <in >out &) &&
+
+	exec 9>in &&
+	exec 8<out &&
+	test_when_finished "exec 9>&-" &&
+	test_when_finished "exec 8<&-" &&
+
+	echo "start" >&9 &&
+	echo "start: ok" >expected &&
+	read line <&8 &&
+	echo "$line" >actual &&
+	test_cmp expected actual &&
+
+	echo "create refs/heads/flush $A" >&9 &&
+
+	echo prepare >&9 &&
+	echo "prepare: ok" >expected &&
+	read line <&8 &&
+	echo "$line" >actual &&
+	test_cmp expected actual &&
+
+	# This must now fail given that we have locked the ref.
+	test_must_fail git update-ref refs/heads/flush $B 2>stderr &&
+	grep "fatal: update_ref failed for ref ${SQ}refs/heads/flush${SQ}: cannot lock ref" stderr &&
+
+	echo commit >&9 &&
+	echo "commit: ok" >expected &&
+	read line <&8 &&
+	echo "$line" >actual &&
+	test_cmp expected actual
+'
+
 test_expect_success 'directory not created deleting packed ref' '
 	git branch d1/d2/r1 HEAD &&
 	git pack-refs --all &&

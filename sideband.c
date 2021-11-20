@@ -183,8 +183,31 @@ int demultiplex_sideband(const char *me, int status,
 		while ((brk = strpbrk(b, "\n\r"))) {
 			int linelen = brk - b;
 
+			/*
+			 * For message accross packet boundary, there would have
+			 * a nonempty "scratch" buffer from last call of this
+			 * function, and there may have a leading CR/LF in "buf".
+			 * For this case we should add a clear-to-eol suffix to
+			 * clean leftover letters we previously have written on
+			 * the same line.
+			 */
+			if (scratch->len && !linelen)
+				strbuf_addstr(scratch, suffix);
+
 			if (!scratch->len)
 				strbuf_addstr(scratch, DISPLAY_PREFIX);
+
+			/*
+			 * A use case that we should not add clear-to-eol suffix
+			 * to empty lines:
+			 *
+			 * For progress reporting we may receive a bunch of
+			 * percentage updates followed by '\r' to remain on the
+			 * same line, and at the end receive a single '\n' to
+			 * move to the next line. We should preserve the final
+			 * status report line by not appending clear-to-eol
+			 * suffix to this single line break.
+			 */
 			if (linelen > 0) {
 				maybe_colorize_sideband(scratch, b, linelen);
 				strbuf_addstr(scratch, suffix);

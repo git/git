@@ -26,13 +26,13 @@
 #include "wt-status.h"
 #include "commit-reach.h"
 #include "sequencer.h"
+#include "packfile.h"
 
 /**
  * Parses the value of --rebase. If value is a false value, returns
  * REBASE_FALSE. If value is a true value, returns REBASE_TRUE. If value is
- * "merges", returns REBASE_MERGES. If value is "preserve", returns
- * REBASE_PRESERVE. If value is a invalid value, dies with a fatal error if
- * fatal is true, otherwise returns REBASE_INVALID.
+ * "merges", returns REBASE_MERGES. If value is a invalid value, dies with
+ * a fatal error if fatal is true, otherwise returns REBASE_INVALID.
  */
 static enum rebase_type parse_config_rebase(const char *key, const char *value,
 		int fatal)
@@ -84,6 +84,7 @@ static char *opt_edit;
 static char *cleanup_arg;
 static char *opt_ff;
 static char *opt_verify_signatures;
+static char *opt_verify;
 static int opt_autostash = -1;
 static int config_autostash;
 static int check_trust_level = 1;
@@ -126,9 +127,9 @@ static struct option pull_options[] = {
 	/* Options passed to git-merge or git-rebase */
 	OPT_GROUP(N_("Options related to merging")),
 	OPT_CALLBACK_F('r', "rebase", &opt_rebase,
-	  "(false|true|merges|preserve|interactive)",
-	  N_("incorporate changes by rebasing rather than merging"),
-	  PARSE_OPT_OPTARG, parse_opt_rebase),
+		"(false|true|merges|interactive)",
+		N_("incorporate changes by rebasing rather than merging"),
+		PARSE_OPT_OPTARG, parse_opt_rebase),
 	OPT_PASSTHRU('n', NULL, &opt_diffstat, NULL,
 		N_("do not show a diffstat at the end of the merge"),
 		PARSE_OPT_NOARG | PARSE_OPT_NONEG),
@@ -160,6 +161,9 @@ static struct option pull_options[] = {
 	OPT_PASSTHRU(0, "ff-only", &opt_ff, NULL,
 		N_("abort if fast-forward is not possible"),
 		PARSE_OPT_NOARG | PARSE_OPT_NONEG),
+	OPT_PASSTHRU(0, "verify", &opt_verify, NULL,
+		N_("control use of pre-merge-commit and commit-msg hooks"),
+		PARSE_OPT_NOARG),
 	OPT_PASSTHRU(0, "verify-signatures", &opt_verify_signatures, NULL,
 		N_("verify that the named commit has a valid GPG signature"),
 		PARSE_OPT_NOARG),
@@ -577,7 +581,7 @@ static int run_fetch(const char *repo, const char **refspecs)
 		strvec_pushv(&args, refspecs);
 	} else if (*refspecs)
 		BUG("refspecs without repo?");
-	ret = run_command_v_opt(args.v, RUN_GIT_CMD);
+	ret = run_command_v_opt(args.v, RUN_GIT_CMD | RUN_CLOSE_OBJECT_STORE);
 	strvec_clear(&args);
 	return ret;
 }
@@ -675,6 +679,8 @@ static int run_merge(void)
 		strvec_pushf(&args, "--cleanup=%s", cleanup_arg);
 	if (opt_ff)
 		strvec_push(&args, opt_ff);
+	if (opt_verify)
+		strvec_push(&args, opt_verify);
 	if (opt_verify_signatures)
 		strvec_push(&args, opt_verify_signatures);
 	strvec_pushv(&args, opt_strategies.v);
@@ -883,8 +889,6 @@ static int run_rebase(const struct object_id *newbase,
 	/* Options passed to git-rebase */
 	if (opt_rebase == REBASE_MERGES)
 		strvec_push(&args, "--rebase-merges");
-	else if (opt_rebase == REBASE_PRESERVE)
-		strvec_push(&args, "--preserve-merges");
 	else if (opt_rebase == REBASE_INTERACTIVE)
 		strvec_push(&args, "--interactive");
 	if (opt_diffstat)
@@ -893,6 +897,8 @@ static int run_rebase(const struct object_id *newbase,
 	strvec_pushv(&args, opt_strategy_opts.v);
 	if (opt_gpg_sign)
 		strvec_push(&args, opt_gpg_sign);
+	if (opt_signoff)
+		strvec_push(&args, opt_signoff);
 	if (opt_autostash == 0)
 		strvec_push(&args, "--no-autostash");
 	else if (opt_autostash == 1)
@@ -911,12 +917,18 @@ static int run_rebase(const struct object_id *newbase,
 	return ret;
 }
 
-static int get_can_ff(struct object_id *orig_head, struct object_id *orig_merge_head)
+static int get_can_ff(struct object_id *orig_head,
+		      struct oid_array *merge_heads)
 {
 	int ret;
 	struct commit_list *list = NULL;
 	struct commit *merge_head, *head;
+	struct object_id *orig_merge_head;
 
+	if (merge_heads->nr > 1)
+		return 0;
+
+	orig_merge_head = &merge_heads->oid[0];
 	head = lookup_commit_reference(the_repository, orig_head);
 	commit_list_insert(head, &list);
 	merge_head = lookup_commit_reference(the_repository, orig_merge_head);
@@ -925,11 +937,38 @@ static int get_can_ff(struct object_id *orig_head, struct object_id *orig_merge_
 	return ret;
 }
 
+/*
+ * Is orig_head a descendant of _all_ merge_heads?
+ * Unfortunately is_descendant_of() cannot be used as it asks
+ * if orig_head is a descendant of at least one of them.
+ */
+static int already_up_to_date(struct object_id *orig_head,
+			      struct oid_array *merge_heads)
+{
+	int i;
+	struct commit *ours;
+
+	ours = lookup_commit_reference(the_repository, orig_head);
+	for (i = 0; i < merge_heads->nr; i++) {
+		struct commit_list *list = NULL;
+		struct commit *theirs;
+		int ok;
+
+		theirs = lookup_commit_reference(the_repository, &merge_heads->oid[i]);
+		commit_list_insert(theirs, &list);
+		ok = repo_is_descendant_of(the_repository, ours, list);
+		free_commit_list(list);
+		if (!ok)
+			return 0;
+	}
+	return 1;
+}
+
 static void show_advice_pull_non_ff(void)
 {
-	advise(_("Pulling without specifying how to reconcile divergent branches is\n"
-		 "discouraged. You can squelch this message by running one of the following\n"
-		 "commands sometime before your next pull:\n"
+	advise(_("You have divergent branches and need to specify how to reconcile them.\n"
+		 "You can do so by running one of the following commands sometime before\n"
+		 "your next pull:\n"
 		 "\n"
 		 "  git config pull.rebase false  # merge (the default strategy)\n"
 		 "  git config pull.rebase true   # rebase\n"
@@ -947,7 +986,6 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	struct oid_array merge_heads = OID_ARRAY_INIT;
 	struct object_id orig_head, curr_head;
 	struct object_id rebase_fork_point;
-	int autostash;
 	int rebase_unspecified = 0;
 	int can_ff;
 
@@ -967,8 +1005,22 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 
 	parse_repo_refspecs(argc, argv, &repo, &refspecs);
 
-	if (!opt_ff)
+	if (!opt_ff) {
 		opt_ff = xstrdup_or_null(config_get_ff());
+		/*
+		 * A subtle point: opt_ff was set on the line above via
+		 * reading from config.  opt_rebase, in contrast, is set
+		 * before this point via command line options.  The setting
+		 * of opt_rebase via reading from config (using
+		 * config_get_rebase()) does not happen until later.  We
+		 * are relying on the next if-condition happening before
+		 * the config_get_rebase() call so that an explicit
+		 * "--rebase" can override a config setting of
+		 * pull.ff=only.
+		 */
+		if (opt_rebase >= 0 && opt_ff && !strcmp(opt_ff, "--ff-only"))
+			opt_ff = "--ff";
+	}
 
 	if (opt_rebase < 0)
 		opt_rebase = config_get_rebase(&rebase_unspecified);
@@ -982,8 +1034,8 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	if (get_oid("HEAD", &orig_head))
 		oidclr(&orig_head);
 
-	autostash = config_autostash;
 	if (opt_rebase) {
+		int autostash = config_autostash;
 		if (opt_autostash != -1)
 			autostash = opt_autostash;
 
@@ -1042,19 +1094,29 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 			die(_("Cannot merge multiple branches into empty head."));
 		return pull_into_void(merge_heads.oid, &curr_head);
 	}
-	if (opt_rebase && merge_heads.nr > 1)
-		die(_("Cannot rebase onto multiple branches."));
+	if (merge_heads.nr > 1) {
+		if (opt_rebase)
+			die(_("Cannot rebase onto multiple branches."));
+		if (opt_ff && !strcmp(opt_ff, "--ff-only"))
+			die(_("Cannot fast-forward to multiple branches."));
+	}
 
-	can_ff = get_can_ff(&orig_head, &merge_heads.oid[0]);
+	can_ff = get_can_ff(&orig_head, &merge_heads);
 
-	if (rebase_unspecified && !opt_ff && !can_ff) {
-		if (opt_verbosity >= 0)
-			show_advice_pull_non_ff();
+	/* ff-only takes precedence over rebase */
+	if (opt_ff && !strcmp(opt_ff, "--ff-only")) {
+		if (!can_ff && !already_up_to_date(&orig_head, &merge_heads))
+			die_ff_impossible();
+		opt_rebase = REBASE_FALSE;
+	}
+	/* If no action specified and we can't fast forward, then warn. */
+	if (!opt_ff && rebase_unspecified && !can_ff) {
+		show_advice_pull_non_ff();
+		die(_("Need to specify how to reconcile divergent branches."));
 	}
 
 	if (opt_rebase) {
 		int ret = 0;
-		int ran_ff = 0;
 
 		struct object_id newbase;
 		struct object_id upstream;
@@ -1065,16 +1127,14 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 		     recurse_submodules == RECURSE_SUBMODULES_ON_DEMAND) &&
 		    submodule_touches_in_range(the_repository, &upstream, &curr_head))
 			die(_("cannot rebase with locally recorded submodule modifications"));
-		if (!autostash) {
-			if (can_ff) {
-				/* we can fast-forward this without invoking rebase */
-				opt_ff = "--ff-only";
-				ran_ff = 1;
-				ret = run_merge();
-			}
-		}
-		if (!ran_ff)
+
+		if (can_ff) {
+			/* we can fast-forward this without invoking rebase */
+			opt_ff = "--ff-only";
+			ret = run_merge();
+		} else {
 			ret = run_rebase(&newbase, &upstream);
+		}
 
 		if (!ret && (recurse_submodules == RECURSE_SUBMODULES_ON ||
 			     recurse_submodules == RECURSE_SUBMODULES_ON_DEMAND))

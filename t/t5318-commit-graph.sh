@@ -5,6 +5,25 @@ test_description='commit graph'
 
 GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS=0
 
+test_expect_success 'usage' '
+	test_expect_code 129 git commit-graph write blah 2>err &&
+	test_expect_code 129 git commit-graph write verify
+'
+
+test_expect_success 'usage shown without sub-command' '
+	test_expect_code 129 git commit-graph 2>err &&
+	! grep error: err
+'
+
+test_expect_success 'usage shown with an error on unknown sub-command' '
+	cat >expect <<-\EOF &&
+	error: unrecognized subcommand: unknown
+	EOF
+	test_expect_code 129 git commit-graph unknown 2>stderr &&
+	grep error stderr >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'setup full repo' '
 	mkdir full &&
 	cd "$TRASH_DIRECTORY/full" &&
@@ -51,8 +70,8 @@ test_expect_success 'create commits and repack' '
 '
 
 graph_git_two_modes() {
-	git -c core.commitGraph=true $1 >output
-	git -c core.commitGraph=false $1 >expect
+	git -c core.commitGraph=true $1 >output &&
+	git -c core.commitGraph=false $1 >expect &&
 	test_cmp expect output
 }
 
@@ -366,6 +385,7 @@ test_expect_success 'replace-objects invalidates commit-graph' '
 		git commit-graph write --reachable &&
 		test_path_is_file .git/objects/info/commit-graph &&
 		git replace HEAD~1 HEAD~2 &&
+		graph_git_two_modes "commit-graph verify" &&
 		git -c core.commitGraph=false log >expect &&
 		git -c core.commitGraph=true log >actual &&
 		test_cmp expect actual &&
@@ -674,11 +694,32 @@ test_expect_success 'detect incorrect chunk count' '
 		$GRAPH_CHUNK_LOOKUP_OFFSET
 '
 
-test_expect_success 'git fsck (checks commit-graph)' '
+test_expect_success 'git fsck (checks commit-graph when config set to true)' '
 	cd "$TRASH_DIRECTORY/full" &&
 	git fsck &&
 	corrupt_graph_and_verify $GRAPH_BYTE_FOOTER "\00" \
 		"incorrect checksum" &&
+	cp commit-graph-pre-write-test $objdir/info/commit-graph &&
+	test_must_fail git -c core.commitGraph=true fsck
+'
+
+test_expect_success 'git fsck (ignores commit-graph when config set to false)' '
+	cd "$TRASH_DIRECTORY/full" &&
+	git fsck &&
+	corrupt_graph_and_verify $GRAPH_BYTE_FOOTER "\00" \
+		"incorrect checksum" &&
+	cp commit-graph-pre-write-test $objdir/info/commit-graph &&
+	git -c core.commitGraph=false fsck
+'
+
+test_expect_success 'git fsck (checks commit-graph when config unset)' '
+	cd "$TRASH_DIRECTORY/full" &&
+	test_when_finished "git config core.commitGraph true" &&
+
+	git fsck &&
+	corrupt_graph_and_verify $GRAPH_BYTE_FOOTER "\00" \
+		"incorrect checksum" &&
+	test_unconfig core.commitGraph &&
 	cp commit-graph-pre-write-test $objdir/info/commit-graph &&
 	test_must_fail git fsck
 '

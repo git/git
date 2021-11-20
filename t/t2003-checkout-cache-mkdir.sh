@@ -10,6 +10,7 @@ also verifies that such leading path may contain symlinks, unlike
 the GIT controlled paths.
 '
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '

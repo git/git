@@ -114,9 +114,9 @@ test_expect_success 'setup main repo' '
 	create_commits_in "$main_repo" A B C D E F G H I J K L M N O P Q R
 '
 
-test_expect_success 'master: pack-redundant works with no packfile' '
+test_expect_success 'main: pack-redundant works with no packfile' '
 	(
-		cd "$master_repo" &&
+		cd "$main_repo" &&
 		cat >expect <<-EOF &&
 			fatal: Zero packs found!
 			EOF

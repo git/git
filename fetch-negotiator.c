@@ -19,7 +19,6 @@ void fetch_negotiator_init(struct repository *r,
 		return;
 
 	case FETCH_NEGOTIATION_DEFAULT:
-	default:
 		default_negotiator_init(negotiator);
 		return;
 	}

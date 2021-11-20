@@ -2,6 +2,7 @@
 
 test_description='git bugreport'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # Headers "[System Info]" will be followed by a non-empty line if we put some

@@ -10,8 +10,8 @@
 
 void credential_init(struct credential *c)
 {
-	memset(c, 0, sizeof(*c));
-	c->helpers.strdup_strings = 1;
+	struct credential blank = CREDENTIAL_INIT;
+	memcpy(c, &blank, sizeof(*c));
 }
 
 void credential_clear(struct credential *c)
@@ -105,7 +105,7 @@ static int match_partial_url(const char *url, void *cb)
 static void credential_apply_config(struct credential *c)
 {
 	char *normalized_url;
-	struct urlmatch_config config = { STRING_LIST_INIT_DUP };
+	struct urlmatch_config config = URLMATCH_CONFIG_INIT;
 	struct strbuf url = STRBUF_INIT;
 
 	if (!c->host)
@@ -128,6 +128,7 @@ static void credential_apply_config(struct credential *c)
 	normalized_url = url_normalize(url.buf, &config.url);
 
 	git_config(urlmatch_config_entry, &config);
+	string_list_clear(&config.vars, 1);
 	free(normalized_url);
 	strbuf_release(&url);
 

@@ -134,7 +134,8 @@ static int add_ref_decoration(const char *refname, const struct object_id *oid,
 			      int flags, void *cb_data)
 {
 	struct object *obj;
-	enum decoration_type type = DECORATION_NONE;
+	enum object_type objtype;
+	enum decoration_type deco_type = DECORATION_NONE;
 	struct decoration_filter *filter = (struct decoration_filter *)cb_data;
 
 	if (filter && !ref_filter_match(refname, filter))
@@ -155,28 +156,29 @@ static int add_ref_decoration(const char *refname, const struct object_id *oid,
 		return 0;
 	}
 
-	obj = parse_object(the_repository, oid);
-	if (!obj)
+	objtype = oid_object_info(the_repository, oid, NULL);
+	if (objtype < 0)
 		return 0;
+	obj = lookup_object_by_type(the_repository, oid, objtype);
 
 	if (starts_with(refname, "refs/heads/"))
-		type = DECORATION_REF_LOCAL;
+		deco_type = DECORATION_REF_LOCAL;
 	else if (starts_with(refname, "refs/remotes/"))
-		type = DECORATION_REF_REMOTE;
+		deco_type = DECORATION_REF_REMOTE;
 	else if (starts_with(refname, "refs/tags/"))
-		type = DECORATION_REF_TAG;
+		deco_type = DECORATION_REF_TAG;
 	else if (!strcmp(refname, "refs/stash"))
-		type = DECORATION_REF_STASH;
+		deco_type = DECORATION_REF_STASH;
 	else if (!strcmp(refname, "HEAD"))
-		type = DECORATION_REF_HEAD;
+		deco_type = DECORATION_REF_HEAD;
 
-	add_name_decoration(type, refname, obj);
+	add_name_decoration(deco_type, refname, obj);
 	while (obj->type == OBJ_TAG) {
+		if (!obj->parsed)
+			parse_object(the_repository, &obj->oid);
 		obj = ((struct tag *)obj)->tagged;
 		if (!obj)
 			break;
-		if (!obj->parsed)
-			parse_object(the_repository, &obj->oid);
 		add_name_decoration(DECORATION_REF_TAG, refname, obj);
 	}
 	return 0;
@@ -513,10 +515,10 @@ static void show_signature(struct rev_info *opt, struct commit *commit)
 
 	status = check_signature(payload.buf, payload.len, signature.buf,
 				 signature.len, &sigc);
-	if (status && !sigc.gpg_output)
+	if (status && !sigc.output)
 		show_sig_lines(opt, status, "No signature\n");
 	else
-		show_sig_lines(opt, status, sigc.gpg_output);
+		show_sig_lines(opt, status, sigc.output);
 	signature_check_clear(&sigc);
 
  out:
@@ -583,8 +585,8 @@ static int show_one_mergetag(struct commit *commit,
 		/* could have a good signature */
 		status = check_signature(payload.buf, payload.len,
 					 signature.buf, signature.len, &sigc);
-		if (sigc.gpg_output)
-			strbuf_addstr(&verify_message, sigc.gpg_output);
+		if (sigc.output)
+			strbuf_addstr(&verify_message, sigc.output);
 		else
 			strbuf_addstr(&verify_message, "No signature\n");
 		signature_check_clear(&sigc);

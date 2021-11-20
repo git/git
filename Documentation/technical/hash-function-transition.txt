@@ -599,7 +599,7 @@ supports four different modes of operation:
     convert any object names written to output to SHA-1, but store
     objects using SHA-256.  This allows users to test the code with no
     visible behavior change except for performance.  This allows
-    allows running even tests that assume the SHA-1 hash function, to
+    running even tests that assume the SHA-1 hash function, to
     sanity-check the behavior of the new mode.
 
  2. ("early transition") Allow both SHA-1 and SHA-256 object names in

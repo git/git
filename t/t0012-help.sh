@@ -34,6 +34,18 @@ test_expect_success 'basic help commands' '
 	git help -a >/dev/null
 '
 
+test_expect_success 'invalid usage' '
+	test_expect_code 129 git help -g add &&
+	test_expect_code 129 git help -a -c &&
+
+	test_expect_code 129 git help -g add &&
+	test_expect_code 129 git help -a -g &&
+
+	test_expect_code 129 git help -g -c &&
+	test_expect_code 129 git help --config-for-completion add &&
+	test_expect_code 129 git help --config-sections-for-completion add
+'
+
 test_expect_success "works for commands and guides by default" '
 	configure_help &&
 	git help status &&
@@ -71,6 +83,59 @@ test_expect_success 'git help -g' '
 	test_i18ngrep "^   attributes " help.output &&
 	test_i18ngrep "^   everyday   " help.output &&
 	test_i18ngrep "^   tutorial   " help.output
+'
+
+test_expect_success 'git help fails for non-existing html pages' '
+	configure_help &&
+	mkdir html-empty &&
+	test_must_fail git -c help.htmlpath=html-empty help status &&
+	test_must_be_empty test-browser.log
+'
+
+test_expect_success 'git help succeeds without git.html' '
+	configure_help &&
+	mkdir html-with-docs &&
+	touch html-with-docs/git-status.html &&
+	git -c help.htmlpath=html-with-docs help status &&
+	echo "html-with-docs/git-status.html" >expect &&
+	test_cmp expect test-browser.log
+'
+
+test_expect_success 'git help -c' '
+	git help -c >help.output &&
+	cat >expect <<-\EOF &&
+
+	'\''git help config'\'' for more information
+	EOF
+	grep -v -E \
+		-e "^[^.]+\.[^.]+$" \
+		-e "^[^.]+\.[^.]+\.[^.]+$" \
+		help.output >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'git help --config-for-completion' '
+	git help -c >human &&
+	grep -E \
+	     -e "^[^.]+\.[^.]+$" \
+	     -e "^[^.]+\.[^.]+\.[^.]+$" human |
+	     sed -e "s/\*.*//" -e "s/<.*//" |
+	     sort -u >human.munged &&
+
+	git help --config-for-completion >vars &&
+	test_cmp human.munged vars
+'
+
+test_expect_success 'git help --config-sections-for-completion' '
+	git help -c >human &&
+	grep -E \
+	     -e "^[^.]+\.[^.]+$" \
+	     -e "^[^.]+\.[^.]+\.[^.]+$" human |
+	     sed -e "s/\..*//" |
+	     sort -u >human.munged &&
+
+	git help --config-sections-for-completion >sections &&
+	test_cmp human.munged sections
 '
 
 test_expect_success 'generate builtin list' '

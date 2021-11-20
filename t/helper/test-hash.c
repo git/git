@@ -54,5 +54,5 @@ int cmd_hash_impl(int ac, const char **av, int algo)
 		fwrite(hash, 1, algop->rawsz, stdout);
 	else
 		puts(hash_to_hex_algop(hash, algop));
-	exit(0);
+	return 0;
 }

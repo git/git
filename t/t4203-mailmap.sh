@@ -959,7 +959,7 @@ test_expect_success SYMLINKS 'symlinks not respected in-tree' '
 	test_when_finished "rm .mailmap" &&
 	ln -s map .mailmap &&
 	git log -1 --format=%aE >actual &&
-	echo "orig@example.com" >expect&&
+	echo "orig@example.com" >expect &&
 	test_cmp expect actual
 '
 

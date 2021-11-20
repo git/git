@@ -15,20 +15,20 @@ test_expect_success "proc-receive: report unexpected ref ($PROTOCOL/porcelain)" 
 		HEAD:refs/for/main/topic \
 		>out-$test_count 2>&1 &&
 	make_user_friendly_and_stable_output <out-$test_count >actual &&
-	cat >expect <<-EOF &&
-	remote: # pre-receive hook
-	remote: pre-receive< <COMMIT-A> <COMMIT-B> refs/heads/main
-	remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic
-	remote: # proc-receive hook
-	remote: proc-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic
-	remote: proc-receive> ok refs/heads/main
-	remote: error: proc-receive reported status on unexpected ref: refs/heads/main
-	remote: # post-receive hook
-	remote: post-receive< <COMMIT-A> <COMMIT-B> refs/heads/main
-	To <URL/of/upstream.git>
-	     <COMMIT-B>:refs/heads/main    <OID-A>..<OID-B>
-	!    HEAD:refs/for/main/topic    [remote rejected] (proc-receive failed to report status)
-	Done
+	format_and_save_expect <<-EOF &&
+	> remote: # pre-receive hook        Z
+	> remote: pre-receive< <COMMIT-A> <COMMIT-B> refs/heads/main        Z
+	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: # proc-receive hook        Z
+	> remote: proc-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: proc-receive> ok refs/heads/main        Z
+	> remote: error: proc-receive reported status on unexpected ref: refs/heads/main        Z
+	> remote: # post-receive hook        Z
+	> remote: post-receive< <COMMIT-A> <COMMIT-B> refs/heads/main        Z
+	> To <URL/of/upstream.git>
+	>  	<COMMIT-B>:refs/heads/main	<COMMIT-A>..<COMMIT-B>
+	> !	HEAD:refs/for/main/topic	[remote rejected] (proc-receive failed to report status)
+	> Done
 	EOF
 	test_cmp expect actual &&
 

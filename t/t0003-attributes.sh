@@ -2,6 +2,7 @@
 
 test_description=gitattributes
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 attr_check_basic () {

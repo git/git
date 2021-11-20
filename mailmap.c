@@ -8,6 +8,7 @@
 #define debug_mm(...) fprintf(stderr, __VA_ARGS__)
 #define debug_str(X) ((X) ? (X) : "(none)")
 #else
+__attribute__((format (printf, 1, 2)))
 static inline void debug_mm(const char *format, ...) {}
 static inline const char *debug_str(const char *s) { return s; }
 #endif
@@ -36,6 +37,7 @@ static void free_mailmap_info(void *p, const char *s)
 		 s, debug_str(mi->name), debug_str(mi->email));
 	free(mi->name);
 	free(mi->email);
+	free(mi);
 }
 
 static void free_mailmap_entry(void *p, const char *s)
@@ -51,6 +53,7 @@ static void free_mailmap_entry(void *p, const char *s)
 
 	me->namemap.strdup_strings = 1;
 	string_list_clear_func(&me->namemap, free_mailmap_info);
+	free(me);
 }
 
 /*

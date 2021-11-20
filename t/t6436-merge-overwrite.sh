@@ -68,7 +68,8 @@ test_expect_success 'will not overwrite removed file' '
 	git commit -m "rm c1.c" &&
 	cp important c1.c &&
 	test_must_fail git merge c1a &&
-	test_cmp important c1.c
+	test_cmp important c1.c &&
+	rm c1.c  # Do not leave untracked file in way of future tests
 '
 
 test_expect_success 'will not overwrite re-added file' '

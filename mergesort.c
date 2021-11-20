@@ -1,73 +1,84 @@
 #include "cache.h"
 #include "mergesort.h"
 
-struct mergesort_sublist {
-	void *ptr;
-	unsigned long len;
-};
-
-static void *get_nth_next(void *list, unsigned long n,
-			  void *(*get_next_fn)(const void *))
+/* Combine two sorted lists.  Take from `list` on equality. */
+static void *llist_merge(void *list, void *other,
+			 void *(*get_next_fn)(const void *),
+			 void (*set_next_fn)(void *, void *),
+			 int (*compare_fn)(const void *, const void *))
 {
-	while (n-- && list)
-		list = get_next_fn(list);
-	return list;
+	void *result = list, *tail;
+
+	if (compare_fn(list, other) > 0) {
+		result = other;
+		goto other;
+	}
+	for (;;) {
+		do {
+			tail = list;
+			list = get_next_fn(list);
+			if (!list) {
+				set_next_fn(tail, other);
+				return result;
+			}
+		} while (compare_fn(list, other) <= 0);
+		set_next_fn(tail, other);
+	other:
+		do {
+			tail = other;
+			other = get_next_fn(other);
+			if (!other) {
+				set_next_fn(tail, list);
+				return result;
+			}
+		} while (compare_fn(list, other) > 0);
+		set_next_fn(tail, list);
+	}
 }
 
-static void *pop_item(struct mergesort_sublist *l,
-		      void *(*get_next_fn)(const void *))
-{
-	void *p = l->ptr;
-	l->ptr = get_next_fn(l->ptr);
-	l->len = l->ptr ? (l->len - 1) : 0;
-	return p;
-}
-
+/*
+ * Perform an iterative mergesort using an array of sublists.
+ *
+ * n is the number of items.
+ * ranks[i] is undefined if n & 2^i == 0, and assumed empty.
+ * ranks[i] contains a sublist of length 2^i otherwise.
+ *
+ * The number of bits in a void pointer limits the number of objects
+ * that can be created, and thus the number of array elements necessary
+ * to be able to sort any valid list.
+ *
+ * Adding an item to this array is like incrementing a binary number;
+ * positional values for set bits correspond to sublist lengths.
+ */
 void *llist_mergesort(void *list,
 		      void *(*get_next_fn)(const void *),
 		      void (*set_next_fn)(void *, void *),
 		      int (*compare_fn)(const void *, const void *))
 {
-	unsigned long l;
+	void *ranks[bitsizeof(void *)];
+	size_t n = 0;
+	int i;
 
-	if (!list)
-		return NULL;
-	for (l = 1; ; l *= 2) {
-		void *curr;
-		struct mergesort_sublist p, q;
+	while (list) {
+		void *next = get_next_fn(list);
+		if (next)
+			set_next_fn(list, NULL);
+		for (i = 0; n & (1 << i); i++)
+			list = llist_merge(ranks[i], list, get_next_fn,
+					   set_next_fn, compare_fn);
+		n++;
+		ranks[i] = list;
+		list = next;
+	}
 
-		p.ptr = list;
-		q.ptr = get_nth_next(p.ptr, l, get_next_fn);
-		if (!q.ptr)
-			break;
-		p.len = q.len = l;
-
-		if (compare_fn(p.ptr, q.ptr) > 0)
-			list = curr = pop_item(&q, get_next_fn);
+	for (i = 0; n; i++, n >>= 1) {
+		if (!(n & 1))
+			continue;
+		if (list)
+			list = llist_merge(ranks[i], list, get_next_fn,
+					   set_next_fn, compare_fn);
 		else
-			list = curr = pop_item(&p, get_next_fn);
-
-		while (p.ptr) {
-			while (p.len || q.len) {
-				void *prev = curr;
-
-				if (!p.len)
-					curr = pop_item(&q, get_next_fn);
-				else if (!q.len)
-					curr = pop_item(&p, get_next_fn);
-				else if (compare_fn(p.ptr, q.ptr) > 0)
-					curr = pop_item(&q, get_next_fn);
-				else
-					curr = pop_item(&p, get_next_fn);
-				set_next_fn(prev, curr);
-			}
-			p.ptr = q.ptr;
-			p.len = l;
-			q.ptr = get_nth_next(p.ptr, l, get_next_fn);
-			q.len = q.ptr ? l : 0;
-
-		}
-		set_next_fn(curr, NULL);
+			list = ranks[i];
 	}
 	return list;
 }

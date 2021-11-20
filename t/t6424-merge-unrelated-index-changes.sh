@@ -132,6 +132,7 @@ test_expect_success 'merge-recursive, when index==head but head!=HEAD' '
 
 	# Make index match B
 	git diff C B -- | git apply --cached &&
+	test_when_finished "git clean -fd" &&  # Do not leave untracked around
 	# Merge B & F, with B as "head"
 	git merge-recursive A -- B F > out &&
 	test_i18ngrep "Already up to date" out

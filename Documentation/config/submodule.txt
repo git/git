@@ -58,8 +58,9 @@ submodule.active::
 	commands. See linkgit:gitsubmodules[7] for details.
 
 submodule.recurse::
-	Specifies if commands recurse into submodules by default. This
-	applies to all commands that have a `--recurse-submodules` option
+	A boolean indicating if commands should enable the `--recurse-submodules`
+	option by default.
+	Applies to all commands that support this option
 	(`checkout`, `fetch`, `grep`, `pull`, `push`, `read-tree`, `reset`,
 	`restore` and `switch`) except `clone` and `ls-files`.
 	Defaults to false.

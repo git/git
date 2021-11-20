@@ -603,8 +603,7 @@ static void gather_results_from_workers(struct pc_worker *workers,
 				continue;
 
 			if (pfd->revents & POLLIN) {
-				int len = packet_read(pfd->fd, NULL, NULL,
-						      packet_buffer,
+				int len = packet_read(pfd->fd, packet_buffer,
 						      sizeof(packet_buffer), 0);
 
 				if (len < 0) {

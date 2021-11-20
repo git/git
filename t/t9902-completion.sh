@@ -540,6 +540,15 @@ test_expect_success '__gitcomp - expand/narrow all negative options' '
 	EOF
 '
 
+test_expect_success '__gitcomp - equal skip' '
+	test_gitcomp "--option=" "--option=" <<-\EOF &&
+
+	EOF
+	test_gitcomp "option=" "option=" <<-\EOF
+
+	EOF
+'
+
 test_expect_success '__gitcomp - doesnt fail because of invalid variable name' '
 	__gitcomp "$invalid_variable_name"
 '
@@ -2380,6 +2389,12 @@ test_expect_success 'git clone --config= - value' '
 	EOF
 '
 
+test_expect_success 'options with value' '
+	test_completion "git merge -X diff-algorithm=" <<-\EOF
+
+	EOF
+'
+
 test_expect_success 'sourcing the completion script clears cached commands' '
 	__git_compute_all_commands &&
 	verbose test -n "$__git_all_commands" &&
@@ -2402,6 +2417,19 @@ test_expect_success 'sourcing the completion script clears cached --options' '
 	. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash" &&
 	verbose test -z "$__gitcomp_builtin_checkout" &&
 	verbose test -z "$__gitcomp_builtin_notes_edit"
+'
+
+test_expect_success 'option aliases are not shown by default' '
+	test_completion "git clone --recurs" "--recurse-submodules "
+'
+
+test_expect_success 'option aliases are shown with GIT_COMPLETION_SHOW_ALL' '
+	. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash" &&
+	GIT_COMPLETION_SHOW_ALL=1 && export GIT_COMPLETION_SHOW_ALL &&
+	test_completion "git clone --recurs" <<-\EOF
+	--recurse-submodules Z
+	--recursive Z
+	EOF
 '
 
 test_expect_success '__git_complete' '

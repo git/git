@@ -7,16 +7,16 @@ test_expect_success "git-push ($PROTOCOL)" '
 		HEAD:refs/heads/next \
 		>out 2>&1 &&
 	make_user_friendly_and_stable_output <out >actual &&
-	cat >expect <<-EOF &&
-	remote: # pre-receive hook
-	remote: pre-receive< <COMMIT-A> <COMMIT-B> refs/heads/main
-	remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/heads/next
-	remote: # post-receive hook
-	remote: post-receive< <COMMIT-A> <COMMIT-B> refs/heads/main
-	remote: post-receive< <ZERO-OID> <COMMIT-A> refs/heads/next
-	To <URL/of/upstream.git>
-	 <OID-A>..<OID-B> <COMMIT-B> -> main
-	 * [new branch] HEAD -> next
+	format_and_save_expect <<-EOF &&
+	> remote: # pre-receive hook        Z
+	> remote: pre-receive< <COMMIT-A> <COMMIT-B> refs/heads/main        Z
+	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/heads/next        Z
+	> remote: # post-receive hook        Z
+	> remote: post-receive< <COMMIT-A> <COMMIT-B> refs/heads/main        Z
+	> remote: post-receive< <ZERO-OID> <COMMIT-A> refs/heads/next        Z
+	> To <URL/of/upstream.git>
+	>    <COMMIT-A>..<COMMIT-B>  <COMMIT-B> -> main
+	>  * [new branch]      HEAD -> next
 	EOF
 	test_cmp expect actual &&
 
@@ -38,10 +38,10 @@ test_expect_success "git-push --atomic ($PROTOCOL)" '
 		-e "/^To / { p; }" \
 		-e "/^ ! / { p; }" \
 		<out-$test_count >actual &&
-	cat >expect <<-EOF &&
-	To <URL/of/upstream.git>
-	 ! [rejected] main -> main (non-fast-forward)
-	 ! [rejected] <COMMIT-B> -> next (atomic push failed)
+	format_and_save_expect <<-EOF &&
+	> To <URL/of/upstream.git>
+	>  ! [rejected]        main -> main (non-fast-forward)
+	>  ! [rejected]        <COMMIT-B> -> next (atomic push failed)
 	EOF
 	test_cmp expect actual &&
 
@@ -63,14 +63,14 @@ test_expect_success "non-fast-forward git-push ($PROTOCOL)" '
 		$B:refs/heads/next \
 		>out-$test_count 2>&1 &&
 	make_user_friendly_and_stable_output <out-$test_count >actual &&
-	cat >expect <<-EOF &&
-	remote: # pre-receive hook
-	remote: pre-receive< <COMMIT-A> <COMMIT-B> refs/heads/next
-	remote: # post-receive hook
-	remote: post-receive< <COMMIT-A> <COMMIT-B> refs/heads/next
-	To <URL/of/upstream.git>
-	 <OID-A>..<OID-B> <COMMIT-B> -> next
-	 ! [rejected] main -> main (non-fast-forward)
+	format_and_save_expect <<-EOF &&
+	> remote: # pre-receive hook        Z
+	> remote: pre-receive< <COMMIT-A> <COMMIT-B> refs/heads/next        Z
+	> remote: # post-receive hook        Z
+	> remote: post-receive< <COMMIT-A> <COMMIT-B> refs/heads/next        Z
+	> To <URL/of/upstream.git>
+	>    <COMMIT-A>..<COMMIT-B>  <COMMIT-B> -> next
+	>  ! [rejected]        main -> main (non-fast-forward)
 	EOF
 	test_cmp expect actual &&
 
@@ -92,25 +92,25 @@ test_expect_success "git-push -f ($PROTOCOL)" '
 		HEAD:refs/heads/a/b/c \
 		>out 2>&1 &&
 	make_user_friendly_and_stable_output <out >actual &&
-	cat >expect <<-EOF &&
-	remote: # pre-receive hook
-	remote: pre-receive< <COMMIT-B> <COMMIT-A> refs/heads/main
-	remote: pre-receive< <COMMIT-B> <ZERO-OID> refs/heads/next
-	remote: pre-receive< <ZERO-OID> <TAG-v123> refs/tags/v123
-	remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/review/main/topic
-	remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/heads/a/b/c
-	remote: # post-receive hook
-	remote: post-receive< <COMMIT-B> <COMMIT-A> refs/heads/main
-	remote: post-receive< <COMMIT-B> <ZERO-OID> refs/heads/next
-	remote: post-receive< <ZERO-OID> <TAG-v123> refs/tags/v123
-	remote: post-receive< <ZERO-OID> <COMMIT-A> refs/review/main/topic
-	remote: post-receive< <ZERO-OID> <COMMIT-A> refs/heads/a/b/c
-	To <URL/of/upstream.git>
-	 + <OID-B>...<OID-A> main -> main (forced update)
-	 - [deleted] next
-	 * [new tag] v123 -> v123
-	 * [new reference] main -> refs/review/main/topic
-	 * [new branch] HEAD -> a/b/c
+	format_and_save_expect <<-EOF &&
+	> remote: # pre-receive hook        Z
+	> remote: pre-receive< <COMMIT-B> <COMMIT-A> refs/heads/main        Z
+	> remote: pre-receive< <COMMIT-B> <ZERO-OID> refs/heads/next        Z
+	> remote: pre-receive< <ZERO-OID> <TAG-v123> refs/tags/v123        Z
+	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/review/main/topic        Z
+	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/heads/a/b/c        Z
+	> remote: # post-receive hook        Z
+	> remote: post-receive< <COMMIT-B> <COMMIT-A> refs/heads/main        Z
+	> remote: post-receive< <COMMIT-B> <ZERO-OID> refs/heads/next        Z
+	> remote: post-receive< <ZERO-OID> <TAG-v123> refs/tags/v123        Z
+	> remote: post-receive< <ZERO-OID> <COMMIT-A> refs/review/main/topic        Z
+	> remote: post-receive< <ZERO-OID> <COMMIT-A> refs/heads/a/b/c        Z
+	> To <URL/of/upstream.git>
+	>  + <COMMIT-B>...<COMMIT-A> main -> main (forced update)
+	>  - [deleted]         next
+	>  * [new tag]         v123 -> v123
+	>  * [new reference]   main -> refs/review/main/topic
+	>  * [new branch]      HEAD -> a/b/c
 	EOF
 	test_cmp expect actual &&
 

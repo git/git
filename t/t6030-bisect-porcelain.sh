@@ -962,4 +962,22 @@ test_expect_success 'bisect handles annotated tags' '
 	grep "$bad is the first bad commit" output
 '
 
+test_expect_success 'bisect run fails with exit code equals or greater than 128' '
+	write_script test_script.sh <<-\EOF &&
+	exit 128
+	EOF
+	test_must_fail git bisect run ./test_script.sh &&
+	write_script test_script.sh <<-\EOF &&
+	exit 255
+	EOF
+	test_must_fail git bisect run ./test_script.sh
+'
+
+test_expect_success 'bisect visualize with a filename with dash and space' '
+	echo "My test line" >>"./-hello 2" &&
+	git add -- "./-hello 2" &&
+	git commit --quiet -m "Add test line" -- "./-hello 2" &&
+	git bisect visualize -p -- "-hello 2"
+'
+
 test_done

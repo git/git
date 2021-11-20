@@ -29,11 +29,13 @@ extern const char *empty_strvec[];
  */
 struct strvec {
 	const char **v;
-	int nr;
-	int alloc;
+	size_t nr;
+	size_t alloc;
 };
 
-#define STRVEC_INIT { empty_strvec, 0, 0 }
+#define STRVEC_INIT { \
+	.v = empty_strvec, \
+}
 
 /**
  * Initialize an array. This is no different than assigning from

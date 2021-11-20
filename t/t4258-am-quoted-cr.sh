@@ -26,7 +26,7 @@ test_expect_success 'am --quoted-cr=strip' '
 	git diff --exit-code HEAD two
 '
 
-test_expect_success 'am with config mailinfo.quotecr=strip' '
+test_expect_success 'am with config mailinfo.quotedCr=strip' '
 	test_might_fail git am --abort &&
 	git reset --hard one &&
 	test_config mailinfo.quotedCr strip &&

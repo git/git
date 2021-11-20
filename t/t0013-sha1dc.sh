@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='test sha1 collision detection'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 TEST_DATA="$TEST_DIRECTORY/t0013"
 

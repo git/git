@@ -2,6 +2,7 @@
 
 test_description='Test advise_if_enabled functionality'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'advice should be printed when config variable is unset' '

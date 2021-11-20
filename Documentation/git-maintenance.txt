@@ -179,6 +179,17 @@ OPTIONS
 	`maintenance.<task>.enabled` configured as `true` are considered.
 	See the 'TASKS' section for the list of accepted `<task>` values.
 
+--scheduler=auto|crontab|systemd-timer|launchctl|schtasks::
+	When combined with the `start` subcommand, specify the scheduler
+	for running the hourly, daily and weekly executions of
+	`git maintenance run`.
+	Possible values for `<scheduler>` are `auto`, `crontab`
+	(POSIX), `systemd-timer` (Linux), `launchctl` (macOS), and
+	`schtasks` (Windows). When `auto` is specified, the
+	appropriate platform-specific scheduler is used; on Linux,
+	`systemd-timer` is used if available, otherwise
+	`crontab`. Default is `auto`.
+
 
 TROUBLESHOOTING
 ---------------
@@ -275,6 +286,52 @@ the crontab(5) documentation for advanced scheduling techniques. Please
 do use the full path and `--exec-path` techniques from the default
 schedule to ensure you are executing the correct binaries in your
 schedule.
+
+
+BACKGROUND MAINTENANCE ON LINUX SYSTEMD SYSTEMS
+-----------------------------------------------
+
+While Linux supports `cron`, depending on the distribution, `cron` may
+be an optional package not necessarily installed. On modern Linux
+distributions, systemd timers are superseding it.
+
+If user systemd timers are available, they will be used as a replacement
+of `cron`.
+
+In this case, `git maintenance start` will create user systemd timer units
+and start the timers. The current list of user-scheduled tasks can be found
+by running `systemctl --user list-timers`. The timers written by `git
+maintenance start` are similar to this:
+
+-----------------------------------------------------------------------
+$ systemctl --user list-timers
+NEXT                         LEFT          LAST                         PASSED     UNIT                         ACTIVATES
+Thu 2021-04-29 19:00:00 CEST 42min left    Thu 2021-04-29 18:00:11 CEST 17min ago  git-maintenance@hourly.timer git-maintenance@hourly.service
+Fri 2021-04-30 00:00:00 CEST 5h 42min left Thu 2021-04-29 00:00:11 CEST 18h ago    git-maintenance@daily.timer  git-maintenance@daily.service
+Mon 2021-05-03 00:00:00 CEST 3 days left   Mon 2021-04-26 00:00:11 CEST 3 days ago git-maintenance@weekly.timer git-maintenance@weekly.service
+-----------------------------------------------------------------------
+
+One timer is registered for each `--schedule=<frequency>` option.
+
+The definition of the systemd units can be inspected in the following files:
+
+-----------------------------------------------------------------------
+~/.config/systemd/user/git-maintenance@.timer
+~/.config/systemd/user/git-maintenance@.service
+~/.config/systemd/user/timers.target.wants/git-maintenance@hourly.timer
+~/.config/systemd/user/timers.target.wants/git-maintenance@daily.timer
+~/.config/systemd/user/timers.target.wants/git-maintenance@weekly.timer
+-----------------------------------------------------------------------
+
+`git maintenance start` will overwrite these files and start the timer
+again with `systemctl --user`, so any customization should be done by
+creating a drop-in file, i.e. a `.conf` suffixed file in the
+`~/.config/systemd/user/git-maintenance@.service.d` directory.
+
+`git maintenance stop` will stop the user systemd timers and delete
+the above mentioned files.
+
+For more details, see `systemd.timer(5)`.
 
 
 BACKGROUND MAINTENANCE ON MACOS SYSTEMS

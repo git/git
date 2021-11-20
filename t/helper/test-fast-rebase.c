@@ -91,7 +91,6 @@ int cmd__fast_rebase(int argc, const char **argv)
 	struct commit *last_commit = NULL, *last_picked_commit = NULL;
 	struct object_id head;
 	struct lock_file lock = LOCK_INIT;
-	int clean = 1;
 	struct strvec rev_walk_args = STRVEC_INIT;
 	struct rev_info revs;
 	struct commit *commit;
@@ -124,7 +123,8 @@ int cmd__fast_rebase(int argc, const char **argv)
 	assert(oideq(&onto->object.oid, &head));
 
 	hold_locked_index(&lock, LOCK_DIE_ON_ERROR);
-	assert(repo_read_index(the_repository) >= 0);
+	if (repo_read_index(the_repository) < 0)
+		BUG("Could not read index");
 
 	repo_init_revisions(the_repository, &revs, NULL);
 	revs.verbose_header = 1;
@@ -175,11 +175,10 @@ int cmd__fast_rebase(int argc, const char **argv)
 		free((char*)merge_opt.ancestor);
 		merge_opt.ancestor = NULL;
 		if (!result.clean)
-			die("Aborting: Hit a conflict and restarting is not implemented.");
+			break;
 		last_picked_commit = commit;
 		last_commit = create_commit(result.tree, commit, last_commit);
 	}
-	fprintf(stderr, "\nDone.\n");
 	/* TODO: There should be some kind of rev_info_free(&revs) call... */
 	memset(&revs, 0, sizeof(revs));
 
@@ -188,24 +187,39 @@ int cmd__fast_rebase(int argc, const char **argv)
 	if (result.clean < 0)
 		exit(128);
 
-	strbuf_addf(&reflog_msg, "finish rebase %s onto %s",
-		    oid_to_hex(&last_picked_commit->object.oid),
-		    oid_to_hex(&last_commit->object.oid));
-	if (update_ref(reflog_msg.buf, branch_name.buf,
-		       &last_commit->object.oid,
-		       &last_picked_commit->object.oid,
-		       REF_NO_DEREF, UPDATE_REFS_MSG_ON_ERR)) {
-		error(_("could not update %s"), argv[4]);
-		die("Failed to update %s", argv[4]);
-	}
-	if (create_symref("HEAD", branch_name.buf, reflog_msg.buf) < 0)
-		die(_("unable to update HEAD"));
-	strbuf_release(&reflog_msg);
-	strbuf_release(&branch_name);
+	if (result.clean) {
+		fprintf(stderr, "\nDone.\n");
+		strbuf_addf(&reflog_msg, "finish rebase %s onto %s",
+			    oid_to_hex(&last_picked_commit->object.oid),
+			    oid_to_hex(&last_commit->object.oid));
+		if (update_ref(reflog_msg.buf, branch_name.buf,
+			       &last_commit->object.oid,
+			       &last_picked_commit->object.oid,
+			       REF_NO_DEREF, UPDATE_REFS_MSG_ON_ERR)) {
+			error(_("could not update %s"), argv[4]);
+			die("Failed to update %s", argv[4]);
+		}
+		if (create_symref("HEAD", branch_name.buf, reflog_msg.buf) < 0)
+			die(_("unable to update HEAD"));
+		strbuf_release(&reflog_msg);
+		strbuf_release(&branch_name);
 
-	prime_cache_tree(the_repository, the_repository->index, result.tree);
+		prime_cache_tree(the_repository, the_repository->index,
+				 result.tree);
+	} else {
+		fprintf(stderr, "\nAborting: Hit a conflict.\n");
+		strbuf_addf(&reflog_msg, "rebase progress up to %s",
+			    oid_to_hex(&last_picked_commit->object.oid));
+		if (update_ref(reflog_msg.buf, "HEAD",
+			       &last_commit->object.oid,
+			       &head,
+			       REF_NO_DEREF, UPDATE_REFS_MSG_ON_ERR)) {
+			error(_("could not update %s"), argv[4]);
+			die("Failed to update %s", argv[4]);
+		}
+	}
 	if (write_locked_index(&the_index, &lock,
 			       COMMIT_LOCK | SKIP_IF_UNCHANGED))
 		die(_("unable to write %s"), get_index_file());
-	return (clean == 0);
+	return (result.clean == 0);
 }

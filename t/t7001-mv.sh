@@ -2,10 +2,11 @@
 
 test_description='git mv in subdirs'
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-diff-data.sh
 
 test_expect_success 'prepare reference tree' '
 	mkdir path0 path1 &&
-	cp "$TEST_DIRECTORY"/../COPYING path0/COPYING &&
+	COPYING_test_data >path0/COPYING &&
 	git add path0/COPYING &&
 	git commit -m add -a
 '
@@ -107,7 +108,7 @@ test_expect_success 'clean up' '
 '
 
 test_expect_success 'adding another file' '
-	cp "$TEST_DIRECTORY"/../README.md path0/README &&
+	COPYING_test_data | tr A-Za-z N-ZA-Mn-za-m >path0/README &&
 	git add path0/README &&
 	git commit -m add2 -a
 '

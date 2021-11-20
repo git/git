@@ -2,6 +2,7 @@
 
 test_description='update-index and add refuse to add beyond symlinks'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success SYMLINKS setup '

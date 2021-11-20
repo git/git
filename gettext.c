@@ -66,6 +66,7 @@ const char *get_preferred_languages(void)
 }
 
 #ifndef NO_GETTEXT
+__attribute__((format (printf, 1, 2)))
 static int test_vsnprintf(const char *fmt, ...)
 {
 	char buf[26];

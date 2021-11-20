@@ -422,4 +422,10 @@ test_expect_success 'stash show --{include,only}-untracked on stashes without un
 	test_must_be_empty actual
 '
 
+test_expect_success 'stash -u ignores sub-repository' '
+	test_when_finished "rm -rf sub-repo" &&
+	git init sub-repo &&
+	git stash -u
+'
+
 test_done

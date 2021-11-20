@@ -2,6 +2,7 @@
 
 test_description='wildmatch tests'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # Disable expensive chain-lint tests; all of the tests in this script

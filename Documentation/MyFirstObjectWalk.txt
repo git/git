@@ -691,7 +691,7 @@ help understand. In our case, that means we omit trees and blobs not directly
 referenced by `HEAD` or `HEAD`'s history, because we begin the walk with only
 `HEAD` in the `pending` list.)
 
-First, we'll need to `#include "list-objects-filter-options.h`" and set up the
+First, we'll need to `#include "list-objects-filter-options.h"` and set up the
 `struct list_objects_filter_options` at the top of the function.
 
 ----
@@ -779,7 +779,7 @@ Count all the objects within and modify the print statement:
 	while ((oid = oidset_iter_next(&oit)))
 		omitted_count++;
 
-	printf("commits %d\nblobs %d\ntags %d\ntrees%d\nomitted %d\n",
+	printf("commits %d\nblobs %d\ntags %d\ntrees %d\nomitted %d\n",
 		commit_count, blob_count, tag_count, tree_count, omitted_count);
 ----
 

@@ -897,7 +897,7 @@ which are not of the requested type.
 +
 The form '--filter=sparse:oid=<blob-ish>' uses a sparse-checkout
 specification contained in the blob (or blob-expression) '<blob-ish>'
-to omit blobs that would not be not required for a sparse checkout on
+to omit blobs that would not be required for a sparse checkout on
 the requested refs.
 +
 The form '--filter=tree:<depth>' omits all blobs and trees whose depth
@@ -1064,6 +1064,14 @@ ifdef::git-rev-list[]
 --header::
 	Print the contents of the commit in raw-format; each record is
 	separated with a NUL character.
+
+--no-commit-header::
+	Suppress the header line containing "commit" and the object ID printed before
+	the specified format.  This has no effect on the built-in formats; only custom
+	formats are affected.
+
+--commit-header::
+	Overrides a previous `--no-commit-header`.
 endif::git-rev-list[]
 
 --parents::

@@ -342,6 +342,8 @@ struct dir_struct {
 	unsigned visited_directories;
 };
 
+#define DIR_INIT { 0 }
+
 struct dirent *readdir_skip_dot_and_dotdot(DIR *dirp);
 
 /*Count the number of slashes for string s*/
@@ -366,8 +368,6 @@ int match_pathspec(struct index_state *istate,
 		   int prefix, char *seen, int is_dir);
 int report_path_error(const char *ps_matched, const struct pathspec *pathspec);
 int within_depth(const char *name, int namelen, int depth, int max_depth);
-
-void dir_init(struct dir_struct *dir);
 
 int fill_directory(struct dir_struct *dir,
 		   struct index_state *istate,
@@ -394,6 +394,14 @@ enum pattern_match_result path_matches_pattern_list(const char *pathname,
 				const char *basename, int *dtype,
 				struct pattern_list *pl,
 				struct index_state *istate);
+
+int init_sparse_checkout_patterns(struct index_state *state);
+
+int path_in_sparse_checkout(const char *path,
+			    struct index_state *istate);
+int path_in_cone_mode_sparse_checkout(const char *path,
+				      struct index_state *istate);
+
 struct dir_entry *dir_add_ignored(struct dir_struct *dir,
 				  struct index_state *istate,
 				  const char *pathname, int len);
@@ -453,6 +461,17 @@ static inline int is_dot_or_dotdot(const char *name)
 
 int is_empty_dir(const char *dir);
 
+/*
+ * Retrieve the "humanish" basename of the given Git URL.
+ *
+ * For example:
+ * 	/path/to/repo.git => "repo"
+ * 	host.xz:foo/.git => "foo"
+ * 	http://example.com/user/bar.baz => "bar.baz"
+ */
+char *git_url_basename(const char *repo, int is_bundle, int is_bare);
+void strip_dir_trailing_slashes(char *dir);
+
 void setup_standard_excludes(struct dir_struct *dir);
 
 char *get_sparse_checkout_filename(void);
@@ -489,7 +508,9 @@ int remove_dir_recursively(struct strbuf *path, int flag);
 int remove_path(const char *path);
 
 int fspathcmp(const char *a, const char *b);
+int fspatheq(const char *a, const char *b);
 int fspathncmp(const char *a, const char *b, size_t count);
+unsigned int fspathhash(const char *str);
 
 /*
  * The prefix part of pattern must not contains wildcards.

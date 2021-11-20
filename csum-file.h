@@ -16,7 +16,9 @@ struct hashfile {
 	const char *name;
 	int do_crc;
 	uint32_t crc32;
-	unsigned char buffer[8192];
+	size_t buffer_len;
+	unsigned char *buffer;
+	unsigned char *check_buffer;
 };
 
 /* Checkpoint */
@@ -41,6 +43,9 @@ void hashwrite(struct hashfile *, const void *, unsigned int);
 void hashflush(struct hashfile *f);
 void crc32_begin(struct hashfile *);
 uint32_t crc32_end(struct hashfile *);
+
+/* Verify checksum validity while reading. Returns non-zero on success. */
+int hashfile_checksum_valid(const unsigned char *data, size_t len);
 
 /*
  * Returns the total number of bytes fed to the hashfile so far (including ones

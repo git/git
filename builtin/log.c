@@ -245,6 +245,9 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 			rev->abbrev_commit = 0;
 	}
 
+	if (rev->commit_format == CMIT_FMT_USERFORMAT && !w.decorate)
+		decoration_style = 0;
+
 	if (decoration_style) {
 		const struct string_list *config_exclude =
 			repo_config_get_value_multi(the_repository,
@@ -634,7 +637,7 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 	repo_init_revisions(the_repository, &rev, prefix);
 	rev.diff = 1;
 	rev.always_show_header = 1;
-	rev.no_walk = REVISION_WALK_NO_WALK_SORTED;
+	rev.no_walk = 1;
 	rev.diffopt.stat_width = -1; 	/* Scale to real terminal size */
 
 	memset(&opt, 0, sizeof(opt));
@@ -1968,8 +1971,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	} else if (rev.diffopt.close_file) {
 		/*
 		 * The diff code parsed --output; it has already opened the
-		 * file, but but we must instruct it not to close after each
-		 * diff.
+		 * file, but we must instruct it not to close after each diff.
 		 */
 		rev.diffopt.no_free = 1;
 	} else {

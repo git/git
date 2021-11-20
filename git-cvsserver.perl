@@ -222,10 +222,11 @@ if ($state->{method} eq 'pserver') {
         open my $passwd, "<", $authdb or die $!;
         while (<$passwd>) {
             if (m{^\Q$user\E:(.*)}) {
-                if (crypt($user, descramble($password)) eq $1) {
+                my $hash = crypt(descramble($password), $1);
+                if (defined $hash and $hash eq $1) {
                     $auth_ok = 1;
                 }
-            };
+            }
         }
         close $passwd;
 
@@ -2149,7 +2150,7 @@ sub req_diff
                    ( $meta2->{revision} or "workingcopy" ));
 
         # TODO: Use --label instead of -L because -L is no longer
-        #  documented and may go away someday.  Not sure if there there are
+        #  documented and may go away someday.  Not sure if there are
         #  versions that only support -L, which would make this change risky?
         #  http://osdir.com/ml/bug-gnu-utils-gnu/2010-12/msg00060.html
         #    ("man diff" should actually document the best migration strategy,

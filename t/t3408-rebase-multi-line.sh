@@ -55,14 +55,4 @@ test_expect_success rebase '
 	test_cmp expect actual
 
 '
-test_expect_success REBASE_P rebasep '
-
-	git checkout side-merge &&
-	git rebase -p side &&
-	git cat-file commit HEAD | sed -e "1,/^\$/d" >actual &&
-	git cat-file commit side-merge-original | sed -e "1,/^\$/d" >expect &&
-	test_cmp expect actual
-
-'
-
 test_done

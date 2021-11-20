@@ -113,7 +113,7 @@ test_expect_success 'git pull --force' '
 	git pull two &&
 	test_commit A &&
 	git branch -f origin &&
-	git pull --all --force
+	git pull --no-rebase --all --force
 	)
 '
 
@@ -179,7 +179,7 @@ test_expect_success 'git pull --allow-unrelated-histories' '
 	(
 		cd dst &&
 		test_must_fail git pull ../src side &&
-		git pull --allow-unrelated-histories ../src side
+		git pull --no-rebase --allow-unrelated-histories ../src side
 	)
 '
 
@@ -226,6 +226,30 @@ test_expect_success 'git pull --no-signoff flag cancels --signoff flag' '
 	git -C dst pull --signoff --no-signoff --no-ff &&
 	git -C dst show -s --pretty="format:%(trailers)" HEAD >actual &&
 	test_must_be_empty actual
+'
+
+test_expect_success 'git pull --no-verify flag passed to merge' '
+	test_when_finished "rm -fr src dst actual" &&
+	git init src &&
+	test_commit -C src one &&
+	git clone src dst &&
+	write_script dst/.git/hooks/commit-msg <<-\EOF &&
+	false
+	EOF
+	test_commit -C src two &&
+	git -C dst pull --no-ff --no-verify
+'
+
+test_expect_success 'git pull --no-verify --verify passed to merge' '
+	test_when_finished "rm -fr src dst actual" &&
+	git init src &&
+	test_commit -C src one &&
+	git clone src dst &&
+	write_script dst/.git/hooks/commit-msg <<-\EOF &&
+	false
+	EOF
+	test_commit -C src two &&
+	test_must_fail git -C dst pull --no-ff --no-verify --verify
 '
 
 test_done

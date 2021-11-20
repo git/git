@@ -36,6 +36,13 @@ CVSWORK="$PWD/cvswork"
 CVS_SERVER=git-cvsserver
 export CVSROOT CVS_SERVER
 
+if perl -e 'exit(1) if not defined crypt("", "cv")'
+then
+	PWDHASH='lac2ItudM3.KM'
+else
+	PWDHASH='$2b$10$t8fGvE/a9eLmfOLzsZme2uOa2QtoMYwIxq9wZA6aBKtF1Yb7FJIzi'
+fi
+
 rm -rf "$CVSWORK" "$SERVERDIR"
 test_expect_success 'setup' '
   git config push.default matching &&
@@ -54,7 +61,7 @@ test_expect_success 'setup' '
   GIT_DIR="$SERVERDIR" git config --bool gitcvs.enabled true &&
   GIT_DIR="$SERVERDIR" git config gitcvs.logfile "$SERVERDIR/gitcvs.log" &&
   GIT_DIR="$SERVERDIR" git config gitcvs.authdb "$SERVERDIR/auth.db" &&
-  echo cvsuser:cvGVEarMLnhlA > "$SERVERDIR/auth.db"
+  echo "cvsuser:$PWDHASH" >"$SERVERDIR/auth.db"
 '
 
 # note that cvs doesn't accept absolute pathnames

@@ -43,6 +43,7 @@ A few rules for repo setup:
 # This test heavily relies on the standard error of nested function calls.
 test_untraceable=UnfortunatelyYes
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 here=$(pwd)

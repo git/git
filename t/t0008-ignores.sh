@@ -2,6 +2,7 @@
 
 test_description=check-ignore
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 init_vars () {
@@ -800,6 +801,32 @@ test_expect_success 'existing directory and file' '
 	git check-ignore top-level-dir one >actual &&
 	grep one actual &&
 	grep top-level-dir actual
+'
+
+test_expect_success 'exact prefix matching (with root)' '
+	test_when_finished rm -r a &&
+	mkdir -p a/git a/git-foo &&
+	touch a/git/foo a/git-foo/bar &&
+	echo /git/ >a/.gitignore &&
+	git check-ignore a/git a/git/foo a/git-foo a/git-foo/bar >actual &&
+	cat >expect <<-\EOF &&
+	a/git
+	a/git/foo
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'exact prefix matching (without root)' '
+	test_when_finished rm -r a &&
+	mkdir -p a/git a/git-foo &&
+	touch a/git/foo a/git-foo/bar &&
+	echo git/ >a/.gitignore &&
+	git check-ignore a/git a/git/foo a/git-foo a/git-foo/bar >actual &&
+	cat >expect <<-\EOF &&
+	a/git
+	a/git/foo
+	EOF
+	test_cmp expect actual
 '
 
 ############################################################################

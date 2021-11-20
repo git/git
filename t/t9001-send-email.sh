@@ -1368,6 +1368,16 @@ test_expect_success $PREREQ 'sendemail.identity: bool variable fallback' '
 	! grep "X-Mailer" stdout
 '
 
+test_expect_success $PREREQ 'sendemail.identity: bool variable without a value' '
+	git -c sendemail.xmailer \
+		send-email \
+		--dry-run \
+		--from="nobody@example.com" \
+		$patches >stdout &&
+	grep "To: default@example.com" stdout &&
+	grep "X-Mailer" stdout
+'
+
 test_expect_success $PREREQ '--no-to overrides sendemail.to' '
 	git send-email \
 		--dry-run \
@@ -1516,6 +1526,21 @@ test_expect_success $PREREQ 'sendemail.8bitEncoding works' '
 	clean_fake_sendmail &&
 	git config sendemail.assume8bitEncoding UTF-8 &&
 	echo bogus |
+	git send-email --from=author@example.com --to=nobody@example.com \
+			--smtp-server="$(pwd)/fake.sendmail" \
+			email-using-8bit >stdout &&
+	egrep "Content|MIME" msgtxt1 >actual &&
+	test_cmp content-type-decl actual
+'
+
+test_expect_success $PREREQ 'sendemail.8bitEncoding in .git/config overrides --global .gitconfig' '
+	clean_fake_sendmail &&
+	git config sendemail.assume8bitEncoding UTF-8 &&
+	test_when_finished "rm -rf home" &&
+	mkdir home &&
+	git config -f home/.gitconfig sendemail.assume8bitEncoding "bogus too" &&
+	echo bogus |
+	env HOME="$(pwd)/home" DEBUG=1 \
 	git send-email --from=author@example.com --to=nobody@example.com \
 			--smtp-server="$(pwd)/fake.sendmail" \
 			email-using-8bit >stdout &&
@@ -1829,7 +1854,7 @@ test_expect_success $PREREQ 'sendemail.aliasfiletype=mailrc' '
 	grep "^!somebody@example\.org!$" commandline1
 '
 
-test_expect_success $PREREQ 'sendemail.aliasfile=~/.mailrc' '
+test_expect_success $PREREQ 'sendemail.aliasesfile=~/.mailrc' '
 	clean_fake_sendmail &&
 	echo "alias sbd  someone@example.org" >"$HOME/.mailrc" &&
 	git config --replace-all sendemail.aliasesfile "~/.mailrc" &&
@@ -2092,8 +2117,27 @@ test_expect_success $PREREQ '--[no-]xmailer with sendemail.xmailer=true' '
 	do_xmailer_test 1 "--xmailer"
 '
 
+test_expect_success $PREREQ '--[no-]xmailer with sendemail.xmailer' '
+	test_when_finished "test_unconfig sendemail.xmailer" &&
+	cat >>.git/config <<-\EOF &&
+	[sendemail]
+		xmailer
+	EOF
+	test_config sendemail.xmailer true &&
+	do_xmailer_test 1 "" &&
+	do_xmailer_test 0 "--no-xmailer" &&
+	do_xmailer_test 1 "--xmailer"
+'
+
 test_expect_success $PREREQ '--[no-]xmailer with sendemail.xmailer=false' '
 	test_config sendemail.xmailer false &&
+	do_xmailer_test 0 "" &&
+	do_xmailer_test 0 "--no-xmailer" &&
+	do_xmailer_test 1 "--xmailer"
+'
+
+test_expect_success $PREREQ '--[no-]xmailer with sendemail.xmailer=' '
+	test_config sendemail.xmailer "" &&
 	do_xmailer_test 0 "" &&
 	do_xmailer_test 0 "--no-xmailer" &&
 	do_xmailer_test 1 "--xmailer"
@@ -2165,6 +2209,82 @@ test_expect_success $PREREQ 'leading and trailing whitespaces are removed' '
 	0001-add-main.patch | replace_variable_fields \
 	>actual-list &&
 	test_cmp expected-list actual-list
+'
+
+test_expect_success $PREREQ 'test using command name with --sendmail-cmd' '
+	clean_fake_sendmail &&
+	PATH="$PWD:$PATH" \
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--sendmail-cmd="fake.sendmail" \
+		HEAD^ &&
+	test_path_is_file commandline1
+'
+
+test_expect_success $PREREQ 'test using arguments with --sendmail-cmd' '
+	clean_fake_sendmail &&
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--sendmail-cmd='\''"$(pwd)/fake.sendmail" -f nobody@example.com'\'' \
+		HEAD^ &&
+	test_path_is_file commandline1
+'
+
+test_expect_success $PREREQ 'test shell expression with --sendmail-cmd' '
+	clean_fake_sendmail &&
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--sendmail-cmd='\''f() { "$(pwd)/fake.sendmail" "$@"; };f'\'' \
+		HEAD^ &&
+	test_path_is_file commandline1
+'
+
+test_expect_success $PREREQ 'set up in-reply-to/references patches' '
+	cat >has-reply.patch <<-\EOF &&
+	From: A U Thor <author@example.com>
+	Subject: patch with in-reply-to
+	Message-ID: <patch.with.in.reply.to@example.com>
+	In-Reply-To: <replied.to@example.com>
+	References: <replied.to@example.com>
+
+	This is the body.
+	EOF
+	cat >no-reply.patch <<-\EOF
+	From: A U Thor <author@example.com>
+	Subject: patch without in-reply-to
+	Message-ID: <patch.without.in.reply.to@example.com>
+
+	This is the body.
+	EOF
+'
+
+test_expect_success $PREREQ 'patch reply headers correct with --no-thread' '
+	clean_fake_sendmail &&
+	git send-email \
+		--no-thread \
+		--to=nobody@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		has-reply.patch no-reply.patch &&
+	grep "In-Reply-To: <replied.to@example.com>" msgtxt1 &&
+	grep "References: <replied.to@example.com>" msgtxt1 &&
+	! grep replied.to@example.com msgtxt2
+'
+
+test_expect_success $PREREQ 'cmdline in-reply-to used with --no-thread' '
+	clean_fake_sendmail &&
+	git send-email \
+		--no-thread \
+		--in-reply-to="<cmdline.reply@example.com>" \
+		--to=nobody@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		has-reply.patch no-reply.patch &&
+	grep "In-Reply-To: <cmdline.reply@example.com>" msgtxt1 &&
+	grep "References: <cmdline.reply@example.com>" msgtxt1 &&
+	grep "In-Reply-To: <cmdline.reply@example.com>" msgtxt2 &&
+	grep "References: <cmdline.reply@example.com>" msgtxt2
 '
 
 test_expect_success $PREREQ 'invoke hook' '

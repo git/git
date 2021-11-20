@@ -2,7 +2,8 @@
 #define SPARSE_INDEX_H__
 
 struct index_state;
-int convert_to_sparse(struct index_state *istate);
+#define SPARSE_INDEX_MEMORY_ONLY (1 << 0)
+int convert_to_sparse(struct index_state *istate, int flags);
 
 /*
  * Some places in the codebase expect to search for a specific path.

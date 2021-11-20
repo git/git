@@ -57,5 +57,5 @@ int cmd__hash_speed(int ac, const char **av)
 		free(p);
 	}
 
-	exit(0);
+	return 0;
 }

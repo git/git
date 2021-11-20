@@ -585,6 +585,7 @@ test_expect_success 'checkout --conflict=diff3' '
 '
 
 test_expect_success 'failing checkout -b should not break working tree' '
+	git clean -fd &&  # Remove untracked files in the way
 	git reset --hard main &&
 	git symbolic-ref HEAD refs/heads/main &&
 	test_must_fail git checkout -b renamer side^ &&

@@ -65,6 +65,7 @@ test_rebase_gpg_sign ! true  -i --gpg-sign --no-gpg-sign
 test_rebase_gpg_sign   false -i --no-gpg-sign --gpg-sign
 
 test_expect_failure 'rebase -p --no-gpg-sign override commit.gpgsign' '
+	test_when_finished "git clean -f" &&
 	git reset --hard merged &&
 	git config commit.gpgsign true &&
 	git rebase -p --no-gpg-sign --onto=one fork-point main &&

@@ -9,6 +9,7 @@
 #include "branch.h"
 #include "fmt-merge-msg.h"
 #include "commit-reach.h"
+#include "gpg-interface.h"
 
 static int use_branch_desc;
 static int suppress_dest_pattern_seen;
@@ -16,6 +17,8 @@ static struct string_list suppress_dest_patterns = STRING_LIST_INIT_DUP;
 
 int fmt_merge_msg_config(const char *key, const char *value, void *cb)
 {
+	int status = 0;
+
 	if (!strcmp(key, "merge.log") || !strcmp(key, "merge.summary")) {
 		int is_bool;
 		merge_log_config = git_config_bool_or_int(key, value, &is_bool);
@@ -34,6 +37,9 @@ int fmt_merge_msg_config(const char *key, const char *value, void *cb)
 			string_list_append(&suppress_dest_patterns, value);
 		suppress_dest_pattern_seen = 1;
 	} else {
+		status = git_gpg_config(key, value, NULL);
+		if (status)
+			return status;
 		return git_default_config(key, value, cb);
 	}
 	return 0;
@@ -108,6 +114,7 @@ static int handle_line(char *line, struct merge_parents *merge_parents)
 	struct origin_data *origin_data;
 	char *src;
 	const char *origin, *tag_name;
+	char *to_free = NULL;
 	struct src_data *src_data;
 	struct string_list_item *item;
 	int pulling_head = 0;
@@ -183,12 +190,13 @@ static int handle_line(char *line, struct merge_parents *merge_parents)
 	if (!strcmp(".", src) || !strcmp(src, origin)) {
 		int len = strlen(origin);
 		if (origin[0] == '\'' && origin[len - 1] == '\'')
-			origin = xmemdupz(origin + 1, len - 2);
+			origin = to_free = xmemdupz(origin + 1, len - 2);
 	} else
-		origin = xstrfmt("%s of %s", origin, src);
+		origin = to_free = xstrfmt("%s of %s", origin, src);
 	if (strcmp(".", src))
 		origin_data->is_local_branch = 0;
 	string_list_append(&origins, origin)->util = origin_data;
+	free(to_free);
 	return 0;
 }
 
@@ -526,11 +534,11 @@ static void fmt_merge_msg_sigs(struct strbuf *out)
 			buf = payload.buf;
 			len = payload.len;
 			if (check_signature(payload.buf, payload.len, sig.buf,
-					 sig.len, &sigc) &&
-				!sigc.gpg_output)
+					    sig.len, &sigc) &&
+			    !sigc.output)
 				strbuf_addstr(&sig, "gpg verification failed.\n");
 			else
-				strbuf_addstr(&sig, sigc.gpg_output);
+				strbuf_addstr(&sig, sigc.output);
 		}
 		signature_check_clear(&sigc);
 

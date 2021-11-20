@@ -29,11 +29,21 @@ test_expect_success '"verify" needs a worktree' '
 
 test_expect_success 'annotated tags can be excluded by rev-list options' '
 	git bundle create bundle --all --since=7.Apr.2005.15:14:00.-0700 &&
-	git ls-remote bundle > output &&
-	grep tag output &&
+	cat >expect <<-EOF &&
+	$(git rev-parse HEAD)	HEAD
+	$(git rev-parse tag)	refs/tags/tag
+	$(git rev-parse main)	refs/heads/main
+	EOF
+	git ls-remote bundle >actual &&
+	test_cmp expect actual &&
+
 	git bundle create bundle --all --since=7.Apr.2005.15:16:00.-0700 &&
-	git ls-remote bundle > output &&
-	! grep tag output
+	cat >expect <<-EOF &&
+	$(git rev-parse HEAD)	HEAD
+	$(git rev-parse main)	refs/heads/main
+	EOF
+	git ls-remote bundle >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'die if bundle file cannot be created' '
@@ -43,39 +53,66 @@ test_expect_success 'die if bundle file cannot be created' '
 
 test_expect_success 'bundle --stdin' '
 	echo main | git bundle create stdin-bundle.bdl --stdin &&
-	git ls-remote stdin-bundle.bdl >output &&
-	grep main output
+	cat >expect <<-EOF &&
+	$(git rev-parse main)	refs/heads/main
+	EOF
+	git ls-remote stdin-bundle.bdl >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'bundle --stdin <rev-list options>' '
 	echo main | git bundle create hybrid-bundle.bdl --stdin tag &&
-	git ls-remote hybrid-bundle.bdl >output &&
-	grep main output
+	cat >expect <<-EOF &&
+	$(git rev-parse main)	refs/heads/main
+	EOF
+	git ls-remote stdin-bundle.bdl >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'empty bundle file is rejected' '
-	: >empty-bundle &&
+	>empty-bundle &&
 	test_must_fail git fetch empty-bundle
 '
 
 # This triggers a bug in older versions where the resulting line (with
 # --pretty=oneline) was longer than a 1024-char buffer.
 test_expect_success 'ridiculously long subject in boundary' '
-	: >file4 &&
+	>file4 &&
 	test_tick &&
 	git add file4 &&
 	printf "%01200d\n" 0 | git commit -F - &&
 	test_commit fifth &&
 	git bundle create long-subject-bundle.bdl HEAD^..HEAD &&
-	git bundle list-heads long-subject-bundle.bdl >heads &&
-	test -s heads &&
+	cat >expect <<-EOF &&
+	$(git rev-parse main) HEAD
+	EOF
+	git bundle list-heads long-subject-bundle.bdl >actual &&
+	test_cmp expect actual &&
+
 	git fetch long-subject-bundle.bdl &&
-	sed -n "/^-/{p;q;}" long-subject-bundle.bdl >boundary &&
-	grep "^-$OID_REGEX " boundary
+
+	algo=$(test_oid algo) &&
+	if test "$algo" != sha1
+	then
+		echo "@object-format=sha256"
+	fi >expect &&
+	cat >>expect <<-EOF &&
+	-$(git log --pretty=format:"%H %s" -1 HEAD^)
+	$(git rev-parse HEAD) HEAD
+	EOF
+
+	if test "$algo" = sha1
+	then
+		head -n 3 long-subject-bundle.bdl
+	else
+		head -n 4 long-subject-bundle.bdl
+	fi | grep -v "^#" >actual &&
+
+	test_cmp expect actual
 '
 
 test_expect_success 'prerequisites with an empty commit message' '
-	: >file1 &&
+	>file1 &&
 	git add file1 &&
 	test_tick &&
 	git commit --allow-empty-message -m "" &&
@@ -103,7 +140,11 @@ test_expect_success 'fetch SHA-1 from bundle' '
 
 test_expect_success 'git bundle uses expected default format' '
 	git bundle create bundle HEAD^.. &&
-	head -n1 bundle | grep "^# v$(test_oid version) git bundle$"
+	cat >expect <<-EOF &&
+	# v$(test_oid version) git bundle
+	EOF
+	head -n1 bundle >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'git bundle v3 has expected contents' '

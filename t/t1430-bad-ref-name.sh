@@ -4,6 +4,7 @@ test_description='Test handling of ref names that check-ref-format rejects'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '
@@ -170,7 +171,7 @@ test_expect_success 'for-each-ref emits warnings for broken names' '
 	! grep -e "badname" output &&
 	! grep -e "broken\.\.\.symref" output &&
 	test_i18ngrep "ignoring ref with broken name refs/heads/broken\.\.\.ref" error &&
-	test_i18ngrep "ignoring broken ref refs/heads/badname" error &&
+	test_i18ngrep ! "ignoring broken ref refs/heads/badname" error &&
 	test_i18ngrep "ignoring ref with broken name refs/heads/broken\.\.\.symref" error
 '
 

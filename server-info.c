@@ -27,6 +27,7 @@ static int uic_is_stale(const struct update_info_ctx *uic)
 	return uic->old_fp == NULL;
 }
 
+__attribute__((format (printf, 2, 3)))
 static int uic_printf(struct update_info_ctx *uic, const char *fmt, ...)
 {
 	va_list ap;

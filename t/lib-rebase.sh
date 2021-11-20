@@ -151,3 +151,59 @@ test_editor_unchanged () {
 	EOF
 	test_cmp expect actual
 }
+
+# Set up an editor for testing reword commands
+# Checks that there are no uncommitted changes when rewording and that the
+# todo-list is reread after each
+set_reword_editor () {
+	>reword-actual &&
+	>reword-oid &&
+
+	# Check rewording keeps the original authorship
+	GIT_AUTHOR_NAME="Reword Author"
+	GIT_AUTHOR_EMAIL="reword.author@example.com"
+	GIT_AUTHOR_DATE=@123456
+
+	write_script reword-sequence-editor.sh <<-\EOF &&
+	todo="$(cat "$1")" &&
+	echo "exec git log -1 --pretty=format:'%an <%ae> %at%n%B%n' \
+		>>reword-actual" >"$1" &&
+	printf "%s\n" "$todo" >>"$1"
+	EOF
+
+	write_script reword-editor.sh <<-EOF &&
+	# Save the oid of the first reworded commit so we can check rebase
+	# fast-forwards to it. Also check that we do not write .git/MERGE_MSG
+	# when fast-forwarding
+	if ! test -s reword-oid
+	then
+		git rev-parse HEAD >reword-oid &&
+		if test -f .git/MERGE_MSG
+		then
+			echo 1>&2 "error: .git/MERGE_MSG exists"
+			exit 1
+		fi
+	fi &&
+	# There should be no uncommited changes
+	git diff --exit-code HEAD &&
+	# The todo-list should be re-read after a reword
+	GIT_SEQUENCE_EDITOR="\"$PWD/reword-sequence-editor.sh\"" \
+		git rebase --edit-todo &&
+	echo edited >>"\$1"
+	EOF
+
+	test_set_editor "$PWD/reword-editor.sh"
+}
+
+# Check the results of a rebase after calling set_reword_editor
+# Pass the commits that were reworded in the order that they were picked
+# Expects the first pick to be a fast-forward
+check_reworded_commits () {
+	test_cmp_rev "$(cat reword-oid)" "$1^{commit}" &&
+	git log --format="%an <%ae> %at%n%B%nedited%n" --no-walk=unsorted "$@" \
+		>reword-expected &&
+	test_cmp reword-expected reword-actual &&
+	git log --format="%an <%ae> %at%n%B" -n $# --first-parent --reverse \
+		>reword-log &&
+	test_cmp reword-expected reword-log
+}

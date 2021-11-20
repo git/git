@@ -105,7 +105,6 @@ test_expect_success "fetch with negative pattern refspec does not expand prefix"
 '
 
 test_expect_success "fetch with negative refspec avoids duplicate conflict" '
-	cd "$D" &&
 	(
 		cd one &&
 		git branch dups/a &&

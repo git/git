@@ -14,7 +14,7 @@ struct tracking_name_data {
 	struct object_id *default_dst_oid;
 };
 
-#define TRACKING_NAME_DATA_INIT { NULL, NULL, NULL, 0, NULL, NULL, NULL }
+#define TRACKING_NAME_DATA_INIT { 0 }
 
 static int check_tracking_name(struct remote *remote, void *cb_data)
 {

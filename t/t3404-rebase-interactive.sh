@@ -297,6 +297,7 @@ test_expect_success 'abort with error when new base cannot be checked out' '
 		output &&
 	test_i18ngrep "file1" output &&
 	test_path_is_missing .git/rebase-merge &&
+	rm file1 &&
 	git reset --hard HEAD^
 '
 
@@ -349,82 +350,6 @@ test_expect_success 'squash' '
 
 test_expect_success 'retain authorship when squashing' '
 	git show HEAD | grep "^Author: Twerp Snog"
-'
-
-test_expect_success REBASE_P '-p handles "no changes" gracefully' '
-	HEAD=$(git rev-parse HEAD) &&
-	git rebase -i -p HEAD^ &&
-	git update-index --refresh &&
-	git diff-files --quiet &&
-	git diff-index --quiet --cached HEAD -- &&
-	test $HEAD = $(git rev-parse HEAD)
-'
-
-test_expect_failure REBASE_P 'exchange two commits with -p' '
-	git checkout H &&
-	(
-		set_fake_editor &&
-		FAKE_LINES="2 1" git rebase -i -p HEAD~2
-	) &&
-	test H = $(git cat-file commit HEAD^ | sed -ne \$p) &&
-	test G = $(git cat-file commit HEAD | sed -ne \$p)
-'
-
-test_expect_success REBASE_P 'preserve merges with -p' '
-	git checkout -b to-be-preserved primary^ &&
-	: > unrelated-file &&
-	git add unrelated-file &&
-	test_tick &&
-	git commit -m "unrelated" &&
-	git checkout -b another-branch primary &&
-	echo B > file1 &&
-	test_tick &&
-	git commit -m J file1 &&
-	test_tick &&
-	git merge to-be-preserved &&
-	echo C > file1 &&
-	test_tick &&
-	git commit -m K file1 &&
-	echo D > file1 &&
-	test_tick &&
-	git commit -m L1 file1 &&
-	git checkout HEAD^ &&
-	echo 1 > unrelated-file &&
-	test_tick &&
-	git commit -m L2 unrelated-file &&
-	test_tick &&
-	git merge another-branch &&
-	echo E > file1 &&
-	test_tick &&
-	git commit -m M file1 &&
-	git checkout -b to-be-rebased &&
-	test_tick &&
-	git rebase -i -p --onto branch1 primary &&
-	git update-index --refresh &&
-	git diff-files --quiet &&
-	git diff-index --quiet --cached HEAD -- &&
-	test_cmp_rev HEAD~6 branch1 &&
-	test_cmp_rev HEAD~4^2 to-be-preserved &&
-	test_cmp_rev HEAD^^2^ HEAD^^^ &&
-	test $(git show HEAD~5:file1) = B &&
-	test $(git show HEAD~3:file1) = C &&
-	test $(git show HEAD:file1) = E &&
-	test $(git show HEAD:unrelated-file) = 1
-'
-
-test_expect_success REBASE_P 'edit ancestor with -p' '
-	(
-		set_fake_editor &&
-		FAKE_LINES="1 2 edit 3 4" git rebase -i -p HEAD~3
-	) &&
-	echo 2 > unrelated-file &&
-	test_tick &&
-	git commit -m L2-modified --amend unrelated-file &&
-	git rebase --continue &&
-	git update-index --refresh &&
-	git diff-files --quiet &&
-	git diff-index --quiet --cached HEAD -- &&
-	test $(git show HEAD:unrelated-file) = 2
 '
 
 test_expect_success '--continue tries to commit' '
@@ -837,6 +762,19 @@ test_expect_success 'reword' '
 			git rebase -i A
 	) &&
 	git show HEAD~2 | grep "C changed"
+'
+
+test_expect_success 'no uncommited changes when rewording the todo list is reloaded' '
+	git checkout E &&
+	test_when_finished "git checkout @{-1}" &&
+	(
+		set_fake_editor &&
+		GIT_SEQUENCE_EDITOR="\"$PWD/fake-editor.sh\"" &&
+		export GIT_SEQUENCE_EDITOR &&
+		set_reword_editor &&
+		FAKE_LINES="reword 1 reword 2" git rebase -i C
+	) &&
+	check_reworded_commits D E
 '
 
 test_expect_success 'rebase -i can copy notes' '

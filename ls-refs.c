@@ -41,6 +41,12 @@ static void ensure_config_read(void)
 }
 
 /*
+ * If we see this many or more "ref-prefix" lines from the client, we consider
+ * it "too many" and will avoid using the prefix feature entirely.
+ */
+#define TOO_MANY_PREFIXES 65536
+
+/*
  * Check if one of the prefixes is a prefix of the ref.
  * If no prefixes were provided, all refs match.
  */
@@ -65,6 +71,7 @@ struct ls_refs_data {
 	unsigned peel;
 	unsigned symrefs;
 	struct strvec prefixes;
+	struct strbuf buf;
 	unsigned unborn : 1;
 };
 
@@ -73,7 +80,8 @@ static int send_ref(const char *refname, const struct object_id *oid,
 {
 	struct ls_refs_data *data = cb_data;
 	const char *refname_nons = strip_namespace(refname);
-	struct strbuf refline = STRBUF_INIT;
+
+	strbuf_reset(&data->buf);
 
 	if (ref_is_hidden(refname_nons, refname))
 		return 0;
@@ -82,9 +90,9 @@ static int send_ref(const char *refname, const struct object_id *oid,
 		return 0;
 
 	if (oid)
-		strbuf_addf(&refline, "%s %s", oid_to_hex(oid), refname_nons);
+		strbuf_addf(&data->buf, "%s %s", oid_to_hex(oid), refname_nons);
 	else
-		strbuf_addf(&refline, "unborn %s", refname_nons);
+		strbuf_addf(&data->buf, "unborn %s", refname_nons);
 	if (data->symrefs && flag & REF_ISSYMREF) {
 		struct object_id unused;
 		const char *symref_target = resolve_ref_unsafe(refname, 0,
@@ -94,20 +102,19 @@ static int send_ref(const char *refname, const struct object_id *oid,
 		if (!symref_target)
 			die("'%s' is a symref but it is not?", refname);
 
-		strbuf_addf(&refline, " symref-target:%s",
+		strbuf_addf(&data->buf, " symref-target:%s",
 			    strip_namespace(symref_target));
 	}
 
 	if (data->peel && oid) {
 		struct object_id peeled;
 		if (!peel_iterated_oid(oid, &peeled))
-			strbuf_addf(&refline, " peeled:%s", oid_to_hex(&peeled));
+			strbuf_addf(&data->buf, " peeled:%s", oid_to_hex(&peeled));
 	}
 
-	strbuf_addch(&refline, '\n');
-	packet_write(1, refline.buf, refline.len);
+	strbuf_addch(&data->buf, '\n');
+	packet_fwrite(stdout, data->buf.buf, data->buf.len);
 
-	strbuf_release(&refline);
 	return 0;
 }
 
@@ -138,13 +145,13 @@ static int ls_refs_config(const char *var, const char *value, void *data)
 	return parse_hide_refs_config(var, value, "uploadpack");
 }
 
-int ls_refs(struct repository *r, struct strvec *keys,
-	    struct packet_reader *request)
+int ls_refs(struct repository *r, struct packet_reader *request)
 {
 	struct ls_refs_data data;
 
 	memset(&data, 0, sizeof(data));
 	strvec_init(&data.prefixes);
+	strbuf_init(&data.buf, 0);
 
 	ensure_config_read();
 	git_config(ls_refs_config, NULL);
@@ -157,22 +164,35 @@ int ls_refs(struct repository *r, struct strvec *keys,
 			data.peel = 1;
 		else if (!strcmp("symrefs", arg))
 			data.symrefs = 1;
-		else if (skip_prefix(arg, "ref-prefix ", &out))
-			strvec_push(&data.prefixes, out);
+		else if (skip_prefix(arg, "ref-prefix ", &out)) {
+			if (data.prefixes.nr < TOO_MANY_PREFIXES)
+				strvec_push(&data.prefixes, out);
+		}
 		else if (!strcmp("unborn", arg))
 			data.unborn = allow_unborn;
+		else
+			die(_("unexpected line: '%s'"), arg);
 	}
 
 	if (request->status != PACKET_READ_FLUSH)
 		die(_("expected flush after ls-refs arguments"));
 
+	/*
+	 * If we saw too many prefixes, we must avoid using them at all; as
+	 * soon as we have any prefix, they are meant to form a comprehensive
+	 * list.
+	 */
+	if (data.prefixes.nr >= TOO_MANY_PREFIXES)
+		strvec_clear(&data.prefixes);
+
 	send_possibly_unborn_head(&data);
 	if (!data.prefixes.nr)
 		strvec_push(&data.prefixes, "");
 	for_each_fullref_in_prefixes(get_git_namespace(), data.prefixes.v,
-				     send_ref, &data, 0);
-	packet_flush(1);
+				     send_ref, &data);
+	packet_fflush(stdout);
 	strvec_clear(&data.prefixes);
+	strbuf_release(&data.buf);
 	return 0;
 }
 

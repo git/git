@@ -11,15 +11,13 @@ static void die_usage(const char **argv, const char *msg)
 int cmd__submodule_nested_repo_config(int argc, const char **argv)
 {
 	struct repository subrepo;
-	const struct submodule *sub;
 
 	if (argc < 3)
 		die_usage(argv, "Wrong number of arguments.");
 
 	setup_git_directory();
 
-	sub = submodule_from_path(the_repository, null_oid(), argv[1]);
-	if (repo_submodule_init(&subrepo, the_repository, sub)) {
+	if (repo_submodule_init(&subrepo, the_repository, argv[1], null_oid())) {
 		die_usage(argv, "Submodule not found.");
 	}
 

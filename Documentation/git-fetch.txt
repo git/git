@@ -133,7 +133,7 @@ remember to run that, set `fetch.prune` globally, or
 linkgit:git-config[1].
 
 Here's where things get tricky and more specific. The pruning feature
-doesn't actually care about branches, instead it'll prune local <->
+doesn't actually care about branches, instead it'll prune local <-->
 remote-references as a function of the refspec of the remote (see
 `<refspec>` and <<CRTB,CONFIGURED REMOTE-TRACKING BRANCHES>> above).
 

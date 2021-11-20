@@ -88,9 +88,7 @@ static int parse_file_arg_callback(const struct option *opt,
 	if (!strcmp(arg, "-"))
 		fd = 0;
 	else {
-		fd = open(arg, O_RDONLY);
-		if (fd < 0)
-			die_errno(_("git commit-tree: failed to open '%s'"), arg);
+		fd = xopen(arg, O_RDONLY);
 	}
 	if (strbuf_read(buf, fd, 0) < 0)
 		die_errno(_("git commit-tree: failed to read '%s'"), arg);

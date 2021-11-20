@@ -164,6 +164,9 @@ static void process_tree(struct traversal_context *ctx,
 		die("bad tree object");
 	if (obj->flags & (UNINTERESTING | SEEN))
 		return;
+	if (revs->include_check_obj &&
+	    !revs->include_check_obj(&tree->object, revs->include_check_data))
+		return;
 
 	failed_parse = parse_tree_gently(tree, 1);
 	if (failed_parse) {
@@ -334,8 +337,8 @@ static void add_pending_tree(struct rev_info *revs, struct tree *tree)
 	add_pending_object(revs, &tree->object, "");
 }
 
-static void traverse_trees_and_blobs(struct traversal_context *ctx,
-				     struct strbuf *base)
+static void traverse_non_commits(struct traversal_context *ctx,
+				 struct strbuf *base)
 {
 	int i;
 
@@ -407,9 +410,9 @@ static void do_traverse(struct traversal_context *ctx)
 			 * needs a reallocation for each commit. Can we pass the
 			 * tree directory without allocation churn?
 			 */
-			traverse_trees_and_blobs(ctx, &csp);
+			traverse_non_commits(ctx, &csp);
 	}
-	traverse_trees_and_blobs(ctx, &csp);
+	traverse_non_commits(ctx, &csp);
 	strbuf_release(&csp);
 }
 

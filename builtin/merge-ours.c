@@ -28,6 +28,6 @@ int cmd_merge_ours(int argc, const char **argv, const char *prefix)
 	if (read_cache() < 0)
 		die_errno("read_cache failed");
 	if (index_differs_from(the_repository, "HEAD", NULL, 0))
-		exit(2);
-	exit(0);
+		return 2;
+	return 0;
 }

@@ -63,9 +63,10 @@ OPTIONS
 	Automatically implies --tags.
 
 --abbrev=<n>::
-	Instead of using the default 7 hexadecimal digits as the
-	abbreviated object name, use <n> digits, or as many digits
-	as needed to form a unique object name.  An <n> of 0
+	Instead of using the default number of hexadecimal digits (which
+	will vary according to the number of objects in the repository with
+	a default of 7) of the abbreviated object name, use <n> digits, or
+	as many digits as needed to form a unique object name. An <n> of 0
 	will suppress long format, only showing the closest tag.
 
 --candidates=<n>::
@@ -139,8 +140,11 @@ at the end.
 
 The number of additional commits is the number
 of commits which would be displayed by "git log v1.0.4..parent".
-The hash suffix is "-g" + unambiguous abbreviation for the tip commit
-of parent (which was `2414721b194453f058079d897d13c4e377f92dc6`).
+The hash suffix is "-g" + an unambigous abbreviation for the tip commit
+of parent (which was `2414721b194453f058079d897d13c4e377f92dc6`). The
+length of the abbreviation scales as the repository grows, using the
+approximate number of objects in the repository and a bit of math
+around the birthday paradox, and defaults to a minimum of 7.
 The "g" prefix stands for "git" and is used to allow describing the version of
 a software depending on the SCM the software is managed with. This is useful
 in an environment where people may use different SCMs.

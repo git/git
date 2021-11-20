@@ -79,10 +79,6 @@ struct rev_cmdline_info {
 	} *rev;
 };
 
-#define REVISION_WALK_WALK 0
-#define REVISION_WALK_NO_WALK_SORTED 1
-#define REVISION_WALK_NO_WALK_UNSORTED 2
-
 struct oidset;
 struct topo_walk_info;
 
@@ -129,7 +125,8 @@ struct rev_info {
 	/* Traversal flags */
 	unsigned int	dense:1,
 			prune:1,
-			no_walk:2,
+			no_walk:1,
+			unsorted_input:1,
 			remove_empty_trees:1,
 			simplify_history:1,
 			show_pulls:1,
@@ -193,10 +190,10 @@ struct rev_info {
 			/* Diff-merge flags */
 			explicit_diff_merges: 1,
 			merges_need_diff: 1,
+			merges_imply_patch:1,
 			separate_merges: 1,
 			combine_merges:1,
 			combined_all_paths:1,
-			combined_imply_patch:1,
 			dense_combined_merges:1,
 			first_parent_merges:1;
 
@@ -215,7 +212,8 @@ struct rev_info {
 			missing_newline:1,
 			date_mode_explicit:1,
 			preserve_subject:1,
-			encode_email_headers:1;
+			encode_email_headers:1,
+			include_header:1;
 	unsigned int	disable_stdin:1;
 	/* --show-linear-break */
 	unsigned int	track_linear:1,
@@ -262,6 +260,7 @@ struct rev_info {
 	int min_parents;
 	int max_parents;
 	int (*include_check)(struct commit *, void *);
+	int (*include_check_obj)(struct object *obj, void *);
 	void *include_check_data;
 
 	/* diff info for patches and for paths limiting */
@@ -337,7 +336,6 @@ extern volatile show_early_output_fn_t show_early_output;
 struct setup_revision_opt {
 	const char *def;
 	void (*tweak)(struct rev_info *, struct setup_revision_opt *);
-	const char *submodule;	/* TODO: drop this and use rev_info->repo */
 	unsigned int	assume_dashdash:1,
 			allow_exclude_promisor_objects:1;
 	unsigned revarg_opt;

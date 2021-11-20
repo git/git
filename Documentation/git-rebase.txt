@@ -79,9 +79,10 @@ remain the checked-out branch.
 
 If the upstream branch already contains a change you have made (e.g.,
 because you mailed a patch which was applied upstream), then that commit
-will be skipped. For example, running `git rebase master` on the
-following history (in which `A'` and `A` introduce the same set of changes,
-but have different committer information):
+will be skipped and warnings will be issued (if the `merge` backend is
+used).  For example, running `git rebase master` on the following
+history (in which `A'` and `A` introduce the same set of changes, but
+have different committer information):
 
 ------------
           A---B---C topic
@@ -312,7 +313,10 @@ See also INCOMPATIBLE OPTIONS below.
 By default (or if `--no-reapply-cherry-picks` is given), these commits
 will be automatically dropped.  Because this necessitates reading all
 upstream commits, this can be expensive in repos with a large number
-of upstream commits that need to be read.
+of upstream commits that need to be read.  When using the `merge`
+backend, warnings will be issued for each dropped commit (unless
+`--quiet` is given). Advice will also be issued unless
+`advice.skippedCherryPicks` is set to false (see linkgit:git-config[1]).
 +
 `--reapply-cherry-picks` allows rebase to forgo reading all upstream
 commits, potentially improving performance.
@@ -340,9 +344,7 @@ See also INCOMPATIBLE OPTIONS below.
 
 -m::
 --merge::
-	Use merging strategies to rebase.  When the recursive (default) merge
-	strategy is used, this allows rebase to be aware of renames on the
-	upstream side.  This is the default.
+	Using merging strategies to rebase (default).
 +
 Note that a rebase merge works by replaying each commit from the working
 branch on top of the <upstream> branch.  Because of this, when a merge
@@ -354,9 +356,8 @@ See also INCOMPATIBLE OPTIONS below.
 
 -s <strategy>::
 --strategy=<strategy>::
-	Use the given merge strategy.
-	If there is no `-s` option 'git merge-recursive' is used
-	instead.  This implies --merge.
+	Use the given merge strategy, instead of the default `ort`.
+	This implies `--merge`.
 +
 Because 'git rebase' replays each commit from the working branch
 on top of the <upstream> branch using the given strategy, using
@@ -369,7 +370,7 @@ See also INCOMPATIBLE OPTIONS below.
 --strategy-option=<strategy-option>::
 	Pass the <strategy-option> through to the merge strategy.
 	This implies `--merge` and, if no strategy has been
-	specified, `-s recursive`.  Note the reversal of 'ours' and
+	specified, `-s ort`.  Note the reversal of 'ours' and
 	'theirs' as noted above for the `-m` option.
 +
 See also INCOMPATIBLE OPTIONS below.
@@ -445,7 +446,8 @@ When --fork-point is active, 'fork_point' will be used instead of
 ends up being empty, the <upstream> will be used as a fallback.
 +
 If <upstream> is given on the command line, then the default is
-`--no-fork-point`, otherwise the default is `--fork-point`.
+`--no-fork-point`, otherwise the default is `--fork-point`. See also
+`rebase.forkpoint` in linkgit:git-config[1].
 +
 If your branch was based on <upstream> but <upstream> was rewound and
 your branch contains commits which were dropped, this option can be used
@@ -525,28 +527,11 @@ i.e. commits that would be excluded by linkgit:git-log[1]'s
 the `rebase-cousins` mode is turned on, such commits are instead rebased
 onto `<upstream>` (or `<onto>`, if specified).
 +
-The `--rebase-merges` mode is similar in spirit to the deprecated
-`--preserve-merges` but works with interactive rebases,
-where commits can be reordered, inserted and dropped at will.
-+
 It is currently only possible to recreate the merge commits using the
-`recursive` merge strategy; Different merge strategies can be used only via
+`ort` merge strategy; different merge strategies can be used only via
 explicit `exec git merge -s <strategy> [...]` commands.
 +
 See also REBASING MERGES and INCOMPATIBLE OPTIONS below.
-
--p::
---preserve-merges::
-	[DEPRECATED: use `--rebase-merges` instead] Recreate merge commits
-	instead of flattening the history by replaying commits a merge commit
-	introduces. Merge conflict resolutions or manual amendments to merge
-	commits are not preserved.
-+
-This uses the `--interactive` machinery internally, but combining it
-with the `--interactive` option explicitly is generally not a good
-idea unless you know what you are doing (see BUGS below).
-+
-See also INCOMPATIBLE OPTIONS below.
 
 -x <cmd>::
 --exec <cmd>::
@@ -579,9 +564,6 @@ See also INCOMPATIBLE OPTIONS below.
 	the root commit(s) on a branch.  When used with --onto, it
 	will skip changes already contained in <newbase> (instead of
 	<upstream>) whereas without --onto it will operate on every change.
-	When used together with both --onto and --preserve-merges,
-	'all' root commits will be rewritten to have <newbase> as parent
-	instead.
 +
 See also INCOMPATIBLE OPTIONS below.
 
@@ -643,7 +625,6 @@ are incompatible with the following options:
  * --allow-empty-message
  * --[no-]autosquash
  * --rebase-merges
- * --preserve-merges
  * --interactive
  * --exec
  * --no-keep-empty
@@ -654,13 +635,6 @@ are incompatible with the following options:
 
 In addition, the following pairs of options are incompatible:
 
- * --preserve-merges and --interactive
- * --preserve-merges and --signoff
- * --preserve-merges and --rebase-merges
- * --preserve-merges and --empty=
- * --preserve-merges and --ignore-whitespace
- * --preserve-merges and --committer-date-is-author-date
- * --preserve-merges and --ignore-date
  * --keep-base and --onto
  * --keep-base and --root
  * --fork-point and --root
@@ -1219,12 +1193,16 @@ successful merge so that the user can edit the message.
 If a `merge` command fails for any reason other than merge conflicts (i.e.
 when the merge operation did not even start), it is rescheduled immediately.
 
-At this time, the `merge` command will *always* use the `recursive`
-merge strategy for regular merges, and `octopus` for octopus merges,
-with no way to choose a different one. To work around
-this, an `exec` command can be used to call `git merge` explicitly,
-using the fact that the labels are worktree-local refs (the ref
-`refs/rewritten/onto` would correspond to the label `onto`, for example).
+By default, the `merge` command will use the `ort` merge strategy for
+regular merges, and `octopus` for octopus merges.  One can specify a
+default strategy for all merges using the `--strategy` argument when
+invoking rebase, or can override specific merges in the interactive
+list of commands by using an `exec` command to call `git merge`
+explicitly with a `--strategy` argument.  Note that when calling `git
+merge` explicitly like this, you can make use of the fact that the
+labels are worktree-local refs (the ref `refs/rewritten/onto` would
+correspond to the label `onto`, for example) in order to refer to the
+branches you want to merge.
 
 Note: the first command (`label onto`) labels the revision onto which
 the commits are rebased; The name `onto` is just a convention, as a nod
@@ -1273,29 +1251,6 @@ CONFIGURATION
 
 include::config/rebase.txt[]
 include::config/sequencer.txt[]
-
-BUGS
-----
-The todo list presented by the deprecated `--preserve-merges --interactive`
-does not represent the topology of the revision graph (use `--rebase-merges`
-instead).  Editing commits and rewording their commit messages should work
-fine, but attempts to reorder commits tend to produce counterintuitive results.
-Use `--rebase-merges` in such scenarios instead.
-
-For example, an attempt to rearrange
-------------
-1 --- 2 --- 3 --- 4 --- 5
-------------
-to
-------------
-1 --- 2 --- 4 --- 3 --- 5
-------------
-by moving the "pick 4" line will result in the following history:
-------------
-	3
-       /
-1 --- 2 --- 4 --- 5
-------------
 
 GIT
 ---

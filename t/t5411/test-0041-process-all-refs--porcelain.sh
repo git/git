@@ -50,47 +50,47 @@ test_expect_success "proc-receive: process all refs ($PROTOCOL/porcelain)" '
 		HEAD:refs/for/next/topic \
 		>out 2>&1 &&
 	make_user_friendly_and_stable_output <out >actual &&
-	cat >expect <<-EOF &&
-	remote: # pre-receive hook
-	remote: pre-receive< <COMMIT-A> <COMMIT-B> refs/heads/bar
-	remote: pre-receive< <COMMIT-A> <ZERO-OID> refs/heads/foo
-	remote: pre-receive< <COMMIT-B> <COMMIT-A> refs/heads/main
-	remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic
-	remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/next/topic
-	remote: # proc-receive hook
-	remote: proc-receive< <COMMIT-A> <COMMIT-B> refs/heads/bar
-	remote: proc-receive< <COMMIT-A> <ZERO-OID> refs/heads/foo
-	remote: proc-receive< <COMMIT-B> <COMMIT-A> refs/heads/main
-	remote: proc-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic
-	remote: proc-receive< <ZERO-OID> <COMMIT-A> refs/for/next/topic
-	remote: proc-receive> ok refs/heads/main
-	remote: proc-receive> option fall-through
-	remote: proc-receive> ok refs/heads/foo
-	remote: proc-receive> option fall-through
-	remote: proc-receive> ok refs/heads/bar
-	remote: proc-receive> option fall-through
-	remote: proc-receive> ok refs/for/main/topic
-	remote: proc-receive> option refname refs/pull/123/head
-	remote: proc-receive> option old-oid <COMMIT-A>
-	remote: proc-receive> option new-oid <COMMIT-B>
-	remote: proc-receive> ok refs/for/next/topic
-	remote: proc-receive> option refname refs/pull/124/head
-	remote: proc-receive> option old-oid <COMMIT-B>
-	remote: proc-receive> option new-oid <COMMIT-A>
-	remote: proc-receive> option forced-update
-	remote: # post-receive hook
-	remote: post-receive< <COMMIT-A> <COMMIT-B> refs/heads/bar
-	remote: post-receive< <COMMIT-A> <ZERO-OID> refs/heads/foo
-	remote: post-receive< <COMMIT-B> <COMMIT-A> refs/heads/main
-	remote: post-receive< <COMMIT-A> <COMMIT-B> refs/pull/123/head
-	remote: post-receive< <COMMIT-B> <COMMIT-A> refs/pull/124/head
-	To <URL/of/upstream.git>
-	     <COMMIT-B>:refs/heads/bar    <OID-A>..<OID-B>
-	-    :refs/heads/foo    [deleted]
-	+    HEAD:refs/heads/main    <OID-B>...<OID-A> (forced update)
-	     HEAD:refs/pull/123/head    <OID-A>..<OID-B>
-	+    HEAD:refs/pull/124/head    <OID-B>...<OID-A> (forced update)
-	Done
+	format_and_save_expect <<-EOF &&
+	> remote: # pre-receive hook        Z
+	> remote: pre-receive< <COMMIT-A> <COMMIT-B> refs/heads/bar        Z
+	> remote: pre-receive< <COMMIT-A> <ZERO-OID> refs/heads/foo        Z
+	> remote: pre-receive< <COMMIT-B> <COMMIT-A> refs/heads/main        Z
+	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/next/topic        Z
+	> remote: # proc-receive hook        Z
+	> remote: proc-receive< <COMMIT-A> <COMMIT-B> refs/heads/bar        Z
+	> remote: proc-receive< <COMMIT-A> <ZERO-OID> refs/heads/foo        Z
+	> remote: proc-receive< <COMMIT-B> <COMMIT-A> refs/heads/main        Z
+	> remote: proc-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: proc-receive< <ZERO-OID> <COMMIT-A> refs/for/next/topic        Z
+	> remote: proc-receive> ok refs/heads/main        Z
+	> remote: proc-receive> option fall-through        Z
+	> remote: proc-receive> ok refs/heads/foo        Z
+	> remote: proc-receive> option fall-through        Z
+	> remote: proc-receive> ok refs/heads/bar        Z
+	> remote: proc-receive> option fall-through        Z
+	> remote: proc-receive> ok refs/for/main/topic        Z
+	> remote: proc-receive> option refname refs/pull/123/head        Z
+	> remote: proc-receive> option old-oid <COMMIT-A>        Z
+	> remote: proc-receive> option new-oid <COMMIT-B>        Z
+	> remote: proc-receive> ok refs/for/next/topic        Z
+	> remote: proc-receive> option refname refs/pull/124/head        Z
+	> remote: proc-receive> option old-oid <COMMIT-B>        Z
+	> remote: proc-receive> option new-oid <COMMIT-A>        Z
+	> remote: proc-receive> option forced-update        Z
+	> remote: # post-receive hook        Z
+	> remote: post-receive< <COMMIT-A> <COMMIT-B> refs/heads/bar        Z
+	> remote: post-receive< <COMMIT-A> <ZERO-OID> refs/heads/foo        Z
+	> remote: post-receive< <COMMIT-B> <COMMIT-A> refs/heads/main        Z
+	> remote: post-receive< <COMMIT-A> <COMMIT-B> refs/pull/123/head        Z
+	> remote: post-receive< <COMMIT-B> <COMMIT-A> refs/pull/124/head        Z
+	> To <URL/of/upstream.git>
+	>  	<COMMIT-B>:refs/heads/bar	<COMMIT-A>..<COMMIT-B>
+	> -	:refs/heads/foo	[deleted]
+	> +	HEAD:refs/heads/main	<COMMIT-B>...<COMMIT-A> (forced update)
+	>  	HEAD:refs/pull/123/head	<COMMIT-A>..<COMMIT-B>
+	> +	HEAD:refs/pull/124/head	<COMMIT-B>...<COMMIT-A> (forced update)
+	> Done
 	EOF
 	test_cmp expect actual &&
 

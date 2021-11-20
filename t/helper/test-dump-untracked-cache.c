@@ -45,8 +45,10 @@ int cmd__dump_untracked_cache(int ac, const char **av)
 	struct untracked_cache *uc;
 	struct strbuf base = STRBUF_INIT;
 
-	/* Hack to avoid modifying the untracked cache when we read it */
-	ignore_untracked_cache_config = 1;
+	/* Set core.untrackedCache=keep before setup_git_directory() */
+	xsetenv("GIT_CONFIG_COUNT", "1", 1);
+	xsetenv("GIT_CONFIG_KEY_0", "core.untrackedCache", 1);
+	xsetenv("GIT_CONFIG_VALUE_0", "keep", 1);
 
 	setup_git_directory();
 	if (read_cache() < 0)

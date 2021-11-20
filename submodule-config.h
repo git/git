@@ -45,10 +45,6 @@ struct submodule {
 	struct object_id gitmodules_oid;
 	int recommend_shallow;
 };
-
-#define SUBMODULE_INIT { NULL, NULL, NULL, RECURSE_SUBMODULES_NONE, \
-	NULL, NULL, SUBMODULE_UPDATE_STRATEGY_INIT, { { 0 } }, -1 };
-
 struct submodule_cache;
 struct repository;
 

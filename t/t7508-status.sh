@@ -882,7 +882,7 @@ test_expect_success 'status shows detached HEAD properly after checking out non-
 	git clone upstream downstream &&
 	git -C downstream checkout @{u} &&
 	git -C downstream status >actual &&
-	test_i18ngrep "HEAD detached at [0-9a-f]\\+" actual
+	grep -E "HEAD detached at [0-9a-f]+" actual
 '
 
 test_expect_success 'setup status submodule summary' '

@@ -4,6 +4,13 @@ test_description='partial clone'
 
 . ./test-lib.sh
 
+# missing promisor objects cause repacks which write bitmaps to fail
+GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=0
+# When enabled, some commands will write commit-graphs. This causes fsck
+# to fail when delete_object() is called because fsck will attempt to
+# verify the out-of-sync commit graph.
+GIT_TEST_COMMIT_GRAPH=0
+
 delete_object () {
 	rm $1/.git/objects/$(echo $2 | sed -e 's|^..|&/|')
 }
@@ -319,7 +326,7 @@ test_expect_success 'rev-list stops traversal at missing and promised commit' '
 
 	git -C repo config core.repositoryformatversion 1 &&
 	git -C repo config extensions.partialclone "arbitrary string" &&
-	GIT_TEST_COMMIT_GRAPH=0 git -C repo -c core.commitGraph=false rev-list --exclude-promisor-objects --objects bar >out &&
+	git -C repo rev-list --exclude-promisor-objects --objects bar >out &&
 	grep $(git -C repo rev-parse bar) out &&
 	! grep $FOO out
 '
@@ -536,7 +543,13 @@ test_expect_success 'gc does not repack promisor objects if there are none' '
 repack_and_check () {
 	rm -rf repo2 &&
 	cp -r repo repo2 &&
-	git -C repo2 repack $1 -d &&
+	if test x"$1" = "x--must-fail"
+	then
+		shift
+		test_must_fail git -C repo2 repack $1 -d
+	else
+		git -C repo2 repack $1 -d
+	fi &&
 	git -C repo2 fsck &&
 
 	git -C repo2 cat-file -e $2 &&
@@ -561,6 +574,7 @@ test_expect_success 'repack -d does not irreversibly delete promisor objects' '
 	printf "$THREE\n" | pack_as_from_promisor &&
 	delete_object repo "$ONE" &&
 
+	repack_and_check --must-fail -ab "$TWO" "$THREE" &&
 	repack_and_check -a "$TWO" "$THREE" &&
 	repack_and_check -A "$TWO" "$THREE" &&
 	repack_and_check -l "$TWO" "$THREE"
@@ -602,6 +616,29 @@ test_expect_success 'do not fetch when checking existence of tree we construct o
 	git -C repo config extensions.partialclone "arbitrary string" &&
 
 	git -C repo cherry-pick side1
+'
+
+test_expect_success 'lazy-fetch when accessing object not in the_repository' '
+	rm -rf full partial.git &&
+	test_create_repo full &&
+	test_commit -C full create-a-file file.txt &&
+
+	test_config -C full uploadpack.allowfilter 1 &&
+	test_config -C full uploadpack.allowanysha1inwant 1 &&
+	git clone --filter=blob:none --bare "file://$(pwd)/full" partial.git &&
+	FILE_HASH=$(git -C full rev-parse HEAD:file.txt) &&
+
+	# Sanity check that the file is missing
+	git -C partial.git rev-list --objects --missing=print HEAD >out &&
+	grep "[?]$FILE_HASH" out &&
+
+	git -C full cat-file -s "$FILE_HASH" >expect &&
+	test-tool partial-clone object-info partial.git "$FILE_HASH" >actual &&
+	test_cmp expect actual &&
+
+	# Sanity check that the file is now present
+	git -C partial.git rev-list --objects --missing=print HEAD >out &&
+	! grep "[?]$FILE_HASH" out
 '
 
 . "$TEST_DIRECTORY"/lib-httpd.sh

@@ -14,10 +14,8 @@ struct decoration_filter {
 };
 
 int parse_decorate_color_config(const char *var, const char *slot_name, const char *value);
-void init_log_tree_opt(struct rev_info *);
 int log_tree_diff_flush(struct rev_info *);
 int log_tree_commit(struct rev_info *, struct commit *);
-int log_tree_opt_parse(struct rev_info *, const char **, int);
 void show_log(struct rev_info *opt);
 void format_decorations_extended(struct strbuf *sb, const struct commit *commit,
 			     int use_color,

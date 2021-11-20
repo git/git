@@ -82,6 +82,12 @@ OPTIONS
 --strict::
 	Die, if the pack contains broken objects or links.
 
+--progress-title::
+	For internal use only.
++
+Set the title of the progress bar. The title is "Receiving objects" by
+default and "Indexing objects" when `--stdin` is specified.
+
 --check-self-contained-and-connected::
 	Die if the pack contains broken links. For internal use only.
 

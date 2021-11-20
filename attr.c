@@ -14,6 +14,7 @@
 #include "utf8.h"
 #include "quote.h"
 #include "thread-utils.h"
+#include "dir.h"
 
 const char git_attr__true[] = "(builtin)true";
 const char git_attr__false[] = "\0(builtin)false";
@@ -685,7 +686,7 @@ static struct attr_stack *read_attr_from_array(const char **list)
  * Callers into the attribute system assume there is a single, system-wide
  * global state where attributes are read from and when the state is flipped by
  * calling git_attr_set_direction(), the stack frames that have been
- * constructed need to be discarded so so that subsequent calls into the
+ * constructed need to be discarded so that subsequent calls into the
  * attribute system will lazily read from the right place.  Since changing
  * direction causes a global paradigm shift, it should not ever be called while
  * another thread could potentially be calling into the attribute system.
@@ -742,6 +743,20 @@ static struct attr_stack *read_attr_from_index(struct index_state *istate,
 	int lineno = 0;
 
 	if (!istate)
+		return NULL;
+
+	/*
+	 * The .gitattributes file only applies to files within its
+	 * parent directory. In the case of cone-mode sparse-checkout,
+	 * the .gitattributes file is sparse if and only if all paths
+	 * within that directory are also sparse. Thus, don't load the
+	 * .gitattributes file since it will not matter.
+	 *
+	 * In the case of a sparse index, it is critical that we don't go
+	 * looking for a .gitattributes file, as doing so would cause the
+	 * index to expand.
+	 */
+	if (!path_in_cone_mode_sparse_checkout(path, istate))
 		return NULL;
 
 	buf = read_blob_data_from_index(istate, path, NULL);

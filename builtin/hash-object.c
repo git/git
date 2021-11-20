@@ -53,9 +53,7 @@ static void hash_object(const char *path, const char *type, const char *vpath,
 			unsigned flags, int literally)
 {
 	int fd;
-	fd = open(path, O_RDONLY);
-	if (fd < 0)
-		die_errno("Cannot open '%s'", path);
+	fd = xopen(path, O_RDONLY);
 	hash_fd(fd, type, vpath, flags, literally);
 }
 
@@ -117,7 +115,7 @@ int cmd_hash_object(int argc, const char **argv, const char *prefix)
 		prefix = setup_git_directory_gently(&nongit);
 
 	if (vpath && prefix)
-		vpath = xstrdup(prefix_filename(prefix, vpath));
+		vpath = prefix_filename(prefix, vpath);
 
 	git_config(git_default_config, NULL);
 

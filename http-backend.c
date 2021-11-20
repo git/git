@@ -466,9 +466,7 @@ static void run_service(const char **argv, int buffer_input)
 	struct child_process cld = CHILD_PROCESS_INIT;
 	ssize_t req_len = get_content_length();
 
-	if (encoding && !strcmp(encoding, "gzip"))
-		gzipped_request = 1;
-	else if (encoding && !strcmp(encoding, "x-gzip"))
+	if (encoding && (!strcmp(encoding, "gzip") || !strcmp(encoding, "x-gzip")))
 		gzipped_request = 1;
 
 	if (!user || !*user)
@@ -534,7 +532,7 @@ static void get_info_refs(struct strbuf *hdr, char *arg)
 
 	if (service_name) {
 		const char *argv[] = {NULL /* service name */,
-			"--stateless-rpc", "--advertise-refs",
+			"--http-backend-info-refs",
 			".", NULL};
 		struct rpc_service *svc = select_service(hdr, service_name);
 
@@ -739,6 +737,7 @@ static int bad_request(struct strbuf *hdr, const struct service_cmd *c)
 int cmd_main(int argc, const char **argv)
 {
 	char *method = getenv("REQUEST_METHOD");
+	const char *proto_header;
 	char *dir;
 	struct service_cmd *cmd = NULL;
 	char *cmd_arg = NULL;
@@ -789,6 +788,9 @@ int cmd_main(int argc, const char **argv)
 	http_config();
 	max_request_buffer = git_env_ulong("GIT_HTTP_MAX_REQUEST_BUFFER",
 					   max_request_buffer);
+	proto_header = getenv("HTTP_GIT_PROTOCOL");
+	if (proto_header)
+		setenv(GIT_PROTOCOL_ENVIRONMENT, proto_header, 0);
 
 	cmd->imp(&hdr, cmd_arg);
 	return 0;

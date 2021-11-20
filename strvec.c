@@ -6,9 +6,8 @@ const char *empty_strvec[] = { NULL };
 
 void strvec_init(struct strvec *array)
 {
-	array->v = empty_strvec;
-	array->nr = 0;
-	array->alloc = 0;
+	struct strvec blank = STRVEC_INIT;
+	memcpy(array, &blank, sizeof(*array));
 }
 
 static void strvec_push_nodup(struct strvec *array, const char *value)

@@ -1272,6 +1272,19 @@ test_expect_success 'attempt to delete a branch merged to its base' '
 	test_must_fail git branch -d my10
 '
 
+test_expect_success 'branch --delete --force removes dangling branch' '
+	git checkout main &&
+	test_commit unstable &&
+	hash=$(git rev-parse HEAD) &&
+	objpath=$(echo $hash | sed -e "s|^..|.git/objects/&/|") &&
+	git branch --no-track dangling &&
+	mv $objpath $objpath.x &&
+	test_when_finished "mv $objpath.x $objpath" &&
+	git branch --delete --force dangling &&
+	git for-each-ref refs/heads/dangling >actual &&
+	test_must_be_empty actual
+'
+
 test_expect_success 'use --edit-description' '
 	write_script editor <<-\EOF &&
 		echo "New contents" >"$1"

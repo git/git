@@ -260,6 +260,9 @@ any of the given commits.
 A commit's reachable set is the commit itself and the commits in
 its ancestry chain.
 
+There are several notations to specify a set of connected commits
+(called a "revision range"), illustrated below.
+
 
 Commit Exclusions
 ~~~~~~~~~~~~~~~~~
@@ -293,6 +296,26 @@ did I do since I forked from the origin branch?"  Similarly, '..origin'
 is a shorthand for 'HEAD..origin' and asks "What did the origin do since
 I forked from them?"  Note that '..' would mean 'HEAD..HEAD' which is an
 empty range that is both reachable and unreachable from HEAD.
+
+Commands that are specifically designed to take two distinct ranges
+(e.g. "git range-diff R1 R2" to compare two ranges) do exist, but
+they are exceptions.  Unless otherwise noted, all "git" commands
+that operate on a set of commits work on a single revision range.
+In other words, writing two "two-dot range notation" next to each
+other, e.g.
+
+    $ git log A..B C..D
+
+does *not* specify two revision ranges for most commands.  Instead
+it will name a single connected set of commits, i.e. those that are
+reachable from either B or D but are reachable from neither A or C.
+In a linear history like this:
+
+    ---A---B---o---o---C---D
+
+because A and B are reachable from C, the revision range specified
+by these two dotted ranges is a single commit D.
+
 
 Other <rev>{caret} Parent Shorthand Notations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

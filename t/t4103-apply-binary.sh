@@ -158,4 +158,27 @@ test_expect_success 'apply binary -p0 diff' '
 	test -z "$(git diff --name-status binary -- file3)"
 '
 
+test_expect_success 'reject truncated binary diff' '
+	do_reset &&
+
+	# this length is calculated to get us very close to
+	# the 8192-byte strbuf we will use to read in the patch.
+	test-tool genrandom foo 6205 >file1 &&
+	git diff --binary >patch &&
+
+	# truncate the patch at the second "literal" line,
+	# but exclude the trailing newline. We must use perl
+	# for this, since tools like "sed" cannot reliably
+	# produce output without the trailing newline.
+	perl -pe "
+		if (/^literal/ && \$count++ >= 1) {
+			chomp;
+			print;
+			exit 0;
+		}
+	" <patch >patch.trunc &&
+
+	do_reset &&
+	test_must_fail git apply patch.trunc
+'
 test_done

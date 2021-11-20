@@ -796,12 +796,6 @@ static int group_slide_up(xdfile_t *xdf, struct xdlgroup *g, long flags)
 	}
 }
 
-static void xdl_bug(const char *msg)
-{
-	fprintf(stderr, "BUG: %s\n", msg);
-	exit(1);
-}
-
 /*
  * Move back and forward change groups for a consistent and pretty diff output.
  * This also helps in finding joinable change groups and reducing the diff
@@ -841,7 +835,7 @@ int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo, long flags) {
 			/* Shift the group backward as much as possible: */
 			while (!group_slide_up(xdf, &g, flags))
 				if (group_previous(xdfo, &go))
-					xdl_bug("group sync broken sliding up");
+					BUG("group sync broken sliding up");
 
 			/*
 			 * This is this highest that this group can be shifted.
@@ -857,7 +851,7 @@ int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo, long flags) {
 				if (group_slide_down(xdf, &g, flags))
 					break;
 				if (group_next(xdfo, &go))
-					xdl_bug("group sync broken sliding down");
+					BUG("group sync broken sliding down");
 
 				if (go.end > go.start)
 					end_matching_other = g.end;
@@ -882,9 +876,9 @@ int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo, long flags) {
 			 */
 			while (go.end == go.start) {
 				if (group_slide_up(xdf, &g, flags))
-					xdl_bug("match disappeared");
+					BUG("match disappeared");
 				if (group_previous(xdfo, &go))
-					xdl_bug("group sync broken sliding to match");
+					BUG("group sync broken sliding to match");
 			}
 		} else if (flags & XDF_INDENT_HEURISTIC) {
 			/*
@@ -925,9 +919,9 @@ int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo, long flags) {
 
 			while (g.end > best_shift) {
 				if (group_slide_up(xdf, &g, flags))
-					xdl_bug("best shift unreached");
+					BUG("best shift unreached");
 				if (group_previous(xdfo, &go))
-					xdl_bug("group sync broken sliding to blank line");
+					BUG("group sync broken sliding to blank line");
 			}
 		}
 
@@ -936,11 +930,11 @@ int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo, long flags) {
 		if (group_next(xdf, &g))
 			break;
 		if (group_next(xdfo, &go))
-			xdl_bug("group sync broken moving to next group");
+			BUG("group sync broken moving to next group");
 	}
 
 	if (!group_next(xdfo, &go))
-		xdl_bug("group sync broken at end of file");
+		BUG("group sync broken at end of file");
 
 	return 0;
 }

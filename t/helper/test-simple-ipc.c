@@ -9,6 +9,7 @@
 #include "parse-options.h"
 #include "thread-utils.h"
 #include "strvec.h"
+#include "run-command.h"
 
 #ifndef SUPPORTS_SIMPLE_IPC
 int cmd__simple_ipc(int argc, const char **argv)
@@ -112,7 +113,7 @@ static int app__slow_command(ipc_server_reply_cb *reply_cb,
 /*
  * The client sent a command followed by a (possibly very) large buffer.
  */
-static int app__sendbytes_command(const char *received,
+static int app__sendbytes_command(const char *received, size_t received_len,
 				  ipc_server_reply_cb *reply_cb,
 				  struct ipc_server_reply_data *reply_data)
 {
@@ -122,6 +123,13 @@ static int app__sendbytes_command(const char *received,
 	int k;
 	int errs = 0;
 	int ret;
+
+	/*
+	 * The test is setup to send:
+	 *     "sendbytes" SP <n * char>
+	 */
+	if (received_len < strlen("sendbytes "))
+		BUG("received_len is short in app__sendbytes_command");
 
 	if (skip_prefix(received, "sendbytes ", &p))
 		len_ballast = strlen(p);
@@ -160,7 +168,7 @@ static ipc_server_application_cb test_app_cb;
  * by this application.
  */
 static int test_app_cb(void *application_data,
-		       const char *command,
+		       const char *command, size_t command_len,
 		       ipc_server_reply_cb *reply_cb,
 		       struct ipc_server_reply_data *reply_data)
 {
@@ -173,7 +181,7 @@ static int test_app_cb(void *application_data,
 	if (application_data != (void*)&my_app_data)
 		BUG("application_cb: application_data pointer wrong");
 
-	if (!strcmp(command, "quit")) {
+	if (command_len == 4 && !strncmp(command, "quit", 4)) {
 		/*
 		 * The client sent a "quit" command.  This is an async
 		 * request for the server to shutdown.
@@ -193,22 +201,23 @@ static int test_app_cb(void *application_data,
 		return SIMPLE_IPC_QUIT;
 	}
 
-	if (!strcmp(command, "ping")) {
+	if (command_len == 4 && !strncmp(command, "ping", 4)) {
 		const char *answer = "pong";
 		return reply_cb(reply_data, answer, strlen(answer));
 	}
 
-	if (!strcmp(command, "big"))
+	if (command_len == 3 && !strncmp(command, "big", 3))
 		return app__big_command(reply_cb, reply_data);
 
-	if (!strcmp(command, "chunk"))
+	if (command_len == 5 && !strncmp(command, "chunk", 5))
 		return app__chunk_command(reply_cb, reply_data);
 
-	if (!strcmp(command, "slow"))
+	if (command_len == 4 && !strncmp(command, "slow", 4))
 		return app__slow_command(reply_cb, reply_data);
 
-	if (starts_with(command, "sendbytes "))
-		return app__sendbytes_command(command, reply_cb, reply_data);
+	if (command_len >= 10 && starts_with(command, "sendbytes "))
+		return app__sendbytes_command(command, command_len,
+					      reply_cb, reply_data);
 
 	return app__unhandled_command(command, reply_cb, reply_data);
 }
@@ -259,183 +268,69 @@ static int daemon__run_server(void)
 	 */
 	ret = ipc_server_run(cl_args.path, &opts, test_app_cb, (void*)&my_app_data);
 	if (ret == -2)
-		error(_("socket/pipe already in use: '%s'"), cl_args.path);
+		error("socket/pipe already in use: '%s'", cl_args.path);
 	else if (ret == -1)
-		error_errno(_("could not start server on: '%s'"), cl_args.path);
+		error_errno("could not start server on: '%s'", cl_args.path);
 
 	return ret;
 }
 
-#ifndef GIT_WINDOWS_NATIVE
-/*
- * This is adapted from `daemonize()`.  Use `fork()` to directly create and
- * run the daemon in a child process.
- */
-static int spawn_server(pid_t *pid)
+static start_bg_wait_cb bg_wait_cb;
+
+static int bg_wait_cb(const struct child_process *cp, void *cb_data)
 {
-	struct ipc_server_opts opts = {
-		.nr_threads = cl_args.nr_threads,
-	};
+	int s = ipc_get_active_state(cl_args.path);
 
-	*pid = fork();
+	switch (s) {
+	case IPC_STATE__LISTENING:
+		/* child is "ready" */
+		return 0;
 
-	switch (*pid) {
-	case 0:
-		if (setsid() == -1)
-			error_errno(_("setsid failed"));
-		close(0);
-		close(1);
-		close(2);
-		sanitize_stdfds();
-
-		return ipc_server_run(cl_args.path, &opts, test_app_cb,
-				      (void*)&my_app_data);
-
-	case -1:
-		return error_errno(_("could not spawn daemon in the background"));
+	case IPC_STATE__NOT_LISTENING:
+	case IPC_STATE__PATH_NOT_FOUND:
+		/* give child more time */
+		return 1;
 
 	default:
-		return 0;
-	}
-}
-#else
-/*
- * Conceptually like `daemonize()` but different because Windows does not
- * have `fork(2)`.  Spawn a normal Windows child process but without the
- * limitations of `start_command()` and `finish_command()`.
- */
-static int spawn_server(pid_t *pid)
-{
-	char test_tool_exe[MAX_PATH];
-	struct strvec args = STRVEC_INIT;
-	int in, out;
-
-	GetModuleFileNameA(NULL, test_tool_exe, MAX_PATH);
-
-	in = open("/dev/null", O_RDONLY);
-	out = open("/dev/null", O_WRONLY);
-
-	strvec_push(&args, test_tool_exe);
-	strvec_push(&args, "simple-ipc");
-	strvec_push(&args, "run-daemon");
-	strvec_pushf(&args, "--name=%s", cl_args.path);
-	strvec_pushf(&args, "--threads=%d", cl_args.nr_threads);
-
-	*pid = mingw_spawnvpe(args.v[0], args.v, NULL, NULL, in, out, out);
-	close(in);
-	close(out);
-
-	strvec_clear(&args);
-
-	if (*pid < 0)
-		return error(_("could not spawn daemon in the background"));
-
-	return 0;
-}
-#endif
-
-/*
- * This is adapted from `wait_or_whine()`.  Watch the child process and
- * let it get started and begin listening for requests on the socket
- * before reporting our success.
- */
-static int wait_for_server_startup(pid_t pid_child)
-{
-	int status;
-	pid_t pid_seen;
-	enum ipc_active_state s;
-	time_t time_limit, now;
-
-	time(&time_limit);
-	time_limit += cl_args.max_wait_sec;
-
-	for (;;) {
-		pid_seen = waitpid(pid_child, &status, WNOHANG);
-
-		if (pid_seen == -1)
-			return error_errno(_("waitpid failed"));
-
-		else if (pid_seen == 0) {
-			/*
-			 * The child is still running (this should be
-			 * the normal case).  Try to connect to it on
-			 * the socket and see if it is ready for
-			 * business.
-			 *
-			 * If there is another daemon already running,
-			 * our child will fail to start (possibly
-			 * after a timeout on the lock), but we don't
-			 * care (who responds) if the socket is live.
-			 */
-			s = ipc_get_active_state(cl_args.path);
-			if (s == IPC_STATE__LISTENING)
-				return 0;
-
-			time(&now);
-			if (now > time_limit)
-				return error(_("daemon not online yet"));
-
-			continue;
-		}
-
-		else if (pid_seen == pid_child) {
-			/*
-			 * The new child daemon process shutdown while
-			 * it was starting up, so it is not listening
-			 * on the socket.
-			 *
-			 * Try to ping the socket in the odd chance
-			 * that another daemon started (or was already
-			 * running) while our child was starting.
-			 *
-			 * Again, we don't care who services the socket.
-			 */
-			s = ipc_get_active_state(cl_args.path);
-			if (s == IPC_STATE__LISTENING)
-				return 0;
-
-			/*
-			 * We don't care about the WEXITSTATUS() nor
-			 * any of the WIF*(status) values because
-			 * `cmd__simple_ipc()` does the `!!result`
-			 * trick on all function return values.
-			 *
-			 * So it is sufficient to just report the
-			 * early shutdown as an error.
-			 */
-			return error(_("daemon failed to start"));
-		}
-
-		else
-			return error(_("waitpid is confused"));
+	case IPC_STATE__INVALID_PATH:
+	case IPC_STATE__OTHER_ERROR:
+		/* all the time in world won't help */
+		return -1;
 	}
 }
 
-/*
- * This process will start a simple-ipc server in a background process and
- * wait for it to become ready.  This is like `daemonize()` but gives us
- * more control and better error reporting (and makes it easier to write
- * unit tests).
- */
 static int daemon__start_server(void)
 {
-	pid_t pid_child;
-	int ret;
+	struct child_process cp = CHILD_PROCESS_INIT;
+	enum start_bg_result sbgr;
 
-	/*
-	 * Run the actual daemon in a background process.
-	 */
-	ret = spawn_server(&pid_child);
-	if (pid_child <= 0)
-		return ret;
+	strvec_push(&cp.args, "test-tool");
+	strvec_push(&cp.args, "simple-ipc");
+	strvec_push(&cp.args, "run-daemon");
+	strvec_pushf(&cp.args, "--name=%s", cl_args.path);
+	strvec_pushf(&cp.args, "--threads=%d", cl_args.nr_threads);
 
-	/*
-	 * Let the parent wait for the child process to get started
-	 * and begin listening for requests on the socket.
-	 */
-	ret = wait_for_server_startup(pid_child);
+	cp.no_stdin = 1;
+	cp.no_stdout = 1;
+	cp.no_stderr = 1;
 
-	return ret;
+	sbgr = start_bg_command(&cp, bg_wait_cb, NULL, cl_args.max_wait_sec);
+
+	switch (sbgr) {
+	case SBGR_READY:
+		return 0;
+
+	default:
+	case SBGR_ERROR:
+	case SBGR_CB_ERROR:
+		return error("daemon failed to start");
+
+	case SBGR_TIMEOUT:
+		return error("daemon not online yet");
+
+	case SBGR_DIED:
+		return error("daemon terminated");
+	}
 }
 
 /*
@@ -488,7 +383,9 @@ static int client__send_ipc(void)
 	options.wait_if_busy = 1;
 	options.wait_if_not_found = 0;
 
-	if (!ipc_client_send_command(cl_args.path, &options, command, &buf)) {
+	if (!ipc_client_send_command(cl_args.path, &options,
+				     command, strlen(command),
+				     &buf)) {
 		if (buf.len) {
 			printf("%s\n", buf.buf);
 			fflush(stdout);
@@ -538,7 +435,7 @@ static int client__stop_server(void)
 
 		time(&now);
 		if (now > time_limit)
-			return error(_("daemon has not shutdown yet"));
+			return error("daemon has not shutdown yet");
 	}
 }
 
@@ -556,7 +453,9 @@ static int do_sendbytes(int bytecount, char byte, const char *path,
 	strbuf_addstr(&buf_send, "sendbytes ");
 	strbuf_addchars(&buf_send, byte, bytecount);
 
-	if (!ipc_client_send_command(path, options, buf_send.buf, &buf_resp)) {
+	if (!ipc_client_send_command(path, options,
+				     buf_send.buf, buf_send.len,
+				     &buf_resp)) {
 		strbuf_rtrim(&buf_resp);
 		printf("sent:%c%08d %s\n", byte, bytecount, buf_resp.buf);
 		fflush(stdout);

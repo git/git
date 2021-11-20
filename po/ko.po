@@ -1702,7 +1702,7 @@ msgid ""
 "Found errors in 'diff.dirstat' config variable:\n"
 "%s"
 msgstr ""
-"'diff.submodule' 설정 변수에 오류:\n"
+"'diff.dirstat' 설정 변수에 오류:\n"
 "%s'"
 
 #: diff.c:3823
@@ -1946,7 +1946,7 @@ msgstr "서버 버전이 %.*s입니다"
 
 #: fetch-pack.c:1048
 msgid "Server does not support --shallow-since"
-msgstr "서버에서 --shallow-signed 옵션을 지원하지 않습니다"
+msgstr "서버에서 --shallow-since 옵션을 지원하지 않습니다"
 
 #: fetch-pack.c:1052
 msgid "Server does not support --shallow-exclude"
@@ -2261,12 +2261,12 @@ msgstr "(잘못된 커밋)\n"
 #: merge-recursive.c:320
 #, c-format
 msgid "add_cacheinfo failed for path '%s'; merge aborting."
-msgstr "'%s' 경로에 대해 addinfo_cache 실패. 병합 중지."
+msgstr "'%s' 경로에 대해 add_cacheinfo 실패. 병합 중지."
 
 #: merge-recursive.c:328
 #, c-format
 msgid "add_cacheinfo failed to refresh for path '%s'; merge aborting."
-msgstr "'%s' 경로에 대해 addinfo_cache 새로 고침 실패. 병합 중지."
+msgstr "'%s' 경로에 대해 add_cacheinfo 새로 고침 실패. 병합 중지."
 
 #: merge-recursive.c:410
 msgid "error building trees"
@@ -8384,7 +8384,7 @@ msgstr "값"
 
 #: builtin/config.c:156
 msgid "with --get, use default value when missing entry"
-msgstr "--wget 옵션에서, 해당 항목이 없으면 기본값을 사용합니다"
+msgstr "--get 옵션에서, 해당 항목이 없으면 기본값을 사용합니다"
 
 #: builtin/config.c:332
 #, c-format
@@ -10983,7 +10983,7 @@ msgid ""
 "You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists).\n"
 "Please, commit your changes before you merge."
 msgstr ""
-"커밋 빼오기를 마치지 않았습니다. (COMMIT_PICK_HEAD 있음)\n"
+"커밋 빼오기를 마치지 않았습니다. (CHERRY_PICK_HEAD 있음)\n"
 "병합하기 전에 변경 사항을 커밋하십시오."
 
 #: builtin/merge.c:1257
@@ -12800,7 +12800,7 @@ msgstr ""
 #: builtin/remote.c:145
 #, c-format
 msgid "unknown mirror argument: %s"
-msgstr "알 수 없는 --mirror 옵션 인자: %s"
+msgstr "알 수 없는 mirror 옵션 인자: %s"
 
 #: builtin/remote.c:161
 msgid "fetch the remote branches"
@@ -13879,7 +13879,7 @@ msgstr "공통 이전 커밋 뒤의 <n>개의 커밋을 표시합니다"
 
 #: builtin/show-branch.c:634
 msgid "synonym to more=-1"
-msgstr "--more=-1 옵션과 동일"
+msgstr "more=-1 옵션과 동일"
 
 #: builtin/show-branch.c:635
 msgid "suppress naming strings"
@@ -17858,7 +17858,7 @@ msgid ""
 msgstr ""
 "    위의 Cc 목록은 패치 커밋 메시지에 들어 있는 추가 주소로\n"
 "    확장됩니다. 기본값으로 확장되기 전에 send-email에서\n"
-"    물어봅니다. 이런 동작은 sendmail.confirm 설정에서\n"
+"    물어봅니다. 이런 동작은 sendemail.confirm 설정에서\n"
 "    조정할 수 있습니다.\n"
 "\n"
 "    정보를 더 보려면, 'git send-email --help'를 실행하십시오.\n"

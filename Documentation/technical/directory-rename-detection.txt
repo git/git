@@ -2,9 +2,9 @@ Directory rename detection
 ==========================
 
 Rename detection logic in diffcore-rename that checks for renames of
-individual files is aggregated and analyzed in merge-recursive for cases
-where combinations of renames indicate that a full directory has been
-renamed.
+individual files is also aggregated there and then analyzed in either
+merge-ort or merge-recursive for cases where combinations of renames
+indicate that a full directory has been renamed.
 
 Scope of abilities
 ------------------
@@ -88,9 +88,11 @@ directory rename detection support in:
     Folks have requested in the past that `git diff` detect directory
     renames and somehow simplify its output.  It is not clear whether this
     would be desirable or how the output should be simplified, so this was
-    simply not implemented.  Further, to implement this, directory rename
-    detection logic would need to move from merge-recursive to
-    diffcore-rename.
+    simply not implemented.  Also, while diffcore-rename has most of the
+    logic for detecting directory renames, some of the logic is still found
+    within merge-ort and merge-recursive.  Fully supporting directory
+    rename detection in diffs would require copying or moving the remaining
+    bits of logic to the diff machinery.
 
   * am
 

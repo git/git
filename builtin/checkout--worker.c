@@ -53,7 +53,7 @@ static void packet_to_pc_item(const char *buffer, int len,
 
 static void report_result(struct parallel_checkout_item *pc_item)
 {
-	struct pc_item_result res;
+	struct pc_item_result res = { 0 };
 	size_t size;
 
 	res.id = pc_item->id;
@@ -82,8 +82,8 @@ static void worker_loop(struct checkout *state)
 	size_t i, nr = 0, alloc = 0;
 
 	while (1) {
-		int len = packet_read(0, NULL, NULL, packet_buffer,
-				      sizeof(packet_buffer), 0);
+		int len = packet_read(0, packet_buffer, sizeof(packet_buffer),
+				      0);
 
 		if (len < 0)
 			BUG("packet_read() returned negative value");

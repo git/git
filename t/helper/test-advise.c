@@ -16,7 +16,7 @@ int cmd__advise_if_enabled(int argc, const char **argv)
 	 * selected here and in t0018 where this command is being
 	 * executed.
 	 */
-	advise_if_enabled(ADVICE_NESTED_TAG, argv[1]);
+	advise_if_enabled(ADVICE_NESTED_TAG, "%s", argv[1]);
 
 	return 0;
 }

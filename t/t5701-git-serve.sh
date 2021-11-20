@@ -72,6 +72,37 @@ test_expect_success 'request invalid command' '
 	test_i18ngrep "invalid command" err
 '
 
+test_expect_success 'request capability as command' '
+	test-tool pkt-line pack >in <<-EOF &&
+	command=agent
+	object-format=$(test_oid algo)
+	0000
+	EOF
+	test_must_fail test-tool serve-v2 --stateless-rpc 2>err <in &&
+	grep invalid.command.*agent err
+'
+
+test_expect_success 'request command as capability' '
+	test-tool pkt-line pack >in <<-EOF &&
+	command=ls-refs
+	object-format=$(test_oid algo)
+	fetch
+	0000
+	EOF
+	test_must_fail test-tool serve-v2 --stateless-rpc 2>err <in &&
+	grep unknown.capability err
+'
+
+test_expect_success 'requested command is command=value' '
+	test-tool pkt-line pack >in <<-EOF &&
+	command=ls-refs=whatever
+	object-format=$(test_oid algo)
+	0000
+	EOF
+	test_must_fail test-tool serve-v2 --stateless-rpc 2>err <in &&
+	grep invalid.command.*ls-refs=whatever err
+'
+
 test_expect_success 'wrong object-format' '
 	test-tool pkt-line pack >in <<-EOF &&
 	command=fetch
@@ -116,6 +147,19 @@ test_expect_success 'basics of ls-refs' '
 	test_cmp expect actual
 '
 
+test_expect_success 'ls-refs complains about unknown options' '
+	test-tool pkt-line pack >in <<-EOF &&
+	command=ls-refs
+	object-format=$(test_oid algo)
+	0001
+	no-such-arg
+	0000
+	EOF
+
+	test_must_fail test-tool serve-v2 --stateless-rpc 2>err <in &&
+	grep unexpected.line.*no-such-arg err
+'
+
 test_expect_success 'basic ref-prefixes' '
 	test-tool pkt-line pack >in <<-EOF &&
 	command=ls-refs
@@ -150,6 +194,37 @@ test_expect_success 'refs/heads prefix' '
 	$(git rev-parse refs/heads/dev) refs/heads/dev
 	$(git rev-parse refs/heads/main) refs/heads/main
 	$(git rev-parse refs/heads/release) refs/heads/release
+	0000
+	EOF
+
+	test-tool serve-v2 --stateless-rpc <in >out &&
+	test-tool pkt-line unpack <out >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'ignore very large set of prefixes' '
+	# generate a large number of ref-prefixes that we expect
+	# to match nothing; the value here exceeds TOO_MANY_PREFIXES
+	# from ls-refs.c.
+	{
+		echo command=ls-refs &&
+		echo object-format=$(test_oid algo) &&
+		echo 0001 &&
+		perl -le "print \"ref-prefix refs/heads/\$_\" for (1..65536)" &&
+		echo 0000
+	} |
+	test-tool pkt-line pack >in &&
+
+	# and then confirm that we see unmatched prefixes anyway (i.e.,
+	# that the prefix was not applied).
+	cat >expect <<-EOF &&
+	$(git rev-parse HEAD) HEAD
+	$(git rev-parse refs/heads/dev) refs/heads/dev
+	$(git rev-parse refs/heads/main) refs/heads/main
+	$(git rev-parse refs/heads/release) refs/heads/release
+	$(git rev-parse refs/tags/annotated-tag) refs/tags/annotated-tag
+	$(git rev-parse refs/tags/one) refs/tags/one
+	$(git rev-parse refs/tags/two) refs/tags/two
 	0000
 	EOF
 

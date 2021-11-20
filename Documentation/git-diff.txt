@@ -51,16 +51,20 @@ files on disk.
 	--staged is a synonym of --cached.
 +
 If --merge-base is given, instead of using <commit>, use the merge base
-of <commit> and HEAD.  `git diff --merge-base A` is equivalent to
-`git diff $(git merge-base A HEAD)`.
+of <commit> and HEAD.  `git diff --cached --merge-base A` is equivalent to
+`git diff --cached $(git merge-base A HEAD)`.
 
-'git diff' [<options>] <commit> [--] [<path>...]::
+'git diff' [<options>] [--merge-base] <commit> [--] [<path>...]::
 
 	This form is to view the changes you have in your
 	working tree relative to the named <commit>.  You can
 	use HEAD to compare it with the latest commit, or a
 	branch name to compare with the tip of a different
 	branch.
++
+If --merge-base is given, instead of using <commit>, use the merge base
+of <commit> and HEAD.  `git diff --merge-base A` is equivalent to
+`git diff $(git merge-base A HEAD)`.
 
 'git diff' [<options>] [--merge-base] <commit> <commit> [--] [<path>...]::
 

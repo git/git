@@ -509,4 +509,20 @@ test_expect_success 'colorize errors/hints' '
 	test_i18ngrep ! "^hint: " decoded
 '
 
+test_expect_success 'report error server does not provide ref status' '
+	git init "$HTTPD_DOCUMENT_ROOT_PATH/no_report" &&
+	git -C "$HTTPD_DOCUMENT_ROOT_PATH/no_report" config http.receivepack true &&
+	test_must_fail git push --porcelain \
+		$HTTPD_URL_USER_PASS/smart/no_report \
+		HEAD:refs/tags/will-fail >actual &&
+	test_must_fail git -C "$HTTPD_DOCUMENT_ROOT_PATH/no_report" \
+		rev-parse --verify refs/tags/will-fail &&
+	cat >expect <<-EOF &&
+	To $HTTPD_URL/smart/no_report
+	!	HEAD:refs/tags/will-fail	[remote failure] (remote failed to report status)
+	Done
+	EOF
+	test_cmp expect actual
+'
+
 test_done

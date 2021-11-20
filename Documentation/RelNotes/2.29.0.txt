@@ -184,8 +184,8 @@ Performance, Internal Implementation, Development Support etc.
    the ref backend in use, as its format is much richer than the
    normal refs, and written directly by "git fetch" as a plain file..
 
- * An unused binary has been discarded, and and a bunch of commands
-   have been turned into into built-in.
+ * An unused binary has been discarded, and a bunch of commands
+   have been turned into built-in.
 
  * A handful of places in in-tree code still relied on being able to
    execute the git subcommands, especially built-ins, in "git-foo"

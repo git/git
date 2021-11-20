@@ -70,3 +70,15 @@ void write_or_die(int fd, const void *buf, size_t count)
 		die_errno("write error");
 	}
 }
+
+void fwrite_or_die(FILE *f, const void *buf, size_t count)
+{
+	if (fwrite(buf, 1, count, f) != count)
+		die_errno("fwrite error");
+}
+
+void fflush_or_die(FILE *f)
+{
+	if (fflush(f))
+		die_errno("fflush error");
+}
