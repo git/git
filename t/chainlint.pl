@@ -487,18 +487,75 @@ DONE:
 	$self->SUPER::accumulate($tokens, $cmd);
 }
 
+# ScriptParser is a subclass of ShellParser which identifies individual test
+# definitions within test scripts, and passes each test body through TestParser
+# to identify possible problems. ShellParser detects test definitions not only
+# at the top-level of test scripts but also within compound commands such as
+# loops and function definitions.
 package ScriptParser;
+
+use base 'ShellParser';
 
 sub new {
 	my $class = shift @_;
-	my $self = bless {} => $class;
-	$self->{output} = [];
+	my $self = $class->SUPER::new(@_);
 	$self->{ntests} = 0;
 	return $self;
 }
 
+# extract the raw content of a token, which may be a single string or a
+# composition of multiple strings and non-string character runs; for instance,
+# `"test body"` unwraps to `test body`; `word"a b"42'c d'` to `worda b42c d`
+sub unwrap {
+	my $token = @_ ? shift @_ : $_;
+	# simple case: 'sqstring' or "dqstring"
+	return $token if $token =~ s/^'([^']*)'$/$1/;
+	return $token if $token =~ s/^"([^"]*)"$/$1/;
+
+	# composite case
+	my ($s, $q, $escaped);
+	while (1) {
+		# slurp up non-special characters
+		$s .= $1 if $token =~ /\G([^\\'"]*)/gc;
+		# handle special characters
+		last unless $token =~ /\G(.)/sgc;
+		my $c = $1;
+		$q = undef, next if defined($q) && $c eq $q;
+		$q = $c, next if !defined($q) && $c =~ /^['"]$/;
+		if ($c eq '\\') {
+			last unless $token =~ /\G(.)/sgc;
+			$c = $1;
+			$s .= '\\' if $c eq "\n"; # preserve line splice
+		}
+		$s .= $c;
+	}
+	return $s
+}
+
+sub check_test {
+	my $self = shift @_;
+	my ($title, $body) = map(unwrap, @_);
+	$self->{ntests}++;
+	my $parser = TestParser->new(\$body);
+	my @tokens = $parser->parse();
+	return unless $emit_all || grep(/\?![^?]+\?!/, @tokens);
+	my $checked = join(' ', @tokens);
+	$checked =~ s/^\n//;
+	$checked =~ s/^ //mg;
+	$checked =~ s/ $//mg;
+	$checked .= "\n" unless $checked =~ /\n$/;
+	push(@{$self->{output}}, "# chainlint: $title\n$checked");
+}
+
 sub parse_cmd {
-	return undef;
+	my $self = shift @_;
+	my @tokens = $self->SUPER::parse_cmd();
+	return @tokens unless @tokens && $tokens[0] =~ /^test_expect_(?:success|failure)$/;
+	my $n = $#tokens;
+	$n-- while $n >= 0 && $tokens[$n] =~ /^(?:[;&\n|]|&&|\|\|)$/;
+	$self->check_test($tokens[1], $tokens[2]) if $n == 2; # title body
+	$self->check_test($tokens[2], $tokens[3]) if $n > 2;  # prereq title body
+	return @tokens;
 }
 
 # main contains high-level functionality for processing command-line switches,
