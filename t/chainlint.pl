@@ -198,6 +198,249 @@ RESTART:
 	return length($token) ? $token : undef;
 }
 
+# ShellParser parses POSIX shell scripts (with minor extensions for Bash). It
+# is a recursive descent parser very roughly modeled after section 2.10 "Shell
+# Grammar" of POSIX chapter 2 "Shell Command Language".
+package ShellParser;
+
+sub new {
+	my ($class, $s) = @_;
+	my $self = bless {
+		buff => [],
+		stop => [],
+		output => []
+	} => $class;
+	$self->{lexer} = Lexer->new($self, $s);
+	return $self;
+}
+
+sub next_token {
+	my $self = shift @_;
+	return pop(@{$self->{buff}}) if @{$self->{buff}};
+	return $self->{lexer}->scan_token();
+}
+
+sub untoken {
+	my $self = shift @_;
+	push(@{$self->{buff}}, @_);
+}
+
+sub peek {
+	my $self = shift @_;
+	my $token = $self->next_token();
+	return undef unless defined($token);
+	$self->untoken($token);
+	return $token;
+}
+
+sub stop_at {
+	my ($self, $token) = @_;
+	return 1 unless defined($token);
+	my $stop = ${$self->{stop}}[-1] if @{$self->{stop}};
+	return defined($stop) && $token =~ $stop;
+}
+
+sub expect {
+	my ($self, $expect) = @_;
+	my $token = $self->next_token();
+	return $token if defined($token) && $token eq $expect;
+	push(@{$self->{output}}, "?!ERR?! expected '$expect' but found '" . (defined($token) ? $token : "<end-of-input>") . "'\n");
+	$self->untoken($token) if defined($token);
+	return ();
+}
+
+sub optional_newlines {
+	my $self = shift @_;
+	my @tokens;
+	while (my $token = $self->peek()) {
+		last unless $token eq "\n";
+		push(@tokens, $self->next_token());
+	}
+	return @tokens;
+}
+
+sub parse_group {
+	my $self = shift @_;
+	return ($self->parse(qr/^}$/),
+		$self->expect('}'));
+}
+
+sub parse_subshell {
+	my $self = shift @_;
+	return ($self->parse(qr/^\)$/),
+		$self->expect(')'));
+}
+
+sub parse_case_pattern {
+	my $self = shift @_;
+	my @tokens;
+	while (defined(my $token = $self->next_token())) {
+		push(@tokens, $token);
+		last if $token eq ')';
+	}
+	return @tokens;
+}
+
+sub parse_case {
+	my $self = shift @_;
+	my @tokens;
+	push(@tokens,
+	     $self->next_token(), # subject
+	     $self->optional_newlines(),
+	     $self->expect('in'),
+	     $self->optional_newlines());
+	while (1) {
+		my $token = $self->peek();
+		last unless defined($token) && $token ne 'esac';
+		push(@tokens,
+		     $self->parse_case_pattern(),
+		     $self->optional_newlines(),
+		     $self->parse(qr/^(?:;;|esac)$/)); # item body
+		$token = $self->peek();
+		last unless defined($token) && $token ne 'esac';
+		push(@tokens,
+		     $self->expect(';;'),
+		     $self->optional_newlines());
+	}
+	push(@tokens, $self->expect('esac'));
+	return @tokens;
+}
+
+sub parse_for {
+	my $self = shift @_;
+	my @tokens;
+	push(@tokens,
+	     $self->next_token(), # variable
+	     $self->optional_newlines());
+	my $token = $self->peek();
+	if (defined($token) && $token eq 'in') {
+		push(@tokens,
+		     $self->expect('in'),
+		     $self->optional_newlines());
+	}
+	push(@tokens,
+	     $self->parse(qr/^do$/), # items
+	     $self->expect('do'),
+	     $self->optional_newlines(),
+	     $self->parse_loop_body(),
+	     $self->expect('done'));
+	return @tokens;
+}
+
+sub parse_if {
+	my $self = shift @_;
+	my @tokens;
+	while (1) {
+		push(@tokens,
+		     $self->parse(qr/^then$/), # if/elif condition
+		     $self->expect('then'),
+		     $self->optional_newlines(),
+		     $self->parse(qr/^(?:elif|else|fi)$/)); # if/elif body
+		my $token = $self->peek();
+		last unless defined($token) && $token eq 'elif';
+		push(@tokens, $self->expect('elif'));
+	}
+	my $token = $self->peek();
+	if (defined($token) && $token eq 'else') {
+		push(@tokens,
+		     $self->expect('else'),
+		     $self->optional_newlines(),
+		     $self->parse(qr/^fi$/)); # else body
+	}
+	push(@tokens, $self->expect('fi'));
+	return @tokens;
+}
+
+sub parse_loop_body {
+	my $self = shift @_;
+	return $self->parse(qr/^done$/);
+}
+
+sub parse_loop {
+	my $self = shift @_;
+	return ($self->parse(qr/^do$/), # condition
+		$self->expect('do'),
+		$self->optional_newlines(),
+		$self->parse_loop_body(),
+		$self->expect('done'));
+}
+
+sub parse_func {
+	my $self = shift @_;
+	return ($self->expect('('),
+		$self->expect(')'),
+		$self->optional_newlines(),
+		$self->parse_cmd()); # body
+}
+
+sub parse_bash_array_assignment {
+	my $self = shift @_;
+	my @tokens = $self->expect('(');
+	while (defined(my $token = $self->next_token())) {
+		push(@tokens, $token);
+		last if $token eq ')';
+	}
+	return @tokens;
+}
+
+my %compound = (
+	'{' => \&parse_group,
+	'(' => \&parse_subshell,
+	'case' => \&parse_case,
+	'for' => \&parse_for,
+	'if' => \&parse_if,
+	'until' => \&parse_loop,
+	'while' => \&parse_loop);
+
+sub parse_cmd {
+	my $self = shift @_;
+	my $cmd = $self->next_token();
+	return () unless defined($cmd);
+	return $cmd if $cmd eq "\n";
+
+	my $token;
+	my @tokens = $cmd;
+	if ($cmd eq '!') {
+		push(@tokens, $self->parse_cmd());
+		return @tokens;
+	} elsif (my $f = $compound{$cmd}) {
+		push(@tokens, $self->$f());
+	} elsif (defined($token = $self->peek()) && $token eq '(') {
+		if ($cmd !~ /\w=$/) {
+			push(@tokens, $self->parse_func());
+			return @tokens;
+		}
+		$tokens[-1] .= join(' ', $self->parse_bash_array_assignment());
+	}
+
+	while (defined(my $token = $self->next_token())) {
+		$self->untoken($token), last if $self->stop_at($token);
+		push(@tokens, $token);
+		last if $token =~ /^(?:[;&\n|]|&&|\|\|)$/;
+	}
+	push(@tokens, $self->next_token()) if $tokens[-1] ne "\n" && defined($token = $self->peek()) && $token eq "\n";
+	return @tokens;
+}
+
+sub accumulate {
+	my ($self, $tokens, $cmd) = @_;
+	push(@$tokens, @$cmd);
+}
+
+sub parse {
+	my ($self, $stop) = @_;
+	push(@{$self->{stop}}, $stop);
+	goto DONE if $self->stop_at($self->peek());
+	my @tokens;
+	while (my @cmd = $self->parse_cmd()) {
+		$self->accumulate(\@tokens, \@cmd);
+		last if $self->stop_at($self->peek());
+	}
+DONE:
+	pop(@{$self->{stop}});
+	return @tokens;
+}
+
 package ScriptParser;
 
 sub new {
