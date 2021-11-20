@@ -1,6 +1,6 @@
 name: git-l10n
 
-on: [push, pull_request_target]
+on: [push, pull_request_target] 
 
 jobs:
   git-po-helper:
