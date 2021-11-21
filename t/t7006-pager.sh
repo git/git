@@ -677,7 +677,7 @@ test_expect_success TTY 'git returns SIGPIPE on early pager exit' '
 
 	if test_have_prereq !MINGW
 	then
-		OUT=$( ((test_terminal git log; echo $? 1>&3) >/dev/null) 3>&1 ) &&
+		{ test_terminal git log >/dev/null; OUT=$?; } &&
 		test_match_signal 13 "$OUT"
 	else
 		test_terminal git log
@@ -698,7 +698,7 @@ test_expect_success TTY 'git returns SIGPIPE on early pager non-zero exit' '
 
 	if test_have_prereq !MINGW
 	then
-		OUT=$( ((test_terminal git log; echo $? 1>&3) >/dev/null) 3>&1 ) &&
+		{ test_terminal git log >/dev/null; OUT=$?; } &&
 		test_match_signal 13 "$OUT"
 	else
 		test_terminal git log
@@ -717,13 +717,7 @@ test_expect_success TTY 'git discards pager non-zero exit without SIGPIPE' '
 	export GIT_TRACE2 &&
 	test_when_finished "unset GIT_TRACE2" &&
 
-	if test_have_prereq !MINGW
-	then
-		OUT=$( ((test_terminal git log; echo $? 1>&3) >/dev/null) 3>&1 ) &&
-		test "$OUT" -eq 0
-	else
-		test_terminal git log
-	fi &&
+	test_terminal git log &&
 
 	grep child_exit trace.normal >child-exits &&
 	test_line_count = 1 child-exits &&
@@ -738,13 +732,7 @@ test_expect_success TTY 'git skips paging nonexisting command' '
 	export GIT_TRACE2 &&
 	test_when_finished "unset GIT_TRACE2" &&
 
-	if test_have_prereq !MINGW
-	then
-		OUT=$( ((test_terminal git log; echo $? 1>&3) >/dev/null) 3>&1 ) &&
-		test "$OUT" -eq 0
-	else
-		test_terminal git log
-	fi &&
+	test_terminal git log &&
 
 	grep child_exit trace.normal >child-exits &&
 	test_line_count = 1 child-exits &&
@@ -760,7 +748,7 @@ test_expect_success TTY 'git returns SIGPIPE on propagated signals from pager' '
 
 	if test_have_prereq !MINGW
 	then
-		OUT=$( ((test_terminal git log; echo $? 1>&3) >/dev/null) 3>&1 ) &&
+		{ test_terminal git log >/dev/null; OUT=$?; } &&
 		test_match_signal 13 "$OUT"
 	else
 		test_terminal git log
