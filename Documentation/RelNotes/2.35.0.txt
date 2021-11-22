@@ -1,0 +1,25 @@
+Git 2.35 Release Notes
+======================
+
+Updates since Git 2.34
+----------------------
+
+UI, Workflows & Features
+
+
+Performance, Internal Implementation, Development Support etc.
+
+
+
+Fixes since v2.34
+-----------------
+
+ * "git grep" looking in a blob that has non-UTF8 payload was
+   completely broken when linked with certain versions of PCREv2
+   library in the latest release.
+
+ * Other code cleanup, docfix, build fix, etc.
+   (merge edbd9f3715 ab/update-submitting-patches later to maint).
+
+ * "git pull" with any strategy when the other side is behind us
+   should succeed as it is a no-op, but doesn't.
