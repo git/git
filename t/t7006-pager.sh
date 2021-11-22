@@ -767,7 +767,7 @@ test_expect_success TTY 'git attempts to page to nonexisting pager command, gets
 
 test_expect_success TTY 'git returns SIGPIPE on propagated signals from pager' '
 	test_when_finished "rm pager-used trace.normal" &&
-	test_config core.pager ">pager-used; test-tool sigchain" &&
+	test_config core.pager ">pager-used; exec test-tool sigchain" &&
 	GIT_TRACE2="$(pwd)/trace.normal" &&
 	export GIT_TRACE2 &&
 	test_when_finished "unset GIT_TRACE2" &&
