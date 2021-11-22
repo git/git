@@ -988,6 +988,7 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	struct object_id rebase_fork_point;
 	int rebase_unspecified = 0;
 	int can_ff;
+	int divergent;
 
 	if (!getenv("GIT_REFLOG_ACTION"))
 		set_reflog_message(argc, argv);
@@ -1102,15 +1103,16 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	}
 
 	can_ff = get_can_ff(&orig_head, &merge_heads);
+	divergent = !can_ff && !already_up_to_date(&orig_head, &merge_heads);
 
 	/* ff-only takes precedence over rebase */
 	if (opt_ff && !strcmp(opt_ff, "--ff-only")) {
-		if (!can_ff && !already_up_to_date(&orig_head, &merge_heads))
+		if (divergent)
 			die_ff_impossible();
 		opt_rebase = REBASE_FALSE;
 	}
 	/* If no action specified and we can't fast forward, then warn. */
-	if (!opt_ff && rebase_unspecified && !can_ff) {
+	if (!opt_ff && rebase_unspecified && divergent) {
 		show_advice_pull_non_ff();
 		die(_("Need to specify how to reconcile divergent branches."));
 	}
