@@ -25,7 +25,7 @@ docker pull "$CI_CONTAINER"
 # root@container:/# export jobname=<jobname>
 # root@container:/# /usr/src/git/ci/run-docker-build.sh <host-user-id>
 
-container_cache_dir=/tmp/travis-cache
+container_cache_dir=/tmp/container-cache
 
 docker run \
 	--interactive \

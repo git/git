@@ -41,9 +41,9 @@ linux-clang)
 	export GIT_TEST_DEFAULT_HASH=sha256
 	make test
 	;;
-linux-gcc-4.8|pedantic)
+pedantic)
 	# Don't run the tests; we only care about whether Git can be
-	# built with GCC 4.8 or with pedantic
+	# built.
 	;;
 *)
 	make test
