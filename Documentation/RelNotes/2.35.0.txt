@@ -23,3 +23,12 @@ Fixes since v2.34
 
  * "git pull" with any strategy when the other side is behind us
    should succeed as it is a no-op, but doesn't.
+   (merge ea1954af ev/pull-already-up-to-date-is-noop later to maint).
+
+ * An earlier change in 2.34.0 caused JGit application (that abused
+   GIT_EDITOR mechanism when invoking "git config") to get stuck with
+   a SIGTTOU signal; it has been reverted.
+   (merge e3f7e01b50 jc/save-restore-terminal-revert later to maint).
+
+ * An earlier change that broke .gitignore matching has been reverted.
+   (merge 33c5d6c845 ds/add-rm-with-sparse-index later to maint).
