@@ -156,11 +156,15 @@ export DEFAULT_TEST_TARGET=prove
 export GIT_TEST_CLONE_2GB=true
 export SKIP_DASHED_BUILT_INS=YesPlease
 
-case "$jobname" in
-linux-clang|linux-gcc|linux-leaks)
+case "$runs_on_pool" in
+ubuntu-latest)
+	if test "$jobname" = "linux-gcc-default"
+	then
+		break
+	fi
+
 	if [ "$jobname" = linux-gcc ]
 	then
-		export CC=gcc-8
 		MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=/usr/bin/python3"
 	else
 		MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=/usr/bin/python2"
@@ -180,17 +184,17 @@ linux-clang|linux-gcc|linux-leaks)
 	GIT_LFS_PATH="$HOME/custom/git-lfs"
 	export PATH="$GIT_LFS_PATH:$P4_PATH:$PATH"
 	;;
-osx-clang|osx-gcc)
+macos-latest)
 	if [ "$jobname" = osx-gcc ]
 	then
-		export CC=gcc-9
 		MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=$(which python3)"
 	else
 		MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=$(which python2)"
 	fi
 	;;
-linux-gcc-default)
-	;;
+esac
+
+case "$jobname" in
 linux32)
 	CC=gcc
 	;;
@@ -200,9 +204,6 @@ linux-musl)
 	MAKEFLAGS="$MAKEFLAGS NO_REGEX=Yes ICONV_OMITS_BOM=Yes"
 	MAKEFLAGS="$MAKEFLAGS GIT_TEST_UTF8_LOCALE=C.UTF-8"
 	;;
-esac
-
-case "$jobname" in
 linux-leaks)
 	export SANITIZE=leak
 	export GIT_TEST_PASSING_SANITIZE_LEAK=true
