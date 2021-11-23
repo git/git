@@ -15,7 +15,7 @@ then
 fi
 
 case "$jobname" in
-Linux32)
+linux32)
 	switch_cmd="linux32 --32bit i386"
 	;;
 linux-musl)

@@ -6,7 +6,7 @@
 . ${0%/*}/lib.sh
 
 case "$jobname" in
-Linux32)
+linux32)
 	CI_CONTAINER="daald/ubuntu32:xenial"
 	;;
 linux-musl)

@@ -266,7 +266,8 @@ jobs:
         vector:
         - jobname: linux-musl
           image: alpine
-        - jobname: Linux32
+        - jobname: linux32
+          os: ubuntu32
           image: daald/ubuntu32:xenial
         - jobname: pedantic
           image: fedora

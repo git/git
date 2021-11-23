@@ -191,7 +191,7 @@ osx-clang|osx-gcc)
 	;;
 linux-gcc-default)
 	;;
-Linux32)
+linux32)
 	CC=gcc
 	;;
 linux-musl)
