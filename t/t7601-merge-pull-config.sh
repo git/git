@@ -387,6 +387,12 @@ test_expect_success 'pull prevents non-fast-forward with "only" in pull.ff' '
 	test_must_fail git pull . c3
 '
 
+test_expect_success 'already-up-to-date pull succeeds with unspecified pull.ff' '
+	git reset --hard c1 &&
+	git pull . c0 &&
+	test "$(git rev-parse HEAD)" = "$(git rev-parse c1)"
+'
+
 test_expect_success 'already-up-to-date pull succeeds with "only" in pull.ff' '
 	git reset --hard c1 &&
 	test_config pull.ff only &&
