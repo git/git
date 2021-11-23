@@ -2337,9 +2337,17 @@ int do_read_index(struct index_state *istate, const char *path, int must_exist)
 
 	if (!istate->repo)
 		istate->repo = the_repository;
+
+	/*
+	 * If the command explicitly requires a full index, force it
+	 * to be full. Otherwise, correct the sparsity based on repository
+	 * settings and other properties of the index (if necessary).
+	 */
 	prepare_repo_settings(istate->repo);
 	if (istate->repo->settings.command_requires_full_index)
 		ensure_full_index(istate);
+	else
+		ensure_correct_sparsity(istate);
 
 	return istate->cache_nr;
 
