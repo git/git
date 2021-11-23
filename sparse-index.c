@@ -175,17 +175,20 @@ int convert_to_sparse(struct index_state *istate, int flags)
 	if (index_has_unmerged_entries(istate))
 		return 0;
 
-	/* Clear and recompute the cache-tree */
-	cache_tree_free(&istate->cache_tree);
-	/*
-	 * Silently return if there is a problem with the cache tree update,
-	 * which might just be due to a conflict state in some entry.
-	 *
-	 * This might create new tree objects, so be sure to use
-	 * WRITE_TREE_MISSING_OK.
-	 */
-	if (cache_tree_update(istate, WRITE_TREE_MISSING_OK))
-		return 0;
+	if (!cache_tree_fully_valid(istate->cache_tree)) {
+		/* Clear and recompute the cache-tree */
+		cache_tree_free(&istate->cache_tree);
+
+		/*
+		 * Silently return if there is a problem with the cache tree update,
+		 * which might just be due to a conflict state in some entry.
+		 *
+		 * This might create new tree objects, so be sure to use
+		 * WRITE_TREE_MISSING_OK.
+		 */
+		if (cache_tree_update(istate, WRITE_TREE_MISSING_OK))
+			return 0;
+	}
 
 	remove_fsmonitor(istate);
 
