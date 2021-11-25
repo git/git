@@ -302,14 +302,10 @@ int interactive_add(const char **argv, const char *prefix, int patch)
 static int edit_patch(int argc, const char **argv, const char *prefix)
 {
 	char *file = git_pathdup("ADD_EDIT.patch");
-	const char *apply_argv[] = { "apply", "--recount", "--cached",
-		NULL, NULL };
 	struct child_process child = CHILD_PROCESS_INIT;
 	struct rev_info rev;
 	int out;
 	struct stat st;
-
-	apply_argv[3] = file;
 
 	git_config(git_diff_basic_config, NULL); /* no "diff" UI options */
 
@@ -338,7 +334,8 @@ static int edit_patch(int argc, const char **argv, const char *prefix)
 		die(_("Empty patch. Aborted."));
 
 	child.git_cmd = 1;
-	child.argv = apply_argv;
+	strvec_pushl(&child.args, "apply", "--recount", "--cached", file,
+		     NULL);
 	if (run_command(&child))
 		die(_("Could not apply '%s'"), file);
 
