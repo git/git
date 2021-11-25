@@ -655,12 +655,7 @@ static void trace_run_command(const struct child_process *cp)
 		sq_quote_buf_pretty(&buf, cp->dir);
 		strbuf_addch(&buf, ';');
 	}
-	/*
-	 * The caller is responsible for initializing cp->env from
-	 * cp->env_array if needed. We only check one place.
-	 */
-	if (cp->env)
-		trace_add_env(&buf, cp->env);
+	trace_add_env(&buf, cp->env_array.v);
 	if (cp->git_cmd)
 		strbuf_addstr(&buf, " git");
 	sq_quote_argv_pretty(&buf, cp->args.v);
@@ -675,9 +670,6 @@ int start_command(struct child_process *cmd)
 	int fdin[2], fdout[2], fderr[2];
 	int failed_errno;
 	char *str;
-
-	if (!cmd->env)
-		cmd->env = cmd->env_array.v;
 
 	/*
 	 * In case of errors we must keep the promise to close FDs
@@ -768,7 +760,7 @@ fail_pipe:
 		set_cloexec(null_fd);
 	}
 
-	childenv = prep_childenv(cmd->env);
+	childenv = prep_childenv(cmd->env_array.v);
 	atfork_prepare(&as);
 
 	/*
@@ -931,7 +923,7 @@ end_of_spawn:
 	else if (cmd->use_shell)
 		cmd->args.v = prepare_shell_cmd(&nargv, sargv);
 
-	cmd->pid = mingw_spawnvpe(cmd->args.v[0], cmd->args.v, (char**) cmd->env,
+	cmd->pid = mingw_spawnvpe(cmd->args.v[0], cmd->args.v, (char**) cmd->env_array.v,
 			cmd->dir, fhin, fhout, fherr);
 	failed_errno = errno;
 	if (cmd->pid < 0 && (!cmd->silent_exec_failure || errno != ENOENT))
@@ -1047,7 +1039,8 @@ int run_command_v_opt_cd_env_tr2(const char **argv, int opt, const char *dir,
 	cmd.wait_after_clean = opt & RUN_WAIT_AFTER_CLEAN ? 1 : 0;
 	cmd.close_object_store = opt & RUN_CLOSE_OBJECT_STORE ? 1 : 0;
 	cmd.dir = dir;
-	cmd.env = env;
+	if (env)
+		strvec_pushv(&cmd.env_array, (const char **)env);
 	cmd.trace2_child_class = tr2_class;
 	return run_command(&cmd);
 }
@@ -1333,7 +1326,8 @@ int run_hook_ve(const char *const *env, const char *name, va_list args)
 	strvec_push(&hook.args, p);
 	while ((p = va_arg(args, const char *)))
 		strvec_push(&hook.args, p);
-	hook.env = env;
+	if (env)
+		strvec_pushv(&hook.env_array, (const char **)env);
 	hook.no_stdin = 1;
 	hook.stdout_to_stderr = 1;
 	hook.trace2_hook_name = name;

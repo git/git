@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "config.h"
 #include "strbuf.h"
+#include "strvec.h"
 #include "run-command.h"
 #include "sigchain.h"
 
@@ -78,7 +79,8 @@ static int launch_specified_editor(const char *editor, const char *path,
 		strbuf_realpath(&realpath, path, 1);
 
 		strvec_pushl(&p.args, editor, realpath.buf, NULL);
-		p.env = env;
+		if (env)
+			strvec_pushv(&p.env_array, (const char **)env);
 		p.use_shell = 1;
 		p.trace2_child_class = "editor";
 		if (start_command(&p) < 0) {
