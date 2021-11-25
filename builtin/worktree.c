@@ -355,8 +355,8 @@ static int add_worktree(const char *path, const char *refname,
 		goto done;
 
 	if (opts->checkout) {
-		cp.argv = NULL;
-		strvec_clear(&cp.args);
+		struct child_process cp = CHILD_PROCESS_INIT;
+		cp.git_cmd = 1;
 		strvec_pushl(&cp.args, "reset", "--hard", "--no-recurse-submodules", NULL);
 		if (opts->quiet)
 			strvec_push(&cp.args, "--quiet");
@@ -385,12 +385,11 @@ done:
 		const char *hook = find_hook("post-checkout");
 		if (hook) {
 			const char *env[] = { "GIT_DIR", "GIT_WORK_TREE", NULL };
-			cp.git_cmd = 0;
+			struct child_process cp = CHILD_PROCESS_INIT;
 			cp.no_stdin = 1;
 			cp.stdout_to_stderr = 1;
 			cp.dir = path;
 			cp.env = env;
-			cp.argv = NULL;
 			cp.trace2_hook_name = "post-checkout";
 			strvec_pushl(&cp.args, absolute_path(hook),
 				     oid_to_hex(null_oid()),
