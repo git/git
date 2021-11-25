@@ -812,16 +812,13 @@ static int run_and_feed_hook(const char *hook_name, feed_fn feed,
 {
 	struct child_process proc = CHILD_PROCESS_INIT;
 	struct async muxer;
-	const char *argv[2];
 	int code;
+	const char *hook_path = find_hook(hook_name);
 
-	argv[0] = find_hook(hook_name);
-	if (!argv[0])
+	if (!hook_path)
 		return 0;
 
-	argv[1] = NULL;
-
-	proc.argv = argv;
+	strvec_push(&proc.args, hook_path);
 	proc.in = -1;
 	proc.stdout_to_stderr = 1;
 	proc.trace2_hook_name = hook_name;
@@ -943,23 +940,21 @@ static int run_receive_hook(struct command *commands,
 
 static int run_update_hook(struct command *cmd)
 {
-	const char *argv[5];
 	struct child_process proc = CHILD_PROCESS_INIT;
 	int code;
+	const char *hook_path = find_hook("update");
 
-	argv[0] = find_hook("update");
-	if (!argv[0])
+	if (!hook_path)
 		return 0;
 
-	argv[1] = cmd->ref_name;
-	argv[2] = oid_to_hex(&cmd->old_oid);
-	argv[3] = oid_to_hex(&cmd->new_oid);
-	argv[4] = NULL;
+	strvec_push(&proc.args, hook_path);
+	strvec_push(&proc.args, cmd->ref_name);
+	strvec_push(&proc.args, oid_to_hex(&cmd->old_oid));
+	strvec_push(&proc.args, oid_to_hex(&cmd->new_oid));
 
 	proc.no_stdin = 1;
 	proc.stdout_to_stderr = 1;
 	proc.err = use_sideband ? -1 : 0;
-	proc.argv = argv;
 	proc.trace2_hook_name = "update";
 
 	code = start_command(&proc);
@@ -1117,22 +1112,20 @@ static int run_proc_receive_hook(struct command *commands,
 	struct child_process proc = CHILD_PROCESS_INIT;
 	struct async muxer;
 	struct command *cmd;
-	const char *argv[2];
 	struct packet_reader reader;
 	struct strbuf cap = STRBUF_INIT;
 	struct strbuf errmsg = STRBUF_INIT;
 	int hook_use_push_options = 0;
 	int version = 0;
 	int code;
+	const char *hook_path = find_hook("proc-receive");
 
-	argv[0] = find_hook("proc-receive");
-	if (!argv[0]) {
+	if (!hook_path) {
 		rp_error("cannot find hook 'proc-receive'");
 		return -1;
 	}
-	argv[1] = NULL;
 
-	proc.argv = argv;
+	strvec_push(&proc.args, hook_path);
 	proc.in = -1;
 	proc.out = -1;
 	proc.trace2_hook_name = "proc-receive";

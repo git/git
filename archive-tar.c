@@ -430,7 +430,6 @@ static int write_tar_filter_archive(const struct archiver *ar,
 {
 	struct strbuf cmd = STRBUF_INIT;
 	struct child_process filter = CHILD_PROCESS_INIT;
-	const char *argv[2];
 	int r;
 
 	if (!ar->data)
@@ -440,14 +439,12 @@ static int write_tar_filter_archive(const struct archiver *ar,
 	if (args->compression_level >= 0)
 		strbuf_addf(&cmd, " -%d", args->compression_level);
 
-	argv[0] = cmd.buf;
-	argv[1] = NULL;
-	filter.argv = argv;
+	strvec_push(&filter.args, cmd.buf);
 	filter.use_shell = 1;
 	filter.in = -1;
 
 	if (start_command(&filter) < 0)
-		die_errno(_("unable to start '%s' filter"), argv[0]);
+		die_errno(_("unable to start '%s' filter"), cmd.buf);
 	close(1);
 	if (dup2(filter.in, 1) < 0)
 		die_errno(_("unable to redirect descriptor"));
@@ -457,7 +454,7 @@ static int write_tar_filter_archive(const struct archiver *ar,
 
 	close(1);
 	if (finish_command(&filter) != 0)
-		die(_("'%s' filter reported error"), argv[0]);
+		die(_("'%s' filter reported error"), cmd.buf);
 
 	strbuf_release(&cmd);
 	return r;
