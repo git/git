@@ -497,7 +497,7 @@ static int verify_ssh_signed_buffer(struct signature_check *sigc,
 			if (!*line)
 				break;
 
-			trust_size = strcspn(line, "\n");
+			trust_size = strcspn(line, "\r\n");
 			principal = xmemdupz(line, trust_size);
 
 			child_process_init(&ssh_keygen);
