@@ -167,6 +167,7 @@ static int disable_bits(DWORD bits)
 			strvec_push(&cp.args, "");
 		}
 
+		cp.silent_exec_failure = 1;
 		if (run_command(&cp) == 0)
 			return 0;
 
