@@ -1184,8 +1184,10 @@ static int read_single_character(struct add_p_state *s)
 {
 	if (s->s.use_single_key) {
 		int res = read_key_without_echo(&s->answer);
-		printf("%s\n", res == EOF ? "" : s->answer.buf);
-		return res;
+		if (res != EOF) {
+			printf("%s\n", s->answer.buf);
+			return res;
+		}
 	}
 
 	if (git_read_line_interactively(&s->answer) == EOF)

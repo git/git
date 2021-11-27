@@ -1,11 +1,16 @@
 #ifndef COMPAT_TERMINAL_H
 #define COMPAT_TERMINAL_H
 
+enum terminal_mode {
+	CBREAK = (1<<1)
+};
+
 int save_term(int full_duplex);
 void restore_term(void);
 
 char *git_terminal_prompt(const char *prompt, int echo);
 
+int terminal_support(enum terminal_mode);
 /* Read a single keystroke, without echoing it to the terminal */
 int read_key_without_echo(struct strbuf *buf);
 

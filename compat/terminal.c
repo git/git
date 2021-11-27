@@ -246,21 +246,13 @@ char *git_terminal_prompt(const char *prompt, int echo)
 
 int read_key_without_echo(struct strbuf *buf)
 {
-	static int warning_displayed;
 	char input[8];
 	ssize_t i, len;
 
-	if (warning_displayed || enable_non_canonical() < 0) {
-		if (!warning_displayed) {
-			warning("reading single keystrokes not supported on "
-				"this platform; reading line instead");
-			warning_displayed = 1;
-		}
-
-		return strbuf_getline(buf, stdin);
-	}
-
 	strbuf_reset(buf);
+	if (enable_non_canonical() < 0)
+		return EOF;
+
 	len = read(0, input, sizeof input);
 
 	for (i = 0; i < len; i++) {
@@ -286,6 +278,11 @@ void restore_term(void)
 {
 }
 
+static int enable_non_canonical(void)
+{
+	return -1;
+}
+
 char *git_terminal_prompt(const char *prompt, int echo)
 {
 	return getpass(prompt);
@@ -293,21 +290,24 @@ char *git_terminal_prompt(const char *prompt, int echo)
 
 int read_key_without_echo(struct strbuf *buf)
 {
-	static int warning_displayed;
-	const char *res;
-
-	if (!warning_displayed) {
-		warning("reading single keystrokes not supported on this "
-			"platform; reading line instead");
-		warning_displayed = 1;
-	}
-
-	res = getpass("");
-	strbuf_reset(buf);
-	if (!res)
-		return EOF;
-	strbuf_addstr(buf, res);
-	return 0;
+	BUG("should never be called if CBREAK is not supported");
+	return EOF;
 }
 
 #endif
+
+int terminal_support(enum terminal_mode mode)
+{
+	int ret;
+
+	switch (mode) {
+	case CBREAK:
+		ret = (enable_non_canonical() == 0);
+		restore_term();
+		break;
+	default:
+		BUG("unknown terminal_mode");
+	}
+
+	return ret;
+}

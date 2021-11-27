@@ -10,6 +10,7 @@
 #include "dir.h"
 #include "run-command.h"
 #include "prompt.h"
+#include "compat/terminal.h"
 
 static void init_color(struct repository *r, struct add_i_state *s,
 		       const char *section_and_slot, char *dst,
@@ -30,6 +31,7 @@ static void init_color(struct repository *r, struct add_i_state *s,
 void init_add_i_state(struct add_i_state *s, struct repository *r)
 {
 	const char *value;
+	int single_key = 0;
 
 	s->r = r;
 
@@ -69,7 +71,14 @@ void init_add_i_state(struct add_i_state *s, struct repository *r)
 	git_config_get_string("diff.algorithm",
 			      &s->interactive_diff_algorithm);
 
-	git_config_get_bool("interactive.singlekey", &s->use_single_key);
+	git_config_get_bool("interactive.singleKey", &single_key);
+
+	if (single_key && !terminal_support(CBREAK)) {
+		warning(_("missing single keystrock support, "
+			  "disabling interactive.singleKey"));
+		single_key = 0;
+	}
+	s->use_single_key = single_key;
 }
 
 void clear_add_i_state(struct add_i_state *s)
