@@ -1,0 +1,5 @@
+for i in 1 2 3 4 ; do
+# LINT: broken &&-chain okay if explicit "return $?" signals failure
+	git checkout main -b $i || return $?
+	test_commit $i $i $i tag$i || return $?
+done
