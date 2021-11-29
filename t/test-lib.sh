@@ -476,6 +476,13 @@ export GIT_TEST_MERGE_ALGORITHM
 GIT_TRACE_BARE=1
 export GIT_TRACE_BARE
 
+# Some tests scan the GIT_TRACE2_EVENT feed for events, but the
+# default depth is 2, which frequently causes issues when the
+# events are wrapped in new regions. Set it to a sufficiently
+# large depth to avoid custom changes in the test suite.
+GIT_TRACE2_EVENT_NESTING=100
+export GIT_TRACE2_EVENT_NESTING
+
 # Use specific version of the index file format
 if test -n "${GIT_TEST_INDEX_VERSION:+isset}"
 then
