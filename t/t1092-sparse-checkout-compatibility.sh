@@ -475,6 +475,104 @@ test_expect_success 'checkout and reset (mixed)' '
 	run_on_sparse test_path_is_missing folder1
 '
 
+test_expect_success 'checkout and reset (merge)' '
+	init_repos &&
+
+	write_script edit-contents <<-\EOF &&
+	echo text >>$1
+	EOF
+
+	test_all_match git checkout -b reset-test update-deep &&
+	run_on_all ../edit-contents a &&
+	test_all_match git reset --merge deepest &&
+	test_all_match git status --porcelain=v2 &&
+
+	test_all_match git reset --hard update-deep &&
+	run_on_all ../edit-contents deep/a &&
+	test_all_match test_must_fail git reset --merge deepest
+'
+
+test_expect_success 'checkout and reset (keep)' '
+	init_repos &&
+
+	write_script edit-contents <<-\EOF &&
+	echo text >>$1
+	EOF
+
+	test_all_match git checkout -b reset-test update-deep &&
+	run_on_all ../edit-contents a &&
+	test_all_match git reset --keep deepest &&
+	test_all_match git status --porcelain=v2 &&
+
+	test_all_match git reset --hard update-deep &&
+	run_on_all ../edit-contents deep/a &&
+	test_all_match test_must_fail git reset --keep deepest
+'
+
+test_expect_success 'reset with pathspecs inside sparse definition' '
+	init_repos &&
+
+	write_script edit-contents <<-\EOF &&
+	echo text >>$1
+	EOF
+
+	test_all_match git checkout -b reset-test update-deep &&
+	run_on_all ../edit-contents deep/a &&
+
+	test_all_match git reset base -- deep/a &&
+	test_all_match git status --porcelain=v2 &&
+
+	test_all_match git reset base -- nonexistent-file &&
+	test_all_match git status --porcelain=v2 &&
+
+	test_all_match git reset deepest -- deep &&
+	test_all_match git status --porcelain=v2
+'
+
+# Although the working tree differs between full and sparse checkouts after
+# reset, the state of the index is the same.
+test_expect_success 'reset with pathspecs outside sparse definition' '
+	init_repos &&
+	test_all_match git checkout -b reset-test base &&
+
+	test_sparse_match git reset update-folder1 -- folder1 &&
+	git -C full-checkout reset update-folder1 -- folder1 &&
+	test_sparse_match git status --porcelain=v2 &&
+	test_all_match git rev-parse HEAD:folder1 &&
+
+	test_sparse_match git reset update-folder2 -- folder2/a &&
+	git -C full-checkout reset update-folder2 -- folder2/a &&
+	test_sparse_match git status --porcelain=v2 &&
+	test_all_match git rev-parse HEAD:folder2/a
+'
+
+test_expect_success 'reset with wildcard pathspec' '
+	init_repos &&
+
+	test_all_match git reset update-deep -- deep\* &&
+	test_all_match git ls-files -s -- deep &&
+
+	test_all_match git reset deepest -- deep\*\*\* &&
+	test_all_match git ls-files -s -- deep &&
+
+	# The following `git reset`s result in updating the index on files with
+	# `skip-worktree` enabled. To avoid failing due to discrepencies in reported
+	# "modified" files, `test_sparse_match` reset is performed separately from
+	# "full-checkout" reset, then the index contents of all repos are verified.
+
+	test_sparse_match git reset update-folder1 -- \*/a &&
+	git -C full-checkout reset update-folder1 -- \*/a &&
+	test_all_match git ls-files -s -- deep/a folder1/a &&
+
+	test_sparse_match git reset update-folder2 -- folder\* &&
+	git -C full-checkout reset update-folder2 -- folder\* &&
+	test_all_match git ls-files -s -- folder10 folder1 folder2 &&
+
+	test_sparse_match git reset base -- folder1/\* &&
+	git -C full-checkout reset base -- folder1/\* &&
+	test_all_match git ls-files -s -- folder1
+'
+
 test_expect_success 'merge, cherry-pick, and rebase' '
 	init_repos &&
 
