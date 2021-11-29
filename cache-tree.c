@@ -740,15 +740,26 @@ out:
 	return ret;
 }
 
+static void prime_cache_tree_sparse_dir(struct cache_tree *it,
+					struct tree *tree)
+{
+
+	oidcpy(&it->oid, &tree->object.oid);
+	it->entry_count = 1;
+}
+
 static void prime_cache_tree_rec(struct repository *r,
 				 struct cache_tree *it,
-				 struct tree *tree)
+				 struct tree *tree,
+				 struct strbuf *tree_path)
 {
 	struct tree_desc desc;
 	struct name_entry entry;
 	int cnt;
+	int base_path_len = tree_path->len;
 
 	oidcpy(&it->oid, &tree->object.oid);
+
 	init_tree_desc(&desc, tree->buffer, tree->size);
 	cnt = 0;
 	while (tree_entry(&desc, &entry)) {
@@ -757,14 +768,40 @@ static void prime_cache_tree_rec(struct repository *r,
 		else {
 			struct cache_tree_sub *sub;
 			struct tree *subtree = lookup_tree(r, &entry.oid);
+
 			if (!subtree->object.parsed)
 				parse_tree(subtree);
 			sub = cache_tree_sub(it, entry.path);
 			sub->cache_tree = cache_tree();
-			prime_cache_tree_rec(r, sub->cache_tree, subtree);
+
+			/*
+			 * Recursively-constructed subtree path is only needed when working
+			 * in a sparse index (where it's used to determine whether the
+			 * subtree is a sparse directory in the index).
+			 */
+			if (r->index->sparse_index) {
+				strbuf_setlen(tree_path, base_path_len);
+				strbuf_grow(tree_path, base_path_len + entry.pathlen + 1);
+				strbuf_add(tree_path, entry.path, entry.pathlen);
+				strbuf_addch(tree_path, '/');
+			}
+
+			/*
+			 * If a sparse index is in use, the directory being processed may be
+			 * sparse. To confirm that, we can check whether an entry with that
+			 * exact name exists in the index. If it does, the created subtree
+			 * should be sparse. Otherwise, cache tree expansion should continue
+			 * as normal.
+			 */
+			if (r->index->sparse_index &&
+			    index_entry_exists(r->index, tree_path->buf, tree_path->len))
+				prime_cache_tree_sparse_dir(sub->cache_tree, subtree);
+			else
+				prime_cache_tree_rec(r, sub->cache_tree, subtree, tree_path);
 			cnt += sub->cache_tree->entry_count;
 		}
 	}
+
 	it->entry_count = cnt;
 }
 
@@ -772,11 +809,14 @@ void prime_cache_tree(struct repository *r,
 		      struct index_state *istate,
 		      struct tree *tree)
 {
+	struct strbuf tree_path = STRBUF_INIT;
+
 	trace2_region_enter("cache-tree", "prime_cache_tree", the_repository);
 	cache_tree_free(&istate->cache_tree);
 	istate->cache_tree = cache_tree();
 
-	prime_cache_tree_rec(r, istate->cache_tree, tree);
+	prime_cache_tree_rec(r, istate->cache_tree, tree, &tree_path);
+	strbuf_release(&tree_path);
 	istate->cache_changed |= CACHE_TREE_CHANGED;
 	trace2_region_leave("cache-tree", "prime_cache_tree", the_repository);
 }
