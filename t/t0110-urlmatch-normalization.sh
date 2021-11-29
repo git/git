@@ -47,7 +47,7 @@ test_expect_success 'url authority' '
 	test-tool urlmatch-normalization "scheme://@host" &&
 	test-tool urlmatch-normalization "scheme://%00@host" &&
 	! test-tool urlmatch-normalization "scheme://%%@host" &&
-	! test-tool urlmatch-normalization "scheme://host_" &&
+	test-tool urlmatch-normalization "scheme://host_" &&
 	test-tool urlmatch-normalization "scheme://user:pass@host/" &&
 	test-tool urlmatch-normalization "scheme://@host/" &&
 	test-tool urlmatch-normalization "scheme://host/" &&
