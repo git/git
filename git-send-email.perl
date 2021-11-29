@@ -40,7 +40,8 @@ package main;
 
 sub usage {
 	print <<EOT;
-git send-email [options] <file | directory | rev-list options >
+git send-email' [<options>] <file|directory>
+git send-email' [<options>] <format-patch options>
 git send-email --dump-aliases
 
   Composing:
@@ -113,9 +114,38 @@ EOT
 	exit(1);
 }
 
+sub uniq {
+	my %seen;
+	grep !$seen{$_}++, @_;
+}
+
 sub completion_helper {
-    print Git::command('format-patch', '--git-completion-helper');
-    exit(0);
+	my ($original_opts) = @_;
+	my %not_for_completion = (
+		"git-completion-helper" => undef,
+		"h" => undef,
+	);
+	my @send_email_opts = ();
+
+	foreach my $key (keys %$original_opts) {
+		unless (exists $not_for_completion{$key}) {
+			$key =~ s/!$//;
+
+			if ($key =~ /[:=][si]$/) {
+				$key =~ s/[:=][si]$//;
+				push (@send_email_opts, "--$_=") foreach (split (/\|/, $key));
+			} else {
+				push (@send_email_opts, "--$_") foreach (split (/\|/, $key));
+			}
+		}
+	}
+
+	my @format_patch_opts = split(/ /, Git::command('format-patch', '--git-completion-helper'));
+	my @opts = (@send_email_opts, @format_patch_opts);
+	@opts = uniq (grep !/^$/, @opts);
+	# There's an implicit '\n' here already, no need to add an explicit one.
+	print "@opts";
+	exit(0);
 }
 
 # most mail servers generate the Date: header, but not all...
@@ -425,10 +455,11 @@ my %known_config_keys;
 	my $key = "sendemail.identity";
 	$identity = Git::config(@repo, $key) if exists $known_config_keys{$key};
 }
-my $rc = GetOptions(
+my %identity_options = (
 	"identity=s" => \$identity,
 	"no-identity" => \$no_identity,
 );
+my $rc = GetOptions(%identity_options);
 usage() unless $rc;
 undef $identity if $no_identity;
 
@@ -444,14 +475,17 @@ undef $identity if $no_identity;
 
 my $help;
 my $git_completion_helper;
-$rc = GetOptions("h" => \$help,
-                 "dump-aliases" => \$dump_aliases);
+my %dump_aliases_options = (
+	"h" => \$help,
+	"dump-aliases" => \$dump_aliases,
+);
+$rc = GetOptions(%dump_aliases_options);
 usage() unless $rc;
 die __("--dump-aliases incompatible with other options\n")
     if !$help and $dump_aliases and @ARGV;
-$rc = GetOptions(
+my %options = (
 		    "sender|from=s" => \$sender,
-                    "in-reply-to=s" => \$initial_in_reply_to,
+		    "in-reply-to=s" => \$initial_in_reply_to,
 		    "reply-to=s" => \$reply_to,
 		    "subject=s" => \$initial_subject,
 		    "to=s" => \@getopt_to,
@@ -508,7 +542,8 @@ $rc = GetOptions(
 		    "batch-size=i" => \$batch_size,
 		    "relogin-delay=i" => \$relogin_delay,
 		    "git-completion-helper" => \$git_completion_helper,
-	 );
+);
+$rc = GetOptions(%options);
 
 # Munge any "either config or getopt, not both" variables
 my @initial_to = @getopt_to ? @getopt_to : ($no_to ? () : @config_to);
@@ -516,7 +551,8 @@ my @initial_cc = @getopt_cc ? @getopt_cc : ($no_cc ? () : @config_cc);
 my @initial_bcc = @getopt_bcc ? @getopt_bcc : ($no_bcc ? () : @config_bcc);
 
 usage() if $help;
-completion_helper() if $git_completion_helper;
+my %all_options = (%options, %dump_aliases_options, %identity_options);
+completion_helper(\%all_options) if $git_completion_helper;
 unless ($rc) {
     usage();
 }
