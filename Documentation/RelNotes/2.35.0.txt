@@ -4,11 +4,31 @@ Git 2.35 Release Notes
 Updates since Git 2.34
 ----------------------
 
+Backward compatibility warts
+
+ * "_" is now treated as any other URL-valid characters in an URL when
+   matching the per-URL configuration variable names.
+
+
 UI, Workflows & Features
+
+ * "git status --porcelain=v2" now show the number of stash entries
+   with --show-stash like the normal output does.
+
+ * "git stash" learned the "--staged" option to stash away what has
+   been added to the index (and nothing else).
 
 
 Performance, Internal Implementation, Development Support etc.
 
+ * The use of errno as a means to carry the nature of error in the ref
+   API implementation has been reworked and reduced.
+
+ * Teach and encourage first-time contributors to this project to
+   state the base commit when they submit their topic.
+
+ * The command line complation for "git send-email" options have been
+   tweaked to make it easier to keep it in sync with the command itself.
 
 
 Fixes since v2.34
@@ -19,16 +39,27 @@ Fixes since v2.34
    library in the latest release.
 
  * Other code cleanup, docfix, build fix, etc.
-   (merge edbd9f3715 ab/update-submitting-patches later to maint).
 
  * "git pull" with any strategy when the other side is behind us
    should succeed as it is a no-op, but doesn't.
-   (merge ea1954af ev/pull-already-up-to-date-is-noop later to maint).
 
  * An earlier change in 2.34.0 caused JGit application (that abused
    GIT_EDITOR mechanism when invoking "git config") to get stuck with
    a SIGTTOU signal; it has been reverted.
-   (merge e3f7e01b50 jc/save-restore-terminal-revert later to maint).
 
  * An earlier change that broke .gitignore matching has been reverted.
-   (merge 33c5d6c845 ds/add-rm-with-sparse-index later to maint).
+
+ * Things like "git -c branch.sort=bogus branch new HEAD", i.e. the
+   operation modes of the "git branch" command that do not need the
+   sort key information, no longer errors out by seeing a bogus sort
+   key.
+   (merge 98e7ab6d42 jc/fix-ref-sorting-parse later to maint).
+
+ * The compatibility implementation for unsetenv(3) were written to
+   mimic ancient, non-POSIX, variant seen in an old glibc; it has been
+   changed to return an integer to match the more modern era.
+   (merge a38989bd5b jc/unsetenv-returns-an-int later to maint).
+
+ * The clean/smudge conversion code path has been prepared to better
+   work on platforms where ulong is narrower than size_t.
+   (merge 596b5e77c9 mc/clean-smudge-with-llp64 later to maint).
