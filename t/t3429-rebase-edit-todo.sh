@@ -13,8 +13,13 @@ test_expect_success 'setup' '
 
 test_expect_success 'rebase exec modifies rebase-todo' '
 	todo=.git/rebase-merge/git-rebase-todo &&
-	git rebase HEAD -x "echo exec touch F >>$todo" &&
+	git rebase HEAD~1 -x "echo exec touch F >>$todo" &&
 	test -e F
+'
+
+test_expect_success 'rebase exec with an empty list does not exec anything' '
+	git rebase HEAD -x "true" 2>output &&
+	! grep "Executing: true" output
 '
 
 test_expect_success 'loose object cache vs re-reading todo list' '
