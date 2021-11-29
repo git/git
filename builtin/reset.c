@@ -204,10 +204,16 @@ static int pathspec_needs_expanded_index(const struct pathspec *pathspec)
 			/*
 			 * Special case: if the pattern is a path inside the cone
 			 * followed by only wildcards, the pattern cannot match
-			 * partial sparse directories, so we don't expand the index.
+			 * partial sparse directories, so we know we don't need to
+			 * expand the index.
+			 *
+			 * Examples:
+			 * - in-cone/foo***: doesn't need expanded index
+			 * - not-in-cone/bar*: may need expanded index
+			 * - **.c: may need expanded index
 			 */
-			if (path_in_cone_mode_sparse_checkout(item.original, &the_index) &&
-			    strspn(item.original + item.nowildcard_len, "*") == item.len - item.nowildcard_len)
+			if (strspn(item.original + item.nowildcard_len, "*") == item.len - item.nowildcard_len &&
+			    path_in_cone_mode_sparse_checkout(item.original, &the_index))
 				continue;
 
 			for (pos = 0; pos < active_nr; pos++) {
