@@ -23,16 +23,13 @@
 #define FILTER_REFS_KIND_MASK      (FILTER_REFS_ALL | FILTER_REFS_DETACHED_HEAD)
 
 struct atom_value;
+struct ref_sorting;
 
-struct ref_sorting {
-	struct ref_sorting *next;
-	int atom; /* index into used_atom array (internal) */
-	enum {
-		REF_SORTING_REVERSE = 1<<0,
-		REF_SORTING_ICASE = 1<<1,
-		REF_SORTING_VERSION = 1<<2,
-		REF_SORTING_DETACHED_HEAD_FIRST = 1<<3,
-	} sort_flags;
+enum ref_sorting_order {
+	REF_SORTING_REVERSE = 1<<0,
+	REF_SORTING_ICASE = 1<<1,
+	REF_SORTING_VERSION = 1<<2,
+	REF_SORTING_DETACHED_HEAD_FIRST = 1<<3,
 };
 
 struct ref_array_item {
@@ -97,9 +94,8 @@ struct ref_format {
 #define OPT_NO_MERGED(f, h) _OPT_MERGED_NO_MERGED("no-merged", f, h)
 
 #define OPT_REF_SORT(var) \
-	OPT_CALLBACK_F(0, "sort", (var), \
-		       N_("key"), N_("field name to sort on"), \
-		       PARSE_OPT_NONEG, parse_opt_ref_sorting)
+	OPT_STRING_LIST(0, "sort", (var), \
+			N_("key"), N_("field name to sort on"))
 
 /*
  * API for filtering a set of refs. Based on the type of refs the user
@@ -121,14 +117,10 @@ int format_ref_array_item(struct ref_array_item *info,
 			  struct ref_format *format,
 			  struct strbuf *final_buf,
 			  struct strbuf *error_buf);
-/*  Parse a single sort specifier and add it to the list */
-void parse_ref_sorting(struct ref_sorting **sorting_tail, const char *atom);
-/*  Callback function for parsing the sort option */
-int parse_opt_ref_sorting(const struct option *opt, const char *arg, int unset);
-/*  Default sort option based on refname */
-struct ref_sorting *ref_default_sorting(void);
 /* Release a "struct ref_sorting" */
 void ref_sorting_release(struct ref_sorting *);
+/*  Convert list of sort options into ref_sorting */
+struct ref_sorting *ref_sorting_options(struct string_list *);
 /*  Function to parse --merged and --no-merged options */
 int parse_opt_merge_filter(const struct option *opt, const char *arg, int unset);
 /*  Get the current HEAD's description */
