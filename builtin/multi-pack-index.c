@@ -167,6 +167,8 @@ static int cmd_multi_pack_index_verify(int argc, const char **argv)
 		usage_with_options(builtin_multi_pack_index_verify_usage,
 				   options);
 
+	FREE_AND_NULL(options);
+
 	return verify_midx_file(the_repository, opts.object_dir, opts.flags);
 }
 
@@ -190,6 +192,8 @@ static int cmd_multi_pack_index_expire(int argc, const char **argv)
 	if (argc)
 		usage_with_options(builtin_multi_pack_index_expire_usage,
 				   options);
+
+	FREE_AND_NULL(options);
 
 	return expire_midx_packs(the_repository, opts.object_dir, opts.flags);
 }
