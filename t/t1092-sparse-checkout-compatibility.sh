@@ -596,13 +596,11 @@ test_expect_success 'reset with pathspecs outside sparse definition' '
 
 	test_sparse_match git reset update-folder1 -- folder1 &&
 	git -C full-checkout reset update-folder1 -- folder1 &&
-	test_sparse_match git status --porcelain=v2 &&
-	test_all_match git rev-parse HEAD:folder1 &&
+	test_all_match git ls-files -s -- folder1 &&
 
 	test_sparse_match git reset update-folder2 -- folder2/a &&
 	git -C full-checkout reset update-folder2 -- folder2/a &&
-	test_sparse_match git status --porcelain=v2 &&
-	test_all_match git rev-parse HEAD:folder2/a
+	test_all_match git ls-files -s -- folder2/a
 '
 
 test_expect_success 'reset with wildcard pathspec' '
