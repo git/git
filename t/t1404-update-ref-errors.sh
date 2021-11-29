@@ -261,69 +261,69 @@ test_expect_success REFFILES 'empty directory should not fool 1-arg delete' '
 	git update-ref --stdin
 '
 
-test_expect_success 'D/F conflict prevents add long + delete short' '
+test_expect_success REFFILES 'D/F conflict prevents add long + delete short' '
 	df_test refs/df-al-ds --add-del foo/bar foo
 '
 
-test_expect_success 'D/F conflict prevents add short + delete long' '
+test_expect_success REFFILES 'D/F conflict prevents add short + delete long' '
 	df_test refs/df-as-dl --add-del foo foo/bar
 '
 
-test_expect_success 'D/F conflict prevents delete long + add short' '
+test_expect_success REFFILES 'D/F conflict prevents delete long + add short' '
 	df_test refs/df-dl-as --del-add foo/bar foo
 '
 
-test_expect_success 'D/F conflict prevents delete short + add long' '
+test_expect_success REFFILES 'D/F conflict prevents delete short + add long' '
 	df_test refs/df-ds-al --del-add foo foo/bar
 '
 
-test_expect_success 'D/F conflict prevents add long + delete short packed' '
+test_expect_success REFFILES 'D/F conflict prevents add long + delete short packed' '
 	df_test refs/df-al-dsp --pack --add-del foo/bar foo
 '
 
-test_expect_success 'D/F conflict prevents add short + delete long packed' '
+test_expect_success REFFILES 'D/F conflict prevents add short + delete long packed' '
 	df_test refs/df-as-dlp --pack --add-del foo foo/bar
 '
 
-test_expect_success 'D/F conflict prevents delete long packed + add short' '
+test_expect_success REFFILES 'D/F conflict prevents delete long packed + add short' '
 	df_test refs/df-dlp-as --pack --del-add foo/bar foo
 '
 
-test_expect_success 'D/F conflict prevents delete short packed + add long' '
+test_expect_success REFFILES 'D/F conflict prevents delete short packed + add long' '
 	df_test refs/df-dsp-al --pack --del-add foo foo/bar
 '
 
 # Try some combinations involving symbolic refs...
 
-test_expect_success 'D/F conflict prevents indirect add long + delete short' '
+test_expect_success REFFILES 'D/F conflict prevents indirect add long + delete short' '
 	df_test refs/df-ial-ds --sym-add --add-del foo/bar foo
 '
 
-test_expect_success 'D/F conflict prevents indirect add long + indirect delete short' '
+test_expect_success REFFILES 'D/F conflict prevents indirect add long + indirect delete short' '
 	df_test refs/df-ial-ids --sym-add --sym-del --add-del foo/bar foo
 '
 
-test_expect_success 'D/F conflict prevents indirect add short + indirect delete long' '
+test_expect_success REFFILES 'D/F conflict prevents indirect add short + indirect delete long' '
 	df_test refs/df-ias-idl --sym-add --sym-del --add-del foo foo/bar
 '
 
-test_expect_success 'D/F conflict prevents indirect delete long + indirect add short' '
+test_expect_success REFFILES 'D/F conflict prevents indirect delete long + indirect add short' '
 	df_test refs/df-idl-ias --sym-add --sym-del --del-add foo/bar foo
 '
 
-test_expect_success 'D/F conflict prevents indirect add long + delete short packed' '
+test_expect_success REFFILES 'D/F conflict prevents indirect add long + delete short packed' '
 	df_test refs/df-ial-dsp --sym-add --pack --add-del foo/bar foo
 '
 
-test_expect_success 'D/F conflict prevents indirect add long + indirect delete short packed' '
+test_expect_success REFFILES 'D/F conflict prevents indirect add long + indirect delete short packed' '
 	df_test refs/df-ial-idsp --sym-add --sym-del --pack --add-del foo/bar foo
 '
 
-test_expect_success 'D/F conflict prevents add long + indirect delete short packed' '
+test_expect_success REFFILES 'D/F conflict prevents add long + indirect delete short packed' '
 	df_test refs/df-al-idsp --sym-del --pack --add-del foo/bar foo
 '
 
-test_expect_success 'D/F conflict prevents indirect delete long packed + indirect add short' '
+test_expect_success REFFILES 'D/F conflict prevents indirect delete long packed + indirect add short' '
 	df_test refs/df-idlp-ias --sym-add --sym-del --pack --del-add foo/bar foo
 '
 
