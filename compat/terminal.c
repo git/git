@@ -198,37 +198,6 @@ static int enable_non_canonical(void)
 	return disable_bits(ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT | ENABLE_PROCESSED_INPUT);
 }
 
-/*
- * Override `getchar()`, as the default implementation does not use
- * `ReadFile()`.
- *
- * This poses a problem when we want to see whether the standard
- * input has more characters, as the default of Git for Windows is to start the
- * Bash in a MinTTY, which uses a named pipe to emulate a pty, in which case
- * our `poll()` emulation calls `PeekNamedPipe()`, which seems to require
- * `ReadFile()` to be called first to work properly (it only reports 0
- * available bytes, otherwise).
- *
- * So let's just override `getchar()` with a version backed by `ReadFile()` and
- * go our merry ways from here.
- */
-static int mingw_getchar(void)
-{
-	DWORD read = 0;
-	unsigned char ch;
-
-	if (!ReadFile(GetStdHandle(STD_INPUT_HANDLE), &ch, 1, &read, NULL))
-		return EOF;
-
-	if (!read) {
-		error("Unexpected 0 read");
-		return EOF;
-	}
-
-	return ch;
-}
-#define getchar mingw_getchar
-
 #endif
 
 #ifndef FORCE_TEXT
@@ -275,75 +244,11 @@ char *git_terminal_prompt(const char *prompt, int echo)
 	return buf.buf;
 }
 
-/*
- * The `is_known_escape_sequence()` function returns 1 if the passed string
- * corresponds to an Escape sequence that the terminal capabilities contains.
- *
- * To avoid depending on ncurses or other platform-specific libraries, we rely
- * on the presence of the `infocmp` executable to do the job for us (failing
- * silently if the program is not available or refused to run).
- */
-struct escape_sequence_entry {
-	struct hashmap_entry entry;
-	char sequence[FLEX_ARRAY];
-};
-
-static int sequence_entry_cmp(const void *hashmap_cmp_fn_data,
-			      const struct escape_sequence_entry *e1,
-			      const struct escape_sequence_entry *e2,
-			      const void *keydata)
-{
-	return strcmp(e1->sequence, keydata ? keydata : e2->sequence);
-}
-
-static int is_known_escape_sequence(const char *sequence)
-{
-	static struct hashmap sequences;
-	static int initialized;
-
-	if (!initialized) {
-		struct child_process cp = CHILD_PROCESS_INIT;
-		struct strbuf buf = STRBUF_INIT;
-		char *p, *eol;
-
-		hashmap_init(&sequences, (hashmap_cmp_fn)sequence_entry_cmp,
-			     NULL, 0);
-
-		strvec_pushl(&cp.args, "infocmp", "-L", "-1", NULL);
-		if (pipe_command(&cp, NULL, 0, &buf, 0, NULL, 0))
-			strbuf_setlen(&buf, 0);
-
-		for (eol = p = buf.buf; *p; p = eol + 1) {
-			p = strchr(p, '=');
-			if (!p)
-				break;
-			p++;
-			eol = strchrnul(p, '\n');
-
-			if (starts_with(p, "\\E")) {
-				char *comma = memchr(p, ',', eol - p);
-				struct escape_sequence_entry *e;
-
-				p[0] = '^';
-				p[1] = '[';
-				FLEX_ALLOC_MEM(e, sequence, p, comma - p);
-				hashmap_entry_init(&e->entry,
-						   strhash(e->sequence));
-				hashmap_add(&sequences, &e->entry);
-			}
-			if (!*eol)
-				break;
-		}
-		initialized = 1;
-	}
-
-	return !!hashmap_get_from_hash(&sequences, strhash(sequence), sequence);
-}
-
 int read_key_without_echo(struct strbuf *buf)
 {
 	static int warning_displayed;
-	int ch;
+	char input[8];
+	ssize_t i, len;
 
 	if (warning_displayed || enable_non_canonical() < 0) {
 		if (!warning_displayed) {
@@ -356,43 +261,17 @@ int read_key_without_echo(struct strbuf *buf)
 	}
 
 	strbuf_reset(buf);
-	ch = getchar();
-	if (ch == EOF) {
-		restore_term();
-		return EOF;
-	}
-	strbuf_addch(buf, ch);
+	len = read(0, input, sizeof input);
 
-	if (ch == '\033' /* ESC */) {
-		/*
-		 * We are most likely looking at an Escape sequence. Let's try
-		 * to read more bytes, waiting at most half a second, assuming
-		 * that the sequence is complete if we did not receive any byte
-		 * within that time.
-		 *
-		 * Start by replacing the Escape byte with ^[ */
-		strbuf_splice(buf, buf->len - 1, 1, "^[", 2);
-
-		/*
-		 * Query the terminal capabilities once about all the Escape
-		 * sequences it knows about, so that we can avoid waiting for
-		 * half a second when we know that the sequence is complete.
-		 */
-		while (!is_known_escape_sequence(buf->buf)) {
-			struct pollfd pfd = { .fd = 0, .events = POLLIN };
-
-			if (poll(&pfd, 1, 500) < 1)
-				break;
-
-			ch = getchar();
-			if (ch == EOF)
-				return 0;
-			strbuf_addch(buf, ch);
-		}
+	for (i = 0; i < len; i++) {
+		if (input[i] == '\033')
+			strbuf_addstr(buf, "^[");
+		else
+			strbuf_addch(buf, input[i]);
 	}
 
 	restore_term();
-	return 0;
+	return len ? 0 : EOF;
 }
 
 #else
