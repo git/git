@@ -688,7 +688,7 @@ test_expect_success 'submodule handling' '
 test_expect_success 'sparse-index is expanded and converted back' '
 	init_repos &&
 
-	GIT_TRACE2_EVENT="$(pwd)/trace2.txt" GIT_TRACE2_EVENT_NESTING=10 \
+	GIT_TRACE2_EVENT="$(pwd)/trace2.txt" \
 		git -C sparse-index -c core.fsmonitor="" reset --hard &&
 	test_region index convert_to_sparse trace2.txt &&
 	test_region index ensure_full_index trace2.txt
@@ -702,10 +702,10 @@ ensure_not_expanded () {
 	then
 		shift &&
 		test_must_fail env \
-			GIT_TRACE2_EVENT="$(pwd)/trace2.txt" GIT_TRACE2_EVENT_NESTING=10 \
+			GIT_TRACE2_EVENT="$(pwd)/trace2.txt" \
 			git -C sparse-index "$@" || return 1
 	else
-		GIT_TRACE2_EVENT="$(pwd)/trace2.txt" GIT_TRACE2_EVENT_NESTING=10 \
+		GIT_TRACE2_EVENT="$(pwd)/trace2.txt" \
 			git -C sparse-index "$@" || return 1
 	fi &&
 	test_region ! index ensure_full_index trace2.txt
