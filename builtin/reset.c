@@ -180,6 +180,7 @@ static int read_from_tree(const struct pathspec *pathspec,
 	opt.flags.override_submodule_config = 1;
 	opt.repo = the_repository;
 
+	ensure_full_index(&the_index);
 	if (do_diff_cache(tree_oid, &opt))
 		return 1;
 	diffcore_std(&opt);
@@ -256,9 +257,6 @@ static void parse_args(struct pathspec *pathspec,
 		}
 	}
 	*rev_ret = rev;
-
-	if (read_cache() < 0)
-		die(_("index file corrupt"));
 
 	parse_pathspec(pathspec, 0,
 		       PATHSPEC_PREFER_FULL |
@@ -404,6 +402,12 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 
 	if (intent_to_add && reset_type != MIXED)
 		die(_("-N can only be used with --mixed"));
+
+	prepare_repo_settings(the_repository);
+	the_repository->settings.command_requires_full_index = 0;
+
+	if (read_cache() < 0)
+		die(_("index file corrupt"));
 
 	/* Soft reset does not touch the index file nor the working tree
 	 * at all, but requires them in a good order.  Other resets reset
