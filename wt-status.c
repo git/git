@@ -948,11 +948,17 @@ static int stash_count_refs(struct object_id *ooid, struct object_id *noid,
 	return 0;
 }
 
+static int count_stash_entries(void)
+{
+	int n = 0;
+	for_each_reflog_ent("refs/stash", stash_count_refs, &n);
+	return n;
+}
+
 static void wt_longstatus_print_stash_summary(struct wt_status *s)
 {
-	int stash_count = 0;
+	int stash_count = count_stash_entries();
 
-	for_each_reflog_ent("refs/stash", stash_count_refs, &stash_count);
 	if (stash_count > 0)
 		status_printf_ln(s, GIT_COLOR_NORMAL,
 				 Q_("Your stash currently has %d entry",
@@ -2177,6 +2183,18 @@ static void wt_porcelain_v2_print_tracking(struct wt_status *s)
 }
 
 /*
+ * Print the stash count in a porcelain-friendly format
+ */
+static void wt_porcelain_v2_print_stash(struct wt_status *s)
+{
+	int stash_count = count_stash_entries();
+	char eol = s->null_termination ? '\0' : '\n';
+
+	if (stash_count > 0)
+		fprintf(s->fp, "# stash %d%c", stash_count, eol);
+}
+
+/*
  * Convert various submodule status values into a
  * fixed-length string of characters in the buffer provided.
  */
@@ -2436,6 +2454,9 @@ static void wt_porcelain_v2_print(struct wt_status *s)
 
 	if (s->show_branch)
 		wt_porcelain_v2_print_tracking(s);
+
+	if (s->show_stash)
+		wt_porcelain_v2_print_stash(s);
 
 	for (i = 0; i < s->change.nr; i++) {
 		it = &(s->change.items[i]);
