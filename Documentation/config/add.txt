@@ -7,6 +7,6 @@ add.ignore-errors (deprecated)::
 	variables.
 
 add.interactive.useBuiltin::
-	[EXPERIMENTAL] Set to `true` to use the experimental built-in
-	implementation of the interactive version of linkgit:git-add[1]
-	instead of the Perl script version. Is `false` by default.
+	Set to `false` to fall back to the original Perl implementation of
+	the interactive version of linkgit:git-add[1] instead of the built-in
+	version. Is `true` by default.
