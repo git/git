@@ -1455,7 +1455,7 @@ static const char *update_worktree(unsigned char *sha1, const struct worktree *w
 	if (!worktree || !worktree->path)
 		BUG("worktree->path must be non-NULL");
 
-	if (is_bare_repository())
+	if (worktree->is_bare)
 		return "denyCurrentBranch = updateInstead needs a worktree";
 	git_dir = get_worktree_git_dir(worktree);
 
@@ -1481,9 +1481,7 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 	int do_update_worktree = 0;
 	struct worktree **worktrees = get_worktrees();
 	const struct worktree *worktree =
-		is_bare_repository() ?
-			NULL :
-			find_shared_symref(worktrees, "HEAD", name);
+		find_shared_symref(worktrees, "HEAD", name);
 
 	/* only refs/... are allowed */
 	if (!starts_with(name, "refs/") || check_refname_format(name + 5, 0)) {
@@ -1496,7 +1494,7 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 	free(namespaced_name);
 	namespaced_name = strbuf_detach(&namespaced_name_buf, NULL);
 
-	if (worktree) {
+	if (worktree && !worktree->is_bare) {
 		switch (deny_current_branch) {
 		case DENY_IGNORE:
 			break;
