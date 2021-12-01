@@ -1449,29 +1449,22 @@ static const char *push_to_checkout(unsigned char *hash,
 
 static const char *update_worktree(unsigned char *sha1, const struct worktree *worktree)
 {
-	const char *retval, *work_tree, *git_dir = NULL;
+	const char *retval, *git_dir;
 	struct strvec env = STRVEC_INIT;
 
-	if (worktree && worktree->path)
-		work_tree = worktree->path;
-	else if (git_work_tree_cfg)
-		work_tree = git_work_tree_cfg;
-	else
-		work_tree = "..";
+	if (!worktree || !worktree->path)
+		BUG("worktree->path must be non-NULL");
 
 	if (is_bare_repository())
 		return "denyCurrentBranch = updateInstead needs a worktree";
-	if (worktree)
-		git_dir = get_worktree_git_dir(worktree);
-	if (!git_dir)
-		git_dir = get_git_dir();
+	git_dir = get_worktree_git_dir(worktree);
 
 	strvec_pushf(&env, "GIT_DIR=%s", absolute_path(git_dir));
 
 	if (!hook_exists(push_to_checkout_hook))
-		retval = push_to_deploy(sha1, &env, work_tree);
+		retval = push_to_deploy(sha1, &env, worktree->path);
 	else
-		retval = push_to_checkout(sha1, &env, work_tree);
+		retval = push_to_checkout(sha1, &env, worktree->path);
 
 	strvec_clear(&env);
 	return retval;
@@ -1592,9 +1585,7 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 	}
 
 	if (do_update_worktree) {
-		ret = update_worktree(new_oid->hash,
-				      find_shared_symref(worktrees, "HEAD",
-							 name));
+		ret = update_worktree(new_oid->hash, worktree);
 		if (ret)
 			goto out;
 	}
