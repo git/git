@@ -148,7 +148,7 @@ test_expect_success 'checkout -b to an existing branch fails' '
 test_expect_success 'checkout -b to @{-1} fails with the right branch name' '
 	git checkout branch1 &&
 	git checkout branch2 &&
-	echo  >expect "fatal: A branch named '\''branch1'\'' already exists." &&
+	echo  >expect "fatal: a branch named '\''branch1'\'' already exists" &&
 	test_must_fail git checkout -b @{-1} 2>actual &&
 	test_cmp expect actual
 '
