@@ -175,7 +175,7 @@ static int receive_pack_config(const char *var, const char *value, void *cb)
 			strbuf_addf(&fsck_msg_types, "%c%s=%s",
 				fsck_msg_types.len ? ',' : '=', var, value);
 		else
-			warning("Skipping unknown msg id '%s'", var);
+			warning("skipping unknown msg id '%s'", var);
 		return 0;
 	}
 
@@ -1589,9 +1589,9 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 		if (!parse_object(the_repository, old_oid)) {
 			old_oid = NULL;
 			if (ref_exists(name)) {
-				rp_warning("Allowing deletion of corrupt ref.");
+				rp_warning("allowing deletion of corrupt ref");
 			} else {
-				rp_warning("Deleting a non-existent ref.");
+				rp_warning("deleting a non-existent ref");
 				cmd->did_not_exist = 1;
 			}
 		}
@@ -2490,9 +2490,9 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, options, receive_pack_usage, 0);
 
 	if (argc > 1)
-		usage_msg_opt(_("Too many arguments."), receive_pack_usage, options);
+		usage_msg_opt(_("too many arguments"), receive_pack_usage, options);
 	if (argc == 0)
-		usage_msg_opt(_("You must specify a directory."), receive_pack_usage, options);
+		usage_msg_opt(_("you must specify a directory"), receive_pack_usage, options);
 
 	service_dir = argv[0];
 
