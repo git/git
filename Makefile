@@ -1218,7 +1218,7 @@ ARFLAGS = rcs
 PTHREAD_CFLAGS =
 
 # For the 'sparse' target
-SPARSE_FLAGS ?=
+SPARSE_FLAGS ?= -std=gnu99
 SP_EXTRA_FLAGS = -Wno-universal-initializer
 
 # For the 'coccicheck' target; setting SPATCH_BATCH_SIZE higher will
