@@ -357,14 +357,16 @@ void remove_branch_state(struct repository *r, int verbose)
 
 void die_if_checked_out(const char *branch, int ignore_current_worktree)
 {
+	struct worktree **worktrees = get_worktrees();
 	const struct worktree *wt;
 
-	wt = find_shared_symref("HEAD", branch);
-	if (!wt || (ignore_current_worktree && wt->is_current))
-		return;
-	skip_prefix(branch, "refs/heads/", &branch);
-	die(_("'%s' is already checked out at '%s'"),
-	    branch, wt->path);
+	wt = find_shared_symref(worktrees, "HEAD", branch);
+	if (wt && (!ignore_current_worktree || !wt->is_current)) {
+		skip_prefix(branch, "refs/heads/", &branch);
+		die(_("'%s' is already checked out at '%s'"), branch, wt->path);
+	}
+
+	free_worktrees(worktrees);
 }
 
 int replace_each_worktree_head_symref(const char *oldref, const char *newref,

@@ -1486,12 +1486,17 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 	struct object_id *old_oid = &cmd->old_oid;
 	struct object_id *new_oid = &cmd->new_oid;
 	int do_update_worktree = 0;
-	const struct worktree *worktree = is_bare_repository() ? NULL : find_shared_symref("HEAD", name);
+	struct worktree **worktrees = get_worktrees();
+	const struct worktree *worktree =
+		is_bare_repository() ?
+			NULL :
+			find_shared_symref(worktrees, "HEAD", name);
 
 	/* only refs/... are allowed */
 	if (!starts_with(name, "refs/") || check_refname_format(name + 5, 0)) {
 		rp_error("refusing to create funny ref '%s' remotely", name);
-		return "funny refname";
+		ret = "funny refname";
+		goto out;
 	}
 
 	strbuf_addf(&namespaced_name_buf, "%s%s", get_git_namespace(), name);
@@ -1510,7 +1515,8 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 			rp_error("refusing to update checked out branch: %s", name);
 			if (deny_current_branch == DENY_UNCONFIGURED)
 				refuse_unconfigured_deny();
-			return "branch is currently checked out";
+			ret = "branch is currently checked out";
+			goto out;
 		case DENY_UPDATE_INSTEAD:
 			/* pass -- let other checks intervene first */
 			do_update_worktree = 1;
@@ -1521,13 +1527,15 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 	if (!is_null_oid(new_oid) && !has_object_file(new_oid)) {
 		error("unpack should have generated %s, "
 		      "but I can't find it!", oid_to_hex(new_oid));
-		return "bad pack";
+		ret = "bad pack";
+		goto out;
 	}
 
 	if (!is_null_oid(old_oid) && is_null_oid(new_oid)) {
 		if (deny_deletes && starts_with(name, "refs/heads/")) {
 			rp_error("denying ref deletion for %s", name);
-			return "deletion prohibited";
+			ret = "deletion prohibited";
+			goto out;
 		}
 
 		if (worktree || (head_name && !strcmp(namespaced_name, head_name))) {
@@ -1543,9 +1551,11 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 				if (deny_delete_current == DENY_UNCONFIGURED)
 					refuse_unconfigured_deny_delete_current();
 				rp_error("refusing to delete the current branch: %s", name);
-				return "deletion of the current branch prohibited";
+				ret = "deletion of the current branch prohibited";
+				goto out;
 			default:
-				return "Invalid denyDeleteCurrent setting";
+				ret = "Invalid denyDeleteCurrent setting";
+				goto out;
 			}
 		}
 	}
@@ -1563,25 +1573,30 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 		    old_object->type != OBJ_COMMIT ||
 		    new_object->type != OBJ_COMMIT) {
 			error("bad sha1 objects for %s", name);
-			return "bad ref";
+			ret = "bad ref";
+			goto out;
 		}
 		old_commit = (struct commit *)old_object;
 		new_commit = (struct commit *)new_object;
 		if (!in_merge_bases(old_commit, new_commit)) {
 			rp_error("denying non-fast-forward %s"
 				 " (you should pull first)", name);
-			return "non-fast-forward";
+			ret = "non-fast-forward";
+			goto out;
 		}
 	}
 	if (run_update_hook(cmd)) {
 		rp_error("hook declined to update %s", name);
-		return "hook declined";
+		ret = "hook declined";
+		goto out;
 	}
 
 	if (do_update_worktree) {
-		ret = update_worktree(new_oid->hash, find_shared_symref("HEAD", name));
+		ret = update_worktree(new_oid->hash,
+				      find_shared_symref(worktrees, "HEAD",
+							 name));
 		if (ret)
-			return ret;
+			goto out;
 	}
 
 	if (is_null_oid(new_oid)) {
@@ -1600,17 +1615,19 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 					   old_oid,
 					   0, "push", &err)) {
 			rp_error("%s", err.buf);
-			strbuf_release(&err);
-			return "failed to delete";
+			ret = "failed to delete";
+		} else {
+			ret = NULL; /* good */
 		}
 		strbuf_release(&err);
-		return NULL; /* good */
 	}
 	else {
 		struct strbuf err = STRBUF_INIT;
 		if (shallow_update && si->shallow_ref[cmd->index] &&
-		    update_shallow_ref(cmd, si))
-			return "shallow error";
+		    update_shallow_ref(cmd, si)) {
+			ret = "shallow error";
+			goto out;
+		}
 
 		if (ref_transaction_update(transaction,
 					   namespaced_name,
@@ -1618,14 +1635,16 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 					   0, "push",
 					   &err)) {
 			rp_error("%s", err.buf);
-			strbuf_release(&err);
-
-			return "failed to update ref";
+			ret = "failed to update ref";
+		} else {
+			ret = NULL; /* good */
 		}
 		strbuf_release(&err);
-
-		return NULL; /* good */
 	}
+
+out:
+	free_worktrees(worktrees);
+	return ret;
 }
 
 static void run_update_post_hook(struct command *commands)
