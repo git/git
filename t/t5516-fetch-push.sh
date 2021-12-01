@@ -1771,4 +1771,22 @@ test_expect_success 'denyCurrentBranch and worktrees' '
 	git -C cloned push origin HEAD:new-wt &&
 	test_must_fail git -C cloned push --delete origin new-wt
 '
+
+test_expect_success 'refuse fetch to current branch of worktree' '
+	test_when_finished "git worktree remove --force wt && git branch -D wt" &&
+	git worktree add wt &&
+	test_commit apple &&
+	test_must_fail git fetch . HEAD:wt &&
+	git fetch -u . HEAD:wt
+'
+
+test_expect_success 'refuse fetch to current branch of bare repository worktree' '
+	test_when_finished "rm -fr bare.git" &&
+	git clone --bare . bare.git &&
+	git -C bare.git worktree add wt &&
+	test_commit banana &&
+	test_must_fail git -C bare.git fetch .. HEAD:wt &&
+	git -C bare.git fetch -u .. HEAD:wt
+'
+
 test_done
