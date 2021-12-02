@@ -1629,8 +1629,7 @@ static int packed_reflog_exists(struct ref_store *ref_store,
 }
 
 static int packed_create_reflog(struct ref_store *ref_store,
-			       const char *refname, int force_create,
-			       struct strbuf *err)
+				const char *refname, struct strbuf *err)
 {
 	BUG("packed reference store does not support reflogs");
 }

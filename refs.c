@@ -2373,16 +2373,15 @@ int reflog_exists(const char *refname)
 }
 
 int refs_create_reflog(struct ref_store *refs, const char *refname,
-		       int force_create, struct strbuf *err)
-{
-	return refs->be->create_reflog(refs, refname, force_create, err);
-}
-
-int safe_create_reflog(const char *refname, int force_create,
 		       struct strbuf *err)
 {
+	return refs->be->create_reflog(refs, refname, err);
+}
+
+int safe_create_reflog(const char *refname, struct strbuf *err)
+{
 	return refs_create_reflog(get_main_ref_store(the_repository), refname,
-				  force_create, err);
+				  err);
 }
 
 int refs_delete_reflog(struct ref_store *refs, const char *refname)
