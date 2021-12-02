@@ -63,6 +63,10 @@ check_show 'format-local:%%z' "$TIME" '%z'
 check_show 'format:%Y-%m-%d %H:%M:%S' "$TIME" '2016-06-15 16:13:20'
 check_show 'format-local:%Y-%m-%d %H:%M:%S' "$TIME" '2016-06-15 09:13:20' '' EST5
 
+check_show 'format:%s' '123456789 +1234' 123456789
+check_show 'format:%s' '123456789 -1234' 123456789
+check_show 'format-local:%s' '123456789 -1234' 123456789
+
 # arbitrary time absurdly far in the future
 FUTURE="5758122296 -0400"
 check_show iso       "$FUTURE" "2152-06-19 18:24:56 -0400" TIME_IS_64BIT,TIME_T_IS_64BIT
