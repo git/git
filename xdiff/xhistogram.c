@@ -91,9 +91,8 @@ struct region {
 static int cmp_recs(xpparam_t const *xpp,
 	xrecord_t *r1, xrecord_t *r2)
 {
-	return r1->ha == r2->ha &&
-		xdl_recmatch(r1->ptr, r1->size, r2->ptr, r2->size,
-			    xpp->flags);
+	return r1->ha == r2->ha;
+
 }
 
 #define CMP_ENV(xpp, env, s1, l1, s2, l2) \

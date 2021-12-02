@@ -392,10 +392,7 @@ static xdchange_t *xdl_add_change(xdchange_t *xscr, long i1, long i2, long chg1,
 
 static int recs_match(xrecord_t *rec1, xrecord_t *rec2, long flags)
 {
-	return (rec1->ha == rec2->ha &&
-		xdl_recmatch(rec1->ptr, rec1->size,
-			     rec2->ptr, rec2->size,
-			     flags));
+	return (rec1->ha == rec2->ha);
 }
 
 /*
