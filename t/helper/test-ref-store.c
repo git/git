@@ -5,6 +5,48 @@
 #include "object-store.h"
 #include "repository.h"
 
+struct flag_definition {
+	const char *name;
+	uint64_t mask;
+};
+
+#define FLAG_DEF(x)     \
+	{               \
+#x, (x) \
+	}
+
+static unsigned int parse_flags(const char *str, struct flag_definition *defs)
+{
+	struct string_list masks = STRING_LIST_INIT_DUP;
+	int i = 0;
+	unsigned int result = 0;
+
+	if (!strcmp(str, "0"))
+		return 0;
+
+	string_list_split(&masks, str, ',', 64);
+	for (; i < masks.nr; i++) {
+		const char *name = masks.items[i].string;
+		struct flag_definition *def = defs;
+		int found = 0;
+		while (def->name) {
+			if (!strcmp(def->name, name)) {
+				result |= def->mask;
+				found = 1;
+				break;
+			}
+			def++;
+		}
+		if (!found)
+			die("unknown flag \"%s\"", name);
+	}
+
+	string_list_clear(&masks, 0);
+	return result;
+}
+
+static struct flag_definition empty_flags[] = { { NULL, 0 } };
+
 static const char *notnull(const char *arg, const char *name)
 {
 	if (!arg)
@@ -12,9 +54,10 @@ static const char *notnull(const char *arg, const char *name)
 	return arg;
 }
 
-static unsigned int arg_flags(const char *arg, const char *name)
+static unsigned int arg_flags(const char *arg, const char *name,
+			      struct flag_definition *defs)
 {
-	return atoi(notnull(arg, name));
+	return parse_flags(notnull(arg, name), defs);
 }
 
 static const char **get_store(const char **argv, struct ref_store **refs)
@@ -64,10 +107,13 @@ static const char **get_store(const char **argv, struct ref_store **refs)
 	return argv + 1;
 }
 
+static struct flag_definition pack_flags[] = { FLAG_DEF(PACK_REFS_PRUNE),
+					       FLAG_DEF(PACK_REFS_ALL),
+					       { NULL, 0 } };
 
 static int cmd_pack_refs(struct ref_store *refs, const char **argv)
 {
-	unsigned int flags = arg_flags(*argv++, "flags");
+	unsigned int flags = arg_flags(*argv++, "flags", pack_flags);
 
 	return refs_pack_refs(refs, flags);
 }
@@ -81,9 +127,15 @@ static int cmd_create_symref(struct ref_store *refs, const char **argv)
 	return refs_create_symref(refs, refname, target, logmsg);
 }
 
+static struct flag_definition transaction_flags[] = {
+	FLAG_DEF(REF_NO_DEREF),
+	FLAG_DEF(REF_FORCE_CREATE_REFLOG),
+	{ NULL, 0 }
+};
+
 static int cmd_delete_refs(struct ref_store *refs, const char **argv)
 {
-	unsigned int flags = arg_flags(*argv++, "flags");
+	unsigned int flags = arg_flags(*argv++, "flags", transaction_flags);
 	const char *msg = *argv++;
 	struct string_list refnames = STRING_LIST_INIT_NODUP;
 
@@ -120,7 +172,7 @@ static int cmd_resolve_ref(struct ref_store *refs, const char **argv)
 {
 	struct object_id oid = *null_oid();
 	const char *refname = notnull(*argv++, "refname");
-	int resolve_flags = arg_flags(*argv++, "resolve-flags");
+	int resolve_flags = arg_flags(*argv++, "resolve-flags", empty_flags);
 	int flags;
 	const char *ref;
 	int ignore_errno;
@@ -209,7 +261,7 @@ static int cmd_delete_ref(struct ref_store *refs, const char **argv)
 	const char *msg = notnull(*argv++, "msg");
 	const char *refname = notnull(*argv++, "refname");
 	const char *sha1_buf = notnull(*argv++, "old-sha1");
-	unsigned int flags = arg_flags(*argv++, "flags");
+	unsigned int flags = arg_flags(*argv++, "flags", transaction_flags);
 	struct object_id old_oid;
 
 	if (get_oid_hex(sha1_buf, &old_oid))
@@ -224,7 +276,7 @@ static int cmd_update_ref(struct ref_store *refs, const char **argv)
 	const char *refname = notnull(*argv++, "refname");
 	const char *new_sha1_buf = notnull(*argv++, "new-sha1");
 	const char *old_sha1_buf = notnull(*argv++, "old-sha1");
-	unsigned int flags = arg_flags(*argv++, "flags");
+	unsigned int flags = arg_flags(*argv++, "flags", transaction_flags);
 	struct object_id old_oid;
 	struct object_id new_oid;
 
