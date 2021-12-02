@@ -125,11 +125,11 @@ command can be requested at a time.
     empty-request = flush-pkt
     command-request = command
 		      capability-list
-		      [command-args]
+		      delim-pkt
+		      command-args
 		      flush-pkt
     command = PKT-LINE("command=" key LF)
-    command-args = delim-pkt
-		   *command-specific-arg
+    command-args = *command-specific-arg
 
     command-specific-args are packet line framed arguments defined by
     each individual command.
