@@ -952,6 +952,28 @@ test_expect_success 'decorate-refs-exclude and simplify-by-decoration' '
 	test_cmp expect.decorate actual
 '
 
+test_expect_success 'decorate-refs with implied decorate from format' '
+	cat >expect <<-\EOF &&
+	side-2 (tag: side-2)
+	side-1
+	EOF
+	git log --no-walk --format="%s%d" \
+		--decorate-refs="*side-2" side-1 side-2 \
+		>actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'implied decorate does not override option' '
+	cat >expect <<-\EOF &&
+	side-2 (tag: refs/tags/side-2, refs/heads/side)
+	side-1 (tag: refs/tags/side-1)
+	EOF
+	git log --no-walk --format="%s%d" \
+		--decorate=full side-1 side-2 \
+		>actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'log.decorate config parsing' '
 	git log --oneline --decorate=full >expect.full &&
 	git log --oneline --decorate=short >expect.short &&

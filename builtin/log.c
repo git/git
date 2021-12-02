@@ -245,8 +245,22 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 			rev->abbrev_commit = 0;
 	}
 
-	if (rev->commit_format == CMIT_FMT_USERFORMAT && !w.decorate)
-		decoration_style = 0;
+	if (rev->commit_format == CMIT_FMT_USERFORMAT) {
+		if (!w.decorate) {
+			/*
+			 * Disable decoration loading if the format will not
+			 * show them anyway.
+			 */
+			decoration_style = 0;
+		} else if (!decoration_style) {
+			/*
+			 * If we are going to show them, make sure we do load
+			 * them here, but taking care not to override a
+			 * specific style set by config or --decorate.
+			 */
+			decoration_style = DECORATE_SHORT_REFS;
+		}
+	}
 
 	if (decoration_style) {
 		const struct string_list *config_exclude =
