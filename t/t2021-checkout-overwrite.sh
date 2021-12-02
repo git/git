@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='checkout must not overwrite an untracked objects'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '
