@@ -515,15 +515,6 @@ static void strbuf_to_cone_pattern(struct strbuf *line, struct pattern_list *pl)
 	insert_recursive_pattern(pl, line);
 }
 
-static char const * const builtin_sparse_checkout_set_usage[] = {
-	N_("git sparse-checkout (set|add) (--stdin | <patterns>)"),
-	NULL
-};
-
-static struct sparse_checkout_set_opts {
-	int use_stdin;
-} set_opts;
-
 static void add_patterns_from_input(struct pattern_list *pl,
 				    int argc, const char **argv,
 				    int use_stdin)
@@ -663,8 +654,43 @@ static int modify_pattern_list(int argc, const char **argv, int use_stdin,
 	return result;
 }
 
-static int sparse_checkout_set(int argc, const char **argv, const char *prefix,
-			       enum modify_type m)
+static char const * const builtin_sparse_checkout_add_usage[] = {
+	N_("git sparse-checkout add (--stdin | <patterns>)"),
+	NULL
+};
+
+static struct sparse_checkout_add_opts {
+	int use_stdin;
+} add_opts;
+
+static int sparse_checkout_add(int argc, const char **argv, const char *prefix)
+{
+	static struct option builtin_sparse_checkout_add_options[] = {
+		OPT_BOOL(0, "stdin", &add_opts.use_stdin,
+			 N_("read patterns from standard in")),
+		OPT_END(),
+	};
+
+	repo_read_index(the_repository);
+
+	argc = parse_options(argc, argv, prefix,
+			     builtin_sparse_checkout_add_options,
+			     builtin_sparse_checkout_add_usage,
+			     PARSE_OPT_KEEP_UNKNOWN);
+
+	return modify_pattern_list(argc, argv, add_opts.use_stdin, ADD);
+}
+
+static char const * const builtin_sparse_checkout_set_usage[] = {
+	N_("git sparse-checkout set (--stdin | <patterns>)"),
+	NULL
+};
+
+static struct sparse_checkout_set_opts {
+	int use_stdin;
+} set_opts;
+
+static int sparse_checkout_set(int argc, const char **argv, const char *prefix)
 {
 	static struct option builtin_sparse_checkout_set_options[] = {
 		OPT_BOOL(0, "stdin", &set_opts.use_stdin,
@@ -679,7 +705,7 @@ static int sparse_checkout_set(int argc, const char **argv, const char *prefix,
 			     builtin_sparse_checkout_set_usage,
 			     PARSE_OPT_KEEP_UNKNOWN);
 
-	return modify_pattern_list(argc, argv, set_opts.use_stdin, m);
+	return modify_pattern_list(argc, argv, set_opts.use_stdin, REPLACE);
 }
 
 static char const * const builtin_sparse_checkout_reapply_usage[] = {
@@ -762,9 +788,9 @@ int cmd_sparse_checkout(int argc, const char **argv, const char *prefix)
 		if (!strcmp(argv[0], "init"))
 			return sparse_checkout_init(argc, argv);
 		if (!strcmp(argv[0], "set"))
-			return sparse_checkout_set(argc, argv, prefix, REPLACE);
+			return sparse_checkout_set(argc, argv, prefix);
 		if (!strcmp(argv[0], "add"))
-			return sparse_checkout_set(argc, argv, prefix, ADD);
+			return sparse_checkout_add(argc, argv, prefix);
 		if (!strcmp(argv[0], "reapply"))
 			return sparse_checkout_reapply(argc, argv);
 		if (!strcmp(argv[0], "disable"))
