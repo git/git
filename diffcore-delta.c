@@ -133,10 +133,10 @@ static struct spanhash_top *hash_chars(struct repository *r,
 
 	i = INITIAL_HASH_SIZE;
 	hash = xmalloc(st_add(sizeof(*hash),
-			      st_mult(sizeof(struct spanhash), 1<<i)));
+			      st_mult(sizeof(struct spanhash), (size_t)1 << i)));
 	hash->alloc_log2 = i;
 	hash->free = INITIAL_FREE(i);
-	memset(hash->data, 0, sizeof(struct spanhash) * (1<<i));
+	memset(hash->data, 0, sizeof(struct spanhash) * ((size_t)1 << i));
 
 	n = 0;
 	accum1 = accum2 = 0;
@@ -159,7 +159,7 @@ static struct spanhash_top *hash_chars(struct repository *r,
 		n = 0;
 		accum1 = accum2 = 0;
 	}
-	QSORT(hash->data, 1ul << hash->alloc_log2, spanhash_cmp);
+	QSORT(hash->data, (size_t)1ul << hash->alloc_log2, spanhash_cmp);
 	return hash;
 }
 
