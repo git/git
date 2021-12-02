@@ -9,10 +9,10 @@ git-p4 - Import from and submit to Perforce repositories
 SYNOPSIS
 --------
 [verse]
-'git p4 clone' [<sync options>] [<clone options>] <p4 depot path>...
-'git p4 sync' [<sync options>] [<p4 depot path>...]
+'git p4 clone' [<sync-options>] [<clone-options>] <p4-depot-path>...
+'git p4 sync' [<sync-options>] [<p4-depot-path>...]
 'git p4 rebase'
-'git p4 submit' [<submit options>] [<master branch name>]
+'git p4 submit' [<submit-options>] [<master-branch-name>]
 
 
 DESCRIPTION
@@ -361,7 +361,7 @@ These options can be used to modify 'git p4 submit' behavior.
 	p4/master.  See the "Sync options" section above for more
 	information.
 
---commit <sha1>|<sha1..sha1>::
+--commit (<sha1>|<sha1>..<sha1>)::
     Submit only the specified commit or range of commits, instead of the full
     list of changes that are in the current Git branch.
 
