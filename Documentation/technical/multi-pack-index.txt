@@ -87,11 +87,6 @@ Future Work
   helpful to organize packfiles by object type (commit, tree, blob,
   etc.) and use this metadata to help that maintenance.
 
-- The partial clone feature records special "promisor" packs that
-  may point to objects that are not stored locally, but available
-  on request to a server. The multi-pack-index does not currently
-  track these promisor packs.
-
 Related Links
 -------------
 [0] https://bugs.chromium.org/p/git/issues/detail?id=6
