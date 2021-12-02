@@ -970,7 +970,7 @@ static void show_advice_pull_non_ff(void)
 		 "You can do so by running one of the following commands sometime before\n"
 		 "your next pull:\n"
 		 "\n"
-		 "  git config pull.rebase false  # merge (the default strategy)\n"
+		 "  git config pull.rebase false  # merge\n"
 		 "  git config pull.rebase true   # rebase\n"
 		 "  git config pull.ff only       # fast-forward only\n"
 		 "\n"
