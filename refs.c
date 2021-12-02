@@ -1094,6 +1094,13 @@ int ref_transaction_update(struct ref_transaction *transaction,
 	if (flags & ~REF_TRANSACTION_UPDATE_ALLOWED_FLAGS)
 		BUG("illegal flags 0x%x passed to ref_transaction_update()", flags);
 
+	/*
+	 * Clear flags outside the allowed set; this should be a noop because
+	 * of the BUG() check above, but it works around a -Wnonnull warning
+	 * with some versions of "gcc -O3".
+	 */
+	flags &= REF_TRANSACTION_UPDATE_ALLOWED_FLAGS;
+
 	flags |= (new_oid ? REF_HAVE_NEW : 0) | (old_oid ? REF_HAVE_OLD : 0);
 
 	ref_transaction_add_update(transaction, refname, flags,
