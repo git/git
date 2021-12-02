@@ -50,7 +50,7 @@ const char *git_sequence_editor(void)
 
 static int prepare_term(const char *editor)
 {
-	int need_saverestore = !strcmp(editor, "vi");
+	int need_saverestore = !strcmp(editor, DEFAULT_EDITOR);
 
 	git_config_get_bool("editor.stty", &need_saverestore);
 	if (need_saverestore)
@@ -68,8 +68,10 @@ static int launch_specified_editor(const char *editor, const char *path,
 		struct strbuf realpath = STRBUF_INIT;
 		const char *args[] = { editor, NULL, NULL };
 		struct child_process p = CHILD_PROCESS_INIT;
-		int ret, sig, need_restore = 0;
-		int print_waiting_for_editor = advice_enabled(ADVICE_WAITING_FOR_EDITOR) && isatty(2);
+		int ret, sig, need_restore;
+		int is_interactive = isatty(2);
+		int print_waiting_for_editor = advice_enabled(ADVICE_WAITING_FOR_EDITOR) &&
+						is_interactive;
 
 		if (print_waiting_for_editor) {
 			/*
@@ -94,7 +96,7 @@ static int launch_specified_editor(const char *editor, const char *path,
 		p.env = env;
 		p.use_shell = 1;
 		p.trace2_child_class = "editor";
-		need_restore = prepare_term(editor);
+		need_restore = is_interactive ? prepare_term(editor) : 0;
 		if (start_command(&p) < 0) {
 			if (need_restore)
 				restore_term();
