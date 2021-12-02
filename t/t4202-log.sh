@@ -974,6 +974,21 @@ test_expect_success 'implied decorate does not override option' '
 	test_cmp expect actual
 '
 
+test_expect_success 'decorate-refs and simplify-by-decoration without output' '
+	cat >expect <<-\EOF &&
+	side-2
+	initial
+	EOF
+	# Do not just use a --format without %d here; we want to
+	# make sure that we did not accidentally turn on displaying
+	# the decorations, too. And that requires one of the regular
+	# formats.
+	git log --decorate-refs="*side-2" --oneline \
+		--simplify-by-decoration >actual.raw &&
+	sed "s/^[0-9a-f]* //" <actual.raw >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'log.decorate config parsing' '
 	git log --oneline --decorate=full >expect.full &&
 	git log --oneline --decorate=short >expect.short &&

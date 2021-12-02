@@ -262,7 +262,7 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 		}
 	}
 
-	if (decoration_style) {
+	if (decoration_style || rev->simplify_by_decoration) {
 		const struct string_list *config_exclude =
 			repo_config_get_value_multi(the_repository,
 						    "log.excludeDecoration");
@@ -274,7 +274,8 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 						   item->string);
 		}
 
-		rev->show_decorations = 1;
+		if (decoration_style)
+			rev->show_decorations = 1;
 
 		load_ref_decorations(&decoration_filter, decoration_style);
 	}
