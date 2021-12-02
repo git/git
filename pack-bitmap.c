@@ -1759,7 +1759,7 @@ int test_bitmap_hashes(struct repository *r)
 	struct object_id oid;
 	uint32_t i, index_pos;
 
-	if (!bitmap_git->hashes)
+	if (!bitmap_git || !bitmap_git->hashes)
 		goto cleanup;
 
 	for (i = 0; i < bitmap_num_objects(bitmap_git); i++) {
