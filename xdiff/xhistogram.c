@@ -95,9 +95,6 @@ static int cmp_recs(xpparam_t const *xpp,
 
 }
 
-#define CMP_ENV(xpp, env, s1, l1, s2, l2) \
-	(cmp_recs(xpp, REC(env, s1, l1), REC(env, s2, l2)))
-
 #define CMP(i, s1, l1, s2, l2) \
 	(cmp_recs(i->xpp, REC(i->env, s1, l1), REC(i->env, s2, l2)))
 
