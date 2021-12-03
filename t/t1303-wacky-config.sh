@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='Test wacky input to git config'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # Leaving off the newline is intentional!

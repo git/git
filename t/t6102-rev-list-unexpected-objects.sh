@@ -2,6 +2,7 @@
 
 test_description='git rev-list should handle unexpected object types'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup well-formed objects' '

@@ -2,6 +2,7 @@
 
 test_description='pack should notice missing commit objects'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '
