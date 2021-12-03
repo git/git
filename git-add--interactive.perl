@@ -1175,15 +1175,17 @@ sub prompt_single_character {
 		ReadMode 'cbreak';
 		my $key = ReadKey 0;
 		ReadMode 'restore';
-		if ($use_termcap and $key eq "\e") {
-			while (!defined $term_escapes{$key}) {
-				my $next = ReadKey 0.5;
-				last if (!defined $next);
-				$key .= $next;
+		if (defined $key) {
+			if ($use_termcap and $key eq "\e") {
+				while (!defined $term_escapes{$key}) {
+					my $next = ReadKey 0.5;
+					last if (!defined $next);
+					$key .= $next;
+				}
+				$key =~ s/\e/^[/;
 			}
-			$key =~ s/\e/^[/;
+			print "$key";
 		}
-		print "$key" if defined $key;
 		print "\n";
 		return $key;
 	} else {
