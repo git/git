@@ -72,7 +72,7 @@ static void delete_worktrees_dir_if_empty(void)
 static void prune_worktree(const char *id, const char *reason)
 {
 	if (show_only || verbose)
-		printf_ln(_("Removing %s/%s: %s"), "worktrees", id, reason);
+		fprintf_ln(stderr, _("Removing %s/%s: %s"), "worktrees", id, reason);
 	if (!show_only)
 		delete_git_dir(id);
 }
@@ -418,24 +418,24 @@ static void print_preparing_worktree_line(int detach,
 	if (force_new_branch) {
 		struct commit *commit = lookup_commit_reference_by_name(new_branch);
 		if (!commit)
-			printf_ln(_("Preparing worktree (new branch '%s')"), new_branch);
+			fprintf_ln(stderr, _("Preparing worktree (new branch '%s')"), new_branch);
 		else
-			printf_ln(_("Preparing worktree (resetting branch '%s'; was at %s)"),
+			fprintf_ln(stderr, _("Preparing worktree (resetting branch '%s'; was at %s)"),
 				  new_branch,
 				  find_unique_abbrev(&commit->object.oid, DEFAULT_ABBREV));
 	} else if (new_branch) {
-		printf_ln(_("Preparing worktree (new branch '%s')"), new_branch);
+		fprintf_ln(stderr, _("Preparing worktree (new branch '%s')"), new_branch);
 	} else {
 		struct strbuf s = STRBUF_INIT;
 		if (!detach && !strbuf_check_branch_ref(&s, branch) &&
 		    ref_exists(s.buf))
-			printf_ln(_("Preparing worktree (checking out '%s')"),
+			fprintf_ln(stderr, _("Preparing worktree (checking out '%s')"),
 				  branch);
 		else {
 			struct commit *commit = lookup_commit_reference_by_name(branch);
 			if (!commit)
 				die(_("invalid reference: %s"), branch);
-			printf_ln(_("Preparing worktree (detached HEAD %s)"),
+			fprintf_ln(stderr, _("Preparing worktree (detached HEAD %s)"),
 				  find_unique_abbrev(&commit->object.oid, DEFAULT_ABBREV));
 		}
 		strbuf_release(&s);
@@ -1006,7 +1006,7 @@ static int remove_worktree(int ac, const char **av, const char *prefix)
 static void report_repair(int iserr, const char *path, const char *msg, void *cb_data)
 {
 	if (!iserr) {
-		printf_ln(_("repair: %s: %s"), msg, path);
+		fprintf_ln(stderr, _("repair: %s: %s"), msg, path);
 	} else {
 		int *exit_status = (int *)cb_data;
 		fprintf_ln(stderr, _("error: %s: %s"), msg, path);
