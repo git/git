@@ -5,9 +5,6 @@ test_description='Per branch config variables affects "git fetch".
 
 '
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
-
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-bundle.sh
 
