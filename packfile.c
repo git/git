@@ -324,7 +324,8 @@ void close_pack_index(struct packed_git *p)
 	}
 }
 
-void close_pack_revindex(struct packed_git *p) {
+static void close_pack_revindex(struct packed_git *p)
+{
 	if (!p->revindex_map)
 		return;
 
