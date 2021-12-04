@@ -44,11 +44,20 @@ static struct rev_name *get_commit_rev_name(const struct commit *commit)
 	return is_valid_rev_name(name) ? name : NULL;
 }
 
+static int effective_distance(int distance, int generation)
+{
+	return distance + (generation > 0 ? MERGE_TRAVERSAL_WEIGHT : 0);
+}
+
 static int is_better_name(struct rev_name *name,
 			  timestamp_t taggerdate,
+			  int generation,
 			  int distance,
 			  int from_tag)
 {
+	int name_distance = effective_distance(name->distance, name->generation);
+	int new_distance = effective_distance(distance, generation);
+
 	/*
 	 * When comparing names based on tags, prefer names
 	 * based on the older tag, even if it is farther away.
@@ -56,7 +65,7 @@ static int is_better_name(struct rev_name *name,
 	if (from_tag && name->from_tag)
 		return (name->taggerdate > taggerdate ||
 			(name->taggerdate == taggerdate &&
-			 name->distance > distance));
+			 name_distance > new_distance));
 
 	/*
 	 * We know that at least one of them is a non-tag at this point.
@@ -69,8 +78,8 @@ static int is_better_name(struct rev_name *name,
 	 * We are now looking at two non-tags.  Tiebreak to favor
 	 * shorter hops.
 	 */
-	if (name->distance != distance)
-		return name->distance > distance;
+	if (name_distance != new_distance)
+		return name_distance > new_distance;
 
 	/* ... or tiebreak to favor older date */
 	if (name->taggerdate != taggerdate)
@@ -88,7 +97,7 @@ static struct rev_name *create_or_update_name(struct commit *commit,
 	struct rev_name *name = commit_rev_name_at(&rev_names, commit);
 
 	if (is_valid_rev_name(name)) {
-		if (!is_better_name(name, taggerdate, distance, from_tag))
+		if (!is_better_name(name, taggerdate, generation, distance, from_tag))
 			return NULL;
 
 		/*
