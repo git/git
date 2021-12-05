@@ -93,6 +93,73 @@ sub topic_relation {
 	}
 }
 
+sub get_message_parent {
+	my ($mid) = @_;
+	my @line = ();
+	my %irt = ();
+
+	open(my $fh, "-|", qw(curl -s),
+	     "https://lore.kernel.org/git/" . "$mid" . "/raw");
+	while (<$fh>) {
+		last if (/^$/);
+		chomp;
+		if (/^\s/) {
+			$line[-1] .= $_;
+		} else {
+			push @line, $_;
+		}
+	}
+	while (<$fh>) { # slurp
+	}
+	close($fh);
+	for (@line) {
+		if (s/^in-reply-to:\s*//i) {
+			while (/\s*<([^<]*)>\s*(.*)/) {
+				$irt{$1} = $1;
+				$_ = $2;
+			}
+		}
+	}
+	keys %irt;
+}
+
+sub get_source {
+	my ($branch) = @_;
+	my @id = ();
+	my %msgs = ();
+	my %source = ();
+	my %skip_me = ();
+
+	open(my $fh, "-|",
+	     qw(git log --notes=amlog --first-parent --format=%N ^master),
+	     $branch);
+	while (<$fh>) {
+		if (s/^message-id:\s*<(.*)>\s*$/$1/i) {
+			my $msg = $_;
+			$msgs{$msg} = [get_message_parent($msg)];
+			if (!%source) {
+				$source{$msg} = $msg;
+			}
+		}
+	}
+	close($fh);
+
+	# Collect parent messages that are not in the series,
+	# as they are likely to be the cover letters.
+	for my $msg (keys %msgs) {
+		for my $parent (@{$msgs{$msg}}) {
+			if (!exists $msgs{$parent}) {
+				$source{$parent} = 1;
+			}
+		}
+	}
+
+	map {
+		" source: <$_>";
+	}
+	(keys %source);
+}
+
 =head1
 Inspect the current set of topics
 
@@ -446,22 +513,28 @@ sub read_previous {
 				text => join("\n", @{$ary}),
 			};
 		} else {
-			my @desc = ();
+			my (@desc, @src, @txt) = ();
+
 			while (@{$ary}) {
 				my $elem = shift @{$ary};
 				last if ($elem eq '');
 				push @desc, $elem;
 			}
-			my @txt = map {
+			for (@{$ary}) {
 				s/^\s+//;
 				$_ = "$lead$_";
 				s/\s+$//;
-				$_;
-			} @{$ary};
+				if (/^${lead}source:/) {
+					push @src, $_;
+				} else {
+					push @txt, $_;
+				}
+			}
 
 			$description{$branch} = +{
 				desc => join("\n", @desc),
 				text => join("\n", @txt),
+				src => join("\n", @src),
 			};
 		}
 	}
@@ -501,6 +574,12 @@ sub write_cooking {
 					s/\n+$//s;
 				}
 				print $fh "\n", $d->{'text'}, "\n";
+			}
+			if ($d->{'src'}) {
+				if (!$d->{'text'}) {
+					print $fh "\n";
+				}
+				print $fh $d->{'src'}, "\n";
 			}
 			$lead = "\n\n";
 		}
@@ -658,15 +737,38 @@ sub merge_cooking {
 			# Ignore new topics without anything merged
 			if (topic_in_seen($current->{$topic}{'desc'})) {
 				push @new_topic, $topic;
+				# lazily find the source for a new topic.
+				$current->{$topic}{'src'} = join("\n", get_source($topic));
 			}
 			next;
 		}
+
 		# Annotate if the contents of the topic changed
+		my $topic_changed = 0;
 		my $n = $current->{$topic}{'desc'};
 		my $o = $td->{$topic}{'desc'};
 		if ($n ne $o) {
+			$topic_changed = 1;
 			$td->{$topic}{'desc'} = $n . "\n<<\n" . $o ."\n>>";
 			tweak_willdo($td->{$topic});
+		}
+
+		# Keep the original source for unchanged topic
+		if ($topic_changed) {
+			# lazily find out the source for the latest round.
+			$current->{$topic}{'src'} = join("\n", get_source($topic));
+
+			$n = $current->{$topic}{'src'};
+			$o = $td->{$topic}{'src'};
+			if ($n ne $o) {
+				$o = join("\n",
+					  map { s/^\s*//; "-$_"; }
+					  split(/\n/, $o));
+				$n = join("\n",
+					  map { s/^\s*//; "+$_"; }
+					  split(/\n/, $n));
+				$td->{$topic}{'src'} = join("\n", "<<", $o, $n, ">>");
+			}
 		}
 	}
 
@@ -683,6 +785,7 @@ sub merge_cooking {
 	for (@new_topic) {
 		push @{$sd->{$new_topics}}, $_;
 		$td->{$_}{'desc'} = $current->{$_}{'desc'};
+		$td->{$_}{'src'} = $current->{$_}{'src'};
 	}
 
 	if (!$incremental) {
@@ -944,8 +1047,8 @@ sub havedone {
 # WhatsCooking
 
 sub doit {
-	my $topic = get_commit();
 	my $cooking = read_previous('Meta/whats-cooking.txt');
+	my $topic = get_commit($cooking);
 	merge_cooking($cooking, $topic);
 	write_cooking('Meta/whats-cooking.txt', $cooking);
 }
