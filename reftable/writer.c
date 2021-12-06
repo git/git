@@ -150,6 +150,8 @@ void reftable_writer_set_limits(struct reftable_writer *w, uint64_t min,
 
 void reftable_writer_free(struct reftable_writer *w)
 {
+	if (!w)
+		return;
 	reftable_free(w->block);
 	reftable_free(w);
 }
