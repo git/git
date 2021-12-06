@@ -26,10 +26,22 @@ static int prune_tmp_file(const char *fullpath)
 		return error("Could not stat '%s'", fullpath);
 	if (st.st_mtime > expire)
 		return 0;
-	if (show_only || verbose)
-		printf("Removing stale temporary file %s\n", fullpath);
-	if (!show_only)
-		unlink_or_warn(fullpath);
+	if (S_ISDIR(st.st_mode)) {
+		if (show_only || verbose)
+			printf("Removing stale temporary directory %s\n", fullpath);
+		if (!show_only) {
+			struct strbuf remove_dir_buf = STRBUF_INIT;
+
+			strbuf_addstr(&remove_dir_buf, fullpath);
+			remove_dir_recursively(&remove_dir_buf, 0);
+			strbuf_release(&remove_dir_buf);
+		}
+	} else {
+		if (show_only || verbose)
+			printf("Removing stale temporary file %s\n", fullpath);
+		if (!show_only)
+			unlink_or_warn(fullpath);
+	}
 	return 0;
 }
 
