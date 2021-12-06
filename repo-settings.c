@@ -17,6 +17,9 @@ void prepare_repo_settings(struct repository *r)
 	char *strval;
 	int manyfiles;
 
+	if (!r->gitdir)
+		BUG("Cannot add settings for uninitialized repository");
+
 	if (r->settings.initialized++)
 		return;
 
