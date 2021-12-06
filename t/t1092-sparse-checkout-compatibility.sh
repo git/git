@@ -472,21 +472,36 @@ test_expect_success 'log with pathspec outside sparse definition' '
 test_expect_success 'blame with pathspec inside sparse definition' '
 	init_repos &&
 
-	test_all_match git blame a &&
-	test_all_match git blame deep/a &&
-	test_all_match git blame deep/deeper1/a &&
-	test_all_match git blame deep/deeper1/deepest/a
+	for file in a \
+			deep/a \
+			deep/deeper1/a \
+			deep/deeper1/deepest/a
+	do
+		test_all_match git blame $file
+	done
 '
 
-# TODO: blame currently does not support blaming files outside of the
-# sparse definition. It complains that the file doesn't exist locally.
-test_expect_failure 'blame with pathspec outside sparse definition' '
+# Without a revision specified, blame will error if passed any file that
+# is not present in the working directory (even if the file is tracked).
+# Here we just verify that this is also true with sparse checkouts.
+test_expect_success 'blame with pathspec outside sparse definition' '
 	init_repos &&
+	test_sparse_match git sparse-checkout set &&
 
-	test_all_match git blame folder1/a &&
-	test_all_match git blame folder2/a &&
-	test_all_match git blame deep/deeper2/a &&
-	test_all_match git blame deep/deeper2/deepest/a
+	for file in a \
+			deep/a \
+			deep/deeper1/a \
+			deep/deeper1/deepest/a
+	do
+		test_sparse_match test_must_fail git blame $file &&
+		cat >expect <<-EOF &&
+		fatal: Cannot lstat '"'"'$file'"'"': No such file or directory
+		EOF
+		# We compare sparse-checkout-err and sparse-index-err in
+		# `test_sparse_match`. Given we know they are the same, we
+		# only check the content of sparse-index-err here.
+		test_cmp expect sparse-index-err
+	done
 '
 
 test_expect_success 'checkout and reset (mixed)' '
@@ -935,6 +950,18 @@ test_expect_success 'sparse index is not expanded: diff' '
 	test_all_match git diff --cached &&
 	ensure_not_expanded diff &&
 	ensure_not_expanded diff --cached
+'
+
+test_expect_success 'sparse index is not expanded: blame' '
+	init_repos &&
+
+	for file in a \
+			deep/a \
+			deep/deeper1/a \
+			deep/deeper1/deepest/a
+	do
+		ensure_not_expanded blame $file
+	done
 '
 
 # NEEDSWORK: a sparse-checkout behaves differently from a full checkout
