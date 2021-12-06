@@ -401,7 +401,7 @@ test_expect_success 'checkout and reset --hard' '
 	test_all_match git reset --hard update-folder2
 '
 
-test_expect_success 'diff --staged' '
+test_expect_success 'diff --cached' '
 	init_repos &&
 
 	write_script edit-contents <<-\EOF &&
@@ -410,10 +410,10 @@ test_expect_success 'diff --staged' '
 	run_on_all ../edit-contents &&
 
 	test_all_match git diff &&
-	test_all_match git diff --staged &&
+	test_all_match git diff --cached &&
 	test_all_match git add README.md &&
 	test_all_match git diff &&
-	test_all_match git diff --staged
+	test_all_match git diff --cached
 '
 
 # NEEDSWORK: sparse-checkout behaves differently from full-checkout when
@@ -430,8 +430,8 @@ test_expect_success 'diff with renames and conflicts' '
 		test_all_match git checkout rename-base &&
 		test_all_match git checkout $branch -- . &&
 		test_all_match git status --porcelain=v2 &&
-		test_all_match git diff --staged --no-renames &&
-		test_all_match git diff --staged --find-renames || return 1
+		test_all_match git diff --cached --no-renames &&
+		test_all_match git diff --cached --find-renames || return 1
 	done
 '
 
@@ -450,8 +450,8 @@ test_expect_success 'diff with directory/file conflicts' '
 		test_all_match git checkout $branch &&
 		test_all_match git checkout rename-base -- . &&
 		test_all_match git status --porcelain=v2 &&
-		test_all_match git diff --staged --no-renames &&
-		test_all_match git diff --staged --find-renames || return 1
+		test_all_match git diff --cached --no-renames &&
+		test_all_match git diff --cached --find-renames || return 1
 	done
 '
 
