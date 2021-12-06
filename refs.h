@@ -616,11 +616,17 @@ struct ref_transaction *ref_transaction_begin(struct strbuf *err);
 #define REF_FORCE_CREATE_REFLOG (1 << 1)
 
 /*
+ * Blindly write an object_id. This is useful for testing data corruption
+ * scenarios.
+ */
+#define REF_SKIP_OID_VERIFICATION (1 << 10)
+
+/*
  * Bitmask of all of the flags that are allowed to be passed in to
  * ref_transaction_update() and friends:
  */
 #define REF_TRANSACTION_UPDATE_ALLOWED_FLAGS \
-	(REF_NO_DEREF | REF_FORCE_CREATE_REFLOG)
+	(REF_NO_DEREF | REF_FORCE_CREATE_REFLOG | REF_SKIP_OID_VERIFICATION)
 
 /*
  * Add a reference update to transaction. `new_oid` is the value that
