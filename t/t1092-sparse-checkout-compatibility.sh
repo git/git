@@ -19,6 +19,8 @@ test_expect_success 'setup' '
 		mkdir folder1 folder2 deep x &&
 		mkdir deep/deeper1 deep/deeper2 deep/before deep/later &&
 		mkdir deep/deeper1/deepest &&
+		mkdir deep/deeper1/deepest2 &&
+		mkdir deep/deeper1/deepest3 &&
 		echo "after deeper1" >deep/e &&
 		echo "after deepest" >deep/deeper1/e &&
 		cp a folder1 &&
@@ -30,7 +32,9 @@ test_expect_success 'setup' '
 		cp a deep/deeper2 &&
 		cp a deep/later &&
 		cp a deep/deeper1/deepest &&
-		cp -r deep/deeper1/deepest deep/deeper2 &&
+		cp a deep/deeper1/deepest2 &&
+		cp a deep/deeper1/deepest3 &&
+		cp -r deep/deeper1/ deep/deeper2 &&
 		mkdir deep/deeper1/0 &&
 		mkdir deep/deeper1/0/0 &&
 		touch deep/deeper1/0/1 &&
@@ -126,6 +130,8 @@ test_expect_success 'setup' '
 
 		git checkout -b deepest base &&
 		echo "updated deepest" >deep/deeper1/deepest/a &&
+		echo "updated deepest2" >deep/deeper1/deepest2/a &&
+		echo "updated deepest3" >deep/deeper1/deepest3/a &&
 		git commit -a -m "update deepest" &&
 
 		git checkout -f base &&
@@ -299,6 +305,14 @@ test_expect_success 'add, commit, checkout' '
 
 	test_all_match git checkout HEAD~1 &&
 	test_all_match git checkout -
+'
+
+test_expect_failure 'deep changes during checkout' '
+	init_repos &&
+
+	test_sparse_match git sparse-checkout set deep/deeper1/deepest &&
+	test_all_match git checkout deepest &&
+	test_all_match git checkout base
 '
 
 test_expect_success 'add outside sparse cone' '
