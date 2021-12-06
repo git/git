@@ -307,7 +307,7 @@ test_expect_success 'add, commit, checkout' '
 	test_all_match git checkout -
 '
 
-test_expect_failure 'deep changes during checkout' '
+test_expect_success 'deep changes during checkout' '
 	init_repos &&
 
 	test_sparse_match git sparse-checkout set deep/deeper1/deepest &&
