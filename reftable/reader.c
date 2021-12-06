@@ -290,28 +290,33 @@ int reader_init_block_reader(struct reftable_reader *r, struct block_reader *br,
 
 	err = reader_get_block(r, &block, next_off, guess_block_size);
 	if (err < 0)
-		return err;
+		goto done;
 
 	block_size = extract_block_size(block.data, &block_typ, next_off,
 					r->version);
-	if (block_size < 0)
-		return block_size;
-
+	if (block_size < 0) {
+		err = block_size;
+		goto done;
+	}
 	if (want_typ != BLOCK_TYPE_ANY && block_typ != want_typ) {
-		reftable_block_done(&block);
-		return 1;
+		err = 1;
+		goto done;
 	}
 
 	if (block_size > guess_block_size) {
 		reftable_block_done(&block);
 		err = reader_get_block(r, &block, next_off, block_size);
 		if (err < 0) {
-			return err;
+			goto done;
 		}
 	}
 
-	return block_reader_init(br, &block, header_off, r->block_size,
-				 hash_size(r->hash_id));
+	err = block_reader_init(br, &block, header_off, r->block_size,
+				hash_size(r->hash_id));
+done:
+	reftable_block_done(&block);
+
+	return err;
 }
 
 static int table_iter_next_block(struct table_iter *dest,
