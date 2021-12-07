@@ -611,9 +611,10 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 		}
 		if (detach_auto) {
 			int ret = report_last_gc_error();
+
 			if (ret < 0)
 				/* an I/O error occurred, already reported */
-				exit(128);
+				return 128;
 			if (ret == 1)
 				/* Last gc --auto failed. Skip this one. */
 				return 0;
