@@ -401,16 +401,18 @@ static void dump_marks(void);
 
 static NORETURN void die_nicely(const char *err, va_list params)
 {
+	va_list cp;
 	static int zombie;
-	char message[2 * PATH_MAX];
+	report_fn die_message_fn = get_die_message_routine();
 
-	vsnprintf(message, sizeof(message), err, params);
-	fputs("fatal: ", stderr);
-	fputs(message, stderr);
-	fputc('\n', stderr);
+	va_copy(cp, params);
+	die_message_fn(err, params);
 
 	if (!zombie) {
+		char message[2 * PATH_MAX];
+
 		zombie = 1;
+		vsnprintf(message, sizeof(message), err, cp);
 		write_crash_report(message);
 		end_packfile();
 		unkeep_all_packs();
