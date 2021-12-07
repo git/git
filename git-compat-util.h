@@ -474,7 +474,6 @@ static inline int git_has_dir_sep(const char *path)
 struct strbuf;
 
 /* General helper functions */
-void vreportf(const char *prefix, const char *err, va_list params);
 NORETURN void usage(const char *err);
 NORETURN void usagef(const char *err, ...) __attribute__((format (printf, 1, 2)));
 NORETURN void die(const char *err, ...) __attribute__((format (printf, 1, 2)));
