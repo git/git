@@ -47,7 +47,6 @@ static inline void cb_init(struct cb_tree *t)
 
 struct cb_node *cb_lookup(struct cb_tree *, const uint8_t *k, size_t klen);
 struct cb_node *cb_insert(struct cb_tree *, struct cb_node *, size_t klen);
-struct cb_node *cb_unlink(struct cb_tree *t, const uint8_t *k, size_t klen);
 
 typedef enum cb_next (*cb_iter)(struct cb_node *, void *arg);
 
