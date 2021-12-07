@@ -35,8 +35,7 @@ test_expect_success 'delete_refs(FOO, refs/tags/new-tag)' '
 	git rev-parse FOO -- &&
 	git rev-parse refs/tags/new-tag -- &&
 	m=$(git rev-parse main) &&
-	REF_NO_DEREF=1 &&
-	$RUN delete-refs $REF_NO_DEREF nothing FOO refs/tags/new-tag &&
+	$RUN delete-refs REF_NO_DEREF nothing FOO refs/tags/new-tag &&
 	test_must_fail git rev-parse --symbolic-full-name FOO &&
 	test_must_fail git rev-parse FOO -- &&
 	test_must_fail git rev-parse refs/tags/new-tag --
@@ -108,7 +107,7 @@ test_expect_success 'delete_reflog(HEAD)' '
 '
 
 test_expect_success 'create-reflog(HEAD)' '
-	$RUN create-reflog HEAD 1 &&
+	$RUN create-reflog HEAD &&
 	git reflog exists HEAD
 '
 
