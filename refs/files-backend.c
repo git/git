@@ -16,8 +16,7 @@
  * This backend uses the following flags in `ref_update::flags` for
  * internal bookkeeping purposes. Their numerical values must not
  * conflict with REF_NO_DEREF, REF_FORCE_CREATE_REFLOG, REF_HAVE_NEW,
- * REF_HAVE_OLD, or REF_IS_PRUNING, which are also stored in
- * `ref_update::flags`.
+ * or REF_HAVE_OLD, which are also stored in `ref_update::flags`.
  */
 
 /*
