@@ -233,6 +233,18 @@ int die_message(const char *err, ...)
 	return 128;
 }
 
+#undef die_message_errno
+int die_message_errno(const char *fmt, ...)
+{
+	char buf[1024];
+	va_list params;
+
+	va_start(params, fmt);
+	die_message_routine(fmt_with_err(buf, sizeof(buf), fmt), params);
+	va_end(params);
+	return 128;
+}
+
 #undef error_errno
 int error_errno(const char *fmt, ...)
 {
