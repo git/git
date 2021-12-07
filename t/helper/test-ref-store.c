@@ -131,6 +131,7 @@ static struct flag_definition transaction_flags[] = {
 	FLAG_DEF(REF_NO_DEREF),
 	FLAG_DEF(REF_FORCE_CREATE_REFLOG),
 	FLAG_DEF(REF_SKIP_OID_VERIFICATION),
+	FLAG_DEF(REF_SKIP_REFNAME_VERIFICATION),
 	{ NULL, 0 }
 };
 
