@@ -589,6 +589,15 @@ USER_TERM="$TERM"
 TERM=dumb
 export TERM USER_TERM
 
+# What is written by tests to stdout and stderr is sent to different places
+# depending on the test mode (e.g. /dev/null in non-verbose mode, piped to tee
+# with --tee option, etc.). We save the original stdin to FD #6 and stdout and
+# stderr to #5 and #7, so that the test framework can use them (e.g. for
+# printing errors within the test framework) independently of the test mode.
+exec 5>&1
+exec 6<&0
+exec 7>&2
+
 _error_exit () {
 	finalize_junit_xml
 	GIT_EXIT_OK=t
@@ -612,7 +621,7 @@ BAIL_OUT () {
 	local bail_out="Bail out! "
 	local message="$1"
 
-	say_color error $bail_out "$message"
+	say_color >&5 error $bail_out "$message"
 	_error_exit
 }
 
@@ -637,9 +646,6 @@ then
 	exit 0
 fi
 
-exec 5>&1
-exec 6<&0
-exec 7>&2
 if test "$verbose_log" = "t"
 then
 	exec 3>>"$GIT_TEST_TEE_OUTPUT_FILE" 4>&3
@@ -668,6 +674,8 @@ test_count=0
 test_fixed=0
 test_broken=0
 test_success=0
+
+test_missing_prereq=
 
 test_external_has_tap=0
 
@@ -1069,6 +1077,14 @@ test_skip () {
 			of_prereq=" of $test_prereq"
 		fi
 		skipped_reason="missing $missing_prereq${of_prereq}"
+
+		# Keep a list of all the missing prereq for result aggregation
+		if test -z "$missing_prereq"
+		then
+			test_missing_prereq=$missing_prereq
+		else
+			test_missing_prereq="$test_missing_prereq,$missing_prereq"
+		fi
 	fi
 
 	case "$to_skip" in
@@ -1175,6 +1191,7 @@ test_done () {
 		fixed $test_fixed
 		broken $test_broken
 		failed $test_failure
+		missing_prereq $test_missing_prereq
 
 		EOF
 	fi

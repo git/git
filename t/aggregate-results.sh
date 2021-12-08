@@ -6,6 +6,7 @@ success=0
 failed=0
 broken=0
 total=0
+missing_prereq=
 
 while read file
 do
@@ -30,9 +31,25 @@ do
 			broken=$(($broken + $value)) ;;
 		total)
 			total=$(($total + $value)) ;;
+		missing_prereq)
+			missing_prereq="$missing_prereq,$value" ;;
 		esac
 	done <"$file"
 done
+
+if test -n "$missing_prereq"
+then
+	unique_missing_prereq=$(
+		echo $missing_prereq |
+		tr -s "," "\n" |
+		grep -v '^$' |
+		sort -u |
+		paste -s -d ' ')
+	if test -n "$unique_missing_prereq"
+	then
+		printf "\nmissing prereq: $unique_missing_prereq\n\n"
+	fi
+fi
 
 if test -n "$failed_tests"
 then
