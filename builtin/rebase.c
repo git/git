@@ -585,8 +585,7 @@ static int move_to_original_branch(struct rebase_options *opts)
 		    opts->head_name);
 	ret = reset_head(the_repository, NULL, opts->head_name,
 			 RESET_HEAD_REFS_ONLY,
-			 orig_head_reflog.buf, head_reflog.buf,
-			 DEFAULT_REFLOG_ACTION);
+			 orig_head_reflog.buf, head_reflog.buf, NULL);
 
 	strbuf_release(&orig_head_reflog);
 	strbuf_release(&head_reflog);
@@ -822,7 +821,7 @@ static int checkout_up_to_date(struct rebase_options *options)
 		    options->switch_to);
 	if (reset_head(the_repository, &options->orig_head,
 		       options->head_name, RESET_HEAD_RUN_POST_CHECKOUT_HOOK,
-		       NULL, buf.buf, DEFAULT_REFLOG_ACTION) < 0)
+		       NULL, buf.buf, NULL) < 0)
 		ret = error(_("could not switch to %s"), options->switch_to);
 	strbuf_release(&buf);
 
@@ -1273,7 +1272,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		string_list_clear(&merge_rr, 1);
 
 		if (reset_head(the_repository, NULL, NULL, RESET_HEAD_HARD,
-			       NULL, NULL, DEFAULT_REFLOG_ACTION) < 0)
+			       NULL, NULL, NULL) < 0)
 			die(_("could not discard worktree changes"));
 		remove_branch_state(the_repository, 0);
 		if (read_basic_state(&options))
@@ -1778,8 +1777,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			options.head_name ? options.head_name : "detached HEAD",
 			oid_to_hex(&options.onto->object.oid));
 		reset_head(the_repository, NULL, options.head_name,
-			   RESET_HEAD_REFS_ONLY, "HEAD", msg.buf,
-			   DEFAULT_REFLOG_ACTION);
+			   RESET_HEAD_REFS_ONLY, "HEAD", msg.buf, NULL);
 		strbuf_release(&msg);
 		ret = finish_rebase(&options);
 		goto cleanup;

@@ -4137,7 +4137,7 @@ void create_autostash(struct repository *r, const char *path)
 		write_file(path, "%s", oid_to_hex(&oid));
 		printf(_("Created autostash: %s\n"), buf.buf);
 		if (reset_head(r, NULL, NULL, RESET_HEAD_HARD, NULL, NULL,
-			       "") < 0)
+			       NULL) < 0)
 			die(_("could not reset --hard"));
 
 		if (discard_index(r->index) < 0 ||

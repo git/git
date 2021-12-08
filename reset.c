@@ -22,8 +22,13 @@ static int update_refs(const struct object_id *oid, const char *switch_to_branch
 	size_t prefix_len;
 	int ret;
 
-	reflog_action = getenv(GIT_REFLOG_ACTION_ENVIRONMENT);
-	strbuf_addf(&msg, "%s: ", reflog_action ? reflog_action : default_reflog_action);
+	if ((update_orig_head && !reflog_orig_head) || !reflog_head) {
+		if (!default_reflog_action)
+			BUG("default_reflog_action must be given when reflog messages are omitted");
+		reflog_action = getenv(GIT_REFLOG_ACTION_ENVIRONMENT);
+		strbuf_addf(&msg, "%s: ", reflog_action ? reflog_action :
+							  default_reflog_action);
+	}
 	prefix_len = msg.len;
 
 	if (update_orig_head) {
@@ -71,6 +76,7 @@ int reset_head(struct repository *r, struct object_id *oid,
 {
 	unsigned reset_hard = flags & RESET_HEAD_HARD;
 	unsigned refs_only = flags & RESET_HEAD_REFS_ONLY;
+	unsigned update_orig_head = flags & RESET_ORIG_HEAD;
 	struct object_id *head = NULL, head_oid;
 	struct tree_desc desc[2] = { { NULL }, { NULL } };
 	struct lock_file lock = LOCK_INIT;
@@ -144,8 +150,10 @@ int reset_head(struct repository *r, struct object_id *oid,
 		goto leave_reset_head;
 	}
 
-	ret = update_refs(oid, switch_to_branch, head, reflog_head,
-			  reflog_orig_head, default_reflog_action, flags);
+	if (oid != &head_oid || update_orig_head || switch_to_branch)
+		ret = update_refs(oid, switch_to_branch, head, reflog_head,
+				  reflog_orig_head, default_reflog_action,
+				  flags);
 
 leave_reset_head:
 	rollback_lock_file(&lock);
