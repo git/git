@@ -4,9 +4,6 @@ test_description='git read-tree in partial clones'
 
 TEST_NO_CREATE_REPO=1
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
-
 . ./test-lib.sh
 
 test_expect_success 'read-tree in partial clone prefetches in one batch' '
