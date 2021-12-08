@@ -4137,8 +4137,7 @@ void create_autostash(struct repository *r, const char *path,
 			    path);
 		write_file(path, "%s", oid_to_hex(&oid));
 		printf(_("Created autostash: %s\n"), buf.buf);
-		if (reset_head(r, NULL, "reset --hard",
-			       NULL, RESET_HEAD_HARD, NULL, NULL,
+		if (reset_head(r, NULL, NULL, RESET_HEAD_HARD, NULL, NULL,
 			       default_reflog_action) < 0)
 			die(_("could not reset --hard"));
 
