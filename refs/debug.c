@@ -284,6 +284,7 @@ static int debug_print_reflog_ent(struct object_id *old_oid,
 	int ret;
 	char o[GIT_MAX_HEXSZ + 1] = "null";
 	char n[GIT_MAX_HEXSZ + 1] = "null";
+	char *msgend = strchrnul(msg, '\n');
 	if (old_oid)
 		oid_to_hex_r(o, old_oid);
 	if (new_oid)
@@ -291,8 +292,10 @@ static int debug_print_reflog_ent(struct object_id *old_oid,
 
 	ret = dbg->fn(old_oid, new_oid, committer, timestamp, tz, msg,
 		      dbg->cb_data);
-	trace_printf_key(&trace_refs, "reflog_ent %s (ret %d): %s -> %s, %s %ld \"%s\"\n",
-		dbg->refname, ret, o, n, committer, (long int)timestamp, msg);
+	trace_printf_key(&trace_refs,
+			 "reflog_ent %s (ret %d): %s -> %s, %s %ld \"%.*s\"\n",
+			 dbg->refname, ret, o, n, committer,
+			 (long int)timestamp, (int)(msgend - msg), msg);
 	return ret;
 }
 
