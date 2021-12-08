@@ -1658,10 +1658,10 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	if (repo_read_index(the_repository) < 0)
 		die(_("could not read index"));
 
-	if (options.autostash) {
-		create_autostash(the_repository, state_dir_path("autostash", &options),
-				 DEFAULT_REFLOG_ACTION);
-	}
+	if (options.autostash)
+		create_autostash(the_repository,
+				 state_dir_path("autostash", &options));
+
 
 	if (require_clean_work_tree(the_repository, "rebase",
 				    _("Please commit or stash them."), 1, 1)) {
