@@ -1,35 +1,11 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Dec 2021, #01; Fri, 3)
+Subject: What's cooking in git.git (Dec 2021, #02; Tue, 7)
 X-master-at: abe6bb3905392d5eb6b01fa6e54d7e784e0522aa
-X-next-at: a8338297339b1ab064e799c15c4fc56c122ef967
+X-next-at: 8cdad7bc9aee8e9403eb7f1ef605b37815892e18
 
-What's cooking in git.git (Dec 2021, #01; Fri, 3)
+What's cooking in git.git (Dec 2021, #02; Tue, 7)
 --------------------------------------------------
-
-This is probably the first issue of the "What's cooking" report, in
-which all topics have some sort of description.
-
-Even better, each and every topic is annotated with some sort of
-verdict (like "Will discard", "Expecting a reroll", "Will merge to
-'next'?" etc.).  There is no topic in the "Undecided" category when
-this report is fed to "cook -w" script (found in the 'todo' branch).
-
-A handful of topics are added to 'next', and we have about 40 topics
-cooking there.  For them, the future is automated---they spend about
-a week in 'next', and if we find issues in them, we incrementally
-improve them, or get merged to 'master'.
-
-Then we have about a dozen topics that are marked for 'next' (please
-raise your hand if you have objection before a real damage is done),
-and 8 more that may be ready for 'next' (please raise your hand if
-you want to nudge them in either direction, for or against).
-
-
-
-
-
-
 
 Here are the topics that have been cooking in my tree.  Commits
 prefixed with '+' are in 'next' (being in 'next' is a sign that a
@@ -41,12 +17,6 @@ another topic already in flight" or "this may turn out to be
 useful").  Do not read too much into a topic being in (or not in)
 'seen'.  The ones marked with '.' do not appear in any of the
 integration branches, but I am still holding onto them.
-
-A few topics for regression fixes have been merged to 'next' and
-will be merged to 'master' shortly.  There are many topics listed as
-"New" that are in 'seen', but I haven't read many of them (and I
-shouldn't have anyway, before dealing with regression fixes) and
-haven't gave any summary comments in this report, either, yet.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -79,6 +49,243 @@ Release tarballs are available at:
 --------------------------------------------------
 [New Topics]
 
+* je/http-better-error-output (2021-12-03) 1 commit
+ . http-backend: give a hint that web browser access is not supported
+
+ When the http-backend program, which is the server-side component
+ for the smart HTTP transport, sends a "404 Not found" error, we
+ deliberately did not say anything to the requesting client.  We now
+ send a message back to the browser to tell the user that they do
+ not want to visit the URL via their browser, instead of a totally
+ blank page.
+
+ Expecting a reroll.
+ Breaks its self tests.
+ cf. <7r23s082-o3q0-479o-srqn-r45q778s5nq7@vanv.qr>
+ source: <20211202102855.23907-1-jengelh@inai.de>
+
+
+* es/doc-stdout-vs-stderr (2021-12-04) 1 commit
+ - CodingGuidelines: document which output goes to stdout vs. stderr
+
+ Coding guideline document has been updated to clarify what goes to
+ standard error i nour system.
+
+ Will merge to 'next'.
+ source: <20211202223110.22062-1-sunshine@sunshineco.com>
+
+
+* tb/pack-revindex-on-disk-cleanup (2021-12-04) 1 commit
+ - packfile: make `close_pack_revindex()` static
+
+ Code clean-up.
+
+ Will merge to 'next'.
+ source: <dad2b73c84f1c1575a6bce04a449ee1236680b10.1638658219.git.me@ttaylorr.com>
+
+
+* ds/sparse-deep-pattern-checkout-fix (2021-12-06) 2 commits
+ - unpack-trees: use traverse_path instead of name
+ - t1092: add deeper changes during a checkout
+
+ The sparse-index/sparse-checkout feature had a bug in its use of
+ the matching code to determine which path is in or outside the
+ sparse checkout patterns.
+
+ Will merge to 'next'.
+ source: <pull.1092.v2.git.1638799837.gitgitgadget@gmail.com>
+
+
+* en/name-rev-shorter-output (2021-12-04) 1 commit
+ - name-rev: prefer shorter names over following merges
+
+ "git name-rev" has been tweaked to give output that is shorter and
+ easier to understand.
+
+ Will merge to 'next'?
+ source: <pull.1119.git.git.1636762454792.gitgitgadget@gmail.com>
+
+
+* en/rebase-x-wo-git-dir-env (2021-12-04) 1 commit
+ - sequencer: do not export GIT_DIR and GIT_WORK_TREE for 'exec'
+
+ "git rebase -x" by mistake started exporting the GIT_DIR and
+ GIT_WORK_TREE environment variables when the command was rewritten
+ in C, which has been corrected.
+
+ Will merge to 'next'.
+ source: <pull.1134.v3.git.git.1638596219656.gitgitgadget@gmail.com>
+
+
+* es/worktree-chatty-to-stderr (2021-12-04) 2 commits
+ - git-worktree.txt: add missing `-v` to synopsis for `worktree list`
+ - worktree: send "chatty" messages to stderr
+
+ "git worktree add" showed "Preparing worktree" message to the
+ standard output stream, but when it failed, the message from die()
+ went to the standard error stream.  Depending on the order the
+ stdio streams are flushed at the program end, this resulted in
+ confusing output.  It has been corrected by sending all the chatty
+ messages to the standard error stream.
+
+ Will merge to 'next'.
+ source: <20211203034420.47447-1-sunshine@sunshineco.com>
+
+
+* ja/i18n-similar-messages (2021-12-05) 10 commits
+ - i18n: ref-filter: factorize "%(foo) atom used without %(bar) atom"
+ - i18n: factorize "--foo outside a repository"
+ - i18n: refactor "unrecognized %(foo) argument" strings
+ - i18n: factorize "no directory given for --foo"
+ - i18n: factorize "--foo requires --bar" and the like
+ - i18n: tag.c factorize i18n strings
+ - i18n: standardize "cannot open" and "cannot read"
+ - i18n: turn "options are incompatible" into "are mutually exclusive"
+ - i18n: refactor "%s, %s and %s are mutually exclusive"
+ - i18n: refactor "foo and bar are mutually exclusive"
+
+ Similar message templates have been consolidated so that
+ translators need to work on fewer number of messages.
+
+ Needs review.
+ source: <pull.1088.git.1638514909.gitgitgadget@gmail.com>
+
+
+* js/test-initial-branch-override-cleanup (2021-12-05) 1 commit
+ - tests: set GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME only when needed
+
+ Many tests that used to need GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+ mechanism to force "git" to use 'master' as the default name for
+ the initial branch no longer need it; the use of the mechanism from
+ them have been removed.
+
+ Will merge to 'next'.
+ source: <pull.1089.git.1638524353230.gitgitgadget@gmail.com>
+
+
+* ab/die-with-bug (2021-12-07) 4 commits
+ - object.c: use BUG(...) no die("BUG: ...") in lookup_object_by_type()
+ - pathspec: use BUG(...) not die("BUG:%s:%d....", <file>, <line>)
+ - strbuf.h: use BUG(...) not die("BUG: ...")
+ - pack-objects: use BUG(...) not die("BUG: ...")
+
+ Code clean-up.
+
+ Will merge to 'next'.
+ source: <cover-v2-0.4-00000000000-20211207T110440Z-avarab@gmail.com>
+
+
+* ab/usage-die-message (2021-12-07) 6 commits
+ - config API: use get_error_routine(), not vreportf()
+ - usage.c + gc: add and use a die_message_errno()
+ - gc: return from cmd_gc(), don't call exit()
+ - usage.c API users: use die_message() for error() + exit 128
+ - usage.c API users: use die_message() for "fatal :" + exit 128
+ - usage.c: add a die_message() routine
+
+ Code clean-up to hide vreportf() from public API.
+
+ Needs review.
+ source: <cover-v2-0.6-00000000000-20211207T182419Z-avarab@gmail.com>
+
+
+* js/compat-util-msvc-flex-array (2021-12-06) 1 commit
+ - git-compat-util(msvc): C11 does not imply support for zero-sized arrays
+
+ MSVC build started to break on flex arrays?
+
+ Will merge to 'next'?
+ source: <pull.1094.git.1638823724410.gitgitgadget@gmail.com>
+
+
+* ab/common-main-cleanup (2021-12-07) 1 commit
+ - common-main.c: call exit(), don't return
+
+ Code clean-up.
+
+ Will merge to 'next'?
+ source: <patch-v2-1.1-4f52ecc94ba-20211207T101207Z-avarab@gmail.com>
+
+
+* ab/fetch-set-upstream-while-detached (2021-12-07) 1 commit
+ - pull, fetch: fix segfault in --set-upstream option
+
+ "git fetch --set-upstream" did not check if there is a current
+ branch, leading to a segfault when it is run on a detached HEAD,
+ which has been corrected.
+
+ Will merge to 'next'.
+ source: <patch-v5-1.1-69ab40d623b-20211207T215115Z-avarab@gmail.com>
+
+
+* ew/cbtree-remove-unused-and-broken-cb-unlink (2021-12-07) 1 commit
+ - cbtree: remove broken and unused cb_unlink
+
+ Code clean-up.
+
+ Will merge to 'next'.
+ source: <20211207183810.688481-1-e@80x24.org>
+
+--------------------------------------------------
+[Stalled]
+
+* ar/submodule-update (2021-10-13) 9 commits
+ . submodule--helper: rename helper functions
+ . submodule--helper: remove unused helpers
+ . submodule: move core cmd_update() logic to C
+ . submodule--helper: run update using child process struct
+ . submodule--helper: allow setting superprefix for init_submodule()
+ . submodule--helper: refactor get_submodule_displaypath()
+ . submodule--helper: rename helpers for update-clone
+ . submodule--helper: get remote names from any repository
+ . submodule--helper: split up ensure_core_worktree()
+
+ Rewrite of "git submodule update" in C.
+
+ Expecting a reroll?
+ cf. <YWiXL+plA7GHfuVv@google.com>
+ source: <20211013051805.45662-10-raykar.ath@gmail.com>
+
+
+* ms/customizable-ident-expansion (2021-09-01) 1 commit
+ - keyword expansion: make "$Id$" string configurable
+
+ Instead of "$Id$", user-specified string (like $FreeBSD$) can be
+ used as an in-blob placeholder for keyword expansion.
+
+ Will discard.
+ Stalled for too long.
+ cf. <xmqqfsuosvrh.fsf@gitster.g>
+ cf. <211101.86fssf3bn3.gmgdl@evledraar.gmail.com>
+ source: <pull.1074.v3.git.git.1630462385587.gitgitgadget@gmail.com>
+
+
+* pw/fix-some-issues-in-reset-head (2021-10-01) 12 commits
+ - rebase -m: don't fork git checkout
+ - rebase --apply: set ORIG_HEAD correctly
+ - rebase --apply: fix reflog
+ - reset_head(): take struct rebase_head_opts
+ - rebase: cleanup reset_head() calls
+ - reset_head(): make default_reflog_action optional
+ - reset_head(): factor out ref updates
+ - reset_head(): remove action parameter
+ - reset_head(): don't run checkout hook if there is an error
+ - reset_head(): fix checkout
+ - rebase: factor out checkout for up to date branch
+ - Merge branch 'pw/rebase-of-a-tag-fix' into pw/fix-some-issues-in-reset-head
+
+ Fix "some issues" in a helper function reset_head().
+
+ Expecting a reroll.
+ cf. <e1aadd47-533c-fd8b-4fae-f64a53c81ec9@gmail.com>
+ This needs a lot better explanation, including what the issues are,
+ which codepaths the helper is used in and to do what, and tests to
+ protect the fixes.
+ source: <pull.1049.git.1633082702.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
 * ab/cat-file (2021-11-29) 10 commits
  - cat-file: use GET_OID_ONLY_TO_DIE in --(textconv|filters)
  - object-name.c: don't have GET_OID_ONLY_TO_DIE imply *_QUIETLY
@@ -101,7 +308,7 @@ Release tarballs are available at:
  source: <patch-v3-10.10-45a24f97c88-20211129T195357Z-avarab@gmail.com>
 
 
-* ab/grep-patterntype (2021-11-29) 7 commits
+* ab/grep-patterntype (2021-12-04) 7 commits
  - grep: simplify config parsing and option parsing
  - grep API: call grep_config() after grep_init()
  - grep.c: don't pass along NULL callback value
@@ -112,9 +319,8 @@ Release tarballs are available at:
 
  Some code clean-up in the "git grep" machinery.
 
- Need to pick up a reroll.
- cf. <cover-v4-0.7-00000000000-20211203T101348Z-avarab@gmail.com>
- source: <cover-v3-0.7-00000000000-20211129T143956Z-avarab@gmail.com>
+ Needs review.
+ source: <cover-v4-0.7-00000000000-20211203T101348Z-avarab@gmail.com>
 
 
 * en/rebase-x-fix (2021-11-29) 1 commit
@@ -142,7 +348,7 @@ Release tarballs are available at:
  source: <pull.1087.git.1638281655.gitgitgadget@gmail.com>
 
 
-* jt/conditional-config-on-remote-url (2021-11-29) 2 commits
+* jt/conditional-config-on-remote-url (2021-12-04) 2 commits
  - config: include file if remote URL matches a glob
  - config: make git_config_include() static
 
@@ -150,9 +356,8 @@ Release tarballs are available at:
  "[includeIf <condition>]" learns to base its decision on the
  URL of the remote repository the repository interacts with.
 
- Need to pick up a reroll.
- cf. <cover.1638487815.git.jonathantanmy@google.com>
- source: <3b3af0da983c65ac8282b14141495f6859cd575a.1638217387.git.jonathantanmy@google.com>
+ Needs review.
+ source: <cover.1638487815.git.jonathantanmy@google.com>
 
 
 * tb/cruft-packs (2021-11-29) 17 commits
@@ -210,87 +415,15 @@ Release tarballs are available at:
  source: <YahbseXEC66dK0k8@coredump.intra.peff.net>
 
 
-* jl/subtree-check-parents-argument-passing-fix (2021-12-01) 1 commit
+* jl/subtree-check-parents-argument-passing-fix (2021-12-05) 1 commit
  - subtree: fix argument handling in check_parents
 
  Fix performance-releated bug in "git subtree" (in contrib/).
 
  Expecting a reroll.
- cf. <nycvar.QRO.7.76.6.2112031610590.63@tvgsbejvaqbjf.bet>
- source: <pull.1086.v2.git.1638424290015.gitgitgadget@gmail.com>
+ cf. <nycvar.QRO.7.76.6.2112072243310.90@tvgsbejvaqbjf.bet>
+ source: <pull.1086.v3.git.1638758742741.gitgitgadget@gmail.com>
 
---------------------------------------------------
-[Stalled]
-
-* ar/submodule-update (2021-10-13) 9 commits
- . submodule--helper: rename helper functions
- . submodule--helper: remove unused helpers
- . submodule: move core cmd_update() logic to C
- . submodule--helper: run update using child process struct
- . submodule--helper: allow setting superprefix for init_submodule()
- . submodule--helper: refactor get_submodule_displaypath()
- . submodule--helper: rename helpers for update-clone
- . submodule--helper: get remote names from any repository
- . submodule--helper: split up ensure_core_worktree()
-
- Rewrite of "git submodule update" in C.
-
- Expecting a reroll?
- cf. <YWiXL+plA7GHfuVv@google.com>
- source: <20211013051805.45662-10-raykar.ath@gmail.com>
-
-
-* cf/fetch-set-upstream-while-detached (2021-07-06) 1 commit
- - fetch: fix segfault on --set-upstream while on a detached HEAD
-
- "git fetch --set-upstream" while on detached HEAD segfaulted
- instead of noticing that such an operation did not make sense.
-
- Expecting a reroll.
- A low hanging fruit to make this usable is an addition of a few tests;
- any takers?
- cf. <CAPig+cTRXTGe-MNTy=2gk1eX8G+0fa303nrLnEtX1uHUC2usmg@mail.gmail.com>
- cf. <xmqqsg0ri5mq.fsf@gitster.g>
- source: <20210706162238.575988-1-clemens@endorphin.org>
-
-
-* ms/customizable-ident-expansion (2021-09-01) 1 commit
- - keyword expansion: make "$Id$" string configurable
-
- Instead of "$Id$", user-specified string (like $FreeBSD$) can be
- used as an in-blob placeholder for keyword expansion.
-
- Will discard.
- Stalled for too long.
- cf. <xmqqfsuosvrh.fsf@gitster.g>
- cf. <211101.86fssf3bn3.gmgdl@evledraar.gmail.com>
- source: <pull.1074.v3.git.git.1630462385587.gitgitgadget@gmail.com>
-
-
-* pw/fix-some-issues-in-reset-head (2021-10-01) 12 commits
- - rebase -m: don't fork git checkout
- - rebase --apply: set ORIG_HEAD correctly
- - rebase --apply: fix reflog
- - reset_head(): take struct rebase_head_opts
- - rebase: cleanup reset_head() calls
- - reset_head(): make default_reflog_action optional
- - reset_head(): factor out ref updates
- - reset_head(): remove action parameter
- - reset_head(): don't run checkout hook if there is an error
- - reset_head(): fix checkout
- - rebase: factor out checkout for up to date branch
- - Merge branch 'pw/rebase-of-a-tag-fix' into pw/fix-some-issues-in-reset-head
-
- Fix "some issues" in a helper function reset_head().
-
- Will discard.
- This needs a lot better explanation, including what the issues are,
- which codepaths the helper is used in and to do what, and tests to
- protect the fixes.
- source: <pull.1049.git.1633082702.gitgitgadget@gmail.com>
-
---------------------------------------------------
-[Cooking]
 
 * ab/ambiguous-object-name (2021-11-26) 6 commits
  - object-name: re-use "struct strbuf" in show_ambiguous_object()
@@ -344,7 +477,7 @@ Release tarballs are available at:
  source: <pull.1085.git.1638193666.gitgitgadget@gmail.com>
 
 
-* hn/allow-bogus-oid-in-ref-tests (2021-12-02) 8 commits
+* hn/allow-bogus-oid-in-ref-tests (2021-12-07) 8 commits
  - t1430: create valid symrefs using test-helper
  - t1430: remove refs using test-tool
  - refs: introduce REF_SKIP_REFNAME_VERIFICATION flag
@@ -359,7 +492,7 @@ Release tarballs are available at:
  want to test Git in.
 
  Will merge to 'next'.
- source: <pull.1147.v3.git.git.1638470403.gitgitgadget@gmail.com>
+ source: <pull.1147.v4.git.git.1638884300.gitgitgadget@gmail.com>
 
 
 * hn/t1404-df-limitation-is-ref-files-only (2021-11-29) 1 commit
@@ -407,13 +540,13 @@ Release tarballs are available at:
  source: <pull.1083.git.1637666875171.gitgitgadget@gmail.com>
 
 
-* jc/grep-patterntype-default-doc (2021-11-29) 1 commit
+* jc/grep-patterntype-default-doc (2021-12-05) 1 commit
  - grep: clarify what `grep.patternType=default` means
 
  Doc update.
 
- Will merge to 'next'.
- source: <xmqq7dcq62af.fsf@gitster.g>
+ Will merge to 'next'?
+ source: <xmqqy24ykdel.fsf_-_@gitster.g>
 
 
 * ab/ci-updates (2021-11-23) 5 commits
@@ -479,6 +612,7 @@ Release tarballs are available at:
 * hn/create-reflog-simplify (2021-11-22) 1 commit
   (merged to 'next' on 2021-12-02 at 87ff49b776)
  + refs: drop force_create argument of create_reflog API
+ (this branch is used by hn/reftable-coverity-fixes.)
 
  A small simplification of API.
 
@@ -603,7 +737,7 @@ Release tarballs are available at:
  source: <20211118154317.639118-1-alexhenrie24@gmail.com>
 
 
-* ds/fetch-pull-with-sparse-index (2021-11-29) 3 commits
+* ds/fetch-pull-with-sparse-index (2021-12-06) 3 commits
  - ls-files: add --sparse option
  - fetch/pull: use the sparse index
  - Merge branch 'ld/sparse-diff-blame' into ds/fetch-pull-with-sparse-index
@@ -612,8 +746,10 @@ Release tarballs are available at:
  "git fetch" and "git pull" are now declared sparse-index clean.
  Also "git ls-files" learns the "--sparse" option to help debugging.
 
- Expecting a reroll?
+ Expecting a reroll.
  Discussion seems to have stalled, with a few loose ends questions.
+ Also since the branch that this depends on was rerolled, it may
+ benefit from a refresh.
  source: <pull.1080.git.1637077083.gitgitgadget@gmail.com>
 
 
@@ -662,7 +798,11 @@ Release tarballs are available at:
  source: <5a9e49e7f1540d762374382e1769edf112cf093f.1637272706.git.steadmon@google.com>
 
 
-* pw/xdiff-classify-record-in-histogram (2021-11-18) 3 commits
+* pw/xdiff-classify-record-in-histogram (2021-12-04) 6 commits
+  (merged to 'next' on 2021-12-07 at 8cdad7bc9a)
+ + xdiff: drop unused flags parameter from recs_match
+ + xdiff: drop xpparam_t parameter from histogram cmp_recs()
+ + xdiff: drop CMP_ENV macro from xhistogram
   (merged to 'next' on 2021-12-02 at 5ccd12d09b)
  + xdiff: simplify comparison
  + xdiff: avoid unnecessary memory allocations
@@ -671,7 +811,8 @@ Release tarballs are available at:
  "diff --histogram" optimization.
 
  Will merge to 'master'.
- source: <b0bc773f51e114d96ad6efd1ebd03fb6e7646288.1637148025.git.gitgitgadget@gmail.com>
+ source: <Yammtm+pIkMu43zZ@coredump.intra.peff.net>
+ source: <pull.1079.git.1637148025.gitgitgadget@gmail.com>
 
 
 * rs/mergesort (2021-11-18) 1 commit
@@ -684,7 +825,7 @@ Release tarballs are available at:
  source: <5eabbe1c-4c0f-559a-da21-423afec89e7e@web.de>
 
 
-* xw/am-empty (2021-12-01) 3 commits
+* xw/am-empty (2021-12-07) 3 commits
  - am: support --allow-empty to record specific empty patches
  - am: support --empty=<option> to handle empty patches
  - doc: git-format-patch: describe the option --always
@@ -692,9 +833,8 @@ Release tarballs are available at:
  "git am" learns "--empty=(die|drop|keep)" option to tweak what is
  done to a piece of e-mail without a patch in it.
 
- Expecting a reroll.
- The new and the third patch seems iffy.
- source: <pull.1076.v14.git.1638329848.gitgitgadget@gmail.com>
+ Almost there.
+ source: <pull.1076.v17.git.1638865913.gitgitgadget@gmail.com>
 
 
 * hk/ci-checkwhitespace-commentfix (2021-11-19) 1 commit
@@ -1008,7 +1148,8 @@ Release tarballs are available at:
  Long-overdue correctness and performance update to "diff
  --color-moved" feature.
 
- Need to pick up the reroll before merging to 'next'.
+ Expecting a reroll.
+ cf. <e1aadd47-533c-fd8b-4fae-f64a53c81ec9@gmail.com>
  cf. <pull.981.v4.git.1637056178.gitgitgadget@gmail.com>
 
 
@@ -1134,16 +1275,14 @@ Release tarballs are available at:
  source: <pull.1059.v5.git.1637626833.gitgitgadget@gmail.com>
 
 
-* js/branch-track-inherit (2021-11-18) 1 commit
- - branch: add flags and config to inherit tracking
+* js/branch-track-inherit (2021-12-07) 2 commits
+ . branch: add flags and config to inherit tracking
+ . branch: accept multiple upstream branches for tracking
 
  "git -c branch.autosetupmerge=inherit branch new old" makes "new"
  to have the same upstream as the "old" branch, instead of marking
  "old" itself as its upstream.
-
- Expecting a reroll.
- cf. <YaaYyFhDrvEbenWa@google.com>
- source: <7ad7507f183332cb2b5fdf2eb76fbbc9dd7199ef.1637085915.git.steadmon@google.com>
+ source: <cover.1638859949.git.steadmon@google.com>
 
 
 * jh/builtin-fsmonitor-part2 (2021-10-21) 29 commits
@@ -1185,20 +1324,24 @@ Release tarballs are available at:
  source: <pull.1041.v4.git.1634826309.gitgitgadget@gmail.com>
 
 
-* ld/sparse-diff-blame (2021-11-29) 3 commits
+* ld/sparse-diff-blame (2021-12-06) 8 commits
  - blame: enable and test the sparse index
  - diff: enable and test the sparse index
+ - diff: replace --staged with --cached in t1092 tests
+ - repo-settings: prepare_repo_settings only in git repos
+ - test-read-cache: set up repo after git directory
+ - commit-graph: return if there is no git directory
+ - git: ensure correct git directory setup with -h
  - Merge branch 'vd/sparse-reset' into ld/sparse-diff-blame
  (this branch is used by ds/fetch-pull-with-sparse-index; uses vd/sparse-reset.)
 
  Teach diff and blame to work well with sparse index.
 
- Need to pick up a reroll.
- cf. <pull.1050.v5.git.1638566165.gitgitgadget@gmail.com>
- source: <pull.1050.v2.git.1634332835.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <pull.1050.v6.git.1638806161.gitgitgadget@gmail.com>
 
 
-* ns/remerge-diff (2021-10-27) 9 commits
+* ns/remerge-diff (2021-12-06) 8 commits
  - doc/diff-options: explain the new --remerge-diff option
  - show, log: adapt Elijah Newren's changes to common tmp-objdir API
  - show, log: provide a --remerge-diff capability
@@ -1206,7 +1349,6 @@ Release tarballs are available at:
  - ll-merge: add API for capturing warnings in a strbuf instead of stderr
  - merge-ort: add ability to record conflict messages in a file
  - merge-ort: mark a few more conflict messages as omittable
- - Merge branch 'ns/tmp-objdir' into ns/remerge-diff
  - Merge branch 'ns/tmp-objdir' into ns/remerge-diff
  (this branch uses ns/tmp-objdir.)
 
@@ -1221,9 +1363,7 @@ Release tarballs are available at:
  them to longer-term storage" infrastructure with another topic.
 
 
-* ns/tmp-objdir (2021-10-27) 4 commits
- - fixup! tmp-objdir: new API for creating temporary writable databases
- - fixup! tmp-objdir: new API for creating temporary writable databases
+* ns/tmp-objdir (2021-12-06) 2 commits
  - tmp-objdir: disable ref updates when replacing the primary odb
  - tmp-objdir: new API for creating temporary writable databases
  (this branch is used by ns/batched-fsync and ns/remerge-diff.)
@@ -1231,11 +1371,8 @@ Release tarballs are available at:
  New interface into the tmp-objdir API to help in-core use of the
  quarantine feature.
 
- Expecting a reroll.
- cf. <CANQDOddCC7+gGUy1VBxxwvN7ieP+N8mQhbxK2xx6ySqZc6U7-g@mail.gmail.com>
- cf. <CABPp-BHq4DnkCZZ+HcnGiZYKHpWJgzMBjMDuWbbTFYPesm2sXA@mail.gmail.com>
- cf. <pull.1076.v9.git.git.1637020263.gitgitgadget@gmail.com>
- cf. <ef5a087813b7dfd232a9366eee09774d197e2307.1635287730.git.gitgitgadget@gmail.com>
+ Needs an Ack or Reviewed-by.
+ source: <pull.1091.v3.git.1638828305.gitgitgadget@gmail.com>
 
 
 * vd/sparse-reset (2021-11-29) 8 commits
@@ -1272,8 +1409,7 @@ Release tarballs are available at:
  source: <20211117005701.371808-1-emilyshaffer@google.com>
 
 
-* ns/batched-fsync (2021-10-27) 9 commits
- - Merge branch 'ns/tmp-objdir' into ns/batched-fsync
+* ns/batched-fsync (2021-12-06) 8 commits
  - core.fsyncobjectfiles: performance tests for add and stash
  - core.fsyncobjectfiles: tests for batch mode
  - unpack-objects: use the bulk-checkin infrastructure
@@ -1289,7 +1425,7 @@ Release tarballs are available at:
 
  Expecting a reroll.
  cf. <CABPp-BHq4DnkCZZ+HcnGiZYKHpWJgzMBjMDuWbbTFYPesm2sXA@mail.gmail.com>
- source: <f4fa20f591e580107b961aa1ca46d844603559d6.1633366668.git.gitgitgadget@gmail.com>
+ source: <pull.1076.v9.git.git.1637020263.gitgitgadget@gmail.com>
 
 
 * en/zdiff3 (2021-12-01) 2 commits
@@ -1302,7 +1438,7 @@ Release tarballs are available at:
  source: <pull.1036.v5.git.git.1638317108.gitgitgadget@gmail.com>
 
 
-* js/scalar (2021-12-01) 17 commits
+* js/scalar (2021-12-04) 15 commits
  - scalar: implement the `version` command
  - scalar: implement the `delete` command
  - scalar: teach 'reconfigure' to optionally handle all registered enlistments
@@ -1314,8 +1450,6 @@ Release tarballs are available at:
  - scalar: let 'unregister' handle a deleted enlistment directory gracefully
  - scalar: 'unregister' stops background maintenance
  - scalar: 'register' sets recommended config and starts maintenance
- - ci: also run the `scalar` tests
- - cmake: optionally build `scalar`, too
  - scalar: create test infrastructure
  - scalar: start documenting the command
  - scalar: create a rudimentary executable
@@ -1323,9 +1457,8 @@ Release tarballs are available at:
 
  Add pieces from "scalar" to contrib/.
 
- Need to pick up the reroll before merging to 'next'.
- cf. <pull.1005.v10.git.1638538470.gitgitgadget@gmail.com>
- source: <pull.1005.v9.git.1638273289.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <pull.1005.v10.git.1638538470.gitgitgadget@gmail.com>
 
 
 * ab/only-single-progress-at-once (2021-11-03) 8 commits
@@ -1368,9 +1501,22 @@ Release tarballs are available at:
  + reftable: add error related functionality
  + reftable: add LICENSE
  + hash.h: provide constants for the hash IDs
+ (this branch is used by hn/reftable-coverity-fixes.)
 
  The "reftable" backend for the refs API, without integrating into
  the refs subsystem, has been added.
 
  Will merge to 'master'.
  source: <pull.1081.v4.git.git.1633638315.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Discarded]
+
+* cf/fetch-set-upstream-while-detached (2021-07-06) 1 commit
+ . fetch: fix segfault on --set-upstream while on a detached HEAD
+
+ "git fetch --set-upstream" while on detached HEAD segfaulted
+ instead of noticing that such an operation did not make sense.
+
+ Superseded by the ab/fetch-set-upstream-while-detached topic
+ source: <20210706162238.575988-1-clemens@endorphin.org>
