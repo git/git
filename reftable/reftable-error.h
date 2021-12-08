@@ -53,6 +53,10 @@ enum reftable_error {
 
 	/* Invalid ref name. */
 	REFTABLE_REFNAME_ERROR = -10,
+
+	/* Entry does not fit. This can happen when writing outsize reflog
+	   messages. */
+	REFTABLE_ENTRY_TOO_BIG_ERROR = -11,
 };
 
 /* convert the numeric error code to a string. The string should not be

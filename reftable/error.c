@@ -32,6 +32,8 @@ const char *reftable_error_str(int err)
 		return "wrote empty table";
 	case REFTABLE_REFNAME_ERROR:
 		return "invalid refname";
+	case REFTABLE_ENTRY_TOO_BIG_ERROR:
+		return "entry too large";
 	case -1:
 		return "general error";
 	default:
