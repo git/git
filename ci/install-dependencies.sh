@@ -11,18 +11,11 @@ UBUNTU_COMMON_PKGS="make libssl-dev libcurl4-openssl-dev libexpat-dev
  tcl tk gettext zlib1g-dev perl-modules liberror-perl libauthen-sasl-perl
  libemail-valid-perl libio-socket-ssl-perl libnet-smtp-ssl-perl"
 
-case "$jobname" in
-linux-clang|linux-gcc|linux-leaks)
-	sudo apt-add-repository -y "ppa:ubuntu-toolchain-r/test"
+case "$runs_on_pool" in
+ubuntu-latest)
 	sudo apt-get -q update
 	sudo apt-get -q -y install language-pack-is libsvn-perl apache2 \
-		$UBUNTU_COMMON_PKGS
-	case "$jobname" in
-	linux-gcc)
-		sudo apt-get -q -y install gcc-8
-		;;
-	esac
-
+		$UBUNTU_COMMON_PKGS $CC_PACKAGE
 	mkdir --parents "$P4_PATH"
 	pushd "$P4_PATH"
 		wget --quiet "$P4WHENCE/bin.linux26x86_64/p4d"
@@ -37,7 +30,7 @@ linux-clang|linux-gcc|linux-leaks)
 		cp git-lfs-$LINUX_GIT_LFS_VERSION/git-lfs .
 	popd
 	;;
-osx-clang|osx-gcc)
+macos-latest)
 	export HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1
 	# Uncomment this if you want to run perf tests:
 	# brew install gnu-time
@@ -51,15 +44,17 @@ osx-clang|osx-gcc)
 		brew install --cask --no-quarantine perforce
 	} ||
 	brew install homebrew/cask/perforce
-	case "$jobname" in
-	osx-gcc)
-		brew install gcc@9
-		# Just in case the image is updated to contain gcc@9
-		# pre-installed but not linked.
-		brew link gcc@9
-		;;
-	esac
+
+	if test -n "$CC_PACKAGE"
+	then
+		BREW_PACKAGE=${CC_PACKAGE/-/@}
+		brew install "$BREW_PACKAGE"
+		brew link "$BREW_PACKAGE"
+	fi
 	;;
+esac
+
+case "$jobname" in
 StaticAnalysis)
 	sudo apt-get -q update
 	sudo apt-get -q -y install coccinelle libcurl4-openssl-dev libssl-dev \
@@ -77,7 +72,7 @@ Documentation)
 	test -n "$ALREADY_HAVE_ASCIIDOCTOR" ||
 	sudo gem install --version 1.5.8 asciidoctor
 	;;
-linux-gcc-default|linux-gcc-4.8)
+linux-gcc-default)
 	sudo apt-get -q update
 	sudo apt-get -q -y install $UBUNTU_COMMON_PKGS
 	;;
