@@ -187,7 +187,7 @@ static int handshake_capabilities(struct child_process *process,
 				*supported_capabilities |= capabilities[i].flag;
 		} else {
 			die("subprocess '%s' requested unsupported capability '%s'",
-			    process->argv[0], p);
+			    process->args.v[0], p);
 		}
 	}
 

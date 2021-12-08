@@ -232,7 +232,7 @@ static void fn_child_start_fl(const char *file, int line,
 	strbuf_addch(&buf_payload, ' ');
 	if (cmd->git_cmd)
 		strbuf_addstr(&buf_payload, "git ");
-	sq_append_quote_argv_pretty(&buf_payload, cmd->argv);
+	sq_append_quote_argv_pretty(&buf_payload, cmd->args.v);
 
 	normal_io_write_fl(file, line, &buf_payload);
 	strbuf_release(&buf_payload);

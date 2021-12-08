@@ -44,22 +44,35 @@
 struct child_process {
 
 	/**
-	 * The .argv member is set up as an array of string pointers (NULL
-	 * terminated), of which .argv[0] is the program name to run (usually
-	 * without a path). If the command to run is a git command, set argv[0] to
-	 * the command name without the 'git-' prefix and set .git_cmd = 1.
+	 * The .args is a `struct strvec', use that API to manipulate
+	 * it, e.g. strvec_pushv() to add an existing "const char **"
+	 * vector.
 	 *
-	 * Note that the ownership of the memory pointed to by .argv stays with the
-	 * caller, but it should survive until `finish_command` completes. If the
-	 * .argv member is NULL, `start_command` will point it at the .args
-	 * `strvec` (so you may use one or the other, but you must use exactly
-	 * one). The memory in .args will be cleaned up automatically during
+	 * If the command to run is a git command, set the first
+	 * element in the strvec to the command name without the
+	 * 'git-' prefix and set .git_cmd = 1.
+	 *
+	 * The memory in .args will be cleaned up automatically during
 	 * `finish_command` (or during `start_command` when it is unsuccessful).
-	 *
 	 */
-	const char **argv;
-
 	struct strvec args;
+
+	/**
+	 * Like .args the .env_array is a `struct strvec'.
+	 *
+	 * To modify the environment of the sub-process, specify an array of
+	 * environment settings. Each string in the array manipulates the
+	 * environment.
+	 *
+	 * - If the string is of the form "VAR=value", i.e. it contains '='
+	 *   the variable is added to the child process's environment.
+	 *
+	 * - If the string does not contain '=', it names an environment
+	 *   variable that will be removed from the child process's environment.
+	 *
+	 * The memory in .env_array will be cleaned up automatically during
+	 * `finish_command` (or during `start_command` when it is unsuccessful).
+	 */
 	struct strvec env_array;
 	pid_t pid;
 
@@ -95,23 +108,6 @@ struct child_process {
 	 * specify it in the .dir member.
 	 */
 	const char *dir;
-
-	/**
-	 * To modify the environment of the sub-process, specify an array of
-	 * string pointers (NULL terminated) in .env:
-	 *
-	 * - If the string is of the form "VAR=value", i.e. it contains '='
-	 *   the variable is added to the child process's environment.
-	 *
-	 * - If the string does not contain '=', it names an environment
-	 *   variable that will be removed from the child process's environment.
-	 *
-	 * If the .env member is NULL, `start_command` will point it at the
-	 * .env_array `strvec` (so you may use one or the other, but not both).
-	 * The memory in .env_array will be cleaned up automatically during
-	 * `finish_command` (or during `start_command` when it is unsuccessful).
-	 */
-	const char *const *env;
 
 	unsigned no_stdin:1;
 	unsigned no_stdout:1;
