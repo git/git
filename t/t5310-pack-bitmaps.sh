@@ -35,7 +35,7 @@ test_expect_success 'setup writing bitmaps during repack' '
 '
 
 test_expect_success 'full repack creates bitmaps' '
-	GIT_TRACE2_EVENT_NESTING=4 GIT_TRACE2_EVENT="$(pwd)/trace" \
+	GIT_TRACE2_EVENT="$(pwd)/trace" \
 		git repack -ad &&
 	ls .git/objects/pack/ | grep bitmap >output &&
 	test_line_count = 1 output &&

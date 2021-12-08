@@ -175,13 +175,11 @@ test_expect_success 'persist filter settings' '
 	test_when_finished rm -rf .git/objects/info/commit-graph* &&
 	rm -rf .git/objects/info/commit-graph* &&
 	GIT_TRACE2_EVENT="$(pwd)/trace2.txt" \
-		GIT_TRACE2_EVENT_NESTING=5 \
 		GIT_TEST_BLOOM_SETTINGS_NUM_HASHES=9 \
 		GIT_TEST_BLOOM_SETTINGS_BITS_PER_ENTRY=15 \
 		git commit-graph write --reachable --changed-paths &&
 	grep "{\"hash_version\":1,\"num_hashes\":9,\"bits_per_entry\":15,\"max_changed_paths\":512" trace2.txt &&
 	GIT_TRACE2_EVENT="$(pwd)/trace2-auto.txt" \
-		GIT_TRACE2_EVENT_NESTING=5 \
 		git commit-graph write --reachable --changed-paths &&
 	grep "{\"hash_version\":1,\"num_hashes\":9,\"bits_per_entry\":15,\"max_changed_paths\":512" trace2-auto.txt
 '

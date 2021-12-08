@@ -390,7 +390,7 @@ test_expect_success 'status succeeds after staging/unstaging' '
 # during a call to 'git status'. Otherwise, we verify that we _do_ call it.
 check_sparse_index_behavior () {
 	git -C full status --porcelain=v2 >expect &&
-	GIT_TRACE2_EVENT="$(pwd)/trace2.txt" GIT_TRACE2_EVENT_NESTING=10 \
+	GIT_TRACE2_EVENT="$(pwd)/trace2.txt" \
 		git -C sparse status --porcelain=v2 >actual &&
 	test_region $1 index ensure_full_index trace2.txt &&
 	test_region fsm_hook query trace2.txt &&
