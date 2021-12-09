@@ -350,10 +350,9 @@ test_expect_success 'cvs update (subdirectories)' \
 	test_cmp "$dir/$filename" "../$dir/$filename"; then
         :
       else
-        echo >failure
+	exit 1
       fi
-    done) &&
-   test ! -f failure'
+    done)'
 
 cd "$WORKDIR"
 test_expect_success 'cvs update (delete file)' \

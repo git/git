@@ -51,27 +51,21 @@ EOF
 test_expect_success 'add a large file or two' '
 	git add large1 huge large2 &&
 	# make sure we got a single packfile and no loose objects
-	bad= count=0 idx= &&
+	count=0 idx= &&
 	for p in .git/objects/pack/pack-*.pack
 	do
 		count=$(( $count + 1 )) &&
-		if test_path_is_file "$p" &&
-		   idx=${p%.pack}.idx && test_path_is_file "$idx"
-		then
-			continue
-		fi
-		bad=t
+		test_path_is_file "$p" &&
+		idx=${p%.pack}.idx &&
+		test_path_is_file "$idx" || return 1
 	done &&
-	test -z "$bad" &&
 	test $count = 1 &&
 	cnt=$(git show-index <"$idx" | wc -l) &&
 	test $cnt = 2 &&
 	for l in .git/objects/$OIDPATH_REGEX
 	do
-		test_path_is_file "$l" || continue
-		bad=t
+		test_path_is_missing "$l" || return 1
 	done &&
-	test -z "$bad" &&
 
 	# attempt to add another copy of the same
 	git add large3 &&
@@ -79,14 +73,10 @@ test_expect_success 'add a large file or two' '
 	for p in .git/objects/pack/pack-*.pack
 	do
 		count=$(( $count + 1 )) &&
-		if test_path_is_file "$p" &&
-		   idx=${p%.pack}.idx && test_path_is_file "$idx"
-		then
-			continue
-		fi
-		bad=t
+		test_path_is_file "$p" &&
+		idx=${p%.pack}.idx &&
+		test_path_is_file "$idx" || return 1
 	done &&
-	test -z "$bad" &&
 	test $count = 1
 '
 
