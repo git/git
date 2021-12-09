@@ -166,11 +166,11 @@ test_expect_success 'cherry-pick fails if cwd needs to be removed' '
 '
 
 test_expect_success 'rebase does not clean cwd incidentally' '
-	test_incidental_dir_removal failure git rebase reverted
+	test_incidental_dir_removal success git rebase reverted
 '
 
 test_expect_success 'rebase fails if cwd needs to be removed' '
-	test_required_dir_removal failure git rebase fd_conflict
+	test_required_dir_removal success git rebase fd_conflict
 '
 
 test_expect_success 'revert does not clean cwd incidentally' '
