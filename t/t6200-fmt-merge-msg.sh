@@ -104,7 +104,7 @@ test_expect_success 'message for merging local branch' '
 test_expect_success GPG 'message for merging local tag signed by good key' '
 	git checkout main &&
 	git fetch . signed-good-tag &&
-	git fmt-merge-msg <.git/FETCH_HEAD >actual 2>&1 &&
+	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
 	grep "^Merge tag ${apos}signed-good-tag${apos}" actual &&
 	grep "^# gpg: Signature made" actual &&
 	grep "^# gpg: Good signature from" actual
@@ -113,7 +113,7 @@ test_expect_success GPG 'message for merging local tag signed by good key' '
 test_expect_success GPG 'message for merging local tag signed by unknown key' '
 	git checkout main &&
 	git fetch . signed-good-tag &&
-	GNUPGHOME=. git fmt-merge-msg <.git/FETCH_HEAD >actual 2>&1 &&
+	GNUPGHOME=. git fmt-merge-msg <.git/FETCH_HEAD >actual &&
 	grep "^Merge tag ${apos}signed-good-tag${apos}" actual &&
 	grep "^# gpg: Signature made" actual &&
 	grep -E "^# gpg: Can${apos}t check signature: (public key not found|No public key)" actual
@@ -123,7 +123,7 @@ test_expect_success GPGSSH 'message for merging local tag signed by good ssh key
 	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
 	git checkout main &&
 	git fetch . signed-good-ssh-tag &&
-	git fmt-merge-msg <.git/FETCH_HEAD >actual 2>&1 &&
+	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
 	grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
 	! grep "${GPGSSH_BAD_SIGNATURE}" actual
 '
@@ -132,7 +132,7 @@ test_expect_success GPGSSH 'message for merging local tag signed by unknown ssh 
 	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
 	git checkout main &&
 	git fetch . signed-untrusted-ssh-tag &&
-	git fmt-merge-msg <.git/FETCH_HEAD >actual 2>&1 &&
+	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
 	grep "${GPGSSH_GOOD_SIGNATURE_UNTRUSTED}" actual &&
 	! grep "${GPGSSH_BAD_SIGNATURE}" actual &&
 	grep "${GPGSSH_KEY_NOT_TRUSTED}" actual
