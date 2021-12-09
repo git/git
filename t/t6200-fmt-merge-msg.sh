@@ -124,6 +124,7 @@ test_expect_success GPGSSH 'message for merging local tag signed by good ssh key
 	git checkout main &&
 	git fetch . signed-good-ssh-tag &&
 	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	grep "^Merge tag ${apos}signed-good-ssh-tag${apos}" actual &&
 	grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
 	! grep "${GPGSSH_BAD_SIGNATURE}" actual
 '
@@ -133,6 +134,7 @@ test_expect_success GPGSSH 'message for merging local tag signed by unknown ssh 
 	git checkout main &&
 	git fetch . signed-untrusted-ssh-tag &&
 	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	grep "^Merge tag ${apos}signed-untrusted-ssh-tag${apos}" actual &&
 	grep "${GPGSSH_GOOD_SIGNATURE_UNTRUSTED}" actual &&
 	! grep "${GPGSSH_BAD_SIGNATURE}" actual &&
 	grep "${GPGSSH_KEY_NOT_TRUSTED}" actual
