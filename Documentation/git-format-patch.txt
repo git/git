@@ -18,7 +18,7 @@ SYNOPSIS
 		   [-n | --numbered | -N | --no-numbered]
 		   [--start-number <n>] [--numbered-files]
 		   [--in-reply-to=<message id>] [--suffix=.<sfx>]
-		   [--ignore-if-in-upstream]
+		   [--ignore-if-in-upstream] [--always]
 		   [--cover-from-description=<mode>]
 		   [--rfc] [--subject-prefix=<subject prefix>]
 		   [(--reroll-count|-v) <n>]
@@ -191,6 +191,10 @@ will want to ensure that threading is disabled for `git send-email`.
 	from <since> but not from <until> and compare them with the
 	patches being generated, and any patch that matches is
 	ignored.
+
+--always::
+	Include patches for commits that do not introduce any change,
+	which are omitted by default.
 
 --cover-from-description=<mode>::
 	Controls which parts of the cover letter will be automatically
