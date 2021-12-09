@@ -32,9 +32,6 @@ test_expect_success setup '
 '
 
 test_incidental_dir_removal () {
-	works=$1 &&
-	shift &&
-
 	test_when_finished "git reset --hard" &&
 
 	git checkout foo/bar/baz^{commit} &&
@@ -44,88 +41,57 @@ test_incidental_dir_removal () {
 		cd foo &&
 		"$@" &&
 
-		# Although we want pwd & git status to pass, test for existing
-		# rather than desired behavior.
-		if test "$works" = "success"
-		then
-			test-tool getcwd &&
-			git status --porcelain
-		else
-			! test-tool getcwd &&
-			test_might_fail git status --porcelain
-		fi
+		# Make sure foo still exists, and commands needing it work
+		test-tool getcwd &&
+		git status --porcelain
 	) &&
 	test_path_is_missing foo/bar/baz &&
 	test_path_is_missing foo/bar &&
 
-	# Although we want dir to be present, test for existing rather
-	# than desired behavior.
-	if test "$works" = "success"
-	then
-		test_path_is_dir foo
-	else
-		test_path_is_missing foo
-	fi
+	test_path_is_dir foo
 }
 
 test_required_dir_removal () {
-	works=$1 &&
-	shift &&
-
 	git checkout df_conflict^{commit} &&
 	test_when_finished "git clean -fdx" &&
 
 	(
 		cd dirORfile &&
 
-		# We'd like for the command to fail (much as it would if there
-		# was an untracked file there), and for the index and worktree
-		# to be left clean with pwd and git status working afterwards.
-		# But test for existing rather than desired behavior.
-		if test "$works" = "success"
-		then
-			test_must_fail "$@" 2>../error &&
-			grep "Refusing to remove.*current working directory" ../error &&
+		# Ensure command refuses to run
+		test_must_fail "$@" 2>../error &&
+		grep "Refusing to remove.*current working directory" ../error &&
 
-			git diff --exit-code HEAD &&
+		# ...and that the index and working tree are left clean
+		git diff --exit-code HEAD &&
 
-			test-tool getcwd &&
-			git status --porcelain
-		else
-			"$@" &&
-			! test-tool getcwd &&
-			test_might_fail git status --porcelain
-		fi
+		# Ensure that getcwd and git status do not error out (which
+		# they might if the current working directory had been removed)
+		test-tool getcwd &&
+		git status --porcelain
 	) &&
 
-	# Although we want dirORfile to be present, test for existing rather
-	# than desired behavior.
-	if test "$works" = "success"
-	then
-		test_path_is_dir dirORfile
-	else
-		test_path_is_file dirORfile
-	fi
+	test_path_is_dir dirORfile
 }
 
 test_expect_success 'checkout does not clean cwd incidentally' '
-	test_incidental_dir_removal success git checkout init
+	test_incidental_dir_removal git checkout init
 '
 
 test_expect_success 'checkout fails if cwd needs to be removed' '
-	test_required_dir_removal success git checkout fd_conflict
+	test_required_dir_removal git checkout fd_conflict
 '
 
 test_expect_success 'reset --hard does not clean cwd incidentally' '
-	test_incidental_dir_removal success git reset --hard init
+	test_incidental_dir_removal git reset --hard init
 '
 
 test_expect_success 'reset --hard fails if cwd needs to be removed' '
-	test_required_dir_removal success git reset --hard fd_conflict
+	test_required_dir_removal git reset --hard fd_conflict
 '
 
 test_expect_success 'merge does not clean cwd incidentally' '
-	test_incidental_dir_removal success git merge reverted
+	test_incidental_dir_removal git merge reverted
 '
 
 # This file uses some simple merges where
@@ -154,46 +120,43 @@ test_expect_success 'merge fails if cwd needs to be removed; recursive friendly'
 GIT_TEST_MERGE_ALGORITHM=ort
 
 test_expect_success 'merge fails if cwd needs to be removed' '
-	test_required_dir_removal success git merge fd_conflict
+	test_required_dir_removal git merge fd_conflict
 '
 
 test_expect_success 'cherry-pick does not clean cwd incidentally' '
-	test_incidental_dir_removal success git cherry-pick reverted
+	test_incidental_dir_removal git cherry-pick reverted
 '
 
 test_expect_success 'cherry-pick fails if cwd needs to be removed' '
-	test_required_dir_removal success git cherry-pick fd_conflict
+	test_required_dir_removal git cherry-pick fd_conflict
 '
 
 test_expect_success 'rebase does not clean cwd incidentally' '
-	test_incidental_dir_removal success git rebase reverted
+	test_incidental_dir_removal git rebase reverted
 '
 
 test_expect_success 'rebase fails if cwd needs to be removed' '
-	test_required_dir_removal success git rebase fd_conflict
+	test_required_dir_removal git rebase fd_conflict
 '
 
 test_expect_success 'revert does not clean cwd incidentally' '
-	test_incidental_dir_removal success git revert HEAD
+	test_incidental_dir_removal git revert HEAD
 '
 
 test_expect_success 'revert fails if cwd needs to be removed' '
-	test_required_dir_removal success git revert undo_fd_conflict
+	test_required_dir_removal git revert undo_fd_conflict
 '
 
 test_expect_success 'rm does not clean cwd incidentally' '
-	test_incidental_dir_removal success git rm bar/baz.t
+	test_incidental_dir_removal git rm bar/baz.t
 '
 
 test_expect_success 'apply does not remove cwd incidentally' '
 	git diff HEAD HEAD~1 >patch &&
-	test_incidental_dir_removal success git apply ../patch
+	test_incidental_dir_removal git apply ../patch
 '
 
 test_incidental_untracked_dir_removal () {
-	works=$1 &&
-	shift &&
-
 	test_when_finished "git reset --hard" &&
 
 	git checkout foo/bar/baz^{commit} &&
@@ -205,38 +168,24 @@ test_incidental_untracked_dir_removal () {
 		cd untracked &&
 		"$@" &&
 
-		# Although we want pwd & git status to pass, test for existing
-		# rather than desired behavior.
-		if test "$works" = "success"
-		then
-			test-tool getcwd &&
-			git status --porcelain
-		else
-			! test-tool getcwd &&
-			test_might_fail git status --porcelain
-		fi
+		# Make sure untracked still exists, and commands needing it work
+		test-tool getcwd &&
+		git status --porcelain
 	) &&
 	test_path_is_missing empty &&
 	test_path_is_missing untracked/random &&
 
-	# Although we want dir to be present, test for existing rather
-	# than desired behavior.
-	if test "$works" = "success"
-	then
-		test_path_is_dir untracked
-	else
-		test_path_is_missing untracked
-	fi
+	test_path_is_dir untracked
 }
 
 test_expect_success 'clean does not remove cwd incidentally' '
-	test_incidental_untracked_dir_removal success \
+	test_incidental_untracked_dir_removal \
 		git -C .. clean -fd -e warnings . >warnings &&
 	grep "Refusing to remove current working directory" warnings
 '
 
 test_expect_success 'stash does not remove cwd incidentally' '
-	test_incidental_untracked_dir_removal success \
+	test_incidental_untracked_dir_removal \
 		git stash --include-untracked
 '
 
