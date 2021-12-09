@@ -130,7 +130,7 @@ test_expect_success 'generate lots of packs' '
 		echo "data <<EOF" &&
 		echo "blob $i" &&
 		echo "EOF" &&
-		echo "checkpoint"
+		echo "checkpoint" || return 1
 	done |
 	git -c fastimport.unpackLimit=0 fast-import
 '

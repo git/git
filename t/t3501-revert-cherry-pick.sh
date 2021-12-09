@@ -19,7 +19,7 @@ test_expect_success setup '
 
 	for l in a b c d e f g h i j k l m n o
 	do
-		echo $l$l$l$l$l$l$l$l$l
+		echo $l$l$l$l$l$l$l$l$l || return 1
 	done >oops &&
 
 	test_tick &&

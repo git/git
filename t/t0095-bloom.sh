@@ -84,7 +84,7 @@ test_expect_success 'get bloom filter for commit with 10 changes' '
 	mkdir smallDir &&
 	for i in $(test_seq 0 9)
 	do
-		echo $i >smallDir/$i
+		echo $i >smallDir/$i || return 1
 	done &&
 	git add smallDir &&
 	git commit -m "commit with 10 changes" &&
@@ -102,7 +102,7 @@ test_expect_success EXPENSIVE 'get bloom filter for commit with 513 changes' '
 	mkdir bigDir &&
 	for i in $(test_seq 0 511)
 	do
-		echo $i >bigDir/$i
+		echo $i >bigDir/$i || return 1
 	done &&
 	git add bigDir &&
 	git commit -m "commit with 513 changes" &&

@@ -349,12 +349,12 @@ test_expect_success SHA1 'parsing reverse reflogs at BUFSIZ boundaries' '
 		printf "$zf%02d $zf%02d %s\t" $i $(($i+1)) "$ident" &&
 		if test $i = 75; then
 			for j in $(test_seq 1 89); do
-				printf X
+				printf X || return 1
 			done
 		else
 			printf X
 		fi &&
-		printf "\n"
+		printf "\n" || return 1
 	done >.git/logs/refs/heads/reflogskip &&
 	git rev-parse reflogskip@{73} >actual &&
 	echo ${zf}03 >expect &&

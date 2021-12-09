@@ -123,14 +123,14 @@ test_expect_success 'show-ref -d' '
 test_expect_success 'show-ref --heads, --tags, --head, pattern' '
 	for branch in B main side
 	do
-		echo $(git rev-parse refs/heads/$branch) refs/heads/$branch
+		echo $(git rev-parse refs/heads/$branch) refs/heads/$branch || return 1
 	done >expect.heads &&
 	git show-ref --heads >actual &&
 	test_cmp expect.heads actual &&
 
 	for tag in A B C
 	do
-		echo $(git rev-parse refs/tags/$tag) refs/tags/$tag
+		echo $(git rev-parse refs/tags/$tag) refs/tags/$tag || return 1
 	done >expect.tags &&
 	git show-ref --tags >actual &&
 	test_cmp expect.tags actual &&

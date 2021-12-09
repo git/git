@@ -718,7 +718,7 @@ test_expect_success bool '
 	for i in 1 2 3 4
 	do
 	    git config --bool --get bool.true$i >>result &&
-	    git config --bool --get bool.false$i >>result
+	    git config --bool --get bool.false$i >>result || return 1
 	done &&
 	test_cmp expect result'
 

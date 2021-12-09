@@ -381,7 +381,7 @@ test_expect_success 'ambiguous commits are printed by type first, then hash orde
 	do
 		grep $type objects >$type.objects &&
 		sort $type.objects >$type.objects.sorted &&
-		test_cmp $type.objects.sorted $type.objects
+		test_cmp $type.objects.sorted $type.objects || return 1
 	done
 '
 

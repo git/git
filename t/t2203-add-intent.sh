@@ -116,7 +116,7 @@ test_expect_success 'cache-tree does not ignore dir that has i-t-a entries' '
 		mkdir 2 &&
 		for f in 1 2/1 2/2 3
 		do
-			echo "$f" >"$f"
+			echo "$f" >"$f" || return 1
 		done &&
 		git add 1 2/2 3 &&
 		git add -N 2/1 &&

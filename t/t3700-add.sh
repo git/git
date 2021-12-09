@@ -143,7 +143,7 @@ test_expect_success 'git add with filemode=0, symlinks=0, and unmerged entries' 
 	do
 		echo $s > stage$s &&
 		echo "100755 $(git hash-object -w stage$s) $s	file" &&
-		echo "120000 $(printf $s | git hash-object -w -t blob --stdin) $s	symlink"
+		echo "120000 $(printf $s | git hash-object -w -t blob --stdin) $s	symlink" || return 1
 	done | git update-index --index-info &&
 	git config core.filemode 0 &&
 	git config core.symlinks 0 &&

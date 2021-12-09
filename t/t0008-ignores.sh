@@ -200,7 +200,7 @@ test_expect_success 'setup' '
 	do
 		: >$dir/not-ignored &&
 		: >$dir/ignored-and-untracked &&
-		: >$dir/ignored-but-in-index
+		: >$dir/ignored-but-in-index || return 1
 	done &&
 	git add -f ignored-but-in-index a/ignored-but-in-index &&
 	cat <<-\EOF >a/.gitignore &&

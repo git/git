@@ -1368,7 +1368,7 @@ test_expect_success ULIMIT_FILE_DESCRIPTORS 'large transaction creating branches
 (
 	for i in $(test_seq 33)
 	do
-		echo "create refs/heads/$i HEAD"
+		echo "create refs/heads/$i HEAD" || exit 1
 	done >large_input &&
 	run_with_limited_open_files git update-ref --stdin <large_input &&
 	git rev-parse --verify -q refs/heads/33
@@ -1379,7 +1379,7 @@ test_expect_success ULIMIT_FILE_DESCRIPTORS 'large transaction deleting branches
 (
 	for i in $(test_seq 33)
 	do
-		echo "delete refs/heads/$i HEAD"
+		echo "delete refs/heads/$i HEAD" || exit 1
 	done >large_input &&
 	run_with_limited_open_files git update-ref --stdin <large_input &&
 	test_must_fail git rev-parse --verify -q refs/heads/33

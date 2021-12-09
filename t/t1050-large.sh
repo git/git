@@ -105,7 +105,7 @@ test_expect_success 'packsize limit' '
 		count=0 &&
 		for pi in .git/objects/pack/pack-*.idx
 		do
-			test_path_is_file "$pi" && count=$(( $count + 1 ))
+			test_path_is_file "$pi" && count=$(( $count + 1 )) || return 1
 		done &&
 		test $count = 2 &&
 
@@ -118,7 +118,7 @@ test_expect_success 'packsize limit' '
 
 		for pi in .git/objects/pack/pack-*.idx
 		do
-			git show-index <"$pi"
+			git show-index <"$pi" || return 1
 		done |
 		sed -e "s/^[0-9]* \([0-9a-f]*\) .*/\1/" |
 		sort >actual &&
