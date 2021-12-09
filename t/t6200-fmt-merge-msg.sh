@@ -519,7 +519,7 @@ test_expect_success 'merge-msg lots of commits' '
 		while test $i -gt 9
 		do
 			echo "  $i" &&
-			i=$(($i-1))
+			i=$(($i-1)) || return 1
 		done &&
 		echo "  ..."
 	} >expected &&

@@ -262,7 +262,7 @@ test_expect_success 'name-rev --all' '
 	>expect.unsorted &&
 	for rev in $(git rev-list --all)
 	do
-		git name-rev $rev >>expect.unsorted
+		git name-rev $rev >>expect.unsorted || return 1
 	done &&
 	sort <expect.unsorted >expect &&
 	git name-rev --all >actual.unsorted &&
@@ -275,7 +275,7 @@ test_expect_success 'name-rev --stdin' '
 	for rev in $(git rev-list --all)
 	do
 		name=$(git name-rev --name-only $rev) &&
-		echo "$rev ($name)" >>expect.unsorted
+		echo "$rev ($name)" >>expect.unsorted || return 1
 	done &&
 	sort <expect.unsorted >expect &&
 	git rev-list --all | git name-rev --stdin >actual.unsorted &&
@@ -395,7 +395,7 @@ EOF" &&
 		then
 			echo "from refs/heads/main^0"
 		fi &&
-		i=$(($i + 1))
+		i=$(($i + 1)) || return 1
 	done | git fast-import &&
 	git checkout main &&
 	git tag far-far-away HEAD^ &&

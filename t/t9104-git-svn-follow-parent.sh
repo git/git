@@ -117,7 +117,7 @@ test_expect_success 'follow-parent avoids deleting relevant info' '
 	mkdir -p import/trunk/subversion/bindings/swig/perl/t &&
 	for i in a b c ; do \
 	  echo $i > import/trunk/subversion/bindings/swig/perl/$i.pm &&
-	  echo _$i > import/trunk/subversion/bindings/swig/perl/t/$i.t; \
+	  echo _$i > import/trunk/subversion/bindings/swig/perl/t/$i.t || return 1
 	done &&
 	  echo "bad delete test" > \
 	   import/trunk/subversion/bindings/swig/perl/t/larger-parent &&
@@ -134,7 +134,7 @@ test_expect_success 'follow-parent avoids deleting relevant info' '
 		svn mv t native/t &&
 		for i in a b c
 		do
-			svn mv $i.pm native/$i.pm
+			svn mv $i.pm native/$i.pm || return 1
 		done &&
 		echo z >>native/t/c.t &&
 		poke native/t/c.t &&

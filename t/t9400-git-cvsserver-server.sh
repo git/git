@@ -338,7 +338,7 @@ test_expect_success 'cvs update (subdirectories)' \
   '(for dir in A A/B A/B/C A/D E; do
       mkdir $dir &&
       echo "test file in $dir" >"$dir/file_in_$(echo $dir|sed -e "s#/# #g")"  &&
-      git add $dir
+      git add $dir || exit 1
    done) &&
    git commit -q -m "deep sub directory structure" &&
    git push gitcvs.git >/dev/null &&
@@ -381,7 +381,7 @@ test_expect_success 'cvs update (merge)' \
    for i in 1 2 3 4 5 6 7
    do
      echo Line $i >>merge &&
-     echo Line $i >>expected
+     echo Line $i >>expected || return 1
    done &&
    echo Line 8 >>expected &&
    git add merge &&

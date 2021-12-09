@@ -1338,7 +1338,7 @@ test_expect_success ':remotename and :remoteref' '
 			echo "${pair#*=}" >expect &&
 			git for-each-ref --format="${pair%=*}" \
 				refs/heads/main >actual &&
-			test_cmp expect actual
+			test_cmp expect actual || exit 1
 		done &&
 		git branch push-simple &&
 		git config branch.push-simple.pushRemote from &&

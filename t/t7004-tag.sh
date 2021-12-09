@@ -1981,7 +1981,7 @@ EOF" &&
 		then
 			echo "from refs/heads/main^0"
 		fi &&
-		i=$(($i + 1))
+		i=$(($i + 1)) || return 1
 	done | git fast-import &&
 	git checkout main &&
 	git tag far-far-away HEAD^ &&
