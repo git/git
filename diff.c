@@ -1098,6 +1098,38 @@ static int shrink_potential_moved_blocks(struct moved_block *pmb,
 	return rp + 1;
 }
 
+static void fill_potential_moved_blocks(struct diff_options *o,
+					struct hashmap *hm,
+					struct moved_entry *match,
+					struct emitted_diff_symbol *l,
+					struct moved_block **pmb_p,
+					int *pmb_alloc_p, int *pmb_nr_p)
+
+{
+	struct moved_block *pmb = *pmb_p;
+	int pmb_alloc = *pmb_alloc_p, pmb_nr = *pmb_nr_p;
+
+	/*
+	 * The current line is the start of a new block.
+	 * Setup the set of potential blocks.
+	 */
+	hashmap_for_each_entry_from(hm, match, ent) {
+		ALLOC_GROW(pmb, pmb_nr + 1, pmb_alloc);
+		if (o->color_moved_ws_handling &
+		    COLOR_MOVED_WS_ALLOW_INDENTATION_CHANGE) {
+			if (compute_ws_delta(l, match->es, &(pmb[pmb_nr]).wsd))
+				pmb[pmb_nr++].match = match;
+		} else {
+			pmb[pmb_nr].wsd = 0;
+			pmb[pmb_nr++].match = match;
+		}
+	}
+
+	*pmb_p = pmb;
+	*pmb_alloc_p = pmb_alloc;
+	*pmb_nr_p = pmb_nr;
+}
+
 /*
  * If o->color_moved is COLOR_MOVED_PLAIN, this function does nothing.
  *
@@ -1198,23 +1230,8 @@ static void mark_color_as_moved(struct diff_options *o,
 		pmb_nr = shrink_potential_moved_blocks(pmb, pmb_nr);
 
 		if (pmb_nr == 0) {
-			/*
-			 * The current line is the start of a new block.
-			 * Setup the set of potential blocks.
-			 */
-			hashmap_for_each_entry_from(hm, match, ent) {
-				ALLOC_GROW(pmb, pmb_nr + 1, pmb_alloc);
-				if (o->color_moved_ws_handling &
-				    COLOR_MOVED_WS_ALLOW_INDENTATION_CHANGE) {
-					if (compute_ws_delta(l, match->es,
-							     &pmb[pmb_nr].wsd))
-						pmb[pmb_nr++].match = match;
-				} else {
-					pmb[pmb_nr].wsd = 0;
-					pmb[pmb_nr++].match = match;
-				}
-			}
-
+			fill_potential_moved_blocks(
+				o, hm, match, l, &pmb, &pmb_alloc, &pmb_nr);
 			if (adjust_last_block(o, n, block_length) &&
 			    pmb_nr && last_symbol != l->s)
 				flipped_block = (flipped_block + 1) % 2;
