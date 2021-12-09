@@ -118,17 +118,17 @@ test_expect_success check '
 # If an expanded ident ever gets into the repository, we want to make sure that
 # it is collapsed before being expanded again on checkout
 test_expect_success expanded_in_repo '
-	{
-		echo "File with expanded keywords"
-		echo "\$Id\$"
-		echo "\$Id:\$"
-		echo "\$Id: 0000000000000000000000000000000000000000 \$"
-		echo "\$Id: NoSpaceAtEnd\$"
-		echo "\$Id:NoSpaceAtFront \$"
-		echo "\$Id:NoSpaceAtEitherEnd\$"
-		echo "\$Id: NoTerminatingSymbol"
-		echo "\$Id: Foreign Commit With Spaces \$"
-	} >expanded-keywords.0 &&
+	cat >expanded-keywords.0 <<-\EOF &&
+	File with expanded keywords
+	$Id$
+	$Id:$
+	$Id: 0000000000000000000000000000000000000000 $
+	$Id: NoSpaceAtEnd$
+	$Id:NoSpaceAtFront $
+	$Id:NoSpaceAtEitherEnd$
+	$Id: NoTerminatingSymbol
+	$Id: Foreign Commit With Spaces $
+	EOF
 
 	{
 		cat expanded-keywords.0 &&
@@ -139,17 +139,17 @@ test_expect_success expanded_in_repo '
 	git commit -m "File with keywords expanded" &&
 	id=$(git rev-parse --verify :expanded-keywords) &&
 
-	{
-		echo "File with expanded keywords"
-		echo "\$Id: $id \$"
-		echo "\$Id: $id \$"
-		echo "\$Id: $id \$"
-		echo "\$Id: $id \$"
-		echo "\$Id: $id \$"
-		echo "\$Id: $id \$"
-		echo "\$Id: NoTerminatingSymbol"
-		echo "\$Id: Foreign Commit With Spaces \$"
-	} >expected-output.0 &&
+	cat >expected-output.0 <<-EOF &&
+	File with expanded keywords
+	\$Id: $id \$
+	\$Id: $id \$
+	\$Id: $id \$
+	\$Id: $id \$
+	\$Id: $id \$
+	\$Id: $id \$
+	\$Id: NoTerminatingSymbol
+	\$Id: Foreign Commit With Spaces \$
+	EOF
 	{
 		cat expected-output.0 &&
 		printf "\$Id: NoTerminatingSymbolAtEOF"

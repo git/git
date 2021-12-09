@@ -105,19 +105,19 @@ test_expect_success setup '
 	remotes="$remotes config-glob" &&
 
 	mkdir -p .git/remotes &&
-	{
-		echo "URL: ../.git/"
-		echo "Pull: refs/heads/main:remotes/rem/main"
-		echo "Pull: refs/heads/one:remotes/rem/one"
-		echo "Pull: two:remotes/rem/two"
-		echo "Pull: refs/heads/three:remotes/rem/three"
-	} >.git/remotes/remote-explicit &&
+	cat >.git/remotes/remote-explicit <<-\EOF &&
+	URL: ../.git/
+	Pull: refs/heads/main:remotes/rem/main
+	Pull: refs/heads/one:remotes/rem/one
+	Pull: two:remotes/rem/two
+	Pull: refs/heads/three:remotes/rem/three
+	EOF
 	remotes="$remotes remote-explicit" &&
 
-	{
-		echo "URL: ../.git/"
-		echo "Pull: refs/heads/*:refs/remotes/rem/*"
-	} >.git/remotes/remote-glob &&
+	cat >.git/remotes/remote-glob <<-\EOF &&
+	URL: ../.git/
+	Pull: refs/heads/*:refs/remotes/rem/*
+	EOF
 	remotes="$remotes remote-glob" &&
 
 	mkdir -p .git/branches &&
