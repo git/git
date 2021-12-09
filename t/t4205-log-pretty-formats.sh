@@ -976,7 +976,7 @@ test_expect_success '%(describe) vs git describe' '
 		else
 			: >expect-contains-bad
 		fi &&
-		echo "$hash $desc"
+		echo "$hash $desc" || return 1
 	done >expect &&
 	test_path_exists expect-contains-good &&
 	test_path_exists expect-contains-bad &&

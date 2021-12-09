@@ -333,7 +333,7 @@ test_expect_success 'applying beyond EOF requires one non-blank context line' '
 
 test_expect_success 'tons of blanks at EOF should not apply' '
 	for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16; do
-		test_write_lines "" "" "" ""
+		test_write_lines "" "" "" "" || return 1
 	done >one &&
 	git add one &&
 	echo a >>one &&
@@ -396,7 +396,7 @@ test_expect_success 'shrink file with tons of missing blanks at end of file' '
 	test_write_lines a b c >one &&
 	cp one no-blank-lines &&
 	for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16; do
-		test_write_lines "" "" "" ""
+		test_write_lines "" "" "" "" || return 1
 	done >>one &&
 	git add one &&
 	echo a >one &&

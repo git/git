@@ -101,7 +101,7 @@ test_expect_success 'preparation for big change tests' '
 	i=0 &&
 	while test $i -lt 1000
 	do
-		echo $i && i=$(($i + 1))
+		echo $i && i=$(($i + 1)) || return 1
 	done >abcd &&
 	git commit -m message abcd
 '

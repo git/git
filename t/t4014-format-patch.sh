@@ -325,7 +325,7 @@ test_expect_success 'filename length limit' '
 		max=$(
 			for patch in 000[1-9]-*.patch
 			do
-				echo "$patch" | wc -c
+				echo "$patch" | wc -c || exit 1
 			done |
 			sort -nr |
 			head -n 1
@@ -343,7 +343,7 @@ test_expect_success 'filename length limit from config' '
 		max=$(
 			for patch in 000[1-9]-*.patch
 			do
-				echo "$patch" | wc -c
+				echo "$patch" | wc -c || exit 1
 			done |
 			sort -nr |
 			head -n 1
@@ -361,7 +361,7 @@ test_expect_success 'filename limit applies only to basename' '
 		max=$(
 			for patch in patches/000[1-9]-*.patch
 			do
-				echo "${patch#patches/}" | wc -c
+				echo "${patch#patches/}" | wc -c || exit 1
 			done |
 			sort -nr |
 			head -n 1

@@ -30,7 +30,7 @@ test_expect_success setup '
 	while test $x -lt $n
 	do
 		printf "%63s%d\n" "" $x >>after &&
-		x=$(( $x + 1 ))
+		x=$(( $x + 1 )) || return 1
 	done &&
 	printf "\t%s\n" d e f >>after &&
 	test_expect_code 1 git diff --no-index before after >patch2.patch.raw &&
@@ -41,7 +41,7 @@ test_expect_success setup '
 	while test $x -lt $n
 	do
 		printf "%63s%d\n" "" $x >>expect-2 &&
-		x=$(( $x + 1 ))
+		x=$(( $x + 1 )) || return 1
 	done &&
 	printf "%64s\n" d e f >>expect-2 &&
 
@@ -53,7 +53,7 @@ test_expect_success setup '
 	while test $x -lt $n
 	do
 		printf "%63s%02d\n" "" $x >>after &&
-		x=$(( $x + 1 ))
+		x=$(( $x + 1 )) || return 1
 	done &&
 	printf "\t%s\n" d e f >>after &&
 	test_expect_code 1 git diff --no-index before after >patch3.patch.raw &&
@@ -64,7 +64,7 @@ test_expect_success setup '
 	while test $x -lt $n
 	do
 		printf "%63s%02d\n" "" $x >>expect-3 &&
-		x=$(( $x + 1 ))
+		x=$(( $x + 1 )) || return 1
 	done &&
 	printf "%64s\n" d e f >>expect-3 &&
 
@@ -74,7 +74,7 @@ test_expect_success setup '
 	while test $x -lt 50
 	do
 		printf "\t%02d\n" $x >>before &&
-		x=$(( $x + 1 ))
+		x=$(( $x + 1 )) || return 1
 	done &&
 	cat before >after &&
 	printf "%64s\n" a b c >>after &&
@@ -82,7 +82,7 @@ test_expect_success setup '
 	do
 		printf "\t%02d\n" $x >>before &&
 		printf "\t%02d\n" $x >>after &&
-		x=$(( $x + 1 ))
+		x=$(( $x + 1 )) || return 1
 	done &&
 	test_expect_code 1 git diff --no-index before after >patch4.patch.raw &&
 	sed -e "s/before/test-4/" -e "s/after/test-4/" patch4.patch.raw >patch4.patch &&
@@ -91,7 +91,7 @@ test_expect_success setup '
 	while test $x -lt 50
 	do
 		printf "%63s%02d\n" "" $x >>test-4 &&
-		x=$(( $x + 1 ))
+		x=$(( $x + 1 )) || return 1
 	done &&
 	cat test-4 >expect-4 &&
 	printf "%64s\n" a b c >>expect-4 &&
@@ -99,7 +99,7 @@ test_expect_success setup '
 	do
 		printf "%63s%02d\n" "" $x >>test-4 &&
 		printf "%63s%02d\n" "" $x >>expect-4 &&
-		x=$(( $x + 1 ))
+		x=$(( $x + 1 )) || return 1
 	done &&
 
 	git config core.whitespace tab-in-indent,tabwidth=63 &&

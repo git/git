@@ -100,7 +100,7 @@ test_expect_success 'setup for --cc --raw' '
 	for i in $(test_seq 1 40)
 	do
 		blob=$(echo file$i | git hash-object --stdin -w) &&
-		trees="$trees$(echo "100644 blob $blob	file" | git mktree)$LF"
+		trees="$trees$(echo "100644 blob $blob	file" | git mktree)$LF" || return 1
 	done
 '
 
