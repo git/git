@@ -177,7 +177,7 @@ test_expect_success 'git add --refresh' '
 	git read-tree HEAD &&
 	case "$(git diff-index HEAD -- foo)" in
 	:100644" "*"M	foo") echo pass;;
-	*) echo fail; (exit 1);;
+	*) echo fail; false;;
 	esac &&
 	git add --refresh -- foo &&
 	test -z "$(git diff-index HEAD -- foo)"

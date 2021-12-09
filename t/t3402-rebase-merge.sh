@@ -68,7 +68,7 @@ test_expect_success 'merge and rebase should match' '
 	if test -s difference
 	then
 		cat difference
-		(exit 1)
+		false
 	else
 		echo happy
 	fi
@@ -102,7 +102,7 @@ test_expect_success 'merge and rebase should match' '
 	if test -s difference
 	then
 		cat difference
-		(exit 1)
+		false
 	else
 		echo happy
 	fi
@@ -117,7 +117,7 @@ test_expect_success 'picking rebase' '
 		echo happy
 	else
 		git show-branch
-		(exit 1)
+		false
 	fi &&
 	f=$(git diff-tree --name-only HEAD^ HEAD) &&
 	g=$(git diff-tree --name-only HEAD^^ HEAD^) &&
@@ -127,7 +127,7 @@ test_expect_success 'picking rebase' '
 	*)
 		echo "$f"
 		echo "$g"
-		(exit 1)
+		false
 	esac
 '
 
