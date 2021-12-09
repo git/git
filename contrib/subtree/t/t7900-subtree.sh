@@ -1445,7 +1445,7 @@ test_expect_success 'subtree descendant check' '
 	) &&
 	test_create_commit "$test_count" folder_subtree/0 &&
 	test_create_commit "$test_count" folder_subtree/b &&
-	cherry=$(cd "$test_count"; git rev-parse HEAD) &&
+	cherry=$(cd "$test_count" && git rev-parse HEAD) &&
 	(
 		cd "$test_count" &&
 		git checkout branch
