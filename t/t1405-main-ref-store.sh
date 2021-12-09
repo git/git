@@ -17,8 +17,7 @@ test_expect_success 'setup' '
 test_expect_success REFFILES 'pack_refs(PACK_REFS_ALL | PACK_REFS_PRUNE)' '
 	N=`find .git/refs -type f | wc -l` &&
 	test "$N" != 0 &&
-	ALL_OR_PRUNE_FLAG=3 &&
-	$RUN pack-refs ${ALL_OR_PRUNE_FLAG} &&
+	$RUN pack-refs PACK_REFS_PRUNE,PACK_REFS_ALL &&
 	N=`find .git/refs -type f` &&
 	test -z "$N"
 '
@@ -35,8 +34,7 @@ test_expect_success 'delete_refs(FOO, refs/tags/new-tag)' '
 	git rev-parse FOO -- &&
 	git rev-parse refs/tags/new-tag -- &&
 	m=$(git rev-parse main) &&
-	REF_NO_DEREF=1 &&
-	$RUN delete-refs $REF_NO_DEREF nothing FOO refs/tags/new-tag &&
+	$RUN delete-refs REF_NO_DEREF nothing FOO refs/tags/new-tag &&
 	test_must_fail git rev-parse --symbolic-full-name FOO &&
 	test_must_fail git rev-parse FOO -- &&
 	test_must_fail git rev-parse refs/tags/new-tag --
