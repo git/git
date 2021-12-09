@@ -113,7 +113,7 @@ test_expect_success 'checkout does not clean cwd incidentally' '
 '
 
 test_expect_success 'checkout fails if cwd needs to be removed' '
-	test_required_dir_removal failure git checkout fd_conflict
+	test_required_dir_removal success git checkout fd_conflict
 '
 
 test_expect_success 'reset --hard does not clean cwd incidentally' '
@@ -144,23 +144,17 @@ test_expect_success 'merge fails if cwd needs to be removed; recursive friendly'
 	(
 		cd dirORfile &&
 
-		# We would rather this failed, but we test for existing
-		# rather than desired behavior
-		git merge fd_conflict 2>../error
+		test_must_fail git merge fd_conflict 2>../error
 	) &&
 
-	## Here is the behavior we would rather have:
-	#test_path_is_dir dirORfile &&
-	#grep "Refusing to remove the current working directory" error
-	## But instead we test for existing behavior
-	test_path_is_file dirORfile &&
-	test_must_be_empty error
+	test_path_is_dir dirORfile &&
+	grep "Refusing to remove the current working directory" error
 '
 
 GIT_TEST_MERGE_ALGORITHM=ort
 
 test_expect_success 'merge fails if cwd needs to be removed' '
-	test_required_dir_removal failure git merge fd_conflict
+	test_required_dir_removal success git merge fd_conflict
 '
 
 test_expect_success 'cherry-pick does not clean cwd incidentally' '
@@ -168,7 +162,7 @@ test_expect_success 'cherry-pick does not clean cwd incidentally' '
 '
 
 test_expect_success 'cherry-pick fails if cwd needs to be removed' '
-	test_required_dir_removal failure git cherry-pick fd_conflict
+	test_required_dir_removal success git cherry-pick fd_conflict
 '
 
 test_expect_success 'rebase does not clean cwd incidentally' '
@@ -184,7 +178,7 @@ test_expect_success 'revert does not clean cwd incidentally' '
 '
 
 test_expect_success 'revert fails if cwd needs to be removed' '
-	test_required_dir_removal failure git revert undo_fd_conflict
+	test_required_dir_removal success git revert undo_fd_conflict
 '
 
 test_expect_success 'rm does not clean cwd incidentally' '
