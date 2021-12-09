@@ -182,12 +182,12 @@ test_expect_success 'revert fails if cwd needs to be removed' '
 '
 
 test_expect_success 'rm does not clean cwd incidentally' '
-	test_incidental_dir_removal failure git rm bar/baz.t
+	test_incidental_dir_removal success git rm bar/baz.t
 '
 
 test_expect_success 'apply does not remove cwd incidentally' '
 	git diff HEAD HEAD~1 >patch &&
-	test_incidental_dir_removal failure git apply ../patch
+	test_incidental_dir_removal success git apply ../patch
 '
 
 test_incidental_untracked_dir_removal () {
@@ -271,12 +271,8 @@ test_expect_success '`rm -rf dir` even with only tracked files will remove somet
 	) &&
 
 	test_path_is_missing a/b/c/tracked &&
-	## We would prefer if a/b was still present, though empty, since it
-	## was the current working directory
-	#test_path_is_dir a/b
-	## But the current behavior is that it not only deletes the directory
-	## a/b as requested, but also goes and deletes a
-	test_path_is_missing a
+	test_path_is_missing a/b/c &&
+	test_path_is_dir a/b
 '
 
 test_expect_success 'git version continues working from a deleted dir' '
