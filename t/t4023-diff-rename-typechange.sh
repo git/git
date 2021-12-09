@@ -55,7 +55,7 @@ test_expect_success 'cross renames to be detected for regular files' '
 
 	git diff-tree five six -r --name-status -B -M | sort >actual &&
 	{
-		echo "R100	foo	bar"
+		echo "R100	foo	bar" &&
 		echo "R100	bar	foo"
 	} | sort >expect &&
 	test_cmp expect actual
@@ -66,7 +66,7 @@ test_expect_success 'cross renames to be detected for typechange' '
 
 	git diff-tree one two -r --name-status -B -M | sort >actual &&
 	{
-		echo "R100	foo	bar"
+		echo "R100	foo	bar" &&
 		echo "R100	bar	foo"
 	} | sort >expect &&
 	test_cmp expect actual
@@ -78,7 +78,7 @@ test_expect_success 'moves and renames' '
 	git diff-tree three four -r --name-status -B -M | sort >actual &&
 	{
 		# see -B -M (#6) in t4008
-		echo "C100	foo	bar"
+		echo "C100	foo	bar" &&
 		echo "T100	foo"
 	} | sort >expect &&
 	test_cmp expect actual

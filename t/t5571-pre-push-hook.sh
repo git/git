@@ -114,7 +114,7 @@ test_expect_success 'push to URL' '
 
 test_expect_success 'set up many-ref tests' '
 	{
-		nr=1000
+		nr=1000 &&
 		while test $nr -lt 2000
 		do
 			nr=$(( $nr + 1 )) &&

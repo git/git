@@ -233,7 +233,7 @@ test_expect_success 'blank at EOF with --whitespace=fix (1)' '
 	test_write_lines a b c >one &&
 	git add one &&
 	test_write_lines a b c >expect &&
-	{ cat expect; echo; } >one &&
+	{ cat expect && echo; } >one &&
 	git diff -- one >patch &&
 
 	git checkout one &&

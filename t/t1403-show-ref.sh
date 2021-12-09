@@ -78,7 +78,7 @@ test_expect_success 'show-ref --verify -q' '
 test_expect_success 'show-ref -d' '
 	{
 		echo $(git rev-parse refs/tags/A) refs/tags/A &&
-		echo $(git rev-parse refs/tags/A^0) "refs/tags/A^{}"
+		echo $(git rev-parse refs/tags/A^0) "refs/tags/A^{}" &&
 		echo $(git rev-parse refs/tags/C) refs/tags/C
 	} >expect &&
 	git show-ref -d A C >actual &&
@@ -148,7 +148,7 @@ test_expect_success 'show-ref --heads, --tags, --head, pattern' '
 
 	{
 		echo $(git rev-parse HEAD) HEAD &&
-		echo $(git rev-parse refs/heads/B) refs/heads/B
+		echo $(git rev-parse refs/heads/B) refs/heads/B &&
 		echo $(git rev-parse refs/tags/B) refs/tags/B
 	} >expect &&
 	git show-ref --head B >actual &&
@@ -156,8 +156,8 @@ test_expect_success 'show-ref --heads, --tags, --head, pattern' '
 
 	{
 		echo $(git rev-parse HEAD) HEAD &&
-		echo $(git rev-parse refs/heads/B) refs/heads/B
-		echo $(git rev-parse refs/tags/B) refs/tags/B
+		echo $(git rev-parse refs/heads/B) refs/heads/B &&
+		echo $(git rev-parse refs/tags/B) refs/tags/B &&
 		echo $(git rev-parse refs/tags/B^0) "refs/tags/B^{}"
 	} >expect &&
 	git show-ref --head -d B >actual &&

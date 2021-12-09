@@ -76,13 +76,13 @@ test_expect_success setup '
 	git config filter.rot13.clean ./rot13.sh &&
 
 	{
-	    echo "*.t filter=rot13"
+	    echo "*.t filter=rot13" &&
 	    echo "*.i ident"
 	} >.gitattributes &&
 
 	{
-	    echo a b c d e f g h i j k l m
-	    echo n o p q r s t u v w x y z
+	    echo a b c d e f g h i j k l m &&
+	    echo n o p q r s t u v w x y z &&
 	    echo '\''$Id$'\''
 	} >test &&
 	cat test >test.t &&
@@ -159,7 +159,7 @@ test_expect_success expanded_in_repo '
 		printf "\$Id: NoTerminatingSymbolAtEOF"
 	} >expected-output-crlf &&
 	{
-		echo "expanded-keywords ident"
+		echo "expanded-keywords ident" &&
 		echo "expanded-keywords-crlf ident text eol=crlf"
 	} >>.gitattributes &&
 

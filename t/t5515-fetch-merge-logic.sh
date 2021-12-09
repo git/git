@@ -191,17 +191,17 @@ do
 		cp "$expect_r" expect_r &&
 		convert_expected expect_r sed_script &&
 		{
-			echo "# $cmd"
-			set x $cmd; shift
-			git symbolic-ref HEAD refs/heads/$1 ; shift
-			rm -f .git/FETCH_HEAD
+			echo "# $cmd" &&
+			set x $cmd && shift &&
+			git symbolic-ref HEAD refs/heads/$1 && shift &&
+			rm -f .git/FETCH_HEAD &&
 			git for-each-ref \
 				refs/heads refs/remotes/rem refs/tags |
 			while read val type refname
 			do
 				git update-ref -d "$refname" "$val"
-			done
-			git fetch "$@" >/dev/null
+			done &&
+			git fetch "$@" >/dev/null &&
 			cat .git/FETCH_HEAD
 		} >"$actual_f" &&
 		git show-ref >"$actual_r" &&

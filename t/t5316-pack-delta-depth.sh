@@ -57,8 +57,11 @@ test_expect_success 'create series of packs' '
 		git commit -m $i &&
 		cur=$(git rev-parse HEAD^{tree}) &&
 		{
-			test -n "$prev" && echo "-$prev"
-			echo $cur
+			if test -n "$prev"
+			then
+				echo "-$prev"
+			fi &&
+			echo $cur &&
 			echo "$(git rev-parse :file) file"
 		} | git pack-objects --stdout >tmp &&
 		git index-pack --stdin --fix-thin <tmp || return 1
