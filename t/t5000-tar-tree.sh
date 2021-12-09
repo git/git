@@ -77,7 +77,7 @@ check_tar() {
 					path=$(get_pax_header $header path) &&
 					if test -n "$path"
 					then
-						mv "$data" "$path"
+						mv "$data" "$path" || exit 1
 					fi
 				fi
 			done
@@ -133,7 +133,7 @@ test_expect_success 'populate workdir' '
 		for depth in 1 2 3 4 5
 		do
 			mkdir $p &&
-			cd $p
+			cd $p || exit 1
 		done &&
 		echo text >file_with_long_path
 	) &&

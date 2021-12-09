@@ -19,7 +19,7 @@ test_expect_success 'setup normal src repo' '
 		echo "This is file: $n" > src/file.$n.txt &&
 		git -C src add file.$n.txt &&
 		git -C src commit -m "file $n" &&
-		git -C src ls-files -s file.$n.txt >>temp
+		git -C src ls-files -s file.$n.txt >>temp || return 1
 	done &&
 	awk -f print_2.awk <temp | sort >expect_1.oids &&
 	test_line_count = 4 expect_1.oids
@@ -74,7 +74,7 @@ test_expect_success 'push new commits to server' '
 	do
 		echo "Mod file.1.txt $x" >>src/file.1.txt &&
 		git -C src add file.1.txt &&
-		git -C src commit -m "mod $x"
+		git -C src commit -m "mod $x" || return 1
 	done &&
 	git -C src blame main -- file.1.txt >expect.blame &&
 	git -C src push -u srv main
@@ -116,7 +116,7 @@ test_expect_success 'push new commits to server for file.2.txt' '
 	do
 		echo "Mod file.2.txt $x" >>src/file.2.txt &&
 		git -C src add file.2.txt &&
-		git -C src commit -m "mod $x"
+		git -C src commit -m "mod $x" || return 1
 	done &&
 	git -C src push -u srv main
 '
@@ -137,7 +137,7 @@ test_expect_success 'push new commits to server for file.3.txt' '
 	do
 		echo "Mod file.3.txt $x" >>src/file.3.txt &&
 		git -C src add file.3.txt &&
-		git -C src commit -m "mod $x"
+		git -C src commit -m "mod $x" || return 1
 	done &&
 	git -C src push -u srv main
 '
@@ -385,7 +385,7 @@ setup_triangle () {
 	for i in $(test_seq 1 100)
 	do
 		echo "make the tree big" >server/file$i &&
-		git -C server add file$i
+		git -C server add file$i || return 1
 	done &&
 	git -C server commit -m "initial" &&
 	git clone --bare --filter=tree:0 "file://$(pwd)/server" client &&
@@ -669,7 +669,7 @@ test_expect_success 'tolerate server sending REF_DELTA against missing promisor 
 	for i in $(test_seq 10)
 	do
 		echo "this is a line" >>"$SERVER/foo.txt" &&
-		echo "this is another line" >>"$SERVER/have.txt"
+		echo "this is another line" >>"$SERVER/have.txt" || return 1
 	done &&
 	git -C "$SERVER" add foo.txt have.txt &&
 	git -C "$SERVER" commit -m bar &&

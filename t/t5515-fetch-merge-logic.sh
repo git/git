@@ -133,7 +133,7 @@ test_expect_success setup '
 		git config branch.br-$remote-merge.merge refs/heads/three &&
 		git config branch.br-$remote-octopus.remote $remote &&
 		git config branch.br-$remote-octopus.merge refs/heads/one &&
-		git config --add branch.br-$remote-octopus.merge two
+		git config --add branch.br-$remote-octopus.merge two || return 1
 	done &&
 	build_script sed_script
 '
@@ -199,7 +199,7 @@ do
 				refs/heads refs/remotes/rem refs/tags |
 			while read val type refname
 			do
-				git update-ref -d "$refname" "$val"
+				git update-ref -d "$refname" "$val" || return 1
 			done &&
 			git fetch "$@" >/dev/null &&
 			cat .git/FETCH_HEAD

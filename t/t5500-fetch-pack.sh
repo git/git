@@ -95,7 +95,7 @@ test_expect_success 'setup' '
 	while [ $cur -le 10 ]; do
 		add A$cur $(eval echo \$A$prev) &&
 		prev=$cur &&
-		cur=$(($cur+1))
+		cur=$(($cur+1)) || return 1
 	done &&
 	add B1 $A1 &&
 	git update-ref refs/heads/A "$ATIP" &&
@@ -112,7 +112,7 @@ test_expect_success 'post 1st pull setup' '
 	while [ $cur -le 65 ]; do
 		add B$cur $(eval echo \$B$prev) &&
 		prev=$cur &&
-		cur=$(($cur+1))
+		cur=$(($cur+1)) || return 1
 	done
 '
 
@@ -464,11 +464,11 @@ test_expect_success 'fetch creating new shallow root' '
 test_expect_success 'setup tests for the --stdin parameter' '
 	for head in C D E F
 	do
-		add $head
+		add $head || return 1
 	done &&
 	for head in A B C D E F
 	do
-		git tag $head $head
+		git tag $head $head || return 1
 	done &&
 	cat >input <<-\EOF &&
 	refs/heads/C

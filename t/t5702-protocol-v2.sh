@@ -747,7 +747,7 @@ test_expect_success 'clone big repository with http:// using protocol v2' '
 		echo "data 0" &&
 		echo "M 644 inline bla.txt" &&
 		echo "data 4" &&
-		echo "bla"
+		echo "bla" || return 1
 	done | git -C "$HTTPD_DOCUMENT_ROOT_PATH/big" fast-import &&
 
 	GIT_TRACE_PACKET="$(pwd)/log" GIT_TRACE_CURL="$(pwd)/log" git \
@@ -942,7 +942,7 @@ test_expect_success 'part of packfile response provided as URI' '
 			then
 				>h2found
 			fi
-		fi
+		fi || return 1
 	done &&
 	test -f hfound &&
 	test -f h2found &&

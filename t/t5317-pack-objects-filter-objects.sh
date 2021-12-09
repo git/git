@@ -18,7 +18,7 @@ test_expect_success 'setup r1' '
 	do
 		echo "This is file: $n" > r1/file.$n &&
 		git -C r1 add file.$n &&
-		git -C r1 commit -m "$n"
+		git -C r1 commit -m "$n" || return 1
 	done
 '
 
@@ -118,7 +118,7 @@ test_expect_success 'setup r2' '
 	do
 		printf "%"$n"s" X > r2/large.$n &&
 		git -C r2 add large.$n &&
-		git -C r2 commit -m "$n"
+		git -C r2 commit -m "$n" || return 1
 	done
 '
 
@@ -281,7 +281,7 @@ test_expect_success 'setup r3' '
 		echo "This is file: $n" > r3/$n &&
 		git -C r3 add $n &&
 		echo "This is file: dir1/$n" > r3/dir1/$n &&
-		git -C r3 add dir1/$n
+		git -C r3 add dir1/$n || return 1
 	done &&
 	git -C r3 commit -m "sparse" &&
 	echo dir1/ >pattern1 &&
@@ -334,7 +334,7 @@ test_expect_success 'setup r4' '
 		echo "This is file: $n" > r4/$n &&
 		git -C r4 add $n &&
 		echo "This is file: dir1/$n" > r4/dir1/$n &&
-		git -C r4 add dir1/$n
+		git -C r4 add dir1/$n || return 1
 	done &&
 	echo dir1/ >r4/pattern &&
 	git -C r4 add pattern &&
@@ -409,7 +409,7 @@ test_expect_success 'setup r1 - delete loose blobs' '
 
 	for id in `cat expected | sed "s|..|&/|"`
 	do
-		rm r1/.git/objects/$id
+		rm r1/.git/objects/$id || return 1
 	done
 '
 
