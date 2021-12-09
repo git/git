@@ -1202,4 +1202,61 @@ test_expect_success 'record as an empty commit when meeting e-mail message that 
 	grep "Creating an empty commit: empty commit" output
 '
 
+test_expect_success 'skip an empty patch in the middle of an am session' '
+	git checkout empty-commit^ &&
+	test_must_fail git am empty-commit.patch >err &&
+	grep "Patch is empty." err &&
+	grep "To record the empty patch as an empty commit, run \"git am --allow-empty\"." err &&
+	git am --skip &&
+	test_path_is_missing .git/rebase-apply &&
+	git rev-parse empty-commit^ >expected &&
+	git rev-parse HEAD >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'record an empty patch as an empty commit in the middle of an am session' '
+	git checkout empty-commit^ &&
+	test_must_fail git am empty-commit.patch >err &&
+	grep "Patch is empty." err &&
+	grep "To record the empty patch as an empty commit, run \"git am --allow-empty\"." err &&
+	git am --allow-empty >output &&
+	grep "No changes - recorded it as an empty commit." output &&
+	test_path_is_missing .git/rebase-apply &&
+	git show empty-commit --format="%B" >expected &&
+	git show HEAD --format="%B" >actual &&
+	grep -f actual expected
+'
+
+test_expect_success 'create an non-empty commit when the index IS changed though "--allow-empty" is given' '
+	git checkout empty-commit^ &&
+	test_must_fail git am empty-commit.patch >err &&
+	: >empty-file &&
+	git add empty-file &&
+	git am --allow-empty &&
+	git show empty-commit --format="%B" >expected &&
+	git show HEAD --format="%B" >actual &&
+	grep -f actual expected &&
+	git diff HEAD^..HEAD --name-only
+'
+
+test_expect_success 'cannot create empty commits when there is a clean index due to merge conflicts' '
+	test_when_finished "git am --abort || :" &&
+	git rev-parse HEAD >expected &&
+	test_must_fail git am seq.patch &&
+	test_must_fail git am --allow-empty >err &&
+	! grep "To record the empty patch as an empty commit, run \"git am --allow-empty\"." err &&
+	git rev-parse HEAD >actual &&
+	test_cmp actual expected
+'
+
+test_expect_success 'cannot create empty commits when there is unmerged index due to merge conflicts' '
+	test_when_finished "git am --abort || :" &&
+	git rev-parse HEAD >expected &&
+	test_must_fail git am -3 seq.patch &&
+	test_must_fail git am --allow-empty >err &&
+	! grep "To record the empty patch as an empty commit, run \"git am --allow-empty\"." err &&
+	git rev-parse HEAD >actual &&
+	test_cmp actual expected
+'
+
 test_done

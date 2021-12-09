@@ -18,7 +18,7 @@ SYNOPSIS
 	 [--quoted-cr=<action>]
 	 [--empty=(stop|drop|keep)]
 	 [(<mbox> | <Maildir>)...]
-'git am' (--continue | --skip | --abort | --quit | --show-current-patch[=(diff|raw)])
+'git am' (--continue | --skip | --abort | --quit | --show-current-patch[=(diff|raw)] | --allow-empty)
 
 DESCRIPTION
 -----------
@@ -199,6 +199,11 @@ default.   You can use `--no-utf8` to override this.
 	conflicts.  If `raw` is specified, show the raw contents of
 	the e-mail message; if `diff`, show the diff portion only.
 	Defaults to `raw`.
+
+--allow-empty::
+	After a patch failure on an input e-mail message lacking a patch,
+	create an empty commit with the contents of the e-mail message
+	as its log message.
 
 DISCUSSION
 ----------
