@@ -955,10 +955,7 @@ test_expect_success '%(raw) with --shell and --sort=raw must fail' '
 '
 
 test_expect_success '%(raw:size) with --shell' '
-	git for-each-ref --format="%(raw:size)" | while read line
-	do
-		echo "'\''$line'\''" >>expect
-	done &&
+	git for-each-ref --format="%(raw:size)" | sed "s/^/$SQ/;s/$/$SQ/" >expect &&
 	git for-each-ref --format="%(raw:size)" --shell >actual &&
 	test_cmp expect actual
 '
