@@ -16,9 +16,9 @@ test_expect_success 'setup normal src repo' '
 	git init src &&
 	for n in 1 2 3 4
 	do
-		echo "This is file: $n" > src/file.$n.txt
-		git -C src add file.$n.txt
-		git -C src commit -m "file $n"
+		echo "This is file: $n" > src/file.$n.txt &&
+		git -C src add file.$n.txt &&
+		git -C src commit -m "file $n" &&
 		git -C src ls-files -s file.$n.txt >>temp
 	done &&
 	awk -f print_2.awk <temp | sort >expect_1.oids &&
@@ -72,8 +72,8 @@ test_expect_success 'push new commits to server' '
 	git -C src remote add srv "file://$(pwd)/srv.bare" &&
 	for x in a b c d e
 	do
-		echo "Mod file.1.txt $x" >>src/file.1.txt
-		git -C src add file.1.txt
+		echo "Mod file.1.txt $x" >>src/file.1.txt &&
+		git -C src add file.1.txt &&
 		git -C src commit -m "mod $x"
 	done &&
 	git -C src blame main -- file.1.txt >expect.blame &&
@@ -114,8 +114,8 @@ test_expect_success 'verify blame causes dynamic object fetch' '
 test_expect_success 'push new commits to server for file.2.txt' '
 	for x in a b c d e f
 	do
-		echo "Mod file.2.txt $x" >>src/file.2.txt
-		git -C src add file.2.txt
+		echo "Mod file.2.txt $x" >>src/file.2.txt &&
+		git -C src add file.2.txt &&
 		git -C src commit -m "mod $x"
 	done &&
 	git -C src push -u srv main
@@ -135,8 +135,8 @@ test_expect_success 'override inherited filter-spec using --no-filter' '
 test_expect_success 'push new commits to server for file.3.txt' '
 	for x in a b c d e f
 	do
-		echo "Mod file.3.txt $x" >>src/file.3.txt
-		git -C src add file.3.txt
+		echo "Mod file.3.txt $x" >>src/file.3.txt &&
+		git -C src add file.3.txt &&
 		git -C src commit -m "mod $x"
 	done &&
 	git -C src push -u srv main

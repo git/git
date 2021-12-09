@@ -717,7 +717,7 @@ test_expect_success bool '
 	rm -f result &&
 	for i in 1 2 3 4
 	do
-	    git config --bool --get bool.true$i >>result
+	    git config --bool --get bool.true$i >>result &&
 	    git config --bool --get bool.false$i >>result
 	done &&
 	test_cmp expect result'

@@ -117,7 +117,7 @@ test_expect_success 'set up many-ref tests' '
 		nr=1000
 		while test $nr -lt 2000
 		do
-			nr=$(( $nr + 1 ))
+			nr=$(( $nr + 1 )) &&
 			echo "create refs/heads/b/$nr $COMMIT3"
 		done
 	} | git update-ref --stdin

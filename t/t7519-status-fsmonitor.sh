@@ -248,7 +248,7 @@ do
 		git config core.preloadIndex $preload_val &&
 		if test $preload_val = true
 		then
-			GIT_TEST_PRELOAD_INDEX=$preload_val; export GIT_TEST_PRELOAD_INDEX
+			GIT_TEST_PRELOAD_INDEX=$preload_val && export GIT_TEST_PRELOAD_INDEX
 		else
 			sane_unset GIT_TEST_PRELOAD_INDEX
 		fi

@@ -16,8 +16,8 @@ test_expect_success 'setup r1' '
 	git init r1 &&
 	for n in 1 2 3 4 5
 	do
-		echo "This is file: $n" > r1/file.$n
-		git -C r1 add file.$n
+		echo "This is file: $n" > r1/file.$n &&
+		git -C r1 add file.$n &&
 		git -C r1 commit -m "$n"
 	done
 '
@@ -73,8 +73,8 @@ test_expect_success 'setup r2' '
 	git init r2 &&
 	for n in 1000 10000
 	do
-		printf "%"$n"s" X > r2/large.$n
-		git -C r2 add large.$n
+		printf "%"$n"s" X > r2/large.$n &&
+		git -C r2 add large.$n &&
 		git -C r2 commit -m "$n"
 	done
 '
@@ -245,9 +245,9 @@ test_expect_success 'setup r3' '
 	mkdir r3/dir1 &&
 	for n in sparse1 sparse2
 	do
-		echo "This is file: $n" > r3/$n
-		git -C r3 add $n
-		echo "This is file: dir1/$n" > r3/dir1/$n
+		echo "This is file: $n" > r3/$n &&
+		git -C r3 add $n &&
+		echo "This is file: dir1/$n" > r3/dir1/$n &&
 		git -C r3 add dir1/$n
 	done &&
 	git -C r3 commit -m "sparse" &&

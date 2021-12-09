@@ -29,7 +29,7 @@ test_expect_success 'merge c1 with c2, c3, c4, ... c29' '
 	refs="" &&
 	while test $i -le 30
 	do
-		refs="$refs c$i"
+		refs="$refs c$i" &&
 		i=$(expr $i + 1)
 	done &&
 	git merge $refs &&

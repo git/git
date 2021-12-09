@@ -142,7 +142,7 @@ test_expect_success 'ancestors with the same commit time' '
 
 	test_tick_keep=$test_tick &&
 	for i in 1 2 3 4 5 6 7 8; do
-		test_tick=$test_tick_keep
+		test_tick=$test_tick_keep &&
 		test_commit t$i
 	done &&
 	git rev-list t1^! --not t$i >result &&

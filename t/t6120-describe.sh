@@ -390,8 +390,11 @@ test_expect_success ULIMIT_STACK_SIZE 'name-rev works in a deep repo' '
 committer A U Thor <author@example.com> $((1000000000 + $i * 100)) +0200
 data <<EOF
 commit #$i
-EOF"
-		test $i = 1 && echo "from refs/heads/main^0"
+EOF" &&
+		if test $i = 1
+		then
+			echo "from refs/heads/main^0"
+		fi &&
 		i=$(($i + 1))
 	done | git fast-import &&
 	git checkout main &&

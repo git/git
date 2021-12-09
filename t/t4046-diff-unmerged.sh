@@ -18,7 +18,7 @@ test_expect_success setup '
 			for t in o x
 			do
 				path="$b$o$t" &&
-				case "$path" in ooo) continue ;; esac
+				case "$path" in ooo) continue ;; esac &&
 				paths="$paths$path " &&
 				p="	$path" &&
 				case "$b" in x) echo "$m1$p" ;; esac &&

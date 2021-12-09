@@ -126,10 +126,10 @@ done
 # Measure pack loading with 10,000 packs.
 test_expect_success 'generate lots of packs' '
 	for i in $(test_seq 10000); do
-		echo "blob"
-		echo "data <<EOF"
-		echo "blob $i"
-		echo "EOF"
+		echo "blob" &&
+		echo "data <<EOF" &&
+		echo "blob $i" &&
+		echo "EOF" &&
 		echo "checkpoint"
 	done |
 	git -c fastimport.unpackLimit=0 fast-import

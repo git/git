@@ -54,7 +54,7 @@ test_expect_success 'add a large file or two' '
 	bad= count=0 idx= &&
 	for p in .git/objects/pack/pack-*.pack
 	do
-		count=$(( $count + 1 ))
+		count=$(( $count + 1 )) &&
 		if test_path_is_file "$p" &&
 		   idx=${p%.pack}.idx && test_path_is_file "$idx"
 		then
@@ -78,7 +78,7 @@ test_expect_success 'add a large file or two' '
 	bad= count=0 &&
 	for p in .git/objects/pack/pack-*.pack
 	do
-		count=$(( $count + 1 ))
+		count=$(( $count + 1 )) &&
 		if test_path_is_file "$p" &&
 		   idx=${p%.pack}.idx && test_path_is_file "$idx"
 		then

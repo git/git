@@ -150,8 +150,8 @@ test_expect_success 'add -u resolves unmerged paths' '
 	{
 		for path in path1 path2
 		do
-			echo "100644 $one 1	$path"
-			echo "100644 $two 2	$path"
+			echo "100644 $one 1	$path" &&
+			echo "100644 $two 2	$path" &&
 			echo "100644 $three 3	$path"
 		done
 		echo "100644 $one 1	path3"

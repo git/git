@@ -5,10 +5,10 @@ test_description='git rev-list --max-count and --skip test'
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-    for n in 1 2 3 4 5 ; do \
-        echo $n > a ; \
-        git add a ; \
-        git commit -m "$n" ; \
+    for n in 1 2 3 4 5 ; do
+	echo $n > a &&
+	git add a &&
+	git commit -m "$n"
     done
 '
 

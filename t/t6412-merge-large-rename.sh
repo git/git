@@ -47,7 +47,7 @@ test_rename() {
 	git commit -a -m change=$n &&
 	git checkout -b test$n HEAD^ &&
 	for i in $(count $n); do
-		git rm $i
+		git rm $i &&
 		make_text $i initial changed >$i.moved
 	done &&
 	git add . &&

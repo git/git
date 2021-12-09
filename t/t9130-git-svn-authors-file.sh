@@ -59,7 +59,7 @@ test_expect_success 'authors-file against globs' '
 	git svn clone --authors-file=svn-authors -s "$svnrepo"/aa aa-work &&
 	for i in bb ee cc
 	do
-		branch="aa/branches/$i"
+		branch="aa/branches/$i" &&
 		svn_cmd mkdir -m "$branch" --username $i "$svnrepo/$branch"
 	done
 	'

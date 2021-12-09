@@ -29,7 +29,7 @@ test_expect_success setup '
 	x=1 &&
 	while test $x -lt $n
 	do
-		printf "%63s%d\n" "" $x >>after
+		printf "%63s%d\n" "" $x >>after &&
 		x=$(( $x + 1 ))
 	done &&
 	printf "\t%s\n" d e f >>after &&
@@ -40,7 +40,7 @@ test_expect_success setup '
 	x=1 &&
 	while test $x -lt $n
 	do
-		printf "%63s%d\n" "" $x >>expect-2
+		printf "%63s%d\n" "" $x >>expect-2 &&
 		x=$(( $x + 1 ))
 	done &&
 	printf "%64s\n" d e f >>expect-2 &&
@@ -52,7 +52,7 @@ test_expect_success setup '
 	x=0 &&
 	while test $x -lt $n
 	do
-		printf "%63s%02d\n" "" $x >>after
+		printf "%63s%02d\n" "" $x >>after &&
 		x=$(( $x + 1 ))
 	done &&
 	printf "\t%s\n" d e f >>after &&
@@ -63,7 +63,7 @@ test_expect_success setup '
 	x=0 &&
 	while test $x -lt $n
 	do
-		printf "%63s%02d\n" "" $x >>expect-3
+		printf "%63s%02d\n" "" $x >>expect-3 &&
 		x=$(( $x + 1 ))
 	done &&
 	printf "%64s\n" d e f >>expect-3 &&
@@ -73,15 +73,15 @@ test_expect_success setup '
 	x=0 &&
 	while test $x -lt 50
 	do
-		printf "\t%02d\n" $x >>before
+		printf "\t%02d\n" $x >>before &&
 		x=$(( $x + 1 ))
 	done &&
 	cat before >after &&
 	printf "%64s\n" a b c >>after &&
 	while test $x -lt 100
 	do
-		printf "\t%02d\n" $x >>before
-		printf "\t%02d\n" $x >>after
+		printf "\t%02d\n" $x >>before &&
+		printf "\t%02d\n" $x >>after &&
 		x=$(( $x + 1 ))
 	done &&
 	test_expect_code 1 git diff --no-index before after >patch4.patch.raw &&
@@ -90,15 +90,15 @@ test_expect_success setup '
 	x=0 &&
 	while test $x -lt 50
 	do
-		printf "%63s%02d\n" "" $x >>test-4
+		printf "%63s%02d\n" "" $x >>test-4 &&
 		x=$(( $x + 1 ))
 	done &&
 	cat test-4 >expect-4 &&
 	printf "%64s\n" a b c >>expect-4 &&
 	while test $x -lt 100
 	do
-		printf "%63s%02d\n" "" $x >>test-4
-		printf "%63s%02d\n" "" $x >>expect-4
+		printf "%63s%02d\n" "" $x >>test-4 &&
+		printf "%63s%02d\n" "" $x >>expect-4 &&
 		x=$(( $x + 1 ))
 	done &&
 
