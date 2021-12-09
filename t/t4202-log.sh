@@ -120,48 +120,48 @@ test_expect_success 'diff-filter=A' '
 
 test_expect_success 'diff-filter=M' '
 
-	actual=$(git log --pretty="format:%s" --diff-filter=M HEAD) &&
-	expect=$(echo second) &&
-	verbose test "$actual" = "$expect"
+	git log --pretty="format:%s" --diff-filter=M HEAD >actual &&
+	printf "second" >expect &&
+	test_cmp expect actual
 
 '
 
 test_expect_success 'diff-filter=D' '
 
-	actual=$(git log --no-renames --pretty="format:%s" --diff-filter=D HEAD) &&
-	expect=$(echo sixth ; echo third) &&
-	verbose test "$actual" = "$expect"
+	git log --no-renames --pretty="format:%s" --diff-filter=D HEAD >actual &&
+	printf "sixth\nthird" >expect &&
+	test_cmp expect actual
 
 '
 
 test_expect_success 'diff-filter=R' '
 
-	actual=$(git log -M --pretty="format:%s" --diff-filter=R HEAD) &&
-	expect=$(echo third) &&
-	verbose test "$actual" = "$expect"
+	git log -M --pretty="format:%s" --diff-filter=R HEAD >actual &&
+	printf "third" >expect &&
+	test_cmp expect actual
 
 '
 
 test_expect_success 'diff-filter=C' '
 
-	actual=$(git log -C -C --pretty="format:%s" --diff-filter=C HEAD) &&
-	expect=$(echo fourth) &&
-	verbose test "$actual" = "$expect"
+	git log -C -C --pretty="format:%s" --diff-filter=C HEAD >actual &&
+	printf "fourth" >expect &&
+	test_cmp expect actual
 
 '
 
 test_expect_success 'git log --follow' '
 
-	actual=$(git log --follow --pretty="format:%s" ichi) &&
-	expect=$(echo third ; echo second ; echo initial) &&
-	verbose test "$actual" = "$expect"
+	git log --follow --pretty="format:%s" ichi >actual &&
+	printf "third\nsecond\ninitial" >expect &&
+	test_cmp expect actual
 '
 
 test_expect_success 'git config log.follow works like --follow' '
 	test_config log.follow true &&
-	actual=$(git log --pretty="format:%s" ichi) &&
-	expect=$(echo third ; echo second ; echo initial) &&
-	verbose test "$actual" = "$expect"
+	git log --pretty="format:%s" ichi >actual &&
+	printf "third\nsecond\ninitial" >expect &&
+	test_cmp expect actual
 '
 
 test_expect_success 'git config log.follow does not die with multiple paths' '
@@ -176,9 +176,9 @@ test_expect_success 'git config log.follow does not die with no paths' '
 
 test_expect_success 'git config log.follow is overridden by --no-follow' '
 	test_config log.follow true &&
-	actual=$(git log --no-follow --pretty="format:%s" ichi) &&
-	expect="third" &&
-	verbose test "$actual" = "$expect"
+	git log --no-follow --pretty="format:%s" ichi >actual &&
+	printf "third" >expect &&
+	test_cmp expect actual
 '
 
 # Note that these commits are intentionally listed out of order.
