@@ -591,7 +591,7 @@ test_expect_success 'cvs annotate' '
     cd cvswork &&
     GIT_CONFIG="$git_config" cvs annotate merge >../out &&
     sed -e "s/ .*//" ../out >../actual &&
-    for i in 3 1 1 1 1 1 1 1 2 4; do echo 1.$i; done >../expect &&
+    printf "1.%d\n" 3 1 1 1 1 1 1 1 2 4 >../expect &&
     test_cmp ../expect ../actual
 '
 

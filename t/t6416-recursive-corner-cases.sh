@@ -24,14 +24,8 @@ test_expect_success 'setup basic criss-cross + rename with no modifications' '
 		cd basic-rename &&
 
 		ten="0 1 2 3 4 5 6 7 8 9" &&
-		for i in $ten
-		do
-			echo line $i in a sample file
-		done >one &&
-		for i in $ten
-		do
-			echo line $i in another sample file
-		done >two &&
+		printf "line %d in a sample file\n" $ten >one &&
+		printf "line %d in another sample file\n" $ten >two &&
 		git add one two &&
 		test_tick && git commit -m initial &&
 
@@ -96,14 +90,8 @@ test_expect_success 'setup criss-cross + rename merges with basic modification' 
 		cd rename-modify &&
 
 		ten="0 1 2 3 4 5 6 7 8 9" &&
-		for i in $ten
-		do
-			echo line $i in a sample file
-		done >one &&
-		for i in $ten
-		do
-			echo line $i in another sample file
-		done >two &&
+		printf "line %d in a sample file\n" $ten >one &&
+		printf "line %d in another sample file\n" $ten >two &&
 		git add one two &&
 		test_tick && git commit -m initial &&
 
@@ -1588,10 +1576,7 @@ test_expect_success 'setup nested conflicts' '
 		cd nested_conflicts &&
 
 		# Create some related files now
-		for i in $(test_seq 1 10)
-		do
-			echo Random base content line $i
-		done >initial &&
+		printf "Random base content line %d\n" $(test_seq 1 10) >initial &&
 
 		cp initial b_L1 &&
 		cp initial b_R1 &&
@@ -1777,10 +1762,7 @@ test_expect_success 'setup virtual merge base with nested conflicts' '
 		cd virtual_merge_base_has_nested_conflicts &&
 
 		# Create some related files now
-		for i in $(test_seq 1 10)
-		do
-			echo Random base content line $i
-		done >content &&
+		printf "Random base content line %d\n" $(test_seq 1 10) >content &&
 
 		# Setup original commit
 		git add content &&

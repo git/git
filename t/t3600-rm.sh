@@ -274,10 +274,7 @@ test_expect_success 'Resolving by removal is not a warning-worthy event' '
 	git reset -q --hard &&
 	test_when_finished "rm -f .git/index.lock msg && git reset -q --hard" &&
 	blob=$(echo blob | git hash-object -w --stdin) &&
-	for stage in 1 2 3
-	do
-		echo "100644 $blob $stage	blob"
-	done | git update-index --index-info &&
+	printf "100644 $blob %d\tblob\n" 1 2 3 | git update-index --index-info &&
 	git rm blob >msg 2>&1 &&
 	test_i18ngrep ! "needs merge" msg &&
 	test_must_fail git ls-files -s --error-unmatch blob

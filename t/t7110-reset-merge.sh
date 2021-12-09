@@ -8,7 +8,7 @@ test_description='Tests for "git reset" with "--merge" and "--keep" options'
 . ./test-lib.sh
 
 test_expect_success setup '
-    for i in 1 2 3; do echo line $i; done >file1 &&
+    printf "line %d\n" 1 2 3 >file1 &&
     cat file1 >file2 &&
     git add file1 file2 &&
     test_tick &&
