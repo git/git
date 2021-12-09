@@ -850,28 +850,15 @@ static void fill_es_indent_data(struct emitted_diff_symbol *es)
 }
 
 static int compute_ws_delta(const struct emitted_diff_symbol *a,
-			    const struct emitted_diff_symbol *b,
-			    int *out)
+			    const struct emitted_diff_symbol *b)
 {
-	int a_len = a->len,
-	    b_len = b->len,
-	    a_off = a->indent_off,
-	    a_width = a->indent_width,
-	    b_off = b->indent_off,
+	int a_width = a->indent_width,
 	    b_width = b->indent_width;
 
-	if (a_width == INDENT_BLANKLINE && b_width == INDENT_BLANKLINE) {
-		*out = INDENT_BLANKLINE;
-		return 1;
-	}
+	if (a_width == INDENT_BLANKLINE && b_width == INDENT_BLANKLINE)
+		return INDENT_BLANKLINE;
 
-	if (a_len - a_off != b_len - b_off ||
-	    memcmp(a->line + a_off, b->line + b_off, a_len - a_off))
-		return 0;
-
-	*out = a_width - b_width;
-
-	return 1;
+	return a_width - b_width;
 }
 
 static int cmp_in_block_with_wsd(const struct moved_entry *cur,
@@ -916,26 +903,17 @@ static int moved_entry_cmp(const void *hashmap_cmp_fn_data,
 			   const void *keydata)
 {
 	const struct diff_options *diffopt = hashmap_cmp_fn_data;
-	const struct moved_entry *a, *b;
+	const struct emitted_diff_symbol *a, *b;
 	unsigned flags = diffopt->color_moved_ws_handling
 			 & XDF_WHITESPACE_FLAGS;
 
-	a = container_of(eptr, const struct moved_entry, ent);
-	b = container_of(entry_or_key, const struct moved_entry, ent);
+	a = container_of(eptr, const struct moved_entry, ent)->es;
+	b = container_of(entry_or_key, const struct moved_entry, ent)->es;
 
-	if (diffopt->color_moved_ws_handling &
-	    COLOR_MOVED_WS_ALLOW_INDENTATION_CHANGE)
-		/*
-		 * As there is not specific white space config given,
-		 * we'd need to check for a new block, so ignore all
-		 * white space. The setup of the white space
-		 * configuration for the next block is done else where
-		 */
-		flags |= XDF_IGNORE_WHITESPACE;
-
-	return !xdiff_compare_lines(a->es->line, a->es->len,
-				    b->es->line, b->es->len,
-				    flags);
+	return !xdiff_compare_lines(a->line + a->indent_off,
+				    a->len - a->indent_off,
+				    b->line + b->indent_off,
+				    b->len - b->indent_off, flags);
 }
 
 static struct moved_entry *prepare_entry(struct diff_options *o,
@@ -944,7 +922,8 @@ static struct moved_entry *prepare_entry(struct diff_options *o,
 	struct moved_entry *ret = xmalloc(sizeof(*ret));
 	struct emitted_diff_symbol *l = &o->emitted_symbols->buf[line_no];
 	unsigned flags = o->color_moved_ws_handling & XDF_WHITESPACE_FLAGS;
-	unsigned int hash = xdiff_hash_string(l->line, l->len, flags);
+	unsigned int hash = xdiff_hash_string(l->line + l->indent_off,
+					      l->len - l->indent_off, flags);
 
 	hashmap_entry_init(&ret->ent, hash);
 	ret->es = l;
@@ -1036,13 +1015,11 @@ static void fill_potential_moved_blocks(struct diff_options *o,
 	hashmap_for_each_entry_from(hm, match, ent) {
 		ALLOC_GROW(pmb, pmb_nr + 1, pmb_alloc);
 		if (o->color_moved_ws_handling &
-		    COLOR_MOVED_WS_ALLOW_INDENTATION_CHANGE) {
-			if (compute_ws_delta(l, match->es, &(pmb[pmb_nr]).wsd))
-				pmb[pmb_nr++].match = match;
-		} else {
+		    COLOR_MOVED_WS_ALLOW_INDENTATION_CHANGE)
+			pmb[pmb_nr].wsd = compute_ws_delta(l, match->es);
+		else
 			pmb[pmb_nr].wsd = 0;
-			pmb[pmb_nr++].match = match;
-		}
+		pmb[pmb_nr++].match = match;
 	}
 
 	*pmb_p = pmb;
@@ -6275,10 +6252,6 @@ static void diff_flush_patch_all_file_pairs(struct diff_options *o)
 	if (o->emitted_symbols) {
 		if (o->color_moved) {
 			struct hashmap add_lines, del_lines;
-
-			if (o->color_moved_ws_handling &
-			    COLOR_MOVED_WS_ALLOW_INDENTATION_CHANGE)
-				o->color_moved_ws_handling |= XDF_IGNORE_WHITESPACE;
 
 			hashmap_init(&del_lines, moved_entry_cmp, o, 0);
 			hashmap_init(&add_lines, moved_entry_cmp, o, 0);

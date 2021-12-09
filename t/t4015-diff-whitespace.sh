@@ -2206,10 +2206,10 @@ EMPTY=''
 test_expect_success 'compare mixed whitespace delta across moved blocks' '
 
 	git reset --hard &&
-	tr Q_ "\t " <<-EOF >text.txt &&
-	${EMPTY}
-	____too short without
-	${EMPTY}
+	tr "^|Q_" "\f\v\t " <<-EOF >text.txt &&
+	^__
+	|____too short without
+	^
 	___being grouped across blank line
 	${EMPTY}
 	context
@@ -2228,7 +2228,7 @@ test_expect_success 'compare mixed whitespace delta across moved blocks' '
 	git add text.txt &&
 	git commit -m "add text.txt" &&
 
-	tr Q_ "\t " <<-EOF >text.txt &&
+	tr "^|Q_" "\f\v\t " <<-EOF >text.txt &&
 	context
 	lines
 	to
@@ -2239,7 +2239,7 @@ test_expect_success 'compare mixed whitespace delta across moved blocks' '
 	${EMPTY}
 	QQtoo short without
 	${EMPTY}
-	Q_______being grouped across blank line
+	^Q_______being grouped across blank line
 	${EMPTY}
 	Q_QThese two lines have had their
 	indentation reduced by four spaces
@@ -2251,16 +2251,16 @@ test_expect_success 'compare mixed whitespace delta across moved blocks' '
 		-c core.whitespace=space-before-tab \
 		diff --color --color-moved --ws-error-highlight=all \
 		--color-moved-ws=allow-indentation-change >actual.raw &&
-	grep -v "index" actual.raw | test_decode_color >actual &&
+	grep -v "index" actual.raw | tr "\f\v" "^|" | test_decode_color >actual &&
 
 	cat <<-\EOF >expected &&
 	<BOLD>diff --git a/text.txt b/text.txt<RESET>
 	<BOLD>--- a/text.txt<RESET>
 	<BOLD>+++ b/text.txt<RESET>
 	<CYAN>@@ -1,16 +1,16 @@<RESET>
-	<BOLD;MAGENTA>-<RESET>
-	<BOLD;MAGENTA>-<RESET><BOLD;MAGENTA>    too short without<RESET>
-	<BOLD;MAGENTA>-<RESET>
+	<BOLD;MAGENTA>-<RESET><BOLD;MAGENTA>^<RESET><BRED>  <RESET>
+	<BOLD;MAGENTA>-<RESET><BOLD;MAGENTA>|    too short without<RESET>
+	<BOLD;MAGENTA>-<RESET><BOLD;MAGENTA>^<RESET>
 	<BOLD;MAGENTA>-<RESET><BOLD;MAGENTA>   being grouped across blank line<RESET>
 	<BOLD;MAGENTA>-<RESET>
 	 <RESET>context<RESET>
@@ -2280,7 +2280,7 @@ test_expect_success 'compare mixed whitespace delta across moved blocks' '
 	<BOLD;YELLOW>+<RESET>
 	<BOLD;YELLOW>+<RESET>		<BOLD;YELLOW>too short without<RESET>
 	<BOLD;YELLOW>+<RESET>
-	<BOLD;YELLOW>+<RESET>	<BOLD;YELLOW>       being grouped across blank line<RESET>
+	<BOLD;YELLOW>+<RESET><BOLD;YELLOW>^	       being grouped across blank line<RESET>
 	<BOLD;YELLOW>+<RESET>
 	<BOLD;CYAN>+<RESET>	<BRED> <RESET>	<BOLD;CYAN>These two lines have had their<RESET>
 	<BOLD;CYAN>+<RESET><BOLD;CYAN>indentation reduced by four spaces<RESET>
