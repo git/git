@@ -236,7 +236,7 @@ test_expect_success 'clean does not remove cwd incidentally' '
 '
 
 test_expect_success 'stash does not remove cwd incidentally' '
-	test_incidental_untracked_dir_removal failure \
+	test_incidental_untracked_dir_removal success \
 		git stash --include-untracked
 '
 
