@@ -1205,7 +1205,15 @@ static void mark_color_as_moved(struct diff_options *o,
 		if (!match) {
 			int i;
 
-			adjust_last_block(o, n, block_length);
+			if (!adjust_last_block(o, n, block_length) &&
+			    block_length > 1) {
+				/*
+				 * Rewind in case there is another match
+				 * starting at the second line of the block
+				 */
+				match = NULL;
+				n -= block_length;
+			}
 			for(i = 0; i < pmb_nr; i++)
 				moved_block_clear(&pmb[i]);
 			pmb_nr = 0;
@@ -1230,10 +1238,20 @@ static void mark_color_as_moved(struct diff_options *o,
 		pmb_nr = shrink_potential_moved_blocks(pmb, pmb_nr);
 
 		if (pmb_nr == 0) {
-			fill_potential_moved_blocks(
-				o, hm, match, l, &pmb, &pmb_alloc, &pmb_nr);
-			if (adjust_last_block(o, n, block_length) &&
-			    pmb_nr && last_symbol != l->s)
+			int contiguous = adjust_last_block(o, n, block_length);
+
+			if (!contiguous && block_length > 1)
+				/*
+				 * Rewind in case there is another match
+				 * starting at the second line of the block
+				 */
+				n -= block_length;
+			else
+				fill_potential_moved_blocks(o, hm, match, l,
+							    &pmb, &pmb_alloc,
+							    &pmb_nr);
+
+			if (contiguous && pmb_nr && last_symbol != l->s)
 				flipped_block = (flipped_block + 1) % 2;
 			else
 				flipped_block = 0;

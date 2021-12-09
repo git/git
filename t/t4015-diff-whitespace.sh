@@ -1833,6 +1833,52 @@ test_expect_success '--color-moved treats adjacent blocks as separate for MIN_AL
 	test_cmp expected actual
 '
 
+test_expect_success '--color-moved rewinds for MIN_ALNUM_COUNT' '
+	git reset --hard &&
+	test_write_lines >file \
+		A B C one two three four five six seven D E F G H I J &&
+	git add file &&
+	test_write_lines >file \
+		one two A B C D E F G H I J two three four five six seven &&
+	git diff --color-moved=zebra -- file &&
+
+	git diff --color-moved=zebra --color -- file >actual.raw &&
+	grep -v "index" actual.raw | test_decode_color >actual &&
+	cat >expected <<-\EOF &&
+	<BOLD>diff --git a/file b/file<RESET>
+	<BOLD>--- a/file<RESET>
+	<BOLD>+++ b/file<RESET>
+	<CYAN>@@ -1,13 +1,8 @@<RESET>
+	<GREEN>+<RESET><GREEN>one<RESET>
+	<GREEN>+<RESET><GREEN>two<RESET>
+	 A<RESET>
+	 B<RESET>
+	 C<RESET>
+	<RED>-one<RESET>
+	<BOLD;MAGENTA>-two<RESET>
+	<BOLD;MAGENTA>-three<RESET>
+	<BOLD;MAGENTA>-four<RESET>
+	<BOLD;MAGENTA>-five<RESET>
+	<BOLD;MAGENTA>-six<RESET>
+	<BOLD;MAGENTA>-seven<RESET>
+	 D<RESET>
+	 E<RESET>
+	 F<RESET>
+	<CYAN>@@ -15,3 +10,9 @@<RESET> <RESET>G<RESET>
+	 H<RESET>
+	 I<RESET>
+	 J<RESET>
+	<BOLD;CYAN>+<RESET><BOLD;CYAN>two<RESET>
+	<BOLD;CYAN>+<RESET><BOLD;CYAN>three<RESET>
+	<BOLD;CYAN>+<RESET><BOLD;CYAN>four<RESET>
+	<BOLD;CYAN>+<RESET><BOLD;CYAN>five<RESET>
+	<BOLD;CYAN>+<RESET><BOLD;CYAN>six<RESET>
+	<BOLD;CYAN>+<RESET><BOLD;CYAN>seven<RESET>
+	EOF
+
+	test_cmp expected actual
+'
+
 test_expect_success 'move detection with submodules' '
 	test_create_repo bananas &&
 	echo ripe >bananas/recipe &&
