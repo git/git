@@ -22,7 +22,7 @@ test_expect_success 'update-index and ls-files' '
 	git update-index --add one &&
 	case "$(git ls-files)" in
 	one) echo pass one ;;
-	*) echo bad one; exit 1 ;;
+	*) echo bad one; return 1 ;;
 	esac &&
 	(
 		cd dir &&
@@ -34,7 +34,7 @@ test_expect_success 'update-index and ls-files' '
 	) &&
 	case "$(git ls-files)" in
 	dir/two"$LF"one) echo pass both ;;
-	*) echo bad; exit 1 ;;
+	*) echo bad; return 1 ;;
 	esac
 '
 
@@ -57,7 +57,7 @@ test_expect_success 'diff-files' '
 	echo d >>dir/two &&
 	case "$(git diff-files --name-only)" in
 	dir/two"$LF"one) echo pass top ;;
-	*) echo bad top; exit 1 ;;
+	*) echo bad top; return 1 ;;
 	esac &&
 	# diff should not omit leading paths
 	(
