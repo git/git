@@ -361,11 +361,7 @@ test_expect_success 'unpacking with --strict' '
 	ST=$(git write-tree) &&
 	git rev-list --objects "$LIST" "$LI" "$ST" >actual &&
 	PACK5=$( git pack-objects test-5 <actual ) &&
-	PACK6=$( (
-			echo "$LIST"
-			echo "$LI"
-			echo "$ST"
-		 ) | git pack-objects test-6 ) &&
+	PACK6=$( test_write_lines "$LIST" "$LI" "$ST" | git pack-objects test-6 ) &&
 	test_create_repo test-5 &&
 	(
 		cd test-5 &&
@@ -408,11 +404,7 @@ test_expect_success 'index-pack with --strict' '
 	ST=$(git write-tree) &&
 	git rev-list --objects "$LIST" "$LI" "$ST" >actual &&
 	PACK5=$( git pack-objects test-5 <actual ) &&
-	PACK6=$( (
-			echo "$LIST"
-			echo "$LI"
-			echo "$ST"
-		 ) | git pack-objects test-6 ) &&
+	PACK6=$( test_write_lines "$LIST" "$LI" "$ST" | git pack-objects test-6 ) &&
 	test_create_repo test-7 &&
 	(
 		cd test-7 &&

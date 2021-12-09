@@ -9,10 +9,7 @@ test_expect_success setup '
 	git add empty &&
 	test_tick &&
 	git commit -m initial &&
-	for i in a b c d e
-	do
-		echo $i
-	done >empty &&
+	test_write_lines a b c d e >empty &&
 	cat empty >expect &&
 	git diff |
 	sed -e "/^diff --git/d" \

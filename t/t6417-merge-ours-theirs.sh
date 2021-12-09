@@ -7,10 +7,7 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 test_expect_success setup '
-	for i in 1 2 3 4 5 6 7 8 9
-	do
-		echo "$i"
-	done >file &&
+	test_write_lines 1 2 3 4 5 6 7 8 9 >file &&
 	git add file &&
 	cp file elif &&
 	git commit -m initial &&

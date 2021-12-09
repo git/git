@@ -11,9 +11,9 @@ test_description='Try various core-level commands in subdirectory.
 
 test_expect_success setup '
 	long="a b c d e f g h i j k l m n o p q r s t u v w x y z" &&
-	for c in $long; do echo $c; done >one &&
+	test_write_lines $long >one &&
 	mkdir dir &&
-	for c in x y z $long a b c; do echo $c; done >dir/two &&
+	test_write_lines x y z $long a b c >dir/two &&
 	cp one original.one &&
 	cp dir/two original.two
 '

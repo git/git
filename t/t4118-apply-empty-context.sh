@@ -10,11 +10,7 @@ test_description='git apply with new style GNU diff with empty context
 . ./test-lib.sh
 
 test_expect_success setup '
-	{
-		echo; echo;
-		echo A; echo B; echo C;
-		echo;
-	} >file1 &&
+	test_write_lines "" "" A B C "" >file1 &&
 	cat file1 >file1.orig &&
 	{
 		cat file1 &&
