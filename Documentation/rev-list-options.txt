@@ -1047,7 +1047,7 @@ omitted.
 has no effect.
 
 `--date=format:...` feeds the format `...` to your system `strftime`,
-except for %z and %Z, which are handled internally.
+except for %s, %z, and %Z, which are handled internally.
 Use `--date=format:%c` to show the date in your system locale's
 preferred format.  See the `strftime` manual for a complete list of
 format placeholders. When using `-local`, the correct syntax is
