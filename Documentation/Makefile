@@ -93,6 +93,7 @@ TECH_DOCS += SubmittingPatches
 TECH_DOCS += technical/bundle-format
 TECH_DOCS += technical/hash-function-transition
 TECH_DOCS += technical/http-protocol
+TECH_DOCS += technical/http-gitweb-debugging
 TECH_DOCS += technical/index-format
 TECH_DOCS += technical/long-running-process-protocol
 TECH_DOCS += technical/multi-pack-index
