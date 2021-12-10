@@ -18,6 +18,24 @@ UI, Workflows & Features
  * "git stash" learned the "--staged" option to stash away what has
    been added to the index (and nothing else).
 
+ * "git var GIT_DEFAULT_BRANCH" is a way to see what name is used for
+   the newly created branch if "git init" is run.
+
+ * Various operating modes of "git reset" have been made to work
+   better with the sparse index.
+
+ * "git submodule deinit" for a submodule whose .git metadata
+   directory is embedded in its working tree refused to work, until
+   the submodule gets converted to use the "absorbed" form where the
+   metadata directory is stored in superproject, and a gitfile at the
+   top-level of the working tree of the submodule points at it.  The
+   command is taught to convert such submodules to the absorbed form
+   as needed.
+
+ * The completion script (in contrib/) learns that the "--date"
+   option of commands from the "git log" family takes "human" and
+   "auto" as valid values.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -29,6 +47,21 @@ Performance, Internal Implementation, Development Support etc.
 
  * The command line complation for "git send-email" options have been
    tweaked to make it easier to keep it in sync with the command itself.
+
+
+ * Ensure that the sparseness of the in-core index matches the
+   index.sparse configuration specified by the repository immediately
+   after the on-disk index file is read.
+
+ * Code clean-up to eventually allow information on remotes defined
+   for an arbitrary repository to be read.
+
+ * Build optimization.
+
+ * Tighten code for testing pack-bitmap.
+
+ * Weather balloon to break people with compilers that do not support
+   C99.
 
 
 Fixes since v2.34
@@ -63,3 +96,69 @@ Fixes since v2.34
  * The clean/smudge conversion code path has been prepared to better
    work on platforms where ulong is narrower than size_t.
    (merge 596b5e77c9 mc/clean-smudge-with-llp64 later to maint).
+
+ * Redact the path part of packfile URI that appears in the trace output.
+   (merge 0ba558ffb1 if/redact-packfile-uri later to maint).
+
+ * CI has been taught to catch some Unicode directional formatting
+   sequence that can be used in certain mischief.
+   (merge 0e7696c64d js/ci-no-directional-formatting later to maint).
+
+ * The "--date=format:<strftime>" gained a workaround for the lack of
+   system support for a non-local timezone to handle "%s" placeholder.
+   (merge 9b591b9403 jk/strbuf-addftime-seconds-since-epoch later to maint).
+
+ * The "merge" subcommand of "git jump" (in contrib/) silently ignored
+   pathspec and other parameters.
+   (merge 67ba13e5a4 jk/jump-merge-with-pathspec later to maint).
+
+ * The code to decode the length of packed object size has been
+   corrected.
+   (merge 34de5b8eac jt/pack-header-lshift-overflow later to maint).
+
+ * The advice message given by "git pull" when the user hasn't made a
+   choice between merge and rebase still said that the merge is the
+   default, which no longer is the case.  This has been corrected.
+   (merge 71076d0edd ah/advice-pull-has-no-preference-between-rebase-and-merge later to maint).
+
+ * "git fetch", when received a bad packfile, can fail with SIGPIPE.
+   This wasn't wrong per-se, but we now detect the situation and fail
+   in a more predictable way.
+   (merge 2a4aed42ec jk/fetch-pack-avoid-sigpipe-to-index-pack later to maint).
+
+ * The function to cull a child process and determine the exit status
+   had two separate code paths for normal callers and callers in a
+   signal handler, and the latter did not yield correct value when the
+   child has caught a signal.  The handling of the exit status has
+   been unified for these two code paths.  An existing test with
+   flakiness has also been corrected.
+   (merge 5263e22cba jk/t7006-sigpipe-tests-fix later to maint).
+
+ * When a non-existent program is given as the pager, we tried to
+   reuse an uninitialized child_process structure and crashed, which
+   has been fixed.
+   (merge f917f57f40 em/missing-pager later to maint).
+
+ * The single-key-input mode in "git add -p" had some code to handle
+   keys that generate a sequence of input via ReadKey(), which did not
+   handle end-of-file correctly, which has been fixed.
+   (merge fc8a8126df cb/add-p-single-key-fix later to maint).
+
+ * "git rebase -x" added an unnecessary 'exec' instructions before
+   'noop', which has been corrected.
+   (merge cc9dcdee61 en/rebase-x-fix later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
+   (merge 74db416c9c cw/protocol-v2-doc-fix later to maint).
+   (merge f9b2b6684d ja/doc-cleanup later to maint).
+   (merge 7d1b866778 jc/fix-first-object-walk later to maint).
+   (merge 538ac74604 js/trace2-avoid-recursive-errors later to maint).
+   (merge 152923b132 jk/t5319-midx-corruption-test-deflake later to maint).
+   (merge 9081a421a6 ab/checkout-branch-info-leakfix later to maint).
+   (merge 42c456ff81 rs/mergesort later to maint).
+   (merge ad506e6780 tl/midx-docfix later to maint).
+   (merge bf5b83fd8a hk/ci-checkwhitespace-commentfix later to maint).
+   (merge 49f1eb3b34 jk/refs-g11-workaround later to maint).
+   (merge 7d3fc7df70 jt/midx-doc-fix later to maint).
+   (merge 7b089120d9 hn/create-reflog-simplify later to maint).
+   (merge 9e12400da8 cb/mingw-gmtime-r later to maint).
