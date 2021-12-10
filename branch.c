@@ -64,7 +64,7 @@ int install_branch_config(int flag, const char *local, const char *origin, const
 	if (skip_prefix(remote, "refs/heads/", &shortname)
 	    && !strcmp(local, shortname)
 	    && !origin) {
-		warning(_("Not setting branch %s as its own upstream."),
+		warning(_("not setting branch %s as its own upstream"),
 			local);
 		return 0;
 	}
@@ -116,7 +116,7 @@ int install_branch_config(int flag, const char *local, const char *origin, const
 
 out_err:
 	strbuf_release(&key);
-	error(_("Unable to write upstream branch configuration"));
+	error(_("unable to write upstream branch configuration"));
 
 	advise(_(tracking_advice),
 	       origin ? origin : "",
@@ -153,7 +153,7 @@ static void setup_tracking(const char *new_ref, const char *orig_ref,
 		}
 
 	if (tracking.matches > 1)
-		die(_("Not tracking: ambiguous information for ref %s"),
+		die(_("not tracking: ambiguous information for ref %s"),
 		    orig_ref);
 
 	if (install_branch_config(config_flags, new_ref, tracking.remote,
@@ -186,7 +186,7 @@ int read_branch_desc(struct strbuf *buf, const char *branch_name)
 int validate_branchname(const char *name, struct strbuf *ref)
 {
 	if (strbuf_check_branch_ref(ref, name))
-		die(_("'%s' is not a valid branch name."), name);
+		die(_("'%s' is not a valid branch name"), name);
 
 	return ref_exists(ref->buf);
 }
@@ -199,18 +199,23 @@ int validate_branchname(const char *name, struct strbuf *ref)
  */
 int validate_new_branchname(const char *name, struct strbuf *ref, int force)
 {
-	const char *head;
+	struct worktree **worktrees;
+	const struct worktree *wt;
 
 	if (!validate_branchname(name, ref))
 		return 0;
 
 	if (!force)
-		die(_("A branch named '%s' already exists."),
+		die(_("a branch named '%s' already exists"),
 		    ref->buf + strlen("refs/heads/"));
 
-	head = resolve_ref_unsafe("HEAD", 0, NULL, NULL);
-	if (!is_bare_repository() && head && !strcmp(head, ref->buf))
-		die(_("Cannot force update the current branch."));
+	worktrees = get_worktrees();
+	wt = find_shared_symref(worktrees, "HEAD", ref->buf);
+	if (wt && !wt->is_bare)
+		die(_("cannot force update the branch '%s'"
+		      "checked out at '%s'"),
+		    ref->buf + strlen("refs/heads/"), wt->path);
+	free_worktrees(worktrees);
 
 	return 1;
 }
@@ -230,7 +235,7 @@ static int validate_remote_tracking_branch(char *ref)
 }
 
 static const char upstream_not_branch[] =
-N_("Cannot setup tracking information; starting point '%s' is not a branch.");
+N_("cannot set up tracking information; starting point '%s' is not a branch");
 static const char upstream_missing[] =
 N_("the requested upstream branch '%s' does not exist");
 static const char upstream_advice[] =
@@ -278,7 +283,7 @@ void create_branch(struct repository *r,
 			}
 			die(_(upstream_missing), start_name);
 		}
-		die(_("Not a valid object name: '%s'."), start_name);
+		die(_("not a valid object name: '%s'"), start_name);
 	}
 
 	switch (dwim_ref(start_name, strlen(start_name), &oid, &real_ref, 0)) {
@@ -298,12 +303,12 @@ void create_branch(struct repository *r,
 		}
 		break;
 	default:
-		die(_("Ambiguous object name: '%s'."), start_name);
+		die(_("ambiguous object name: '%s'"), start_name);
 		break;
 	}
 
 	if ((commit = lookup_commit_reference(r, &oid)) == NULL)
-		die(_("Not a valid branch point: '%s'."), start_name);
+		die(_("not a valid branch point: '%s'"), start_name);
 	oidcpy(&oid, &commit->object.oid);
 
 	if (reflog)
@@ -357,14 +362,16 @@ void remove_branch_state(struct repository *r, int verbose)
 
 void die_if_checked_out(const char *branch, int ignore_current_worktree)
 {
+	struct worktree **worktrees = get_worktrees();
 	const struct worktree *wt;
 
-	wt = find_shared_symref("HEAD", branch);
-	if (!wt || (ignore_current_worktree && wt->is_current))
-		return;
-	skip_prefix(branch, "refs/heads/", &branch);
-	die(_("'%s' is already checked out at '%s'"),
-	    branch, wt->path);
+	wt = find_shared_symref(worktrees, "HEAD", branch);
+	if (wt && (!ignore_current_worktree || !wt->is_current)) {
+		skip_prefix(branch, "refs/heads/", &branch);
+		die(_("'%s' is already checked out at '%s'"), branch, wt->path);
+	}
+
+	free_worktrees(worktrees);
 }
 
 int replace_each_worktree_head_symref(const char *oldref, const char *newref,

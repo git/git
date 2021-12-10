@@ -404,16 +404,12 @@ int is_worktree_being_bisected(const struct worktree *wt,
  * bisect). New commands that do similar things should update this
  * function as well.
  */
-const struct worktree *find_shared_symref(const char *symref,
+const struct worktree *find_shared_symref(struct worktree **worktrees,
+					  const char *symref,
 					  const char *target)
 {
 	const struct worktree *existing = NULL;
-	static struct worktree **worktrees;
 	int i = 0;
-
-	if (worktrees)
-		free_worktrees(worktrees);
-	worktrees = get_worktrees();
 
 	for (i = 0; worktrees[i]; i++) {
 		struct worktree *wt = worktrees[i];
