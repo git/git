@@ -417,8 +417,8 @@ int refs_pack_refs(struct ref_store *refs, unsigned int flags);
  * Setup reflog before using. Fill in err and return -1 on failure.
  */
 int refs_create_reflog(struct ref_store *refs, const char *refname,
-		       int force_create, struct strbuf *err);
-int safe_create_reflog(const char *refname, int force_create, struct strbuf *err);
+		       struct strbuf *err);
+int safe_create_reflog(const char *refname, struct strbuf *err);
 
 /** Reads log for the value of ref during at_time. **/
 int read_ref_at(struct ref_store *refs,

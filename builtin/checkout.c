@@ -885,7 +885,7 @@ static void update_refs_for_switch(const struct checkout_opts *opts,
 				int ret;
 				struct strbuf err = STRBUF_INIT;
 
-				ret = safe_create_reflog(refname, 1, &err);
+				ret = safe_create_reflog(refname, &err);
 				if (ret) {
 					fprintf(stderr, _("Can not do reflog for '%s': %s\n"),
 						opts->new_orphan_branch, err.buf);

@@ -182,11 +182,10 @@ static int cmd_reflog_exists(struct ref_store *refs, const char **argv)
 static int cmd_create_reflog(struct ref_store *refs, const char **argv)
 {
 	const char *refname = notnull(*argv++, "refname");
-	int force_create = arg_flags(*argv++, "force-create");
 	struct strbuf err = STRBUF_INIT;
 	int ret;
 
-	ret = refs_create_reflog(refs, refname, force_create, &err);
+	ret = refs_create_reflog(refs, refname, &err);
 	if (err.len)
 		puts(err.buf);
 	return ret;
