@@ -58,14 +58,19 @@ running, enable trace output by setting the environment variable `GIT_TRACE`.
 
 Add usage text and `-h` handling, like all subcommands should consistently do
 (our test suite will notice and complain if you fail to do so).
+We'll need to include the `parse-options.h` header.
 
 ----
+#include "parse-options.h"
+
+...
+
 int cmd_walken(int argc, const char **argv, const char *prefix)
 {
 	const char * const walken_usage[] = {
 		N_("git walken"),
 		NULL,
-	}
+	};
 	struct option options[] = {
 		OPT_END()
 	};
@@ -195,9 +200,14 @@ Similarly to the default values, we don't have anything to do here yet
 ourselves; however, we should call `git_default_config()` if we aren't calling
 any other existing config callbacks.
 
-Add a new function to `builtin/walken.c`:
+Add a new function to `builtin/walken.c`.
+We'll also need to include the `config.h` header:
 
 ----
+#include "config.h"
+
+...
+
 static int git_walken_config(const char *var, const char *value, void *cb)
 {
 	/*
@@ -229,8 +239,14 @@ typically done by calling `repo_init_revisions()` with the repository you intend
 to target, as well as the `prefix` argument of `cmd_walken` and your `rev_info`
 struct.
 
-Add the `struct rev_info` and the `repo_init_revisions()` call:
+Add the `struct rev_info` and the `repo_init_revisions()` call.
+We'll also need to include the `revision.h` header:
+
 ----
+#include "revision.h"
+
+...
+
 int cmd_walken(int argc, const char **argv, const char *prefix)
 {
 	/* This can go wherever you like in your declarations.*/
@@ -624,9 +640,14 @@ static void walken_object_walk(struct rev_info *rev)
 ----
 
 Let's start by calling just the unfiltered walk and reporting our counts.
-Complete your implementation of `walken_object_walk()`:
+Complete your implementation of `walken_object_walk()`.
+We'll also need to include the `list-objects.h` header.
 
 ----
+#include "list-objects.h"
+
+...
+
 	traverse_commit_list(rev, walken_show_commit, walken_show_object, NULL);
 
 	printf("commits %d\nblobs %d\ntags %d\ntrees %d\n", commit_count,
@@ -697,7 +718,7 @@ First, we'll need to `#include "list-objects-filter-options.h"` and set up the
 ----
 static void walken_object_walk(struct rev_info *rev)
 {
-	struct list_objects_filter_options filter_options = {};
+	struct list_objects_filter_options filter_options = { 0 };
 
 	...
 ----
