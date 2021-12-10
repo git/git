@@ -2,6 +2,7 @@
 
 test_description='checkout --pathspec-from-file'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_tick
