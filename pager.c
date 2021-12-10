@@ -8,7 +8,7 @@
 #define DEFAULT_PAGER "less"
 #endif
 
-static struct child_process pager_process = CHILD_PROCESS_INIT;
+static struct child_process pager_process;
 static const char *pager_program;
 
 /* Is the value coming back from term_columns() just a guess? */
@@ -123,6 +123,8 @@ void setup_pager(void)
 	}
 
 	setenv("GIT_PAGER_IN_USE", "true", 1);
+
+	child_process_init(&pager_process);
 
 	/* spawn the pager */
 	prepare_pager_args(&pager_process, pager);

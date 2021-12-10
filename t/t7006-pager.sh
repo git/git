@@ -760,4 +760,9 @@ test_expect_success TTY 'git returns SIGPIPE on propagated signals from pager' '
 	test_path_is_file pager-used
 '
 
+test_expect_success TTY 'non-existent pager doesnt cause crash' '
+	test_config pager.show invalid-pager &&
+	test_terminal git show
+'
+
 test_done
