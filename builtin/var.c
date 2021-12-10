@@ -5,6 +5,7 @@
  */
 #include "builtin.h"
 #include "config.h"
+#include "refs.h"
 
 static const char var_usage[] = "git var (-l | <variable>)";
 
@@ -27,6 +28,11 @@ static const char *pager(int flag)
 	return pgm;
 }
 
+static const char *default_branch(int flag)
+{
+	return git_default_branch_name(1);
+}
+
 struct git_var {
 	const char *name;
 	const char *(*read)(int);
@@ -36,6 +42,7 @@ static struct git_var git_vars[] = {
 	{ "GIT_AUTHOR_IDENT",   git_author_info },
 	{ "GIT_EDITOR", editor },
 	{ "GIT_PAGER", pager },
+	{ "GIT_DEFAULT_BRANCH", default_branch },
 	{ "", NULL },
 };
 
