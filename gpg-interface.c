@@ -757,6 +757,21 @@ int git_gpg_config(const char *var, const char *value, void *cb)
 	return 0;
 }
 
+/*
+ * Returns 1 if `string` contains a literal ssh key, 0 otherwise
+ * `key` will be set to the start of the actual key if a prefix is present.
+ */
+static int is_literal_ssh_key(const char *string, const char **key)
+{
+	if (skip_prefix(string, "key::", key))
+		return 1;
+	if (starts_with(string, "ssh-")) {
+		*key = string;
+		return 1;
+	}
+	return 0;
+}
+
 static char *get_ssh_key_fingerprint(const char *signing_key)
 {
 	struct child_process ssh_keygen = CHILD_PROCESS_INIT;
@@ -764,15 +779,16 @@ static char *get_ssh_key_fingerprint(const char *signing_key)
 	struct strbuf fingerprint_stdout = STRBUF_INIT;
 	struct strbuf **fingerprint;
 	char *fingerprint_ret;
+	const char *literal_key = NULL;
 
 	/*
 	 * With SSH Signing this can contain a filename or a public key
 	 * For textual representation we usually want a fingerprint
 	 */
-	if (starts_with(signing_key, "ssh-")) {
+	if (is_literal_ssh_key(signing_key, &literal_key)) {
 		strvec_pushl(&ssh_keygen.args, "ssh-keygen", "-lf", "-", NULL);
-		ret = pipe_command(&ssh_keygen, signing_key,
-				   strlen(signing_key), &fingerprint_stdout, 0,
+		ret = pipe_command(&ssh_keygen, literal_key,
+				   strlen(literal_key), &fingerprint_stdout, 0,
 				   NULL, 0);
 	} else {
 		strvec_pushl(&ssh_keygen.args, "ssh-keygen", "-lf",
@@ -807,6 +823,7 @@ static const char *get_default_ssh_signing_key(void)
 	const char **argv;
 	int n;
 	char *default_key = NULL;
+	const char *literal_key = NULL;
 
 	if (!ssh_default_key_command)
 		die(_("either user.signingkey or gpg.ssh.defaultKeyCommand needs to be configured"));
@@ -824,7 +841,11 @@ static const char *get_default_ssh_signing_key(void)
 
 	if (!ret) {
 		keys = strbuf_split_max(&key_stdout, '\n', 2);
-		if (keys[0] && starts_with(keys[0]->buf, "ssh-")) {
+		if (keys[0] && is_literal_ssh_key(keys[0]->buf, &literal_key)) {
+			/*
+			 * We only use `is_literal_ssh_key` here to check validity
+			 * The prefix will be stripped when the key is used.
+			 */
 			default_key = strbuf_detach(keys[0], NULL);
 		} else {
 			warning(_("gpg.ssh.defaultKeyCommand succeeded but returned no keys: %s %s"),
@@ -939,19 +960,20 @@ static int sign_buffer_ssh(struct strbuf *buffer, struct strbuf *signature,
 	struct tempfile *key_file = NULL, *buffer_file = NULL;
 	char *ssh_signing_key_file = NULL;
 	struct strbuf ssh_signature_filename = STRBUF_INIT;
+	const char *literal_key = NULL;
 
 	if (!signing_key || signing_key[0] == '\0')
 		return error(
 			_("user.signingkey needs to be set for ssh signing"));
 
-	if (starts_with(signing_key, "ssh-")) {
+	if (is_literal_ssh_key(signing_key, &literal_key)) {
 		/* A literal ssh key */
 		key_file = mks_tempfile_t(".git_signing_key_tmpXXXXXX");
 		if (!key_file)
 			return error_errno(
 				_("could not create temporary file"));
-		keylen = strlen(signing_key);
-		if (write_in_full(key_file->fd, signing_key, keylen) < 0 ||
+		keylen = strlen(literal_key);
+		if (write_in_full(key_file->fd, literal_key, keylen) < 0 ||
 		    close_tempfile_gently(key_file) < 0) {
 			error_errno(_("failed writing ssh signing key to '%s'"),
 				    key_file->filename.buf);
