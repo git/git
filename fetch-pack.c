@@ -25,6 +25,7 @@
 #include "shallow.h"
 #include "commit-reach.h"
 #include "commit-graph.h"
+#include "sigchain.h"
 
 static int transfer_unpack_limit = -1;
 static int fetch_unpack_limit = -1;
@@ -956,6 +957,8 @@ static int get_pack(struct fetch_pack_args *args,
 			strvec_push(index_pack_args, cmd.args.v[i]);
 	}
 
+	sigchain_push(SIGPIPE, SIG_IGN);
+
 	cmd.in = demux.out;
 	cmd.git_cmd = 1;
 	if (start_command(&cmd))
@@ -985,6 +988,8 @@ static int get_pack(struct fetch_pack_args *args,
 		die(_("%s failed"), cmd_name);
 	if (use_sideband && finish_async(&demux))
 		die(_("error in sideband demultiplexer"));
+
+	sigchain_pop(SIGPIPE);
 
 	/*
 	 * Now that index-pack has succeeded, write the promisor file using the
