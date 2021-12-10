@@ -575,7 +575,7 @@ OPTIONS
 -------
 
 --shared[=(false|true|umask|group|all|world|everybody)]::
---template=<template_directory>::
+--template=<template-directory>::
 	Only used with the 'init' command.
 	These are passed directly to 'git init'.
 

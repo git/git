@@ -9,7 +9,7 @@ git-stage - Add file contents to the staging area
 SYNOPSIS
 --------
 [verse]
-'git stage' args...
+'git stage' <arg>...
 
 
 DESCRIPTION

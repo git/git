@@ -9,7 +9,7 @@ git-http-push - Push objects over HTTP/DAV to another repository
 SYNOPSIS
 --------
 [verse]
-'git http-push' [--all] [--dry-run] [--force] [--verbose] <url> <ref> [<ref>...]
+'git http-push' [--all] [--dry-run] [--force] [--verbose] <URL> <ref> [<ref>...]
 
 DESCRIPTION
 -----------
@@ -63,16 +63,15 @@ of such patterns separated by a colon ":" (this means that a ref name
 cannot have a colon in it).  A single pattern '<name>' is just a
 shorthand for '<name>:<name>'.
 
-Each pattern pair consists of the source side (before the colon)
-and the destination side (after the colon).  The ref to be
-pushed is determined by finding a match that matches the source
-side, and where it is pushed is determined by using the
-destination side.
+Each pattern pair '<src>:<dst>' consists of the source side (before
+the colon) and the destination side (after the colon).  The ref to be
+pushed is determined by finding a match that matches the source side,
+and where it is pushed is determined by using the destination side.
 
- - It is an error if <src> does not match exactly one of the
+ - It is an error if '<src>' does not match exactly one of the
    local refs.
 
- - If <dst> does not match any remote ref, either
+ - If '<dst>' does not match any remote ref, either
 
    * it has to start with "refs/"; <dst> is used as the
      destination literally in this case.
