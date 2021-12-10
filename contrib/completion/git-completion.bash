@@ -2001,7 +2001,7 @@ __git_log_shortlog_options="
 "
 
 __git_log_pretty_formats="oneline short medium full fuller reference email raw format: tformat: mboxrd"
-__git_log_date_formats="relative iso8601 iso8601-strict rfc2822 short local default raw unix format:"
+__git_log_date_formats="relative iso8601 iso8601-strict rfc2822 short local default human raw unix auto: format:"
 
 _git_log ()
 {
