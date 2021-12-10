@@ -421,27 +421,30 @@ static int run_builtin(struct cmd_struct *p, int argc, const char **argv)
 	int status, help;
 	struct stat st;
 	const char *prefix;
+	int run_setup = (p->option & (RUN_SETUP | RUN_SETUP_GENTLY));
 
-	prefix = NULL;
 	help = argc == 2 && !strcmp(argv[1], "-h");
-	if (!help) {
-		if (p->option & RUN_SETUP)
-			prefix = setup_git_directory();
-		else if (p->option & RUN_SETUP_GENTLY) {
-			int nongit_ok;
-			prefix = setup_git_directory_gently(&nongit_ok);
-		}
-		precompose_argv_prefix(argc, argv, NULL);
-		if (use_pager == -1 && p->option & (RUN_SETUP | RUN_SETUP_GENTLY) &&
-		    !(p->option & DELAY_PAGER_CONFIG))
-			use_pager = check_pager_config(p->cmd);
-		if (use_pager == -1 && p->option & USE_PAGER)
-			use_pager = 1;
+	if (help && (run_setup & RUN_SETUP))
+		/* demote to GENTLY to allow 'git cmd -h' outside repo */
+		run_setup = RUN_SETUP_GENTLY;
 
-		if ((p->option & (RUN_SETUP | RUN_SETUP_GENTLY)) &&
-		    startup_info->have_repository) /* get_git_dir() may set up repo, avoid that */
-			trace_repo_setup(prefix);
+	if (run_setup & RUN_SETUP) {
+		prefix = setup_git_directory();
+	} else if (run_setup & RUN_SETUP_GENTLY) {
+		int nongit_ok;
+		prefix = setup_git_directory_gently(&nongit_ok);
+	} else {
+		prefix = NULL;
 	}
+	precompose_argv_prefix(argc, argv, NULL);
+	if (use_pager == -1 && run_setup &&
+		!(p->option & DELAY_PAGER_CONFIG))
+		use_pager = check_pager_config(p->cmd);
+	if (use_pager == -1 && p->option & USE_PAGER)
+		use_pager = 1;
+	if (run_setup && startup_info->have_repository)
+		/* get_git_dir() may set up repo, avoid that */
+		trace_repo_setup(prefix);
 	commit_pager_choice();
 
 	if (!help && get_super_prefix()) {
