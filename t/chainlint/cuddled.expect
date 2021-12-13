@@ -1,10 +1,8 @@
-(
-cd foo &&
+(cd foo &&
 	bar
 ) &&
 
-(
-cd foo ?!AMP?!
+(cd foo ?!AMP?!
 	bar
 ) &&
 
@@ -12,10 +10,8 @@ cd foo ?!AMP?!
 	cd foo &&
 	bar) &&
 
-(
-cd foo &&
+(cd foo &&
 	bar) &&
 
-(
-cd foo ?!AMP?!
+(cd foo ?!AMP?!
 	bar)

@@ -13,8 +13,7 @@
 (
 	foo;
 ) &&
-(
-cd foo &&
+(cd foo &&
 	for i in a b c; do
 		echo;
 	done)

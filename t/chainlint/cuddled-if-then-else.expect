@@ -1,5 +1,4 @@
-(
-if test -z ""; then
+(if test -z ""; then
     echo empty
  else
     echo bizzy

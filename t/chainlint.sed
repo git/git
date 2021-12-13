@@ -131,11 +131,15 @@ b
 	h
 	bnextln
 }
-# "(..." line -- split off and stash "(", then process "..." as its own line
+# "(..." line -- "(" opening subshell cuddled with command; temporarily replace
+# "(" with sentinel "^" and process the line as if "(" had been seen solo on
+# the preceding line; this temporary replacement prevents several rules from
+# accidentally thinking "(" introduces a nested subshell; "^" is changed back
+# to "(" at output time
 x
-s/.*/(/
+s/.*//
 x
-s/(//
+s/(/^/
 bslurp
 
 :nextln
@@ -168,12 +172,12 @@ s/.*\n//
 	/"[^"]*#[^"]*"/!s/[ 	]#.*$//
 }
 # one-liner "case ... esac"
-/^[ 	]*case[ 	]*..*esac/bchkchn
+/^[ 	^]*case[ 	]*..*esac/bchkchn
 # multi-line "case ... esac"
-/^[ 	]*case[ 	]..*[ 	]in/bcase
+/^[ 	^]*case[ 	]..*[ 	]in/bcase
 # multi-line "for ... done" or "while ... done"
-/^[ 	]*for[ 	]..*[ 	]in/bcont
-/^[ 	]*while[ 	]/bcont
+/^[ 	^]*for[ 	]..*[ 	]in/bcont
+/^[ 	^]*while[ 	]/bcont
 /^[ 	]*do[ 	]/bcont
 /^[ 	]*do[ 	]*$/bcont
 /;[ 	]*do/bcont
@@ -184,7 +188,7 @@ s/.*\n//
 /||[ 	]*exit[ 	]/bcont
 /||[ 	]*exit[ 	]*$/bcont
 # multi-line "if...elsif...else...fi"
-/^[ 	]*if[ 	]/bcont
+/^[ 	^]*if[ 	]/bcont
 /^[ 	]*then[ 	]/bcont
 /^[ 	]*then[ 	]*$/bcont
 /;[ 	]*then/bcont
@@ -197,15 +201,15 @@ s/.*\n//
 /^[ 	]*fi[ 	]*[<>|]/bdone
 /^[ 	]*fi[ 	]*)/bdone
 # nested one-liner "(...) &&"
-/^[ 	]*(.*)[ 	]*&&[ 	]*$/bchkchn
+/^[ 	^]*(.*)[ 	]*&&[ 	]*$/bchkchn
 # nested one-liner "(...)"
-/^[ 	]*(.*)[ 	]*$/bchkchn
+/^[ 	^]*(.*)[ 	]*$/bchkchn
 # nested one-liner "(...) >x" (or "2>x" or "<x" or "|x")
-/^[ 	]*(.*)[ 	]*[0-9]*[<>|]/bchkchn
+/^[ 	^]*(.*)[ 	]*[0-9]*[<>|]/bchkchn
 # nested multi-line "(...\n...)"
-/^[ 	]*(/bnest
+/^[ 	^]*(/bnest
 # multi-line "{...\n...}"
-/^[ 	]*{/bblock
+/^[ 	^]*{/bblock
 # closing ")" on own line -- exit subshell
 /^[ 	]*)/bclssolo
 # "$((...))" -- arithmetic expansion; not closing ")"
@@ -237,6 +241,7 @@ s/.*\n//
 :cont
 # retrieve and print previous line
 x
+s/^\([ 	]*\)^/\1(/
 s/?!HERE?!/<</g
 n
 bslurp
@@ -292,6 +297,7 @@ bfolded
 # found "case ... in" -- pass through untouched
 :case
 x
+s/^\([ 	]*\)^/\1(/
 s/?!HERE?!/<</g
 n
 :cascom
@@ -326,6 +332,7 @@ bchkchn
 :nest
 x
 :nstslrp
+s/^\([ 	]*\)^/\1(/
 s/?!HERE?!/<</g
 n
 :nstcom
@@ -354,6 +361,7 @@ bchkchn
 # found multi-line "{...\n...}" block -- pass through untouched
 :block
 x
+s/^\([ 	]*\)^/\1(/
 s/?!HERE?!/<</g
 n
 :blkcom
@@ -371,17 +379,21 @@ bblock
 :clssolo
 x
 s/\( ?!AMP?!\)* ?!AMP?!$//
+s/^\([ 	]*\)^/\1(/
 s/?!HERE?!/<</g
 p
 x
+s/^\([ 	]*\)^/\1(/
 s/?!HERE?!/<</g
 b
 
 # found closing "...)" -- exit subshell loop
 :close
 x
+s/^\([ 	]*\)^/\1(/
 s/?!HERE?!/<</g
 p
 x
+s/^\([ 	]*\)^/\1(/
 s/?!HERE?!/<</g
 b

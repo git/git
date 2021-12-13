@@ -4,6 +4,5 @@
 	flibble "not a # comment"
 ) &&
 
-(
-cd foo &&
+(cd foo &&
 	flibble "not a # comment")
