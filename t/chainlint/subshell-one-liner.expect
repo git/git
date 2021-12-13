@@ -8,7 +8,7 @@
 	(foo || exit 1) &&
 	(foo || exit 1) |
 	(foo || exit 1) >baz &&
-?!AMP?!	(foo && bar)
-?!AMP?!?!SEMI?!	(foo && bar; baz)
+	(foo && bar) ?!AMP?!
+?!SEMI?!	(foo && bar; baz) ?!AMP?!
 	foobar
 >)

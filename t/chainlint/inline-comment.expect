@@ -1,6 +1,6 @@
 (
 	foobar &&
-?!AMP?!	barfoo
+	barfoo ?!AMP?!
 	flibble "not a # comment"
 >) &&
 

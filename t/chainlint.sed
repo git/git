@@ -236,7 +236,7 @@ s/.*\n//
 # line ends with pipe "...|" -- valid; not missing "&&"
 /|[ 	]*$/bcont
 # missing end-of-line "&&" -- mark suspect
-/&&[ 	]*$/!s/^/?!AMP?!/
+/&&[ 	]*$/!s/$/ ?!AMP?!/
 :cont
 # retrieve and print previous line
 x
@@ -303,7 +303,7 @@ bcase
 # that line legitimately lacks "&&"
 :else
 x
-s/?!AMP?!//
+s/ ?!AMP?!$//
 x
 bcont
 
@@ -311,7 +311,7 @@ bcont
 # "suspect" from final contained line since that line legitimately lacks "&&"
 :done
 x
-s/?!AMP?!//
+s/ ?!AMP?!$//
 x
 # is 'done' or 'fi' cuddled with ")" to close subshell?
 /done.*)/bclose
@@ -354,7 +354,7 @@ bblock
 # since that line legitimately lacks "&&" and exit subshell loop
 :clssolo
 x
-s/?!AMP?!//
+s/ ?!AMP?!$//
 p
 x
 s/^/>/

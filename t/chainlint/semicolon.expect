@@ -1,5 +1,5 @@
 (
-?!AMP?!?!SEMI?!	cat foo ; echo bar
+?!SEMI?!	cat foo ; echo bar ?!AMP?!
 ?!SEMI?!	cat foo ; echo bar
 >) &&
 (

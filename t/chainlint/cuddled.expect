@@ -4,7 +4,7 @@ cd foo &&
 >) &&
 
 (
-?!AMP?!cd foo
+cd foo ?!AMP?!
 	bar
 >) &&
 
@@ -17,5 +17,5 @@ cd foo &&
 >	bar) &&
 
 (
-?!AMP?!cd foo
+cd foo ?!AMP?!
 >	bar)

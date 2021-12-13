@@ -2,6 +2,6 @@ cat >foop &&
 
 (
 	cat &&
-?!AMP?!	cat
+	cat ?!AMP?!
 	foobar
 >)

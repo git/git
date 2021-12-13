@@ -1,7 +1,7 @@
 (
 	if test -n ""
 	then
-?!AMP?!		echo very
+		echo very ?!AMP?!
 		echo empty
 	elif test -z ""
 	then
@@ -9,7 +9,7 @@
 	else
 		echo foo &&
 		cat
-?!AMP?!	fi
+	fi ?!AMP?!
 	echo poodle
 >) &&
 (

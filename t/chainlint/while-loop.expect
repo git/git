@@ -1,9 +1,9 @@
 (
 	while true
 	do
-?!AMP?!		echo foo
+		echo foo ?!AMP?!
 		cat
-?!AMP?!	done
+	done ?!AMP?!
 	while true; do
 		echo foo &&
 		cat bar
