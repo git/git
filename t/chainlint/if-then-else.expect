@@ -11,10 +11,10 @@
 		cat
 	fi ?!AMP?!
 	echo poodle
->) &&
+) &&
 (
 	if test -n ""; then
 		echo very &&
 		echo empty
 	fi
->)
+)

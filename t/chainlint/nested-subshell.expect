@@ -3,10 +3,10 @@
 	(
 		echo a &&
 		echo b
->>	) >file &&
+	) >file &&
 	cd foo &&
 	(
 		echo a
 		echo b
->>	) >file
->)
+	) >file
+)

@@ -76,12 +76,6 @@
 # newline, thus the closing here-doc tag has been found. The closing tag line
 # and the "<...>" prefix on the target line are then discarded, leaving just
 # the target line "cat >out".
-#
-# To facilitate regression testing (and manual debugging), a ">" annotation is
-# applied to the line containing ")" which closes a subshell, ">>" to a line
-# closing a nested subshell, and ">>>" to a line closing both at once. This
-# makes it easy to detect whether the heuristics correctly identify
-# end-of-subshell.
 #------------------------------------------------------------------------------
 
 # incomplete line -- slurp up next line
@@ -337,7 +331,6 @@ n
 x
 bnstslrp
 :nstcl
-s/^/>>/
 # is it "))" which closes nested and parent subshells?
 /)[ 	]*)/bslurp
 bchkchn
@@ -357,7 +350,6 @@ x
 s/\( ?!AMP?!\)* ?!AMP?!$//
 p
 x
-s/^/>/
 b
 
 # found closing "...)" -- exit subshell loop
@@ -365,5 +357,4 @@ b
 x
 p
 x
-s/^/>/
 b

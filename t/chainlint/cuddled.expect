@@ -1,21 +1,21 @@
 (
 cd foo &&
 	bar
->) &&
+) &&
 
 (
 cd foo ?!AMP?!
 	bar
->) &&
+) &&
 
 (
 	cd foo &&
->	bar) &&
+	bar) &&
 
 (
 cd foo &&
->	bar) &&
+	bar) &&
 
 (
 cd foo ?!AMP?!
->	bar)
+	bar)

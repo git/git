@@ -1,4 +1,4 @@
 (
 	cat && echo "multi-line	string" ?!AMP?!
 	bap
->)
+)

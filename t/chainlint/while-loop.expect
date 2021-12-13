@@ -8,4 +8,4 @@
 		echo foo &&
 		cat bar
 	done
->)
+)

@@ -8,4 +8,4 @@
 		echo $i &&
 		cat $i
 	done
->)
+)

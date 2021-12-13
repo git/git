@@ -11,4 +11,4 @@
 	(foo && bar) ?!AMP?!
 	(foo && bar; ?!AMP?! baz) ?!AMP?!
 	foobar
->)
+)

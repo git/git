@@ -2,9 +2,9 @@
 	echo wobba 	       gorgo snoot 	       wafta snurb &&
 	cat >bip ?!AMP?!
 	echo >bop
->) &&
+) &&
 (
 	cat >bup &&
 	cat >bup3 &&
 	meep
->)
+)

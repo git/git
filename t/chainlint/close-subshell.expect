@@ -1,25 +1,25 @@
 (
 	foo
->) &&
+) &&
 (
 	bar
->) >out &&
+) >out &&
 (
 	baz
->) 2>err &&
+) 2>err &&
 (
 	boo
->) <input &&
+) <input &&
 (
 	bip
->) | wuzzle &&
+) | wuzzle &&
 (
 	bop
->) | fazz 	fozz &&
+) | fazz 	fozz &&
 (
 	bup
->) |
+) |
 fuzzle &&
 (
 	yop
->)
+)

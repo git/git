@@ -4,4 +4,4 @@ cat >foop &&
 	cat &&
 	cat ?!AMP?!
 	foobar
->)
+)
