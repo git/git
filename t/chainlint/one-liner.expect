@@ -4,6 +4,6 @@
 
 ?!SEMI?!(foo; bar) &&
 ?!SEMI?!(foo; bar) |
-?!SEMI?!(foo; bar) >baz
+?!SEMI?!(foo; bar) >baz &&
 
 (foo "bar; baz")
