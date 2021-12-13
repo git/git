@@ -3,7 +3,7 @@
 (foo && bar) |
 (foo && bar) >baz &&
 
-# LINT: top-level one-liner subshell missing internal "&&"
+# LINT: top-level one-liner subshell missing internal "&&" and broken &&-chain
 (foo; bar) &&
 (foo; bar) |
 (foo; bar) >baz
