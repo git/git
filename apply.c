@@ -4752,8 +4752,10 @@ static int apply_patch(struct apply_state *state,
 	}
 
 	if (!list && !skipped_patch) {
-		error(_("unrecognized input"));
-		res = -128;
+		if (!state->allow_empty) {
+			error(_("No valid patches in input (allow with \"--allow-empty\")"));
+			res = -128;
+		}
 		goto end;
 	}
 
@@ -5081,6 +5083,8 @@ int apply_parse_options(int argc, const char **argv,
 		OPT_CALLBACK(0, "directory", state, N_("root"),
 			N_("prepend <root> to all filenames"),
 			apply_option_parse_directory),
+		OPT_BOOL(0, "allow-empty", &state->allow_empty,
+			N_("don't return error for empty patches")),
 		OPT_END()
 	};
 
