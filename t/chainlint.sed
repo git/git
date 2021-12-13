@@ -294,6 +294,12 @@ bfolded
 x
 s/?!HERE?!/<</g
 n
+:cascom
+/^[ 	]*#/{
+	N
+	s/.*\n//
+	bcascom
+}
 /^[ 	]*esac/bslurp
 bcase
 
@@ -322,10 +328,15 @@ x
 :nstslrp
 s/?!HERE?!/<</g
 n
+:nstcom
+# comment -- not closing ")" if in comment
+/^[ 	]*#/{
+	N
+	s/.*\n//
+	bnstcom
+}
 # closing ")" on own line -- stop nested slurp
 /^[ 	]*)/bnstcl
-# comment -- not closing ")" if in comment
-/^[ 	]*#/bnstcnt
 # "$((...))" -- arithmetic expansion; not closing ")"
 /\$(([^)][^)]*))[^)]*$/bnstcnt
 # "$(...)" -- command substitution; not closing ")"
@@ -345,6 +356,12 @@ bchkchn
 x
 s/?!HERE?!/<</g
 n
+:blkcom
+/^[ 	]*#/{
+	N
+	s/.*\n//
+	bblkcom
+}
 # closing "}" -- stop block slurp
 /}/bchkchn
 bblock

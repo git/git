@@ -2,8 +2,6 @@
 	foo &&
 	(
 		bar &&
-		# bottles wobble while fiddles gobble
-		# minor numbers of cows (or do they?)
 		baz &&
 		snaff
 	) ?!AMP?!
