@@ -11,10 +11,10 @@
 	cat foo; ?!SEMI?! echo bar
 >) &&
 (
-	foo; ?!SEMI?!
+	foo;
 >) &&
 (
 cd foo &&
 	for i in a b c; do
-		echo; ?!SEMI?!
+		echo;
 >	done)

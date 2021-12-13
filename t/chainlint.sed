@@ -47,8 +47,9 @@
 # "?!AMP?!" violation is removed from the "bar" line (retrieved from the "hold"
 # area) since the final statement of a subshell must not end with "&&". The
 # final line of a subshell may still break the &&-chain by using ";" internally
-# to chain commands together rather than "&&", so "?!SEMI?!" is never removed
-# from a line (even though "?!AMP?!" might be).
+# to chain commands together rather than "&&", so "?!SEMI?!" is not removed
+# from such a line; however, if the line ends with "?!SEMI?!", then the ";" is
+# harmless and the annotation is removed.
 #
 # Care is taken to recognize the last _statement_ of a multi-line subshell, not
 # necessarily the last textual _line_ within the subshell, since &&-chaining
@@ -303,7 +304,7 @@ bcase
 # that line legitimately lacks "&&"
 :else
 x
-s/ ?!AMP?!$//
+s/\( ?!SEMI?!\)* ?!AMP?!$//
 x
 bcont
 
@@ -311,7 +312,7 @@ bcont
 # "suspect" from final contained line since that line legitimately lacks "&&"
 :done
 x
-s/ ?!AMP?!$//
+s/\( ?!SEMI?!\)* ?!AMP?!$//
 x
 # is 'done' or 'fi' cuddled with ")" to close subshell?
 /done.*)/bclose
@@ -354,7 +355,7 @@ bblock
 # since that line legitimately lacks "&&" and exit subshell loop
 :clssolo
 x
-s/ ?!AMP?!$//
+s/\( ?!SEMI?!\)* ?!AMP?!$//
 p
 x
 s/^/>/
