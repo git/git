@@ -7,6 +7,7 @@
 # LINT: last statement before 'elif' does not need "&&"
 		echo empty
 	elif test -z ""
+	then
 # LINT: last statement before 'else' does not need "&&"
 		echo foo
 	else
@@ -24,5 +25,5 @@
 	if test -n ""; then
 		echo very &&
 		echo empty
-	if
+	fi
 )

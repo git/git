@@ -11,7 +11,7 @@
 # LINT: missing "&&" on 'cat'
 	cat <<EOF >bip
 	fish fly high
-	EOF
+EOF
 
 # LINT: swallow here-doc (EOF is last line of subshell)
 	echo <<-\EOF >bop

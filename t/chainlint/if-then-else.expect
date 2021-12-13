@@ -4,6 +4,7 @@
 ?!AMP?!		echo very
 		echo empty
 	elif test -z ""
+	then
 		echo foo
 	else
 		echo foo &&
@@ -14,6 +15,6 @@
 (
 	if test -n ""; then
 		echo very &&
-?!AMP?!		echo empty
-	if
+		echo empty
+	fi
 >)
