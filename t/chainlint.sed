@@ -24,9 +24,9 @@
 # in order to avoid misinterpreting the ")" in constructs such as "x=$(...)"
 # and "case $x in *)" as ending the subshell.
 #
-# Lines missing a final "&&" are flagged with "?!AMP?!", and lines which chain
-# commands with ";" internally rather than "&&" are flagged "?!SEMI?!". A line
-# may be flagged for both violations.
+# Lines missing a final "&&" are flagged with "?!AMP?!", as are lines which
+# chain commands with ";" internally rather than "&&". A line may be flagged
+# for both violations.
 #
 # Detection of a missing &&-link in a multi-line subshell is complicated by the
 # fact that the last statement before the closing ")" must not end with "&&".
@@ -47,9 +47,8 @@
 # "?!AMP?!" violation is removed from the "bar" line (retrieved from the "hold"
 # area) since the final statement of a subshell must not end with "&&". The
 # final line of a subshell may still break the &&-chain by using ";" internally
-# to chain commands together rather than "&&", so "?!SEMI?!" is not removed
-# from such a line; however, if the line ends with "?!SEMI?!", then the ";" is
-# harmless and the annotation is removed.
+# to chain commands together rather than "&&", but an internal "?!AMP?!" is
+# never removed from a line even though a line-ending "?!AMP?!" might be.
 #
 # Care is taken to recognize the last _statement_ of a multi-line subshell, not
 # necessarily the last textual _line_ within the subshell, since &&-chaining
@@ -127,7 +126,7 @@ b
 # "&&" (but not ";" in a string)
 :oneline
 /;/{
-	/"[^"]*;[^"]*"/!s/;/; ?!SEMI?!/
+	/"[^"]*;[^"]*"/!s/;/; ?!AMP?!/
 }
 b
 
@@ -231,7 +230,7 @@ s/.*\n//
 # string and not ";;" in one-liner "case...esac")
 /;/{
 	/;;/!{
-		/"[^"]*;[^"]*"/!s/;/; ?!SEMI?!/
+		/"[^"]*;[^"]*"/!s/;/; ?!AMP?!/
 	}
 }
 # line ends with pipe "...|" -- valid; not missing "&&"
@@ -304,7 +303,7 @@ bcase
 # that line legitimately lacks "&&"
 :else
 x
-s/\( ?!SEMI?!\)* ?!AMP?!$//
+s/\( ?!AMP?!\)* ?!AMP?!$//
 x
 bcont
 
@@ -312,7 +311,7 @@ bcont
 # "suspect" from final contained line since that line legitimately lacks "&&"
 :done
 x
-s/\( ?!SEMI?!\)* ?!AMP?!$//
+s/\( ?!AMP?!\)* ?!AMP?!$//
 x
 # is 'done' or 'fi' cuddled with ")" to close subshell?
 /done.*)/bclose
@@ -355,7 +354,7 @@ bblock
 # since that line legitimately lacks "&&" and exit subshell loop
 :clssolo
 x
-s/\( ?!SEMI?!\)* ?!AMP?!$//
+s/\( ?!AMP?!\)* ?!AMP?!$//
 p
 x
 s/^/>/

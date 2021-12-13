@@ -1,14 +1,14 @@
 (
-	cat foo ; ?!SEMI?! echo bar ?!AMP?!
-	cat foo ; ?!SEMI?! echo bar
+	cat foo ; ?!AMP?! echo bar ?!AMP?!
+	cat foo ; ?!AMP?! echo bar
 >) &&
 (
-	cat foo ; ?!SEMI?! echo bar &&
-	cat foo ; ?!SEMI?! echo bar
+	cat foo ; ?!AMP?! echo bar &&
+	cat foo ; ?!AMP?! echo bar
 >) &&
 (
 	echo "foo; bar" &&
-	cat foo; ?!SEMI?! echo bar
+	cat foo; ?!AMP?! echo bar
 >) &&
 (
 	foo;
