@@ -8,7 +8,7 @@
 		echo foo
 	else
 		echo foo &&
-		cat
+		cat <<-EOF
 	fi ?!AMP?!
 	echo poodle
 ) &&

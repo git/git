@@ -1,10 +1,10 @@
 (
-	echo wobba 	       gorgo snoot 	       wafta snurb &&
-	cat >bip ?!AMP?!
-	echo >bop
+	echo wobba 	       gorgo snoot 	       wafta snurb <<-EOF &&
+	cat <<EOF >bip ?!AMP?!
+	echo <<-EOF >bop
 ) &&
 (
-	cat >bup &&
-	cat >bup3 &&
+	cat <<-ARBITRARY >bup &&
+	cat <<-ARBITRARY3 >bup3 &&
 	meep
 )

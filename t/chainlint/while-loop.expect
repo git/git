@@ -2,7 +2,7 @@
 	while true
 	do
 		echo foo ?!AMP?!
-		cat
+		cat <<-EOF
 	done ?!AMP?!
 	while true; do
 		echo foo &&

@@ -1,7 +1,7 @@
-cat >foop &&
+cat <<ARBITRARY >foop &&
 
 (
-	cat &&
-	cat ?!AMP?!
+	cat <<-INPUT_END &&
+	cat <<-EOT ?!AMP?!
 	foobar
 )

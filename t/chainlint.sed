@@ -62,20 +62,20 @@
 # receives similar treatment.
 #
 # Swallowing here-docs with arbitrary tags requires a bit of finesse. When a
-# line such as "cat <<EOF >out" is seen, the here-doc tag is moved to the front
-# of the line enclosed in angle brackets as a sentinel, giving "<EOF>cat >out".
+# line such as "cat <<EOF" is seen, the here-doc tag is copied to the front of
+# the line enclosed in angle brackets as a sentinel, giving "<EOF>cat <<EOF".
 # As each subsequent line is read, it is appended to the target line and a
 # (whitespace-loose) back-reference match /^<(.*)>\n\1$/ is attempted to see if
 # the content inside "<...>" matches the entirety of the newly-read line. For
 # instance, if the next line read is "some data", when concatenated with the
-# target line, it becomes "<EOF>cat >out\nsome data", and a match is attempted
+# target line, it becomes "<EOF>cat <<EOF\nsome data", and a match is attempted
 # to see if "EOF" matches "some data". Since it doesn't, the next line is
 # attempted. When a line consisting of only "EOF" (and possible whitespace) is
-# encountered, it is appended to the target line giving "<EOF>cat >out\nEOF",
+# encountered, it is appended to the target line giving "<EOF>cat <<EOF\nEOF",
 # in which case the "EOF" inside "<...>" does match the text following the
 # newline, thus the closing here-doc tag has been found. The closing tag line
 # and the "<...>" prefix on the target line are then discarded, leaving just
-# the target line "cat >out".
+# the target line "cat <<EOF".
 #------------------------------------------------------------------------------
 
 # incomplete line -- slurp up next line
@@ -90,8 +90,7 @@
 # command to which it was attached)
 /<<-*[ 	]*[\\'"]*[A-Za-z0-9_]/ {
 	/"[^"]*<<[^"]*"/bnotdoc
-	s/^\(.*\)<<-*[ 	]*[\\'"]*\([A-Za-z0-9_][A-Za-z0-9_]*\)['"]*/<\2>\1<</
-	s/[ 	]*<<//
+	s/^\(.*<<-*[ 	]*\)[\\'"]*\([A-Za-z0-9_][A-Za-z0-9_]*\)['"]*/<\2>\1\2/
 	:hered
 	N
 	/^<\([^>]*\)>.*\n[ 	]*\1[ 	]*$/!{
@@ -238,6 +237,7 @@ s/.*\n//
 :cont
 # retrieve and print previous line
 x
+s/?!HERE?!/<</g
 n
 bslurp
 
@@ -278,8 +278,7 @@ bfolded
 # found here-doc -- swallow it to avoid false hits within its body (but keep
 # the command to which it was attached)
 :heredoc
-s/^\(.*\)<<-*[ 	]*[\\'"]*\([A-Za-z0-9_][A-Za-z0-9_]*\)['"]*/<\2>\1<</
-s/[ 	]*<<//
+s/^\(.*\)<<\(-*[ 	]*\)[\\'"]*\([A-Za-z0-9_][A-Za-z0-9_]*\)['"]*/<\3>\1?!HERE?!\2\3/
 :hdocsub
 N
 /^<\([^>]*\)>.*\n[ 	]*\1[ 	]*$/!{
@@ -293,6 +292,7 @@ bfolded
 # found "case ... in" -- pass through untouched
 :case
 x
+s/?!HERE?!/<</g
 n
 /^[ 	]*esac/bslurp
 bcase
@@ -320,6 +320,7 @@ bchkchn
 :nest
 x
 :nstslrp
+s/?!HERE?!/<</g
 n
 # closing ")" on own line -- stop nested slurp
 /^[ 	]*)/bnstcl
@@ -342,6 +343,7 @@ bchkchn
 # found multi-line "{...\n...}" block -- pass through untouched
 :block
 x
+s/?!HERE?!/<</g
 n
 # closing "}" -- stop block slurp
 /}/bchkchn
@@ -352,13 +354,17 @@ bblock
 :clssolo
 x
 s/\( ?!AMP?!\)* ?!AMP?!$//
+s/?!HERE?!/<</g
 p
 x
+s/?!HERE?!/<</g
 b
 
 # found closing "...)" -- exit subshell loop
 :close
 x
+s/?!HERE?!/<</g
 p
 x
+s/?!HERE?!/<</g
 b

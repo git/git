@@ -1,5 +1,5 @@
 (
-	x=$(bobble &&
+	x=$(bobble <<-END &&
 		wiffle) ?!AMP?!
 	echo $x
 )
