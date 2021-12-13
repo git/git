@@ -2,13 +2,13 @@
 	(foo && bar) &&
 	(foo && bar) |
 	(foo && bar) >baz &&
-?!SEMI?!	(foo; bar) &&
-?!SEMI?!	(foo; bar) |
-?!SEMI?!	(foo; bar) >baz &&
+	(foo; ?!SEMI?! bar) &&
+	(foo; ?!SEMI?! bar) |
+	(foo; ?!SEMI?! bar) >baz &&
 	(foo || exit 1) &&
 	(foo || exit 1) |
 	(foo || exit 1) >baz &&
 	(foo && bar) ?!AMP?!
-?!SEMI?!	(foo && bar; baz) ?!AMP?!
+	(foo && bar; ?!SEMI?! baz) ?!AMP?!
 	foobar
 >)

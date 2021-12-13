@@ -126,7 +126,7 @@ b
 # "&&" (but not ";" in a string)
 :oneline
 /;/{
-	/"[^"]*;[^"]*"/!s/^/?!SEMI?!/
+	/"[^"]*;[^"]*"/!s/;/; ?!SEMI?!/
 }
 b
 
@@ -230,7 +230,7 @@ s/.*\n//
 # string and not ";;" in one-liner "case...esac")
 /;/{
 	/;;/!{
-		/"[^"]*;[^"]*"/!s/^/?!SEMI?!/
+		/"[^"]*;[^"]*"/!s/;/; ?!SEMI?!/
 	}
 }
 # line ends with pipe "...|" -- valid; not missing "&&"
