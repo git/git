@@ -16,7 +16,7 @@ SYNOPSIS
 	  [--ignore-space-change | --ignore-whitespace]
 	  [--whitespace=(nowarn|warn|fix|error|error-all)]
 	  [--exclude=<path>] [--include=<path>] [--directory=<root>]
-	  [--verbose] [--unsafe-paths] [<patch>...]
+	  [--verbose | --quiet] [--unsafe-paths] [<patch>...]
 
 DESCRIPTION
 -----------
@@ -227,6 +227,11 @@ behavior:
 	Report progress to stderr. By default, only a message about the
 	current patch being applied will be printed. This option will cause
 	additional information to be reported.
+
+-q::
+--quiet::
+	Suppress stderr output. Messages about patch status and progress
+	will not be printed.
 
 --recount::
 	Do not trust the line counts in the hunk headers, but infer them
