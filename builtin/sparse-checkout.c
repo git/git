@@ -699,8 +699,9 @@ static struct sparse_checkout_set_opts {
 static int sparse_checkout_set(int argc, const char **argv, const char *prefix)
 {
 	static struct option builtin_sparse_checkout_set_options[] = {
-		OPT_BOOL(0, "stdin", &set_opts.use_stdin,
-			 N_("read patterns from standard in")),
+		OPT_BOOL_F(0, "stdin", &set_opts.use_stdin,
+			   N_("read patterns from standard in"),
+			   PARSE_OPT_NONEG),
 		OPT_END(),
 	};
 
