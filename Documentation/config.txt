@@ -159,6 +159,33 @@ all branches that begin with `foo/`. This is useful if your branches are
 organized hierarchically and you would like to apply a configuration to
 all the branches in that hierarchy.
 
+`hasconfig:remote.*.url:`::
+	The data that follows this keyword is taken to
+	be a pattern with standard globbing wildcards and two
+	additional ones, `**/` and `/**`, that can match multiple
+	components. The first time this keyword is seen, the rest of
+	the config files will be scanned for remote URLs (without
+	applying any values). If there exists at least one remote URL
+	that matches this pattern, the include condition is met.
++
+Files included by this option (directly or indirectly) are not allowed
+to contain remote URLs.
++
+Note that unlike other includeIf conditions, resolving this condition
+relies on information that is not yet known at the point of reading the
+condition. A typical use case is this option being present as a
+system-level or global-level config, and the remote URL being in a
+local-level config; hence the need to scan ahead when resolving this
+condition. In order to avoid the chicken-and-egg problem in which
+potentially-included files can affect whether such files are potentially
+included, Git breaks the cycle by prohibiting these files from affecting
+the resolution of these conditions (thus, prohibiting them from
+declaring remote URLs).
++
+As for the naming of this keyword, it is for forwards compatibiliy with
+a naming scheme that supports more variable-based include conditions,
+but currently Git only supports the exact keyword described above.
+
 A few more notes on matching via `gitdir` and `gitdir/i`:
 
  * Symlinks in `$GIT_DIR` are not resolved before matching.
