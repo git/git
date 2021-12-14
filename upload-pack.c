@@ -194,7 +194,13 @@ static int write_one_shallow(const struct commit_graft *graft, void *cb_data)
 }
 
 struct output_state {
-	char buffer[8193];
+	/*
+	 * We do writes no bigger than LARGE_PACKET_DATA_MAX - 1, because with
+	 * sideband-64k the band designator takes up 1 byte of space. Because
+	 * relay_pack_data keeps the last byte to itself, we make the buffer 1
+	 * byte bigger than the intended maximum write size.
+	 */
+	char buffer[(LARGE_PACKET_DATA_MAX - 1) + 1];
 	int used;
 	unsigned packfile_uris_started : 1;
 	unsigned packfile_started : 1;
@@ -269,7 +275,7 @@ static void create_pack_file(struct upload_pack_data *pack_data,
 			     const struct string_list *uri_protocols)
 {
 	struct child_process pack_objects = CHILD_PROCESS_INIT;
-	struct output_state output_state = { { 0 } };
+	struct output_state *output_state = xcalloc(1, sizeof(struct output_state));
 	char progress[128];
 	char abort_msg[] = "aborting due to possible repository "
 		"corruption on the remote side.";
@@ -404,7 +410,7 @@ static void create_pack_file(struct upload_pack_data *pack_data,
 		}
 		if (0 <= pu && (pfd[pu].revents & (POLLIN|POLLHUP))) {
 			int result = relay_pack_data(pack_objects.out,
-						     &output_state,
+						     output_state,
 						     pack_data->use_sideband,
 						     !!uri_protocols);
 
@@ -438,11 +444,12 @@ static void create_pack_file(struct upload_pack_data *pack_data,
 	}
 
 	/* flush the data */
-	if (output_state.used > 0) {
-		send_client_data(1, output_state.buffer, output_state.used,
+	if (output_state->used > 0) {
+		send_client_data(1, output_state->buffer, output_state->used,
 				 pack_data->use_sideband);
 		fprintf(stderr, "flushed.\n");
 	}
+	free(output_state);
 	if (pack_data->use_sideband)
 		packet_flush(1);
 	return;
