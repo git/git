@@ -47,7 +47,8 @@ static int debug_transaction_prepare(struct ref_store *refs,
 	transaction->ref_store = drefs->refs;
 	res = drefs->refs->be->transaction_prepare(drefs->refs, transaction,
 						   err);
-	trace_printf_key(&trace_refs, "transaction_prepare: %d\n", res);
+	trace_printf_key(&trace_refs, "transaction_prepare: %d \"%s\"\n", res,
+			 err->buf);
 	return res;
 }
 
