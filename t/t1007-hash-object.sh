@@ -50,6 +50,9 @@ test_expect_success 'setup' '
 
 	example sha1:ddd3f836d3e3fbb7ae289aa9ae83536f76956399
 	example sha256:b44fe1fe65589848253737db859bd490453510719d7424daab03daf0767b85ae
+
+	large5GB sha1:0be2be10a4c8764f32c4bf372a98edc731a4b204
+	large5GB sha256:dc18ca621300c8d3cfa505a275641ebab00de189859e022a975056882d313e64
 	EOF
 '
 
@@ -258,6 +261,42 @@ test_expect_success '--literally with extra-long type' '
 	t=12345678901234567890123456789012345678901234567890 &&
 	t="$t$t$t$t$t$t$t$t$t$t$t$t$t$t$t$t$t$t$t$t$t$t$t$t$t$t$t$t$t$t" &&
 	echo example | git hash-object -t $t --literally --stdin
+'
+
+test_expect_success EXPENSIVE,SIZE_T_IS_64BIT,!LONG_IS_64BIT \
+		'files over 4GB hash literally' '
+	test-tool genzeros $((5*1024*1024*1024)) >big &&
+	test_oid large5GB >expect &&
+	git hash-object --stdin --literally <big >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success EXPENSIVE,SIZE_T_IS_64BIT,!LONG_IS_64BIT \
+		'files over 4GB hash correctly via --stdin' '
+	{ test -f big || test-tool genzeros $((5*1024*1024*1024)) >big; } &&
+	test_oid large5GB >expect &&
+	git hash-object --stdin <big >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success EXPENSIVE,SIZE_T_IS_64BIT,!LONG_IS_64BIT \
+		'files over 4GB hash correctly' '
+	{ test -f big || test-tool genzeros $((5*1024*1024*1024)) >big; } &&
+	test_oid large5GB >expect &&
+	git hash-object -- big >actual &&
+	test_cmp expect actual
+'
+
+# This clean filter does nothing, other than excercising the interface.
+# We ensure that cleaning doesn't mangle large files on 64-bit Windows.
+test_expect_success EXPENSIVE,SIZE_T_IS_64BIT,!LONG_IS_64BIT \
+		'hash filtered files over 4GB correctly' '
+	{ test -f big || test-tool genzeros $((5*1024*1024*1024)) >big; } &&
+	test_oid large5GB >expect &&
+	test_config filter.null-filter.clean "cat" &&
+	echo "big filter=null-filter" >.gitattributes &&
+	git hash-object -- big >actual &&
+	test_cmp expect actual
 '
 
 test_done
