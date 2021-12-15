@@ -6,6 +6,7 @@
 test_description='Binary diff and apply
 '
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 cat >expect.binary-numstat <<\EOF
