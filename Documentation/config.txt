@@ -262,11 +262,19 @@ color::
        colors (at most two, one for foreground and one for background)
        and attributes (as many as you want), separated by spaces.
 +
-The basic colors accepted are `normal`, `black`, `red`, `green`, `yellow`,
-`blue`, `magenta`, `cyan` and `white`.  The first color given is the
-foreground; the second is the background.  All the basic colors except
-`normal` have a bright variant that can be specified by prefixing the
-color with `bright`, like `brightred`.
+The basic colors accepted are `normal`, `black`, `red`, `green`,
+`yellow`, `blue`, `magenta`, `cyan`, `white` and `default`.  The first
+color given is the foreground; the second is the background.  All the
+basic colors except `normal` and `default` have a bright variant that can
+be specified by prefixing the color with `bright`, like `brightred`.
++
+The color `normal` makes no change to the color. It is the same as an
+empty string, but can be used as the foreground color when specifying a
+background color alone (for example, "normal red").
++
+The color `default` explicitly resets the color to the terminal default,
+for example to specify a cleared background. Although it varies between
+terminals, this is usually not the same as setting to "white black".
 +
 Colors may also be given as numbers between 0 and 255; these use ANSI
 256-color mode (but note that not all terminals may support this).  If
@@ -279,6 +287,11 @@ The position of any attributes with respect to the colors
 (before, after, or in between), doesn't matter. Specific attributes may
 be turned off by prefixing them with `no` or `no-` (e.g., `noreverse`,
 `no-ul`, etc).
++
+The pseudo-attribute `reset` resets all colors and attributes before
+applying the specified coloring. For example, `reset green` will result
+in a green foreground and default background without any active
+attributes.
 +
 An empty color string produces no color effect at all. This can be used
 to avoid coloring specific elements without disabling color entirely.
