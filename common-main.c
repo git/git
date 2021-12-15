@@ -51,7 +51,10 @@ int main(int argc, const char **argv)
 
 	result = cmd_main(argc, argv);
 
-	trace2_cmd_exit(result);
-
-	return result;
+	/*
+	 * We define exit() to call trace2_cmd_exit_fl() in
+	 * git-compat-util.h. Whether we reach this or exit()
+	 * elsewhere we'll always run our trace2 exit handler.
+	 */
+	exit(result);
 }
