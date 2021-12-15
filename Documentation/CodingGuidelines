@@ -499,6 +499,33 @@ For Python scripts:
  - Where required libraries do not restrict us to Python 2, we try to
    also be compatible with Python 3.1 and later.
 
+
+Program Output
+
+ We make a distinction between a Git command's primary output and
+ output which is merely chatty feedback (for instance, status
+ messages, running transcript, or progress display), as well as error
+ messages. Roughly speaking, a Git command's primary output is that
+ which one might want to capture to a file or send down a pipe; its
+ chatty output should not interfere with these use-cases.
+
+ As such, primary output should be sent to the standard output stream
+ (stdout), and chatty output should be sent to the standard error
+ stream (stderr). Examples of commands which produce primary output
+ include `git log`, `git show`, and `git branch --list` which generate
+ output on the stdout stream.
+
+ Not all Git commands have primary output; this is often true of
+ commands whose main function is to perform an action. Some action
+ commands are silent, whereas others are chatty. An example of a
+ chatty action commands is `git clone` with its "Cloning into
+ '<path>'..." and "Checking connectivity..." status messages which it
+ sends to the stderr stream.
+
+ Error messages from Git commands should always be sent to the stderr
+ stream.
+
+
 Error Messages
 
  - Do not end error messages with a full stop.
