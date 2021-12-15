@@ -16,7 +16,7 @@ SYNOPSIS
 	  [--ignore-space-change | --ignore-whitespace]
 	  [--whitespace=(nowarn|warn|fix|error|error-all)]
 	  [--exclude=<path>] [--include=<path>] [--directory=<root>]
-	  [--verbose] [--unsafe-paths] [<patch>...]
+	  [--verbose | --quiet] [--unsafe-paths] [--allow-empty] [<patch>...]
 
 DESCRIPTION
 -----------
@@ -228,6 +228,11 @@ behavior:
 	current patch being applied will be printed. This option will cause
 	additional information to be reported.
 
+-q::
+--quiet::
+	Suppress stderr output. Messages about patch status and progress
+	will not be printed.
+
 --recount::
 	Do not trust the line counts in the hunk headers, but infer them
 	by inspecting the patch (e.g. after editing the patch without
@@ -250,6 +255,10 @@ running `git apply --directory=modules/git-gui`.
 When `git apply` is used as a "better GNU patch", the user can pass
 the `--unsafe-paths` option to override this safety check.  This option
 has no effect when `--index` or `--cached` is in use.
+
+--allow-empty::
+	Don't return error for patches containing no diff. This includes
+	empty patches and patches with commit text only.
 
 CONFIGURATION
 -------------

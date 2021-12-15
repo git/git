@@ -66,6 +66,7 @@ struct apply_state {
 	int threeway;
 	int unidiff_zero;
 	int unsafe_paths;
+	int allow_empty;
 
 	/* Other non boolean parameters */
 	struct repository *repo;
