@@ -1,4 +1,4 @@
-name: CI/PR
+name: CI
 
 on: [push, pull_request]
 
@@ -7,6 +7,7 @@ env:
 
 jobs:
   ci-config:
+    name: config
     runs-on: ubuntu-latest
     outputs:
       enabled: ${{ steps.check-ref.outputs.enabled }}${{ steps.skip-if-redundant.outputs.enabled }}
@@ -77,6 +78,7 @@ jobs:
             }
 
   windows-build:
+    name: win build
     needs: ci-config
     if: needs.ci-config.outputs.enabled == 'yes'
     runs-on: windows-latest
@@ -97,6 +99,7 @@ jobs:
         name: windows-artifacts
         path: artifacts
   windows-test:
+    name: win test
     runs-on: windows-latest
     needs: [windows-build]
     strategy:
@@ -127,6 +130,7 @@ jobs:
         name: failed-tests-windows
         path: ${{env.FAILED_TEST_ARTIFACTS}}
   vs-build:
+    name: win+VS build
     needs: ci-config
     if: needs.ci-config.outputs.enabled == 'yes'
     env:
@@ -178,6 +182,7 @@ jobs:
         name: vs-artifacts
         path: artifacts
   vs-test:
+    name: win+VS test
     runs-on: windows-latest
     needs: vs-build
     strategy:
@@ -210,6 +215,7 @@ jobs:
         name: failed-tests-windows
         path: ${{env.FAILED_TEST_ARTIFACTS}}
   regular:
+    name: ${{matrix.vector.jobname}} (${{matrix.vector.pool}})
     needs: ci-config
     if: needs.ci-config.outputs.enabled == 'yes'
     strategy:
@@ -219,14 +225,25 @@ jobs:
           - jobname: linux-clang
             cc: clang
             pool: ubuntu-latest
+          - jobname: linux-sha256
+            cc: clang
+            os: ubuntu
+            pool: ubuntu-latest
           - jobname: linux-gcc
             cc: gcc
+            cc_package: gcc-8
+            pool: ubuntu-latest
+          - jobname: linux-TEST-vars
+            cc: gcc
+            os: ubuntu
+            cc_package: gcc-8
             pool: ubuntu-latest
           - jobname: osx-clang
             cc: clang
             pool: macos-latest
           - jobname: osx-gcc
             cc: gcc
+            cc_package: gcc-9
             pool: macos-latest
           - jobname: linux-gcc-default
             cc: gcc
@@ -236,7 +253,9 @@ jobs:
             pool: ubuntu-latest
     env:
       CC: ${{matrix.vector.cc}}
+      CC_PACKAGE: ${{matrix.vector.cc_package}}
       jobname: ${{matrix.vector.jobname}}
+      runs_on_pool: ${{matrix.vector.pool}}
     runs-on: ${{matrix.vector.pool}}
     steps:
     - uses: actions/checkout@v2
@@ -251,6 +270,7 @@ jobs:
         name: failed-tests-${{matrix.vector.jobname}}
         path: ${{env.FAILED_TEST_ARTIFACTS}}
   dockerized:
+    name: ${{matrix.vector.jobname}} (${{matrix.vector.image}})
     needs: ci-config
     if: needs.ci-config.outputs.enabled == 'yes'
     strategy:
@@ -259,7 +279,8 @@ jobs:
         vector:
         - jobname: linux-musl
           image: alpine
-        - jobname: Linux32
+        - jobname: linux32
+          os: ubuntu32
           image: daald/ubuntu32:xenial
         - jobname: pedantic
           image: fedora
@@ -311,6 +332,7 @@ jobs:
       run: ci/install-dependencies.sh
     - run: make sparse
   documentation:
+    name: documentation
     needs: ci-config
     if: needs.ci-config.outputs.enabled == 'yes'
     env:

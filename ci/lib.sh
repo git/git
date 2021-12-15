@@ -34,7 +34,7 @@ save_good_tree () {
 # successfully before (e.g. because the branch got rebased, changing only
 # the commit messages).
 skip_good_tree () {
-	if test "$TRAVIS_DEBUG_MODE" = true || test true = "$GITHUB_ACTIONS"
+	if test true = "$GITHUB_ACTIONS"
 	then
 		return
 	fi
@@ -60,7 +60,7 @@ skip_good_tree () {
 			cat <<-EOF
 			$(tput setaf 2)Skipping build job for commit $CI_COMMIT.$(tput sgr0)
 			This commit's tree has already been built and tested successfully in build job $prev_good_job_number for commit $prev_good_commit.
-			The log of that build job is available at $(url_for_job_id $prev_good_job_id)
+			The log of that build job is available at $SYSTEM_TASKDEFINITIONSURI$SYSTEM_TEAMPROJECT/_build/results?buildId=$prev_good_job_id
 			To force a re-build delete the branch's cache and then hit 'Restart job'.
 			EOF
 		fi
@@ -91,29 +91,7 @@ export MAKEFLAGS=
 # and installing dependencies.
 set -ex
 
-if test true = "$TRAVIS"
-then
-	CI_TYPE=travis
-	# When building a PR, TRAVIS_BRANCH refers to the *target* branch. Not
-	# what we want here. We want the source branch instead.
-	CI_BRANCH="${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH}"
-	CI_COMMIT="$TRAVIS_COMMIT"
-	CI_JOB_ID="$TRAVIS_JOB_ID"
-	CI_JOB_NUMBER="$TRAVIS_JOB_NUMBER"
-	CI_OS_NAME="$TRAVIS_OS_NAME"
-	CI_REPO_SLUG="$TRAVIS_REPO_SLUG"
-
-	cache_dir="$HOME/travis-cache"
-
-	url_for_job_id () {
-		echo "https://travis-ci.org/$CI_REPO_SLUG/jobs/$1"
-	}
-
-	BREW_INSTALL_PACKAGES="git-lfs gettext"
-	export GIT_PROVE_OPTS="--timer --jobs 3 --state=failed,slow,save"
-	export GIT_TEST_OPTS="--verbose-log -x --immediate"
-	MAKEFLAGS="$MAKEFLAGS --jobs=2"
-elif test -n "$SYSTEM_COLLECTIONURI" || test -n "$SYSTEM_TASKDEFINITIONSURI"
+if test -n "$SYSTEM_COLLECTIONURI" || test -n "$SYSTEM_TASKDEFINITIONSURI"
 then
 	CI_TYPE=azure-pipelines
 	# We are running in Azure Pipelines
@@ -129,10 +107,6 @@ then
 	# use a subdirectory of the cache dir (because the file share is shared
 	# among *all* phases)
 	cache_dir="$HOME/test-cache/$SYSTEM_PHASENAME"
-
-	url_for_job_id () {
-		echo "$SYSTEM_TASKDEFINITIONSURI$SYSTEM_TEAMPROJECT/_build/results?buildId=$1"
-	}
 
 	export GIT_PROVE_OPTS="--timer --jobs 10 --state=failed,slow,save"
 	export GIT_TEST_OPTS="--verbose-log -x --write-junit-xml"
@@ -182,11 +156,15 @@ export DEFAULT_TEST_TARGET=prove
 export GIT_TEST_CLONE_2GB=true
 export SKIP_DASHED_BUILT_INS=YesPlease
 
-case "$jobname" in
-linux-clang|linux-gcc|linux-leaks)
+case "$runs_on_pool" in
+ubuntu-latest)
+	if test "$jobname" = "linux-gcc-default"
+	then
+		break
+	fi
+
 	if [ "$jobname" = linux-gcc ]
 	then
-		export CC=gcc-8
 		MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=/usr/bin/python3"
 	else
 		MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=/usr/bin/python2"
@@ -206,23 +184,18 @@ linux-clang|linux-gcc|linux-leaks)
 	GIT_LFS_PATH="$HOME/custom/git-lfs"
 	export PATH="$GIT_LFS_PATH:$P4_PATH:$PATH"
 	;;
-osx-clang|osx-gcc)
+macos-latest)
 	if [ "$jobname" = osx-gcc ]
 	then
-		export CC=gcc-9
 		MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=$(which python3)"
 	else
 		MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=$(which python2)"
 	fi
+	;;
+esac
 
-	# t9810 occasionally fails on Travis CI OS X
-	# t9816 occasionally fails with "TAP out of sequence errors" on
-	# Travis CI OS X
-	export GIT_SKIP_TESTS="t9810 t9816"
-	;;
-linux-gcc-default)
-	;;
-Linux32)
+case "$jobname" in
+linux32)
 	CC=gcc
 	MAKEFLAGS="$MAKEFLAGS NO_UNCOMPRESS2=1"
 	;;
@@ -232,9 +205,6 @@ linux-musl)
 	MAKEFLAGS="$MAKEFLAGS NO_REGEX=Yes ICONV_OMITS_BOM=Yes"
 	MAKEFLAGS="$MAKEFLAGS GIT_TEST_UTF8_LOCALE=C.UTF-8"
 	;;
-esac
-
-case "$jobname" in
 linux-leaks)
 	export SANITIZE=leak
 	export GIT_TEST_PASSING_SANITIZE_LEAK=true
