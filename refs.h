@@ -463,7 +463,29 @@ int delete_reflog(const char *refname);
 
 /*
  * Callback to process a reflog entry found by the iteration functions (see
- * below)
+ * below).
+ *
+ * The committer parameter is a single string, in the form
+ * "$GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>" (without double quotes).
+ *
+ * The timestamp parameter gives the time when entry was created as the number
+ * of seconds since the UNIX epoch.
+ *
+ * The tz parameter gives the timezone offset for the user who created
+ * the reflog entry, and its value gives a positive or negative offset
+ * from UTC.  Its absolute value is formed by multiplying the hour
+ * part by 100 and adding the minute part.  For example, 1 hour ahead
+ * of UTC, CET == "+0100", is represented as positive one hundred (not
+ * postiive sixty).
+ *
+ * The msg parameter is a single complete line; a reflog message given
+ * to refs_delete_ref, refs_update_ref, etc. is returned to the
+ * callback normalized---each run of whitespaces are squashed into a
+ * single whitespace, trailing whitespace, if exists, is trimmed, and
+ * then a single LF is added at the end.
+ *
+ * The cb_data is a caller-supplied pointer given to the iterator
+ * functions.
  */
 typedef int each_reflog_ent_fn(
 		struct object_id *old_oid, struct object_id *new_oid,
