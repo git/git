@@ -603,8 +603,7 @@ static void try_to_follow_renames(const struct object_id *old_oid,
 	 * about dry-run mode and returns wildcard info.
 	 */
 	if (opt->pathspec.has_wildcard)
-		die("BUG:%s:%d: wildcards are not supported",
-		    __FILE__, __LINE__);
+		BUG("wildcards are not supported");
 #endif
 
 	/* Remove the file creation entry from the diff queue, and remember it */
