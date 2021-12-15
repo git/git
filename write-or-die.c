@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "config.h"
 #include "run-command.h"
 
 /*
@@ -57,6 +58,10 @@ void fprintf_or_die(FILE *f, const char *fmt, ...)
 
 void fsync_or_die(int fd, const char *msg)
 {
+	if (use_fsync < 0)
+		use_fsync = git_env_bool("GIT_TEST_FSYNC", 1);
+	if (!use_fsync)
+		return;
 	while (fsync(fd) < 0) {
 		if (errno != EINTR)
 			die_errno("fsync error on '%s'", msg);
