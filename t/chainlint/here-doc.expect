@@ -1,9 +1,7 @@
-boodle wobba        gorgo snoot        wafta snurb &&
+boodle wobba        gorgo snoot        wafta snurb <<EOF &&
 
-cat >foo &&
+cat <<-Arbitrary_Tag_42 >foo &&
 
-cat >bar &&
+cat <<zump >boo &&
 
-cat >boo &&
-
-horticulture
+horticulture <<EOF

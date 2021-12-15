@@ -1,5 +1,5 @@
 (
-# LINT: "...)" arms in 'case' not misinterpreted as subshell-closing ")"
+# LINT: "...)" arms in "case" not misinterpreted as subshell-closing ")"
 	case "$x" in
 	x) foo ;;
 	*) bar ;;
@@ -7,7 +7,7 @@
 	foobar
 ) &&
 (
-# LINT: missing "&&" on 'esac'
+# LINT: missing "&&" on "esac"
 	case "$x" in
 	x) foo ;;
 	*) bar ;;
@@ -15,7 +15,7 @@
 	foobar
 ) &&
 (
-# LINT: "...)" arm in one-liner 'case' not misinterpreted as closing ")"
+# LINT: "...)" arm in one-liner "case" not misinterpreted as closing ")"
 	case "$x" in 1) true;; esac &&
 # LINT: same but missing "&&"
 	case "$y" in 2) false;; esac

@@ -7,6 +7,6 @@
 	bar &&
 	{
 		echo c
-?!AMP?!	}
+	} ?!AMP?!
 	baz
->)
+)
