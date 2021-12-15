@@ -4665,8 +4665,8 @@ msgstr "El procés continuarà, pressuposant que volíeu dir «%s»."
 
 #: help.c:646
 #, c-format, fuzzy
-msgid "Run '%s' instead? (y/N)"
-msgstr "Voleu executar «%s»? (s/N)"
+msgid "Run '%s' instead? [y/N] "
+msgstr "Voleu executar «%s»? [s/N] "
 
 #: help.c:654
 #, c-format

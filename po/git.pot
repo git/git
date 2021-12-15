@@ -4246,7 +4246,7 @@ msgstr ""
 
 #: help.c:646
 #, c-format
-msgid "Run '%s' instead? (y/N)"
+msgid "Run '%s' instead? [y/N] "
 msgstr ""
 
 #: help.c:654

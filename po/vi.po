@@ -4535,8 +4535,8 @@ msgstr "Tiếp tục và coi rằng ý bạn là “%s”."
 
 #: help.c:646
 #, c-format
-msgid "Run '%s' instead? (y/N)"
-msgstr "Chạy “%s” để thay thế? (y/N)"
+msgid "Run '%s' instead? [y/N] "
+msgstr "Chạy “%s” để thay thế? [y/N] "
 
 #: help.c:654
 #, c-format

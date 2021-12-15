@@ -4528,8 +4528,8 @@ msgstr "Fortsätter under förutsättningen att du menade \"%s\"."
 
 #: help.c:646
 #, c-format
-msgid "Run '%s' instead? (y/N)"
-msgstr "Köra \"%s\" istället? (j/N)"
+msgid "Run '%s' instead? [y/N] "
+msgstr "Köra \"%s\" istället? [j/N] "
 
 #: help.c:654
 #, c-format

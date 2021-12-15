@@ -4698,8 +4698,8 @@ msgstr "Continuons en supposant que vous avez voulu dire '%s'."
 
 #: help.c:646
 #, c-format
-msgid "Run '%s' instead? (y/N)"
-msgstr "Lancer '%s' à la place ? (y/N)"
+msgid "Run '%s' instead? [y/N] "
+msgstr "Lancer '%s' à la place ? [y/N] "
 
 #: help.c:654
 #, c-format

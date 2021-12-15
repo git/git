@@ -4411,8 +4411,8 @@ msgstr "假定你想要的是 '%s' 並繼續。"
 
 #: help.c:646
 #, c-format
-msgid "Run '%s' instead? (y/N)"
-msgstr "改執行「%s」？(y/N)"
+msgid "Run '%s' instead? [y/N] "
+msgstr "改執行「%s」？[y/N] "
 
 #: help.c:654
 #, c-format

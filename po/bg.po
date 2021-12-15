@@ -4800,8 +4800,8 @@ msgstr ""
 
 #: help.c:646
 #, c-format
-msgid "Run '%s' instead? (y/N)"
-msgstr "Да се изпълни „%s“ вместо това? (y/N)"
+msgid "Run '%s' instead? [y/N] "
+msgstr "Да се изпълни „%s“ вместо това? [y/N] "
 
 #: help.c:654
 #, c-format

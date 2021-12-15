@@ -4597,8 +4597,8 @@ msgstr "'%s' demek istediğiniz varsayılarak sürdürülüyor."
 
 #: help.c:646
 #, c-format
-msgid "Run '%s' instead? (y/N)"
-msgstr "Bunun yerine '%s' çalıştır? (y/N)"
+msgid "Run '%s' instead? [y/N] "
+msgstr "Bunun yerine '%s' çalıştır? [y/N] "
 
 #: help.c:654
 #, c-format

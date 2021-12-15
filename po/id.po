@@ -4415,7 +4415,7 @@ msgstr "Melanjutkan di bawah asumsi bahwa maksud Anda '%s'."
 
 #: help.c:646
 #, c-format
-msgid "Run '%s' instead? (y/N)"
+msgid "Run '%s' instead? [y/N] "
 msgstr ""
 
 #: help.c:654

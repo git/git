@@ -4565,8 +4565,8 @@ msgstr "Continuando asumiendo que quisiste decir '%s'."
 
 #: help.c:646
 #, c-format
-msgid "Run '%s' instead? (y/N)"
-msgstr "Ejecutar '%s' en su lugar? (y/N)"
+msgid "Run '%s' instead? [y/N] "
+msgstr "Ejecutar '%s' en su lugar? [y/N] "
 
 #: help.c:654
 #, c-format

@@ -4620,8 +4620,8 @@ msgstr "Setze fort unter der Annahme, dass Sie '%s' meinten."
 
 #: help.c:646
 #, c-format
-msgid "Run '%s' instead? (y/N)"
-msgstr "Stattdessen '%s' ausführen? (y/N)"
+msgid "Run '%s' instead? [y/N] "
+msgstr "Stattdessen '%s' ausführen? [y/N] "
 
 #: help.c:654
 #, c-format
