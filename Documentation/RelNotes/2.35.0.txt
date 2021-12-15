@@ -36,6 +36,14 @@ UI, Workflows & Features
    option of commands from the "git log" family takes "human" and
    "auto" as valid values.
 
+ * "Zealous diff3" style of merge conflict presentation has been added.
+
+ * The "git log --format=%(describe)" placeholder has been extended to
+   allow passing selected command-line options to the underlying "git
+   describe" command.
+
+ * "default" and "reset" have been added to our color palette.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -62,6 +70,36 @@ Performance, Internal Implementation, Development Support etc.
 
  * Weather balloon to break people with compilers that do not support
    C99.
+
+ * The "reftable" backend for the refs API, without integrating into
+   the refs subsystem, has been added.
+
+ * More tests are marked as leak-free.
+
+ * The test framework learns to list unsatisfied test prerequisites,
+   and optionally error out when prerequisites that are expected to be
+   satisfied are not.
+
+ * The default setting for trace2 event nesting was too low to cause
+   test failures, which is worked around by bumping it up in the test
+   framework.
+
+ * Drop support for TravisCI and update test workflows at GitHub.
+
+ * Many tests that used to need GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+   mechanism to force "git" to use 'master' as the default name for
+   the initial branch no longer need it; the use of the mechanism from
+   them have been removed.
+
+ * Allow running our tests while disabling fsync.
+
+ * Document the parameters given to the reflog entry iterator callback
+   functions.
+   (merge e6e94f34b2 jc/reflog-iterator-callback-doc later to maint).
+
+ * The test helper for refs subsystem learned to write bogus and/or
+   nonexistent object name to refs to simulate error situations we
+   want to test Git in.
 
 
 Fixes since v2.34
@@ -148,6 +186,30 @@ Fixes since v2.34
    'noop', which has been corrected.
    (merge cc9dcdee61 en/rebase-x-fix later to maint).
 
+ * When the "git push" command is killed while the receiving end is
+   trying to report what happened to the ref update proposals, the
+   latter used to die, due to SIGPIPE.  The code now ignores SIGPIPE
+   to increase our chances to run the post-receive hook after it
+   happens.
+   (merge d34182b9e3 rj/receive-pack-avoid-sigpipe-during-status-reporting later to maint).
+
+ * "git worktree add" showed "Preparing worktree" message to the
+   standard output stream, but when it failed, the message from die()
+   went to the standard error stream.  Depending on the order the
+   stdio streams are flushed at the program end, this resulted in
+   confusing output.  It has been corrected by sending all the chatty
+   messages to the standard error stream.
+   (merge b50252484f es/worktree-chatty-to-stderr later to maint).
+
+ * Coding guideline document has been updated to clarify what goes to
+   standard error in our system.
+   (merge e258eb4800 es/doc-stdout-vs-stderr later to maint).
+
+ * The sparse-index/sparse-checkout feature had a bug in its use of
+   the matching code to determine which path is in or outside the
+   sparse checkout patterns.
+   (merge 8c5de0d265 ds/sparse-deep-pattern-checkout-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 74db416c9c cw/protocol-v2-doc-fix later to maint).
    (merge f9b2b6684d ja/doc-cleanup later to maint).
@@ -162,3 +224,6 @@ Fixes since v2.34
    (merge 7d3fc7df70 jt/midx-doc-fix later to maint).
    (merge 7b089120d9 hn/create-reflog-simplify later to maint).
    (merge 9e12400da8 cb/mingw-gmtime-r later to maint).
+   (merge 0bf0de6cc7 tb/pack-revindex-on-disk-cleanup later to maint).
+   (merge 2c68f577fc ew/cbtree-remove-unused-and-broken-cb-unlink later to maint).
+   (merge eafd6e7e55 ab/die-with-bug later to maint).
