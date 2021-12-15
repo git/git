@@ -39,8 +39,6 @@ int cmd__read_cache(int argc, const char **argv)
 	int table = 0, expand = 0;
 
 	initialize_the_repository();
-	prepare_repo_settings(r);
-	r->settings.command_requires_full_index = 0;
 
 	for (++argv, --argc; *argv && starts_with(*argv, "--"); ++argv, --argc) {
 		if (skip_prefix(*argv, "--print-and-refresh=", &name))
@@ -55,6 +53,9 @@ int cmd__read_cache(int argc, const char **argv)
 		cnt = strtol(argv[0], NULL, 0);
 	setup_git_directory();
 	git_config(git_default_config, NULL);
+
+	prepare_repo_settings(r);
+	r->settings.command_requires_full_index = 0;
 
 	for (i = 0; i < cnt; i++) {
 		repo_read_index(r);

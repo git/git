@@ -9,14 +9,14 @@ SYNOPSIS
 --------
 [verse]
 'git help' [-a|--all [--[no-]verbose]]
-	   [[-i|--info] [-m|--man] [-w|--web]] [COMMAND|GUIDE]
+	   [[-i|--info] [-m|--man] [-w|--web]] [<command>|<guide>]
 'git help' [-g|--guides]
 'git help' [-c|--config]
 
 DESCRIPTION
 -----------
 
-With no options and no COMMAND or GUIDE given, the synopsis of the 'git'
+With no options and no '<command>' or '<guide>' given, the synopsis of the 'git'
 command and a list of the most commonly used Git commands are printed
 on the standard output.
 
@@ -33,7 +33,7 @@ variables.
 
 If an alias is given, git shows the definition of the alias on
 standard output. To get the manual page for the aliased command, use
-`git COMMAND --help`.
+`git <command> --help`.
 
 Note that `git --help ...` is identical to `git help ...` because the
 former is internally converted into the latter.

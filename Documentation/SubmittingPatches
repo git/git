@@ -448,7 +448,7 @@ their trees themselves.
   entitled "What's cooking in git.git" and "What's in git.git" giving
   the status of various proposed changes.
 
-== GitHub CI[[GHCI]]]
+== GitHub CI[[GHCI]]
 
 With an account at GitHub, you can use GitHub CI to test your changes
 on Linux, Mac and Windows. See
@@ -463,7 +463,7 @@ Follow these steps for the initial setup:
 
 After the initial setup, CI will run whenever you push new changes
 to your fork of Git on GitHub.  You can monitor the test state of all your
-branches here: https://github.com/<Your GitHub handle>/git/actions/workflows/main.yml
+branches here: `https://github.com/<Your GitHub handle>/git/actions/workflows/main.yml`
 
 If a branch did not pass all test cases then it is marked with a red
 cross. In that case you can click on the failing job and navigate to

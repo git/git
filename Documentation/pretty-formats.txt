@@ -20,7 +20,7 @@ built-in formats:
 
 * 'oneline'
 
-	  <hash> <title line>
+	  <hash> <title-line>
 +
 This is designed to be as compact as possible.
 
@@ -29,17 +29,17 @@ This is designed to be as compact as possible.
 	  commit <hash>
 	  Author: <author>
 
-	      <title line>
+	      <title-line>
 
 * 'medium'
 
 	  commit <hash>
 	  Author: <author>
-	  Date:   <author date>
+	  Date:   <author-date>
 
-	      <title line>
+	      <title-line>
 
-	      <full commit message>
+	      <full-commit-message>
 
 * 'full'
 
@@ -47,25 +47,25 @@ This is designed to be as compact as possible.
 	  Author: <author>
 	  Commit: <committer>
 
-	      <title line>
+	      <title-line>
 
-	      <full commit message>
+	      <full-commit-message>
 
 * 'fuller'
 
 	  commit <hash>
 	  Author:     <author>
-	  AuthorDate: <author date>
+	  AuthorDate: <author-date>
 	  Commit:     <committer>
-	  CommitDate: <committer date>
+	  CommitDate: <committer-date>
 
-	       <title line>
+	       <title-line>
 
-	       <full commit message>
+	       <full-commit-message>
 
 * 'reference'
 
-	  <abbrev hash> (<title line>, <short author date>)
+	  <abbrev-hash> (<title-line>, <short-author-date>)
 +
 This format is used to refer to another commit in a commit message and
 is the same as `--pretty='format:%C(auto)%h (%s, %ad)'`.  By default,
@@ -78,10 +78,10 @@ placeholders, its output is not affected by other options like
 
 	  From <hash> <date>
 	  From: <author>
-	  Date: <author date>
-	  Subject: [PATCH] <title line>
+	  Date: <author-date>
+	  Subject: [PATCH] <title-line>
 
-	  <full commit message>
+	  <full-commit-message>
 
 * 'mboxrd'
 +
@@ -101,9 +101,9 @@ commits are displayed, but not the way the diff is shown e.g. with
 `git log --raw`. To get full object names in a raw diff format,
 use `--no-abbrev`.
 
-* 'format:<string>'
+* 'format:<format-string>'
 +
-The 'format:<string>' format allows you to specify which information
+The 'format:<format-string>' format allows you to specify which information
 you want to show. It works a little bit like printf format,
 with the notable exception that you get a newline with '%n'
 instead of '\n'.
@@ -273,12 +273,12 @@ endif::git-rev-list[]
 			  If any option is provided multiple times the
 			  last occurrence wins.
 +
-The boolean options accept an optional value `[=<BOOL>]`. The values
+The boolean options accept an optional value `[=<value>]`. The values
 `true`, `false`, `on`, `off` etc. are all accepted. See the "boolean"
 sub-section in "EXAMPLES" in linkgit:git-config[1]. If a boolean
 option is given with no value, it's enabled.
 +
-** 'key=<K>': only show trailers with specified key. Matching is done
+** 'key=<key>': only show trailers with specified <key>. Matching is done
    case-insensitively and trailing colon is optional. If option is
    given multiple times trailer lines matching any of the keys are
    shown. This option automatically enables the `only` option so that
@@ -286,25 +286,25 @@ option is given with no value, it's enabled.
    desired it can be disabled with `only=false`.  E.g.,
    `%(trailers:key=Reviewed-by)` shows trailer lines with key
    `Reviewed-by`.
-** 'only[=<BOOL>]': select whether non-trailer lines from the trailer
+** 'only[=<bool>]': select whether non-trailer lines from the trailer
    block should be included.
-** 'separator=<SEP>': specify a separator inserted between trailer
+** 'separator=<sep>': specify a separator inserted between trailer
    lines. When this option is not given each trailer line is
-   terminated with a line feed character. The string SEP may contain
+   terminated with a line feed character. The string <sep> may contain
    the literal formatting codes described above. To use comma as
    separator one must use `%x2C` as it would otherwise be parsed as
    next option. E.g., `%(trailers:key=Ticket,separator=%x2C )`
    shows all trailer lines whose key is "Ticket" separated by a comma
    and a space.
-** 'unfold[=<BOOL>]': make it behave as if interpret-trailer's `--unfold`
+** 'unfold[=<bool>]': make it behave as if interpret-trailer's `--unfold`
    option was given. E.g.,
    `%(trailers:only,unfold=true)` unfolds and shows all trailer lines.
-** 'keyonly[=<BOOL>]': only show the key part of the trailer.
-** 'valueonly[=<BOOL>]': only show the value part of the trailer.
-** 'key_value_separator=<SEP>': specify a separator inserted between
+** 'keyonly[=<bool>]': only show the key part of the trailer.
+** 'valueonly[=<bool>]': only show the value part of the trailer.
+** 'key_value_separator=<sep>': specify a separator inserted between
    trailer lines. When this option is not given each trailer key-value
    pair is separated by ": ". Otherwise it shares the same semantics
-   as 'separator=<SEP>' above.
+   as 'separator=<sep>' above.
 
 NOTE: Some placeholders may depend on other options given to the
 revision traversal engine. For example, the `%g*` reflog options will

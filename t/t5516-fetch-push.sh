@@ -541,6 +541,15 @@ do
 
 done
 
+test_expect_success "push to remote with no explicit refspec and config remote.*.push = src:dest" '
+	mk_test testrepo heads/main &&
+	git checkout $the_first_commit &&
+	test_config remote.there.url testrepo &&
+	test_config remote.there.push refs/heads/main:refs/heads/main &&
+	git push there &&
+	check_push_result testrepo $the_commit heads/main
+'
+
 test_expect_success 'push with remote.pushdefault' '
 	mk_test up_repo heads/main &&
 	mk_test down_repo heads/main &&

@@ -9,10 +9,10 @@ git-init - Create an empty Git repository or reinitialize an existing one
 SYNOPSIS
 --------
 [verse]
-'git init' [-q | --quiet] [--bare] [--template=<template_directory>]
-	  [--separate-git-dir <git dir>] [--object-format=<format>]
+'git init' [-q | --quiet] [--bare] [--template=<template-directory>]
+	  [--separate-git-dir <git-dir>] [--object-format=<format>]
 	  [-b <branch-name> | --initial-branch=<branch-name>]
-	  [--shared[=<permissions>]] [directory]
+	  [--shared[=<permissions>]] [<directory>]
 
 
 DESCRIPTION
@@ -57,12 +57,12 @@ values are 'sha1' and (if enabled) 'sha256'.  'sha1' is the default.
 +
 include::object-format-disclaimer.txt[]
 
---template=<template_directory>::
+--template=<template-directory>::
 
 Specify the directory from which templates will be used.  (See the "TEMPLATE
 DIRECTORY" section below.)
 
---separate-git-dir=<git dir>::
+--separate-git-dir=<git-dir>::
 
 Instead of initializing the repository as a directory to either `$GIT_DIR` or
 `./.git/`, create a text file there containing the path to the actual
@@ -79,7 +79,7 @@ repository.  If not specified, fall back to the default name (currently
 `master`, but this is subject to change in the future; the name can be
 customized via the `init.defaultBranch` configuration variable).
 
---shared[=(false|true|umask|group|all|world|everybody|0xxx)]::
+--shared[=(false|true|umask|group|all|world|everybody|<perm>)]::
 
 Specify that the Git repository is to be shared amongst several users.  This
 allows users belonging to the same group to push into that
@@ -110,13 +110,16 @@ the repository permissions.
 
 Same as 'group', but make the repository readable by all users.
 
-'0xxx'::
+'<perm>'::
 
-'0xxx' is an octal number and each file will have mode '0xxx'. '0xxx' will
-override users' umask(2) value (and not only loosen permissions as 'group' and
-'all' does). '0640' will create a repository which is group-readable, but not
-group-writable or accessible to others. '0660' will create a repo that is
-readable and writable to the current user and group, but inaccessible to others.
+'<perm>' is a 3-digit octal number prefixed with `0` and each file
+will have mode '<perm>'. '<perm>' will override users' umask(2)
+value (and not only loosen permissions as 'group' and 'all'
+does). '0640' will create a repository which is group-readable, but
+not group-writable or accessible to others. '0660' will create a repo
+that is readable and writable to the current user and group, but
+inaccessible to others (directories and executable files get their
+`x` bit from the `r` bit for corresponding classes of users).
 --
 
 By default, the configuration flag `receive.denyNonFastForwards` is enabled

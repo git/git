@@ -7,6 +7,7 @@ test_description='git apply symlinks and partial files
 
 '
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '

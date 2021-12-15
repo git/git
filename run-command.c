@@ -552,20 +552,17 @@ static int wait_or_whine(pid_t pid, const char *argv0, int in_signal)
 
 	while ((waiting = waitpid(pid, &status, 0)) < 0 && errno == EINTR)
 		;	/* nothing */
-	if (in_signal) {
-		if (WIFEXITED(status))
-			code = WEXITSTATUS(status);
-		return code;
-	}
 
 	if (waiting < 0) {
 		failed_errno = errno;
-		error_errno("waitpid for %s failed", argv0);
+		if (!in_signal)
+			error_errno("waitpid for %s failed", argv0);
 	} else if (waiting != pid) {
-		error("waitpid is confused (%s)", argv0);
+		if (!in_signal)
+			error("waitpid is confused (%s)", argv0);
 	} else if (WIFSIGNALED(status)) {
 		code = WTERMSIG(status);
-		if (code != SIGINT && code != SIGQUIT && code != SIGPIPE)
+		if (!in_signal && code != SIGINT && code != SIGQUIT && code != SIGPIPE)
 			error("%s died of signal %d", argv0, code);
 		/*
 		 * This return value is chosen so that code & 0xff
@@ -576,10 +573,12 @@ static int wait_or_whine(pid_t pid, const char *argv0, int in_signal)
 	} else if (WIFEXITED(status)) {
 		code = WEXITSTATUS(status);
 	} else {
-		error("waitpid is confused (%s)", argv0);
+		if (!in_signal)
+			error("waitpid is confused (%s)", argv0);
 	}
 
-	clear_child_for_cleanup(pid);
+	if (!in_signal)
+		clear_child_for_cleanup(pid);
 
 	errno = failed_errno;
 	return code;

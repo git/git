@@ -11,7 +11,7 @@ given by a list of patterns.
 SYNOPSIS
 --------
 [verse]
-'git sparse-checkout <subcommand> [options]'
+'git sparse-checkout <subcommand> [<options>]'
 
 
 DESCRIPTION

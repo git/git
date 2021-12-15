@@ -26,14 +26,14 @@ config file would appear like this:
 
 ------------
 	[remote "<name>"]
-		url = <url>
+		url = <URL>
 		pushurl = <pushurl>
 		push = <refspec>
 		fetch = <refspec>
 ------------
 
 The `<pushurl>` is used for pushes only. It is optional and defaults
-to `<url>`.
+to `<URL>`.
 
 Named file in `$GIT_DIR/remotes`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -67,10 +67,10 @@ This file should have the following format:
 
 
 ------------
-	<url>#<head>
+	<URL>#<head>
 ------------
 
-`<url>` is required; `#<head>` is optional.
+`<URL>` is required; `#<head>` is optional.
 
 Depending on the operation, git will use one of the following
 refspecs, if you don't provide one on the command line.

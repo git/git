@@ -11,7 +11,7 @@ SYNOPSIS
 'git checkout' [-q] [-f] [-m] [<branch>]
 'git checkout' [-q] [-f] [-m] --detach [<branch>]
 'git checkout' [-q] [-f] [-m] [--detach] <commit>
-'git checkout' [-q] [-f] [-m] [[-b|-B|--orphan] <new_branch>] [<start_point>]
+'git checkout' [-q] [-f] [-m] [[-b|-B|--orphan] <new-branch>] [<start-point>]
 'git checkout' [-f|--ours|--theirs|-m|--conflict=<style>] [<tree-ish>] [--] <pathspec>...
 'git checkout' [-f|--ours|--theirs|-m|--conflict=<style>] [<tree-ish>] --pathspec-from-file=<file> [--pathspec-file-nul]
 'git checkout' (-p|--patch) [<tree-ish>] [--] [<pathspec>...]
@@ -43,7 +43,7 @@ You could omit `<branch>`, in which case the command degenerates to
 rather expensive side-effects to show only the tracking information,
 if exists, for the current branch.
 
-'git checkout' -b|-B <new_branch> [<start point>]::
+'git checkout' -b|-B <new-branch> [<start-point>]::
 
 	Specifying `-b` causes a new branch to be created as if
 	linkgit:git-branch[1] were called and then checked out.  In
@@ -52,11 +52,11 @@ if exists, for the current branch.
 	`--track` without `-b` implies branch creation; see the
 	description of `--track` below.
 +
-If `-B` is given, `<new_branch>` is created if it doesn't exist; otherwise, it
+If `-B` is given, `<new-branch>` is created if it doesn't exist; otherwise, it
 is reset. This is the transactional equivalent of
 +
 ------------
-$ git branch -f <branch> [<start point>]
+$ git branch -f <branch> [<start-point>]
 $ git checkout <branch>
 ------------
 +
@@ -145,13 +145,13 @@ as `ours` (i.e. "our shared canonical history"), while what you did
 on your side branch as `theirs` (i.e. "one contributor's work on top
 of it").
 
--b <new_branch>::
-	Create a new branch named `<new_branch>` and start it at
-	`<start_point>`; see linkgit:git-branch[1] for details.
+-b <new-branch>::
+	Create a new branch named `<new-branch>` and start it at
+	`<start-point>`; see linkgit:git-branch[1] for details.
 
--B <new_branch>::
-	Creates the branch `<new_branch>` and start it at `<start_point>`;
-	if it already exists, then reset it to `<start_point>`. This is
+-B <new-branch>::
+	Creates the branch `<new-branch>` and start it at `<start-point>`;
+	if it already exists, then reset it to `<start-point>`. This is
 	equivalent to running "git branch" with "-f"; see
 	linkgit:git-branch[1] for details.
 
@@ -210,16 +210,16 @@ variable.
 	`<commit>` is not a branch name.  See the "DETACHED HEAD" section
 	below for details.
 
---orphan <new_branch>::
-	Create a new 'orphan' branch, named `<new_branch>`, started from
-	`<start_point>` and switch to it.  The first commit made on this
+--orphan <new-branch>::
+	Create a new 'orphan' branch, named `<new-branch>`, started from
+	`<start-point>` and switch to it.  The first commit made on this
 	new branch will have no parents and it will be the root of a new
 	history totally disconnected from all the other branches and
 	commits.
 +
 The index and the working tree are adjusted as if you had previously run
-`git checkout <start_point>`.  This allows you to start a new history
-that records a set of paths similar to `<start_point>` by easily running
+`git checkout <start-point>`.  This allows you to start a new history
+that records a set of paths similar to `<start-point>` by easily running
 `git commit -a` to make the root commit.
 +
 This can be useful when you want to publish the tree from a commit
@@ -229,7 +229,7 @@ whose full history contains proprietary or otherwise encumbered bits of
 code.
 +
 If you want to start a disconnected history that records a set of paths
-that is totally different from the one of `<start_point>`, then you should
+that is totally different from the one of `<start-point>`, then you should
 clear the index and the working tree right after creating the orphan
 branch by running `git rm -rf .` from the top level of the working tree.
 Afterwards you will be ready to prepare your new files, repopulating the
@@ -341,10 +341,10 @@ As a special case, you may use `A...B` as a shortcut for the
 merge base of `A` and `B` if there is exactly one merge base. You can
 leave out at most one of `A` and `B`, in which case it defaults to `HEAD`.
 
-<new_branch>::
+<new-branch>::
 	Name for the new branch.
 
-<start_point>::
+<start-point>::
 	The name of a commit at which to start the new branch; see
 	linkgit:git-branch[1] for details. Defaults to `HEAD`.
 +

@@ -482,8 +482,10 @@ test_expect_success 'corrupt MIDX is not reused' '
 '
 
 test_expect_success 'verify incorrect checksum' '
-	pos=$(($(wc -c <$objdir/pack/multi-pack-index) - 1)) &&
-	corrupt_midx_and_verify $pos "\377" $objdir "incorrect checksum"
+	pos=$(($(wc -c <$objdir/pack/multi-pack-index) - 10)) &&
+	corrupt_midx_and_verify $pos \
+		"\377\377\377\377\377\377\377\377\377\377" \
+		$objdir "incorrect checksum"
 '
 
 test_expect_success 'repack progress off for redirected stderr' '

@@ -3,6 +3,7 @@
 test_description='git update-index --assume-unchanged test.
 '
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '

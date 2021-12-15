@@ -829,6 +829,23 @@ test_expect_success 'exact prefix matching (without root)' '
 	test_cmp expect actual
 '
 
+test_expect_success 'directories and ** matches' '
+	cat >.gitignore <<-\EOF &&
+	data/**
+	!data/**/
+	!data/**/*.txt
+	EOF
+	git check-ignore file \
+		data/file data/data1/file1 data/data1/file1.txt \
+		data/data2/file2 data/data2/file2.txt >actual &&
+	cat >expect <<-\EOF &&
+	data/file
+	data/data1/file1
+	data/data2/file2
+	EOF
+	test_cmp expect actual
+'
+
 ############################################################################
 #
 # test whitespace handling

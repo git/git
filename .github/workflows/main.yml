@@ -289,6 +289,7 @@ jobs:
     - uses: actions/checkout@v2
     - run: ci/install-dependencies.sh
     - run: ci/run-static-analysis.sh
+    - run: ci/check-directional-formatting.bash
   sparse:
     needs: ci-config
     if: needs.ci-config.outputs.enabled == 'yes'

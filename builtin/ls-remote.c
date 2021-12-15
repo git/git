@@ -54,7 +54,7 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 	struct transport *transport;
 	const struct ref *ref;
 	struct ref_array ref_array;
-	static struct ref_sorting *sorting = NULL, **sorting_tail = &sorting;
+	struct string_list sorting_options = STRING_LIST_INIT_DUP;
 
 	struct option options[] = {
 		OPT__QUIET(&quiet, N_("do not print remote URL")),
@@ -68,7 +68,7 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 		OPT_BIT(0, "refs", &flags, N_("do not show peeled tags"), REF_NORMAL),
 		OPT_BOOL(0, "get-url", &get_url,
 			 N_("take url.<base>.insteadOf into account")),
-		OPT_REF_SORT(sorting_tail),
+		OPT_REF_SORT(&sorting_options),
 		OPT_SET_INT_F(0, "exit-code", &status,
 			      N_("exit with exit code 2 if no matching refs are found"),
 			      2, PARSE_OPT_NOCOMPLETE),
@@ -85,8 +85,6 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 	dest = argv[0];
 
 	packet_trace_identity("ls-remote");
-
-	UNLEAK(sorting);
 
 	if (argc > 1) {
 		int i;
@@ -139,8 +137,13 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 		item->symref = xstrdup_or_null(ref->symref);
 	}
 
-	if (sorting)
+	if (sorting_options.nr) {
+		struct ref_sorting *sorting;
+
+		sorting = ref_sorting_options(&sorting_options);
 		ref_array_sort(sorting, &ref_array);
+		ref_sorting_release(sorting);
+	}
 
 	for (i = 0; i < ref_array.nr; i++) {
 		const struct ref_array_item *ref = ref_array.items[i];

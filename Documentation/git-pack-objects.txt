@@ -13,8 +13,8 @@ SYNOPSIS
 	[--no-reuse-delta] [--delta-base-offset] [--non-empty]
 	[--local] [--incremental] [--window=<n>] [--depth=<n>]
 	[--revs [--unpacked | --all]] [--keep-pack=<pack-name>]
-	[--stdout [--filter=<filter-spec>] | base-name]
-	[--shallow] [--keep-true-parents] [--[no-]sparse] < object-list
+	[--stdout [--filter=<filter-spec>] | <base-name>]
+	[--shallow] [--keep-true-parents] [--[no-]sparse] < <object-list>
 
 
 DESCRIPTION

@@ -832,8 +832,9 @@ for full details.
 
 `GIT_TRACE_REDACT`::
 	By default, when tracing is activated, Git redacts the values of
-	cookies, the "Authorization:" header, and the "Proxy-Authorization:"
-	header. Set this variable to `0` to prevent this redaction.
+	cookies, the "Authorization:" header, the "Proxy-Authorization:"
+	header and packfile URIs. Set this variable to `0` to prevent this
+	redaction.
 
 `GIT_LITERAL_PATHSPECS`::
 	Setting this variable to `1` will cause Git to treat all
