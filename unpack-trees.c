@@ -1238,7 +1238,9 @@ static int find_cache_pos(struct traverse_info *info,
 
 /*
  * Given a sparse directory entry 'ce', compare ce->name to
- * info->name + '/' + p->path + '/' if info->name is non-empty.
+ * info->traverse_path + p->path + '/' if info->traverse_path
+ * is non-empty.
+ *
  * Compare ce->name to p->path + '/' otherwise. Note that
  * ce->name must end in a trailing '/' because it is a sparse
  * directory entry.
@@ -1250,11 +1252,11 @@ static int sparse_dir_matches_path(const struct cache_entry *ce,
 	assert(S_ISSPARSEDIR(ce->ce_mode));
 	assert(ce->name[ce->ce_namelen - 1] == '/');
 
-	if (info->namelen)
-		return ce->ce_namelen == info->namelen + p->pathlen + 2 &&
-		       ce->name[info->namelen] == '/' &&
-		       !strncmp(ce->name, info->name, info->namelen) &&
-		       !strncmp(ce->name + info->namelen + 1, p->path, p->pathlen);
+	if (info->pathlen)
+		return ce->ce_namelen == info->pathlen + p->pathlen + 1 &&
+		       ce->name[info->pathlen - 1] == '/' &&
+		       !strncmp(ce->name, info->traverse_path, info->pathlen) &&
+		       !strncmp(ce->name + info->pathlen, p->path, p->pathlen);
 	return ce->ce_namelen == p->pathlen + 1 &&
 	       !strncmp(ce->name, p->path, p->pathlen);
 }
