@@ -213,7 +213,7 @@ test_expect_success 'clone a void' '
 	test_cmp target-6/.git/config target-7/.git/config
 '
 
-test_expect_success 'clone respects global branch.autosetuprebase' '
+test_expect_success 'clone respects global branch.autosetuprebase remote' '
 	(
 		test_config="$HOME/.gitconfig" &&
 		git config -f "$test_config" branch.autosetuprebase remote &&
@@ -222,6 +222,18 @@ test_expect_success 'clone respects global branch.autosetuprebase' '
 		cd dst &&
 		actual="z$(git config branch.main.rebase)" &&
 		test ztrue = $actual
+	)
+'
+
+test_expect_success 'clone respects global branch.autosetuprebase merges' '
+	(
+		test_config="$HOME/.gitconfig" &&
+		git config -f "$test_config" branch.autosetuprebase merges &&
+		rm -fr dst &&
+		git clone src dst &&
+		cd dst &&
+		actual="z$(git config branch.master.rebase)" &&
+		test zmerges = $actual
 	)
 '
 
