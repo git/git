@@ -4,6 +4,9 @@ test_description='test show-branch'
 
 . ./test-lib.sh
 
+# arbitrary reference time: 2009-08-30 19:20:00
+GIT_TEST_DATE_NOW=1251660000; export GIT_TEST_DATE_NOW
+
 test_expect_success 'setup' '
 	test_commit initial &&
 	for i in $(test_seq 1 10)
@@ -144,6 +147,18 @@ test_expect_success 'show branch --merge-base with N arguments' '
 
 	git merge-base $(cat branches.sorted) >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'show branch --reflog=2' '
+	sed "s/^>	//" >expect <<-\EOF &&
+	>	! [refs/heads/branch10@{0}] (4 years, 5 months ago) commit: branch10
+	>	 ! [refs/heads/branch10@{1}] (4 years, 5 months ago) commit: branch10
+	>	--
+	>	+  [refs/heads/branch10@{0}] branch10
+	>	++ [refs/heads/branch10@{1}] initial
+	EOF
+	git show-branch --reflog=2 >actual &&
+	test_cmp actual expect
 '
 
 test_done
