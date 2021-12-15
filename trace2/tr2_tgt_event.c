@@ -354,7 +354,7 @@ static void fn_child_start_fl(const char *file, int line,
 	jw_object_inline_begin_array(&jw, "argv");
 	if (cmd->git_cmd)
 		jw_array_string(&jw, "git");
-	jw_array_argv(&jw, cmd->argv);
+	jw_array_argv(&jw, cmd->args.v);
 	jw_end(&jw);
 	jw_end(&jw);
 

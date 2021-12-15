@@ -812,16 +812,13 @@ static int run_and_feed_hook(const char *hook_name, feed_fn feed,
 {
 	struct child_process proc = CHILD_PROCESS_INIT;
 	struct async muxer;
-	const char *argv[2];
 	int code;
+	const char *hook_path = find_hook(hook_name);
 
-	argv[0] = find_hook(hook_name);
-	if (!argv[0])
+	if (!hook_path)
 		return 0;
 
-	argv[1] = NULL;
-
-	proc.argv = argv;
+	strvec_push(&proc.args, hook_path);
 	proc.in = -1;
 	proc.stdout_to_stderr = 1;
 	proc.trace2_hook_name = hook_name;
@@ -943,23 +940,21 @@ static int run_receive_hook(struct command *commands,
 
 static int run_update_hook(struct command *cmd)
 {
-	const char *argv[5];
 	struct child_process proc = CHILD_PROCESS_INIT;
 	int code;
+	const char *hook_path = find_hook("update");
 
-	argv[0] = find_hook("update");
-	if (!argv[0])
+	if (!hook_path)
 		return 0;
 
-	argv[1] = cmd->ref_name;
-	argv[2] = oid_to_hex(&cmd->old_oid);
-	argv[3] = oid_to_hex(&cmd->new_oid);
-	argv[4] = NULL;
+	strvec_push(&proc.args, hook_path);
+	strvec_push(&proc.args, cmd->ref_name);
+	strvec_push(&proc.args, oid_to_hex(&cmd->old_oid));
+	strvec_push(&proc.args, oid_to_hex(&cmd->new_oid));
 
 	proc.no_stdin = 1;
 	proc.stdout_to_stderr = 1;
 	proc.err = use_sideband ? -1 : 0;
-	proc.argv = argv;
 	proc.trace2_hook_name = "update";
 
 	code = start_command(&proc);
@@ -1117,22 +1112,20 @@ static int run_proc_receive_hook(struct command *commands,
 	struct child_process proc = CHILD_PROCESS_INIT;
 	struct async muxer;
 	struct command *cmd;
-	const char *argv[2];
 	struct packet_reader reader;
 	struct strbuf cap = STRBUF_INIT;
 	struct strbuf errmsg = STRBUF_INIT;
 	int hook_use_push_options = 0;
 	int version = 0;
 	int code;
+	const char *hook_path = find_hook("proc-receive");
 
-	argv[0] = find_hook("proc-receive");
-	if (!argv[0]) {
+	if (!hook_path) {
 		rp_error("cannot find hook 'proc-receive'");
 		return -1;
 	}
-	argv[1] = NULL;
 
-	proc.argv = argv;
+	strvec_push(&proc.args, hook_path);
 	proc.in = -1;
 	proc.out = -1;
 	proc.trace2_hook_name = "proc-receive";
@@ -1370,23 +1363,11 @@ static const char *push_to_deploy(unsigned char *sha1,
 				  struct strvec *env,
 				  const char *work_tree)
 {
-	const char *update_refresh[] = {
-		"update-index", "-q", "--ignore-submodules", "--refresh", NULL
-	};
-	const char *diff_files[] = {
-		"diff-files", "--quiet", "--ignore-submodules", "--", NULL
-	};
-	const char *diff_index[] = {
-		"diff-index", "--quiet", "--cached", "--ignore-submodules",
-		NULL, "--", NULL
-	};
-	const char *read_tree[] = {
-		"read-tree", "-u", "-m", NULL, NULL
-	};
 	struct child_process child = CHILD_PROCESS_INIT;
 
-	child.argv = update_refresh;
-	child.env = env->v;
+	strvec_pushl(&child.args, "update-index", "-q", "--ignore-submodules",
+		     "--refresh", NULL);
+	strvec_pushv(&child.env_array, env->v);
 	child.dir = work_tree;
 	child.no_stdin = 1;
 	child.stdout_to_stderr = 1;
@@ -1396,8 +1377,9 @@ static const char *push_to_deploy(unsigned char *sha1,
 
 	/* run_command() does not clean up completely; reinitialize */
 	child_process_init(&child);
-	child.argv = diff_files;
-	child.env = env->v;
+	strvec_pushl(&child.args, "diff-files", "--quiet",
+		     "--ignore-submodules", "--", NULL);
+	strvec_pushv(&child.env_array, env->v);
 	child.dir = work_tree;
 	child.no_stdin = 1;
 	child.stdout_to_stderr = 1;
@@ -1405,12 +1387,13 @@ static const char *push_to_deploy(unsigned char *sha1,
 	if (run_command(&child))
 		return "Working directory has unstaged changes";
 
-	/* diff-index with either HEAD or an empty tree */
-	diff_index[4] = head_has_history() ? "HEAD" : empty_tree_oid_hex();
-
 	child_process_init(&child);
-	child.argv = diff_index;
-	child.env = env->v;
+	strvec_pushl(&child.args, "diff-index", "--quiet", "--cached",
+		     "--ignore-submodules",
+		     /* diff-index with either HEAD or an empty tree */
+		     head_has_history() ? "HEAD" : empty_tree_oid_hex(),
+		     "--", NULL);
+	strvec_pushv(&child.env_array, env->v);
 	child.no_stdin = 1;
 	child.no_stdout = 1;
 	child.stdout_to_stderr = 0;
@@ -1418,10 +1401,10 @@ static const char *push_to_deploy(unsigned char *sha1,
 	if (run_command(&child))
 		return "Working directory has staged changes";
 
-	read_tree[3] = hash_to_hex(sha1);
 	child_process_init(&child);
-	child.argv = read_tree;
-	child.env = env->v;
+	strvec_pushl(&child.args, "read-tree", "-u", "-m", hash_to_hex(sha1),
+		     NULL);
+	strvec_pushv(&child.env_array, env->v);
 	child.dir = work_tree;
 	child.no_stdin = 1;
 	child.no_stdout = 1;
@@ -2219,7 +2202,8 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 			close(err_fd);
 		return "unable to create temporary object directory";
 	}
-	child.env = tmp_objdir_env(tmp_objdir);
+	if (tmp_objdir)
+		strvec_pushv(&child.env_array, tmp_objdir_env(tmp_objdir));
 
 	/*
 	 * Normally we just pass the tmp_objdir environment to the child
@@ -2575,16 +2559,14 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 		run_update_post_hook(commands);
 		string_list_clear(&push_options, 0);
 		if (auto_gc) {
-			const char *argv_gc_auto[] = {
-				"gc", "--auto", "--quiet", NULL,
-			};
 			struct child_process proc = CHILD_PROCESS_INIT;
 
 			proc.no_stdin = 1;
 			proc.stdout_to_stderr = 1;
 			proc.err = use_sideband ? -1 : 0;
 			proc.git_cmd = proc.close_object_store = 1;
-			proc.argv = argv_gc_auto;
+			strvec_pushl(&proc.args, "gc", "--auto", "--quiet",
+				     NULL);
 
 			if (!start_command(&proc)) {
 				if (use_sideband)

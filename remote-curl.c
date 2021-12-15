@@ -1061,7 +1061,7 @@ static int rpc_service(struct rpc_state *rpc, struct discovery *heads,
 	client.in = -1;
 	client.out = -1;
 	client.git_cmd = 1;
-	client.argv = client_argv;
+	strvec_pushv(&client.args, client_argv);
 	if (start_command(&client))
 		exit(1);
 	write_or_die(client.in, preamble->buf, preamble->len);

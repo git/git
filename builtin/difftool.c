@@ -202,14 +202,9 @@ static void changed_files(struct hashmap *result, const char *index_path,
 {
 	struct child_process update_index = CHILD_PROCESS_INIT;
 	struct child_process diff_files = CHILD_PROCESS_INIT;
-	struct strbuf index_env = STRBUF_INIT, buf = STRBUF_INIT;
-	const char *git_dir = absolute_path(get_git_dir()), *env[] = {
-		NULL, NULL
-	};
+	struct strbuf buf = STRBUF_INIT;
+	const char *git_dir = absolute_path(get_git_dir());
 	FILE *fp;
-
-	strbuf_addf(&index_env, "GIT_INDEX_FILE=%s", index_path);
-	env[0] = index_env.buf;
 
 	strvec_pushl(&update_index.args,
 		     "--git-dir", git_dir, "--work-tree", workdir,
@@ -222,7 +217,7 @@ static void changed_files(struct hashmap *result, const char *index_path,
 	update_index.use_shell = 0;
 	update_index.clean_on_exit = 1;
 	update_index.dir = workdir;
-	update_index.env = env;
+	strvec_pushf(&update_index.env_array, "GIT_INDEX_FILE=%s", index_path);
 	/* Ignore any errors of update-index */
 	run_command(&update_index);
 
@@ -235,7 +230,7 @@ static void changed_files(struct hashmap *result, const char *index_path,
 	diff_files.clean_on_exit = 1;
 	diff_files.out = -1;
 	diff_files.dir = workdir;
-	diff_files.env = env;
+	strvec_pushf(&diff_files.env_array, "GIT_INDEX_FILE=%s", index_path);
 	if (start_command(&diff_files))
 		die("could not obtain raw diff");
 	fp = xfdopen(diff_files.out, "r");
@@ -248,7 +243,6 @@ static void changed_files(struct hashmap *result, const char *index_path,
 	fclose(fp);
 	if (finish_command(&diff_files))
 		die("diff-files did not exit properly");
-	strbuf_release(&index_env);
 	strbuf_release(&buf);
 }
 
