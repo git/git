@@ -45,9 +45,8 @@ test_corrupt_gitfile () {
 	git worktree add --detach corrupt &&
 	git -C corrupt rev-parse --absolute-git-dir >expect &&
 	eval "$butcher" &&
-	git -C "$repairdir" worktree repair >out 2>err &&
-	test_i18ngrep "$problem" out &&
-	test_must_be_empty err &&
+	git -C "$repairdir" worktree repair 2>err &&
+	test_i18ngrep "$problem" err &&
 	git -C corrupt rev-parse --absolute-git-dir >actual &&
 	test_cmp expect actual
 }
@@ -130,10 +129,9 @@ test_expect_success 'repair broken gitdir' '
 	sed s,orig/\.git$,moved/.git, .git/worktrees/orig/gitdir >expect &&
 	rm .git/worktrees/orig/gitdir &&
 	mv orig moved &&
-	git worktree repair moved >out 2>err &&
+	git worktree repair moved 2>err &&
 	test_cmp expect .git/worktrees/orig/gitdir &&
-	test_i18ngrep "gitdir unreadable" out &&
-	test_must_be_empty err
+	test_i18ngrep "gitdir unreadable" err
 '
 
 test_expect_success 'repair incorrect gitdir' '
@@ -141,10 +139,9 @@ test_expect_success 'repair incorrect gitdir' '
 	git worktree add --detach orig &&
 	sed s,orig/\.git$,moved/.git, .git/worktrees/orig/gitdir >expect &&
 	mv orig moved &&
-	git worktree repair moved >out 2>err &&
+	git worktree repair moved 2>err &&
 	test_cmp expect .git/worktrees/orig/gitdir &&
-	test_i18ngrep "gitdir incorrect" out &&
-	test_must_be_empty err
+	test_i18ngrep "gitdir incorrect" err
 '
 
 test_expect_success 'repair gitdir (implicit) from linked worktree' '
@@ -152,10 +149,9 @@ test_expect_success 'repair gitdir (implicit) from linked worktree' '
 	git worktree add --detach orig &&
 	sed s,orig/\.git$,moved/.git, .git/worktrees/orig/gitdir >expect &&
 	mv orig moved &&
-	git -C moved worktree repair >out 2>err &&
+	git -C moved worktree repair 2>err &&
 	test_cmp expect .git/worktrees/orig/gitdir &&
-	test_i18ngrep "gitdir incorrect" out &&
-	test_must_be_empty err
+	test_i18ngrep "gitdir incorrect" err
 '
 
 test_expect_success 'unable to repair gitdir (implicit) from main worktree' '
@@ -163,9 +159,8 @@ test_expect_success 'unable to repair gitdir (implicit) from main worktree' '
 	git worktree add --detach orig &&
 	cat .git/worktrees/orig/gitdir >expect &&
 	mv orig moved &&
-	git worktree repair >out 2>err &&
+	git worktree repair 2>err &&
 	test_cmp expect .git/worktrees/orig/gitdir &&
-	test_must_be_empty out &&
 	test_must_be_empty err
 '
 
@@ -178,12 +173,11 @@ test_expect_success 'repair multiple gitdir files' '
 	sed s,orig2/\.git$,moved2/.git, .git/worktrees/orig2/gitdir >expect2 &&
 	mv orig1 moved1 &&
 	mv orig2 moved2 &&
-	git worktree repair moved1 moved2 >out 2>err &&
+	git worktree repair moved1 moved2 2>err &&
 	test_cmp expect1 .git/worktrees/orig1/gitdir &&
 	test_cmp expect2 .git/worktrees/orig2/gitdir &&
-	test_i18ngrep "gitdir incorrect:.*orig1/gitdir$" out &&
-	test_i18ngrep "gitdir incorrect:.*orig2/gitdir$" out &&
-	test_must_be_empty err
+	test_i18ngrep "gitdir incorrect:.*orig1/gitdir$" err &&
+	test_i18ngrep "gitdir incorrect:.*orig2/gitdir$" err
 '
 
 test_expect_success 'repair moved main and linked worktrees' '

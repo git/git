@@ -134,7 +134,7 @@ test_expect_success '"list" all worktrees with prunable consistent with "prune"'
 	git worktree list >out &&
 	grep "/prunable  *[0-9a-f].* prunable$" out &&
 	! grep "/unprunable  *[0-9a-f].* unprunable$" out &&
-	git worktree prune --verbose >out &&
+	git worktree prune --verbose 2>out &&
 	test_i18ngrep "^Removing worktrees/prunable" out &&
 	test_i18ngrep ! "^Removing worktrees/unprunable" out
 '
