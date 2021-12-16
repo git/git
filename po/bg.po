@@ -826,7 +826,7 @@ msgstr "неуспешно изпълнение на „git apply --cached“"
 #. of the word "no" does not start with n.
 #: add-patch.c:1247 git-add--interactive.perl:1242
 msgid ""
-"Your edited hunk does not apply. Edit again (saying \"no\" discards!) [y/n]? "
+"Your edited hunk does not apply. Edit again (saying \"no\" discards!)? [y/n] "
 msgstr ""
 "Редактираното парче не може да се приложи.  Да се продължи ли с "
 "редактирането? (текущите редакции ще се отменят при отказ!): „y“ (да)/ "

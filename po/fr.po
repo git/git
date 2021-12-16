@@ -714,10 +714,10 @@ msgstr "'git apply --cached' a échoué"
 #. of the word "no" does not start with n.
 #: add-patch.c:1247 git-add--interactive.perl:1242
 msgid ""
-"Your edited hunk does not apply. Edit again (saying \"no\" discards!) [y/n]? "
+"Your edited hunk does not apply. Edit again (saying \"no\" discards!)? [y/n] "
 msgstr ""
 "Votre section éditée ne s'applique pas. L'éditer à nouveau (\"no\" "
-"l'élimine !) [y|n] ? "
+"l'élimine !) ? [y|n] "
 
 #: add-patch.c:1290
 msgid "The selected hunks do not apply to the index!"

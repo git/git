@@ -20795,10 +20795,10 @@ msgstr ""
 #. of the word "no" does not start with n.
 #: git-add--interactive.perl:1213
 msgid ""
-"Your edited hunk does not apply. Edit again (saying \"no\" discards!) [y/n]? "
+"Your edited hunk does not apply. Edit again (saying \"no\" discards!)? [y/n] "
 msgstr ""
 "Η επεξεργασμένη αλλαγή σας δεν εφαρμόζεται. Να γίνει επεξεργασία πάλι (με \"n"
-"\" απορρίπτεται!) [y/n];"
+"\" απορρίπτεται!); [y/n] "
 
 #: git-add--interactive.perl:1222
 msgid ""

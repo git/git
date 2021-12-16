@@ -17274,10 +17274,10 @@ msgstr "부분 편집 파일을 읽기용으로 여는데 실패: '%s'"
 #. of the word "no" does not start with n.
 #: git-add--interactive.perl:1213
 msgid ""
-"Your edited hunk does not apply. Edit again (saying \"no\" discards!) [y/n]? "
+"Your edited hunk does not apply. Edit again (saying \"no\" discards!)? [y/n] "
 msgstr ""
 "편집한 부분이 적용되지 않습니다. 다시 편집하시겠습니까 (\"no\"라고 하면 버립"
-"니다!) [y/n]? "
+"니다!)? [y/n] "
 
 #: git-add--interactive.perl:1222
 msgid ""

@@ -1245,8 +1245,8 @@ static int edit_hunk_loop(struct add_p_state *s,
 		 * of the word "no" does not start with n.
 		 */
 		res = prompt_yesno(s, _("Your edited hunk does not apply. "
-					"Edit again (saying \"no\" discards!) "
-					"[y/n]? "));
+					"Edit again (saying \"no\" discards!)? "
+					"[y/n] "));
 		if (res < 1)
 			return -1;
 	}
