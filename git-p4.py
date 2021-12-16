@@ -56,8 +56,8 @@ defaultBlockSize = 1<<20
 
 p4_access_checked = False
 
-re_ko_keywords = re.compile(r'\$(Id|Header)(:[^$\n]+)?\$')
-re_k_keywords = re.compile(r'\$(Id|Header|Author|Date|DateTime|Change|File|Revision)(:[^$\n]+)?\$')
+re_ko_keywords = re.compile(br'\$(Id|Header)(:[^$\n]+)?\$')
+re_k_keywords = re.compile(br'\$(Id|Header|Author|Date|DateTime|Change|File|Revision)(:[^$\n]+)?\$')
 
 def p4_build_cmd(cmd):
     """Build a suitable p4 command line.
@@ -1754,9 +1754,9 @@ class P4Submit(Command, P4UserMap):
         # Attempt to zap the RCS keywords in a p4 controlled file matching the given regex
         (handle, outFileName) = tempfile.mkstemp(dir='.')
         try:
-            with os.fdopen(handle, "w") as outFile, open(file, "r") as inFile:
+            with os.fdopen(handle, "wb") as outFile, open(file, "rb") as inFile:
                 for line in inFile.readlines():
-                    outFile.write(regexp.sub(r'$\1$', line))
+                    outFile.write(regexp.sub(br'$\1$', line))
             # Forcibly overwrite the original file
             os.unlink(file)
             shutil.move(outFileName, file)
@@ -2089,7 +2089,9 @@ class P4Submit(Command, P4UserMap):
                     regexp = p4_keywords_regexp_for_file(file)
                     if regexp:
                         # this file is a possibility...look for RCS keywords.
-                        for line in read_pipe_lines(["git", "diff", "%s^..%s" % (id, id), file]):
+                        for line in read_pipe_lines(
+                            ["git", "diff", "%s^..%s" % (id, id), file],
+                            raw=True):
                             if regexp.search(line):
                                 if verbose:
                                     print("got keyword match on %s in %s in %s" % (regex.pattern, line, file))
@@ -3020,8 +3022,7 @@ class P4Sync(Command, P4UserMap):
         # even though in theory somebody may want that.
         regexp = p4_keywords_regexp_for_type(type_base, type_mods)
         if regexp:
-            contents = [encode_text_stream(regexp.sub(
-                r'$\1$', ''.join(decode_text_stream(c) for c in contents)))]
+            contents = [regexp.sub(br'$\1$', c) for c in contents]
 
         if self.largeFileSystem:
             (git_mode, contents) = self.largeFileSystem.processContent(git_mode, relPath, contents)
