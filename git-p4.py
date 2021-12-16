@@ -1757,14 +1757,11 @@ class P4Submit(Command, P4UserMap):
         # Attempt to zap the RCS keywords in a p4 controlled file matching the given pattern
         (handle, outFileName) = tempfile.mkstemp(dir='.')
         try:
-            outFile = os.fdopen(handle, "w+")
-            inFile = open(file, "r")
-            regexp = re.compile(pattern, re.VERBOSE)
-            for line in inFile.readlines():
-                line = regexp.sub(r'$\1$', line)
-                outFile.write(line)
-            inFile.close()
-            outFile.close()
+            with os.fdopen(handle, "w+") as outFile, open(file, "r") as inFile:
+                regexp = re.compile(pattern, re.VERBOSE)
+                for line in inFile.readlines():
+                    line = regexp.sub(r'$\1$', line)
+                    outFile.write(line)
             # Forcibly overwrite the original file
             os.unlink(file)
             shutil.move(outFileName, file)
