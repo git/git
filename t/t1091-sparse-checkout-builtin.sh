@@ -708,4 +708,25 @@ test_expect_success 'cone mode clears ignored subdirectories' '
 	test_cmp expect out
 '
 
+test_expect_success 'malformed cone-mode patterns' '
+	git -C repo sparse-checkout init --cone &&
+	mkdir -p repo/foo/bar &&
+	touch repo/foo/bar/x repo/foo/y &&
+	cat >repo/.git/info/sparse-checkout <<-\EOF &&
+	/*
+	!/*/
+	/foo/
+	!/foo/*/
+	/foo/\*/
+	EOF
+
+	# Listing the patterns will notice the duplicate pattern and
+	# emit a warning. It will list the patterns directly instead
+	# of using the cone-mode translation to a set of directories.
+	git -C repo sparse-checkout list >actual 2>err &&
+	test_cmp repo/.git/info/sparse-checkout actual &&
+	grep "warning: your sparse-checkout file may have issues: pattern .* is repeated" err &&
+	grep "warning: disabling cone pattern matching" err
+'
+
 test_done
