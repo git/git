@@ -10385,7 +10385,7 @@ msgstr ""
 #. at this point.
 #.
 #: builtin/bisect--helper.c:373
-msgid "Are you sure [Y/n]? "
+msgid "Are you sure? [Y/n] "
 msgstr ""
 
 #: builtin/bisect--helper.c:434
@@ -10460,7 +10460,7 @@ msgstr ""
 #. at this point.
 #.
 #: builtin/bisect--helper.c:841
-msgid "Do you want me to do it for you [Y/n]? "
+msgid "Do you want me to do it for you? [Y/n] "
 msgstr ""
 
 #: builtin/bisect--helper.c:859

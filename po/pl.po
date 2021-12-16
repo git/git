@@ -11238,8 +11238,8 @@ msgstr "przeszukiwanie tylko z zapisem %s"
 #. at this point.
 #.
 #: builtin/bisect--helper.c:373
-msgid "Are you sure [Y/n]? "
-msgstr "Czy na pewno [Y/n]? "
+msgid "Are you sure? [Y/n] "
+msgstr "Czy na pewno? [Y/n] "
 
 #: builtin/bisect--helper.c:434
 msgid "no terms defined"
@@ -11319,8 +11319,8 @@ msgstr "Musisz rozpocząć przez „git bisect start”\n"
 #. at this point.
 #.
 #: builtin/bisect--helper.c:841
-msgid "Do you want me to do it for you [Y/n]? "
-msgstr "Chcesz, żeby to teraz zrobić [Y/n]? "
+msgid "Do you want me to do it for you? [Y/n] "
+msgstr "Chcesz, żeby to teraz zrobić? [Y/n] "
 
 #: builtin/bisect--helper.c:859
 msgid "Please call `--bisect-state` with at least one argument"

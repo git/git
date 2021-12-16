@@ -9796,8 +9796,8 @@ msgstr ""
 #. translation. The program will only accept English input
 #. at this point.
 #: builtin/bisect--helper.c:357
-msgid "Are you sure [Y/n]? "
-msgstr "Вы уверены [Y - да/n - нет]? "
+msgid "Are you sure? [Y/n] "
+msgstr "Вы уверены? [Y - да/n - нет] "
 
 #: builtin/bisect--helper.c:418
 msgid "no terms defined"
@@ -9870,8 +9870,8 @@ msgstr ""
 #. translation. The program will only accept English input
 #. at this point.
 #: builtin/bisect--helper.c:825
-msgid "Do you want me to do it for you [Y/n]? "
-msgstr "Вы уверены, что хотите, чтобы я сделал это [Y] - да/[n] - нет? "
+msgid "Do you want me to do it for you? [Y/n] "
+msgstr "Вы уверены, что хотите, чтобы я сделал это? [Y] - да/[n] - нет "
 
 #: builtin/bisect--helper.c:843
 msgid "Please call `--bisect-state` with at least one argument"

@@ -10682,7 +10682,7 @@ msgstr "eseguo la bisezione solo con un commit %s"
 #. at this point.
 #.
 #: builtin/bisect--helper.c:370
-msgid "Are you sure [Y/n]? "
+msgid "Are you sure? [Y/n] "
 msgstr "Sei sicuro? [Y/n] "
 
 #: builtin/bisect--helper.c:431
@@ -10762,8 +10762,8 @@ msgstr "Devi iniziare con \"git bisect start\"\n"
 #. at this point.
 #.
 #: builtin/bisect--helper.c:838
-msgid "Do you want me to do it for you [Y/n]? "
-msgstr "Vuoi che me ne occupi io [Y/n]? "
+msgid "Do you want me to do it for you? [Y/n] "
+msgstr "Vuoi che me ne occupi io? [Y/n] "
 
 #: builtin/bisect--helper.c:866
 msgid "perform 'git bisect next'"

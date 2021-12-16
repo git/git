@@ -370,7 +370,7 @@ static int decide_next(const struct bisect_terms *terms,
 		 * translation. The program will only accept English input
 		 * at this point.
 		 */
-		yesno = git_prompt(_("Are you sure [Y/n]? "), PROMPT_ECHO);
+		yesno = git_prompt(_("Are you sure? [Y/n] "), PROMPT_ECHO);
 		if (starts_with(yesno, "N") || starts_with(yesno, "n"))
 			return -1;
 		return 0;
@@ -838,8 +838,8 @@ static int bisect_autostart(struct bisect_terms *terms)
 	 * translation. The program will only accept English input
 	 * at this point.
 	 */
-	yesno = git_prompt(_("Do you want me to do it for you "
-			     "[Y/n]? "), PROMPT_ECHO);
+	yesno = git_prompt(_("Do you want me to do it for you? "
+			     "[Y/n] "), PROMPT_ECHO);
 	res = tolower(*yesno) == 'n' ?
 		-1 : bisect_start(terms, empty_strvec, 0);
 

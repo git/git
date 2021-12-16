@@ -11235,8 +11235,8 @@ msgstr "chỉ thực hiện việc bisect với một lần chuyển giao %s"
 #. at this point.
 #.
 #: builtin/bisect--helper.c:373
-msgid "Are you sure [Y/n]? "
-msgstr "Bạn có chắc chắn chưa [Y/n]? "
+msgid "Are you sure? [Y/n] "
+msgstr "Bạn có chắc chắn chưa? [Y/n] "
 
 #: builtin/bisect--helper.c:434
 msgid "no terms defined"
@@ -11314,8 +11314,8 @@ msgstr "Bạn cần khởi đầu bằng \"git bisect start\"\n"
 #. at this point.
 #.
 #: builtin/bisect--helper.c:841
-msgid "Do you want me to do it for you [Y/n]? "
-msgstr "Bạn có muốn tôi thực hiện điều này cho bạn không [Y/n]? "
+msgid "Do you want me to do it for you? [Y/n] "
+msgstr "Bạn có muốn tôi thực hiện điều này cho bạn không? [Y/n] "
 
 #: builtin/bisect--helper.c:859
 msgid "Please call `--bisect-state` with at least one argument"

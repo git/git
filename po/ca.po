@@ -11355,8 +11355,8 @@ msgstr "bisecant amb només una comissió %s"
 #. translation. The program will only accept English input
 #. at this point.
 #: builtin/bisect--helper.c:373
-msgid "Are you sure [Y/n]? "
-msgstr "N'esteu segur [Y/n]? "
+msgid "Are you sure? [Y/n] "
+msgstr "N'esteu segur? [Y/n] "
 
 #: builtin/bisect--helper.c:434
 msgid "no terms defined"
@@ -11435,8 +11435,8 @@ msgstr "Cal començar per «git bisect start»\n"
 #. translation. The program will only accept English input
 #. at this point.
 #: builtin/bisect--helper.c:841
-msgid "Do you want me to do it for you [Y/n]? "
-msgstr "Voleu que ho faci per vostè [Y/n]? "
+msgid "Do you want me to do it for you? [Y/n] "
+msgstr "Voleu que ho faci per vostè? [Y/n] "
 
 #: builtin/bisect--helper.c:859
 msgid "Please call `--bisect-state` with at least one argument"

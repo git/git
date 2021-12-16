@@ -11429,8 +11429,8 @@ msgstr "binäre Suche nur mit einem %s Commit"
 #. at this point.
 #.
 #: builtin/bisect--helper.c:373
-msgid "Are you sure [Y/n]? "
-msgstr "Sind Sie sicher [Y/n]? "
+msgid "Are you sure? [Y/n] "
+msgstr "Sind Sie sicher? [Y/n] "
 
 #: builtin/bisect--helper.c:434
 msgid "no terms defined"
@@ -11511,8 +11511,8 @@ msgstr "Sie müssen mit \"git bisect start\" beginnen\n"
 #. at this point.
 #.
 #: builtin/bisect--helper.c:841
-msgid "Do you want me to do it for you [Y/n]? "
-msgstr "Wollen Sie, dass ich es für Sie mache [Y/n]? "
+msgid "Do you want me to do it for you? [Y/n] "
+msgstr "Wollen Sie, dass ich es für Sie mache? [Y/n] "
 
 #: builtin/bisect--helper.c:859
 msgid "Please call `--bisect-state` with at least one argument"

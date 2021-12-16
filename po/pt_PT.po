@@ -10900,8 +10900,8 @@ msgstr "bissetando apenas com uma memória %s"
 #. at this point.
 #.
 #: builtin/bisect--helper.c:358
-msgid "Are you sure [Y/n]? "
-msgstr "Tem a certeza [Y/n]? "
+msgid "Are you sure? [Y/n] "
+msgstr "Tem a certeza? [Y/n] "
 
 #: builtin/bisect--helper.c:419
 msgid "no terms defined"
@@ -10977,8 +10977,8 @@ msgstr "Deves começar com \"git bisect start\"\n"
 #. at this point.
 #.
 #: builtin/bisect--helper.c:826
-msgid "Do you want me to do it for you [Y/n]? "
-msgstr "Quer que seja eu a fazer isso [Y/n]? "
+msgid "Do you want me to do it for you? [Y/n] "
+msgstr "Quer que seja eu a fazer isso? [Y/n] "
 
 #: builtin/bisect--helper.c:844
 msgid "Please call `--bisect-state` with at least one argument"

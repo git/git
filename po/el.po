@@ -8202,7 +8202,7 @@ msgstr ""
 #. at this point.
 #.
 #: builtin/bisect--helper.c:329
-msgid "Are you sure [Y/n]? "
+msgid "Are you sure? [Y/n] "
 msgstr "Επιβεβαιώνετε [Y/n]; "
 
 #: builtin/bisect--helper.c:376
@@ -19779,7 +19779,7 @@ msgstr "Χρειάζεται να αρχίσετε με \"git bisect start\""
 #. translation. The program will only accept English input
 #. at this point.
 #: git-bisect.sh:60
-msgid "Do you want me to do it for you [Y/n]? "
+msgid "Do you want me to do it for you? [Y/n] "
 msgstr ""
 
 #: git-bisect.sh:101
@@ -21272,8 +21272,8 @@ msgstr ""
 #. TRANSLATORS: please keep [y/N] as is.
 #: git-send-email.perl:825
 #, perl-format
-msgid "Are you sure you want to use <%s> [y/N]? "
-msgstr "Επιβεβαιώνετε πως θέλετε να χρησιμοποιήσετε <%s> [y/N]? "
+msgid "Are you sure you want to use <%s>? [y/N] "
+msgstr "Επιβεβαιώνετε πως θέλετε να χρησιμοποιήσετε <%s>? [y/N] "
 
 #: git-send-email.perl:880
 msgid ""

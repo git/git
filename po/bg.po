@@ -11633,7 +11633,7 @@ msgstr "двоично търсене само по „%s“ подаване."
 #. at this point.
 #.
 #: builtin/bisect--helper.c:373
-msgid "Are you sure [Y/n]? "
+msgid "Are you sure? [Y/n] "
 msgstr "Да се продължи ли? „Y“ —  ДА, „n“ — не"
 
 #: builtin/bisect--helper.c:434
@@ -11716,8 +11716,8 @@ msgstr "Започнете като изпълните командата „git
 #. at this point.
 #.
 #: builtin/bisect--helper.c:841
-msgid "Do you want me to do it for you [Y/n]? "
-msgstr "Да се извърши ли автоматично? „Y“ —  ДА, „n“ — не"
+msgid "Do you want me to do it for you? [Y/n] "
+msgstr "Да се извърши ли автоматично? „Y“ —  ДА, „n“ — не "
 
 #: builtin/bisect--helper.c:859
 msgid "Please call `--bisect-state` with at least one argument"

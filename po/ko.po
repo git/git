@@ -15994,8 +15994,8 @@ msgstr "\"git bisect start\" 명령으로 시작해야 합니다"
 #. translation. The program will only accept English input
 #. at this point.
 #: git-bisect.sh:60
-msgid "Do you want me to do it for you [Y/n]? "
-msgstr "지금 하시겠습니까 [Y/n]? "
+msgid "Do you want me to do it for you? [Y/n] "
+msgstr "지금 하시겠습니까? [Y/n] "
 
 #: git-bisect.sh:121
 #, sh-format
@@ -16061,8 +16061,8 @@ msgstr "경고: 하나의 $TERM_BAD 커밋에 대해서만 이등분."
 #. translation. The program will only accept English input
 #. at this point.
 #: git-bisect.sh:312
-msgid "Are you sure [Y/n]? "
-msgstr "확실합니까 [Y/n]? "
+msgid "Are you sure? [Y/n] "
+msgstr "확실합니까? [Y/n] "
 
 #: git-bisect.sh:324
 #, sh-format

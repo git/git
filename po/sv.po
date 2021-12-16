@@ -11173,8 +11173,8 @@ msgstr "utför bisect med endast en %s incheckning"
 #. at this point.
 #.
 #: builtin/bisect--helper.c:373
-msgid "Are you sure [Y/n]? "
-msgstr "Är du säker [Y=ja/N=nej]? "
+msgid "Are you sure? [Y/n] "
+msgstr "Är du säker? [Y=ja/N=nej] "
 
 #: builtin/bisect--helper.c:434
 msgid "no terms defined"
@@ -11254,8 +11254,8 @@ msgstr "Du måste starta med \"git bisect start\"\n"
 #. at this point.
 #.
 #: builtin/bisect--helper.c:841
-msgid "Do you want me to do it for you [Y/n]? "
-msgstr "Vill du att jag ska göra det åt dig [Y=ja/N=nej]? "
+msgid "Do you want me to do it for you? [Y/n] "
+msgstr "Vill du att jag ska göra det åt dig? [Y=ja/N=nej] "
 
 #: builtin/bisect--helper.c:859
 msgid "Please call `--bisect-state` with at least one argument"

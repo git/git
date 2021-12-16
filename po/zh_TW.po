@@ -10958,8 +10958,8 @@ msgstr "在只有一個 %s 提交的情況下二分搜尋"
 #. at this point.
 #.
 #: builtin/bisect--helper.c:373
-msgid "Are you sure [Y/n]? "
-msgstr "您確認嗎[Y/n]？ "
+msgid "Are you sure? [Y/n] "
+msgstr "您確認嗎? [Y/n] "
 
 #: builtin/bisect--helper.c:434
 msgid "no terms defined"
@@ -11036,8 +11036,8 @@ msgstr "您需要執行 \"git bisect start\" 來開始\n"
 #. at this point.
 #.
 #: builtin/bisect--helper.c:841
-msgid "Do you want me to do it for you [Y/n]? "
-msgstr "您想讓我為您這樣做嗎[Y/n]？ "
+msgid "Do you want me to do it for you? [Y/n] "
+msgstr "您想讓我為您這樣做嗎? [Y/n] "
 
 #: builtin/bisect--helper.c:859
 msgid "Please call `--bisect-state` with at least one argument"
