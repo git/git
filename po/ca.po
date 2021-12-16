@@ -13211,8 +13211,8 @@ msgstr "Selecciona els ítems a suprimir"
 #. TRANSLATORS: Make sure to keep [y/N] as is
 #: builtin/clean.c:755
 #, c-format
-msgid "Remove %s [y/N]? "
-msgstr "Voleu eliminar %s [y/N]? "
+msgid "Remove %s? [y/N] "
+msgstr "Voleu eliminar %s? [y/N] "
 
 #: builtin/clean.c:786
 msgid ""

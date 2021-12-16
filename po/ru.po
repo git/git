@@ -11466,8 +11466,8 @@ msgstr "Укажите элементы для удаления"
 #. TRANSLATORS: Make sure to keep [y/N] as is
 #: builtin/clean.c:758
 #, c-format
-msgid "Remove %s [y/N]? "
-msgstr "Удалить %s [y - да/N - нет]? "
+msgid "Remove %s? [y/N] "
+msgstr "Удалить %s? [y - да/N - нет] "
 
 #: builtin/clean.c:789
 msgid ""

@@ -13487,7 +13487,7 @@ msgstr "Избиране на обекти за изтриване"
 #. TRANSLATORS: Make sure to keep [y/N] as is
 #: builtin/clean.c:755
 #, c-format
-msgid "Remove %s [y/N]? "
+msgid "Remove %s? [y/N] "
 msgstr "Да се изтрие ли „%s“? „y“ —  да, „N“ — НЕ"
 
 #: builtin/clean.c:786

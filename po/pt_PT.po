@@ -12623,8 +12623,8 @@ msgstr "Selecione itens para eliminar"
 #. TRANSLATORS: Make sure to keep [y/N] as is
 #: builtin/clean.c:755
 #, c-format
-msgid "Remove %s [y/N]? "
-msgstr "Remover %s [y/N]? "
+msgid "Remove %s? [y/N] "
+msgstr "Remover %s? [y/N] "
 
 #: builtin/clean.c:786
 msgid ""

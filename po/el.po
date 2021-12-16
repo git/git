@@ -9560,7 +9560,7 @@ msgstr ""
 #. TRANSLATORS: Make sure to keep [y/N] as is
 #: builtin/clean.c:760
 #, c-format
-msgid "Remove %s [y/N]? "
+msgid "Remove %s? [y/N] "
 msgstr ""
 
 #: builtin/clean.c:785 git-add--interactive.perl:1717

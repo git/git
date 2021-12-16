@@ -12881,8 +12881,8 @@ msgstr "选择要删除的条目"
 #. TRANSLATORS: Make sure to keep [y/N] as is
 #: builtin/clean.c:755
 #, c-format
-msgid "Remove %s [y/N]? "
-msgstr "删除 %s [y/N]？"
+msgid "Remove %s? [y/N] "
+msgstr "删除 %s? [y/N] "
 
 #: builtin/clean.c:786
 msgid ""

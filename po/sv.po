@@ -12981,8 +12981,8 @@ msgstr "Välj poster att ta bort"
 #. TRANSLATORS: Make sure to keep [y/N] as is
 #: builtin/clean.c:755
 #, c-format
-msgid "Remove %s [y/N]? "
-msgstr "Ta bort %s [Y=ja / N=nej]? "
+msgid "Remove %s? [y/N] "
+msgstr "Ta bort %s? [Y=ja / N=nej] "
 
 #: builtin/clean.c:786
 msgid ""

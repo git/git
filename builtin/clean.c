@@ -752,7 +752,7 @@ static int ask_each_cmd(void)
 		if (!eof) {
 			qname = quote_path(item->string, NULL, &buf, 0);
 			/* TRANSLATORS: Make sure to keep [y/N] as is */
-			printf(_("Remove %s [y/N]? "), qname);
+			printf(_("Remove %s? [y/N] "), qname);
 			if (git_read_line_interactively(&confirm) == EOF) {
 				putchar('\n');
 				eof = 1;

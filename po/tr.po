@@ -13040,8 +13040,8 @@ msgstr "Silinecek ögeleri seçin"
 #. TRANSLATORS: Make sure to keep [y/N] as is
 #: builtin/clean.c:755
 #, c-format
-msgid "Remove %s [y/N]? "
-msgstr "%s kaldırılsın mı [y/N]? "
+msgid "Remove %s? [y/N] "
+msgstr "%s kaldırılsın mı? [y/N] "
 
 #: builtin/clean.c:786
 msgid ""

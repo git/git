@@ -7179,8 +7179,8 @@ msgstr "삭제할 항목을 선택하십시오"
 #. TRANSLATORS: Make sure to keep [y/N] as is
 #: builtin/clean.c:763
 #, c-format
-msgid "Remove %s [y/N]? "
-msgstr "%s 제거합니까 [y/N]? "
+msgid "Remove %s? [y/N] "
+msgstr "%s 제거합니까? [y/N] "
 
 #: builtin/clean.c:788 git-add--interactive.perl:1717
 #, c-format
