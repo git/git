@@ -110,7 +110,8 @@ test_expect_success 'switching to cone mode with non-cone mode patterns' '
 		git sparse-checkout init &&
 		git sparse-checkout add dir &&
 		git config core.sparseCheckoutCone true &&
-		git sparse-checkout add dir
+		test_must_fail git sparse-checkout add dir 2>err &&
+		grep "existing sparse-checkout patterns do not use cone mode" err
 	)
 '
 
@@ -176,12 +177,14 @@ test_expect_success 'set sparse-checkout using --stdin' '
 '
 
 test_expect_success 'add to sparse-checkout' '
-	cat repo/.git/info/sparse-checkout >expect &&
+	cat repo/.git/info/sparse-checkout >old &&
+	test_when_finished cp old repo/.git/info/sparse-checkout &&
 	cat >add <<-\EOF &&
 	pattern1
 	/folder1/
 	pattern2
 	EOF
+	cat old >expect &&
 	cat add >>expect &&
 	git -C repo sparse-checkout add --stdin <add &&
 	git -C repo sparse-checkout list >actual &&
