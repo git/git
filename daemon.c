@@ -232,13 +232,13 @@ static const char *path_ok(const char *directory, struct hostinfo *hi)
 
 		rlen = strlcpy(interp_path, expanded_path.buf,
 			       sizeof(interp_path));
+		strbuf_release(&expanded_path);
 		if (rlen >= sizeof(interp_path)) {
 			logerror("interpolated path too large: %s",
 				 interp_path);
 			return NULL;
 		}
 
-		strbuf_release(&expanded_path);
 		loginfo("Interpolated dir '%s'", interp_path);
 
 		dir = interp_path;
