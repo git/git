@@ -56,6 +56,18 @@ defaultBlockSize = 1<<20
 
 p4_access_checked = False
 
+def format_size_human_readable(num):
+    """ Returns a number of units (typically bytes) formatted as a human-readable
+        string.
+    """
+    if num < 1024:
+        return '{:d} B'.format(num)
+    for unit in ["Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi"]:
+        num /= 1024.0
+        if num < 1024.0:
+            return "{:3.1f} {}B".format(num, unit)
+    return "{:.1f} YiB".format(num)
+
 def p4_build_cmd(cmd):
     """Build a suitable p4 command line.
 
@@ -2966,7 +2978,8 @@ class P4Sync(Command, P4UserMap):
                 size = int(self.stream_file['fileSize'])
             else:
                 size = 0 # deleted files don't get a fileSize apparently
-            sys.stdout.write('\r%s --> %s (%i MB)\n' % (file_path, relPath, size/1024/1024))
+            sys.stdout.write('\r%s --> %s (%s)\n' % (
+                file_path, relPath, format_size_human_readable(size)))
             sys.stdout.flush()
 
         (type_base, type_mods) = split_p4_type(file["type"])
@@ -3064,9 +3077,8 @@ class P4Sync(Command, P4UserMap):
         if not err and 'fileSize' in self.stream_file:
             required_bytes = int((4 * int(self.stream_file["fileSize"])) - calcDiskFree())
             if required_bytes > 0:
-                err = 'Not enough space left on %s! Free at least %i MB.' % (
-                    os.getcwd(), required_bytes/1024/1024
-                )
+                err = 'Not enough space left on %s! Free at least %s.' % (
+                    os.getcwd(), format_size_human_readable(required_bytes))
 
         if err:
             f = None
@@ -3110,7 +3122,9 @@ class P4Sync(Command, P4UserMap):
             size = int(self.stream_file["fileSize"])
             if size > 0:
                 progress = 100*self.stream_file['streamContentSize']/size
-                sys.stdout.write('\r%s %d%% (%i MB)' % (self.stream_file['depotFile'], progress, int(size/1024/1024)))
+                sys.stdout.write('\r%s %d%% (%s)' % (
+                    self.stream_file['depotFile'], progress,
+                    format_size_human_readable(size)))
                 sys.stdout.flush()
 
         self.stream_have_file_info = True
