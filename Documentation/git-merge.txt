@@ -12,7 +12,8 @@ SYNOPSIS
 'git merge' [-n] [--stat] [--no-commit] [--squash] [--[no-]edit]
 	[--no-verify] [-s <strategy>] [-X <strategy-option>] [-S[<keyid>]]
 	[--[no-]allow-unrelated-histories]
-	[--[no-]rerere-autoupdate] [-m <msg>] [-F <file>] [<commit>...]
+	[--[no-]rerere-autoupdate] [-m <msg>] [-F <file>]
+	[--into-name <branch>] [<commit>...]
 'git merge' (--continue | --abort | --quit)
 
 DESCRIPTION
@@ -75,6 +76,11 @@ will be appended to the specified message.
 The 'git fmt-merge-msg' command can be
 used to give a good default for automated 'git merge'
 invocations. The automated message can include the branch description.
+
+--into-name <branch>::
+	Prepare the default merge message as if merging to the branch
+	`<branch>`, instead of the name of the real branch to which
+	the merge is made.
 
 -F <file>::
 --file=<file>::
