@@ -59,11 +59,8 @@ submodule.active::
 
 submodule.recurse::
 	A boolean indicating if commands should enable the `--recurse-submodules`
-	option by default.
-	Applies to all commands that support this option
-	(`checkout`, `fetch`, `grep`, `pull`, `push`, `read-tree`, `reset`,
-	`restore` and `switch`) except `clone` and `ls-files`.
-	Defaults to false.
+	option by default. Defaults to false.
+	+
 	When set to true, it can be deactivated via the
 	`--no-recurse-submodules` option. Note that some Git commands
 	lacking this option may call some of the above commands affected by
@@ -71,6 +68,23 @@ submodule.recurse::
 	`git fetch` but does not have a `--no-recurse-submodules` option.
 	For these commands a workaround is to temporarily change the
 	configuration value by using `git -c submodule.recurse=0`.
+	+
+	The following list shows the commands that accept
+	`--recurse-submodules` and whether they are supported by this
+	setting.
+	* `checkout`, `fetch`, `grep`, `pull`, `push`, `read-tree`,
+	`reset`, `restore` and `switch` are always supported.
+	* `clone` and `ls-files` are not supported.
+	* `branch` is supported only if `submodule.propagateBranches` is
+	enabled
+
+submodule.propagateBranches::
+	[EXPERIMENTAL] A boolean that enables branching support when
+	using `--recurse-submodules` or `submodule.recurse=true`.
+	Enabling this will allow certain commands to accept
+	`--recurse-submodules` and certain commands that already accept
+	`--recurse-submodules` will now consider branches.
+	Defaults to false.
 
 submodule.fetchJobs::
 	Specifies how many submodules are fetched/cloned at the same time.

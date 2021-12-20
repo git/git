@@ -16,7 +16,8 @@ SYNOPSIS
 	[--points-at <object>] [--format=<format>]
 	[(-r | --remotes) | (-a | --all)]
 	[--list] [<pattern>...]
-'git branch' [--track [direct|inherit] | --no-track] [-f] <branchname> [<start-point>]
+'git branch' [--track [direct|inherit] | --no-track] [-f]
+	[--recurse-submodules] <branchname> [<start-point>]
 'git branch' (--set-upstream-to=<upstream> | -u <upstream>) [<branchname>]
 'git branch' --unset-upstream [<branchname>]
 'git branch' (-m | -M) [<oldbranch>] <newbranch>
@@ -234,6 +235,14 @@ how the `branch.<name>.remote` and `branch.<name>.merge` options are used.
 --no-track::
 	Do not set up "upstream" configuration, even if the
 	branch.autoSetupMerge configuration variable is set.
+
+--recurse-submodules::
+	THIS OPTION IS EXPERIMENTAL! Causes the current command to
+	recurse into submodules if `submodule.propagateBranches` is
+	enabled. See `submodule.propagateBranches` in
+	linkgit:git-config[1].
+	+
+	Currently, only branch creation is supported.
 
 --set-upstream::
 	As this option had confusing syntax, it is no longer supported.
