@@ -27,6 +27,7 @@
 #include "help.h"
 #include "promisor-remote.h"
 #include "dir.h"
+#include "strmap.h"
 
 #ifdef NO_FAST_WORKING_DIRECTORY
 #define FAST_WORKING_DIRECTORY 0
@@ -3406,6 +3407,33 @@ struct userdiff_driver *get_textconv(struct repository *r,
 	return userdiff_get_textconv(r, one->driver);
 }
 
+static struct strbuf* additional_headers(struct diff_options *o,
+					 const char *path)
+{
+	if (!o->additional_path_headers)
+		return NULL;
+	return strmap_get(o->additional_path_headers, path);
+}
+
+static void add_formatted_headers(struct strbuf *msg,
+				  struct strbuf *more_headers,
+				  const char *line_prefix,
+				  const char *meta,
+				  const char *reset)
+{
+	char *next, *newline;
+
+	next = more_headers->buf;
+	while ((newline = strchr(next, '\n'))) {
+		*newline = '\0';
+		strbuf_addf(msg, "%s%s%s%s\n", line_prefix, meta, next, reset);
+		*newline = '\n';
+		next = newline + 1;
+	}
+	if (*next)
+		strbuf_addf(msg, "%s%s%s%s\n", line_prefix, meta, next, reset);
+}
+
 static void builtin_diff(const char *name_a,
 			 const char *name_b,
 			 struct diff_filespec *one,
@@ -4328,9 +4356,13 @@ static void fill_metainfo(struct strbuf *msg,
 	const char *set = diff_get_color(use_color, DIFF_METAINFO);
 	const char *reset = diff_get_color(use_color, DIFF_RESET);
 	const char *line_prefix = diff_line_prefix(o);
+	struct strbuf *more_headers = NULL;
 
 	*must_show_header = 1;
 	strbuf_init(msg, PATH_MAX * 2 + 300);
+	if ((more_headers = additional_headers(o, name)))
+		add_formatted_headers(msg, more_headers,
+				      line_prefix, set, reset);
 	switch (p->status) {
 	case DIFF_STATUS_COPIED:
 		strbuf_addf(msg, "%s%ssimilarity index %d%%",
@@ -5852,7 +5884,7 @@ int diff_unmodified_pair(struct diff_filepair *p)
 
 static void diff_flush_patch(struct diff_filepair *p, struct diff_options *o)
 {
-	if (diff_unmodified_pair(p))
+	if (diff_unmodified_pair(p) && !additional_headers(o, p->one->path))
 		return;
 
 	if ((DIFF_FILE_VALID(p->one) && S_ISDIR(p->one->mode)) ||
