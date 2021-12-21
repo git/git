@@ -44,6 +44,20 @@ UI, Workflows & Features
 
  * "default" and "reset" have been added to our color palette.
 
+ * The cryptographic signing using ssh keys can specify literal keys
+   for keytypes whose name do not begin with the "ssh-" prefix by
+   using the "key::" prefix mechanism (e.g. "key::ecdsa-sha2-nistp256").
+
+ * "git fetch" without the "--update-head-ok" option ought to protect
+   a checked out branch from getting updated, to prevent the working
+   tree that checks it out to go out of sync.  The code was written
+   before the use of "git worktree" got widespread, and only checked
+   the branch that was checked out in the current worktree, which has
+   been updated.
+
+ * "git name-rev" has been tweaked to give output that is shorter and
+   easier to understand.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -55,7 +69,6 @@ Performance, Internal Implementation, Development Support etc.
 
  * The command line complation for "git send-email" options have been
    tweaked to make it easier to keep it in sync with the command itself.
-
 
  * Ensure that the sparseness of the in-core index matches the
    index.sparse configuration specified by the repository immediately
@@ -100,6 +113,14 @@ Performance, Internal Implementation, Development Support etc.
  * The test helper for refs subsystem learned to write bogus and/or
    nonexistent object name to refs to simulate error situations we
    want to test Git in.
+
+ * "diff --histogram" optimization.
+
+ * Weather balloon to find compilers that do not grok variable
+   declaration in the for() loop.
+
+ * diff and blame commands have been taught to work better with sparse
+   index.
 
 
 Fixes since v2.34
@@ -210,6 +231,16 @@ Fixes since v2.34
    sparse checkout patterns.
    (merge 8c5de0d265 ds/sparse-deep-pattern-checkout-fix later to maint).
 
+ * "git rebase -x" by mistake started exporting the GIT_DIR and
+   GIT_WORK_TREE environment variables when the command was rewritten
+   in C, which has been corrected.
+   (merge 434e0636db en/rebase-x-wo-git-dir-env later to maint).
+
+ * When "git log" implicitly enabled the "decoration" processing
+   without being explicitly asked with "--decorate" option, it failed
+   to read and honor the settings given by the "--decorate-refs"
+   option.
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 74db416c9c cw/protocol-v2-doc-fix later to maint).
    (merge f9b2b6684d ja/doc-cleanup later to maint).
@@ -227,3 +258,4 @@ Fixes since v2.34
    (merge 0bf0de6cc7 tb/pack-revindex-on-disk-cleanup later to maint).
    (merge 2c68f577fc ew/cbtree-remove-unused-and-broken-cb-unlink later to maint).
    (merge eafd6e7e55 ab/die-with-bug later to maint).
+   (merge 91028f7659 jc/grep-patterntype-default-doc later to maint).
