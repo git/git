@@ -11,7 +11,7 @@
 
 struct tracking {
 	struct refspec_item spec;
-	char *src;
+	struct string_list *srcs;
 	const char *remote;
 	int matches;
 };
@@ -22,11 +22,11 @@ static int find_tracked_branch(struct remote *remote, void *priv)
 
 	if (!remote_find_tracking(remote, &tracking->spec)) {
 		if (++tracking->matches == 1) {
-			tracking->src = tracking->spec.src;
+			string_list_append(tracking->srcs, tracking->spec.src);
 			tracking->remote = remote->name;
 		} else {
 			free(tracking->spec.src);
-			FREE_AND_NULL(tracking->src);
+			string_list_clear(tracking->srcs, 0);
 		}
 		tracking->spec.src = NULL;
 	}
@@ -189,6 +189,34 @@ int install_branch_config(int flag, const char *local, const char *origin,
 	return ret;
 }
 
+static int inherit_tracking(struct tracking *tracking, const char *orig_ref)
+{
+	const char *bare_ref;
+	struct branch *branch;
+	int i;
+
+	bare_ref = orig_ref;
+	skip_prefix(orig_ref, "refs/heads/", &bare_ref);
+
+	branch = branch_get(bare_ref);
+	if (!branch->remote_name) {
+		warning(_("asked to inherit tracking from '%s', but no remote is set"),
+			bare_ref);
+		return -1;
+	}
+
+	if (branch->merge_nr < 1 || !branch->merge_name || !branch->merge_name[0]) {
+		warning(_("asked to inherit tracking from '%s', but no merge configuration is set"),
+			bare_ref);
+		return -1;
+	}
+
+	tracking->remote = xstrdup(branch->remote_name);
+	for (i = 0; i < branch->merge_nr; i++)
+		string_list_append(tracking->srcs, branch->merge_name[i]);
+	return 0;
+}
+
 /*
  * This is called when new_ref is branched off of orig_ref, and tries
  * to infer the settings for branch.<new_ref>.{remote,merge} from the
@@ -198,11 +226,15 @@ static void setup_tracking(const char *new_ref, const char *orig_ref,
 			   enum branch_track track, int quiet)
 {
 	struct tracking tracking;
+	struct string_list tracking_srcs = STRING_LIST_INIT_DUP;
 	int config_flags = quiet ? 0 : BRANCH_CONFIG_VERBOSE;
 
 	memset(&tracking, 0, sizeof(tracking));
 	tracking.spec.dst = (char *)orig_ref;
-	if (for_each_remote(find_tracked_branch, &tracking))
+	tracking.srcs = &tracking_srcs;
+	if (track != BRANCH_TRACK_INHERIT)
+		for_each_remote(find_tracked_branch, &tracking);
+	else if (inherit_tracking(&tracking, orig_ref))
 		return;
 
 	if (!tracking.matches)
@@ -210,6 +242,7 @@ static void setup_tracking(const char *new_ref, const char *orig_ref,
 		case BRANCH_TRACK_ALWAYS:
 		case BRANCH_TRACK_EXPLICIT:
 		case BRANCH_TRACK_OVERRIDE:
+		case BRANCH_TRACK_INHERIT:
 			break;
 		default:
 			return;
@@ -219,11 +252,13 @@ static void setup_tracking(const char *new_ref, const char *orig_ref,
 		die(_("Not tracking: ambiguous information for ref %s"),
 		    orig_ref);
 
-	if (install_branch_config(config_flags, new_ref, tracking.remote,
-			      tracking.src ? tracking.src : orig_ref) < 0)
+	if (tracking.srcs->nr < 1)
+		string_list_append(tracking.srcs, orig_ref);
+	if (install_branch_config_multiple_remotes(config_flags, new_ref,
+				tracking.remote, tracking.srcs) < 0)
 		exit(-1);
 
-	free(tracking.src);
+	string_list_clear(tracking.srcs, 0);
 }
 
 int read_branch_desc(struct strbuf *buf, const char *branch_name)
