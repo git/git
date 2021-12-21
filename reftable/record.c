@@ -72,7 +72,7 @@ int reftable_is_block_type(uint8_t typ)
 	return 0;
 }
 
-uint8_t *reftable_ref_record_val1(struct reftable_ref_record *rec)
+uint8_t *reftable_ref_record_val1(const struct reftable_ref_record *rec)
 {
 	switch (rec->value_type) {
 	case REFTABLE_REF_VAL1:
@@ -84,7 +84,7 @@ uint8_t *reftable_ref_record_val1(struct reftable_ref_record *rec)
 	}
 }
 
-uint8_t *reftable_ref_record_val2(struct reftable_ref_record *rec)
+uint8_t *reftable_ref_record_val2(const struct reftable_ref_record *rec)
 {
 	switch (rec->value_type) {
 	case REFTABLE_REF_VAL2:
@@ -251,7 +251,7 @@ static void hex_format(char *dest, uint8_t *src, int hash_size)
 	}
 }
 
-void reftable_ref_record_print(struct reftable_ref_record *ref,
+void reftable_ref_record_print(const struct reftable_ref_record *ref,
 			       uint32_t hash_id)
 {
 	char hex[GIT_MAX_HEXSZ + 1] = { 0 }; /* BUG */
@@ -881,8 +881,8 @@ static int zero_hash_eq(uint8_t *a, uint8_t *b, int sz)
 	return !memcmp(a, b, sz);
 }
 
-int reftable_log_record_equal(struct reftable_log_record *a,
-			      struct reftable_log_record *b, int hash_size)
+int reftable_log_record_equal(const struct reftable_log_record *a,
+			      const struct reftable_log_record *b, int hash_size)
 {
 	if (!(null_streq(a->refname, b->refname) &&
 	      a->update_index == b->update_index &&
@@ -1150,8 +1150,8 @@ static int hash_equal(uint8_t *a, uint8_t *b, int hash_size)
 	return a == b;
 }
 
-int reftable_ref_record_equal(struct reftable_ref_record *a,
-			      struct reftable_ref_record *b, int hash_size)
+int reftable_ref_record_equal(const struct reftable_ref_record *a,
+			      const struct reftable_ref_record *b, int hash_size)
 {
 	assert(hash_size > 0);
 	if (!null_streq(a->refname, b->refname))
