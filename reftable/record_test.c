@@ -21,18 +21,7 @@ static void test_copy(struct reftable_record *rec)
 	reftable_record_copy_from(&copy, rec, GIT_SHA1_RAWSZ);
 	/* do it twice to catch memory leaks */
 	reftable_record_copy_from(&copy, rec, GIT_SHA1_RAWSZ);
-	switch (reftable_record_type(&copy)) {
-	case BLOCK_TYPE_REF:
-		EXPECT(reftable_ref_record_equal(reftable_record_as_ref(&copy),
-						 reftable_record_as_ref(rec),
-						 GIT_SHA1_RAWSZ));
-		break;
-	case BLOCK_TYPE_LOG:
-		EXPECT(reftable_log_record_equal(reftable_record_as_log(&copy),
-						 reftable_record_as_log(rec),
-						 GIT_SHA1_RAWSZ));
-		break;
-	}
+	EXPECT(reftable_record_equal(rec, &copy, GIT_SHA1_RAWSZ));
 	reftable_record_destroy(&copy);
 }
 
@@ -346,13 +335,7 @@ static void test_reftable_obj_record_roundtrip(void)
 					   GIT_SHA1_RAWSZ);
 		EXPECT(n == m);
 
-		EXPECT(in.hash_prefix_len == out.hash_prefix_len);
-		EXPECT(in.offset_len == out.offset_len);
-
-		EXPECT(!memcmp(in.hash_prefix, out.hash_prefix,
-			       in.hash_prefix_len));
-		EXPECT(0 == memcmp(in.offsets, out.offsets,
-				   sizeof(uint64_t) * in.offset_len));
+		EXPECT(reftable_record_equal(&rec, &rec_out, GIT_SHA1_RAWSZ));
 		strbuf_release(&key);
 		reftable_record_release(&rec_out);
 	}
@@ -390,7 +373,7 @@ static void test_reftable_index_record_roundtrip(void)
 	m = reftable_record_decode(&out_rec, key, extra, dest, GIT_SHA1_RAWSZ);
 	EXPECT(m == n);
 
-	EXPECT(in.offset == out.offset);
+	EXPECT(reftable_record_equal(&rec, &out_rec, GIT_SHA1_RAWSZ));
 
 	reftable_record_release(&out_rec);
 	strbuf_release(&key);
