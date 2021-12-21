@@ -168,6 +168,13 @@ test_expect_success 'git branch -M foo bar should fail when bar is checked out' 
 	test_must_fail git branch -M bar foo
 '
 
+test_expect_success 'git branch -M foo bar should fail when bar is checked out in worktree' '
+	git branch -f bar &&
+	test_when_finished "git worktree remove wt && git branch -D wt" &&
+	git worktree add wt &&
+	test_must_fail git branch -M bar wt
+'
+
 test_expect_success 'git branch -M baz bam should succeed when baz is checked out' '
 	git checkout -b baz &&
 	git branch bam &&
@@ -888,7 +895,7 @@ test_expect_success '--set-upstream-to fails on a missing src branch' '
 '
 
 test_expect_success '--set-upstream-to fails on a non-ref' '
-	echo "fatal: Cannot setup tracking information; starting point '"'"'HEAD^{}'"'"' is not a branch." >expect &&
+	echo "fatal: cannot set up tracking information; starting point '"'"'HEAD^{}'"'"' is not a branch" >expect &&
 	test_must_fail git branch --set-upstream-to HEAD^{} 2>err &&
 	test_cmp expect err
 '
@@ -975,7 +982,7 @@ test_expect_success 'disabled option --set-upstream fails' '
 test_expect_success '--set-upstream-to notices an error to set branch as own upstream' '
 	git branch --set-upstream-to refs/heads/my13 my13 2>actual &&
 	cat >expect <<-\EOF &&
-	warning: Not setting branch my13 as its own upstream.
+	warning: not setting branch my13 as its own upstream
 	EOF
 	test_expect_code 1 git config branch.my13.remote &&
 	test_expect_code 1 git config branch.my13.merge &&
