@@ -98,7 +98,7 @@ void merged_iter_pqueue_release(struct merged_iter_pqueue *pq)
 {
 	int i = 0;
 	for (i = 0; i < pq->len; i++) {
-		reftable_record_destroy(&pq->heap[i].rec);
+		reftable_record_release(&pq->heap[i].rec);
 	}
 	FREE_AND_NULL(pq->heap);
 	pq->len = pq->cap = 0;
