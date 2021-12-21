@@ -415,7 +415,7 @@ test_expect_success 'checkout and reset --hard' '
 	test_all_match git reset --hard update-folder2
 '
 
-test_expect_success 'diff --staged' '
+test_expect_success 'diff --cached' '
 	init_repos &&
 
 	write_script edit-contents <<-\EOF &&
@@ -424,10 +424,10 @@ test_expect_success 'diff --staged' '
 	run_on_all ../edit-contents &&
 
 	test_all_match git diff &&
-	test_all_match git diff --staged &&
+	test_all_match git diff --cached &&
 	test_all_match git add README.md &&
 	test_all_match git diff &&
-	test_all_match git diff --staged
+	test_all_match git diff --cached
 '
 
 # NEEDSWORK: sparse-checkout behaves differently from full-checkout when
@@ -444,8 +444,8 @@ test_expect_success 'diff with renames and conflicts' '
 		test_all_match git checkout rename-base &&
 		test_all_match git checkout $branch -- . &&
 		test_all_match git status --porcelain=v2 &&
-		test_all_match git diff --staged --no-renames &&
-		test_all_match git diff --staged --find-renames || return 1
+		test_all_match git diff --cached --no-renames &&
+		test_all_match git diff --cached --find-renames || return 1
 	done
 '
 
@@ -464,8 +464,8 @@ test_expect_success 'diff with directory/file conflicts' '
 		test_all_match git checkout $branch &&
 		test_all_match git checkout rename-base -- . &&
 		test_all_match git status --porcelain=v2 &&
-		test_all_match git diff --staged --no-renames &&
-		test_all_match git diff --staged --find-renames || return 1
+		test_all_match git diff --cached --no-renames &&
+		test_all_match git diff --cached --find-renames || return 1
 	done
 '
 
@@ -486,21 +486,36 @@ test_expect_success 'log with pathspec outside sparse definition' '
 test_expect_success 'blame with pathspec inside sparse definition' '
 	init_repos &&
 
-	test_all_match git blame a &&
-	test_all_match git blame deep/a &&
-	test_all_match git blame deep/deeper1/a &&
-	test_all_match git blame deep/deeper1/deepest/a
+	for file in a \
+			deep/a \
+			deep/deeper1/a \
+			deep/deeper1/deepest/a
+	do
+		test_all_match git blame $file
+	done
 '
 
-# TODO: blame currently does not support blaming files outside of the
-# sparse definition. It complains that the file doesn't exist locally.
-test_expect_failure 'blame with pathspec outside sparse definition' '
+# Without a revision specified, blame will error if passed any file that
+# is not present in the working directory (even if the file is tracked).
+# Here we just verify that this is also true with sparse checkouts.
+test_expect_success 'blame with pathspec outside sparse definition' '
 	init_repos &&
+	test_sparse_match git sparse-checkout set &&
 
-	test_all_match git blame folder1/a &&
-	test_all_match git blame folder2/a &&
-	test_all_match git blame deep/deeper2/a &&
-	test_all_match git blame deep/deeper2/deepest/a
+	for file in a \
+			deep/a \
+			deep/deeper1/a \
+			deep/deeper1/deepest/a
+	do
+		test_sparse_match test_must_fail git blame $file &&
+		cat >expect <<-EOF &&
+		fatal: Cannot lstat '"'"'$file'"'"': No such file or directory
+		EOF
+		# We compare sparse-checkout-err and sparse-index-err in
+		# `test_sparse_match`. Given we know they are the same, we
+		# only check the content of sparse-index-err here.
+		test_cmp expect sparse-index-err
+	done
 '
 
 test_expect_success 'checkout and reset (mixed)' '
@@ -934,6 +949,64 @@ test_expect_success 'sparse-index is not expanded: merge conflict in cone' '
 		git -C sparse-index config pull.twohead ort &&
 		ensure_not_expanded ! merge -m merged expand-right
 	)
+'
+
+test_expect_success 'sparse index is not expanded: diff' '
+	init_repos &&
+
+	write_script edit-contents <<-\EOF &&
+	echo text >>$1
+	EOF
+
+	# Add file within cone
+	test_sparse_match git sparse-checkout set deep &&
+	run_on_all ../edit-contents deep/testfile &&
+	test_all_match git add deep/testfile &&
+	run_on_all ../edit-contents deep/testfile &&
+
+	test_all_match git diff &&
+	test_all_match git diff --cached &&
+	ensure_not_expanded diff &&
+	ensure_not_expanded diff --cached &&
+
+	# Add file outside cone
+	test_all_match git reset --hard &&
+	run_on_all mkdir newdirectory &&
+	run_on_all ../edit-contents newdirectory/testfile &&
+	test_sparse_match git sparse-checkout set newdirectory &&
+	test_all_match git add newdirectory/testfile &&
+	run_on_all ../edit-contents newdirectory/testfile &&
+	test_sparse_match git sparse-checkout set &&
+
+	test_all_match git diff &&
+	test_all_match git diff --cached &&
+	ensure_not_expanded diff &&
+	ensure_not_expanded diff --cached &&
+
+	# Merge conflict outside cone
+	# The sparse checkout will report a warning that is not in the
+	# full checkout, so we use `run_on_all` instead of
+	# `test_all_match`
+	run_on_all git reset --hard &&
+	test_all_match git checkout merge-left &&
+	test_all_match test_must_fail git merge merge-right &&
+
+	test_all_match git diff &&
+	test_all_match git diff --cached &&
+	ensure_not_expanded diff &&
+	ensure_not_expanded diff --cached
+'
+
+test_expect_success 'sparse index is not expanded: blame' '
+	init_repos &&
+
+	for file in a \
+			deep/a \
+			deep/deeper1/a \
+			deep/deeper1/deepest/a
+	do
+		ensure_not_expanded blame $file
+	done
 '
 
 # NEEDSWORK: a sparse-checkout behaves differently from a full checkout
