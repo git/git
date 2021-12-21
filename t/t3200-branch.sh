@@ -950,15 +950,15 @@ test_expect_success 'disabled option --set-upstream fails' '
 	test_must_fail git branch --set-upstream origin/main
 '
 
-test_expect_success '--set-upstream-to notices an error to set branch as own upstream' '
+test_expect_success '--set-upstream-to notices an error to set branch as own upstream' "
 	git branch --set-upstream-to refs/heads/my13 my13 2>actual &&
 	cat >expect <<-\EOF &&
-	warning: Not setting branch my13 as its own upstream.
+	warning: not setting branch 'my13' as its own upstream.
 	EOF
 	test_expect_code 1 git config branch.my13.remote &&
 	test_expect_code 1 git config branch.my13.merge &&
 	test_cmp expect actual
-'
+"
 
 # Keep this test last, as it changes the current branch
 cat >expect <<EOF
