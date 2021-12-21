@@ -97,7 +97,7 @@ test_expect_success 'creating a tag with --create-reflog should create reflog' '
 	test_when_finished "git tag -d tag_with_reflog1" &&
 	git tag --create-reflog tag_with_reflog1 &&
 	git reflog exists refs/tags/tag_with_reflog1 &&
-	sed -e "s/^.*	//" .git/logs/refs/tags/tag_with_reflog1 >actual &&
+	test-tool ref-store main for-each-reflog-ent refs/tags/tag_with_reflog1 | sed -e "s/^.*	//" >actual &&
 	test_cmp expected actual
 '
 
@@ -108,7 +108,7 @@ test_expect_success 'annotated tag with --create-reflog has correct message' '
 	test_when_finished "git tag -d tag_with_reflog2" &&
 	git tag -m "annotated tag" --create-reflog tag_with_reflog2 &&
 	git reflog exists refs/tags/tag_with_reflog2 &&
-	sed -e "s/^.*	//" .git/logs/refs/tags/tag_with_reflog2 >actual &&
+	test-tool ref-store main for-each-reflog-ent refs/tags/tag_with_reflog2 | sed -e "s/^.*	//" >actual &&
 	test_cmp expected actual
 '
 
