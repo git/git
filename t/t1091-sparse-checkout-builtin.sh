@@ -41,7 +41,15 @@ test_expect_success 'setup' '
 	)
 '
 
-test_expect_success 'git sparse-checkout list (empty)' '
+test_expect_success 'git sparse-checkout list (not sparse)' '
+	test_must_fail git -C repo sparse-checkout list >list 2>err &&
+	test_must_be_empty list &&
+	test_i18ngrep "this worktree is not sparse" err
+'
+
+test_expect_success 'git sparse-checkout list (not sparse)' '
+	git -C repo sparse-checkout set &&
+	rm repo/.git/info/sparse-checkout &&
 	git -C repo sparse-checkout list >list 2>err &&
 	test_must_be_empty list &&
 	test_i18ngrep "this worktree is not sparse (sparse-checkout file may not exist)" err
