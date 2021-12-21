@@ -106,7 +106,7 @@ test_expect_success \
      printf "A\$Format:%s\$O" "$SUBSTFORMAT" >a/substfile1 &&
      printf "A not substituted O" >a/substfile2 &&
      (p=long_path_to_a_file && cd a &&
-      for depth in 1 2 3 4 5; do mkdir $p && cd $p; done &&
+      for depth in 1 2 3 4 5; do mkdir $p && cd $p || exit 1; done &&
       echo text >file_with_long_path)
 '
 

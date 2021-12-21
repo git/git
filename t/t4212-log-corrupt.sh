@@ -20,10 +20,10 @@ test_expect_success 'fsck notices broken commit' '
 
 test_expect_success 'git log with broken author email' '
 	{
-		echo commit $(cat broken_email.hash)
-		echo "Author: A U Thor <author@example.com>"
-		echo "Date:   Thu Apr 7 15:13:13 2005 -0700"
-		echo
+		echo commit $(cat broken_email.hash) &&
+		echo "Author: A U Thor <author@example.com>" &&
+		echo "Date:   Thu Apr 7 15:13:13 2005 -0700" &&
+		echo &&
 		echo "    foo"
 	} >expect.out &&
 

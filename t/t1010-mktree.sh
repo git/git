@@ -6,10 +6,10 @@ TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '
-	for d in a a. a0
+	for d in a a- a0
 	do
 		mkdir "$d" && echo "$d/one" >"$d/one" &&
-		git add "$d"
+		git add "$d" || return 1
 	done &&
 	echo zero >one &&
 	git update-index --add --info-only one &&

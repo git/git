@@ -27,7 +27,7 @@ test_expect_success 'setup test repository' '
 test_expect_success 'clone an SVN repository with ignored www directory' '
 	git svn clone --ignore-paths="^www" "$svnrepo" g &&
 	echo test_qqq > expect &&
-	for i in g/*/*.txt; do cat $i >> expect2; done &&
+	for i in g/*/*.txt; do cat $i >> expect2 || return 1; done &&
 	test_cmp expect expect2
 '
 
@@ -36,7 +36,7 @@ test_expect_success 'init+fetch an SVN repository with ignored www directory' '
 	( cd c && git svn fetch --ignore-paths="^www" ) &&
 	rm expect2 &&
 	echo test_qqq > expect &&
-	for i in c/*/*.txt; do cat $i >> expect2; done &&
+	for i in c/*/*.txt; do cat $i >> expect2 || return 1; done &&
 	test_cmp expect expect2
 '
 
@@ -62,7 +62,7 @@ test_expect_success 'update git svn-cloned repo (config ignore)' '
 		cd g &&
 		git svn rebase &&
 		printf "test_qqq\nb\n" > expect &&
-		for i in */*.txt; do cat $i >> expect2; done &&
+		for i in */*.txt; do cat $i >> expect2 || exit 1; done &&
 		test_cmp expect2 expect &&
 		rm expect expect2
 	)
@@ -73,7 +73,7 @@ test_expect_success 'update git svn-cloned repo (option ignore)' '
 		cd c &&
 		git svn rebase --ignore-paths="^www" &&
 		printf "test_qqq\nb\n" > expect &&
-		for i in */*.txt; do cat $i >> expect2; done &&
+		for i in */*.txt; do cat $i >> expect2 || exit 1; done &&
 		test_cmp expect2 expect &&
 		rm expect expect2
 	)
@@ -94,7 +94,7 @@ test_expect_success 'update git svn-cloned repo (config ignore)' '
 		cd g &&
 		git svn rebase &&
 		printf "test_qqq\nb\n" > expect &&
-		for i in */*.txt; do cat $i >> expect2; done &&
+		for i in */*.txt; do cat $i >> expect2 || exit 1; done &&
 		test_cmp expect2 expect &&
 		rm expect expect2
 	)
@@ -105,7 +105,7 @@ test_expect_success 'update git svn-cloned repo (option ignore)' '
 		cd c &&
 		git svn rebase --ignore-paths="^www" &&
 		printf "test_qqq\nb\n" > expect &&
-		for i in */*.txt; do cat $i >> expect2; done &&
+		for i in */*.txt; do cat $i >> expect2 || exit 1; done &&
 		test_cmp expect2 expect &&
 		rm expect expect2
 	)
@@ -127,7 +127,7 @@ test_expect_success 'update git svn-cloned repo again (config ignore)' '
 		cd g &&
 		git svn rebase &&
 		printf "test_qqq\nb\nygg\n" > expect &&
-		for i in */*.txt; do cat $i >> expect2; done &&
+		for i in */*.txt; do cat $i >> expect2 || exit 1; done &&
 		test_cmp expect2 expect &&
 		rm expect expect2
 	)
@@ -138,7 +138,7 @@ test_expect_success 'update git svn-cloned repo again (option ignore)' '
 		cd c &&
 		git svn rebase --ignore-paths="^www" &&
 		printf "test_qqq\nb\nygg\n" > expect &&
-		for i in */*.txt; do cat $i >> expect2; done &&
+		for i in */*.txt; do cat $i >> expect2 || exit 1; done &&
 		test_cmp expect2 expect &&
 		rm expect expect2
 	)

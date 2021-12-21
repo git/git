@@ -27,7 +27,7 @@ test_expect_success 'svn-authors setup' '
 test_expect_success 'setup svnrepo' '
 	for i in aa bb cc-sub dd-sub ee-foo ff
 	do
-		svn mkdir -m $i --username $i "$svnrepo"/$i
+		svn mkdir -m $i --username $i "$svnrepo"/$i || return 1
 	done
 '
 

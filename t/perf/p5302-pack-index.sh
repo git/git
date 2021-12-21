@@ -21,8 +21,8 @@ test_expect_success 'set up thread-counting tests' '
 	threads= &&
 	while test $t -gt 0
 	do
-		threads="$t $threads"
-		t=$((t / 2))
+		threads="$t $threads" &&
+		t=$((t / 2)) || return 1
 	done
 '
 

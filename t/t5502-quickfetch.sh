@@ -130,7 +130,7 @@ test_expect_success 'quickfetch should handle ~1000 refs (on Windows)' '
 	for i in 0 1 2 3 4 5 6 7 8 9; do
 		for j in 0 1 2 3 4 5 6 7 8 9; do
 			for k in 0 1 2 3 4 5 6 7 8 9; do
-				echo "$branchprefix$i$j$k" >> .git/packed-refs
+				echo "$branchprefix$i$j$k" >> .git/packed-refs || return 1
 			done
 		done
 	done &&

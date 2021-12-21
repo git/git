@@ -48,7 +48,7 @@ test_expect_success 'commits with no parents are sent regardless of skip distanc
 	git init client &&
 	for i in $(test_seq 7)
 	do
-		test_commit -C client c$i
+		test_commit -C client c$i || return 1
 	done &&
 
 	# We send: "c7" (skip 1) "c5" (skip 2) "c2" (skip 4). After that, since
@@ -68,7 +68,7 @@ test_expect_success 'when two skips collide, favor the larger one' '
 	git init client &&
 	for i in $(test_seq 11)
 	do
-		test_commit -C client c$i
+		test_commit -C client c$i || return 1
 	done &&
 	git -C client checkout c5 &&
 	test_commit -C client c5side &&
@@ -155,14 +155,14 @@ test_expect_success 'do not send "have" with ancestors of commits that server AC
 	for i in $(test_seq 8)
 	do
 		git -C client checkout --orphan b$i &&
-		test_commit -C client b$i.c0
+		test_commit -C client b$i.c0 || return 1
 	done &&
 	for j in $(test_seq 19)
 	do
 		for i in $(test_seq 8)
 		do
 			git -C client checkout b$i &&
-			test_commit -C client b$i.c$j
+			test_commit -C client b$i.c$j || return 1
 		done
 	done &&
 
@@ -201,7 +201,7 @@ test_expect_success 'do not send "have" with ancestors of commits that server AC
 	# should still send the others (in this test, just check b2).
 	for i in $(test_seq 0 8)
 	do
-		have_not_sent b1.c$i
+		have_not_sent b1.c$i || return 1
 	done &&
 	have_sent b2.c1 b2.c0
 '

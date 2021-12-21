@@ -265,7 +265,7 @@ test_expect_success 'choking "git rm" should not let it die with cruft (induce S
 
 test_expect_success !MINGW 'choking "git rm" should not let it die with cruft (induce and check SIGPIPE)' '
 	choke_git_rm_setup &&
-	OUT=$( ((trap "" PIPE; git rm -n "some-file-*"; echo $? 1>&3) | :) 3>&1 ) &&
+	OUT=$( ((trap "" PIPE && git rm -n "some-file-*"; echo $? 1>&3) | :) 3>&1 ) &&
 	test_match_signal 13 "$OUT" &&
 	test_path_is_missing .git/index.lock
 '
@@ -274,10 +274,7 @@ test_expect_success 'Resolving by removal is not a warning-worthy event' '
 	git reset -q --hard &&
 	test_when_finished "rm -f .git/index.lock msg && git reset -q --hard" &&
 	blob=$(echo blob | git hash-object -w --stdin) &&
-	for stage in 1 2 3
-	do
-		echo "100644 $blob $stage	blob"
-	done | git update-index --index-info &&
+	printf "100644 $blob %d\tblob\n" 1 2 3 | git update-index --index-info &&
 	git rm blob >msg 2>&1 &&
 	test_i18ngrep ! "needs merge" msg &&
 	test_must_fail git ls-files -s --error-unmatch blob

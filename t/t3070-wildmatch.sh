@@ -193,7 +193,7 @@ match() {
 		file=$(cat .git/expected_test_file) &&
 		if should_create_test_file "$file"
 		then
-			dirs=${file%/*}
+			dirs=${file%/*} &&
 			if test "$file" != "$dirs"
 			then
 				mkdir -p -- "$dirs" &&

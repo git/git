@@ -15,7 +15,7 @@ test_expect_success "setup $n bad commits" '
 		echo "committer C <c@example.com> 1234567890 +0000" &&
 		echo "data <<EOF" &&
 		echo "$i.Q." &&
-		echo "EOF"
+		echo "EOF" || return 1
 	done | q_to_nul | git fast-import
 '
 

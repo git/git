@@ -31,7 +31,7 @@ verify_notes () {
 	while [ $i -gt 0 ]; do
 		echo "    commit #$i" &&
 		echo "    note for commit #$i" &&
-		i=$(($i-1));
+		i=$(($i-1)) || return 1
 	done > expect &&
 	test_cmp expect output
 }
@@ -43,7 +43,7 @@ test_expect_success "setup: create $number_of_commits commits" '
 		while [ $nr -lt $number_of_commits ]; do
 			nr=$(($nr+1)) &&
 			test_tick &&
-			cat <<INPUT_END
+			cat <<INPUT_END || return 1
 commit refs/heads/main
 committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
 data <<COMMIT
@@ -179,7 +179,7 @@ verify_concatenated_notes () {
 		echo "    first note for commit #$i" &&
 		echo "    " &&
 		echo "    second note for commit #$i" &&
-		i=$(($i-1));
+		i=$(($i-1)) || return 1
 	done > expect &&
 	test_cmp expect output
 }

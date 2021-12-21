@@ -216,7 +216,7 @@ test_expect_success SYMLINKS 'real path works on symlinks' '
 	mkdir second &&
 	ln -s ../first second/other &&
 	mkdir third &&
-	dir="$(cd .git; pwd -P)" &&
+	dir="$(cd .git && pwd -P)" &&
 	dir2=third/../second/other/.git &&
 	test "$dir" = "$(test-tool path-utils real_path $dir2)" &&
 	file="$dir"/index &&
@@ -224,7 +224,7 @@ test_expect_success SYMLINKS 'real path works on symlinks' '
 	basename=blub &&
 	test "$dir/$basename" = "$(cd .git && test-tool path-utils real_path "$basename")" &&
 	ln -s ../first/file .git/syml &&
-	sym="$(cd first; pwd -P)"/file &&
+	sym="$(cd first && pwd -P)"/file &&
 	test "$sym" = "$(test-tool path-utils real_path "$dir2/syml")"
 '
 

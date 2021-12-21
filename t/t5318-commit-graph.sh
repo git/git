@@ -64,7 +64,7 @@ test_expect_success 'create commits and repack' '
 	for i in $(test_seq 3)
 	do
 		test_commit $i &&
-		git branch commits/$i
+		git branch commits/$i || return 1
 	done &&
 	git repack
 '
@@ -147,13 +147,13 @@ test_expect_success 'Add more commits' '
 	for i in $(test_seq 4 5)
 	do
 		test_commit $i &&
-		git branch commits/$i
+		git branch commits/$i || return 1
 	done &&
 	git reset --hard commits/2 &&
 	for i in $(test_seq 6 7)
 	do
 		test_commit $i &&
-		git branch commits/$i
+		git branch commits/$i || return 1
 	done &&
 	git reset --hard commits/2 &&
 	git merge commits/4 &&

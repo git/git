@@ -594,7 +594,7 @@ test_expect_success 'pattern-checks: contained glob characters' '
 		!/*/
 		something$c-else/
 		EOF
-		check_read_tree_errors repo "a" "disabling cone pattern matching"
+		check_read_tree_errors repo "a" "disabling cone pattern matching" || return 1
 	done
 '
 

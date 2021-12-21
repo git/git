@@ -374,7 +374,7 @@ test_expect_success 'Bloom generation backfills empty commits' '
 		cd empty &&
 		for i in $(test_seq 1 6)
 		do
-			git commit --allow-empty -m "$i"
+			git commit --allow-empty -m "$i" || return 1
 		done &&
 
 		# Generate Bloom filters for empty commits 1-6, two at a time.
@@ -387,7 +387,7 @@ test_expect_success 'Bloom generation backfills empty commits' '
 			test_filter_computed 2 trace.event &&
 			test_filter_not_computed 4 trace.event &&
 			test_filter_trunc_empty 2 trace.event &&
-			test_filter_trunc_large 0 trace.event
+			test_filter_trunc_large 0 trace.event || return 1
 		done &&
 
 		# Finally, make sure that once all commits have filters, that

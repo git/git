@@ -37,11 +37,11 @@ test_expect_success "clone and setup child repos" '
 		git config branch.main.remote two &&
 		git config branch.main.merge refs/heads/one &&
 		mkdir -p .git/remotes &&
-		{
-			echo "URL: ../two/.git/"
-			echo "Pull: refs/heads/main:refs/heads/two"
-			echo "Pull: refs/heads/one:refs/heads/one"
-		} >.git/remotes/two
+		cat >.git/remotes/two <<-\EOF
+		URL: ../two/.git/
+		Pull: refs/heads/main:refs/heads/two
+		Pull: refs/heads/one:refs/heads/one
+		EOF
 	) &&
 	git clone . bundle &&
 	git clone . seven
@@ -68,7 +68,7 @@ test_expect_success "fetch test for-merge" '
 	main_in_two=$(cd ../two && git rev-parse main) &&
 	one_in_two=$(cd ../two && git rev-parse one) &&
 	{
-		echo "$one_in_two	"
+		echo "$one_in_two	" &&
 		echo "$main_in_two	not-for-merge"
 	} >expected &&
 	cut -f -2 .git/FETCH_HEAD >actual &&
@@ -547,7 +547,7 @@ test_expect_success 'bundle should record HEAD correctly' '
 	git bundle list-heads bundle5 >actual &&
 	for h in HEAD refs/heads/main
 	do
-		echo "$(git rev-parse --verify $h) $h"
+		echo "$(git rev-parse --verify $h) $h" || return 1
 	done >expect &&
 	test_cmp expect actual
 

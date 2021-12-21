@@ -228,7 +228,7 @@ test_expect_success 'pack reuse respects --honor-pack-keep' '
 	test_when_finished "rm -f .git/objects/pack/*.keep" &&
 	for i in .git/objects/pack/*.pack
 	do
-		>${i%.pack}.keep
+		>${i%.pack}.keep || return 1
 	done &&
 	reusable_pack --honor-pack-keep >empty.pack &&
 	git index-pack empty.pack &&

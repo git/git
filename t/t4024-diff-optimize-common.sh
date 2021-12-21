@@ -149,7 +149,7 @@ test_expect_success 'diff -U0' '
 
 	for n in $sample
 	do
-		git diff -U0 file-?$n
+		git diff -U0 file-?$n || return 1
 	done | zc >actual &&
 	test_cmp expect actual
 

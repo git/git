@@ -47,8 +47,8 @@ test_expect_success 'apply should fail gracefully' '
 		echo Oops, should not have succeeded
 		false
 	else
-		status=$?
-		echo "Status was $status"
+		status=$? &&
+		echo "Status was $status" &&
 		if test -f .git/index.lock
 		then
 			echo Oops, should not have crashed

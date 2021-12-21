@@ -824,7 +824,7 @@ test_expect_success 'always cherry-pick with --no-ff' '
 	do
 		test ! $(git rev-parse HEAD~$p) = $(git rev-parse original-no-ff-branch~$p) &&
 		git diff HEAD~$p original-no-ff-branch~$p > out &&
-		test_must_be_empty out
+		test_must_be_empty out || return 1
 	done &&
 	test_cmp_rev HEAD~3 original-no-ff-branch~3 &&
 	git diff HEAD~3 original-no-ff-branch~3 > out &&
@@ -1339,7 +1339,7 @@ test_expect_success 'rebase --continue removes CHERRY_PICK_HEAD' '
 		test_seq 5 | sed "s/$double/&&/" >seq &&
 		git add seq &&
 		test_tick &&
-		git commit -m seq-$double
+		git commit -m seq-$double || return 1
 	done &&
 	git tag seq-onto &&
 	git reset --hard HEAD~2 &&

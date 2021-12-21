@@ -19,8 +19,8 @@ test_expect_success setup '
 
 	mkdir dir &&
 	mkdir dir2 &&
-	for i in 1 2 3; do echo $i; done >file0 &&
-	for i in A B; do echo $i; done >dir/sub &&
+	test_write_lines 1 2 3 >file0 &&
+	test_write_lines A B >dir/sub &&
 	cat file0 >file2 &&
 	git add file0 file2 dir/sub &&
 	git commit -m Initial &&
@@ -32,8 +32,8 @@ test_expect_success setup '
 	GIT_COMMITTER_DATE="2006-06-26 00:01:00 +0000" &&
 	export GIT_AUTHOR_DATE GIT_COMMITTER_DATE &&
 
-	for i in 4 5 6; do echo $i; done >>file0 &&
-	for i in C D; do echo $i; done >>dir/sub &&
+	test_write_lines 4 5 6 >>file0 &&
+	test_write_lines C D >>dir/sub &&
 	rm -f file2 &&
 	git update-index --remove file0 file2 dir/sub &&
 	git commit -m "Second${LF}${LF}This is the second commit." &&
@@ -42,9 +42,9 @@ test_expect_success setup '
 	GIT_COMMITTER_DATE="2006-06-26 00:02:00 +0000" &&
 	export GIT_AUTHOR_DATE GIT_COMMITTER_DATE &&
 
-	for i in A B C; do echo $i; done >file1 &&
+	test_write_lines A B C >file1 &&
 	git add file1 &&
-	for i in E F; do echo $i; done >>dir/sub &&
+	test_write_lines E F >>dir/sub &&
 	git update-index dir/sub &&
 	git commit -m Third &&
 
@@ -53,8 +53,8 @@ test_expect_success setup '
 	export GIT_AUTHOR_DATE GIT_COMMITTER_DATE &&
 
 	git checkout side &&
-	for i in A B C; do echo $i; done >>file0 &&
-	for i in 1 2; do echo $i; done >>dir/sub &&
+	test_write_lines A B C >>file0 &&
+	test_write_lines 1 2 >>dir/sub &&
 	cat dir/sub >file3 &&
 	git add file3 &&
 	git update-index file0 dir/sub &&
@@ -71,8 +71,8 @@ test_expect_success setup '
 	GIT_COMMITTER_DATE="2006-06-26 00:05:00 +0000" &&
 	export GIT_AUTHOR_DATE GIT_COMMITTER_DATE &&
 
-	for i in A B C; do echo $i; done >>file0 &&
-	for i in 1 2; do echo $i; done >>dir/sub &&
+	test_write_lines A B C >>file0 &&
+	test_write_lines 1 2 >>dir/sub &&
 	git update-index file0 dir/sub &&
 
 	mkdir dir3 &&
@@ -86,7 +86,7 @@ test_expect_success setup '
 	GIT_COMMITTER_DATE="2006-06-26 00:06:00 +0000" &&
 	export GIT_AUTHOR_DATE GIT_COMMITTER_DATE &&
 	git checkout -b rearrange initial &&
-	for i in B A; do echo $i; done >dir/sub &&
+	test_write_lines B A >dir/sub &&
 	git add dir/sub &&
 	git commit -m "Rearranged lines in dir/sub" &&
 	git checkout master &&

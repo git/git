@@ -29,7 +29,7 @@ test_expect_success setup '
 		git add file1 &&
 		test_tick &&
 		git commit -m "$val" &&
-		git tag $val
+		git tag $val || return 1
 	done
 '
 

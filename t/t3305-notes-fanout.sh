@@ -58,7 +58,7 @@ test_expect_success 'many notes created correctly with git-notes' '
 	do
 		echo "    commit #$i" &&
 		echo "    note #$i" &&
-		i=$(($i - 1));
+		i=$(($i - 1)) || return 1
 	done > expect &&
 	test_cmp expect output
 '
@@ -107,7 +107,7 @@ test_expect_success 'most notes deleted correctly with git-notes' '
 	do
 		echo "    commit #$i" &&
 		echo "    note #$i" &&
-		i=$(($i - 1));
+		i=$(($i - 1)) || return 1
 	done > expect &&
 	test_cmp expect output
 '

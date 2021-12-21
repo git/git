@@ -706,7 +706,7 @@ test_expect_success 'merge-recursive remembers the names of all base trees' '
 	# more trees than static slots used by oid_to_hex()
 	for commit in $c0 $c2 $c4 $c5 $c6 $c7
 	do
-		git rev-parse "$commit^{tree}"
+		git rev-parse "$commit^{tree}" || return 1
 	done >trees &&
 
 	# ignore the return code; it only fails because the input is weird...

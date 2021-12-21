@@ -211,14 +211,14 @@ done
 test_expect_success "--batch-check for a non-existent named object" '
     test "foobar42 missing
 foobar84 missing" = \
-    "$( ( echo foobar42; echo_without_newline foobar84; ) | git cat-file --batch-check)"
+    "$( ( echo foobar42 && echo_without_newline foobar84 ) | git cat-file --batch-check)"
 '
 
 test_expect_success "--batch-check for a non-existent hash" '
     test "0000000000000000000000000000000000000042 missing
 0000000000000000000000000000000000000084 missing" = \
-    "$( ( echo 0000000000000000000000000000000000000042;
-	 echo_without_newline 0000000000000000000000000000000000000084; ) |
+    "$( ( echo 0000000000000000000000000000000000000042 &&
+	 echo_without_newline 0000000000000000000000000000000000000084 ) |
        git cat-file --batch-check)"
 '
 
@@ -226,8 +226,8 @@ test_expect_success "--batch for an existent and a non-existent hash" '
     test "$tag_sha1 tag $tag_size
 $tag_content
 0000000000000000000000000000000000000000 missing" = \
-    "$( ( echo $tag_sha1;
-	 echo_without_newline 0000000000000000000000000000000000000000; ) |
+    "$( ( echo $tag_sha1 &&
+	 echo_without_newline 0000000000000000000000000000000000000000 ) |
        git cat-file --batch)"
 '
 
@@ -283,7 +283,7 @@ test_expect_success "--batch-check with multiple sha1s gives correct format" '
 
 test_expect_success 'setup blobs which are likely to delta' '
 	test-tool genrandom foo 10240 >foo &&
-	{ cat foo; echo plus; } >foo-plus &&
+	{ cat foo && echo plus; } >foo-plus &&
 	git add foo foo-plus &&
 	git commit -m foo &&
 	cat >blobs <<-\EOF
