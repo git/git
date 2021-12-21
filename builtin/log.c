@@ -245,10 +245,24 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 			rev->abbrev_commit = 0;
 	}
 
-	if (rev->commit_format == CMIT_FMT_USERFORMAT && !w.decorate)
-		decoration_style = 0;
+	if (rev->commit_format == CMIT_FMT_USERFORMAT) {
+		if (!w.decorate) {
+			/*
+			 * Disable decoration loading if the format will not
+			 * show them anyway.
+			 */
+			decoration_style = 0;
+		} else if (!decoration_style) {
+			/*
+			 * If we are going to show them, make sure we do load
+			 * them here, but taking care not to override a
+			 * specific style set by config or --decorate.
+			 */
+			decoration_style = DECORATE_SHORT_REFS;
+		}
+	}
 
-	if (decoration_style) {
+	if (decoration_style || rev->simplify_by_decoration) {
 		const struct string_list *config_exclude =
 			repo_config_get_value_multi(the_repository,
 						    "log.excludeDecoration");
@@ -260,7 +274,8 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 						   item->string);
 		}
 
-		rev->show_decorations = 1;
+		if (decoration_style)
+			rev->show_decorations = 1;
 
 		load_ref_decorations(&decoration_filter, decoration_style);
 	}
