@@ -152,7 +152,7 @@ should result in deletion of the path).
 	attached to a terminal, regardless of `--quiet`.
 
 -t::
---track::
+--track [direct|inherit]::
 	When creating a new branch, set up "upstream" configuration.
 	`-c` is implied. See `--track` in linkgit:git-branch[1] for
 	details.
