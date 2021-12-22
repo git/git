@@ -25,6 +25,10 @@ static void test_copy(struct reftable_record *rec)
 	/* do it twice to catch memory leaks */
 	reftable_record_copy_from(&copy, rec, GIT_SHA1_RAWSZ);
 	EXPECT(reftable_record_equal(rec, &copy, GIT_SHA1_RAWSZ));
+
+	puts("testing print coverage:\n");
+	reftable_record_print(&copy, GIT_SHA1_RAWSZ);
+
 	reftable_record_release(&copy);
 }
 
@@ -176,7 +180,8 @@ static void test_reftable_log_record_equal(void)
 static void test_reftable_log_record_roundtrip(void)
 {
 	int i;
-	struct reftable_log_record in[2] = {
+
+	struct reftable_log_record in[] = {
 		{
 			.refname = xstrdup("refs/heads/master"),
 			.update_index = 42,
@@ -197,10 +202,24 @@ static void test_reftable_log_record_roundtrip(void)
 			.refname = xstrdup("refs/heads/master"),
 			.update_index = 22,
 			.value_type = REFTABLE_LOG_DELETION,
+		},
+		{
+			.refname = xstrdup("branch"),
+			.update_index = 33,
+			.value_type = REFTABLE_LOG_UPDATE,
+			.value = {
+				.update = {
+					.old_hash = reftable_malloc(GIT_SHA1_RAWSZ),
+					.new_hash = reftable_malloc(GIT_SHA1_RAWSZ),
+					/* rest of fields left empty. */
+				},
+			},
 		}
 	};
 	set_test_hash(in[0].value.update.new_hash, 1);
 	set_test_hash(in[0].value.update.old_hash, 2);
+	set_test_hash(in[2].value.update.new_hash, 3);
+	set_test_hash(in[2].value.update.old_hash, 4);
 	for (i = 0; i < ARRAY_SIZE(in); i++) {
 		struct reftable_record rec = { .type = BLOCK_TYPE_LOG };
 		struct strbuf key = STRBUF_INIT;

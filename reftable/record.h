@@ -61,6 +61,9 @@ struct reftable_record_vtable {
 
 	/* Are two records equal? This assumes they have the same type. Returns 0 for non-equal. */
 	int (*equal)(const void *a, const void *b, int hash_size);
+
+	/* Print on stdout, for debugging. */
+	void (*print)(const void *rec, int hash_size);
 };
 
 /* returns true for recognized block types. Block start with the block type. */
@@ -112,6 +115,7 @@ struct reftable_record {
 
 /* see struct record_vtable */
 int reftable_record_equal(struct reftable_record *a, struct reftable_record *b, int hash_size);
+void reftable_record_print(struct reftable_record *rec, int hash_size);
 void reftable_record_key(struct reftable_record *rec, struct strbuf *dest);
 uint8_t reftable_record_type(struct reftable_record *rec);
 void reftable_record_copy_from(struct reftable_record *rec,
