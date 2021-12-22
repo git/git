@@ -7,6 +7,7 @@ https://developers.google.com/open-source/licenses/bsd
 */
 
 #include "basics.h"
+#include "constants.h"
 #include "record.h"
 #include "generic.h"
 #include "reftable-iterator.h"
@@ -15,23 +16,21 @@ https://developers.google.com/open-source/licenses/bsd
 int reftable_table_seek_ref(struct reftable_table *tab,
 			    struct reftable_iterator *it, const char *name)
 {
-	struct reftable_ref_record ref = {
-		.refname = (char *)name,
-	};
-	struct reftable_record rec = { NULL };
-	reftable_record_from_ref(&rec, &ref);
+	struct reftable_record rec = { .type = BLOCK_TYPE_REF,
+				       .u.ref = {
+					       .refname = (char *)name,
+				       } };
 	return tab->ops->seek_record(tab->table_arg, it, &rec);
 }
 
 int reftable_table_seek_log(struct reftable_table *tab,
 			    struct reftable_iterator *it, const char *name)
 {
-	struct reftable_log_record log = {
-		.refname = (char *)name,
-		.update_index = ~((uint64_t)0),
-	};
-	struct reftable_record rec = { NULL };
-	reftable_record_from_log(&rec, &log);
+	struct reftable_record rec = { .type = BLOCK_TYPE_LOG,
+				       .u.log = {
+					       .refname = (char *)name,
+					       .update_index = ~((uint64_t)0),
+				       } };
 	return tab->ops->seek_record(tab->table_arg, it, &rec);
 }
 
@@ -129,17 +128,25 @@ void reftable_iterator_destroy(struct reftable_iterator *it)
 int reftable_iterator_next_ref(struct reftable_iterator *it,
 			       struct reftable_ref_record *ref)
 {
-	struct reftable_record rec = { NULL };
-	reftable_record_from_ref(&rec, ref);
-	return iterator_next(it, &rec);
+	struct reftable_record rec = {
+		.type = BLOCK_TYPE_REF,
+		.u.ref = *ref,
+	};
+	int err = iterator_next(it, &rec);
+	*ref = rec.u.ref;
+	return err;
 }
 
 int reftable_iterator_next_log(struct reftable_iterator *it,
 			       struct reftable_log_record *log)
 {
-	struct reftable_record rec = { NULL };
-	reftable_record_from_log(&rec, log);
-	return iterator_next(it, &rec);
+	struct reftable_record rec = {
+		.type = BLOCK_TYPE_LOG,
+		.u.log = *log,
+	};
+	int err = iterator_next(it, &rec);
+	*log = rec.u.log;
+	return err;
 }
 
 int iterator_next(struct reftable_iterator *it, struct reftable_record *rec)
