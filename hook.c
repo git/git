@@ -149,3 +149,17 @@ int run_hooks(const char *hook_name)
 
 	return run_hooks_opt(hook_name, &opt);
 }
+
+int run_hooks_l(const char *hook_name, ...)
+{
+	struct run_hooks_opt opt = RUN_HOOKS_OPT_INIT;
+	va_list ap;
+	const char *arg;
+
+	va_start(ap, hook_name);
+	while ((arg = va_arg(ap, const char *)))
+		strvec_push(&opt.args, arg);
+	va_end(ap);
+
+	return run_hooks_opt(hook_name, &opt);
+}
