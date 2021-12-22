@@ -28,7 +28,6 @@ static timestamp_t default_reflog_expire;
 static timestamp_t default_reflog_expire_unreachable;
 
 struct cmd_reflog_expire_cb {
-	struct rev_info revs;
 	int stalefix;
 	timestamp_t expire_total;
 	timestamp_t expire_unreachable;
@@ -594,13 +593,15 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 	 * from reflog if the repository was pruned with older git.
 	 */
 	if (cmd.stalefix) {
-		repo_init_revisions(the_repository, &cmd.revs, prefix);
-		cmd.revs.do_not_die_on_missing_tree = 1;
-		cmd.revs.ignore_missing = 1;
-		cmd.revs.ignore_missing_links = 1;
+		struct rev_info revs;
+
+		repo_init_revisions(the_repository, &revs, prefix);
+		revs.do_not_die_on_missing_tree = 1;
+		revs.ignore_missing = 1;
+		revs.ignore_missing_links = 1;
 		if (flags & EXPIRE_REFLOGS_VERBOSE)
 			printf(_("Marking reachable objects..."));
-		mark_reachable_objects(&cmd.revs, 0, 0, NULL);
+		mark_reachable_objects(&revs, 0, 0, NULL);
 		if (flags & EXPIRE_REFLOGS_VERBOSE)
 			putchar('\n');
 	}
