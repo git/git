@@ -48,16 +48,9 @@ struct expire_reflog_policy_cb {
 	struct commit_list *tips;
 };
 
-struct collected_reflog {
-	struct object_id oid;
-	char reflog[FLEX_ARRAY];
-};
-
-struct collect_reflog_cb {
-	struct collected_reflog **e;
-	int alloc;
-	int nr;
-	struct worktree *wt;
+struct worktree_reflogs {
+	struct worktree *worktree;
+	struct string_list reflogs;
 };
 
 /* Remember to update object flag allocation in object.h */
@@ -403,24 +396,20 @@ static void reflog_expiry_cleanup(void *cb_data)
 
 static int collect_reflog(const char *ref, const struct object_id *oid, int unused, void *cb_data)
 {
-	struct collected_reflog *e;
-	struct collect_reflog_cb *cb = cb_data;
+	struct worktree_reflogs *cb = cb_data;
+	struct worktree *worktree = cb->worktree;
 	struct strbuf newref = STRBUF_INIT;
 
 	/*
 	 * Avoid collecting the same shared ref multiple times because
 	 * they are available via all worktrees.
 	 */
-	if (!cb->wt->is_current && ref_type(ref) == REF_TYPE_NORMAL)
+	if (!worktree->is_current && ref_type(ref) == REF_TYPE_NORMAL)
 		return 0;
 
-	strbuf_worktree_ref(cb->wt, &newref, ref);
-	FLEX_ALLOC_STR(e, reflog, newref.buf);
-	strbuf_release(&newref);
+	strbuf_worktree_ref(worktree, &newref, ref);
+	string_list_append_nodup(&cb->reflogs, strbuf_detach(&newref, NULL));
 
-	oidcpy(&e->oid, oid);
-	ALLOC_GROW(cb->e, cb->nr + 1, cb->alloc);
-	cb->e[cb->nr++] = e;
 	return 0;
 }
 
@@ -609,33 +598,33 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 	}
 
 	if (do_all) {
-		struct collect_reflog_cb collected;
+		struct worktree_reflogs collected = {
+			.reflogs = STRING_LIST_INIT_DUP,
+		};
+		struct string_list_item *item;
 		struct worktree **worktrees, **p;
-		int i;
 
-		memset(&collected, 0, sizeof(collected));
 		worktrees = get_worktrees();
 		for (p = worktrees; *p; p++) {
 			if (!all_worktrees && !(*p)->is_current)
 				continue;
-			collected.wt = *p;
+			collected.worktree = *p;
 			refs_for_each_reflog(get_worktree_ref_store(*p),
 					     collect_reflog, &collected);
 		}
 		free_worktrees(worktrees);
-		for (i = 0; i < collected.nr; i++) {
-			struct collected_reflog *e = collected.e[i];
+
+		for_each_string_list_item(item, &collected.reflogs) {
 			struct expire_reflog_policy_cb cb = { .cmd = cmd };
 
-			set_reflog_expiry_param(&cb.cmd, explicit_expiry, e->reflog);
-			status |= reflog_expire(e->reflog, flags,
+			set_reflog_expiry_param(&cb.cmd, explicit_expiry, item->string);
+			status |= reflog_expire(item->string, flags,
 						reflog_expiry_prepare,
 						should_expire_reflog_ent,
 						reflog_expiry_cleanup,
 						&cb);
-			free(e);
 		}
-		free(collected.e);
+		string_list_clear(&collected.reflogs, 0);
 	}
 
 	for (; i < argc; i++) {
