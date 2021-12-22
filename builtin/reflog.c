@@ -303,10 +303,15 @@ static int should_expire_reflog_ent(struct object_id *ooid, struct object_id *no
 		return 1;
 
 	if (timestamp < cb->cmd.expire_unreachable) {
-		if (cb->unreachable_expire_kind == UE_ALWAYS)
+		switch (cb->unreachable_expire_kind) {
+		case UE_ALWAYS:
 			return 1;
-		if (unreachable(cb, old_commit, ooid) || unreachable(cb, new_commit, noid))
-			return 1;
+		case UE_NORMAL:
+		case UE_HEAD:
+			if (unreachable(cb, old_commit, ooid) || unreachable(cb, new_commit, noid))
+				return 1;
+			break;
+		}
 	}
 
 	if (cb->cmd.recno && --(cb->cmd.recno) == 0)
@@ -348,6 +353,7 @@ static void reflog_expiry_prepare(const char *refname,
 				  void *cb_data)
 {
 	struct expire_reflog_policy_cb *cb = cb_data;
+	struct commit_list *elem;
 
 	if (!cb->cmd.expire_unreachable || is_head(refname)) {
 		cb->unreachable_expire_kind = UE_HEAD;
@@ -363,34 +369,37 @@ static void reflog_expiry_prepare(const char *refname,
 	if (cb->cmd.expire_unreachable <= cb->cmd.expire_total)
 		cb->unreachable_expire_kind = UE_ALWAYS;
 
-	if (cb->unreachable_expire_kind != UE_ALWAYS) {
-		if (cb->unreachable_expire_kind == UE_HEAD) {
-			struct commit_list *elem;
-
-			for_each_ref(push_tip_to_list, &cb->tips);
-			for (elem = cb->tips; elem; elem = elem->next)
-				commit_list_insert(elem->item, &cb->mark_list);
-		} else {
-			commit_list_insert(cb->tip_commit, &cb->mark_list);
-		}
-		cb->mark_limit = cb->cmd.expire_total;
-		mark_reachable(cb);
+	switch (cb->unreachable_expire_kind) {
+	case UE_ALWAYS:
+		return;
+	case UE_HEAD:
+		for_each_ref(push_tip_to_list, &cb->tips);
+		for (elem = cb->tips; elem; elem = elem->next)
+			commit_list_insert(elem->item, &cb->mark_list);
+		break;
+	case UE_NORMAL:
+		commit_list_insert(cb->tip_commit, &cb->mark_list);
 	}
+	cb->mark_limit = cb->cmd.expire_total;
+	mark_reachable(cb);
 }
 
 static void reflog_expiry_cleanup(void *cb_data)
 {
 	struct expire_reflog_policy_cb *cb = cb_data;
+	struct commit_list *elem;
 
-	if (cb->unreachable_expire_kind != UE_ALWAYS) {
-		if (cb->unreachable_expire_kind == UE_HEAD) {
-			struct commit_list *elem;
-			for (elem = cb->tips; elem; elem = elem->next)
-				clear_commit_marks(elem->item, REACHABLE);
-			free_commit_list(cb->tips);
-		} else {
-			clear_commit_marks(cb->tip_commit, REACHABLE);
-		}
+	switch (cb->unreachable_expire_kind) {
+	case UE_ALWAYS:
+		return;
+	case UE_HEAD:
+		for (elem = cb->tips; elem; elem = elem->next)
+			clear_commit_marks(elem->item, REACHABLE);
+		free_commit_list(cb->tips);
+		break;
+	case UE_NORMAL:
+		clear_commit_marks(cb->tip_commit, REACHABLE);
+		break;
 	}
 }
 
