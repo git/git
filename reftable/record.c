@@ -430,6 +430,15 @@ static int reftable_ref_record_is_deletion_void(const void *p)
 		(const struct reftable_ref_record *)p);
 }
 
+
+static int reftable_ref_record_equal_void(const void *a,
+					  const void *b, int hash_size)
+{
+	struct reftable_ref_record *ra = (struct reftable_ref_record *) a;
+	struct reftable_ref_record *rb = (struct reftable_ref_record *) b;
+	return reftable_ref_record_equal(ra, rb, hash_size);
+}
+
 static struct reftable_record_vtable reftable_ref_record_vtable = {
 	.key = &reftable_ref_record_key,
 	.type = BLOCK_TYPE_REF,
@@ -439,6 +448,7 @@ static struct reftable_record_vtable reftable_ref_record_vtable = {
 	.decode = &reftable_ref_record_decode,
 	.release = &reftable_ref_record_release_void,
 	.is_deletion = &reftable_ref_record_is_deletion_void,
+	.equal = &reftable_ref_record_equal_void,
 };
 
 static void reftable_obj_record_key(const void *r, struct strbuf *dest)
@@ -572,6 +582,25 @@ static int not_a_deletion(const void *p)
 	return 0;
 }
 
+static int reftable_obj_record_equal_void(const void *a, const void *b, int hash_size)
+{
+	struct reftable_obj_record *ra = (struct reftable_obj_record *) a;
+	struct reftable_obj_record *rb = (struct reftable_obj_record *) b;
+
+	if (ra->hash_prefix_len != rb->hash_prefix_len
+	    || ra->offset_len != rb->offset_len)
+		return 0;
+
+	if (ra->hash_prefix_len &&
+	    memcmp(ra->hash_prefix, rb->hash_prefix, ra->hash_prefix_len))
+		return 0;
+	if (ra->offset_len &&
+	    memcmp(ra->offsets, rb->offsets, ra->offset_len * sizeof(uint64_t)))
+		return 0;
+
+	return 1;
+}
+
 static struct reftable_record_vtable reftable_obj_record_vtable = {
 	.key = &reftable_obj_record_key,
 	.type = BLOCK_TYPE_OBJ,
@@ -580,7 +609,8 @@ static struct reftable_record_vtable reftable_obj_record_vtable = {
 	.encode = &reftable_obj_record_encode,
 	.decode = &reftable_obj_record_decode,
 	.release = &reftable_obj_record_release,
-	.is_deletion = not_a_deletion,
+	.is_deletion = &not_a_deletion,
+	.equal = &reftable_obj_record_equal_void,
 };
 
 void reftable_log_record_print(struct reftable_log_record *log,
@@ -881,6 +911,14 @@ static int zero_hash_eq(uint8_t *a, uint8_t *b, int sz)
 	return !memcmp(a, b, sz);
 }
 
+static int reftable_log_record_equal_void(const void *a,
+					  const void *b, int hash_size)
+{
+	return reftable_log_record_equal((struct reftable_log_record *) a,
+					 (struct reftable_log_record *) b,
+					 hash_size);
+}
+
 int reftable_log_record_equal(const struct reftable_log_record *a,
 			      const struct reftable_log_record *b, int hash_size)
 {
@@ -924,6 +962,7 @@ static struct reftable_record_vtable reftable_log_record_vtable = {
 	.decode = &reftable_log_record_decode,
 	.release = &reftable_log_record_release_void,
 	.is_deletion = &reftable_log_record_is_deletion_void,
+	.equal = &reftable_log_record_equal_void
 };
 
 struct reftable_record reftable_new_record(uint8_t typ)
@@ -1042,6 +1081,14 @@ static int reftable_index_record_decode(void *rec, struct strbuf key,
 	return start.len - in.len;
 }
 
+static int reftable_index_record_equal(const void *a, const void *b, int hash_size)
+{
+	struct reftable_index_record *ia = (struct reftable_index_record *) a;
+	struct reftable_index_record *ib = (struct reftable_index_record *) b;
+
+	return ia->offset == ib->offset && !strbuf_cmp(&ia->last_key, &ib->last_key);
+}
+
 static struct reftable_record_vtable reftable_index_record_vtable = {
 	.key = &reftable_index_record_key,
 	.type = BLOCK_TYPE_INDEX,
@@ -1051,6 +1098,7 @@ static struct reftable_record_vtable reftable_index_record_vtable = {
 	.decode = &reftable_index_record_decode,
 	.release = &reftable_index_record_release,
 	.is_deletion = &not_a_deletion,
+	.equal = &reftable_index_record_equal,
 };
 
 void reftable_record_key(struct reftable_record *rec, struct strbuf *dest)
@@ -1096,6 +1144,13 @@ void reftable_record_release(struct reftable_record *rec)
 int reftable_record_is_deletion(struct reftable_record *rec)
 {
 	return rec->ops->is_deletion(rec->data);
+}
+
+int reftable_record_equal(struct reftable_record *a, struct reftable_record *b, int hash_size)
+{
+	if (a->ops != b->ops)
+		return 0;
+	return a->ops->equal(a->data, b->data, hash_size);
 }
 
 void reftable_record_from_ref(struct reftable_record *rec,
