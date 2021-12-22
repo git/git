@@ -3105,12 +3105,12 @@ static int expire_reflog_ent(struct object_id *ooid, struct object_id *noid,
 
 	if ((*cb->should_prune_fn)(ooid, noid, email, timestamp, tz,
 				   message, policy_cb)) {
-		if (!cb->newlog)
+		if (cb->flags & EXPIRE_REFLOGS_DRY_RUN)
 			printf("would prune %s", message);
 		else if (cb->flags & EXPIRE_REFLOGS_VERBOSE)
 			printf("prune %s", message);
 	} else {
-		if (cb->newlog) {
+		if (!(cb->flags & EXPIRE_REFLOGS_DRY_RUN)) {
 			fprintf(cb->newlog, "%s %s %s %"PRItime" %+05d\t%s",
 				oid_to_hex(ooid), oid_to_hex(noid),
 				email, timestamp, tz, message);
