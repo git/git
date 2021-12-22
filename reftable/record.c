@@ -126,7 +126,8 @@ static int encode_string(char *str, struct string_view s)
 	string_view_consume(&s, n);
 	if (s.len < l)
 		return -1;
-	memcpy(s.buf, str, l);
+	if (l)
+		memcpy(s.buf, str, l);
 	string_view_consume(&s, l);
 
 	return start.len - s.len;
@@ -153,7 +154,9 @@ int reftable_encode_key(int *restart, struct string_view dest,
 
 	if (dest.len < suffix_len)
 		return -1;
-	memcpy(dest.buf, key.buf + prefix_len, suffix_len);
+
+	if (suffix_len)
+		memcpy(dest.buf, key.buf + prefix_len, suffix_len);
 	string_view_consume(&dest, suffix_len);
 
 	return start.len - dest.len;
@@ -569,7 +572,8 @@ static int reftable_obj_record_decode(void *rec, struct strbuf key,
 	uint64_t last;
 	int j;
 	r->hash_prefix = reftable_malloc(key.len);
-	memcpy(r->hash_prefix, key.buf, key.len);
+	if (key.len)
+		memcpy(r->hash_prefix, key.buf, key.len);
 	r->hash_prefix_len = key.len;
 
 	if (val_type == 0) {
