@@ -2007,10 +2007,12 @@ struct ref_store *get_worktree_ref_store(const struct worktree *wt)
 	return refs;
 }
 
-void base_ref_store_init(struct ref_store *refs,
-			 const struct ref_storage_be *be)
+void base_ref_store_init(struct ref_store *refs, struct repository *repo,
+			 const char *path, const struct ref_storage_be *be)
 {
 	refs->be = be;
+	refs->repo = repo;
+	refs->gitdir = xstrdup(path);
 }
 
 /* backend functions */
