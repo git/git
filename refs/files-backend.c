@@ -86,11 +86,8 @@ static struct ref_store *files_ref_store_create(struct repository *repo,
 	struct ref_store *ref_store = (struct ref_store *)refs;
 	struct strbuf sb = STRBUF_INIT;
 
-	ref_store->repo = repo;
-	ref_store->gitdir = xstrdup(gitdir);
-	base_ref_store_init(ref_store, &refs_be_files);
+	base_ref_store_init(ref_store, repo, gitdir, &refs_be_files);
 	refs->store_flags = flags;
-
 	get_common_dir_noenv(&sb, gitdir);
 	refs->gitcommondir = strbuf_detach(&sb, NULL);
 	refs->packed_ref_store =

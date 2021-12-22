@@ -201,13 +201,11 @@ struct ref_store *packed_ref_store_create(struct repository *repo,
 	struct ref_store *ref_store = (struct ref_store *)refs;
 	struct strbuf sb = STRBUF_INIT;
 
-	base_ref_store_init(ref_store, &refs_be_packed);
-	ref_store->repo = repo;
-	ref_store->gitdir = xstrdup(gitdir);
+	base_ref_store_init(ref_store, repo, gitdir, &refs_be_packed);
 	refs->store_flags = store_flags;
+
 	strbuf_addf(&sb, "%s/packed-refs", gitdir);
 	refs->path = strbuf_detach(&sb, NULL);
-
 	chdir_notify_reparent("packed-refs", &refs->path);
 	return ref_store;
 }
