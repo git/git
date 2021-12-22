@@ -354,16 +354,14 @@ static void reflog_expiry_prepare(const char *refname,
 {
 	struct expire_reflog_policy_cb *cb = cb_data;
 	struct commit_list *elem;
+	struct commit *commit = NULL;
 
 	if (!cb->cmd.expire_unreachable || is_head(refname)) {
 		cb->unreachable_expire_kind = UE_HEAD;
 	} else {
-		cb->tip_commit = lookup_commit_reference_gently(the_repository,
-								oid, 1);
-		if (!cb->tip_commit)
-			cb->unreachable_expire_kind = UE_ALWAYS;
-		else
-			cb->unreachable_expire_kind = UE_NORMAL;
+		commit = lookup_commit_reference_gently(the_repository,
+							oid, 1);
+		cb->unreachable_expire_kind = commit ? UE_NORMAL : UE_ALWAYS;
 	}
 
 	if (cb->cmd.expire_unreachable <= cb->cmd.expire_total)
@@ -378,7 +376,9 @@ static void reflog_expiry_prepare(const char *refname,
 			commit_list_insert(elem->item, &cb->mark_list);
 		break;
 	case UE_NORMAL:
-		commit_list_insert(cb->tip_commit, &cb->mark_list);
+		commit_list_insert(commit, &cb->mark_list);
+		/* For reflog_expiry_cleanup() below */
+		cb->tip_commit = commit;
 	}
 	cb->mark_limit = cb->cmd.expire_total;
 	mark_reachable(cb);
