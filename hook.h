@@ -12,6 +12,12 @@ struct run_hooks_opt
 
 	/* Emit an error if the hook is missing */
 	unsigned int error_if_missing:1;
+
+	/**
+	 * An optional initial working directory for the hook,
+	 * translates to "struct child_process"'s "dir" member.
+	 */
+	const char *dir;
 };
 
 #define RUN_HOOKS_OPT_INIT { \
