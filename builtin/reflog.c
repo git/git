@@ -357,7 +357,6 @@ static void reflog_expiry_prepare(const char *refname,
 	struct expire_reflog_policy_cb *cb = cb_data;
 
 	if (!cb->cmd.expire_unreachable || is_head(refname)) {
-		cb->tip_commit = NULL;
 		cb->unreachable_expire_kind = UE_HEAD;
 	} else {
 		cb->tip_commit = lookup_commit_reference_gently(the_repository,
@@ -371,8 +370,6 @@ static void reflog_expiry_prepare(const char *refname,
 	if (cb->cmd.expire_unreachable <= cb->cmd.expire_total)
 		cb->unreachable_expire_kind = UE_ALWAYS;
 
-	cb->mark_list = NULL;
-	cb->tips = NULL;
 	if (cb->unreachable_expire_kind != UE_ALWAYS) {
 		if (cb->unreachable_expire_kind == UE_HEAD) {
 			struct commit_list *elem;
@@ -541,7 +538,7 @@ static void set_reflog_expiry_param(struct cmd_reflog_expire_cb *cb, int slot, c
 
 static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 {
-	struct expire_reflog_policy_cb cb;
+	struct cmd_reflog_expire_cb cmd = { 0 };
 	timestamp_t now = time(NULL);
 	int i, status, do_all, all_worktrees = 1;
 	int explicit_expiry = 0;
@@ -553,10 +550,9 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 
 	save_commit_buffer = 0;
 	do_all = status = 0;
-	memset(&cb, 0, sizeof(cb));
 
-	cb.cmd.expire_total = default_reflog_expire;
-	cb.cmd.expire_unreachable = default_reflog_expire_unreachable;
+	cmd.expire_total = default_reflog_expire;
+	cmd.expire_unreachable = default_reflog_expire_unreachable;
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
@@ -564,17 +560,17 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 		if (!strcmp(arg, "--dry-run") || !strcmp(arg, "-n"))
 			flags |= EXPIRE_REFLOGS_DRY_RUN;
 		else if (skip_prefix(arg, "--expire=", &arg)) {
-			if (parse_expiry_date(arg, &cb.cmd.expire_total))
+			if (parse_expiry_date(arg, &cmd.expire_total))
 				die(_("'%s' is not a valid timestamp"), arg);
 			explicit_expiry |= EXPIRE_TOTAL;
 		}
 		else if (skip_prefix(arg, "--expire-unreachable=", &arg)) {
-			if (parse_expiry_date(arg, &cb.cmd.expire_unreachable))
+			if (parse_expiry_date(arg, &cmd.expire_unreachable))
 				die(_("'%s' is not a valid timestamp"), arg);
 			explicit_expiry |= EXPIRE_UNREACH;
 		}
 		else if (!strcmp(arg, "--stale-fix"))
-			cb.cmd.stalefix = 1;
+			cmd.stalefix = 1;
 		else if (!strcmp(arg, "--rewrite"))
 			flags |= EXPIRE_REFLOGS_REWRITE;
 		else if (!strcmp(arg, "--updateref"))
@@ -600,14 +596,14 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 	 * even in older repository.  We cannot trust what's reachable
 	 * from reflog if the repository was pruned with older git.
 	 */
-	if (cb.cmd.stalefix) {
-		repo_init_revisions(the_repository, &cb.cmd.revs, prefix);
-		cb.cmd.revs.do_not_die_on_missing_tree = 1;
-		cb.cmd.revs.ignore_missing = 1;
-		cb.cmd.revs.ignore_missing_links = 1;
+	if (cmd.stalefix) {
+		repo_init_revisions(the_repository, &cmd.revs, prefix);
+		cmd.revs.do_not_die_on_missing_tree = 1;
+		cmd.revs.ignore_missing = 1;
+		cmd.revs.ignore_missing_links = 1;
 		if (flags & EXPIRE_REFLOGS_VERBOSE)
 			printf(_("Marking reachable objects..."));
-		mark_reachable_objects(&cb.cmd.revs, 0, 0, NULL);
+		mark_reachable_objects(&cmd.revs, 0, 0, NULL);
 		if (flags & EXPIRE_REFLOGS_VERBOSE)
 			putchar('\n');
 	}
@@ -629,6 +625,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 		free_worktrees(worktrees);
 		for (i = 0; i < collected.nr; i++) {
 			struct collected_reflog *e = collected.e[i];
+			struct expire_reflog_policy_cb cb = { .cmd = cmd };
 
 			set_reflog_expiry_param(&cb.cmd, explicit_expiry, e->reflog);
 			status |= reflog_expire(e->reflog, flags,
@@ -643,6 +640,8 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 
 	for (; i < argc; i++) {
 		char *ref;
+		struct expire_reflog_policy_cb cb = { .cmd = cmd };
+
 		if (!dwim_log(argv[i], strlen(argv[i]), NULL, &ref)) {
 			status |= error(_("%s points nowhere!"), argv[i]);
 			continue;
