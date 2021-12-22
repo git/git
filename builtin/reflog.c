@@ -662,19 +662,17 @@ static int count_reflog_ent(struct object_id *ooid, struct object_id *noid,
 		const char *email, timestamp_t timestamp, int tz,
 		const char *message, void *cb_data)
 {
-	struct expire_reflog_policy_cb *cb = cb_data;
-	if (!cb->cmd.expire_total || timestamp < cb->cmd.expire_total)
-		cb->cmd.recno++;
+	struct cmd_reflog_expire_cb *cb = cb_data;
+	if (!cb->expire_total || timestamp < cb->expire_total)
+		cb->recno++;
 	return 0;
 }
 
 static int cmd_reflog_delete(int argc, const char **argv, const char *prefix)
 {
-	struct expire_reflog_policy_cb cb;
+	struct cmd_reflog_expire_cb cmd = { 0 };
 	int i, status = 0;
 	unsigned int flags = 0;
-
-	memset(&cb, 0, sizeof(cb));
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
@@ -703,6 +701,7 @@ static int cmd_reflog_delete(int argc, const char **argv, const char *prefix)
 		const char *spec = strstr(argv[i], "@{");
 		char *ep, *ref;
 		int recno;
+		struct expire_reflog_policy_cb cb = { 0 };
 
 		if (!spec) {
 			status |= error(_("not a reflog: %s"), argv[i]);
@@ -716,14 +715,15 @@ static int cmd_reflog_delete(int argc, const char **argv, const char *prefix)
 
 		recno = strtoul(spec + 2, &ep, 10);
 		if (*ep == '}') {
-			cb.cmd.recno = -recno;
-			for_each_reflog_ent(ref, count_reflog_ent, &cb);
+			cmd.recno = -recno;
+			for_each_reflog_ent(ref, count_reflog_ent, &cmd);
 		} else {
-			cb.cmd.expire_total = approxidate(spec + 2);
-			for_each_reflog_ent(ref, count_reflog_ent, &cb);
-			cb.cmd.expire_total = 0;
+			cmd.expire_total = approxidate(spec + 2);
+			for_each_reflog_ent(ref, count_reflog_ent, &cmd);
+			cmd.expire_total = 0;
 		}
 
+		cb.cmd = cmd;
 		status |= reflog_expire(ref, flags,
 					reflog_expiry_prepare,
 					should_expire_reflog_ent,
