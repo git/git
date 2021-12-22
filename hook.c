@@ -142,3 +142,10 @@ cleanup:
 	run_hooks_opt_clear(options);
 	return ret;
 }
+
+int run_hooks(const char *hook_name)
+{
+	struct run_hooks_opt opt = RUN_HOOKS_OPT_INIT;
+
+	return run_hooks_opt(hook_name, &opt);
+}

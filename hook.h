@@ -48,4 +48,10 @@ int hook_exists(const char *hookname);
  * error().
  */
 int run_hooks_opt(const char *hook_name, struct run_hooks_opt *options);
+
+/**
+ * A wrapper for run_hooks_opt() which provides a dummy "struct
+ * run_hooks_opt" initialized with "RUN_HOOKS_OPT_INIT".
+ */
+int run_hooks(const char *hook_name);
 #endif
