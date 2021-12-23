@@ -759,7 +759,7 @@ static int sparse_checkout_set(int argc, const char **argv, const char *prefix)
 }
 
 static char const * const builtin_sparse_checkout_reapply_usage[] = {
-	N_("git sparse-checkout reapply [--[no-]cone] [--[no-]sparse-index] "),
+	N_("git sparse-checkout reapply [--[no-]cone] [--[no-]sparse-index]"),
 	NULL
 };
 
