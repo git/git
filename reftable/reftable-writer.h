@@ -35,6 +35,9 @@ struct reftable_write_options {
 	 */
 	uint32_t hash_id;
 
+	/* Default mode for creating files. If unset, use 0666 (+umask) */
+	unsigned int default_permissions;
+
 	/* boolean: do not check ref names for validity or dir/file conflicts.
 	 */
 	unsigned skip_name_check : 1;

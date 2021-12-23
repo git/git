@@ -469,7 +469,7 @@ static int reftable_stack_init_addition(struct reftable_addition *add,
 	strbuf_addstr(&add->lock_file_name, ".lock");
 
 	add->lock_file_fd = open(add->lock_file_name.buf,
-				 O_EXCL | O_CREAT | O_WRONLY, 0644);
+				 O_EXCL | O_CREAT | O_WRONLY, 0666);
 	if (add->lock_file_fd < 0) {
 		if (errno == EEXIST) {
 			err = REFTABLE_LOCK_ERROR;
@@ -478,6 +478,13 @@ static int reftable_stack_init_addition(struct reftable_addition *add,
 		}
 		goto done;
 	}
+	if (st->config.default_permissions) {
+		if (chmod(add->lock_file_name.buf, st->config.default_permissions) < 0) {
+			err = REFTABLE_IO_ERROR;
+			goto done;
+		}
+	}
+
 	err = stack_uptodate(st);
 	if (err < 0)
 		goto done;
@@ -644,7 +651,12 @@ int reftable_addition_add(struct reftable_addition *add,
 		err = REFTABLE_IO_ERROR;
 		goto done;
 	}
-
+	if (add->stack->config.default_permissions) {
+		if (chmod(temp_tab_file_name.buf, add->stack->config.default_permissions)) {
+			err = REFTABLE_IO_ERROR;
+			goto done;
+		}
+	}
 	wr = reftable_new_writer(reftable_fd_write, &tab_fd,
 				 &add->stack->config);
 	err = write_table(wr, arg);
@@ -900,7 +912,7 @@ static int stack_compact_range(struct reftable_stack *st, int first, int last,
 	strbuf_addstr(&lock_file_name, ".lock");
 
 	lock_file_fd =
-		open(lock_file_name.buf, O_EXCL | O_CREAT | O_WRONLY, 0644);
+		open(lock_file_name.buf, O_EXCL | O_CREAT | O_WRONLY, 0666);
 	if (lock_file_fd < 0) {
 		if (errno == EEXIST) {
 			err = 1;
@@ -931,8 +943,8 @@ static int stack_compact_range(struct reftable_stack *st, int first, int last,
 		strbuf_addstr(&subtab_lock, ".lock");
 
 		sublock_file_fd = open(subtab_lock.buf,
-				       O_EXCL | O_CREAT | O_WRONLY, 0644);
-		if (sublock_file_fd > 0) {
+				       O_EXCL | O_CREAT | O_WRONLY, 0666);
+		if (sublock_file_fd >= 0) {
 			close(sublock_file_fd);
 		} else if (sublock_file_fd < 0) {
 			if (errno == EEXIST) {
@@ -967,7 +979,7 @@ static int stack_compact_range(struct reftable_stack *st, int first, int last,
 		goto done;
 
 	lock_file_fd =
-		open(lock_file_name.buf, O_EXCL | O_CREAT | O_WRONLY, 0644);
+		open(lock_file_name.buf, O_EXCL | O_CREAT | O_WRONLY, 0666);
 	if (lock_file_fd < 0) {
 		if (errno == EEXIST) {
 			err = 1;
@@ -977,6 +989,12 @@ static int stack_compact_range(struct reftable_stack *st, int first, int last,
 		goto done;
 	}
 	have_lock = 1;
+	if (st->config.default_permissions) {
+		if (chmod(lock_file_name.buf, st->config.default_permissions) < 0) {
+			err = REFTABLE_IO_ERROR;
+			goto done;
+		}
+	}
 
 	format_name(&new_table_name, st->readers[first]->min_update_index,
 		    st->readers[last]->max_update_index);
