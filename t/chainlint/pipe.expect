@@ -3,6 +3,6 @@
 	bar |
 	baz &&
 	fish |
-?!AMP?!	cow
+	cow ?!AMP?!
 	sunder
->)
+)
