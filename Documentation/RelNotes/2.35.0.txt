@@ -58,6 +58,10 @@ UI, Workflows & Features
  * "git name-rev" has been tweaked to give output that is shorter and
    easier to understand.
 
+ * "git apply" has been taught to ignore a message without a patch
+   with the "--allow-empty" option.  It also learned to honor the
+   "--quiet" option given from the command line.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -121,6 +125,10 @@ Performance, Internal Implementation, Development Support etc.
 
  * diff and blame commands have been taught to work better with sparse
    index.
+
+ * The chainlint test script linter in the test suite has been updated.
+
+ * The DEVELOPER=yes build uses -std=gnu99 now.
 
 
 Fixes since v2.34
@@ -240,6 +248,11 @@ Fixes since v2.34
    without being explicitly asked with "--decorate" option, it failed
    to read and honor the settings given by the "--decorate-refs"
    option.
+
+ * "git fetch --set-upstream" did not check if there is a current
+   branch, leading to a segfault when it is run on a detached HEAD,
+   which has been corrected.
+   (merge 17baeaf82d ab/fetch-set-upstream-while-detached later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 74db416c9c cw/protocol-v2-doc-fix later to maint).
