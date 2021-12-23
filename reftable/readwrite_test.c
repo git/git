@@ -155,6 +155,40 @@ static void test_log_buffer_size(void)
 	strbuf_release(&buf);
 }
 
+static void test_log_overflow(void)
+{
+	struct strbuf buf = STRBUF_INIT;
+	char msg[256] = { 0 };
+	struct reftable_write_options opts = {
+		.block_size = ARRAY_SIZE(msg),
+	};
+	int err;
+	struct reftable_log_record
+		log = { .refname = "refs/heads/master",
+			.update_index = 0xa,
+			.value_type = REFTABLE_LOG_UPDATE,
+			.value = { .update = {
+					   .name = "Han-Wen Nienhuys",
+					   .email = "hanwen@google.com",
+					   .tz_offset = 100,
+					   .time = 0x5e430672,
+					   .message = msg,
+				   } } };
+	struct reftable_writer *w =
+		reftable_new_writer(&strbuf_add_void, &buf, &opts);
+
+	uint8_t hash1[GIT_SHA1_RAWSZ]  = {1}, hash2[GIT_SHA1_RAWSZ] = { 2 };
+
+	memset(msg, 'x', sizeof(msg) - 1);
+	log.value.update.old_hash = hash1;
+	log.value.update.new_hash = hash2;
+	reftable_writer_set_limits(w, update_index, update_index);
+	err = reftable_writer_add_log(w, &log);
+	EXPECT(err == REFTABLE_ENTRY_TOO_BIG_ERROR);
+	reftable_writer_free(w);
+	strbuf_release(&buf);
+}
+
 static void test_log_write_read(void)
 {
 	int N = 2;
@@ -648,5 +682,6 @@ int readwrite_test_main(int argc, const char *argv[])
 	RUN_TEST(test_table_refs_for_no_index);
 	RUN_TEST(test_table_refs_for_obj_index);
 	RUN_TEST(test_write_empty_table);
+	RUN_TEST(test_log_overflow);
 	return 0;
 }

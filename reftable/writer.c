@@ -239,6 +239,9 @@ static int writer_add_record(struct reftable_writer *w,
 	writer_reinit_block_writer(w, reftable_record_type(rec));
 	err = block_writer_add(w->block_writer, rec);
 	if (err < 0) {
+		/* we are writing into memory, so an error can only mean it
+		 * doesn't fit. */
+		err = REFTABLE_ENTRY_TOO_BIG_ERROR;
 		goto done;
 	}
 
