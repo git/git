@@ -1425,7 +1425,7 @@ static int process_ack(struct fetch_negotiator *negotiator,
 		 * TRANSLATORS: The parameter will be 'ready', a protocol
 		 * keyword.
 		 */
-		die(_("expected no other sections to be sent after '%s'"), "ready");
+		die(_("expected no other sections to be sent after no '%s'"), "ready");
 
 	return 0;
 }
