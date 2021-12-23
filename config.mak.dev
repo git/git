@@ -19,6 +19,11 @@ endif
 endif
 endif
 endif
+
+ifneq ($(or $(filter gcc6,$(COMPILER_FEATURES)),$(filter clang7,$(COMPILER_FEATURES))),)
+DEVELOPER_CFLAGS += -std=gnu99
+endif
+
 DEVELOPER_CFLAGS += -Wdeclaration-after-statement
 DEVELOPER_CFLAGS += -Wformat-security
 DEVELOPER_CFLAGS += -Wold-style-definition
