@@ -44,7 +44,7 @@ gpg.ssh.allowedSignersFile::
 	A file containing ssh public keys which you are willing to trust.
 	The file consists of one or more lines of principals followed by an ssh
 	public key.
-	e.g.: user1@example.com,user2@example.com ssh-rsa AAAAX1...
+	e.g.: `user1@example.com,user2@example.com ssh-rsa AAAAX1...`
 	See ssh-keygen(1) "ALLOWED SIGNERS" for details.
 	The principal is only used to identify the key and is available when
 	verifying a signature.
