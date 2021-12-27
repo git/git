@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Dec 2021, #05; Thu, 23)
+Subject: What's cooking in git.git (Dec 2021, #06; Mon, 27)
 X-master-at: 2ae0a9cb8298185a94e5998086f380a355dd8907
-X-next-at: 21d7827218cb2304be633536bc9a50759e8f5c13
+X-next-at: 55b058a8bbcc54bd93c733035c995abc7967e539
 
-What's cooking in git.git (Dec 2021, #05; Thu, 23)
+What's cooking in git.git (Dec 2021, #06; Mon, 27)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,6 +17,11 @@ another topic already in flight" or "this may turn out to be
 useful").  Do not read too much into a topic being in (or not in)
 'seen'.  The ones marked with '.' do not appear in any of the
 integration branches, but I am still holding onto them.
+
+Hopefully this will be the last issue of "What's cooking" report of
+this year.  Please expect my tree will be slow moving this week and
+whereever you are on the globe, relax and enjoy the remainder of
+this year.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -47,218 +52,84 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
+[New Topics]
 
-* ab/common-main-cleanup (2021-12-07) 1 commit
-  (merged to 'next' on 2021-12-15 at ff08c86f65)
- + common-main.c: call exit(), don't return
+* ab/makefile-hook-list-dependency-fix (2021-12-25) 1 commit
+ - Makefile: correct the dependency graph of hook-list.h
 
- Code clean-up.
- source: <patch-v2-1.1-4f52ecc94ba-20211207T101207Z-avarab@gmail.com>
+ Fix dependency rules to generate hook-list.h header file.
 
-
-* ab/fetch-set-upstream-while-detached (2021-12-07) 1 commit
-  (merged to 'next' on 2021-12-15 at d0406f880a)
- + pull, fetch: fix segfault in --set-upstream option
-
- "git fetch --set-upstream" did not check if there is a current
- branch, leading to a segfault when it is run on a detached HEAD,
- which has been corrected.
- source: <patch-v5-1.1-69ab40d623b-20211207T215115Z-avarab@gmail.com>
+ Will merge to 'next'.
+ source: <patch-1.1-1fafa6c643b-20211217T001137Z-avarab@gmail.com>
 
 
-* ak/protect-any-current-branch (2021-12-01) 8 commits
-  (merged to 'next' on 2021-12-10 at dd2c6a557c)
- + branch: protect branches checked out in all worktrees
- + receive-pack: protect current branch for bare repository worktree
- + receive-pack: clean dead code from update_worktree()
- + fetch: protect branches checked out in all worktrees
- + worktree: simplify find_shared_symref() memory ownership model
- + branch: lowercase error messages
- + receive-pack: lowercase error messages
- + fetch: lowercase error messages
+* ab/makefile-msgfmt-wo-stats (2021-12-25) 1 commit
+ - Makefile: don't invoke msgfmt with --statistics
 
- "git fetch" without the "--update-head-ok" option ought to protect
- a checked out branch from getting updated, to prevent the working
- tree that checks it out to go out of sync.  The code was written
- before the use of "git worktree" got widespread, and only checked
- the branch that was checked out in the current worktree, which has
- been updated.
- source: <20211201221547.1796213-1-andersk@mit.edu>
+ Make the recipe that runs msgfmt less noisy.
+
+ Will merge to 'next'.
+ source: <patch-1.1-58408f384e7-20211217T000729Z-avarab@gmail.com>
 
 
-* en/name-rev-shorter-output (2021-12-04) 1 commit
-  (merged to 'next' on 2021-12-10 at ae8ec3912f)
- + name-rev: prefer shorter names over following merges
+* ab/makefile-pager-env-is-used-only-by-pager.c (2021-12-25) 1 commit
+ - Makefile: move -DPAGER_ENV from BASIC_CFLAGS to EXTRA_CPPFLAGS
 
- "git name-rev" has been tweaked to give output that is shorter and
- easier to understand.
- source: <pull.1119.git.git.1636762454792.gitgitgadget@gmail.com>
-
-
-* en/rebase-x-wo-git-dir-env (2021-12-04) 1 commit
-  (merged to 'next' on 2021-12-07 at 44f2663314)
- + sequencer: do not export GIT_DIR and GIT_WORK_TREE for 'exec'
-
- "git rebase -x" by mistake started exporting the GIT_DIR and
- GIT_WORK_TREE environment variables when the command was rewritten
- in C, which has been corrected.
- source: <pull.1134.v3.git.git.1638596219656.gitgitgadget@gmail.com>
-
-
-* es/chainlint (2021-12-13) 15 commits
-  (merged to 'next' on 2021-12-15 at 49b7a37334)
- + chainlint.sed: stop splitting "(..." into separate lines "(" and "..."
- + chainlint.sed: swallow comments consistently
- + chainlint.sed: stop throwing away here-doc tags
- + chainlint.sed: don't mistake `<< word` in string as here-doc operator
- + chainlint.sed: make here-doc "<<-" operator recognition more POSIX-like
- + chainlint.sed: drop subshell-closing ">" annotation
- + chainlint.sed: drop unnecessary distinction between ?!AMP?! and ?!SEMI?!
- + chainlint.sed: tolerate harmless ";" at end of last line in block
- + chainlint.sed: improve ?!SEMI?! placement accuracy
- + chainlint.sed: improve ?!AMP?! placement accuracy
- + t/Makefile: optimize chainlint self-test
- + t/chainlint/one-liner: avoid overly intimate chainlint.sed knowledge
- + t/chainlint/*.test: generalize self-test commentary
- + t/chainlint/*.test: fix invalid test cases due to mixing quote types
- + t/chainlint/*.test: don't use invalid shell syntax
-
- The chainlint test script linter in the test suite has been updated.
- source: <20211213063059.19424-1-sunshine@sunshineco.com>
-
-
-* fs/ssh-signing-key-lifetime (2021-12-09) 9 commits
-  (merged to 'next' on 2021-12-10 at d5e7bd8b79)
- + ssh signing: verify ssh-keygen in test prereq
- + ssh signing: make fmt-merge-msg consider key lifetime
- + ssh signing: make verify-tag consider key lifetime
- + ssh signing: make git log verify key lifetime
- + ssh signing: make verify-commit consider key lifetime
- + ssh signing: add key lifetime test prereqs
- + ssh signing: use sigc struct to pass payload
- + t/fmt-merge-msg: make gpgssh tests more specific
- + t/fmt-merge-msg: do not redirect stderr
-
- Extend the signing of objects with SSH keys and learn to pay
- attention to the key validity time range when verifying.
- source: <20211209085249.13587-1-fs@gigacodes.de>
-
-
-* fs/ssh-signing-other-keytypes (2021-11-19) 2 commits
-  (merged to 'next' on 2021-12-10 at 2d0c8cb8e6)
- + ssh signing: make sign/amend test more resilient
- + ssh signing: support non ssh-* keytypes
-
- The cryptographic signing using ssh keys can specify literal keys
- for keytypes whose name do not begin with the "ssh-" prefix by
- using the "key::" prefix mechanism (e.g. "key::ecdsa-sha2-nistp256").
- source: <20211119150707.3924636-1-fs@gigacodes.de>
-
-
-* jc/c99-var-decl-in-for-loop (2021-12-03) 1 commit
-  (merged to 'next' on 2021-12-03 at 57100223b2)
- + revision: use C99 declaration of variable in for() loop
-
- Weather balloon to find compilers that do not grok variable
- declaration in the for() loop.
- source: <xmqqpmr2j5lq.fsf_-_@gitster.g>
-
-
-* jc/grep-patterntype-default-doc (2021-12-05) 1 commit
-  (merged to 'next' on 2021-12-10 at e46385ad9d)
- + grep: clarify what `grep.patternType=default` means
-
- Doc update.
- source: <xmqqy24ykdel.fsf_-_@gitster.g>
-
-
-* jk/limit-developers-to-gnu99 (2021-12-08) 2 commits
-  (merged to 'next' on 2021-12-15 at 6b40e01445)
- + config.mak.dev: specify -std=gnu99 for gcc/clang
- + Merge branch 'bc/require-c99' into jk/limit-developers-to-gnu99
-
- Enable -std=gnu99 option in DEVELOPER builds.
- source: <YbEMnksMEuAz3Nt0@coredump.intra.peff.net>
-
-
-* jk/log-decorate-opts-with-implicit-decorate (2021-12-01) 2 commits
-  (merged to 'next' on 2021-12-10 at 80585b2755)
- + log: load decorations with --simplify-by-decoration
- + log: handle --decorate-refs with userformat "%d"
-
- When "git log" implicitly enabled the "decoration" processing
- without being explicitly asked with "--decorate" option, it failed
- to read and honor the settings given by the "--decorate-refs"
- option.
- source: <YahbseXEC66dK0k8@coredump.intra.peff.net>
-
-
-* js/scalar (2021-12-04) 15 commits
-  (merged to 'next' on 2021-12-10 at 6248603a80)
- + scalar: implement the `version` command
- + scalar: implement the `delete` command
- + scalar: teach 'reconfigure' to optionally handle all registered enlistments
- + scalar: allow reconfiguring an existing enlistment
- + scalar: implement the `run` command
- + scalar: teach 'clone' to support the --single-branch option
- + scalar: implement the `clone` subcommand
- + scalar: implement 'scalar list'
- + scalar: let 'unregister' handle a deleted enlistment directory gracefully
- + scalar: 'unregister' stops background maintenance
- + scalar: 'register' sets recommended config and starts maintenance
- + scalar: create test infrastructure
- + scalar: start documenting the command
- + scalar: create a rudimentary executable
- + scalar: add a README with a roadmap
-
- Add pieces from "scalar" to contrib/.
- source: <pull.1005.v10.git.1638538470.gitgitgadget@gmail.com>
-
-
-* jz/apply-quiet-and-allow-empty (2021-12-13) 2 commits
-  (merged to 'next' on 2021-12-15 at e3f643eaa3)
- + git-apply: add --allow-empty flag
- + git-apply: add --quiet flag
-
- "git apply" has been taught to ignore a message without a patch
- with the "--allow-empty" option.  It also learned to honor the
- "--quiet" option given from the command line.
- source: <20211213220327.16042-2-jerry@skydio.com>
-
-
-* ld/sparse-diff-blame (2021-12-06) 8 commits
-  (merged to 'next' on 2021-12-10 at 57b89936d6)
- + blame: enable and test the sparse index
- + diff: enable and test the sparse index
- + diff: replace --staged with --cached in t1092 tests
- + repo-settings: prepare_repo_settings only in git repos
- + test-read-cache: set up repo after git directory
- + commit-graph: return if there is no git directory
- + git: ensure correct git directory setup with -h
- + Merge branch 'vd/sparse-reset' into ld/sparse-diff-blame
- (this branch is used by ds/fetch-pull-with-sparse-index.)
-
- Teach diff and blame to work well with sparse index.
- source: <pull.1050.v6.git.1638806161.gitgitgadget@gmail.com>
-
-
-* pw/xdiff-classify-record-in-histogram (2021-12-04) 6 commits
-  (merged to 'next' on 2021-12-07 at 8cdad7bc9a)
- + xdiff: drop unused flags parameter from recs_match
- + xdiff: drop xpparam_t parameter from histogram cmp_recs()
- + xdiff: drop CMP_ENV macro from xhistogram
-  (merged to 'next' on 2021-12-02 at 5ccd12d09b)
- + xdiff: simplify comparison
- + xdiff: avoid unnecessary memory allocations
- + diff histogram: intern strings
-
- "diff --histogram" optimization.
- source: <Yammtm+pIkMu43zZ@coredump.intra.peff.net>
- source: <pull.1079.git.1637148025.gitgitgadget@gmail.com>
+ Will merge to 'next'.
+ source: <patch-1.1-90d1e77ad5e-20211217T001628Z-avarab@gmail.com>
 
 --------------------------------------------------
-[New Topics]
+[Stalled]
+
+* je/http-better-error-output (2021-12-03) 1 commit
+ . http-backend: give a hint that web browser access is not supported
+
+ When the http-backend program, which is the server-side component
+ for the smart HTTP transport, sends a "404 Not found" error, we
+ deliberately did not say anything to the requesting client.  We now
+ send a message back to the browser to tell the user that they do
+ not want to visit the URL via their browser, instead of a totally
+ blank page.
+
+ Expecting a reroll.
+ Breaks its self tests.
+ cf. <7r23s082-o3q0-479o-srqn-r45q778s5nq7@vanv.qr>
+ source: <20211202102855.23907-1-jengelh@inai.de>
+
+
+* cb/save-term-across-editor-invocation (2021-12-01) 3 commits
+ - fixup! editor: allow for saving/restoring terminal state
+ - editor: allow for saving/restoring terminal state
+ - terminal: teach save_term to fail when not foreground
+
+ Some editors are reported to leave the terminal in funny state
+ after they exit on Windows.  Work it around by saving and restoring
+ the terminal state when needed.
+
+ Expecting a reroll.
+ cf. <CAPUEsphktbdxeV7hvF52Or3CVHS8oOk5-WV=xfEZa8kfCVVnVg@mail.gmail.com>
+ source: <20211202035446.1154-1-carenas@gmail.com>
+
+
+* ar/submodule-update (2021-10-13) 9 commits
+ . submodule--helper: rename helper functions
+ . submodule--helper: remove unused helpers
+ . submodule: move core cmd_update() logic to C
+ . submodule--helper: run update using child process struct
+ . submodule--helper: allow setting superprefix for init_submodule()
+ . submodule--helper: refactor get_submodule_displaypath()
+ . submodule--helper: rename helpers for update-clone
+ . submodule--helper: get remote names from any repository
+ . submodule--helper: split up ensure_core_worktree()
+
+ Rewrite of "git submodule update" in C.
+
+ Expecting a reroll?
+ cf. <YWiXL+plA7GHfuVv@google.com>
+ source: <20211013051805.45662-10-raykar.ath@gmail.com>
+
+--------------------------------------------------
+[Cooking]
 
 * ab/do-not-limit-stash-help-to-push (2021-12-16) 1 commit
  - stash: don't show "git stash push" usage on bad "git stash" usage
@@ -272,13 +143,14 @@ Release tarballs are available at:
 
 
 * km/help-prompt-fix (2021-12-16) 1 commit
- - help: make auto-correction prompt more consistent
+  (merged to 'next' on 2021-12-27 at a16d8fa62a)
+ + help: make auto-correction prompt more consistent
 
  Among some code paths that ask an yes/no question, only one place
  gave a prompt that looked different from the others, which has been
  updated to match what the others create.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <xmqqy24k8c0j.fsf@gitster.g>
 
 
@@ -306,11 +178,12 @@ Release tarballs are available at:
 
 
 * jc/t4204-do-not-write-git-on-upstream-of-pipe (2021-12-16) 1 commit
- - t4204 is not sanitizer clean at all
+  (merged to 'next' on 2021-12-27 at dc2c5db807)
+ + t4204 is not sanitizer clean at all
 
  Test fixes.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <xmqqtuf86t7z.fsf_-_@gitster.g>
 
 
@@ -326,32 +199,35 @@ Release tarballs are available at:
 
 
 * ds/repack-fixlets (2021-12-20) 2 commits
- - repack: make '--quiet' disable progress
- - repack: respect kept objects with '--write-midx -b'
+  (merged to 'next' on 2021-12-27 at 8f8474ae84)
+ + repack: make '--quiet' disable progress
+ + repack: respect kept objects with '--write-midx -b'
 
  Two fixes around "git repack".
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1098.v2.git.1640011691.gitgitgadget@gmail.com>
 
 
 * gh/gpg-doc-markup-fix (2021-12-17) 1 commit
- - docs: add missing colon to Documentation/config/gpg.txt
+  (merged to 'next' on 2021-12-27 at 7988d71a27)
+ + docs: add missing colon to Documentation/config/gpg.txt
 
  Doc markup fix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20211217161718.15767-1-greg@hurrell.net>
 
 
 * jc/merge-detached-head-name (2021-12-20) 1 commit
- - merge: allow to pretend a merge is made into a different branch
+  (merged to 'next' on 2021-12-27 at 01f9fe17b9)
+ + merge: allow to pretend a merge is made into a different branch
 
  The default merge message prepared by "git merge" records the name
  of the current branch; the name can be overridden with a new option
  to allow users to pretend a merge is made on a different branch.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <xmqqee66ubuw.fsf_-_@gitster.g>
 
 
@@ -373,7 +249,7 @@ Release tarballs are available at:
  application in more cases to address the regression caused by the
  recent change to use direct application as a fallback.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20211217224328.7646-1-jerry@skydio.com>
 
 
@@ -389,43 +265,47 @@ Release tarballs are available at:
 
 
 * rs/daemon-plug-leak (2021-12-20) 1 commit
- - daemon: plug memory leak on overlong path
+  (merged to 'next' on 2021-12-27 at 55b058a8bb)
+ + daemon: plug memory leak on overlong path
 
  Plug a memory leak.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <5b151dc3-d4c7-29d3-71ed-a79033693d5d@web.de>
 
 
 * rs/log-invert-grep-with-headers (2021-12-17) 1 commit
- - log: let --invert-grep only invert --grep
+  (merged to 'next' on 2021-12-27 at 861648fe8c)
+ + log: let --invert-grep only invert --grep
 
  "git log --invert-grep --author=<name>" used to exclude commits
  written by the given author, but now "--invert-grep" only affects
  the matches made by the "--grep=<pattern>" option.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <xmqqee6cbalb.fsf@gitster.g>
 
 
 * rs/pcre2-utf (2021-12-20) 2 commits
- - grep/pcre2: factor out literal variable
- - grep/pcre2: use PCRE2_UTF even with ASCII patterns
+  (merged to 'next' on 2021-12-27 at 5dc740c331)
+ + grep/pcre2: factor out literal variable
+ + grep/pcre2: use PCRE2_UTF even with ASCII patterns
 
  "git grep --perl-regexp" failed to match UTF-8 characters with
  wildcard when the pattern consists only of ASCII letters, which has
  been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <5fa6962e-3c1c-6dbc-f6d7-589151a9baec@web.de>
 
 
 * rs/t4202-invert-grep-test-fix (2021-12-17) 1 commit
- - t4202: fix patternType setting in --invert-grep test
+  (merged to 'next' on 2021-12-27 at b09cee1626)
+ + t4202: fix patternType setting in --invert-grep test
 
  Test fix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <79dcebc0-e569-cc8a-4702-c572b062ed6d@web.de>
 
 
@@ -444,25 +324,21 @@ Release tarballs are available at:
  source: <pull.1101.v2.git.1640114048.gitgitgadget@gmail.com>
 
 
-* en/remerge-diff (2021-12-21) 10 commits
- - doc/diff-options: explain the new --remerge-diff option
- - show, log: provide a --remerge-diff capability
- - merge-ort: format messages slightly different for use in headers
+* en/remerge-diff (2021-12-25) 9 commits
+ - show, log: include conflict/warning messages in --remerge-diff headers
  - diff: add ability to insert additional headers for paths
- - merge-ort: make path_messages available to external callers
+ - merge-ort: format messages slightly different for use in headers
  - merge-ort: mark a few more conflict messages as omittable
  - merge-ort: capture and print ll-merge warnings in our preferred fashion
  - ll-merge: make callers responsible for showing warnings
- - tmp_objdir: add a helper function for discarding all contained objects
+ - log: clean unneeded objects during `log --remerge-diff`
+ - show, log: provide a --remerge-diff capability
  - Merge branch 'ns/tmp-objdir' into en/remerge-diff
  (this branch uses ns/tmp-objdir.)
 
  "git log --remerge-diff" shows the difference from mechanical merge
  result and the merge result that is actually recorded.
-
- Expecting a reroll.
- cf. <xmqqa6gto74z.fsf@gitster.g>
- source: <pull.1103.git.1640109948.gitgitgadget@gmail.com>
+ source: <pull.1103.v2.git.1640419159.gitgitgadget@gmail.com>
 
 
 * gc/fetch-negotiate-only-early-return (2021-12-21) 3 commits
@@ -495,14 +371,14 @@ Release tarballs are available at:
  source: <pull.1167.git.git.1640092500725.gitgitgadget@gmail.com>
 
 
-* ja/perf-use-specified-shell (2021-12-21) 1 commit
+* ja/perf-use-specified-shell (2021-12-25) 1 commit
  - t/perf: do not run tests in user's $SHELL
 
  Perf tests were run with end-user's shell, but it has been
  corrected to use the shell specified by $TEST_SHELL_PATH.
 
  Will merge to 'next'.
- source: <f22f978a-26eb-8fe9-cab4-3fd60df69635@web.de>
+ source: <20211225081656.1311583-1-aclopte@gmail.com>
 
 
 * js/l10n-mention-ngettext-early-in-readme (2021-12-21) 1 commit
@@ -573,88 +449,40 @@ Release tarballs are available at:
  Will merge to 'next'.
  source: <pull.1164.git.git.1640287790.gitgitgadget@gmail.com>
 
---------------------------------------------------
-[Stalled]
-
-* je/http-better-error-output (2021-12-03) 1 commit
- . http-backend: give a hint that web browser access is not supported
-
- When the http-backend program, which is the server-side component
- for the smart HTTP transport, sends a "404 Not found" error, we
- deliberately did not say anything to the requesting client.  We now
- send a message back to the browser to tell the user that they do
- not want to visit the URL via their browser, instead of a totally
- blank page.
-
- Expecting a reroll.
- Breaks its self tests.
- cf. <7r23s082-o3q0-479o-srqn-r45q778s5nq7@vanv.qr>
- source: <20211202102855.23907-1-jengelh@inai.de>
-
-
-* cb/save-term-across-editor-invocation (2021-12-01) 3 commits
- - fixup! editor: allow for saving/restoring terminal state
- - editor: allow for saving/restoring terminal state
- - terminal: teach save_term to fail when not foreground
-
- Some editors are reported to leave the terminal in funny state
- after they exit on Windows.  Work it around by saving and restoring
- the terminal state when needed.
-
- Expecting a reroll.
- cf. <CAPUEsphktbdxeV7hvF52Or3CVHS8oOk5-WV=xfEZa8kfCVVnVg@mail.gmail.com>
- source: <20211202035446.1154-1-carenas@gmail.com>
-
-
-* ar/submodule-update (2021-10-13) 9 commits
- . submodule--helper: rename helper functions
- . submodule--helper: remove unused helpers
- . submodule: move core cmd_update() logic to C
- . submodule--helper: run update using child process struct
- . submodule--helper: allow setting superprefix for init_submodule()
- . submodule--helper: refactor get_submodule_displaypath()
- . submodule--helper: rename helpers for update-clone
- . submodule--helper: get remote names from any repository
- . submodule--helper: split up ensure_core_worktree()
-
- Rewrite of "git submodule update" in C.
-
- Expecting a reroll?
- cf. <YWiXL+plA7GHfuVv@google.com>
- source: <20211013051805.45662-10-raykar.ath@gmail.com>
-
---------------------------------------------------
-[Cooking]
 
 * jh/p4-rcs-expansion-in-bytestring (2021-12-16) 5 commits
- - git-p4: resolve RCS keywords in bytes not utf-8
- - git-p4: open temporary patch file for write only
- - git-p4: add raw option to read_pipelines
- - git-p4: pre-compile RCS keyword regexes
- - git-p4: use with statements to close files after use in patchRCSKeywords
+  (merged to 'next' on 2021-12-27 at 650cb248ea)
+ + git-p4: resolve RCS keywords in bytes not utf-8
+ + git-p4: open temporary patch file for write only
+ + git-p4: add raw option to read_pipelines
+ + git-p4: pre-compile RCS keyword regexes
+ + git-p4: use with statements to close files after use in patchRCSKeywords
 
  The RCS keyword substitution in "git p4" used to be done assuming
  that the contents are UTF-8 text, which can trigger decoding
  errors.  We now treat the contents as a bytestring for robustness
  and correctness.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20211216134619.2048348-1-jholdsworth@nvidia.com>
 
 
-* ds/sparse-checkout-malformed-pattern-fix (2021-12-16) 3 commits
- - sparse-checkout: refuse to add to bad patterns
- - sparse-checkout: fix OOM error with mixed patterns
- - sparse-checkout: fix segfault on malformed patterns
+* ds/sparse-checkout-malformed-pattern-fix (2021-12-25) 4 commits
+  (merged to 'next' on 2021-12-27 at c410caf527)
+ + fixup! sparse-checkout: fix OOM error with mixed patterns
+ + sparse-checkout: refuse to add to bad patterns
+ + sparse-checkout: fix OOM error with mixed patterns
+ + sparse-checkout: fix segfault on malformed patterns
 
  Certain sparse-checkout patterns that are valid in non-cone mode
  led to segfault in cone mode, which has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1069.v4.git.1639671222.gitgitgadget@gmail.com>
 
 
-* gc/branch-recurse-submodules (2021-12-20) 6 commits
+* gc/branch-recurse-submodules (2021-12-25) 7 commits
+ - fixup! branch: add --recurse-submodules option for branch creation
  - branch: add --recurse-submodules option for branch creation
  - builtin/branch: clean up action-picking logic in cmd_branch()
  - branch: add a dry_run parameter to create_branch()
@@ -670,27 +498,30 @@ Release tarballs are available at:
 
 
 * jk/ssh-signing-doc-markup-fix (2021-12-15) 1 commit
- - doc/config: mark ssh allowedSigners example as literal
+  (merged to 'next' on 2021-12-27 at 2188dc2023)
+ + doc/config: mark ssh allowedSigners example as literal
 
  Docfix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <YboWlOG3vZD/7Osx@coredump.intra.peff.net>
 
 
 * jv/use-larger-buffer-in-upload-pack (2021-12-15) 1 commit
- - upload-pack.c: increase output buffer size
+  (merged to 'next' on 2021-12-27 at 3a1afc1ef8)
+ + upload-pack.c: increase output buffer size
 
  "git upload-pack" (the other side of "git fetch") used a 8kB buffer
  but most of its payload came on 64kB "packets".  The buffer size
  has been enlarged so that such a packet fits.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20211214194626.33814-1-jacob@gitlab.com>
 
 
 * en/sparse-checkout-set (2021-12-23) 11 commits
- - sparse-checkout: remove stray trailing space
+  (merged to 'next' on 2021-12-25 at 510f9eba9a)
+ + sparse-checkout: remove stray trailing space
   (merged to 'next' on 2021-12-21 at 36a98aed11)
  + clone: avoid using deprecated `sparse-checkout init`
  + Documentation: clarify/correct a few sparsity related statements
@@ -706,7 +537,7 @@ Release tarballs are available at:
  The "init" and "set" subcommands in "git sparse-checkout" have been
  unified for a better user experience and performance.
 
- Will merge to 'next' and then to 'master'.
+ Will merge to 'master'.
  source: <pull.1151.v4.git.git.1639454952.gitgitgadget@gmail.com>
 
 
@@ -785,13 +616,14 @@ Release tarballs are available at:
 
 
 * jc/flex-array-definition (2021-12-08) 1 commit
- - flex-array: simplify compiler-specific workaround
+  (merged to 'next' on 2021-12-27 at 9db6a814b7)
+ + flex-array: simplify compiler-specific workaround
 
  The conditions to choose different definitions of the FLEX_ARRAY
  macro for vendor compilers has been simplified to make it easier to
  maintain.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <xmqqee6mv9no.fsf@gitster.g>
 
 
@@ -852,11 +684,12 @@ Release tarballs are available at:
 
  Code clean-up to hide vreportf() from public API.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <cover-v2-0.6-00000000000-20211207T182419Z-avarab@gmail.com>
 
 
-* ab/cat-file (2021-12-22) 10 commits
+* ab/cat-file (2021-12-25) 11 commits
+ - fixup! cat-file: fix remaining usage bugs
  - cat-file: use GET_OID_ONLY_TO_DIE in --(textconv|filters)
  - object-name.c: don't have GET_OID_ONLY_TO_DIE imply *_QUIETLY
  - cat-file: correct and improve usage information
@@ -874,19 +707,20 @@ Release tarballs are available at:
  source: <cover-v5-00.10-00000000000-20211222T041050Z-avarab@gmail.com>
 
 
-* ab/grep-patterntype (2021-12-22) 7 commits
+* ab/grep-patterntype (2021-12-27) 8 commits
  - grep: simplify config parsing and option parsing
  - grep API: call grep_config() after grep_init()
  - grep.c: don't pass along NULL callback value
  - built-ins: trust the "prefix" from run_builtin()
- - grep tests: add missing "grep.patternType" config test
+ - fixup! grep tests: add missing "grep.patternType" config tests
+ - grep tests: add missing "grep.patternType" config tests
  - log tests: check if grep_config() is called by "log"-like cmds
  - grep.h: remove unused "regex_t regexp" from grep_opt
 
  Some code clean-up in the "git grep" machinery.
 
- Needs review.
- source: <cover-v5-0.7-00000000000-20211222T025214Z-avarab@gmail.com>
+ The last step is still broken; earlier clean-ups may still be worth keeping.
+ source: <cover-v6-0.7-00000000000-20211226T223035Z-avarab@gmail.com>
 
 
 * js/use-builtin-add-i (2021-12-01) 2 commits
@@ -975,17 +809,18 @@ Release tarballs are available at:
 
 
 * en/keep-cwd (2021-12-09) 11 commits
- - t2501: simplify the tests since we can now assume desired behavior
- - dir: new flag to remove_dir_recurse() to spare the original_cwd
- - dir: avoid incidentally removing the original_cwd in remove_path()
- - stash: do not attempt to remove startup_info->original_cwd
- - rebase: do not attempt to remove startup_info->original_cwd
- - clean: do not attempt to remove startup_info->original_cwd
- - symlinks: do not include startup_info->original_cwd in dir removal
- - unpack-trees: add special cwd handling
- - unpack-trees: refuse to remove startup_info->original_cwd
- - setup: introduce startup_info->original_cwd
- - t2501: add various tests for removing the current working directory
+  (merged to 'next' on 2021-12-27 at 7cd8f7fdc0)
+ + t2501: simplify the tests since we can now assume desired behavior
+ + dir: new flag to remove_dir_recurse() to spare the original_cwd
+ + dir: avoid incidentally removing the original_cwd in remove_path()
+ + stash: do not attempt to remove startup_info->original_cwd
+ + rebase: do not attempt to remove startup_info->original_cwd
+ + clean: do not attempt to remove startup_info->original_cwd
+ + symlinks: do not include startup_info->original_cwd in dir removal
+ + unpack-trees: add special cwd handling
+ + unpack-trees: refuse to remove startup_info->original_cwd
+ + setup: introduce startup_info->original_cwd
+ + t2501: add various tests for removing the current working directory
 
  Many git commands that deal with working tree files try to remove a
  directory that becomes empty (i.e. "git switch" from a branch that
@@ -996,7 +831,7 @@ Release tarballs are available at:
  The commands have been taught to keep an empty directory if it is
  the directory they were started in to avoid surprising users.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1140.v6.git.git.1639026515.gitgitgadget@gmail.com>
 
 
@@ -1024,37 +859,39 @@ Release tarballs are available at:
 
 
 * xw/am-empty (2021-12-15) 3 commits
- - am: support --allow-empty to record specific empty patches
- - am: support --empty=<option> to handle empty patches
- - doc: git-format-patch: describe the option --always
+  (merged to 'next' on 2021-12-27 at 562e1552f6)
+ + am: support --allow-empty to record specific empty patches
+ + am: support --empty=<option> to handle empty patches
+ + doc: git-format-patch: describe the option --always
 
  "git am" learns "--empty=(stop|drop|keep)" option to tweak what is
  done to a piece of e-mail without a patch in it.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1076.v19.git.1639034755.gitgitgadget@gmail.com>
 
 
 * pw/diff-color-moved-fix (2021-12-09) 15 commits
- - diff --color-moved: intern strings
- - diff: use designated initializers for emitted_diff_symbol
- - diff --color-moved-ws=allow-indentation-change: improve hash lookups
- - diff --color-moved: stop clearing potential moved blocks
- - diff --color-moved: shrink potential moved blocks as we go
- - diff --color-moved: unify moved block growth functions
- - diff --color-moved: call comparison function directly
- - diff --color-moved-ws=allow-indentation-change: simplify and optimize
- - diff: simplify allow-indentation-change delta calculation
- - diff --color-moved: avoid false short line matches and bad zebra coloring
- - diff --color-moved=zebra: fix alternate coloring
- - diff --color-moved: rewind when discarding pmb
- - diff --color-moved: factor out function
- - diff --color-moved: clear all flags on blocks that are too short
- - diff --color-moved: add perf tests
+  (merged to 'next' on 2021-12-27 at 443dd9f97f)
+ + diff --color-moved: intern strings
+ + diff: use designated initializers for emitted_diff_symbol
+ + diff --color-moved-ws=allow-indentation-change: improve hash lookups
+ + diff --color-moved: stop clearing potential moved blocks
+ + diff --color-moved: shrink potential moved blocks as we go
+ + diff --color-moved: unify moved block growth functions
+ + diff --color-moved: call comparison function directly
+ + diff --color-moved-ws=allow-indentation-change: simplify and optimize
+ + diff: simplify allow-indentation-change delta calculation
+ + diff --color-moved: avoid false short line matches and bad zebra coloring
+ + diff --color-moved=zebra: fix alternate coloring
+ + diff --color-moved: rewind when discarding pmb
+ + diff --color-moved: factor out function
+ + diff --color-moved: clear all flags on blocks that are too short
+ + diff --color-moved: add perf tests
 
  Correctness and performance update to "diff --color-moved" feature.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.981.v5.git.1639045809.gitgitgadget@gmail.com>
 
 
@@ -1108,11 +945,13 @@ Release tarballs are available at:
  to have the same upstream as the "old" branch, instead of marking
  "old" itself as its upstream.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <cover.1640039978.git.steadmon@google.com>
 
 
-* jh/builtin-fsmonitor-part2 (2021-10-21) 29 commits
+* jh/builtin-fsmonitor-part2 (2021-12-25) 31 commits
+ - fixup! t7527: create test for fsmonitor--daemon
+ - fixup! t/perf/p7519: speed up test on Windows
  - t7527: test status with untracked-cache and fsmonitor--daemon
  - fsmonitor: force update index after large responses
  - fsmonitor--daemon: use a cookie file to sync with file system
@@ -1200,8 +1039,9 @@ Release tarballs are available at:
 --------------------------------------------------
 [Discarded]
 
-* ms/customizable-ident-expansion (2021-09-01) 1 commit
- - keyword expansion: make "$Id$" string configurable
+* ms/customizable-ident-expansion (2021-12-25) 2 commits
+ . fixup! keyword expansion: make "$Id$" string configurable
+ . keyword expansion: make "$Id$" string configurable
 
  Instead of "$Id$", user-specified string (like $FreeBSD$) can be
  used as an in-blob placeholder for keyword expansion.
