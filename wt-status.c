@@ -1218,17 +1218,23 @@ static void show_merge_in_progress(struct wt_status *s,
 static void show_am_in_progress(struct wt_status *s,
 				const char *color)
 {
+	int am_empty_patch;
+
 	status_printf_ln(s, color,
 		_("You are in the middle of an am session."));
 	if (s->state.am_empty_patch)
 		status_printf_ln(s, color,
 			_("The current patch is empty."));
 	if (s->hints) {
-		if (!s->state.am_empty_patch)
+		am_empty_patch = s->state.am_empty_patch;
+		if (!am_empty_patch)
 			status_printf_ln(s, color,
 				_("  (fix conflicts and then run \"git am --continue\")"));
 		status_printf_ln(s, color,
 			_("  (use \"git am --skip\" to skip this patch)"));
+		if (am_empty_patch)
+			status_printf_ln(s, color,
+				_("  (use \"git am --allow-empty\" to record this patch as an empty commit)"));
 		status_printf_ln(s, color,
 			_("  (use \"git am --abort\" to restore the original branch)"));
 	}

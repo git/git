@@ -16,8 +16,9 @@ SYNOPSIS
 	 [--exclude=<path>] [--include=<path>] [--reject] [-q | --quiet]
 	 [--[no-]scissors] [-S[<keyid>]] [--patch-format=<format>]
 	 [--quoted-cr=<action>]
+	 [--empty=(stop|drop|keep)]
 	 [(<mbox> | <Maildir>)...]
-'git am' (--continue | --skip | --abort | --quit | --show-current-patch[=(diff|raw)])
+'git am' (--continue | --skip | --abort | --quit | --show-current-patch[=(diff|raw)] | --allow-empty)
 
 DESCRIPTION
 -----------
@@ -62,6 +63,14 @@ OPTIONS
 
 --quoted-cr=<action>::
 	This flag will be passed down to 'git mailinfo' (see linkgit:git-mailinfo[1]).
+
+--empty=(stop|drop|keep)::
+	By default, or when the option is set to 'stop', the command
+	errors out on an input e-mail message lacking a patch
+	and stops into the middle of the current am session. When this
+	option is set to 'drop', skip such an e-mail message instead.
+	When this option is set to 'keep', create an empty commit,
+	recording the contents of the e-mail message as its log.
 
 -m::
 --message-id::
@@ -190,6 +199,11 @@ default.   You can use `--no-utf8` to override this.
 	conflicts.  If `raw` is specified, show the raw contents of
 	the e-mail message; if `diff`, show the diff portion only.
 	Defaults to `raw`.
+
+--allow-empty::
+	After a patch failure on an input e-mail message lacking a patch,
+	create an empty commit with the contents of the e-mail message
+	as its log message.
 
 DISCUSSION
 ----------
