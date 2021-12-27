@@ -111,6 +111,18 @@ test_expect_success 'clone --sparse' '
 	check_files clone a
 '
 
+test_expect_success 'switching to cone mode with non-cone mode patterns' '
+	git init bad-patterns &&
+	(
+		cd bad-patterns &&
+		git sparse-checkout init &&
+		git sparse-checkout add dir &&
+		git config --worktree core.sparseCheckoutCone true &&
+		test_must_fail git sparse-checkout add dir 2>err &&
+		grep "existing sparse-checkout patterns do not use cone mode" err
+	)
+'
+
 test_expect_success 'interaction with clone --no-checkout (unborn index)' '
 	git clone --no-checkout "file://$(pwd)/repo" clone_no_checkout &&
 	git -C clone_no_checkout sparse-checkout init --cone &&
@@ -173,12 +185,14 @@ test_expect_success 'set sparse-checkout using --stdin' '
 '
 
 test_expect_success 'add to sparse-checkout' '
-	cat repo/.git/info/sparse-checkout >expect &&
+	cat repo/.git/info/sparse-checkout >old &&
+	test_when_finished cp old repo/.git/info/sparse-checkout &&
 	cat >add <<-\EOF &&
 	pattern1
 	/folder1/
 	pattern2
 	EOF
+	cat old >expect &&
 	cat add >>expect &&
 	git -C repo sparse-checkout add --stdin <add &&
 	git -C repo sparse-checkout list >actual &&
@@ -714,6 +728,27 @@ test_expect_success 'cone mode clears ignored subdirectories' '
 	git -C repo status --porcelain=v2 >out &&
 	echo "? deep/deeper2/untracked" >expect &&
 	test_cmp expect out
+'
+
+test_expect_success 'malformed cone-mode patterns' '
+	git -C repo sparse-checkout init --cone &&
+	mkdir -p repo/foo/bar &&
+	touch repo/foo/bar/x repo/foo/y &&
+	cat >repo/.git/info/sparse-checkout <<-\EOF &&
+	/*
+	!/*/
+	/foo/
+	!/foo/*/
+	/foo/\*/
+	EOF
+
+	# Listing the patterns will notice the duplicate pattern and
+	# emit a warning. It will list the patterns directly instead
+	# of using the cone-mode translation to a set of directories.
+	git -C repo sparse-checkout list >actual 2>err &&
+	test_cmp repo/.git/info/sparse-checkout actual &&
+	grep "warning: your sparse-checkout file may have issues: pattern .* is repeated" err &&
+	grep "warning: disabling cone pattern matching" err
 '
 
 test_done
