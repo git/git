@@ -9,7 +9,7 @@ git-fmt-merge-msg - Produce a merge commit message
 SYNOPSIS
 --------
 [verse]
-'git fmt-merge-msg' [-m <message>] [--log[=<n>] | --no-log]
+'git fmt-merge-msg' [-m <message>] [--into-name <branch>] [--log[=<n>] | --no-log]
 'git fmt-merge-msg' [-m <message>] [--log[=<n>] | --no-log] -F <file>
 
 DESCRIPTION
@@ -43,6 +43,10 @@ OPTIONS
 --message <message>::
 	Use <message> instead of the branch names for the first line
 	of the log message.  For use with `--log`.
+
+--into-name <branch>::
+	Prepare the merge message as if merging to the branch `<branch>`,
+	instead of the name of the real branch to which the merge is made.
 
 -F <file>::
 --file <file>::

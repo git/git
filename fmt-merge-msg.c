@@ -650,12 +650,15 @@ int fmt_merge_msg(struct strbuf *in, struct strbuf *out,
 
 	memset(&merge_parents, 0, sizeof(merge_parents));
 
-	/* get current branch */
+	/* learn the commit that we merge into and the current branch name */
 	current_branch = current_branch_to_free =
 		resolve_refdup("HEAD", RESOLVE_REF_READING, &head_oid, NULL);
 	if (!current_branch)
 		die("No current branch");
-	if (starts_with(current_branch, "refs/heads/"))
+
+	if (opts->into_name)
+		current_branch = opts->into_name;
+	else if (starts_with(current_branch, "refs/heads/"))
 		current_branch += 11;
 
 	find_merge_parents(&merge_parents, in, &head_oid);
