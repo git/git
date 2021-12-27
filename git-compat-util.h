@@ -46,14 +46,23 @@
 /*
  * See if our compiler is known to support flexible array members.
  */
-#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) && (!defined(__SUNPRO_C) || (__SUNPRO_C > 0x580))
-# define FLEX_ARRAY /* empty */
+
+/*
+ * Check vendor specific quirks first, before checking the
+ * __STDC_VERSION__, as vendor compilers can lie and we need to be
+ * able to work them around.  Note that by not defining FLEX_ARRAY
+ * here, we can fall back to use the "safer but a bit wasteful" one
+ * later.
+ */
+#if defined(__SUNPRO_C) && (__SUNPRO_C <= 0x580)
 #elif defined(__GNUC__)
 # if (__GNUC__ >= 3)
 #  define FLEX_ARRAY /* empty */
 # else
 #  define FLEX_ARRAY 0 /* older GNU extension */
 # endif
+#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
+# define FLEX_ARRAY /* empty */
 #endif
 
 /*
