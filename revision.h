@@ -246,8 +246,6 @@ struct rev_info {
 
 	/* Filter by commit log message */
 	struct grep_opt	grep_filter;
-	/* Negate the match of grep_filter */
-	int invert_grep;
 
 	/* Display history graph */
 	struct git_graph *graph;
