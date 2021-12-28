@@ -14,7 +14,8 @@ for switches in \
 	'-p -t' \
 	'-t -s' \
 	'-s --textconv' \
-	'--textconv --filters'
+	'--textconv --filters' \
+	'--batch-all-objects -e'
 do
 	test_expect_success "usage: cmdmode $switches" '
 		test_cmdmode_usage git cat-file $switches
@@ -40,10 +41,6 @@ for opt in $cw_modes
 do
 	test_expect_success "usage: $opt requires another option" '
 		test_expect_code 129 git cat-file $opt
-	'
-
-	test_expect_failure "usage: incompatible options: --batch-all-objects with $opt" '
-		test_incompatible_usage git cat-file --batch-all-objects $opt
 	'
 done
 
