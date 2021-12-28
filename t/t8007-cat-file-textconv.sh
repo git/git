@@ -29,7 +29,7 @@ test_expect_success 'usage: <bad rev>' '
 
 test_expect_success 'usage: <bad rev>:<bad path>' '
 	cat >expect <<-\EOF &&
-	fatal: Not a valid object name HEAD2:two.bin
+	fatal: invalid object name '\''HEAD2'\''.
 	EOF
 	test_must_fail git cat-file --textconv HEAD2:two.bin 2>actual &&
 	test_cmp expect actual
@@ -37,7 +37,7 @@ test_expect_success 'usage: <bad rev>:<bad path>' '
 
 test_expect_success 'usage: <rev>:<bad path>' '
 	cat >expect <<-\EOF &&
-	fatal: Not a valid object name HEAD:two.bin
+	fatal: path '\''two.bin'\'' does not exist in '\''HEAD'\''
 	EOF
 	test_must_fail git cat-file --textconv HEAD:two.bin 2>actual &&
 	test_cmp expect actual
@@ -46,7 +46,7 @@ test_expect_success 'usage: <rev>:<bad path>' '
 
 test_expect_success 'usage: <rev> with no <path>' '
 	cat >expect <<-\EOF &&
-	fatal: git cat-file --textconv HEAD: <object> must be <sha1:path>
+	fatal: <object>:<path> required, only <object> '\''HEAD'\'' given
 	EOF
 	test_must_fail git cat-file --textconv HEAD 2>actual &&
 	test_cmp expect actual
@@ -55,7 +55,7 @@ test_expect_success 'usage: <rev> with no <path>' '
 
 test_expect_success 'usage: <bad rev>:<good (in HEAD) path>' '
 	cat >expect <<-\EOF &&
-	fatal: Not a valid object name HEAD2:one.bin
+	fatal: invalid object name '\''HEAD2'\''.
 	EOF
 	test_must_fail git cat-file --textconv HEAD2:one.bin 2>actual &&
 	test_cmp expect actual

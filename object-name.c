@@ -1799,6 +1799,9 @@ static enum get_oid_result get_oid_with_context_1(struct repository *repo,
 	oc->mode = S_IFINVALID;
 	strbuf_init(&oc->symlink_path, 0);
 	ret = get_oid_1(repo, name, namelen, oid, flags);
+	if (!ret && flags & GET_OID_REQUIRE_PATH)
+		die(_("<object>:<path> required, only <object> '%s' given"),
+		    name);
 	if (!ret)
 		return ret;
 	/*
