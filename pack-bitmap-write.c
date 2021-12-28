@@ -544,14 +544,14 @@ void bitmap_writer_select_commits(struct commit **indexed_commits,
 
 	QSORT(indexed_commits, indexed_commits_nr, date_compare);
 
-	if (writer.show_progress)
-		writer.progress = start_progress("Selecting bitmap commits", 0);
-
 	if (indexed_commits_nr < 100) {
 		for (i = 0; i < indexed_commits_nr; ++i)
 			push_bitmapped_commit(indexed_commits[i]);
 		return;
 	}
+
+	if (writer.show_progress)
+		writer.progress = start_progress("Selecting bitmap commits", 0);
 
 	for (;;) {
 		struct commit *chosen = NULL;
