@@ -3,12 +3,11 @@
 #include "tree-walk.h"
 #include "xdiff-interface.h"
 #include "object-store.h"
+#include "parse-options.h"
 #include "repository.h"
 #include "blob.h"
 #include "exec-cmd.h"
 #include "merge-blobs.h"
-
-static const char merge_tree_usage[] = "git merge-tree <base-tree> <branch1> <branch2>";
 
 struct merge_list {
 	struct merge_list *next;
@@ -366,15 +365,17 @@ static void *get_tree_descriptor(struct repository *r,
 	return buf;
 }
 
-static int trivial_merge(int argc, const char **argv)
+static int trivial_merge(const char *base,
+			 const char *branch1,
+			 const char *branch2)
 {
 	struct repository *r = the_repository;
 	struct tree_desc t[3];
 	void *buf1, *buf2, *buf3;
 
-	buf1 = get_tree_descriptor(r, t+0, argv[1]);
-	buf2 = get_tree_descriptor(r, t+1, argv[2]);
-	buf3 = get_tree_descriptor(r, t+2, argv[3]);
+	buf1 = get_tree_descriptor(r, t+0, base);
+	buf2 = get_tree_descriptor(r, t+1, branch1);
+	buf3 = get_tree_descriptor(r, t+2, branch2);
 	trivial_merge_trees(t, "");
 	free(buf1);
 	free(buf2);
@@ -384,9 +385,57 @@ static int trivial_merge(int argc, const char **argv)
 	return 0;
 }
 
+struct merge_tree_options {
+	int real;
+	int trivial;
+};
+
+static int real_merge(struct merge_tree_options *o,
+		      const char *branch1, const char *branch2)
+{
+	die(_("real merges are not yet implemented"));
+}
+
 int cmd_merge_tree(int argc, const char **argv, const char *prefix)
 {
-	if (argc != 4)
-		usage(merge_tree_usage);
-	return trivial_merge(argc, argv);
+	struct merge_tree_options o = { 0 };
+	int expected_remaining_argc;
+
+	const char * const merge_tree_usage[] = {
+		N_("git merge-tree [--write-tree] <branch1> <branch2>"),
+		N_("git merge-tree [--trivial-merge] <base-tree> <branch1> <branch2>"),
+		NULL
+	};
+	struct option mt_options[] = {
+		OPT_BOOL(0, "write-tree", &o.real,
+			 N_("do a real merge instead of a trivial merge")),
+		OPT_BOOL(0, "trivial-merge", &o.trivial,
+			 N_("do a trivial merge only")),
+		OPT_END()
+	};
+
+	/* Check for a request for basic help */
+	if (argc == 2 && !strcmp(argv[1], "-h"))
+		usage_with_options(merge_tree_usage, mt_options);
+
+	/* Parse arguments */
+	argc = parse_options(argc, argv, prefix, mt_options,
+			     merge_tree_usage, 0);
+	if (o.real && o.trivial)
+		die(_("--write-tree and --trivial-merge are incompatible"));
+	if (o.real || o.trivial) {
+		expected_remaining_argc = (o.real ? 2 : 3);
+		if (argc != expected_remaining_argc)
+			usage_with_options(merge_tree_usage, mt_options);
+	} else {
+		if (argc < 2 || argc > 3)
+			usage_with_options(merge_tree_usage, mt_options);
+		o.real = (argc == 2);
+	}
+
+	/* Do the relevant type of merge */
+	if (o.real)
+		return real_merge(&o, argv[0], argv[1]);
+	else
+		return trivial_merge(argv[0], argv[1], argv[2]);
 }
