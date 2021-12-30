@@ -852,7 +852,7 @@ int log_tree_diff_flush(struct rev_info *opt)
 	opt->shown_dashes = 0;
 	diffcore_std(&opt->diffopt);
 
-	if (diff_queue_is_empty()) {
+	if (diff_queue_is_empty(&opt->diffopt)) {
 		int saved_fmt = opt->diffopt.output_format;
 		opt->diffopt.output_format = DIFF_FORMAT_NO_OUTPUT;
 		diff_flush(&opt->diffopt);
