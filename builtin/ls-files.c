@@ -37,6 +37,7 @@ static int debug_mode;
 static int show_eol;
 static int recurse_submodules;
 static int skipping_duplicates;
+static int show_sparse_dirs;
 
 static const char *prefix;
 static int max_prefix_len;
@@ -315,8 +316,10 @@ static void show_files(struct repository *repo, struct dir_struct *dir)
 
 	if (!(show_cached || show_stage || show_deleted || show_modified))
 		return;
-	/* TODO: audit for interaction with sparse-index. */
-	ensure_full_index(repo->index);
+
+	if (!show_sparse_dirs)
+		ensure_full_index(repo->index);
+
 	for (i = 0; i < repo->index->cache_nr; i++) {
 		const struct cache_entry *ce = repo->index->cache[i];
 		struct stat st;
@@ -670,12 +673,17 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 		OPT_BOOL(0, "debug", &debug_mode, N_("show debugging data")),
 		OPT_BOOL(0, "deduplicate", &skipping_duplicates,
 			 N_("suppress duplicate entries")),
+		OPT_BOOL(0, "sparse", &show_sparse_dirs,
+			 N_("show sparse directories in the presence of a sparse index")),
 		OPT_END()
 	};
 	int ret = 0;
 
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage_with_options(ls_files_usage, builtin_ls_files_options);
+
+	prepare_repo_settings(the_repository);
+	the_repository->settings.command_requires_full_index = 0;
 
 	prefix = cmd_prefix;
 	if (prefix)

@@ -234,12 +234,27 @@ test_expect_success 'sparse-index enabled and disabled' '
 
 		git -C repo sparse-checkout init --cone --sparse-index &&
 		test_cmp_config -C repo true index.sparse &&
-		test-tool -C repo read-cache --table >cache &&
-		grep " tree " cache &&
-
+		git -C repo ls-files --sparse >sparse &&
 		git -C repo sparse-checkout disable &&
-		test-tool -C repo read-cache --table >cache &&
-		! grep " tree " cache &&
+		git -C repo ls-files --sparse >full &&
+
+		cat >expect <<-\EOF &&
+		@@ -1,4 +1,7 @@
+		 a
+		-deep/
+		-folder1/
+		-folder2/
+		+deep/a
+		+deep/deeper1/a
+		+deep/deeper1/deepest/a
+		+deep/deeper2/a
+		+folder1/a
+		+folder2/a
+		EOF
+
+		diff -u sparse full | tail -n +3 >actual &&
+		test_cmp expect actual &&
+
 		git -C repo config --list >config &&
 		! grep index.sparse config
 	)
