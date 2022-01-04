@@ -2112,11 +2112,6 @@ ifdef DEFAULT_HELP_FORMAT
 BASIC_CFLAGS += -DDEFAULT_HELP_FORMAT='"$(DEFAULT_HELP_FORMAT)"'
 endif
 
-PAGER_ENV_SQ = $(subst ','\'',$(PAGER_ENV))
-PAGER_ENV_CQ = "$(subst ",\",$(subst \,\\,$(PAGER_ENV)))"
-PAGER_ENV_CQ_SQ = $(subst ','\'',$(PAGER_ENV_CQ))
-BASIC_CFLAGS += -DPAGER_ENV='$(PAGER_ENV_CQ_SQ)'
-
 ALL_CFLAGS += $(BASIC_CFLAGS)
 ALL_LDFLAGS += $(BASIC_LDFLAGS)
 
@@ -2230,6 +2225,12 @@ builtin/help.sp builtin/help.s builtin/help.o: EXTRA_CPPFLAGS = \
 	'-DGIT_HTML_PATH="$(htmldir_relative_SQ)"' \
 	'-DGIT_MAN_PATH="$(mandir_relative_SQ)"' \
 	'-DGIT_INFO_PATH="$(infodir_relative_SQ)"'
+
+PAGER_ENV_SQ = $(subst ','\'',$(PAGER_ENV))
+PAGER_ENV_CQ = "$(subst ",\",$(subst \,\\,$(PAGER_ENV)))"
+PAGER_ENV_CQ_SQ = $(subst ','\'',$(PAGER_ENV_CQ))
+pager.sp pager.s pager.o: EXTRA_CPPFLAGS = \
+	-DPAGER_ENV='$(PAGER_ENV_CQ_SQ)'
 
 version.sp version.s version.o: GIT-VERSION-FILE GIT-USER-AGENT
 version.sp version.s version.o: EXTRA_CPPFLAGS = \
