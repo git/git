@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Dec 2021, #06; Mon, 27)
-X-master-at: 2ae0a9cb8298185a94e5998086f380a355dd8907
-X-next-at: 55b058a8bbcc54bd93c733035c995abc7967e539
+Subject: What's cooking in git.git (Jan 2022, #01; Mon, 3)
+X-master-at: dcc0cd074f0c639a0df20461a301af6d45bd582e
+X-next-at: 194610f4cf2df839ebfd040c5da187c8c0162620
 
-What's cooking in git.git (Dec 2021, #06; Mon, 27)
+What's cooking in git.git (Jan 2022, #01; Mon, 3)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -52,31 +52,105 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* en/sparse-checkout-set (2021-12-23) 11 commits
+  (merged to 'next' on 2021-12-25 at 510f9eba9a)
+ + sparse-checkout: remove stray trailing space
+  (merged to 'next' on 2021-12-21 at 36a98aed11)
+ + clone: avoid using deprecated `sparse-checkout init`
+ + Documentation: clarify/correct a few sparsity related statements
+ + git-sparse-checkout.txt: update to document init/set/reapply changes
+ + sparse-checkout: enable reapply to take --[no-]{cone,sparse-index}
+ + sparse-checkout: enable `set` to initialize sparse-checkout mode
+ + sparse-checkout: split out code for tweaking settings config
+ + sparse-checkout: disallow --no-stdin as an argument to set
+ + sparse-checkout: add sanity-checks on initial sparsity state
+ + sparse-checkout: break apart functions for sparse_checkout_(set|add)
+ + sparse-checkout: pass use_stdin as a parameter instead of as a global
+
+ The "init" and "set" subcommands in "git sparse-checkout" have been
+ unified for a better user experience and performance.
+ source: <pull.1151.v4.git.git.1639454952.gitgitgadget@gmail.com>
+
+
+* es/test-chain-lint (2021-12-13) 19 commits
+  (merged to 'next' on 2021-12-21 at d6f56f3248)
+ + t6000-t9999: detect and signal failure within loop
+ + t5000-t5999: detect and signal failure within loop
+ + t4000-t4999: detect and signal failure within loop
+ + t0000-t3999: detect and signal failure within loop
+ + tests: simplify by dropping unnecessary `for` loops
+ + tests: apply modern idiom for exiting loop upon failure
+ + tests: apply modern idiom for signaling test failure
+ + tests: fix broken &&-chains in `{...}` groups
+ + tests: fix broken &&-chains in `$(...)` command substitutions
+ + tests: fix broken &&-chains in compound statements
+ + tests: use test_write_lines() to generate line-oriented output
+ + tests: simplify construction of large blocks of text
+ + t9107: use shell parameter expansion to avoid breaking &&-chain
+ + t6300: make `%(raw:size) --shell` test more robust
+ + t5516: drop unnecessary subshell and command invocation
+ + t4202: clarify intent by creating expected content less cleverly
+ + t1020: avoid aborting entire test script when one test fails
+ + t1010: fix unnoticed failure on Windows
+ + t/lib-pager: use sane_unset() to avoid breaking &&-chain
+
+ Broken &&-chains in the test scripts have been corrected.
+ source: <20211209051115.52629-1-sunshine@sunshineco.com>
+
+
+* jc/unleak-log (2021-12-16) 1 commit
+  (merged to 'next' on 2021-12-21 at c39506ec86)
+ + format-patch: mark rev_info with UNLEAK
+
+ "git format-patch" uses a single rev_info instance and then exits.
+ Mark the structure with UNLEAK() macro to squelch leak sanitizer.
+ source: <xmqqee6dz5s9.fsf@gitster.g>
+
+
+* ns/tmp-objdir (2021-12-08) 2 commits
+  (merged to 'next' on 2021-12-21 at d316ff36fc)
+ + tmp-objdir: disable ref updates when replacing the primary odb
+ + tmp-objdir: new API for creating temporary writable databases
+ (this branch is used by en/remerge-diff.)
+
+ New interface into the tmp-objdir API to help in-core use of the
+ quarantine feature.
+ source: <pull.1091.v3.git.1638828305.gitgitgadget@gmail.com>
+
+--------------------------------------------------
 [New Topics]
 
-* ab/makefile-hook-list-dependency-fix (2021-12-25) 1 commit
- - Makefile: correct the dependency graph of hook-list.h
+* en/merge-ort-renorm-with-rename-delete-conflict-fix (2021-12-30) 1 commit
+ - merge-ort: fix bug with renormalization and rename/delete conflicts
 
- Fix dependency rules to generate hook-list.h header file.
-
- Will merge to 'next'.
- source: <patch-1.1-1fafa6c643b-20211217T001137Z-avarab@gmail.com>
-
-
-* ab/makefile-msgfmt-wo-stats (2021-12-25) 1 commit
- - Makefile: don't invoke msgfmt with --statistics
-
- Make the recipe that runs msgfmt less noisy.
+ A corner case bug in the ort merge strategy has been corrected.
 
  Will merge to 'next'.
- source: <patch-1.1-58408f384e7-20211217T000729Z-avarab@gmail.com>
+ source: <pull.1174.git.git.1640650846612.gitgitgadget@gmail.com>
 
 
-* ab/makefile-pager-env-is-used-only-by-pager.c (2021-12-25) 1 commit
- - Makefile: move -DPAGER_ENV from BASIC_CFLAGS to EXTRA_CPPFLAGS
+* jc/find-header (2022-01-03) 1 commit
+ - receive-pack.c: consolidate find header logic
 
- Will merge to 'next'.
- source: <patch-1.1-90d1e77ad5e-20211217T001628Z-avarab@gmail.com>
+ Code clean-up.
+
+ Will merge to 'next'?
+ source: <pull.1125.v2.git.git.1640758765723.gitgitgadget@gmail.com>
+
+
+* jc/name-rev-stdin (2022-01-03) 4 commits
+ - fixup! name-rev.c: use strbuf_getline instead of limited size buffer
+ - fixup! name-rev: deprecate --stdin in favor of --annotate-text
+ - name-rev.c: use strbuf_getline instead of limited size buffer
+ - name-rev: deprecate --stdin in favor of --annotate-text
+
+ "git name-rev --stdin" does not behave like usual "--stdin" at
+ all.  Start the process of renaming it to "--annotate-stdin".
+
+ Expecting a reroll.
+ source: <pull.1171.v3.git.git.1641221261.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -131,14 +205,43 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* ab/makefile-hook-list-dependency-fix (2021-12-25) 1 commit
+  (merged to 'next' on 2022-01-03 at 8c8ca0cbce)
+ + Makefile: correct the dependency graph of hook-list.h
+
+ Fix dependency rules to generate hook-list.h header file.
+
+ Will merge to 'master'.
+ source: <patch-1.1-1fafa6c643b-20211217T001137Z-avarab@gmail.com>
+
+
+* ab/makefile-msgfmt-wo-stats (2021-12-25) 1 commit
+  (merged to 'next' on 2022-01-03 at 2e2097c310)
+ + Makefile: don't invoke msgfmt with --statistics
+
+ Make the recipe that runs msgfmt less noisy.
+
+ Will merge to 'master'.
+ source: <patch-1.1-58408f384e7-20211217T000729Z-avarab@gmail.com>
+
+
+* ab/makefile-pager-env-is-used-only-by-pager.c (2021-12-25) 1 commit
+  (merged to 'next' on 2022-01-03 at 7ab1e1c5c4)
+ + Makefile: move -DPAGER_ENV from BASIC_CFLAGS to EXTRA_CPPFLAGS
+
+ Will merge to 'master'.
+ source: <patch-1.1-90d1e77ad5e-20211217T001628Z-avarab@gmail.com>
+
+
 * ab/do-not-limit-stash-help-to-push (2021-12-16) 1 commit
- - stash: don't show "git stash push" usage on bad "git stash" usage
+  (merged to 'next' on 2022-01-03 at adfc0c1f17)
+ + stash: don't show "git stash push" usage on bad "git stash" usage
 
  "git stash" by default triggers its "push" action, but its
  implementation also made "git stash -h" to show short help only for
  "git stash push", which has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <patch-v3-1.1-6b33b104c84-20211216T125317Z-avarab@gmail.com>
 
 
@@ -166,14 +269,15 @@ Release tarballs are available at:
 
 
 * ws/fast-export-with-revision-options (2021-12-21) 1 commit
- - fast-export: fix surprising behavior with --first-parent
+  (merged to 'next' on 2022-01-03 at f94f7f70b6)
+ + fast-export: fix surprising behavior with --first-parent
 
  Use of certain "git rev-list" options with "git fast-export"
  created nonsense results (the worst two of which being "--reverse"
  and "--invert-grep --grep=<foo>").  The use of "--first-parent" is
  made to behave a bit more sensible than before.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1084.v2.git.1639037637231.gitgitgadget@gmail.com>
 
 
@@ -185,17 +289,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <xmqqtuf86t7z.fsf_-_@gitster.g>
-
-
-* jc/unleak-log (2021-12-16) 1 commit
-  (merged to 'next' on 2021-12-21 at c39506ec86)
- + format-patch: mark rev_info with UNLEAK
-
- "git format-patch" uses a single rev_info instance and then exits.
- Mark the structure with UNLEAK() macro to squelch leak sanitizer.
-
- Will merge to 'master'.
- source: <xmqqee6dz5s9.fsf@gitster.g>
 
 
 * ds/repack-fixlets (2021-12-20) 2 commits
@@ -232,24 +325,26 @@ Release tarballs are available at:
 
 
 * jh/p4-human-unit-numbers (2021-12-20) 2 commits
- - git-p4: show progress as an integer
- - git-p4: print size values in appropriate units
+  (merged to 'next' on 2022-01-03 at c385766ff4)
+ + git-p4: show progress as an integer
+ + git-p4: print size values in appropriate units
 
  The way "git p4" shows file sizes in its output has been updated to
  use human-readable units.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20211219154028.3288756-1-jholdsworth@nvidia.com>
 
 
 * jz/apply-3-corner-cases (2021-12-20) 1 commit
- - git-apply: skip threeway in add / rename cases
+  (merged to 'next' on 2022-01-03 at cb8e19c304)
+ + git-apply: skip threeway in add / rename cases
 
  "git apply --3way" bypasses the attempt to do a three-way
  application in more cases to address the regression caused by the
  recent change to use direct application as a fallback.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20211217224328.7646-1-jerry@skydio.com>
 
 
@@ -310,21 +405,19 @@ Release tarballs are available at:
 
 
 * ds/sparse-checkout-requires-per-worktree-config (2021-12-21) 5 commits
- - sparse-checkout: use repo_config_set_worktree_gently()
- - config: add repo_config_set_worktree_gently()
- - worktree: add upgrade_to_worktree_config()
- - config: make some helpers repo-aware
- - setup: use a repository when upgrading format
+ . sparse-checkout: use repo_config_set_worktree_gently()
+ . config: add repo_config_set_worktree_gently()
+ . worktree: add upgrade_to_worktree_config()
+ . config: make some helpers repo-aware
+ . setup: use a repository when upgrading format
 
  "git sparse-checkout" wants to work with per-worktree configration,
  but did not work well in a worktree attached to a bare repository.
-
- Expecting a redesign?
- cf. <CABPp-BG7nwsdEYrnfqhAbWU4ndJHcqGf6RS_6DzJittuNVLvoA@mail.gmail.com>
  source: <pull.1101.v2.git.1640114048.gitgitgadget@gmail.com>
 
 
-* en/remerge-diff (2021-12-25) 9 commits
+* en/remerge-diff (2021-12-30) 10 commits
+ - merge-ort: mark conflict/warning messages from inner merges as omittable
  - show, log: include conflict/warning messages in --remerge-diff headers
  - diff: add ability to insert additional headers for paths
  - merge-ort: format messages slightly different for use in headers
@@ -334,11 +427,10 @@ Release tarballs are available at:
  - log: clean unneeded objects during `log --remerge-diff`
  - show, log: provide a --remerge-diff capability
  - Merge branch 'ns/tmp-objdir' into en/remerge-diff
- (this branch uses ns/tmp-objdir.)
 
  "git log --remerge-diff" shows the difference from mechanical merge
  result and the merge result that is actually recorded.
- source: <pull.1103.v2.git.1640419159.gitgitgadget@gmail.com>
+ source: <pull.1103.v3.git.1640907369.gitgitgadget@gmail.com>
 
 
 * gc/fetch-negotiate-only-early-return (2021-12-21) 3 commits
@@ -352,58 +444,63 @@ Release tarballs are available at:
 
 
 * hn/refs-debug-update (2021-12-22) 3 commits
- - refs: centralize initialization of the base ref_store.
- - refs: print error message in debug output
- - refs: pass gitdir to packed_ref_store_create
+  (merged to 'next' on 2022-01-03 at 1cd451c66c)
+ + refs: centralize initialization of the base ref_store.
+ + refs: print error message in debug output
+ + refs: pass gitdir to packed_ref_store_create
 
  Debugging support for refs API.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1163.v2.git.git.1640196714.gitgitgadget@gmail.com>
 
 
 * hn/test-ref-store-show-hash-algo (2021-12-21) 1 commit
- - test-ref-store: print hash algorithm
+  (merged to 'next' on 2022-01-03 at 3cdbfeeaf1)
+ + test-ref-store: print hash algorithm
 
  Debugging support for refs API.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1167.git.git.1640092500725.gitgitgadget@gmail.com>
 
 
 * ja/perf-use-specified-shell (2021-12-25) 1 commit
- - t/perf: do not run tests in user's $SHELL
+  (merged to 'next' on 2022-01-03 at 8ca35ee3d0)
+ + t/perf: do not run tests in user's $SHELL
 
  Perf tests were run with end-user's shell, but it has been
  corrected to use the shell specified by $TEST_SHELL_PATH.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20211225081656.1311583-1-aclopte@gmail.com>
 
 
 * js/l10n-mention-ngettext-early-in-readme (2021-12-21) 1 commit
- - l10n: README: call more attention to plural strings
+  (merged to 'next' on 2022-01-03 at a644f898ce)
+ + l10n: README: call more attention to plural strings
 
  Localization doc update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <25107068cbbf8c9ce6886e66e25dff19e072583f.1639425295.git.steadmon@google.com>
 
 
 * ab/reflog-prep (2021-12-22) 9 commits
- - reflog + refs-backend: move "verbose" out of the backend
- - refs files-backend: assume cb->newlog if !EXPIRE_REFLOGS_DRY_RUN
- - reflog: reduce scope of "struct rev_info"
- - reflog expire: don't use lookup_commit_reference_gently()
- - reflog expire: refactor & use "tip_commit" only for UE_NORMAL
- - reflog expire: use "switch" over enum values
- - reflog: change one->many worktree->refnames to use a string_list
- - reflog expire: narrow scope of "cb" in cmd_reflog_expire()
- - reflog delete: narrow scope of "cmd" passed to count_reflog_ent()
+  (merged to 'next' on 2022-01-03 at 07d2d78d86)
+ + reflog + refs-backend: move "verbose" out of the backend
+ + refs files-backend: assume cb->newlog if !EXPIRE_REFLOGS_DRY_RUN
+ + reflog: reduce scope of "struct rev_info"
+ + reflog expire: don't use lookup_commit_reference_gently()
+ + reflog expire: refactor & use "tip_commit" only for UE_NORMAL
+ + reflog expire: use "switch" over enum values
+ + reflog: change one->many worktree->refnames to use a string_list
+ + reflog expire: narrow scope of "cb" in cmd_reflog_expire()
+ + reflog delete: narrow scope of "cmd" passed to count_reflog_ent()
 
  Code refactoring in the reflog part of refs API.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover-v3-0.9-00000000000-20211222T040557Z-avarab@gmail.com>
 
 
@@ -418,35 +515,38 @@ Release tarballs are available at:
 
 
 * hn/ref-api-tests-update (2021-12-22) 4 commits
- - t7004: use "test-tool ref-store" for reflog inspection
- - t7004: create separate tags for different tests
- - t5550: require REFFILES
- - t5540: require REFFILES
+  (merged to 'next' on 2022-01-03 at 6815d4d8c1)
+ + t7004: use "test-tool ref-store" for reflog inspection
+ + t7004: create separate tags for different tests
+ + t5550: require REFFILES
+ + t5540: require REFFILES
 
  Test updates.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1168.git.git.1640170784.gitgitgadget@gmail.com>
 
 
 * jh/p4-remove-unused (2021-12-22) 2 commits
- - git-p4: remove "rollback" verb
- - git-p4: remove "debug" verb
+  (merged to 'next' on 2022-01-03 at 43f61b2fef)
+ + git-p4: remove "rollback" verb
+ + git-p4: remove "debug" verb
 
  Remove a few commands from "git p4" that aren't very useful.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20211222145552.93786-1-jholdsworth@nvidia.com>
 
 
 * hn/reftable-fixes (2021-12-23) 3 commits
- - reftable: support preset file mode for writing
- - reftable: signal overflow
- - reftable: fix typo in header
+  (merged to 'next' on 2022-01-03 at 532f9bbb27)
+ + reftable: support preset file mode for writing
+ + reftable: signal overflow
+ + reftable: fix typo in header
 
  Assorted fixlets in reftable code.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1164.git.git.1640287790.gitgitgadget@gmail.com>
 
 
@@ -467,9 +567,8 @@ Release tarballs are available at:
  source: <20211216134619.2048348-1-jholdsworth@nvidia.com>
 
 
-* ds/sparse-checkout-malformed-pattern-fix (2021-12-25) 4 commits
-  (merged to 'next' on 2021-12-27 at c410caf527)
- + fixup! sparse-checkout: fix OOM error with mixed patterns
+* ds/sparse-checkout-malformed-pattern-fix (2021-12-30) 3 commits
+  (merged to 'next' on 2021-12-30 at c8b2ade48c)
  + sparse-checkout: refuse to add to bad patterns
  + sparse-checkout: fix OOM error with mixed patterns
  + sparse-checkout: fix segfault on malformed patterns
@@ -519,28 +618,6 @@ Release tarballs are available at:
  source: <20211214194626.33814-1-jacob@gitlab.com>
 
 
-* en/sparse-checkout-set (2021-12-23) 11 commits
-  (merged to 'next' on 2021-12-25 at 510f9eba9a)
- + sparse-checkout: remove stray trailing space
-  (merged to 'next' on 2021-12-21 at 36a98aed11)
- + clone: avoid using deprecated `sparse-checkout init`
- + Documentation: clarify/correct a few sparsity related statements
- + git-sparse-checkout.txt: update to document init/set/reapply changes
- + sparse-checkout: enable reapply to take --[no-]{cone,sparse-index}
- + sparse-checkout: enable `set` to initialize sparse-checkout mode
- + sparse-checkout: split out code for tweaking settings config
- + sparse-checkout: disallow --no-stdin as an argument to set
- + sparse-checkout: add sanity-checks on initial sparsity state
- + sparse-checkout: break apart functions for sparse_checkout_(set|add)
- + sparse-checkout: pass use_stdin as a parameter instead of as a global
-
- The "init" and "set" subcommands in "git sparse-checkout" have been
- unified for a better user experience and performance.
-
- Will merge to 'master'.
- source: <pull.1151.v4.git.git.1639454952.gitgitgadget@gmail.com>
-
-
 * hn/reftable-coverity-fixes (2021-12-22) 18 commits
  - reftable: be more paranoid about 0-length memcpy calls
  - reftable: add print functions to the record types
@@ -587,34 +664,6 @@ Release tarballs are available at:
  source: <cover.1639446906.git.me@ttaylorr.com>
 
 
-* es/test-chain-lint (2021-12-13) 19 commits
-  (merged to 'next' on 2021-12-21 at d6f56f3248)
- + t6000-t9999: detect and signal failure within loop
- + t5000-t5999: detect and signal failure within loop
- + t4000-t4999: detect and signal failure within loop
- + t0000-t3999: detect and signal failure within loop
- + tests: simplify by dropping unnecessary `for` loops
- + tests: apply modern idiom for exiting loop upon failure
- + tests: apply modern idiom for signaling test failure
- + tests: fix broken &&-chains in `{...}` groups
- + tests: fix broken &&-chains in `$(...)` command substitutions
- + tests: fix broken &&-chains in compound statements
- + tests: use test_write_lines() to generate line-oriented output
- + tests: simplify construction of large blocks of text
- + t9107: use shell parameter expansion to avoid breaking &&-chain
- + t6300: make `%(raw:size) --shell` test more robust
- + t5516: drop unnecessary subshell and command invocation
- + t4202: clarify intent by creating expected content less cleverly
- + t1020: avoid aborting entire test script when one test fails
- + t1010: fix unnoticed failure on Windows
- + t/lib-pager: use sane_unset() to avoid breaking &&-chain
-
- Broken &&-chains in the test scripts have been corrected.
-
- Will merge to 'master'.
- source: <20211209051115.52629-1-sunshine@sunshineco.com>
-
-
 * jc/flex-array-definition (2021-12-08) 1 commit
   (merged to 'next' on 2021-12-27 at 9db6a814b7)
  + flex-array: simplify compiler-specific workaround
@@ -654,7 +703,8 @@ Release tarballs are available at:
  source: <pull.1049.v2.git.1638975481.gitgitgadget@gmail.com>
 
 
-* ja/i18n-similar-messages (2021-12-05) 10 commits
+* ja/i18n-similar-messages (2022-01-03) 11 commits
+ - i18n: turn even more messages into "cannot be used together" ones
  - i18n: ref-filter: factorize "%(foo) atom used without %(bar) atom"
  - i18n: factorize "--foo outside a repository"
  - i18n: refactor "unrecognized %(foo) argument" strings
@@ -662,34 +712,33 @@ Release tarballs are available at:
  - i18n: factorize "--foo requires --bar" and the like
  - i18n: tag.c factorize i18n strings
  - i18n: standardize "cannot open" and "cannot read"
- - i18n: turn "options are incompatible" into "are mutually exclusive"
+ - i18n: turn "options are incompatible" into "cannot be used together"
  - i18n: refactor "%s, %s and %s are mutually exclusive"
  - i18n: refactor "foo and bar are mutually exclusive"
 
  Similar message templates have been consolidated so that
  translators need to work on fewer number of messages.
 
- Expecting a reroll.
- cf. <2447705.sFPtriHfYS@cayenne>
- source: <pull.1088.git.1638514909.gitgitgadget@gmail.com>
+ cf. <48262743.WQR3eRXon5@cayenne>
+ source: <pull.1088.v4.git.1641143745.gitgitgadget@gmail.com>
 
 
 * ab/usage-die-message (2021-12-07) 6 commits
- - config API: use get_error_routine(), not vreportf()
- - usage.c + gc: add and use a die_message_errno()
- - gc: return from cmd_gc(), don't call exit()
- - usage.c API users: use die_message() for error() + exit 128
- - usage.c API users: use die_message() for "fatal :" + exit 128
- - usage.c: add a die_message() routine
+  (merged to 'next' on 2022-01-03 at 0ef3860099)
+ + config API: use get_error_routine(), not vreportf()
+ + usage.c + gc: add and use a die_message_errno()
+ + gc: return from cmd_gc(), don't call exit()
+ + usage.c API users: use die_message() for error() + exit 128
+ + usage.c API users: use die_message() for "fatal :" + exit 128
+ + usage.c: add a die_message() routine
 
  Code clean-up to hide vreportf() from public API.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover-v2-0.6-00000000000-20211207T182419Z-avarab@gmail.com>
 
 
-* ab/cat-file (2021-12-25) 11 commits
- - fixup! cat-file: fix remaining usage bugs
+* ab/cat-file (2021-12-30) 10 commits
  - cat-file: use GET_OID_ONLY_TO_DIE in --(textconv|filters)
  - object-name.c: don't have GET_OID_ONLY_TO_DIE imply *_QUIETLY
  - cat-file: correct and improve usage information
@@ -703,23 +752,23 @@ Release tarballs are available at:
 
  Assorted updates to "git cat-file", especially "-h".
 
- Will merge to 'next'?
- source: <cover-v5-00.10-00000000000-20211222T041050Z-avarab@gmail.com>
+ Will merge to 'next'.
+ source: <cover-v6-00.10-00000000000-20211228T132637Z-avarab@gmail.com>
 
 
 * ab/grep-patterntype (2021-12-27) 8 commits
- - grep: simplify config parsing and option parsing
- - grep API: call grep_config() after grep_init()
- - grep.c: don't pass along NULL callback value
- - built-ins: trust the "prefix" from run_builtin()
- - fixup! grep tests: add missing "grep.patternType" config tests
- - grep tests: add missing "grep.patternType" config tests
- - log tests: check if grep_config() is called by "log"-like cmds
- - grep.h: remove unused "regex_t regexp" from grep_opt
+ . grep: simplify config parsing and option parsing
+ . grep API: call grep_config() after grep_init()
+ . grep.c: don't pass along NULL callback value
+ . built-ins: trust the "prefix" from run_builtin()
+ . fixup! grep tests: add missing "grep.patternType" config tests
+ . grep tests: add missing "grep.patternType" config tests
+ . log tests: check if grep_config() is called by "log"-like cmds
+ . grep.h: remove unused "regex_t regexp" from grep_opt
 
  Some code clean-up in the "git grep" machinery.
 
- The last step is still broken; earlier clean-ups may still be worth keeping.
+ Reroll exists.
  source: <cover-v6-0.7-00000000000-20211226T223035Z-avarab@gmail.com>
 
 
@@ -791,7 +840,7 @@ Release tarballs are available at:
  source: <pull.1086.v3.git.1638758742741.gitgitgadget@gmail.com>
 
 
-* ab/ambiguous-object-name (2021-11-26) 6 commits
+* ab/ambiguous-object-name (2021-12-30) 6 commits
  - object-name: re-use "struct strbuf" in show_ambiguous_object()
  - object-name: iterate ambiguous objects before showing header
  - object-name: show date for ambiguous tag objects
@@ -801,11 +850,7 @@ Release tarballs are available at:
 
  Error output given in response to an ambiguous object name has been
  improved.
-
- An earlier iteration that was much smaller had seen some reviews,
- but the latest round enlarged its scope and needs to be reviewed
- afresh.
- source: <patch-v5-6.6-78bb0995f08-20211125T215529Z-avarab@gmail.com>
+ source: <cover-v6-0.6-00000000000-20211228T143223Z-avarab@gmail.com>
 
 
 * en/keep-cwd (2021-12-09) 11 commits
@@ -835,26 +880,32 @@ Release tarballs are available at:
  source: <pull.1140.v6.git.git.1639026515.gitgitgadget@gmail.com>
 
 
-* tl/ls-tree-oid-only (2021-12-21) 1 commit
- - ls-tree.c: support `--object-only` option for "git-ls-tree"
+* tl/ls-tree-oid-only (2022-01-03) 8 commits
+ - ls-tree.c: introduce "--format" option
+ - ls-tree.c: introduce struct "shown_data"
+ - ls-tree.c: support --object-only option for "git-ls-tree"
+ - ls-tree: split up the "init" part of show_tree()
+ - ls-tree: use "size_t", not "int" for "struct strbuf"'s "len"
+ - ls-tree: use "enum object_type", not {blob,tree,commit}_type
+ - ls-tree: add missing braces to "else" arms
+ - ls-tree: remove commented-out code
 
  "git ls-tree" learns "--oid-only" option, similar to "--name-only".
-
- Will merge to 'next'?
- source: <cover.1639721750.git.dyroneteng@gmail.com>
+ source: <cover.1641043500.git.dyroneteng@gmail.com>
 
 
 * ds/fetch-pull-with-sparse-index (2021-12-22) 5 commits
- - test-read-cache: remove --table, --expand options
- - t1091/t3705: remove 'test-tool read-cache --table'
- - t1092: replace 'read-cache --table' with 'ls-files --sparse'
- - ls-files: add --sparse option
- - fetch/pull: use the sparse index
+  (merged to 'next' on 2022-01-03 at f58da4a878)
+ + test-read-cache: remove --table, --expand options
+ + t1091/t3705: remove 'test-tool read-cache --table'
+ + t1092: replace 'read-cache --table' with 'ls-files --sparse'
+ + ls-files: add --sparse option
+ + fetch/pull: use the sparse index
 
  "git fetch" and "git pull" are now declared sparse-index clean.
  Also "git ls-files" learns the "--sparse" option to help debugging.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1080.v4.git.1640182856.gitgitgadget@gmail.com>
 
 
@@ -895,14 +946,14 @@ Release tarballs are available at:
  source: <pull.981.v5.git.1639045809.gitgitgadget@gmail.com>
 
 
-* jc/doc-submitting-patches-choice-of-base (2021-12-23) 1 commit
+* jc/doc-submitting-patches-choice-of-base (2021-12-30) 1 commit
  - SubmittingPatchs: clarify choice of base and testing
 
  Extend the guidance to choose the base commit to build your work
  on, and hint/nudge contributors to read others' changes.
 
- Needs review.
- source: <xmqq5yre7w5o.fsf@gitster.g>
+ Will merge to 'next'.
+ source: <xmqqh7apsv6s.fsf_-_@gitster.g>
 
 
 * ab/config-based-hooks-2 (2021-12-22) 17 commits
@@ -936,16 +987,17 @@ Release tarballs are available at:
 
 
 * js/branch-track-inherit (2021-12-20) 3 commits
- - config: require lowercase for branch.*.autosetupmerge
- - branch: add flags and config to inherit tracking
- - branch: accept multiple upstream branches for tracking
+  (merged to 'next' on 2022-01-03 at ab5fb34db3)
+ + config: require lowercase for branch.*.autosetupmerge
+ + branch: add flags and config to inherit tracking
+ + branch: accept multiple upstream branches for tracking
  (this branch is used by gc/branch-recurse-submodules.)
 
  "git -c branch.autosetupmerge=inherit branch new old" makes "new"
  to have the same upstream as the "old" branch, instead of marking
  "old" itself as its upstream.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover.1640039978.git.steadmon@google.com>
 
 
@@ -990,19 +1042,6 @@ Release tarballs are available at:
  source: <pull.1041.v4.git.1634826309.gitgitgadget@gmail.com>
 
 
-* ns/tmp-objdir (2021-12-08) 2 commits
-  (merged to 'next' on 2021-12-21 at d316ff36fc)
- + tmp-objdir: disable ref updates when replacing the primary odb
- + tmp-objdir: new API for creating temporary writable databases
- (this branch is used by en/remerge-diff.)
-
- New interface into the tmp-objdir API to help in-core use of the
- quarantine feature.
-
- Will merge to 'master'.
- source: <pull.1091.v3.git.1638828305.gitgitgadget@gmail.com>
-
-
 * es/superproject-aware-submodules (2021-11-18) 5 commits
  - submodule: use config to find superproject worktree
  - submodule: record superproject gitdir during 'update'
@@ -1018,8 +1057,7 @@ Release tarballs are available at:
  source: <20211117005701.371808-1-emilyshaffer@google.com>
 
 
-* ab/only-single-progress-at-once (2021-11-03) 8 commits
- - progress.c: add & assert a "global_progress" variable
+* ab/only-single-progress-at-once (2022-01-03) 7 commits
  - various *.c: use isatty(0|2), not isatty(STDIN_FILENO|STDERR_FILENO)
  - pack-bitmap-write.c: don't return without stop_progress()
  - progress.c: add temporary variable from progress struct
@@ -1029,12 +1067,7 @@ Release tarballs are available at:
  - leak tests: fix a memory leaks in "test-progress" helper
 
  Further tweaks on progress API.
-
- Needs review.
- The last three rounds has seen little reaction, even though earlier
- round saw a lot of responses. The latest round needs a serious
- review or at least Acks from past commentors.
- source: <cover-v6-0.8-00000000000-20211102T122507Z-avarab@gmail.com>
+ source: <cover-v7-0.7-00000000000-20211217T041945Z-avarab@gmail.com>
 
 --------------------------------------------------
 [Discarded]
