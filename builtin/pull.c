@@ -1133,7 +1133,14 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 			die(_("cannot rebase with locally recorded submodule modifications"));
 
 		if (can_ff) {
-			/* we can fast-forward this without invoking rebase */
+			/*
+			* We can fast-forward without invoking
+			* rebase, by calling run_merge().  But we
+			* have to allow rebase.autostash=true to kick
+			* in.
+			*/
+			if (opt_autostash < 0)
+				opt_autostash = config_autostash;
 			opt_ff = "--ff-only";
 			ret = run_merge();
 		} else {
