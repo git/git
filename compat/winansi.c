@@ -3,6 +3,12 @@
  */
 
 #undef NOGDI
+
+/*
+ * Including the appropriate header file for RtlGenRandom causes MSVC to see a
+ * redefinition of types in an incompatible way when including headers below.
+ */
+#undef HAVE_RTLGENRANDOM
 #include "../git-compat-util.h"
 #include <wingdi.h>
 #include <winreg.h>
