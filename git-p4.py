@@ -1541,80 +1541,6 @@ class P4UserMap:
         except IOError:
             self.getUserMapFromPerforceServer()
 
-class P4Debug(Command):
-    def __init__(self):
-        Command.__init__(self)
-        self.options = []
-        self.description = "A tool to debug the output of p4 -G."
-        self.needsGit = False
-
-    def run(self, args):
-        j = 0
-        for output in p4CmdList(args):
-            print('Element: %d' % j)
-            j += 1
-            print(output)
-        return True
-
-class P4RollBack(Command):
-    def __init__(self):
-        Command.__init__(self)
-        self.options = [
-            optparse.make_option("--local", dest="rollbackLocalBranches", action="store_true")
-        ]
-        self.description = "A tool to debug the multi-branch import. Don't use :)"
-        self.rollbackLocalBranches = False
-
-    def run(self, args):
-        if len(args) != 1:
-            return False
-        maxChange = int(args[0])
-
-        if "p4ExitCode" in p4Cmd("changes -m 1"):
-            die("Problems executing p4");
-
-        if self.rollbackLocalBranches:
-            refPrefix = "refs/heads/"
-            lines = read_pipe_lines("git rev-parse --symbolic --branches")
-        else:
-            refPrefix = "refs/remotes/"
-            lines = read_pipe_lines("git rev-parse --symbolic --remotes")
-
-        for line in lines:
-            if self.rollbackLocalBranches or (line.startswith("p4/") and line != "p4/HEAD\n"):
-                line = line.strip()
-                ref = refPrefix + line
-                log = extractLogMessageFromGitCommit(ref)
-                settings = extractSettingsGitLog(log)
-
-                depotPaths = settings['depot-paths']
-                change = settings['change']
-
-                changed = False
-
-                if len(p4Cmd("changes -m 1 "  + ' '.join (['%s...@%s' % (p, maxChange)
-                                                           for p in depotPaths]))) == 0:
-                    print("Branch %s did not exist at change %s, deleting." % (ref, maxChange))
-                    system("git update-ref -d %s `git rev-parse %s`" % (ref, ref))
-                    continue
-
-                while change and int(change) > maxChange:
-                    changed = True
-                    if self.verbose:
-                        print("%s is at %s ; rewinding towards %s" % (ref, change, maxChange))
-                    system("git update-ref %s \"%s^\"" % (ref, ref))
-                    log = extractLogMessageFromGitCommit(ref)
-                    settings =  extractSettingsGitLog(log)
-
-
-                    depotPaths = settings['depot-paths']
-                    change = settings['change']
-
-                if changed:
-                    print("%s rewound to %s" % (ref, change))
-
-        return True
-
 class P4Submit(Command, P4UserMap):
 
     conflict_behavior_choices = ("ask", "skip", "quit")
@@ -4366,13 +4292,11 @@ def printUsage(commands):
     print("")
 
 commands = {
-    "debug" : P4Debug,
     "submit" : P4Submit,
     "commit" : P4Submit,
     "sync" : P4Sync,
     "rebase" : P4Rebase,
     "clone" : P4Clone,
-    "rollback" : P4RollBack,
     "branches" : P4Branches,
     "unshelve" : P4Unshelve,
 }
