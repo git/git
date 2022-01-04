@@ -347,7 +347,7 @@ test_expect_success 'unpacking with --strict' '
 		for i in 0 1 2 3 4 5 6 7 8 9
 		do
 			o=$(echo $j$i | git hash-object -w --stdin) &&
-			echo "100644 $o	0 $j$i"
+			echo "100644 $o	0 $j$i" || return 1
 		done
 	done >LIST &&
 	rm -f .git/index &&
@@ -361,11 +361,7 @@ test_expect_success 'unpacking with --strict' '
 	ST=$(git write-tree) &&
 	git rev-list --objects "$LIST" "$LI" "$ST" >actual &&
 	PACK5=$( git pack-objects test-5 <actual ) &&
-	PACK6=$( (
-			echo "$LIST"
-			echo "$LI"
-			echo "$ST"
-		 ) | git pack-objects test-6 ) &&
+	PACK6=$( test_write_lines "$LIST" "$LI" "$ST" | git pack-objects test-6 ) &&
 	test_create_repo test-5 &&
 	(
 		cd test-5 &&
@@ -394,7 +390,7 @@ test_expect_success 'index-pack with --strict' '
 		for i in 0 1 2 3 4 5 6 7 8 9
 		do
 			o=$(echo $j$i | git hash-object -w --stdin) &&
-			echo "100644 $o	0 $j$i"
+			echo "100644 $o	0 $j$i" || return 1
 		done
 	done >LIST &&
 	rm -f .git/index &&
@@ -408,11 +404,7 @@ test_expect_success 'index-pack with --strict' '
 	ST=$(git write-tree) &&
 	git rev-list --objects "$LIST" "$LI" "$ST" >actual &&
 	PACK5=$( git pack-objects test-5 <actual ) &&
-	PACK6=$( (
-			echo "$LIST"
-			echo "$LI"
-			echo "$ST"
-		 ) | git pack-objects test-6 ) &&
+	PACK6=$( test_write_lines "$LIST" "$LI" "$ST" | git pack-objects test-6 ) &&
 	test_create_repo test-7 &&
 	(
 		cd test-7 &&
@@ -594,7 +586,7 @@ test_expect_success 'setup for --stdin-packs tests' '
 		for id in A B C
 		do
 			git pack-objects .git/objects/pack/pack-$id \
-				--incremental --revs <<-EOF
+				--incremental --revs <<-EOF || exit 1
 			refs/tags/$id
 			EOF
 		done &&

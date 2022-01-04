@@ -23,10 +23,10 @@ test_expect_success setup '
 
 	git config core.autocrlf false &&
 
-	for w in Hello world how are you; do echo $w; done >one &&
+	test_write_lines Hello world how are you >one &&
 	mkdir dir &&
-	for w in I am very very fine thank you; do echo $w; done >dir/two &&
-	for w in Oh here is NULQin text here; do echo $w; done | q_to_nul >three &&
+	test_write_lines I am very very fine thank you >dir/two &&
+	test_write_lines Oh here is NULQin text here | q_to_nul >three &&
 	git add . &&
 
 	git commit -m initial &&
@@ -36,7 +36,7 @@ test_expect_success setup '
 	two=$(git rev-parse HEAD:dir/two) &&
 	three=$(git rev-parse HEAD:three) &&
 
-	for w in Some extra lines here; do echo $w; done >>one &&
+	test_write_lines Some extra lines here >>one &&
 	git diff >patch.file &&
 	patched=$(git hash-object --stdin <one) &&
 	git read-tree --reset -u HEAD
@@ -47,7 +47,7 @@ test_expect_success 'safecrlf: autocrlf=input, all CRLF' '
 	git config core.autocrlf input &&
 	git config core.safecrlf true &&
 
-	for w in I am all CRLF; do echo $w; done | append_cr >allcrlf &&
+	test_write_lines I am all CRLF | append_cr >allcrlf &&
 	test_must_fail git add allcrlf
 '
 
@@ -56,7 +56,7 @@ test_expect_success 'safecrlf: autocrlf=input, mixed LF/CRLF' '
 	git config core.autocrlf input &&
 	git config core.safecrlf true &&
 
-	for w in Oh here is CRLFQ in text; do echo $w; done | q_to_cr >mixed &&
+	test_write_lines Oh here is CRLFQ in text | q_to_cr >mixed &&
 	test_must_fail git add mixed
 '
 
@@ -65,7 +65,7 @@ test_expect_success 'safecrlf: autocrlf=true, all LF' '
 	git config core.autocrlf true &&
 	git config core.safecrlf true &&
 
-	for w in I am all LF; do echo $w; done >alllf &&
+	test_write_lines I am all LF >alllf &&
 	test_must_fail git add alllf
 '
 
@@ -74,7 +74,7 @@ test_expect_success 'safecrlf: autocrlf=true mixed LF/CRLF' '
 	git config core.autocrlf true &&
 	git config core.safecrlf true &&
 
-	for w in Oh here is CRLFQ in text; do echo $w; done | q_to_cr >mixed &&
+	test_write_lines Oh here is CRLFQ in text | q_to_cr >mixed &&
 	test_must_fail git add mixed
 '
 
@@ -83,10 +83,10 @@ test_expect_success 'safecrlf: print warning only once' '
 	git config core.autocrlf input &&
 	git config core.safecrlf warn &&
 
-	for w in I am all LF; do echo $w; done >doublewarn &&
+	test_write_lines I am all LF >doublewarn &&
 	git add doublewarn &&
 	git commit -m "nowarn" &&
-	for w in Oh here is CRLFQ in text; do echo $w; done | q_to_cr >doublewarn &&
+	test_write_lines Oh here is CRLFQ in text | q_to_cr >doublewarn &&
 	git add doublewarn 2>err &&
 	grep "CRLF will be replaced by LF" err >err.warnings &&
 	test_line_count = 1 err.warnings
@@ -104,7 +104,7 @@ test_expect_success 'safecrlf: no warning with safecrlf=false' '
 	git config core.autocrlf input &&
 	git config core.safecrlf false &&
 
-	for w in I am all CRLF; do echo $w; done | append_cr >allcrlf &&
+	test_write_lines I am all CRLF | append_cr >allcrlf &&
 	git add allcrlf 2>err &&
 	test_must_be_empty err
 '
@@ -352,9 +352,9 @@ test_expect_success 'setting up for new autocrlf tests' '
 	git config core.autocrlf false &&
 	git config core.safecrlf false &&
 	rm -rf .????* * &&
-	for w in I am all LF; do echo $w; done >alllf &&
-	for w in Oh here is CRLFQ in text; do echo $w; done | q_to_cr >mixed &&
-	for w in I am all CRLF; do echo $w; done | append_cr >allcrlf &&
+	test_write_lines I am all LF >alllf &&
+	test_write_lines Oh here is CRLFQ in text | q_to_cr >mixed &&
+	test_write_lines I am all CRLF | append_cr >allcrlf &&
 	git add -A . &&
 	git commit -m "alllf, allcrlf and mixed only" &&
 	git tag -a -m "message" autocrlf-checkpoint

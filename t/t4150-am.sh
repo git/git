@@ -116,7 +116,7 @@ test_expect_success setup '
 		git format-patch --stdout first | sed -e "1d"
 	} | append_cr >patch1-crlf.eml &&
 	{
-		printf "%255s\\n" ""
+		printf "%255s\\n" "" &&
 		echo "X-Fake-Field: Line One" &&
 		echo "X-Fake-Field: Line Two" &&
 		echo "X-Fake-Field: Line Three" &&

@@ -62,10 +62,10 @@ test_expect_success setup '
 
 test_expect_success merge '
 
-	{
-		echo "binary -merge"
-		echo "union merge=union"
-	} >.gitattributes &&
+	cat >.gitattributes <<-\EOF &&
+	binary -merge
+	union merge=union
+	EOF
 
 	if git merge main
 	then

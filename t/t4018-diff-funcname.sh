@@ -75,7 +75,7 @@ test_expect_success 'last regexp must not be negated' '
 test_expect_success 'setup hunk header tests' '
 	for i in $diffpatterns
 	do
-		echo "$i-* diff=$i"
+		echo "$i-* diff=$i" || return 1
 	done > .gitattributes &&
 
 	# add all test files to the index

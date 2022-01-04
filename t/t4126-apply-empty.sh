@@ -13,10 +13,7 @@ test_expect_success setup '
 	git commit -m initial &&
 	git commit --allow-empty -m "empty commit" &&
 	git format-patch --always HEAD~ >empty.patch &&
-	for i in a b c d e
-	do
-		echo $i
-	done >empty &&
+	test_write_lines a b c d e >empty &&
 	cat empty >expect &&
 	git diff |
 	sed -e "/^diff --git/d" \

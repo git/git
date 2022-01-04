@@ -115,9 +115,7 @@ test_expect_success 'at beginning of file' '
 	git config core.whitespace "blank-at-eol" &&
 	cp beginning file &&
 	git commit -m beginning file &&
-	for i in 1 2 3 4 5; do
-		echo $i
-	done >> file &&
+	test_write_lines 1 2 3 4 5 >>file &&
 	git commit -m more file &&
 	git rebase --whitespace=fix HEAD^^ &&
 	test_cmp expect-beginning file

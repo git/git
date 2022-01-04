@@ -24,7 +24,7 @@ test_expect_success basics '
 	test_cmp expect actual &&
 
 	git update-index --add one two three &&
-	for i in one three two; do echo $i; done >expect &&
+	test_write_lines one three two >expect &&
 	git ls-files >actual &&
 	test_cmp expect actual &&
 

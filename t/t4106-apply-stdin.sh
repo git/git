@@ -20,7 +20,10 @@ test_expect_success 'git apply --numstat - < patch' '
 '
 
 test_expect_success 'git apply --numstat - < patch patch' '
-	for i in 1 2; do echo "1	1	text"; done >expect &&
+	cat >expect <<-\EOF &&
+	1	1	text
+	1	1	text
+	EOF
 	git apply --numstat - < patch patch >actual &&
 	test_cmp expect actual
 '

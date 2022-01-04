@@ -17,15 +17,9 @@ dotest () {
 
 test_expect_success setup '
 
-	for i in 1 2 3 4 5 6 7 8 9 10 11 12
-	do
-		echo $i
-	done >file &&
+	test_write_lines 1 2 3 4 5 6 7 8 9 10 11 12 >file &&
 	git update-index --add file &&
-	for i in 1 2 3 4 5 6 7 a b c d e 8 9 10 11 12
-	do
-		echo $i
-	done >file &&
+	test_write_lines 1 2 3 4 5 6 7 a b c d e 8 9 10 11 12 >file &&
 	cat file >expect &&
 	git diff >O0.diff &&
 

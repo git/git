@@ -174,7 +174,7 @@ test_expect_success 'setup for many rename source candidates' '
 	do
 		for j in 0 1 2 3 4 5 6 7 8 9;
 		do
-			echo "$i$j" >"path$i$j"
+			echo "$i$j" >"path$i$j" || return 1
 		done
 	done &&
 	git add "path??" &&

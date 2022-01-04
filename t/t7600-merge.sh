@@ -967,7 +967,7 @@ test_expect_success 'set up mod-256 conflict scenario' '
 	# 256 near-identical stanzas...
 	for i in $(test_seq 1 256); do
 		for j in 1 2 3 4 5; do
-			echo $i-$j
+			echo $i-$j || return 1
 		done
 	done >file &&
 	git add file &&

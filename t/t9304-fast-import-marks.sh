@@ -16,7 +16,7 @@ test_expect_success 'setup large marks file' '
 	blob=$(git rev-parse HEAD:one.t) &&
 	for i in $(test_seq 1024 16384)
 	do
-		echo ":$i $blob"
+		echo ":$i $blob" || return 1
 	done >>marks
 '
 

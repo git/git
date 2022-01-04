@@ -28,7 +28,7 @@ test_expect_success 'setup test repository' '
 test_expect_success 'clone an SVN repository with filter to include qqq directory' '
 	git svn clone --include-paths="qqq" "$svnrepo" g &&
 	echo test_qqq > expect &&
-	for i in g/*/*.txt; do cat $i >> expect2; done &&
+	for i in g/*/*.txt; do cat $i >> expect2 || return 1; done &&
 	test_cmp expect expect2
 '
 
@@ -38,7 +38,7 @@ test_expect_success 'init+fetch an SVN repository with included qqq directory' '
 	( cd c && git svn fetch --include-paths="qqq" ) &&
 	rm expect2 &&
 	echo test_qqq > expect &&
-	for i in c/*/*.txt; do cat $i >> expect2; done &&
+	for i in c/*/*.txt; do cat $i >> expect2 || return 1; done &&
 	test_cmp expect expect2
 '
 
@@ -64,7 +64,7 @@ test_expect_success 'update git svn-cloned repo (config include)' '
 		cd g &&
 		git svn rebase &&
 		printf "test_qqq\nb\n" > expect &&
-		for i in */*.txt; do cat $i >> expect2; done &&
+		for i in */*.txt; do cat $i >> expect2 || exit 1; done &&
 		test_cmp expect2 expect &&
 		rm expect expect2
 	)
@@ -75,7 +75,7 @@ test_expect_success 'update git svn-cloned repo (option include)' '
 		cd c &&
 		git svn rebase --include-paths="qqq" &&
 		printf "test_qqq\nb\n" > expect &&
-		for i in */*.txt; do cat $i >> expect2; done &&
+		for i in */*.txt; do cat $i >> expect2 || exit 1; done &&
 		test_cmp expect2 expect &&
 		rm expect expect2
 	)
@@ -96,7 +96,7 @@ test_expect_success 'update git svn-cloned repo (config include)' '
 		cd g &&
 		git svn rebase &&
 		printf "test_qqq\nb\n" > expect &&
-		for i in */*.txt; do cat $i >> expect2; done &&
+		for i in */*.txt; do cat $i >> expect2 || exit 1; done &&
 		test_cmp expect2 expect &&
 		rm expect expect2
 	)
@@ -107,7 +107,7 @@ test_expect_success 'update git svn-cloned repo (option include)' '
 		cd c &&
 		git svn rebase --include-paths="qqq" &&
 		printf "test_qqq\nb\n" > expect &&
-		for i in */*.txt; do cat $i >> expect2; done &&
+		for i in */*.txt; do cat $i >> expect2 || exit 1; done &&
 		test_cmp expect2 expect &&
 		rm expect expect2
 	)
@@ -129,7 +129,7 @@ test_expect_success 'update git svn-cloned repo again (config include)' '
 		cd g &&
 		git svn rebase &&
 		printf "test_qqq\nb\nygg\n" > expect &&
-		for i in */*.txt; do cat $i >> expect2; done &&
+		for i in */*.txt; do cat $i >> expect2 || exit 1; done &&
 		test_cmp expect2 expect &&
 		rm expect expect2
 	)
@@ -140,7 +140,7 @@ test_expect_success 'update git svn-cloned repo again (option include)' '
 		cd c &&
 		git svn rebase --include-paths="qqq" &&
 		printf "test_qqq\nb\nygg\n" > expect &&
-		for i in */*.txt; do cat $i >> expect2; done &&
+		for i in */*.txt; do cat $i >> expect2 || exit 1; done &&
 		test_cmp expect2 expect &&
 		rm expect expect2
 	)

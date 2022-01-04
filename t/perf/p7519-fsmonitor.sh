@@ -119,10 +119,10 @@ test_expect_success "one time repo setup" '
 	fi &&
 
 	mkdir 1_file 10_files 100_files 1000_files 10000_files &&
-	for i in $(test_seq 1 10); do touch 10_files/$i; done &&
-	for i in $(test_seq 1 100); do touch 100_files/$i; done &&
-	for i in $(test_seq 1 1000); do touch 1000_files/$i; done &&
-	for i in $(test_seq 1 10000); do touch 10000_files/$i; done &&
+	for i in $(test_seq 1 10); do touch 10_files/$i || return 1; done &&
+	for i in $(test_seq 1 100); do touch 100_files/$i || return 1; done &&
+	for i in $(test_seq 1 1000); do touch 1000_files/$i || return 1; done &&
+	for i in $(test_seq 1 10000); do touch 10000_files/$i || return 1; done &&
 	git add 1_file 10_files 100_files 1000_files 10000_files &&
 	git commit -qm "Add files" &&
 

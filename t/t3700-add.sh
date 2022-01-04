@@ -141,9 +141,9 @@ test_expect_success 'check correct prefix detection' '
 test_expect_success 'git add with filemode=0, symlinks=0, and unmerged entries' '
 	for s in 1 2 3
 	do
-		echo $s > stage$s
-		echo "100755 $(git hash-object -w stage$s) $s	file"
-		echo "120000 $(printf $s | git hash-object -w -t blob --stdin) $s	symlink"
+		echo $s > stage$s &&
+		echo "100755 $(git hash-object -w stage$s) $s	file" &&
+		echo "120000 $(printf $s | git hash-object -w -t blob --stdin) $s	symlink" || return 1
 	done | git update-index --index-info &&
 	git config core.filemode 0 &&
 	git config core.symlinks 0 &&
@@ -177,7 +177,7 @@ test_expect_success 'git add --refresh' '
 	git read-tree HEAD &&
 	case "$(git diff-index HEAD -- foo)" in
 	:100644" "*"M	foo") echo pass;;
-	*) echo fail; (exit 1);;
+	*) echo fail; false;;
 	esac &&
 	git add --refresh -- foo &&
 	test -z "$(git diff-index HEAD -- foo)"

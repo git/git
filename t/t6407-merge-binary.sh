@@ -48,7 +48,7 @@ test_expect_success resolve '
 		echo Oops, should not have succeeded
 		false
 	else
-		git ls-files -s >current
+		git ls-files -s >current &&
 		test_cmp expect current
 	fi
 '
@@ -63,7 +63,7 @@ test_expect_success recursive '
 		echo Oops, should not have succeeded
 		false
 	else
-		git ls-files -s >current
+		git ls-files -s >current &&
 		test_cmp expect current
 	fi
 '

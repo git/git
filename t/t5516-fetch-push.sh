@@ -1325,10 +1325,7 @@ test_expect_success 'fetch follows tags by default' '
 		git pull ../testrepo main &&
 		git tag -m "annotated" tag &&
 		git for-each-ref >tmp1 &&
-		(
-			cat tmp1
-			sed -n "s|refs/heads/main$|refs/remotes/origin/main|p" tmp1
-		) |
+		sed -n "p; s|refs/heads/main$|refs/remotes/origin/main|p" tmp1 |
 		sort -k 3 >../expect
 	) &&
 	git init dst &&

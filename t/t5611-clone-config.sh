@@ -17,7 +17,7 @@ test_expect_success 'clone -c sets config in cloned repo' '
 test_expect_success 'clone -c can set multi-keys' '
 	rm -rf child &&
 	git clone -c core.foo=bar -c core.foo=baz . child &&
-	{ echo bar; echo baz; } >expect &&
+	test_write_lines bar baz >expect &&
 	git --git-dir=child/.git config --get-all core.foo >actual &&
 	test_cmp expect actual
 '

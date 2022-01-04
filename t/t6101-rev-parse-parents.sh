@@ -32,7 +32,7 @@ test_expect_success 'setup' '
 		test_tick &&
 		git commit --allow-empty -m "$i" &&
 		commit=$(git rev-parse --verify HEAD) &&
-		printf "$commit " >>.git/info/grafts
+		printf "$commit " >>.git/info/grafts || return 1
 	done
 '
 

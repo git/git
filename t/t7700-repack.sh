@@ -117,7 +117,7 @@ test_expect_success 'packed obs in alternate ODB kept pack are repacked' '
 			rm alt_objects/pack/$base_name.keep
 		else
 			touch alt_objects/pack/$base_name.keep
-		fi
+		fi || return 1
 	done &&
 	git repack -a -d &&
 	test_no_missing_in_packs

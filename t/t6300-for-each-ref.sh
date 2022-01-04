@@ -952,10 +952,7 @@ test_expect_success '%(raw) with --shell and --sort=raw must fail' '
 '
 
 test_expect_success '%(raw:size) with --shell' '
-	git for-each-ref --format="%(raw:size)" | while read line
-	do
-		echo "'\''$line'\''" >>expect
-	done &&
+	git for-each-ref --format="%(raw:size)" | sed "s/^/$SQ/;s/$/$SQ/" >expect &&
 	git for-each-ref --format="%(raw:size)" --shell >actual &&
 	test_cmp expect actual
 '
@@ -1338,7 +1335,7 @@ test_expect_success ':remotename and :remoteref' '
 			echo "${pair#*=}" >expect &&
 			git for-each-ref --format="${pair%=*}" \
 				refs/heads/main >actual &&
-			test_cmp expect actual
+			test_cmp expect actual || exit 1
 		done &&
 		git branch push-simple &&
 		git config branch.push-simple.pushRemote from &&

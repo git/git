@@ -70,7 +70,7 @@ test_crlf_subject_body_and_contents() {
 			for ref in ${LIB_CRLF_BRANCHES}
 			do
 				cat .crlf-${file}-\"\${ref}\".txt >>expect &&
-				printf \"\n\" >>expect
+				printf \"\n\" >>expect || return 1
 			done &&
 			git $command_and_args --format=\"%${atom}\" >actual &&
 			test_cmp expect actual
@@ -90,7 +90,7 @@ test_expect_success 'branch: --verbose works with messages using CRLF' '
 	do
 		printf "  " >>expect &&
 		cat .crlf-subject-${branch}.txt >>expect &&
-		printf "\n" >>expect
+		printf "\n" >>expect || return 1
 	done &&
 	git branch -v >tmp &&
 	# Remove first two columns, and the line for the currently checked out branch

@@ -843,7 +843,7 @@ test_expect_success 'whitespace changes with modification reported (diffstat)' '
 
 test_expect_success 'whitespace-only changes reported across renames (diffstat)' '
 	git reset --hard &&
-	for i in 1 2 3 4 5 6 7 8 9; do echo "$i$i$i$i$i$i"; done >x &&
+	for i in 1 2 3 4 5 6 7 8 9; do echo "$i$i$i$i$i$i" || return 1; done >x &&
 	git add x &&
 	git commit -m "base" &&
 	sed -e "5s/^/ /" x >z &&
@@ -859,7 +859,7 @@ test_expect_success 'whitespace-only changes reported across renames (diffstat)'
 
 test_expect_success 'whitespace-only changes reported across renames' '
 	git reset --hard HEAD~1 &&
-	for i in 1 2 3 4 5 6 7 8 9; do echo "$i$i$i$i$i$i"; done >x &&
+	for i in 1 2 3 4 5 6 7 8 9; do echo "$i$i$i$i$i$i" || return 1; done >x &&
 	git add x &&
 	hash_x=$(git hash-object x) &&
 	before=$(git rev-parse --short "$hash_x") &&

@@ -12,7 +12,7 @@ test_description='git-pack-object with missing base
 #
 test_expect_success \
     'setup base' \
-    'for a in a b c d e f g h i; do echo $a >>text; done &&
+    'test_write_lines a b c d e f g h i >text &&
      echo side >side &&
      git update-index --add text side &&
      A=$(echo A | git commit-tree $(git write-tree)) &&

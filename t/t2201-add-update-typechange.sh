@@ -98,17 +98,17 @@ test_expect_success modify '
 		"
 	} >expect &&
 	{
-		cat expect
-		echo ":100644 160000 $_empty $ZERO_OID T	yonk"
+		cat expect &&
+		echo ":100644 160000 $_empty $ZERO_OID T	yonk" &&
 		echo ":100644 000000 $_empty $ZERO_OID D	zifmia"
 	} >expect-files &&
 	{
-		cat expect
+		cat expect &&
 		echo ":000000 160000 $ZERO_OID $ZERO_OID A	yonk"
 	} >expect-index &&
 	{
-		echo "100644 $_empty 0	nitfol"
-		echo "160000 $yomin 0	yomin"
+		echo "100644 $_empty 0	nitfol" &&
+		echo "160000 $yomin 0	yomin" &&
 		echo "160000 $yonk 0	yonk"
 	} >expect-final
 '

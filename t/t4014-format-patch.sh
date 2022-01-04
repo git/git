@@ -12,25 +12,25 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . "$TEST_DIRECTORY"/lib-terminal.sh
 
 test_expect_success setup '
-	for i in 1 2 3 4 5 6 7 8 9 10; do echo "$i"; done >file &&
+	test_write_lines 1 2 3 4 5 6 7 8 9 10 >file &&
 	cat file >elif &&
 	git add file elif &&
 	test_tick &&
 	git commit -m Initial &&
 	git checkout -b side &&
 
-	for i in 1 2 5 6 A B C 7 8 9 10; do echo "$i"; done >file &&
+	test_write_lines 1 2 5 6 A B C 7 8 9 10 >file &&
 	test_chmod +x elif &&
 	test_tick &&
 	git commit -m "Side changes #1" &&
 
-	for i in D E F; do echo "$i"; done >>file &&
+	test_write_lines D E F >>file &&
 	git update-index file &&
 	test_tick &&
 	git commit -m "Side changes #2" &&
 	git tag C2 &&
 
-	for i in 5 6 1 2 3 A 4 B C 7 8 9 10 D E F; do echo "$i"; done >file &&
+	test_write_lines 5 6 1 2 3 A 4 B C 7 8 9 10 D E F >file &&
 	git update-index file &&
 	test_tick &&
 	git commit -m "Side changes #3 with \\n backslash-n in it." &&
@@ -43,18 +43,18 @@ test_expect_success setup '
 
 	git checkout side &&
 	git checkout -b patchid &&
-	for i in 5 6 1 2 3 A 4 B C 7 8 9 10 D E F; do echo "$i"; done >file2 &&
-	for i in 1 2 3 A 4 B C 7 8 9 10 D E F 5 6; do echo "$i"; done >file3 &&
-	for i in 8 9 10; do echo "$i"; done >file &&
+	test_write_lines 5 6 1 2 3 A 4 B C 7 8 9 10 D E F >file2 &&
+	test_write_lines 1 2 3 A 4 B C 7 8 9 10 D E F 5 6 >file3 &&
+	test_write_lines 8 9 10 >file &&
 	git add file file2 file3 &&
 	test_tick &&
 	git commit -m "patchid 1" &&
-	for i in 4 A B 7 8 9 10; do echo "$i"; done >file2 &&
-	for i in 8 9 10 5 6; do echo "$i"; done >file3 &&
+	test_write_lines 4 A B 7 8 9 10 >file2 &&
+	test_write_lines 8 9 10 5 6 >file3 &&
 	git add file2 file3 &&
 	test_tick &&
 	git commit -m "patchid 2" &&
-	for i in 10 5 6; do echo "$i"; done >file &&
+	test_write_lines 10 5 6 >file &&
 	git add file &&
 	test_tick &&
 	git commit -m "patchid 3" &&
@@ -325,7 +325,7 @@ test_expect_success 'filename length limit' '
 		max=$(
 			for patch in 000[1-9]-*.patch
 			do
-				echo "$patch" | wc -c
+				echo "$patch" | wc -c || exit 1
 			done |
 			sort -nr |
 			head -n 1
@@ -343,7 +343,7 @@ test_expect_success 'filename length limit from config' '
 		max=$(
 			for patch in 000[1-9]-*.patch
 			do
-				echo "$patch" | wc -c
+				echo "$patch" | wc -c || exit 1
 			done |
 			sort -nr |
 			head -n 1
@@ -361,7 +361,7 @@ test_expect_success 'filename limit applies only to basename' '
 		max=$(
 			for patch in patches/000[1-9]-*.patch
 			do
-				echo "${patch#patches/}" | wc -c
+				echo "${patch#patches/}" | wc -c || exit 1
 			done |
 			sort -nr |
 			head -n 1
@@ -653,7 +653,7 @@ test_expect_success 'excessive subject' '
 	git checkout side &&
 	before=$(git hash-object file) &&
 	before=$(git rev-parse --short $before) &&
-	for i in 5 6 1 2 3 A 4 B C 7 8 9 10 D E F; do echo "$i"; done >>file &&
+	test_write_lines 5 6 1 2 3 A 4 B C 7 8 9 10 D E F >>file &&
 	after=$(git hash-object file) &&
 	after=$(git rev-parse --short $after) &&
 	git update-index file &&
@@ -1086,7 +1086,7 @@ test_expect_success TTY 'format-patch --stdout paginates' '
 test_expect_success 'format-patch handles multi-line subjects' '
 	rm -rf patches/ &&
 	echo content >>file &&
-	for i in one two three; do echo $i; done >msg &&
+	test_write_lines one two three >msg &&
 	git add file &&
 	git commit -F msg &&
 	git format-patch -o patches -1 &&
@@ -1098,7 +1098,7 @@ test_expect_success 'format-patch handles multi-line subjects' '
 test_expect_success 'format-patch handles multi-line encoded subjects' '
 	rm -rf patches/ &&
 	echo content >>file &&
-	for i in en två tre; do echo $i; done >msg &&
+	test_write_lines en två tre >msg &&
 	git add file &&
 	git commit -F msg &&
 	git format-patch -o patches -1 &&

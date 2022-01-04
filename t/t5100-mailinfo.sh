@@ -122,7 +122,7 @@ test_expect_success 'mailinfo unescapes with --mboxrd' '
 	do
 		git mailinfo mboxrd/msg mboxrd/patch \
 		  <mboxrd/$i >mboxrd/out &&
-		test_cmp "$DATA/${i}mboxrd" mboxrd/msg
+		test_cmp "$DATA/${i}mboxrd" mboxrd/msg || return 1
 	done &&
 	sp=" " &&
 	echo "From " >expect &&

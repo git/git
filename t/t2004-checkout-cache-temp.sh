@@ -57,7 +57,7 @@ test_expect_success 'checkout all stage 0 to temporary files' '
 		test $(grep $f actual | cut "-d	" -f2) = $f &&
 		p=$(grep $f actual | cut "-d	" -f1) &&
 		test -f $p &&
-		test $(cat $p) = tree1$f
+		test $(cat $p) = tree1$f || return 1
 	done
 '
 
@@ -85,7 +85,7 @@ test_expect_success 'checkout all stage 2 to temporary files' '
 		test $(grep $f actual | cut "-d	" -f2) = $f &&
 		p=$(grep $f actual | cut "-d	" -f1) &&
 		test -f $p &&
-		test $(cat $p) = tree2$f
+		test $(cat $p) = tree2$f || return 1
 	done
 '
 

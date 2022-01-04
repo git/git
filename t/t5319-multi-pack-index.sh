@@ -93,7 +93,7 @@ test_expect_success 'create objects' '
 	test_commit initial &&
 	for i in $(test_seq 1 5)
 	do
-		generate_objects $i
+		generate_objects $i || return 1
 	done &&
 	commit_and_list_objects
 '
@@ -155,7 +155,7 @@ test_expect_success 'corrupt idx reports errors' '
 test_expect_success 'add more objects' '
 	for i in $(test_seq 6 10)
 	do
-		generate_objects $i
+		generate_objects $i || return 1
 	done &&
 	commit_and_list_objects
 '
@@ -203,7 +203,7 @@ test_expect_success 'add more packs' '
 	do
 		generate_objects $j &&
 		commit_and_list_objects &&
-		git pack-objects --index-version=2 $objdir/pack/test-pack <obj-list
+		git pack-objects --index-version=2 $objdir/pack/test-pack <obj-list || return 1
 	done
 '
 
@@ -596,7 +596,7 @@ test_expect_success 'force some 64-bit offsets with pack-objects' '
 	mkdir objects64/pack &&
 	for i in $(test_seq 1 11)
 	do
-		generate_objects 11
+		generate_objects 11 || return 1
 	done &&
 	commit_and_list_objects &&
 	pack64=$(git pack-objects --index-version=2,0x40 objects64/pack/test-64 <obj-list) &&
@@ -640,7 +640,7 @@ test_expect_success 'setup expire tests' '
 		git update-index --add large_file.txt &&
 		for i in $(test_seq 1 20)
 		do
-			test_commit $i
+			test_commit $i || exit 1
 		done &&
 		git branch A HEAD &&
 		git branch B HEAD~8 &&

@@ -15,7 +15,7 @@ EOF
 test_expect_success 'setup svnrepo' '
 	for i in aa bb cc dd
 	do
-		svn_cmd mkdir -m $i --username $i "$svnrepo"/$i
+		svn_cmd mkdir -m $i --username $i "$svnrepo"/$i || return 1
 	done
 	'
 
@@ -59,8 +59,8 @@ test_expect_success 'authors-file against globs' '
 	git svn clone --authors-file=svn-authors -s "$svnrepo"/aa aa-work &&
 	for i in bb ee cc
 	do
-		branch="aa/branches/$i"
-		svn_cmd mkdir -m "$branch" --username $i "$svnrepo/$branch"
+		branch="aa/branches/$i" &&
+		svn_cmd mkdir -m "$branch" --username $i "$svnrepo/$branch" || return 1
 	done
 	'
 

@@ -15,8 +15,8 @@ test_expect_success setup '
 
 	echo "one text" > .gitattributes &&
 
-	for w in Hello world how are you; do echo $w; done >one &&
-	for w in I am very very fine thank you; do echo $w; done >two &&
+	test_write_lines Hello world how are you >one &&
+	test_write_lines I am very very fine thank you >two &&
 	git add . &&
 
 	git commit -m initial &&

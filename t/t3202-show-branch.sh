@@ -12,7 +12,7 @@ test_expect_success 'setup' '
 	for i in $(test_seq 1 10)
 	do
 		git checkout -b branch$i initial &&
-		test_commit --no-tag branch$i
+		test_commit --no-tag branch$i || return 1
 	done &&
 	git for-each-ref \
 		--sort=version:refname \
@@ -52,7 +52,7 @@ test_expect_success 'show-branch with more than 8 branches' '
 test_expect_success 'show-branch with showbranch.default' '
 	for branch in $(cat branches.sorted)
 	do
-		test_config showbranch.default $branch --add
+		test_config showbranch.default $branch --add || return 1
 	done &&
 	git show-branch >actual &&
 	test_cmp expect actual
@@ -127,7 +127,7 @@ test_expect_success 'show branch --merge-base with one argument' '
 	do
 		git rev-parse $branch >expect &&
 		git show-branch --merge-base $branch >actual &&
-		test_cmp expect actual
+		test_cmp expect actual || return 1
 	done
 '
 
@@ -136,7 +136,7 @@ test_expect_success 'show branch --merge-base with two arguments' '
 	do
 		git rev-parse initial >expect &&
 		git show-branch --merge-base initial $branch >actual &&
-		test_cmp expect actual
+		test_cmp expect actual || return 1
 	done
 '
 

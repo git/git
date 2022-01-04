@@ -32,7 +32,7 @@ test_expect_success 'setup' '
 	do
 		test_commit "1-$i" &&
 		git branch -f commit-1-$i &&
-		git tag -a -m "1-$i" tag-1-$i commit-1-$i
+		git tag -a -m "1-$i" tag-1-$i commit-1-$i || return 1
 	done &&
 	for j in $(test_seq 1 9)
 	do
@@ -46,7 +46,7 @@ test_expect_success 'setup' '
 		do
 			git merge commit-$j-$i -m "$x-$i" &&
 			git branch -f commit-$x-$i &&
-			git tag -a -m "$x-$i" tag-$x-$i commit-$x-$i
+			git tag -a -m "$x-$i" tag-$x-$i commit-$x-$i || return 1
 		done
 	done &&
 	git commit-graph write --reachable &&
