@@ -2256,6 +2256,7 @@ done:
 	strbuf_release(&rdiff1);
 	strbuf_release(&rdiff2);
 	strbuf_release(&rdiff_title);
+	UNLEAK(rev);
 	return 0;
 }
 
