@@ -156,7 +156,7 @@ of it").
 	linkgit:git-branch[1] for details.
 
 -t::
---track::
+--track [direct|inherit]::
 	When creating a new branch, set up "upstream" configuration. See
 	"--track" in linkgit:git-branch[1] for details.
 +
