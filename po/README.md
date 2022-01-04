@@ -221,6 +221,10 @@ General advice:
 - Adjust the strings so that they're easy to translate. Most of the
   advice in `info '(gettext)Preparing Strings'` applies here.
 
+- Strings referencing numbers of items may need to be split into singular and
+  plural forms; see the Q\_() wrapper in the C sub-section below for an
+  example.
+
 - If something is unclear or ambiguous you can use a "TRANSLATORS"
   comment to tell the translators what to make of it. These will be
   extracted by xgettext(1) and put in the "po/\*.po" files, e.g. from
