@@ -301,6 +301,9 @@ int load_midx_revindex(struct multi_pack_index *m)
 	if (m->revindex_data)
 		return 0;
 
+	trace2_data_string("load_midx_revindex", the_repository,
+			   "source", "rev");
+
 	get_midx_rev_filename(&revindex_name, m);
 
 	ret = load_revindex_from_disk(revindex_name.buf,
