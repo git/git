@@ -194,20 +194,19 @@ static int release_snapshot(struct snapshot *snapshot)
 }
 
 struct ref_store *packed_ref_store_create(struct repository *repo,
-					  const char *path,
+					  const char *gitdir,
 					  unsigned int store_flags)
 {
 	struct packed_ref_store *refs = xcalloc(1, sizeof(*refs));
 	struct ref_store *ref_store = (struct ref_store *)refs;
+	struct strbuf sb = STRBUF_INIT;
 
-	base_ref_store_init(ref_store, &refs_be_packed);
-	ref_store->repo = repo;
-	ref_store->gitdir = xstrdup(path);
+	base_ref_store_init(ref_store, repo, gitdir, &refs_be_packed);
 	refs->store_flags = store_flags;
 
-	refs->path = xstrdup(path);
+	strbuf_addf(&sb, "%s/packed-refs", gitdir);
+	refs->path = strbuf_detach(&sb, NULL);
 	chdir_notify_reparent("packed-refs", &refs->path);
-
 	return ref_store;
 }
 

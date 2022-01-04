@@ -710,8 +710,8 @@ int parse_loose_ref_contents(const char *buf, struct object_id *oid,
  * Fill in the generic part of refs and add it to our collection of
  * reference stores.
  */
-void base_ref_store_init(struct ref_store *refs,
-			 const struct ref_storage_be *be);
+void base_ref_store_init(struct ref_store *refs, struct repository *repo,
+			 const char *path, const struct ref_storage_be *be);
 
 /*
  * Support GIT_TRACE_REFS by optionally wrapping the given ref_store instance.
