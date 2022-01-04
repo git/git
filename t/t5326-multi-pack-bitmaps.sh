@@ -19,10 +19,6 @@ midx_pack_source () {
 
 setup_bitmap_history
 
-test_expect_success 'enable core.multiPackIndex' '
-	git config core.multiPackIndex true
-'
-
 test_expect_success 'create single-pack midx with bitmaps' '
 	git repack -ad &&
 	git multi-pack-index write --bitmap &&
