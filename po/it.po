@@ -660,10 +660,10 @@ msgstr "'git apply --cached' non riuscito"
 #. of the word "no" does not start with n.
 #: add-patch.c:1241 git-add--interactive.perl:1244
 msgid ""
-"Your edited hunk does not apply. Edit again (saying \"no\" discards!) [y/n]? "
+"Your edited hunk does not apply. Edit again (saying \"no\" discards!)? [y/n] "
 msgstr ""
 "L'hunk modificato non può essere applicato senza problemi. Modificarlo di "
-"nuovo (se rispondi \"no\", sarà eliminato!) [y/n]? "
+"nuovo (se rispondi \"no\", sarà eliminato!)? [y/n] "
 
 #: add-patch.c:1284
 msgid "The selected hunks do not apply to the index!"
@@ -10682,7 +10682,7 @@ msgstr "eseguo la bisezione solo con un commit %s"
 #. at this point.
 #.
 #: builtin/bisect--helper.c:370
-msgid "Are you sure [Y/n]? "
+msgid "Are you sure? [Y/n] "
 msgstr "Sei sicuro? [Y/n] "
 
 #: builtin/bisect--helper.c:431
@@ -10762,8 +10762,8 @@ msgstr "Devi iniziare con \"git bisect start\"\n"
 #. at this point.
 #.
 #: builtin/bisect--helper.c:838
-msgid "Do you want me to do it for you [Y/n]? "
-msgstr "Vuoi che me ne occupi io [Y/n]? "
+msgid "Do you want me to do it for you? [Y/n] "
+msgstr "Vuoi che me ne occupi io? [Y/n] "
 
 #: builtin/bisect--helper.c:866
 msgid "perform 'git bisect next'"
@@ -12508,8 +12508,8 @@ msgstr "Seleziona gli elementi da eliminare"
 #. TRANSLATORS: Make sure to keep [y/N] as is
 #: builtin/clean.c:758
 #, c-format
-msgid "Remove %s [y/N]? "
-msgstr "Eliminare %s [y/N]? "
+msgid "Remove %s? [y/N] "
+msgstr "Eliminare %s? [y/N] "
 
 #: builtin/clean.c:789
 msgid ""

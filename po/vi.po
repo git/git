@@ -641,10 +641,10 @@ msgstr "“git apply --cached” gặp lỗi"
 #. of the word "no" does not start with n.
 #: add-patch.c:1247 git-add--interactive.perl:1242
 msgid ""
-"Your edited hunk does not apply. Edit again (saying \"no\" discards!) [y/n]? "
+"Your edited hunk does not apply. Edit again (saying \"no\" discards!)? [y/n] "
 msgstr ""
 "Hunk đã sửa của bạn không được áp dụng. Sửa lại lần nữa (nói \"n\" để loại "
-"bỏ!) [y/n]? "
+"bỏ!)? [y/n] "
 
 #: add-patch.c:1290
 msgid "The selected hunks do not apply to the index!"
@@ -4535,8 +4535,8 @@ msgstr "Tiếp tục và coi rằng ý bạn là “%s”."
 
 #: help.c:646
 #, c-format
-msgid "Run '%s' instead? (y/N)"
-msgstr "Chạy “%s” để thay thế? (y/N)"
+msgid "Run '%s' instead? [y/N] "
+msgstr "Chạy “%s” để thay thế? [y/N] "
 
 #: help.c:654
 #, c-format
@@ -11235,8 +11235,8 @@ msgstr "chỉ thực hiện việc bisect với một lần chuyển giao %s"
 #. at this point.
 #.
 #: builtin/bisect--helper.c:373
-msgid "Are you sure [Y/n]? "
-msgstr "Bạn có chắc chắn chưa [Y/n]? "
+msgid "Are you sure? [Y/n] "
+msgstr "Bạn có chắc chắn chưa? [Y/n] "
 
 #: builtin/bisect--helper.c:434
 msgid "no terms defined"
@@ -11314,8 +11314,8 @@ msgstr "Bạn cần khởi đầu bằng \"git bisect start\"\n"
 #. at this point.
 #.
 #: builtin/bisect--helper.c:841
-msgid "Do you want me to do it for you [Y/n]? "
-msgstr "Bạn có muốn tôi thực hiện điều này cho bạn không [Y/n]? "
+msgid "Do you want me to do it for you? [Y/n] "
+msgstr "Bạn có muốn tôi thực hiện điều này cho bạn không? [Y/n] "
 
 #: builtin/bisect--helper.c:859
 msgid "Please call `--bisect-state` with at least one argument"
@@ -13037,8 +13037,8 @@ msgstr "Chọn mục muốn xóa"
 #. TRANSLATORS: Make sure to keep [y/N] as is
 #: builtin/clean.c:755
 #, c-format
-msgid "Remove %s [y/N]? "
-msgstr "Xóa bỏ “%s” [y/N]? "
+msgid "Remove %s? [y/N] "
+msgstr "Xóa bỏ “%s”? [y/N] "
 
 #: builtin/clean.c:786
 msgid ""

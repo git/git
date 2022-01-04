@@ -714,10 +714,10 @@ msgstr "'git apply --cached' a échoué"
 #. of the word "no" does not start with n.
 #: add-patch.c:1247 git-add--interactive.perl:1242
 msgid ""
-"Your edited hunk does not apply. Edit again (saying \"no\" discards!) [y/n]? "
+"Your edited hunk does not apply. Edit again (saying \"no\" discards!)? [y/n] "
 msgstr ""
 "Votre section éditée ne s'applique pas. L'éditer à nouveau (\"no\" "
-"l'élimine !) [y|n] ? "
+"l'élimine !) ? [y|n] "
 
 #: add-patch.c:1290
 msgid "The selected hunks do not apply to the index!"
@@ -4698,8 +4698,8 @@ msgstr "Continuons en supposant que vous avez voulu dire '%s'."
 
 #: help.c:646
 #, c-format
-msgid "Run '%s' instead? (y/N)"
-msgstr "Lancer '%s' à la place ? (y/N)"
+msgid "Run '%s' instead? [y/N] "
+msgstr "Lancer '%s' à la place ? [y/N] "
 
 #: help.c:654
 #, c-format
@@ -11445,8 +11445,8 @@ msgstr "bissection avec seulement un commit %s"
 #. at this point.
 #.
 #: builtin/bisect--helper.c:373
-msgid "Are you sure [Y/n]? "
-msgstr "Confirmez-vous [Y/n] ? "
+msgid "Are you sure? [Y/n] "
+msgstr "Confirmez-vous ? [Y/n] "
 
 #: builtin/bisect--helper.c:434
 msgid "no terms defined"
@@ -11526,8 +11526,8 @@ msgstr "Vous devez démarrer avec \"git bisect start\"\n"
 #. at this point.
 #.
 #: builtin/bisect--helper.c:841
-msgid "Do you want me to do it for you [Y/n]? "
-msgstr "Souhaitez-vous que je le fasse pour vous [Y/n] ? "
+msgid "Do you want me to do it for you? [Y/n] "
+msgstr "Souhaitez-vous que je le fasse pour vous ? [Y/n] "
 
 #: builtin/bisect--helper.c:859
 msgid "Please call `--bisect-state` with at least one argument"
@@ -13282,8 +13282,8 @@ msgstr "Sélectionner les éléments à supprimer"
 #. TRANSLATORS: Make sure to keep [y/N] as is
 #: builtin/clean.c:755
 #, c-format
-msgid "Remove %s [y/N]? "
-msgstr "Supprimer %s [y/N] ? "
+msgid "Remove %s? [y/N] "
+msgstr "Supprimer %s ? [y/N] "
 
 #: builtin/clean.c:786
 msgid ""

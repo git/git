@@ -716,10 +716,10 @@ msgstr "'git apply --cached' başarısız oldu"
 #. of the word "no" does not start with n.
 #: add-patch.c:1247 git-add--interactive.perl:1242
 msgid ""
-"Your edited hunk does not apply. Edit again (saying \"no\" discards!) [y/n]? "
+"Your edited hunk does not apply. Edit again (saying \"no\" discards!)? [y/n] "
 msgstr ""
 "Düzenlediğiniz parça uygulanamıyor. Yeniden düzenlensin mi (\"n (hayır)\" "
-"ıskartaya çıkarır!) [y/n]? "
+"ıskartaya çıkarır!)? [y/n] "
 
 #: add-patch.c:1290
 msgid "The selected hunks do not apply to the index!"
@@ -4597,8 +4597,8 @@ msgstr "'%s' demek istediğiniz varsayılarak sürdürülüyor."
 
 #: help.c:646
 #, c-format
-msgid "Run '%s' instead? (y/N)"
-msgstr "Bunun yerine '%s' çalıştır? (y/N)"
+msgid "Run '%s' instead? [y/N] "
+msgstr "Bunun yerine '%s' çalıştır? [y/N] "
 
 #: help.c:654
 #, c-format
@@ -11238,8 +11238,8 @@ msgstr "yalnızca bir %s işlemesi ile ikili arama yapılıyor"
 #. at this point.
 #.
 #: builtin/bisect--helper.c:373
-msgid "Are you sure [Y/n]? "
-msgstr "Emin misiniz [Y/n]? "
+msgid "Are you sure? [Y/n] "
+msgstr "Emin misiniz? [Y/n] "
 
 #: builtin/bisect--helper.c:434
 msgid "no terms defined"
@@ -11317,8 +11317,8 @@ msgstr "\"git bisect start\" ile başlamalısınız\n"
 #. at this point.
 #.
 #: builtin/bisect--helper.c:841
-msgid "Do you want me to do it for you [Y/n]? "
-msgstr "Bunu sizin yerinize benim yapmamı ister misiniz [Y/n]? "
+msgid "Do you want me to do it for you? [Y/n] "
+msgstr "Bunu sizin yerinize benim yapmamı ister misiniz? [Y/n] "
 
 #: builtin/bisect--helper.c:859
 msgid "Please call `--bisect-state` with at least one argument"
@@ -13040,8 +13040,8 @@ msgstr "Silinecek ögeleri seçin"
 #. TRANSLATORS: Make sure to keep [y/N] as is
 #: builtin/clean.c:755
 #, c-format
-msgid "Remove %s [y/N]? "
-msgstr "%s kaldırılsın mı [y/N]? "
+msgid "Remove %s? [y/N] "
+msgstr "%s kaldırılsın mı? [y/N] "
 
 #: builtin/clean.c:786
 msgid ""

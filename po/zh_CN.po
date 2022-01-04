@@ -754,8 +754,8 @@ msgstr "'git apply --cached' 失败"
 #. of the word "no" does not start with n.
 #: add-patch.c:1247 git-add--interactive.perl:1242
 msgid ""
-"Your edited hunk does not apply. Edit again (saying \"no\" discards!) [y/n]? "
-msgstr "您的编辑块不能被应用。重新编辑（选择 \"no\" 丢弃！） [y/n]? "
+"Your edited hunk does not apply. Edit again (saying \"no\" discards!)? [y/n] "
+msgstr "您的编辑块不能被应用。重新编辑（选择 \"no\" 丢弃！）? [y/n] "
 
 #: add-patch.c:1290
 msgid "The selected hunks do not apply to the index!"
@@ -4546,8 +4546,8 @@ msgstr "假定您想要的是 '%s' 并继续。"
 
 #: help.c:646
 #, c-format
-msgid "Run '%s' instead? (y/N)"
-msgstr "取而代之运行 '%s' ？ (y/N)"
+msgid "Run '%s' instead? [y/N] "
+msgstr "取而代之运行 '%s' ？ [y/N] "
 
 #: help.c:654
 #, c-format
@@ -11092,8 +11092,8 @@ msgstr "在只有一个 %s 提交的情况下二分查找"
 #. at this point.
 #.
 #: builtin/bisect--helper.c:373
-msgid "Are you sure [Y/n]? "
-msgstr "您确认么[Y/n]？ "
+msgid "Are you sure? [Y/n] "
+msgstr "您确认么? [Y/n] "
 
 #: builtin/bisect--helper.c:434
 msgid "no terms defined"
@@ -11169,8 +11169,8 @@ msgstr "您需要执行 \"git bisect start\" 来开始\n"
 #. at this point.
 #.
 #: builtin/bisect--helper.c:841
-msgid "Do you want me to do it for you [Y/n]? "
-msgstr "您想让我为您这样做么[Y/n]？ "
+msgid "Do you want me to do it for you? [Y/n] "
+msgstr "您想让我为您这样做么? [Y/n] "
 
 #: builtin/bisect--helper.c:859
 msgid "Please call `--bisect-state` with at least one argument"
@@ -12881,8 +12881,8 @@ msgstr "选择要删除的条目"
 #. TRANSLATORS: Make sure to keep [y/N] as is
 #: builtin/clean.c:755
 #, c-format
-msgid "Remove %s [y/N]? "
-msgstr "删除 %s [y/N]？"
+msgid "Remove %s? [y/N] "
+msgstr "删除 %s? [y/N] "
 
 #: builtin/clean.c:786
 msgid ""

@@ -631,10 +631,10 @@ msgstr "'git apply --cached' gagal"
 #. of the word "no" does not start with n.
 #: add-patch.c:1247 git-add--interactive.perl:1242
 msgid ""
-"Your edited hunk does not apply. Edit again (saying \"no\" discards!) [y/n]? "
+"Your edited hunk does not apply. Edit again (saying \"no\" discards!)? [y/n] "
 msgstr ""
 "Bingkah Anda tak diterapkan. Sunting lagi (bilang \"n\" untuk \"tidak\" "
-"buang!) [y/n]?"
+"buang!)? [y/n] "
 
 #: add-patch.c:1290
 msgid "The selected hunks do not apply to the index!"
@@ -4415,7 +4415,7 @@ msgstr "Melanjutkan di bawah asumsi bahwa maksud Anda '%s'."
 
 #: help.c:646
 #, c-format
-msgid "Run '%s' instead? (y/N)"
+msgid "Run '%s' instead? [y/N] "
 msgstr ""
 
 #: help.c:654
@@ -10734,8 +10734,8 @@ msgstr "membagi dua hanya dengan sebuah komit %s"
 #. at this point.
 #.
 #: builtin/bisect--helper.c:373
-msgid "Are you sure [Y/n]? "
-msgstr "Anda yakin [Y/n]?"
+msgid "Are you sure? [Y/n] "
+msgstr "Anda yakin? [Y/n] "
 
 #: builtin/bisect--helper.c:434
 msgid "no terms defined"
@@ -10813,8 +10813,8 @@ msgstr "Anda perlu memulai dengan \"git bisect start\"\n"
 #. at this point.
 #.
 #: builtin/bisect--helper.c:841
-msgid "Do you want me to do it for you [Y/n]? "
-msgstr "Anda ingin saya melakukannya untuk Anda [Y/n]"
+msgid "Do you want me to do it for you? [Y/n] "
+msgstr "Anda ingin saya melakukannya untuk Anda [Y/n] "
 
 #: builtin/bisect--helper.c:859
 msgid "Please call `--bisect-state` with at least one argument"
@@ -12525,8 +12525,8 @@ msgstr "Pilih item untuk dihapus"
 #. TRANSLATORS: Make sure to keep [y/N] as is
 #: builtin/clean.c:755
 #, c-format
-msgid "Remove %s [y/N]? "
-msgstr "Hapus %s [y/N]? "
+msgid "Remove %s? [y/N] "
+msgstr "Hapus %s? [y/N] "
 
 #: builtin/clean.c:786
 msgid ""

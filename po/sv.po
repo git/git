@@ -632,10 +632,10 @@ msgstr "\"git apply --cached\" misslyckades"
 #. of the word "no" does not start with n.
 #: add-patch.c:1247 git-add--interactive.perl:1242
 msgid ""
-"Your edited hunk does not apply. Edit again (saying \"no\" discards!) [y/n]? "
+"Your edited hunk does not apply. Edit again (saying \"no\" discards!)? [y/n] "
 msgstr ""
-"Ditt redigerade stycke kan inte appliceras. Redigera igen (\"nej\" kastar!) "
-"[y/n]? "
+"Ditt redigerade stycke kan inte appliceras. Redigera igen (\"nej\" kastar!)? "
+"[y/n] "
 
 #: add-patch.c:1290
 msgid "The selected hunks do not apply to the index!"
@@ -4528,8 +4528,8 @@ msgstr "Fortsätter under förutsättningen att du menade \"%s\"."
 
 #: help.c:646
 #, c-format
-msgid "Run '%s' instead? (y/N)"
-msgstr "Köra \"%s\" istället? (j/N)"
+msgid "Run '%s' instead? [y/N] "
+msgstr "Köra \"%s\" istället? [j/N] "
 
 #: help.c:654
 #, c-format
@@ -11173,8 +11173,8 @@ msgstr "utför bisect med endast en %s incheckning"
 #. at this point.
 #.
 #: builtin/bisect--helper.c:373
-msgid "Are you sure [Y/n]? "
-msgstr "Är du säker [Y=ja/N=nej]? "
+msgid "Are you sure? [Y/n] "
+msgstr "Är du säker? [Y=ja/N=nej] "
 
 #: builtin/bisect--helper.c:434
 msgid "no terms defined"
@@ -11254,8 +11254,8 @@ msgstr "Du måste starta med \"git bisect start\"\n"
 #. at this point.
 #.
 #: builtin/bisect--helper.c:841
-msgid "Do you want me to do it for you [Y/n]? "
-msgstr "Vill du att jag ska göra det åt dig [Y=ja/N=nej]? "
+msgid "Do you want me to do it for you? [Y/n] "
+msgstr "Vill du att jag ska göra det åt dig? [Y=ja/N=nej] "
 
 #: builtin/bisect--helper.c:859
 msgid "Please call `--bisect-state` with at least one argument"
@@ -12981,8 +12981,8 @@ msgstr "Välj poster att ta bort"
 #. TRANSLATORS: Make sure to keep [y/N] as is
 #: builtin/clean.c:755
 #, c-format
-msgid "Remove %s [y/N]? "
-msgstr "Ta bort %s [Y=ja / N=nej]? "
+msgid "Remove %s? [y/N] "
+msgstr "Ta bort %s? [Y=ja / N=nej] "
 
 #: builtin/clean.c:786
 msgid ""

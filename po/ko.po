@@ -7179,8 +7179,8 @@ msgstr "삭제할 항목을 선택하십시오"
 #. TRANSLATORS: Make sure to keep [y/N] as is
 #: builtin/clean.c:763
 #, c-format
-msgid "Remove %s [y/N]? "
-msgstr "%s 제거합니까 [y/N]? "
+msgid "Remove %s? [y/N] "
+msgstr "%s 제거합니까? [y/N] "
 
 #: builtin/clean.c:788 git-add--interactive.perl:1717
 #, c-format
@@ -15994,8 +15994,8 @@ msgstr "\"git bisect start\" 명령으로 시작해야 합니다"
 #. translation. The program will only accept English input
 #. at this point.
 #: git-bisect.sh:60
-msgid "Do you want me to do it for you [Y/n]? "
-msgstr "지금 하시겠습니까 [Y/n]? "
+msgid "Do you want me to do it for you? [Y/n] "
+msgstr "지금 하시겠습니까? [Y/n] "
 
 #: git-bisect.sh:121
 #, sh-format
@@ -16061,8 +16061,8 @@ msgstr "경고: 하나의 $TERM_BAD 커밋에 대해서만 이등분."
 #. translation. The program will only accept English input
 #. at this point.
 #: git-bisect.sh:312
-msgid "Are you sure [Y/n]? "
-msgstr "확실합니까 [Y/n]? "
+msgid "Are you sure? [Y/n] "
+msgstr "확실합니까? [Y/n] "
 
 #: git-bisect.sh:324
 #, sh-format
@@ -17274,10 +17274,10 @@ msgstr "부분 편집 파일을 읽기용으로 여는데 실패: '%s'"
 #. of the word "no" does not start with n.
 #: git-add--interactive.perl:1213
 msgid ""
-"Your edited hunk does not apply. Edit again (saying \"no\" discards!) [y/n]? "
+"Your edited hunk does not apply. Edit again (saying \"no\" discards!)? [y/n] "
 msgstr ""
 "편집한 부분이 적용되지 않습니다. 다시 편집하시겠습니까 (\"no\"라고 하면 버립"
-"니다!) [y/n]? "
+"니다!)? [y/n] "
 
 #: git-add--interactive.perl:1222
 msgid ""

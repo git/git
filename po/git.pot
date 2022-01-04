@@ -567,7 +567,7 @@ msgstr ""
 #. of the word "no" does not start with n.
 #: add-patch.c:1247 git-add--interactive.perl:1242
 msgid ""
-"Your edited hunk does not apply. Edit again (saying \"no\" discards!) [y/n]? "
+"Your edited hunk does not apply. Edit again (saying \"no\" discards!)? [y/n] "
 msgstr ""
 
 #: add-patch.c:1290
@@ -4246,7 +4246,7 @@ msgstr ""
 
 #: help.c:646
 #, c-format
-msgid "Run '%s' instead? (y/N)"
+msgid "Run '%s' instead? [y/N] "
 msgstr ""
 
 #: help.c:654
@@ -10385,7 +10385,7 @@ msgstr ""
 #. at this point.
 #.
 #: builtin/bisect--helper.c:373
-msgid "Are you sure [Y/n]? "
+msgid "Are you sure? [Y/n] "
 msgstr ""
 
 #: builtin/bisect--helper.c:434
@@ -10460,7 +10460,7 @@ msgstr ""
 #. at this point.
 #.
 #: builtin/bisect--helper.c:841
-msgid "Do you want me to do it for you [Y/n]? "
+msgid "Do you want me to do it for you? [Y/n] "
 msgstr ""
 
 #: builtin/bisect--helper.c:859
@@ -12087,7 +12087,7 @@ msgstr ""
 #. TRANSLATORS: Make sure to keep [y/N] as is
 #: builtin/clean.c:755
 #, c-format
-msgid "Remove %s [y/N]? "
+msgid "Remove %s? [y/N] "
 msgstr ""
 
 #: builtin/clean.c:786

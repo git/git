@@ -577,9 +577,9 @@ msgstr ""
 #. of the word "no" does not start with n.
 #: add-patch.c:1246 git-add--interactive.perl:1242
 msgid ""
-"Your edited hunk does not apply. Edit again (saying \"no\" discards!) [y/n]?"
+"Your edited hunk does not apply. Edit again (saying \"no\" discards!)? [y/n]"
 " "
-msgstr "Изменённый вами блок не применяется. Редактировать снова (ответ «y» означает «нет»!) [y/n]? "
+msgstr "Изменённый вами блок не применяется. Редактировать снова (ответ «y» означает «нет»!)? [y/n] "
 
 #: add-patch.c:1289
 msgid "The selected hunks do not apply to the index!"
@@ -9796,8 +9796,8 @@ msgstr ""
 #. translation. The program will only accept English input
 #. at this point.
 #: builtin/bisect--helper.c:357
-msgid "Are you sure [Y/n]? "
-msgstr "Вы уверены [Y - да/n - нет]? "
+msgid "Are you sure? [Y/n] "
+msgstr "Вы уверены? [Y - да/n - нет] "
 
 #: builtin/bisect--helper.c:418
 msgid "no terms defined"
@@ -9870,8 +9870,8 @@ msgstr ""
 #. translation. The program will only accept English input
 #. at this point.
 #: builtin/bisect--helper.c:825
-msgid "Do you want me to do it for you [Y/n]? "
-msgstr "Вы уверены, что хотите, чтобы я сделал это [Y] - да/[n] - нет? "
+msgid "Do you want me to do it for you? [Y/n] "
+msgstr "Вы уверены, что хотите, чтобы я сделал это? [Y] - да/[n] - нет "
 
 #: builtin/bisect--helper.c:843
 msgid "Please call `--bisect-state` with at least one argument"
@@ -11466,8 +11466,8 @@ msgstr "Укажите элементы для удаления"
 #. TRANSLATORS: Make sure to keep [y/N] as is
 #: builtin/clean.c:758
 #, c-format
-msgid "Remove %s [y/N]? "
-msgstr "Удалить %s [y - да/N - нет]? "
+msgid "Remove %s? [y/N] "
+msgstr "Удалить %s? [y - да/N - нет] "
 
 #: builtin/clean.c:789
 msgid ""
