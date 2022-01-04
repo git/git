@@ -62,6 +62,9 @@ UI, Workflows & Features
    with the "--allow-empty" option.  It also learned to honor the
    "--quiet" option given from the command line.
 
+ * The "init" and "set" subcommands in "git sparse-checkout" have been
+   unified for a better user experience and performance.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -129,6 +132,14 @@ Performance, Internal Implementation, Development Support etc.
  * The chainlint test script linter in the test suite has been updated.
 
  * The DEVELOPER=yes build uses -std=gnu99 now.
+
+ * "git format-patch" uses a single rev_info instance and then exits.
+   Mark the structure with UNLEAK() macro to squelch leak sanitizer.
+
+ * New interface into the tmp-objdir API to help in-core use of the
+   quarantine feature.
+
+ * Broken &&-chains in the test scripts have been corrected.
 
 
 Fixes since v2.34
