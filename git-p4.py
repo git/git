@@ -56,6 +56,9 @@ defaultBlockSize = 1<<20
 
 p4_access_checked = False
 
+re_ko_keywords = re.compile(br'\$(Id|Header)(:[^$\n]+)?\$')
+re_k_keywords = re.compile(br'\$(Id|Header|Author|Date|DateTime|Change|File|Revision)(:[^$\n]+)?\$')
+
 def p4_build_cmd(cmd):
     """Build a suitable p4 command line.
 
@@ -337,17 +340,19 @@ def p4_read_pipe(c, ignore_error=False, raw=False):
     real_cmd = p4_build_cmd(c)
     return read_pipe(real_cmd, ignore_error, raw=raw)
 
-def read_pipe_lines(c):
+def read_pipe_lines(c, raw=False):
     if verbose:
         sys.stderr.write('Reading pipe: %s\n' % str(c))
 
     expand = not isinstance(c, list)
     p = subprocess.Popen(c, stdout=subprocess.PIPE, shell=expand)
     pipe = p.stdout
-    val = [decode_text_stream(line) for line in pipe.readlines()]
+    lines = pipe.readlines()
+    if not raw:
+        lines = [decode_text_stream(line) for line in lines]
     if pipe.close() or p.wait():
         die('Command failed: %s' % str(c))
-    return val
+    return lines
 
 def p4_read_pipe_lines(c):
     """Specifically invoke p4 on the command supplied. """
@@ -577,20 +582,12 @@ def p4_type(f):
 #
 def p4_keywords_regexp_for_type(base, type_mods):
     if base in ("text", "unicode", "binary"):
-        kwords = None
         if "ko" in type_mods:
-            kwords = 'Id|Header'
+            return re_ko_keywords
         elif "k" in type_mods:
-            kwords = 'Id|Header|Author|Date|DateTime|Change|File|Revision'
+            return re_k_keywords
         else:
             return None
-        pattern = r"""
-            \$              # Starts with a dollar, followed by...
-            (%s)            # one of the keywords, followed by...
-            (:[^$\n]+)?     # possibly an old expansion, followed by...
-            \$              # another dollar
-            """ % kwords
-        return pattern
     else:
         return None
 
@@ -1753,18 +1750,13 @@ class P4Submit(Command, P4UserMap):
 
         return result
 
-    def patchRCSKeywords(self, file, pattern):
-        # Attempt to zap the RCS keywords in a p4 controlled file matching the given pattern
+    def patchRCSKeywords(self, file, regexp):
+        # Attempt to zap the RCS keywords in a p4 controlled file matching the given regex
         (handle, outFileName) = tempfile.mkstemp(dir='.')
         try:
-            outFile = os.fdopen(handle, "w+")
-            inFile = open(file, "r")
-            regexp = re.compile(pattern, re.VERBOSE)
-            for line in inFile.readlines():
-                line = regexp.sub(r'$\1$', line)
-                outFile.write(line)
-            inFile.close()
-            outFile.close()
+            with os.fdopen(handle, "wb") as outFile, open(file, "rb") as inFile:
+                for line in inFile.readlines():
+                    outFile.write(regexp.sub(br'$\1$', line))
             # Forcibly overwrite the original file
             os.unlink(file)
             shutil.move(outFileName, file)
@@ -2091,25 +2083,24 @@ class P4Submit(Command, P4UserMap):
             # the patch to see if that's possible.
             if gitConfigBool("git-p4.attemptRCSCleanup"):
                 file = None
-                pattern = None
                 kwfiles = {}
                 for file in editedFiles | filesToDelete:
                     # did this file's delta contain RCS keywords?
-                    pattern = p4_keywords_regexp_for_file(file)
-
-                    if pattern:
+                    regexp = p4_keywords_regexp_for_file(file)
+                    if regexp:
                         # this file is a possibility...look for RCS keywords.
-                        regexp = re.compile(pattern, re.VERBOSE)
-                        for line in read_pipe_lines(["git", "diff", "%s^..%s" % (id, id), file]):
+                        for line in read_pipe_lines(
+                            ["git", "diff", "%s^..%s" % (id, id), file],
+                            raw=True):
                             if regexp.search(line):
                                 if verbose:
-                                    print("got keyword match on %s in %s in %s" % (pattern, line, file))
-                                kwfiles[file] = pattern
+                                    print("got keyword match on %s in %s in %s" % (regex.pattern, line, file))
+                                kwfiles[file] = regexp
                                 break
 
-                for file in kwfiles:
+                for file, regexp in kwfiles.items():
                     if verbose:
-                        print("zapping %s with %s" % (line,pattern))
+                        print("zapping %s with %s" % (line, regexp.pattern))
                     # File is being deleted, so not open in p4.  Must
                     # disable the read-only bit on windows.
                     if self.isWindows and file not in editedFiles:
@@ -3029,12 +3020,9 @@ class P4Sync(Command, P4UserMap):
 
         # Note that we do not try to de-mangle keywords on utf16 files,
         # even though in theory somebody may want that.
-        pattern = p4_keywords_regexp_for_type(type_base, type_mods)
-        if pattern:
-            regexp = re.compile(pattern, re.VERBOSE)
-            text = ''.join(decode_text_stream(c) for c in contents)
-            text = regexp.sub(r'$\1$', text)
-            contents = [ encode_text_stream(text) ]
+        regexp = p4_keywords_regexp_for_type(type_base, type_mods)
+        if regexp:
+            contents = [regexp.sub(br'$\1$', c) for c in contents]
 
         if self.largeFileSystem:
             (git_mode, contents) = self.largeFileSystem.processContent(git_mode, relPath, contents)
