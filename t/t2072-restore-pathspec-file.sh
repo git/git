@@ -152,7 +152,7 @@ test_expect_success 'error conditions' '
 	>empty_list &&
 
 	test_must_fail git restore --pathspec-from-file=list --patch --source=HEAD^1 2>err &&
-	test_i18ngrep -e "--pathspec-from-file is incompatible with --patch" err &&
+	test_i18ngrep -e "options .--pathspec-from-file. and .--patch. cannot be used together" err &&
 
 	test_must_fail git restore --pathspec-from-file=list --source=HEAD^1 -- fileA.t 2>err &&
 	test_i18ngrep -e "--pathspec-from-file is incompatible with pathspec arguments" err &&

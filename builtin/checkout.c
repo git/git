@@ -464,10 +464,10 @@ static int checkout_paths(const struct checkout_opts *opts,
 		die(_("'%s' cannot be used with updating paths"), "--detach");
 
 	if (opts->merge && opts->patch_mode)
-		die(_("'%s' cannot be used with %s"), "--merge", "--patch");
+		die(_("options '%s' and '%s' cannot be used together"), "--merge", "--patch");
 
 	if (opts->ignore_unmerged && opts->merge)
-		die(_("'%s' cannot be used with %s"),
+		die(_("options '%s' and '%s' cannot be used together"),
 		    opts->ignore_unmerged_opt, "-m");
 
 	if (opts->new_branch)
@@ -1749,10 +1749,10 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 			die(_("--pathspec-from-file is incompatible with pathspec arguments"));
 
 		if (opts->force_detach)
-			die(_("--pathspec-from-file is incompatible with --detach"));
+			die(_("options '%s' and '%s' cannot be used together"), "--pathspec-from-file", "--detach");
 
 		if (opts->patch_mode)
-			die(_("--pathspec-from-file is incompatible with --patch"));
+			die(_("options '%s' and '%s' cannot be used together"), "--pathspec-from-file", "--patch");
 
 		parse_pathspec_file(&opts->pathspec, 0,
 				    0,

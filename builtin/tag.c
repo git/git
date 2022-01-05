@@ -522,7 +522,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	finalize_colopts(&colopts, -1);
 	if (cmdmode == 'l' && filter.lines != -1) {
 		if (explicitly_enable_column(colopts))
-			die(_("--column and -n are incompatible"));
+			die(_("options '%s' and '%s' cannot be used together"), "--column", "-n");
 		colopts = 0;
 	}
 	sorting = ref_sorting_options(&sorting_options);
@@ -564,7 +564,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 
 	if (msg.given || msgfile) {
 		if (msg.given && msgfile)
-			die(_("only one -F or -m option is allowed."));
+			die(_("options '%s' and '%s' cannot be used together"), "-F", "-m");
 		if (msg.given)
 			strbuf_addbuf(&buf, &(msg.buf));
 		else {

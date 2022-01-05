@@ -590,7 +590,7 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 	save_commit_buffer = 0;
 
 	if (longformat && abbrev == 0)
-		die(_("--long is incompatible with --abbrev=0"));
+		die(_("options '%s' and '%s' cannot be used together"), "--long", "--abbrev=0");
 
 	if (contains) {
 		struct string_list_item *item;
