@@ -72,12 +72,12 @@ test_expect_success 'usage' '
 	grep "cannot be used together" err &&
 
 	test_expect_code 128 git log --pickaxe-all --find-object=HEAD 2>err &&
-	grep "mutually exclusive" err
+	grep "cannot be used together" err
 '
 
 test_expect_success 'usage: --pickaxe-regex' '
 	test_expect_code 128 git log -Gregex --pickaxe-regex 2>err &&
-	grep "mutually exclusive" err
+	grep "cannot be used together" err
 '
 
 test_expect_success 'usage: --no-pickaxe-regex' '

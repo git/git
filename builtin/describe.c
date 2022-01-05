@@ -670,9 +670,9 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 		}
 		describe("HEAD", 1);
 	} else if (dirty) {
-		die(_("--dirty is incompatible with commit-ishes"));
+		die(_("option '%s' and commit-ishes cannot be used together"), "--dirty");
 	} else if (broken) {
-		die(_("--broken is incompatible with commit-ishes"));
+		die(_("option '%s' and commit-ishes cannot be used together"), "--broken");
 	} else {
 		while (argc-- > 0)
 			describe(*argv++, argc == 0);

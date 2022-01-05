@@ -729,7 +729,7 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 	}
 
 	if (force_path && batch.enabled) {
-		error("--path=<path> incompatible with --batch");
+		error("options '--path=<path>' and '--batch' cannot be used together");
 		usage_with_options(cat_file_usage, options);
 	}
 

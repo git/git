@@ -46,7 +46,7 @@ test_expect_success 'disallows --bare with --origin' '
 
 	test_must_fail git clone -o foo --bare parent clone-bare-o 2>err &&
 	test_debug "cat err" &&
-	test_i18ngrep -e "--bare and --origin foo options are incompatible" err
+	test_i18ngrep -e "options .--bare. and .--origin foo. cannot be used together" err
 
 '
 
