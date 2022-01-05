@@ -633,7 +633,35 @@ test_expect_success 'merge-msg with "merging" an annotated tag' '
 	test_cmp expected .git/MERGE_MSG
 '
 
+test_expect_success 'merge --into-name=<name>' '
+	test_when_finished "git checkout main" &&
+	git checkout -B side main &&
+	git commit --allow-empty -m "One step ahead" &&
+
+	git checkout --detach main &&
+	git merge --no-ff side &&
+	git show -s --format="%s" >full.0 &&
+	head -n1 full.0 >actual &&
+	# expect that HEAD is shown as-is
+	grep -e "Merge branch .side. into HEAD$" actual &&
+
+	git reset --hard main &&
+	git merge --no-ff --into-name=main side &&
+	git show -s --format="%s" >full.1 &&
+	head -n1 full.1 >actual &&
+	# expect that we pretend to be merging to main, that is suppressed
+	grep -e "Merge branch .side.$" actual &&
+
+	git checkout -b throwaway main &&
+	git merge --no-ff --into-name=main side &&
+	git show -s --format="%s" >full.2 &&
+	head -n1 full.2 >actual &&
+	# expect that we pretend to be merging to main, that is suppressed
+	grep -e "Merge branch .side.$" actual
+'
+
 test_expect_success 'merge.suppressDest configuration' '
+	test_when_finished "git checkout main" &&
 	git checkout -B side main &&
 	git commit --allow-empty -m "One step ahead" &&
 	git checkout main &&
@@ -650,7 +678,19 @@ test_expect_success 'merge.suppressDest configuration' '
 	git -c merge.suppressDest="ma?*[rn]" fmt-merge-msg <.git/FETCH_HEAD >full.3 &&
 	head -n1 full.3 >actual &&
 	grep -e "Merge branch .side." actual &&
-	! grep -e " into main$" actual
+	! grep -e " into main$" actual &&
+
+	git checkout --detach HEAD &&
+	git -c merge.suppressDest="main" fmt-merge-msg <.git/FETCH_HEAD >full.4 &&
+	head -n1 full.4 >actual &&
+	grep -e "Merge branch .side. into HEAD$" actual &&
+
+	git -c merge.suppressDest="main" fmt-merge-msg \
+		--into-name=main <.git/FETCH_HEAD >full.5 &&
+	head -n1 full.5 >actual &&
+	grep -e "Merge branch .side." actual &&
+	! grep -e " into main$" actual &&
+	! grep -e " into HEAD$" actual
 '
 
 test_done
