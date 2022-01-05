@@ -123,4 +123,10 @@ test_expect_success GETTEXT_LOCALE,LIBPCRE2,PCRE2_MATCH_INVALID_UTF 'PCRE v2: gr
 	test_cmp invalid-0xe5 actual
 '
 
+test_expect_success GETTEXT_LOCALE,LIBPCRE2 'PCRE v2: grep non-literal ASCII from UTF-8' '
+	git grep --perl-regexp -h -o -e ll. file >actual &&
+	echo "lló" >expected &&
+	test_cmp expected actual
+'
+
 test_done
