@@ -1313,7 +1313,7 @@ static int module_summary(int argc, const char **argv, const char *prefix)
 
 	if (files) {
 		if (cached)
-			die(_("--cached and --files are mutually exclusive"));
+			die(_("options '%s' and '%s' cannot be used together"), "--cached", "--files");
 		diff_cmd = DIFF_FILES;
 	}
 
@@ -2972,7 +2972,7 @@ static int module_set_branch(int argc, const char **argv, const char *prefix)
 		die(_("--branch or --default required"));
 
 	if (opt_branch && opt_default)
-		die(_("--branch and --default are mutually exclusive"));
+		die(_("options '%s' and '%s' cannot be used together"), "--branch", "--default");
 
 	if (argc != 1 || !(path = argv[0]))
 		usage_with_options(usage, options);

@@ -152,7 +152,7 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 	}
 
 	if (read_stdin && merge_base)
-		die(_("--stdin and --merge-base are mutually exclusive"));
+		die(_("options '%s' and '%s' cannot be used together"), "--stdin", "--merge-base");
 	if (merge_base && opt->pending.nr != 2)
 		die(_("--merge-base only works with two commits"));
 

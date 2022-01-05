@@ -2028,12 +2028,12 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		if (deepen_relative < 0)
 			die(_("negative depth in --deepen is not supported"));
 		if (depth)
-			die(_("--deepen and --depth are mutually exclusive"));
+			die(_("options '%s' and '%s' cannot be used together"), "--deepen", "--depth");
 		depth = xstrfmt("%d", deepen_relative);
 	}
 	if (unshallow) {
 		if (depth)
-			die(_("--depth and --unshallow cannot be used together"));
+			die(_("options '%s' and '%s' cannot be used together"), "--depth", "--unshallow");
 		else if (!is_repository_shallow(the_repository))
 			die(_("--unshallow on a complete repository does not make sense"));
 		else
