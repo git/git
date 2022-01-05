@@ -2090,4 +2090,23 @@ test_expect_success 'log --end-of-options' '
        test_cmp expect actual
 '
 
+test_expect_success 'set up commits with different authors' '
+	git checkout --orphan authors &&
+	test_commit --author "Jim <jim@example.com>" jim_1 &&
+	test_commit --author "Val <val@example.com>" val_1 &&
+	test_commit --author "Val <val@example.com>" val_2 &&
+	test_commit --author "Jim <jim@example.com>" jim_2 &&
+	test_commit --author "Val <val@example.com>" val_3 &&
+	test_commit --author "Jim <jim@example.com>" jim_3
+'
+
+test_expect_success 'log --invert-grep --grep --author' '
+	cat >expect <<-\EOF &&
+	val_3
+	val_1
+	EOF
+	git log --format=%s --author=Val --grep 2 --invert-grep >actual &&
+	test_cmp expect actual
+'
+
 test_done

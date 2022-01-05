@@ -699,6 +699,14 @@ static struct grep_expr *compile_pattern_expr(struct grep_pat **list)
 	return compile_pattern_or(list);
 }
 
+static struct grep_expr *grep_not_expr(struct grep_expr *expr)
+{
+	struct grep_expr *z = xcalloc(1, sizeof(*z));
+	z->node = GREP_NODE_NOT;
+	z->u.unary = expr;
+	return z;
+}
+
 static struct grep_expr *grep_true_expr(void)
 {
 	struct grep_expr *z = xcalloc(1, sizeof(*z));
@@ -797,7 +805,7 @@ void compile_grep_patterns(struct grep_opt *opt)
 		}
 	}
 
-	if (opt->all_match || header_expr)
+	if (opt->all_match || opt->no_body_match || header_expr)
 		opt->extended = 1;
 	else if (!opt->extended)
 		return;
@@ -807,6 +815,9 @@ void compile_grep_patterns(struct grep_opt *opt)
 		opt->pattern_expression = compile_pattern_expr(&p);
 	if (p)
 		die("incomplete pattern expression: %s", p->pattern);
+
+	if (opt->no_body_match && opt->pattern_expression)
+		opt->pattern_expression = grep_not_expr(opt->pattern_expression);
 
 	if (!header_expr)
 		return;
@@ -1057,6 +1068,8 @@ static int match_expr_eval(struct grep_opt *opt, struct grep_expr *x,
 			if (h && (*col < 0 || tmp.rm_so < *col))
 				*col = tmp.rm_so;
 		}
+		if (x->u.atom->token == GREP_PATTERN_BODY)
+			opt->body_hit |= h;
 		break;
 	case GREP_NODE_NOT:
 		/*
@@ -1825,16 +1838,19 @@ int grep_source(struct grep_opt *opt, struct grep_source *gs)
 	 * we do not have to do the two-pass grep when we do not check
 	 * buffer-wide "all-match".
 	 */
-	if (!opt->all_match)
+	if (!opt->all_match && !opt->no_body_match)
 		return grep_source_1(opt, gs, 0);
 
 	/* Otherwise the toplevel "or" terms hit a bit differently.
 	 * We first clear hit markers from them.
 	 */
 	clr_hit_marker(opt->pattern_expression);
+	opt->body_hit = 0;
 	grep_source_1(opt, gs, 1);
 
-	if (!chk_hit_marker(opt->pattern_expression))
+	if (opt->all_match && !chk_hit_marker(opt->pattern_expression))
+		return 0;
+	if (opt->no_body_match && opt->body_hit)
 		return 0;
 
 	return grep_source_1(opt, gs, 0);
