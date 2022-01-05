@@ -153,7 +153,7 @@ test_expect_success 'error conditions' '
 	test_i18ngrep -e "--pathspec-from-file is incompatible with pathspec arguments" err &&
 
 	test_must_fail git commit --pathspec-file-nul -m "Commit" 2>err &&
-	test_i18ngrep -e "--pathspec-file-nul requires --pathspec-from-file" err &&
+	test_i18ngrep -e "the option .--pathspec-file-nul. requires .--pathspec-from-file." err &&
 
 	test_must_fail git commit --pathspec-from-file=empty_list --include -m "Commit" 2>err &&
 	test_i18ngrep -e "No paths with --include/--only does not make sense." err &&
