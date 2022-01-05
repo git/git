@@ -65,6 +65,21 @@ UI, Workflows & Features
  * The "init" and "set" subcommands in "git sparse-checkout" have been
    unified for a better user experience and performance.
 
+ * Many git commands that deal with working tree files try to remove a
+   directory that becomes empty (i.e. "git switch" from a branch that
+   has the directory to another branch that does not would attempt
+   remove all files in the directory and the directory itself).  This
+   drops users into an unfamiliar situation if the command was run in
+   a subdirectory that becomes subject to removal due to the command.
+   The commands have been taught to keep an empty directory if it is
+   the directory they were started in to avoid surprising users.
+
+ * "git am" learns "--empty=(stop|drop|keep)" option to tweak what is
+   done to a piece of e-mail without a patch in it.
+
+ * The default merge message prepared by "git merge" records the name
+   of the current branch; the name can be overridden with a new option
+   to allow users to pretend a merge is made on a different branch.
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -140,6 +155,21 @@ Performance, Internal Implementation, Development Support etc.
    quarantine feature.
 
  * Broken &&-chains in the test scripts have been corrected.
+
+ * The RCS keyword substitution in "git p4" used to be done assuming
+   that the contents are UTF-8 text, which can trigger decoding
+   errors.  We now treat the contents as a bytestring for robustness
+   and correctness.
+
+ * The conditions to choose different definitions of the FLEX_ARRAY
+   macro for vendor compilers has been simplified to make it easier to
+   maintain.
+
+ * Correctness and performance update to "diff --color-moved" feature.
+
+ * "git upload-pack" (the other side of "git fetch") used a 8kB buffer
+   but most of its payload came on 64kB "packets".  The buffer size
+   has been enlarged so that such a packet fits.
 
 
 Fixes since v2.34
@@ -265,6 +295,21 @@ Fixes since v2.34
    which has been corrected.
    (merge 17baeaf82d ab/fetch-set-upstream-while-detached later to maint).
 
+ * Among some code paths that ask an yes/no question, only one place
+   gave a prompt that looked different from the others, which has been
+   updated to match what the others create.
+   (merge 0fc8ed154c km/help-prompt-fix later to maint).
+
+ * "git log --invert-grep --author=<name>" used to exclude commits
+   written by the given author, but now "--invert-grep" only affects
+   the matches made by the "--grep=<pattern>" option.
+   (merge 794c000267 rs/log-invert-grep-with-headers later to maint).
+
+ * "git grep --perl-regexp" failed to match UTF-8 characters with
+   wildcard when the pattern consists only of ASCII letters, which has
+   been corrected.
+   (merge 32e3e8bc55 rs/pcre2-utf later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 74db416c9c cw/protocol-v2-doc-fix later to maint).
    (merge f9b2b6684d ja/doc-cleanup later to maint).
@@ -283,3 +328,7 @@ Fixes since v2.34
    (merge 2c68f577fc ew/cbtree-remove-unused-and-broken-cb-unlink later to maint).
    (merge eafd6e7e55 ab/die-with-bug later to maint).
    (merge 91028f7659 jc/grep-patterntype-default-doc later to maint).
+   (merge 47ca93d071 ds/repack-fixlets later to maint).
+   (merge e6a9bc0c60 rs/t4202-invert-grep-test-fix later to maint).
+   (merge deb5407a42 gh/gpg-doc-markup-fix later to maint).
+   (merge 999bba3e0b rs/daemon-plug-leak later to maint).
