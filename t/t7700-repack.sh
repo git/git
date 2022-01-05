@@ -5,6 +5,7 @@ test_description='git repack works correctly'
 . ./test-lib.sh
 . "${TEST_DIRECTORY}/lib-bitmap.sh"
 . "${TEST_DIRECTORY}/lib-midx.sh"
+. "${TEST_DIRECTORY}/lib-terminal.sh"
 
 commit_and_pack () {
 	test_commit "$@" 1>&2 &&
@@ -370,6 +371,18 @@ test_expect_success '--write-midx with preferred bitmap tips' '
 
 		! test_cmp before after
 	)
+'
+
+test_expect_success '--write-midx -b packs non-kept objects' '
+	GIT_TRACE2_EVENT="$(pwd)/trace.txt" \
+		git repack --write-midx -a -b &&
+	test_subcommand_inexact git pack-objects --honor-pack-keep <trace.txt
+'
+
+test_expect_success TTY '--quiet disables progress' '
+	test_terminal env GIT_PROGRESS_DELAY=0 \
+		git -C midx repack -ad --quiet --write-midx 2>stderr &&
+	test_must_be_empty stderr
 '
 
 test_done

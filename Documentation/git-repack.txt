@@ -76,8 +76,9 @@ to the new separate pack will be written.
 	linkgit:git-pack-objects[1].
 
 -q::
-	Pass the `-q` option to 'git pack-objects'. See
-	linkgit:git-pack-objects[1].
+--quiet::
+	Show no progress over the standard error stream and pass the `-q`
+	option to 'git pack-objects'. See linkgit:git-pack-objects[1].
 
 -n::
 	Do not update the server information with

@@ -1760,6 +1760,40 @@ test_subcommand () {
 }
 
 # Check that the given command was invoked as part of the
+# trace2-format trace on stdin, but without an exact set of
+# arguments.
+#
+#	test_subcommand [!] <command> <args>... < <trace>
+#
+# For example, to look for an invocation of "git pack-objects"
+# with the "--honor-pack-keep" argument, use
+#
+#	GIT_TRACE2_EVENT=event.log git repack ... &&
+#	test_subcommand git pack-objects --honor-pack-keep <event.log
+#
+# If the first parameter passed is !, this instead checks that
+# the given command was not called.
+#
+test_subcommand_inexact () {
+	local negate=
+	if test "$1" = "!"
+	then
+		negate=t
+		shift
+	fi
+
+	local expr=$(printf '"%s".*' "$@")
+	expr="${expr%,}"
+
+	if test -n "$negate"
+	then
+		! grep "\"event\":\"child_start\".*\[$expr\]"
+	else
+		grep "\"event\":\"child_start\".*\[$expr\]"
+	fi
+}
+
+# Check that the given command was invoked as part of the
 # trace2-format trace on stdin.
 #
 #	test_region [!] <category> <label> git <command> <args>...
