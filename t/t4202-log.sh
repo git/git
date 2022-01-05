@@ -250,7 +250,7 @@ test_expect_success 'log --invert-grep --grep' '
 	test_cmp expect actual &&
 
 	# POSIX extended
-	git -c grep.patternType=basic log --pretty="tformat:%s" --invert-grep --grep=t[h] --grep=S[e]c >actual &&
+	git -c grep.patternType=extended log --pretty="tformat:%s" --invert-grep --grep=t[h] --grep=S[e]c >actual &&
 	test_cmp expect actual &&
 
 	# PCRE
