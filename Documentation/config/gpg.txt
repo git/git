@@ -34,7 +34,7 @@ gpg.minTrustLevel::
 * `fully`
 * `ultimate`
 
-gpg.ssh.defaultKeyCommand:
+gpg.ssh.defaultKeyCommand::
 	This command that will be run when user.signingkey is not set and a ssh
 	signature is requested. On successful exit a valid ssh public key is
 	expected in the	first line of its output. To automatically use the first
