@@ -595,6 +595,14 @@ static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 	}
 }
 
+static struct grep_expr *grep_not_expr(struct grep_expr *expr)
+{
+	struct grep_expr *z = xcalloc(1, sizeof(*z));
+	z->node = GREP_NODE_NOT;
+	z->u.unary = expr;
+	return z;
+}
+
 static struct grep_expr *grep_or_expr(struct grep_expr *left, struct grep_expr *right)
 {
 	struct grep_expr *z = xcalloc(1, sizeof(*z));
@@ -647,12 +655,10 @@ static struct grep_expr *compile_pattern_not(struct grep_pat **list)
 		if (!p->next)
 			die("--not not followed by pattern expression");
 		*list = p->next;
-		CALLOC_ARRAY(x, 1);
-		x->node = GREP_NODE_NOT;
-		x->u.unary = compile_pattern_not(list);
-		if (!x->u.unary)
+		x = compile_pattern_not(list);
+		if (!x)
 			die("--not followed by non pattern expression");
-		return x;
+		return grep_not_expr(x);
 	default:
 		return compile_pattern_atom(list);
 	}
@@ -702,14 +708,6 @@ static struct grep_expr *compile_pattern_or(struct grep_pat **list)
 static struct grep_expr *compile_pattern_expr(struct grep_pat **list)
 {
 	return compile_pattern_or(list);
-}
-
-static struct grep_expr *grep_not_expr(struct grep_expr *expr)
-{
-	struct grep_expr *z = xcalloc(1, sizeof(*z));
-	z->node = GREP_NODE_NOT;
-	z->u.unary = expr;
-	return z;
 }
 
 static struct grep_expr *grep_true_expr(void)
