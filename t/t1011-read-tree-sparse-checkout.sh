@@ -197,7 +197,7 @@ test_expect_success 'read-tree will not throw away dirty changes, non-sparse' '
 	grep -q dirty init.t
 '
 
-test_expect_failure 'read-tree will not throw away dirty changes, sparse' '
+test_expect_success 'read-tree will not throw away dirty changes, sparse' '
 	echo "/*" >.git/info/sparse-checkout &&
 	read_tree_u_must_succeed -m -u HEAD &&
 
