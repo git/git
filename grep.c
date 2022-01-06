@@ -619,6 +619,11 @@ static struct grep_expr *grep_or_expr(struct grep_expr *left, struct grep_expr *
 	return grep_binexp(GREP_NODE_OR, left, right);
 }
 
+static struct grep_expr *grep_and_expr(struct grep_expr *left, struct grep_expr *right)
+{
+	return grep_binexp(GREP_NODE_AND, left, right);
+}
+
 static struct grep_expr *compile_pattern_or(struct grep_pat **);
 static struct grep_expr *compile_pattern_atom(struct grep_pat **list)
 {
@@ -674,7 +679,7 @@ static struct grep_expr *compile_pattern_not(struct grep_pat **list)
 static struct grep_expr *compile_pattern_and(struct grep_pat **list)
 {
 	struct grep_pat *p;
-	struct grep_expr *x, *y, *z;
+	struct grep_expr *x, *y;
 
 	x = compile_pattern_not(list);
 	p = *list;
@@ -687,11 +692,7 @@ static struct grep_expr *compile_pattern_and(struct grep_pat **list)
 		y = compile_pattern_and(list);
 		if (!y)
 			die("--and not followed by pattern expression");
-		CALLOC_ARRAY(z, 1);
-		z->node = GREP_NODE_AND;
-		z->u.binary.left = x;
-		z->u.binary.right = y;
-		return z;
+		return grep_and_expr(x, y);
 	}
 	return x;
 }
