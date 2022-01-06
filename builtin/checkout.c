@@ -464,10 +464,10 @@ static int checkout_paths(const struct checkout_opts *opts,
 		die(_("'%s' cannot be used with updating paths"), "--detach");
 
 	if (opts->merge && opts->patch_mode)
-		die(_("'%s' cannot be used with %s"), "--merge", "--patch");
+		die(_("options '%s' and '%s' cannot be used together"), "--merge", "--patch");
 
 	if (opts->ignore_unmerged && opts->merge)
-		die(_("'%s' cannot be used with %s"),
+		die(_("options '%s' and '%s' cannot be used together"),
 		    opts->ignore_unmerged_opt, "-m");
 
 	if (opts->new_branch)
@@ -1637,11 +1637,11 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 	}
 
 	if ((!!opts->new_branch + !!opts->new_branch_force + !!opts->new_orphan_branch) > 1)
-		die(_("-%c, -%c and --orphan are mutually exclusive"),
-				cb_option, toupper(cb_option));
+		die(_("options '-%c', '-%c', and '%s' cannot be used together"),
+			cb_option, toupper(cb_option), "--orphan");
 
 	if (opts->overlay_mode == 1 && opts->patch_mode)
-		die(_("-p and --overlay are mutually exclusive"));
+		die(_("options '%s' and '%s' cannot be used together"), "-p", "--overlay");
 
 	if (opts->checkout_index >= 0 || opts->checkout_worktree >= 0) {
 		if (opts->checkout_index < 0)
@@ -1748,19 +1748,19 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 
 	if (opts->pathspec_from_file) {
 		if (opts->pathspec.nr)
-			die(_("--pathspec-from-file is incompatible with pathspec arguments"));
+			die(_("'%s' and pathspec arguments cannot be used together"), "--pathspec-from-file");
 
 		if (opts->force_detach)
-			die(_("--pathspec-from-file is incompatible with --detach"));
+			die(_("options '%s' and '%s' cannot be used together"), "--pathspec-from-file", "--detach");
 
 		if (opts->patch_mode)
-			die(_("--pathspec-from-file is incompatible with --patch"));
+			die(_("options '%s' and '%s' cannot be used together"), "--pathspec-from-file", "--patch");
 
 		parse_pathspec_file(&opts->pathspec, 0,
 				    0,
 				    prefix, opts->pathspec_from_file, opts->pathspec_file_nul);
 	} else if (opts->pathspec_file_nul) {
-		die(_("--pathspec-file-nul requires --pathspec-from-file"));
+		die(_("the option '%s' requires '%s'"), "--pathspec-file-nul", "--pathspec-from-file");
 	}
 
 	opts->pathspec.recursive = 1;

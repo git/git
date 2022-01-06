@@ -46,7 +46,7 @@ test_expect_success 'disallows --bare with --origin' '
 
 	test_must_fail git clone -o foo --bare parent clone-bare-o 2>err &&
 	test_debug "cat err" &&
-	test_i18ngrep -e "--bare and --origin foo options are incompatible" err
+	test_i18ngrep -e "options .--bare. and .--origin foo. cannot be used together" err
 
 '
 
@@ -54,7 +54,7 @@ test_expect_success 'disallows --bare with --separate-git-dir' '
 
 	test_must_fail git clone --bare --separate-git-dir dot-git-destiation parent clone-bare-sgd 2>err &&
 	test_debug "cat err" &&
-	test_i18ngrep -e "--bare and --separate-git-dir are incompatible" err
+	test_i18ngrep -e "options .--bare. and .--separate-git-dir. cannot be used together" err
 
 '
 

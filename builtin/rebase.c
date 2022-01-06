@@ -1190,13 +1190,13 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 	if (keep_base) {
 		if (options.onto_name)
-			die(_("cannot combine '--keep-base' with '--onto'"));
+			die(_("options '%s' and '%s' cannot be used together"), "--keep-base", "--onto");
 		if (options.root)
-			die(_("cannot combine '--keep-base' with '--root'"));
+			die(_("options '%s' and '%s' cannot be used together"), "--keep-base", "--root");
 	}
 
 	if (options.root && options.fork_point > 0)
-		die(_("cannot combine '--root' with '--fork-point'"));
+		die(_("options '%s' and '%s' cannot be used together"), "--root", "--fork-point");
 
 	if (action != ACTION_NONE && !in_progress)
 		die(_("No rebase in progress?"));
@@ -1460,8 +1460,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 		if (i >= 0) {
 			if (is_merge(&options))
-				die(_("cannot combine apply options with "
-				      "merge options"));
+				die(_("apply options and merge options "
+					  "cannot be used together"));
 			else
 				options.type = REBASE_APPLY;
 		}

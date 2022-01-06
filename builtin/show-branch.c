@@ -707,8 +707,8 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			 *
 			 * Also --all and --remotes do not make sense either.
 			 */
-			die(_("--reflog is incompatible with --all, --remotes, "
-			      "--independent or --merge-base"));
+			die(_("options '%s' and '%s' cannot be used together"), "--reflog",
+				"--all/--remotes/--independent/--merge-base");
 	}
 
 	/* If nothing is specified, show all branches by default */

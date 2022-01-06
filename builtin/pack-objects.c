@@ -4070,7 +4070,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		die(_("--thin cannot be used to build an indexable pack"));
 
 	if (keep_unreachable && unpack_unreachable)
-		die(_("--keep-unreachable and --unpack-unreachable are incompatible"));
+		die(_("options '%s' and '%s' cannot be used together"), "--keep-unreachable", "--unpack-unreachable");
 	if (!rev_list_all || !rev_list_reflog || !rev_list_index)
 		unpack_unreachable_expiration = 0;
 

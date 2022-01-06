@@ -63,21 +63,21 @@ test_expect_success 'usage' '
 	test_i18ngrep "switch.*requires a value" err &&
 
 	test_expect_code 128 git log -Gregex -Sstring 2>err &&
-	grep "mutually exclusive" err &&
+	grep "cannot be used together" err &&
 
 	test_expect_code 128 git log -Gregex --find-object=HEAD 2>err &&
-	grep "mutually exclusive" err &&
+	grep "cannot be used together" err &&
 
 	test_expect_code 128 git log -Sstring --find-object=HEAD 2>err &&
-	grep "mutually exclusive" err &&
+	grep "cannot be used together" err &&
 
 	test_expect_code 128 git log --pickaxe-all --find-object=HEAD 2>err &&
-	grep "mutually exclusive" err
+	grep "cannot be used together" err
 '
 
 test_expect_success 'usage: --pickaxe-regex' '
 	test_expect_code 128 git log -Gregex --pickaxe-regex 2>err &&
-	grep "mutually exclusive" err
+	grep "cannot be used together" err
 '
 
 test_expect_success 'usage: --no-pickaxe-regex' '
