@@ -2381,6 +2381,13 @@ int do_read_index(struct index_state *istate, const char *path, int must_exist)
 	else
 		ensure_correct_sparsity(istate);
 
+	/*
+	 * If sparse checkouts are in use, check whether paths with the
+	 * SKIP_WORKTREE attribute are missing from the worktree; if not,
+	 * clear that attribute for that path.
+	 */
+	ensure_skip_worktree_means_skip_worktree(istate);
+
 	return istate->cache_nr;
 
 unmap:

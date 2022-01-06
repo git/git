@@ -370,7 +370,7 @@ test_expect_success 'status/add: outside sparse cone' '
 	write_script edit-contents <<-\EOF &&
 	echo text >>$1
 	EOF
-	run_on_sparse ../edit-contents folder1/a &&
+	run_on_all ../edit-contents folder1/a &&
 	run_on_all ../edit-contents folder1/new &&
 
 	test_sparse_match git status --porcelain=v2 &&
@@ -379,8 +379,8 @@ test_expect_success 'status/add: outside sparse cone' '
 	test_sparse_match test_must_fail git add folder1/a &&
 	grep "Disable or modify the sparsity rules" sparse-checkout-err &&
 	test_sparse_unstaged folder1/a &&
-	test_sparse_match test_must_fail git add --refresh folder1/a &&
-	grep "Disable or modify the sparsity rules" sparse-checkout-err &&
+	test_all_match git add --refresh folder1/a &&
+	test_must_be_empty sparse-checkout-err &&
 	test_sparse_unstaged folder1/a &&
 	test_sparse_match test_must_fail git add folder1/new &&
 	grep "Disable or modify the sparsity rules" sparse-checkout-err &&
@@ -642,11 +642,11 @@ test_expect_success 'update-index modify outside sparse definition' '
 	run_on_sparse cp ../initial-repo/folder1/a folder1/a &&
 	run_on_all ../edit-contents folder1/a &&
 
-	# If file has skip-worktree enabled, update-index does not modify the
-	# index entry
-	test_sparse_match git update-index folder1/a &&
-	test_sparse_match git status --porcelain=v2 &&
-	test_must_be_empty sparse-checkout-out &&
+	# If file has skip-worktree enabled, but the file is present, it is
+	# treated the same as if skip-worktree is disabled
+	test_all_match git status --porcelain=v2 &&
+	test_all_match git update-index folder1/a &&
+	test_all_match git status --porcelain=v2 &&
 
 	# When skip-worktree is disabled (even on files outside sparse cone), file
 	# is updated in the index
