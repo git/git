@@ -603,13 +603,20 @@ static struct grep_expr *grep_not_expr(struct grep_expr *expr)
 	return z;
 }
 
-static struct grep_expr *grep_or_expr(struct grep_expr *left, struct grep_expr *right)
+static struct grep_expr *grep_binexp(enum grep_expr_node kind,
+				     struct grep_expr *left,
+				     struct grep_expr *right)
 {
 	struct grep_expr *z = xcalloc(1, sizeof(*z));
-	z->node = GREP_NODE_OR;
+	z->node = kind;
 	z->u.binary.left = left;
 	z->u.binary.right = right;
 	return z;
+}
+
+static struct grep_expr *grep_or_expr(struct grep_expr *left, struct grep_expr *right)
+{
+	return grep_binexp(GREP_NODE_OR, left, right);
 }
 
 static struct grep_expr *compile_pattern_or(struct grep_pat **);
