@@ -595,6 +595,15 @@ static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 	}
 }
 
+static struct grep_expr *grep_or_expr(struct grep_expr *left, struct grep_expr *right)
+{
+	struct grep_expr *z = xcalloc(1, sizeof(*z));
+	z->node = GREP_NODE_OR;
+	z->u.binary.left = left;
+	z->u.binary.right = right;
+	return z;
+}
+
 static struct grep_expr *compile_pattern_or(struct grep_pat **);
 static struct grep_expr *compile_pattern_atom(struct grep_pat **list)
 {
@@ -677,7 +686,7 @@ static struct grep_expr *compile_pattern_and(struct grep_pat **list)
 static struct grep_expr *compile_pattern_or(struct grep_pat **list)
 {
 	struct grep_pat *p;
-	struct grep_expr *x, *y, *z;
+	struct grep_expr *x, *y;
 
 	x = compile_pattern_and(list);
 	p = *list;
@@ -685,11 +694,7 @@ static struct grep_expr *compile_pattern_or(struct grep_pat **list)
 		y = compile_pattern_or(list);
 		if (!y)
 			die("not a pattern expression %s", p->pattern);
-		CALLOC_ARRAY(z, 1);
-		z->node = GREP_NODE_OR;
-		z->u.binary.left = x;
-		z->u.binary.right = y;
-		return z;
+		return grep_or_expr(x, y);
 	}
 	return x;
 }
@@ -711,15 +716,6 @@ static struct grep_expr *grep_true_expr(void)
 {
 	struct grep_expr *z = xcalloc(1, sizeof(*z));
 	z->node = GREP_NODE_TRUE;
-	return z;
-}
-
-static struct grep_expr *grep_or_expr(struct grep_expr *left, struct grep_expr *right)
-{
-	struct grep_expr *z = xcalloc(1, sizeof(*z));
-	z->node = GREP_NODE_OR;
-	z->u.binary.left = left;
-	z->u.binary.right = right;
 	return z;
 }
 
