@@ -1535,7 +1535,7 @@ static int packed_delete_refs(struct ref_store *ref_store, const char *msg,
 	 * updates into a single transaction.
 	 */
 
-	transaction = ref_store_transaction_begin(ref_store, &err);
+	transaction = ref_store_transaction_begin(ref_store, 0, &err);
 	if (!transaction)
 		return -1;
 
