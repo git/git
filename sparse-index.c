@@ -341,18 +341,117 @@ void ensure_correct_sparsity(struct index_state *istate)
 		ensure_full_index(istate);
 }
 
+struct path_cache_entry {
+	struct hashmap_entry ent;
+	const char *path;
+	int path_length;
+	int is_present;
+};
+
+static int path_cache_cmp(const void *unused,
+			  const struct hashmap_entry *entry1,
+			  const struct hashmap_entry *entry2,
+			  const void *also_unused)
+{
+	const struct path_cache_entry *e1, *e2;
+
+	e1 = container_of(entry1, const struct path_cache_entry, ent);
+	e2 = container_of(entry2, const struct path_cache_entry, ent);
+	if (e1->path_length != e2->path_length)
+		return e1->path_length - e2->path_length;
+	return memcmp(e1->path, e2->path, e1->path_length);
+}
+
+static struct path_cache_entry *find_path_cache_entry(struct hashmap *map,
+						      const char *str,
+						      int str_length)
+{
+	struct path_cache_entry entry;
+	hashmap_entry_init(&entry.ent, memhash(str, str_length));
+	entry.path = str;
+	entry.path_length = str_length;
+	return hashmap_get_entry(map, &entry, ent, NULL);
+}
+
+static void record(struct hashmap *path_cache,
+		   struct mem_pool *pool,
+		   const char *path,
+		   int path_length,
+		   int found)
+{
+	struct path_cache_entry *entry;
+
+	entry = mem_pool_alloc(pool, sizeof(*entry));
+	hashmap_entry_init(&entry->ent, memhash(path, path_length));
+	entry->path = path;
+	entry->path_length = path_length;
+	entry->is_present = found;
+	hashmap_add(path_cache, &entry->ent);
+}
+
+static int path_found(struct hashmap *path_cache, struct mem_pool *pool,
+		      const char *path, int path_length)
+{
+	struct stat st;
+	int found;
+	const char *dirsep = path + path_length - 1;
+	const char *tmp;
+
+	/* Find directory separator; memrchr is sadly glibc-specific */
+	while (dirsep > path && *dirsep != '/')
+		dirsep--;
+
+	/* If parent of path doesn't exist, no point lstat'ing path... */
+	if (dirsep > path) {
+		struct path_cache_entry *entry;
+		int new_length, parent_found;
+
+		/* First, check if path's parent's existence was cached */
+		new_length = dirsep - path;
+		entry = find_path_cache_entry(path_cache, path, new_length);
+		if (entry)
+			parent_found = entry->is_present;
+		else
+			parent_found = path_found(path_cache, pool,
+						  path, new_length);
+
+		if (!parent_found) {
+			/* path can't exist if parent dir doesn't */
+			record(path_cache, pool, path, path_length, 0);
+			return 0;
+		} /* else parent was found so must check path itself too... */
+	}
+
+	/* Okay, parent dir exists, so we have to check original path */
+
+	/* Make sure we have a NUL-terminated string to pass to lstat */
+	tmp = path;
+	if (path[path_length])
+		tmp = mem_pool_strndup(pool, path, path_length);
+	/* Determine if path exists */
+	found = !lstat(tmp, &st);
+
+	record(path_cache, pool, path, path_length, found);
+	return found;
+}
+
 void ensure_skip_worktree_means_skip_worktree(struct index_state *istate)
 {
+	struct hashmap path_cache = HASHMAP_INIT(path_cache_cmp, NULL);
+	struct mem_pool pool;
+
 	int i;
+
 	if (!core_apply_sparse_checkout)
 		return;
 
+	mem_pool_init(&pool, 32*1024);
 restart:
 	for (i = 0; i < istate->cache_nr; i++) {
 		struct cache_entry *ce = istate->cache[i];
-		struct stat st;
 
-		if (ce_skip_worktree(ce) && !lstat(ce->name, &st)) {
+		if (ce_skip_worktree(ce) &&
+		    path_found(&path_cache, &pool, ce->name, strlen(ce->name))) {
 			if (S_ISSPARSEDIR(ce->ce_mode)) {
 				ensure_full_index(istate);
 				goto restart;
@@ -360,6 +459,8 @@ restart:
 			ce->ce_flags &= ~CE_SKIP_WORKTREE;
 		}
 	}
+	hashmap_clear(&path_cache);
+	mem_pool_discard(&pool, 0);
 }
 
 
