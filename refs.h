@@ -569,6 +569,11 @@ enum action_on_err {
 };
 
 /*
+ * Skip executing the reference-transaction hook.
+ */
+#define REF_TRANSACTION_SKIP_HOOK (1 << 0)
+
+/*
  * Begin a reference transaction.  The reference transaction must
  * be freed by calling ref_transaction_free().
  */
