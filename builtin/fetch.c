@@ -222,17 +222,22 @@ static struct option builtin_fetch_options[] = {
 	OPT_END()
 };
 
-static void unlock_pack(void)
+static void unlock_pack(unsigned int flags)
 {
 	if (gtransport)
-		transport_unlock_pack(gtransport);
+		transport_unlock_pack(gtransport, flags);
 	if (gsecondary)
-		transport_unlock_pack(gsecondary);
+		transport_unlock_pack(gsecondary, flags);
+}
+
+static void unlock_pack_atexit(void)
+{
+	unlock_pack(0);
 }
 
 static void unlock_pack_on_signal(int signo)
 {
-	unlock_pack();
+	unlock_pack(TRANSPORT_UNLOCK_PACK_IN_SIGNAL_HANDLER);
 	sigchain_pop(signo);
 	raise(signo);
 }
@@ -1326,7 +1331,7 @@ static int fetch_and_consume_refs(struct transport *transport, struct ref *ref_m
 	trace2_region_leave("fetch", "consume_refs", the_repository);
 
 out:
-	transport_unlock_pack(transport);
+	transport_unlock_pack(transport, 0);
 	return ret;
 }
 
@@ -1962,7 +1967,7 @@ static int fetch_one(struct remote *remote, int argc, const char **argv,
 		gtransport->server_options = &server_options;
 
 	sigchain_push_common(unlock_pack_on_signal);
-	atexit(unlock_pack);
+	atexit(unlock_pack_atexit);
 	sigchain_push(SIGPIPE, SIG_IGN);
 	exit_code = do_fetch(gtransport, &rs);
 	sigchain_pop(SIGPIPE);
