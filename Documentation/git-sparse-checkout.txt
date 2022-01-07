@@ -3,9 +3,7 @@ git-sparse-checkout(1)
 
 NAME
 ----
-git-sparse-checkout - Initialize and modify the sparse-checkout
-configuration, which reduces the checkout to a set of paths
-given by a list of patterns.
+git-sparse-checkout - Reduce your working tree to a subset of tracked files
 
 
 SYNOPSIS
@@ -17,8 +15,20 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-Initialize and modify the sparse-checkout configuration, which reduces
-the checkout to a set of paths given by a list of patterns.
+This command is used to create sparse checkouts, which means that it
+changes the working tree from having all tracked files present, to only
+have a subset of them.  It can also switch which subset of files are
+present, or undo and go back to having all tracked files present in the
+working copy.
+
+The subset of files is chosen by providing a list of directories in
+cone mode (which is recommended), or by providing a list of patterns
+in non-cone mode.
+
+When in a sparse-checkout, other Git commands behave a bit differently.
+For example, switching branches will not update paths outside the
+sparse-checkout directories/patterns, and `git commit -a` will not record
+paths outside the sparse-checkout directories/patterns as deleted.
 
 THIS COMMAND IS EXPERIMENTAL. ITS BEHAVIOR, AND THE BEHAVIOR OF OTHER
 COMMANDS IN THE PRESENCE OF SPARSE-CHECKOUTS, WILL LIKELY CHANGE IN
@@ -28,7 +38,7 @@ THE FUTURE.
 COMMANDS
 --------
 'list'::
-	Describe the patterns in the sparse-checkout file.
+	Describe the directories or patterns in the sparse-checkout file.
 
 'set'::
 	Enable the necessary config settings
@@ -38,20 +48,26 @@ COMMANDS
 	list of arguments following the 'set' subcommand. Update the
 	working directory to match the new patterns.
 +
-When the `--stdin` option is provided, the patterns are read from
-standard in as a newline-delimited list instead of from the arguments.
+When the `--stdin` option is provided, the directories or patterns are
+read from standard in as a newline-delimited list instead of from the
+arguments.
 +
 When `--cone` is passed or `core.sparseCheckoutCone` is enabled, the
-input list is considered a list of directories instead of
-sparse-checkout patterns.  This allows for better performance with a
-limited set of patterns (see 'CONE PATTERN SET' below).  Note that the
-set command will write patterns to the sparse-checkout file to include
-all files contained in those directories (recursively) as well as
-files that are siblings of ancestor directories. The input format
-matches the output of `git ls-tree --name-only`.  This includes
-interpreting pathnames that begin with a double quote (") as C-style
-quoted strings.  This may become the default in the future; --no-cone
-can be passed to request non-cone mode.
+input list is considered a list of directories.  This allows for
+better performance with a limited set of patterns (see 'CONE PATTERN
+SET' below).  The input format matches the output of `git ls-tree
+--name-only`.  This includes interpreting pathnames that begin with a
+double quote (") as C-style quoted strings.  Note that the set command
+will write patterns to the sparse-checkout file to include all files
+contained in those directories (recursively) as well as files that are
+siblings of ancestor directories. This may become the default in the
+future; --no-cone can be passed to request non-cone mode.
++
+When `--no-cone` is passed or `core.sparseCheckoutCone` is not enabled,
+the input list is considered a list of patterns.  This mode is harder
+to use and less performant, and is thus not recommended.  See the
+"Sparse Checkout" section of linkgit:git-read-tree[1] and the "Pattern
+Set" sections below for more details.
 +
 Use the `--[no-]sparse-index` option to use a sparse index (the
 default is to not use it).  A sparse index reduces the size of the
@@ -69,11 +85,10 @@ understand the sparse directory entries index extension and may fail to
 interact with your repository until it is disabled.
 
 'add'::
-	Update the sparse-checkout file to include additional patterns.
-	By default, these patterns are read from the command-line arguments,
-	but they can be read from stdin using the `--stdin` option. When
-	`core.sparseCheckoutCone` is enabled, the given patterns are interpreted
-	as directory names as in the 'set' subcommand.
+	Update the sparse-checkout file to include additional directories
+	(in cone mode) or patterns (in non-cone mode).  By default, these
+	directories or patterns are read from the command-line arguments,
+	but they can be read from stdin using the `--stdin` option.
 
 'reapply'::
 	Reapply the sparsity pattern rules to paths in the working tree.
@@ -117,13 +132,14 @@ decreased in utility.
 SPARSE CHECKOUT
 ---------------
 
-"Sparse checkout" allows populating the working directory sparsely.
-It uses the skip-worktree bit (see linkgit:git-update-index[1]) to tell
-Git whether a file in the working directory is worth looking at. If
-the skip-worktree bit is set, then the file is ignored in the working
-directory. Git will avoid populating the contents of those files, which
-makes a sparse checkout helpful when working in a repository with many
-files, but only a few are important to the current user.
+"Sparse checkout" allows populating the working directory sparsely.  It
+uses the skip-worktree bit (see linkgit:git-update-index[1]) to tell Git
+whether a file in the working directory is worth looking at. If the
+skip-worktree bit is set, and the file is not present in the working tree,
+then its absence is ignored. Git will avoid populating the contents of
+those files, which makes a sparse checkout helpful when working in a
+repository with many files, but only a few are important to the current
+user.
 
 The `$GIT_DIR/info/sparse-checkout` file is used to define the
 skip-worktree reference bitmap. When Git updates the working
