@@ -3,6 +3,7 @@
 
 #if defined(GIT_WINDOWS_NATIVE)
 #include "lazyload.h"
+#include <winnt.h>
 
 static int cmd_sync(void)
 {
@@ -86,7 +87,8 @@ static int cmd_dropcaches(void)
 {
 	HANDLE hProcess = GetCurrentProcess();
 	HANDLE hToken;
-	DECLARE_PROC_ADDR(ntdll.dll, DWORD, NtSetSystemInformation, INT, PVOID, ULONG);
+	DECLARE_PROC_ADDR(ntdll.dll, DWORD, NTAPI, NtSetSystemInformation, INT, PVOID,
+		ULONG);
 	SYSTEM_MEMORY_LIST_COMMAND command;
 	int status;
 
