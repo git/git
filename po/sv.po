@@ -1,14 +1,14 @@
 # Swedish translations for Git.
-# Copyright (C) 2010-2021 Peter Krefting <peter@softwolves.pp.se>
+# Copyright (C) 2010-2022 Peter Krefting <peter@softwolves.pp.se>
 # This file is distributed under the same license as the Git package.
-# Peter Krefting <peter@softwolves.pp.se>, 2010-2021.
+# Peter Krefting <peter@softwolves.pp.se>, 2010-2022.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: git 2.34.0\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
 "POT-Creation-Date: 2021-11-10 08:55+0800\n"
-"PO-Revision-Date: 2021-11-11 23:20+0100\n"
+"PO-Revision-Date: 2022-01-08 21:11+0100\n"
 "Last-Translator: Peter Krefting <peter@softwolves.pp.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
 "Language: sv\n"
@@ -13212,9 +13212,7 @@ msgstr "serverspecifik"
 #: builtin/clone.c:147 builtin/fetch.c:202 builtin/ls-remote.c:77
 #: builtin/pull.c:235 builtin/push.c:575 builtin/send-pack.c:201
 msgid "option to transmit"
-msgstr ""
-"inget att checka in\n"
-"flagga att sända"
+msgstr "flagga att sända"
 
 #: builtin/clone.c:148 builtin/fetch.c:203 builtin/pull.c:238
 #: builtin/push.c:576
