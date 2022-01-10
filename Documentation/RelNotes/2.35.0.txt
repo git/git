@@ -9,6 +9,9 @@ Backward compatibility warts
  * "_" is now treated as any other URL-valid characters in an URL when
    matching the per-URL configuration variable names.
 
+ * The color palette used by "git grep" has been updated to match that
+   of GNU grep.
+
 
 UI, Workflows & Features
 
@@ -80,6 +83,14 @@ UI, Workflows & Features
  * The default merge message prepared by "git merge" records the name
    of the current branch; the name can be overridden with a new option
    to allow users to pretend a merge is made on a different branch.
+
+ * The way "git p4" shows file sizes in its output has been updated to
+   use human-readable units.
+
+ * "git -c branch.autosetupmerge=inherit branch new old" makes "new"
+   to have the same upstream as the "old" branch, instead of marking
+   "old" itself as its upstream.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -170,6 +181,12 @@ Performance, Internal Implementation, Development Support etc.
  * "git upload-pack" (the other side of "git fetch") used a 8kB buffer
    but most of its payload came on 64kB "packets".  The buffer size
    has been enlarged so that such a packet fits.
+
+ * "git fetch" and "git pull" are now declared sparse-index clean.
+   Also "git ls-files" learns the "--sparse" option to help debugging.
+
+ * Similar message templates have been consolidated so that
+   translators need to work on fewer number of messages.
 
 
 Fixes since v2.34
@@ -310,6 +327,46 @@ Fixes since v2.34
    been corrected.
    (merge 32e3e8bc55 rs/pcre2-utf later to maint).
 
+ * Certain sparse-checkout patterns that are valid in non-cone mode
+   led to segfault in cone mode, which has been corrected.
+
+ * Use of certain "git rev-list" options with "git fast-export"
+   created nonsense results (the worst two of which being "--reverse"
+   and "--invert-grep --grep=<foo>").  The use of "--first-parent" is
+   made to behave a bit more sensible than before.
+   (merge 726a228dfb ws/fast-export-with-revision-options later to maint).
+
+ * Perf tests were run with end-user's shell, but it has been
+   corrected to use the shell specified by $TEST_SHELL_PATH.
+   (merge 9ccab75608 ja/perf-use-specified-shell later to maint).
+
+ * Fix dependency rules to generate hook-list.h header file.
+   (merge d3fd1a6667 ab/makefile-hook-list-dependency-fix later to maint).
+
+ * "git stash" by default triggers its "push" action, but its
+   implementation also made "git stash -h" to show short help only for
+   "git stash push", which has been corrected.
+   (merge ca7990cea5 ab/do-not-limit-stash-help-to-push later to maint).
+
+ * "git apply --3way" bypasses the attempt to do a three-way
+   application in more cases to address the regression caused by the
+   recent change to use direct application as a fallback.
+   (merge 34d607032c jz/apply-3-corner-cases later to maint).
+
+ * Fix performance-releated bug in "git subtree" (in contrib/).
+   (merge 3ce8888fb4 jl/subtree-check-parents-argument-passing-fix later to maint).
+
+ * Extend the guidance to choose the base commit to build your work
+   on, and hint/nudge contributors to read others' changes.
+   (merge fdfae830f8 jc/doc-submitting-patches-choice-of-base later to maint).
+
+ * A corner case bug in the ort merge strategy has been corrected.
+   (merge d30126c20d en/merge-ort-renorm-with-rename-delete-conflict-fix later to maint).
+
+ * "git stash apply" forgot to attempt restoring untracked files when
+   it failed to restore changes to tracked ones.
+   (merge 71cade5a0b en/stash-df-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 74db416c9c cw/protocol-v2-doc-fix later to maint).
    (merge f9b2b6684d ja/doc-cleanup later to maint).
@@ -332,3 +389,5 @@ Fixes since v2.34
    (merge e6a9bc0c60 rs/t4202-invert-grep-test-fix later to maint).
    (merge deb5407a42 gh/gpg-doc-markup-fix later to maint).
    (merge 999bba3e0b rs/daemon-plug-leak later to maint).
+   (merge 786eb1ba39 js/l10n-mention-ngettext-early-in-readme later to maint).
+   (merge 2f12b31b74 ab/makefile-msgfmt-wo-stats later to maint).
