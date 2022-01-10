@@ -1395,4 +1395,28 @@ test_expect_success 'git stash can pop directory -> file saved changes' '
 	)
 '
 
+test_expect_success 'restore untracked files even when we hit conflicts' '
+	git init restore_untracked_after_conflict &&
+	(
+		cd restore_untracked_after_conflict &&
+
+		echo hi >a &&
+		echo there >b &&
+		git add . &&
+		git commit -m first &&
+		echo hello >a &&
+		echo something >c &&
+
+		git stash push --include-untracked &&
+
+		echo conflict >a &&
+		git add a &&
+		git commit -m second &&
+
+		test_must_fail git stash pop &&
+
+		test_path_is_file c
+	)
+'
+
 test_done

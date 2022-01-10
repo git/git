@@ -561,18 +561,19 @@ static int do_apply_stash(const char *prefix, struct stash_info *info,
 		if (index)
 			fprintf_ln(stderr, _("Index was not unstashed."));
 
-		return ret;
+		goto restore_untracked;
 	}
 
 	if (has_index) {
 		if (reset_tree(&index_tree, 0, 0))
-			return -1;
+			ret = -1;
 	} else {
 		unstage_changes_unless_new(&c_tree);
 	}
 
+restore_untracked:
 	if (info->has_u && restore_untracked(&info->u_tree))
-		return error(_("could not restore untracked files from stash"));
+		ret = error(_("could not restore untracked files from stash"));
 
 	if (!quiet) {
 		struct child_process cp = CHILD_PROCESS_INIT;
@@ -592,7 +593,7 @@ static int do_apply_stash(const char *prefix, struct stash_info *info,
 		run_command(&cp);
 	}
 
-	return 0;
+	return ret;
 }
 
 static int apply_stash(int argc, const char **argv, const char *prefix)
