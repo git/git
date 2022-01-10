@@ -727,7 +727,7 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 		;
 	else if (batch.follow_symlinks)
 		usage_msg_optf(_("'%s' requires a batch mode"), usage, options,
-			       "--follow_symlinks");
+			       "--follow-symlinks");
 	else if (batch.buffer_output >= 0)
 		usage_msg_optf(_("'%s' requires a batch mode"), usage, options,
 			       "--buffer");
