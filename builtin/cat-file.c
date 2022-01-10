@@ -653,11 +653,11 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 	const char * const usage[] = {
 		N_("git cat-file <type> <object>"),
 		N_("git cat-file (-e | -p) <object>"),
-		N_("git cat-file ( -t | -s ) [--allow-unknown-type] <object>"),
+		N_("git cat-file (-t | -s) [--allow-unknown-type] <object>"),
 		N_("git cat-file (--batch | --batch-check) [--batch-all-objects]\n"
 		   "             [--buffer] [--follow-symlinks] [--unordered]\n"
 		   "             [--textconv | --filters]"),
-		N_("git cat-file (--textconv | --filters )\n"
+		N_("git cat-file (--textconv | --filters)\n"
 		   "             [<rev>:<path|tree-ish> | --path=<path|tree-ish> <rev>]"),
 		NULL
 	};
@@ -699,7 +699,7 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 		OPT_CMDMODE(0, "filters", &opt,
 			    N_("run filters on object's content"), 'w'),
 		OPT_STRING(0, "path", &force_path, N_("blob|tree"),
-			   N_("use a <path> for (--textconv | --filters ); Not with 'batch'")),
+			   N_("use a <path> for (--textconv | --filters); Not with 'batch'")),
 		OPT_END()
 	};
 
