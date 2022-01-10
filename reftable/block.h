@@ -21,7 +21,7 @@ struct block_writer {
 	uint8_t *buf;
 	uint32_t block_size;
 
-	/* Offset ofof the global header. Nonzero in the first block only. */
+	/* Offset of the global header. Nonzero in the first block only. */
 	uint32_t header_off;
 
 	/* How often to restart keys. */
