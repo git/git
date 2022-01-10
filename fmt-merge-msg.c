@@ -541,7 +541,6 @@ static void fmt_merge_msg_sigs(struct strbuf *out)
 			else
 				strbuf_addstr(&sig, sigc.output);
 		}
-		signature_check_clear(&sigc);
 
 		if (!tag_number++) {
 			fmt_tag_signature(&tagbuf, &sig, buf, len);
@@ -565,6 +564,7 @@ static void fmt_merge_msg_sigs(struct strbuf *out)
 		}
 		strbuf_release(&payload);
 		strbuf_release(&sig);
+		signature_check_clear(&sigc);
 	next:
 		free(origbuf);
 	}
