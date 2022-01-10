@@ -37,7 +37,13 @@ test_expect_success setup '
 	>whatever/empty &&
 	git add numbers greeting whatever/empty &&
 	test_tick &&
-	git commit -m other-modifications
+	git commit -m other-modifications &&
+
+	git switch --orphan unrelated &&
+	>something-else &&
+	git add something-else &&
+	test_tick &&
+	git commit -m first-commit
 '
 
 test_expect_success 'Content merge and a few conflicts' '
@@ -136,6 +142,22 @@ test_expect_success 'Check conflicted oids and modes without messages' '
 	# Check the actual hashes against the `ls-files -u` output too
 	tail -n +2 out | sed -e s/side1/HEAD/ >actual &&
 	test_cmp conflicted-file-info actual
+'
+
+test_expect_success 'error out by default for unrelated histories' '
+	test_expect_code 128 git merge-tree --write-tree side1 unrelated 2>error &&
+
+	grep "refusing to merge unrelated histories" error
+'
+
+test_expect_success 'can override merge of unrelated histories' '
+	git merge-tree --write-tree --allow-unrelated-histories side1 unrelated >tree &&
+	TREE=$(cat tree) &&
+
+	git rev-parse side1:numbers side1:greeting side1:whatever unrelated:something-else >expect &&
+	git rev-parse $TREE:numbers $TREE:greeting $TREE:whatever $TREE:something-else >actual &&
+
+	test_cmp expect actual
 '
 
 test_done
