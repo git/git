@@ -206,45 +206,42 @@ test_sparse_unstaged () {
 test_expect_success 'sparse-index contents' '
 	init_repos &&
 
-	test-tool -C sparse-index read-cache --table >cache &&
+	git -C sparse-index ls-files --sparse --stage >cache &&
 	for dir in folder1 folder2 x
 	do
 		TREE=$(git -C sparse-index rev-parse HEAD:$dir) &&
-		grep "040000 tree $TREE	$dir/" cache \
+		grep "040000 $TREE 0	$dir/" cache \
 			|| return 1
 	done &&
 
 	git -C sparse-index sparse-checkout set folder1 &&
 
-	test-tool -C sparse-index read-cache --table >cache &&
+	git -C sparse-index ls-files --sparse --stage >cache &&
 	for dir in deep folder2 x
 	do
 		TREE=$(git -C sparse-index rev-parse HEAD:$dir) &&
-		grep "040000 tree $TREE	$dir/" cache \
+		grep "040000 $TREE 0	$dir/" cache \
 			|| return 1
 	done &&
 
 	git -C sparse-index sparse-checkout set deep/deeper1 &&
 
-	test-tool -C sparse-index read-cache --table >cache &&
+	git -C sparse-index ls-files --sparse --stage >cache &&
 	for dir in deep/deeper2 folder1 folder2 x
 	do
 		TREE=$(git -C sparse-index rev-parse HEAD:$dir) &&
-		grep "040000 tree $TREE	$dir/" cache \
+		grep "040000 $TREE 0	$dir/" cache \
 			|| return 1
 	done &&
 
-	# Disabling the sparse-index removes tree entries with full ones
+	# Disabling the sparse-index replaces tree entries with full ones
 	git -C sparse-index sparse-checkout init --no-sparse-index &&
-
-	test-tool -C sparse-index read-cache --table >cache &&
-	! grep "040000 tree" cache &&
-	test_sparse_match test-tool read-cache --table
+	test_sparse_match git ls-files --stage --sparse
 '
 
 test_expect_success 'expanded in-memory index matches full index' '
 	init_repos &&
-	test_sparse_match test-tool read-cache --expand --table
+	test_sparse_match git ls-files --stage
 '
 
 test_expect_success 'status with options' '
@@ -801,9 +798,9 @@ test_expect_success 'submodule handling' '
 
 	# having a submodule prevents "modules" from collapse
 	test_sparse_match git sparse-checkout set deep/deeper1 &&
-	test-tool -C sparse-index read-cache --table >cache &&
-	grep "100644 blob .*	modules/a" cache &&
-	grep "160000 commit $(git -C initial-repo rev-parse HEAD)	modules/sub" cache
+	git -C sparse-index ls-files --sparse --stage >cache &&
+	grep "100644 .*	modules/a" cache &&
+	grep "160000 $(git -C initial-repo rev-parse HEAD) 0	modules/sub" cache
 '
 
 # When working with a sparse index, some commands will need to expand the
@@ -816,6 +813,12 @@ test_expect_success 'sparse-index is expanded and converted back' '
 	GIT_TRACE2_EVENT="$(pwd)/trace2.txt" \
 		git -C sparse-index reset -- folder1/a &&
 	test_region index convert_to_sparse trace2.txt &&
+	test_region index ensure_full_index trace2.txt &&
+
+	# ls-files expands on read, but does not write.
+	rm trace2.txt &&
+	GIT_TRACE2_EVENT="$(pwd)/trace2.txt" GIT_TRACE2_EVENT_NESTING=10 \
+		git -C sparse-index ls-files &&
 	test_region index ensure_full_index trace2.txt
 '
 
@@ -871,6 +874,7 @@ test_expect_success 'sparse-index is not expanded' '
 	init_repos &&
 
 	ensure_not_expanded status &&
+	ensure_not_expanded ls-files --sparse &&
 	ensure_not_expanded commit --allow-empty -m empty &&
 	echo >>sparse-index/a &&
 	ensure_not_expanded commit -a -m a &&
@@ -1009,6 +1013,100 @@ test_expect_success 'sparse index is not expanded: blame' '
 	done
 '
 
+test_expect_success 'sparse index is not expanded: fetch/pull' '
+	init_repos &&
+
+	git -C sparse-index remote add full "file://$(pwd)/full-checkout" &&
+	ensure_not_expanded fetch full &&
+	git -C full-checkout commit --allow-empty -m "for pull merge" &&
+	git -C sparse-index commit --allow-empty -m "for pull merge" &&
+	ensure_not_expanded pull full base
+'
+
+test_expect_success 'ls-files' '
+	init_repos &&
+
+	# Use a smaller sparse-checkout for reduced output
+	test_sparse_match git sparse-checkout set &&
+
+	# Behavior agrees by default. Sparse index is expanded.
+	test_all_match git ls-files &&
+
+	# With --sparse, the sparse index data changes behavior.
+	git -C sparse-index ls-files --sparse >actual &&
+
+	cat >expect <<-\EOF &&
+	a
+	deep/
+	e
+	folder1-
+	folder1.x
+	folder1/
+	folder10
+	folder2/
+	g
+	x/
+	z
+	EOF
+
+	test_cmp expect actual &&
+
+	# With --sparse and no sparse index, nothing changes.
+	git -C sparse-checkout ls-files >dense &&
+	git -C sparse-checkout ls-files --sparse >sparse &&
+	test_cmp dense sparse &&
+
+	# Set up a strange condition of having a file edit
+	# outside of the sparse-checkout cone. This is just
+	# to verify that sparse-checkout and sparse-index
+	# behave the same in this case.
+	write_script edit-content <<-\EOF &&
+	mkdir folder1 &&
+	echo content >>folder1/a
+	EOF
+	run_on_sparse ../edit-content &&
+
+	# ls-files does not currently notice modified files whose
+	# cache entries are marked SKIP_WORKTREE. This may change
+	# in the future, but here we test that sparse index does
+	# not accidentally create a change of behavior.
+	test_sparse_match git ls-files --modified &&
+	test_must_be_empty sparse-checkout-out &&
+	test_must_be_empty sparse-index-out &&
+
+	git -C sparse-index ls-files --sparse --modified >sparse-index-out &&
+	test_must_be_empty sparse-index-out &&
+
+	# Add folder1 to the sparse-checkout cone and
+	# check that ls-files shows the expanded files.
+	test_sparse_match git sparse-checkout add folder1 &&
+	test_sparse_match git ls-files --modified &&
+
+	test_all_match git ls-files &&
+	git -C sparse-index ls-files --sparse >actual &&
+
+	cat >expect <<-\EOF &&
+	a
+	deep/
+	e
+	folder1-
+	folder1.x
+	folder1/0/0/0
+	folder1/0/1
+	folder1/a
+	folder10
+	folder2/
+	g
+	x/
+	z
+	EOF
+
+	test_cmp expect actual &&
+
+	# Double-check index expansion is avoided
+	ensure_not_expanded ls-files --sparse
+'
+
 # NEEDSWORK: a sparse-checkout behaves differently from a full checkout
 # in this scenario, but it shouldn't.
 test_expect_success 'reset mixed and checkout orphan' '
@@ -1024,13 +1122,13 @@ test_expect_success 'reset mixed and checkout orphan' '
 	# the sparse checkouts skip "adding" the other side of
 	# the conflict.
 	test_sparse_match git reset --mixed HEAD~1 &&
-	test_sparse_match test-tool read-cache --table --expand &&
+	test_sparse_match git ls-files --stage &&
 	test_sparse_match git status --porcelain=v2 &&
 
 	# At this point, sparse-checkouts behave differently
 	# from the full-checkout.
 	test_sparse_match git checkout --orphan new-branch &&
-	test_sparse_match test-tool read-cache --table --expand &&
+	test_sparse_match git ls-files --stage &&
 	test_sparse_match git status --porcelain=v2
 '
 

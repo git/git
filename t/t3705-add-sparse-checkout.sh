@@ -181,13 +181,13 @@ test_expect_success 'git add fails outside of sparse-checkout definition' '
 	# Avoid munging CRLFs to avoid an error message
 	git -c core.autocrlf=input add --sparse sparse_entry 2>stderr &&
 	test_must_be_empty stderr &&
-	test-tool read-cache --table >actual &&
-	grep "^100644 blob.*sparse_entry\$" actual &&
+	git ls-files --stage >actual &&
+	grep "^100644 .*sparse_entry\$" actual &&
 
 	git add --sparse --chmod=+x sparse_entry 2>stderr &&
 	test_must_be_empty stderr &&
-	test-tool read-cache --table >actual &&
-	grep "^100755 blob.*sparse_entry\$" actual &&
+	git ls-files --stage >actual &&
+	grep "^100755 .*sparse_entry\$" actual &&
 
 	git reset &&
 
