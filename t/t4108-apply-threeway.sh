@@ -275,4 +275,22 @@ test_expect_success 'apply full-index patch with 3way' '
 	git apply --3way --index bin.diff
 '
 
+test_expect_success 'apply delete then new patch with 3way' '
+	git reset --hard main &&
+	test_write_lines 2 > delnew &&
+	git add delnew &&
+	git diff --cached >> new.patch &&
+	git reset --hard &&
+	test_write_lines 1 > delnew &&
+	git add delnew &&
+	git commit -m "delnew" &&
+	rm delnew &&
+	git diff >> delete-then-new.patch &&
+	cat new.patch >> delete-then-new.patch &&
+
+	git checkout -- . &&
+	# Apply must succeed.
+	git apply --3way delete-then-new.patch
+'
+
 test_done
