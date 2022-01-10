@@ -2555,11 +2555,12 @@ void git_die_config(const char *key, const char *err, ...)
 {
 	const struct string_list *values;
 	struct key_value_info *kv_info;
+	report_fn error_fn = get_error_routine();
 
 	if (err) {
 		va_list params;
 		va_start(params, err);
-		vreportf("error: ", err, params);
+		error_fn(err, params);
 		va_end(params);
 	}
 	values = git_config_get_value_multi(key);
