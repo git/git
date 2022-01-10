@@ -11,7 +11,7 @@
 
 struct tracking {
 	struct refspec_item spec;
-	char *src;
+	struct string_list *srcs;
 	const char *remote;
 	int matches;
 };
@@ -22,11 +22,11 @@ static int find_tracked_branch(struct remote *remote, void *priv)
 
 	if (!remote_find_tracking(remote, &tracking->spec)) {
 		if (++tracking->matches == 1) {
-			tracking->src = tracking->spec.src;
+			string_list_append(tracking->srcs, tracking->spec.src);
 			tracking->remote = remote->name;
 		} else {
 			free(tracking->spec.src);
-			FREE_AND_NULL(tracking->src);
+			string_list_clear(tracking->srcs, 0);
 		}
 		tracking->spec.src = NULL;
 	}
@@ -49,25 +49,46 @@ static int should_setup_rebase(const char *origin)
 	return 0;
 }
 
-static const char tracking_advice[] =
-N_("\n"
-"After fixing the error cause you may try to fix up\n"
-"the remote tracking information by invoking\n"
-"\"git branch --set-upstream-to=%s%s%s\".");
-
-int install_branch_config(int flag, const char *local, const char *origin, const char *remote)
+/**
+ * Install upstream tracking configuration for a branch; specifically, add
+ * `branch.<name>.remote` and `branch.<name>.merge` entries.
+ *
+ * `flag` contains integer flags for options; currently only
+ * BRANCH_CONFIG_VERBOSE is checked.
+ *
+ * `local` is the name of the branch whose configuration we're installing.
+ *
+ * `origin` is the name of the remote owning the upstream branches. NULL means
+ * the upstream branches are local to this repo.
+ *
+ * `remotes` is a list of refs that are upstream of local
+ */
+static int install_branch_config_multiple_remotes(int flag, const char *local,
+		const char *origin, struct string_list *remotes)
 {
 	const char *shortname = NULL;
 	struct strbuf key = STRBUF_INIT;
+	struct string_list_item *item;
 	int rebasing = should_setup_rebase(origin);
 
-	if (skip_prefix(remote, "refs/heads/", &shortname)
-	    && !strcmp(local, shortname)
-	    && !origin) {
-		warning(_("not setting branch %s as its own upstream"),
-			local);
-		return 0;
-	}
+	if (!remotes->nr)
+		BUG("must provide at least one remote for branch config");
+	if (rebasing && remotes->nr > 1)
+		die(_("cannot inherit upstream tracking configuration of "
+		      "multiple refs when rebasing is requested"));
+
+	/*
+	 * If the new branch is trying to track itself, something has gone
+	 * wrong. Warn the user and don't proceed any further.
+	 */
+	if (!origin)
+		for_each_string_list_item(item, remotes)
+			if (skip_prefix(item->string, "refs/heads/", &shortname)
+			    && !strcmp(local, shortname)) {
+				warning(_("not setting branch '%s' as its own upstream"),
+					local);
+				return 0;
+			}
 
 	strbuf_addf(&key, "branch.%s.remote", local);
 	if (git_config_set_gently(key.buf, origin ? origin : ".") < 0)
@@ -75,8 +96,17 @@ int install_branch_config(int flag, const char *local, const char *origin, const
 
 	strbuf_reset(&key);
 	strbuf_addf(&key, "branch.%s.merge", local);
-	if (git_config_set_gently(key.buf, remote) < 0)
+	/*
+	 * We want to overwrite any existing config with all the branches in
+	 * "remotes". Override any existing config, then write our branches. If
+	 * more than one is provided, use CONFIG_REGEX_NONE to preserve what
+	 * we've written so far.
+	 */
+	if (git_config_set_gently(key.buf, NULL) < 0)
 		goto out_err;
+	for_each_string_list_item(item, remotes)
+		if (git_config_set_multivar_gently(key.buf, item->string, CONFIG_REGEX_NONE, 0) < 0)
+			goto out_err;
 
 	if (rebasing) {
 		strbuf_reset(&key);
@@ -87,29 +117,40 @@ int install_branch_config(int flag, const char *local, const char *origin, const
 	strbuf_release(&key);
 
 	if (flag & BRANCH_CONFIG_VERBOSE) {
-		if (shortname) {
-			if (origin)
-				printf_ln(rebasing ?
-					  _("Branch '%s' set up to track remote branch '%s' from '%s' by rebasing.") :
-					  _("Branch '%s' set up to track remote branch '%s' from '%s'."),
-					  local, shortname, origin);
-			else
-				printf_ln(rebasing ?
-					  _("Branch '%s' set up to track local branch '%s' by rebasing.") :
-					  _("Branch '%s' set up to track local branch '%s'."),
-					  local, shortname);
-		} else {
-			if (origin)
-				printf_ln(rebasing ?
-					  _("Branch '%s' set up to track remote ref '%s' by rebasing.") :
-					  _("Branch '%s' set up to track remote ref '%s'."),
-					  local, remote);
-			else
-				printf_ln(rebasing ?
-					  _("Branch '%s' set up to track local ref '%s' by rebasing.") :
-					  _("Branch '%s' set up to track local ref '%s'."),
-					  local, remote);
+		struct strbuf tmp_ref_name = STRBUF_INIT;
+		struct string_list friendly_ref_names = STRING_LIST_INIT_DUP;
+
+		for_each_string_list_item(item, remotes) {
+			shortname = item->string;
+			skip_prefix(shortname, "refs/heads/", &shortname);
+			if (origin) {
+				strbuf_addf(&tmp_ref_name, "%s/%s",
+					    origin, shortname);
+				string_list_append_nodup(
+					&friendly_ref_names,
+					strbuf_detach(&tmp_ref_name, NULL));
+			} else {
+				string_list_append(
+					&friendly_ref_names, shortname);
+			}
 		}
+
+		if (remotes->nr == 1) {
+			/*
+			 * Rebasing is only allowed in the case of a single
+			 * upstream branch.
+			 */
+			printf_ln(rebasing ?
+				_("branch '%s' set up to track '%s' by rebasing.") :
+				_("branch '%s' set up to track '%s'."),
+				local, friendly_ref_names.items[0].string);
+		} else {
+			printf_ln(_("branch '%s' set up to track:"), local);
+			for_each_string_list_item(item, &friendly_ref_names)
+				printf_ln("  %s", item->string);
+		}
+
+		string_list_clear(&friendly_ref_names, 0);
 	}
 
 	return 0;
@@ -118,12 +159,62 @@ out_err:
 	strbuf_release(&key);
 	error(_("unable to write upstream branch configuration"));
 
-	advise(_(tracking_advice),
-	       origin ? origin : "",
-	       origin ? "/" : "",
-	       shortname ? shortname : remote);
+	advise(_("\nAfter fixing the error cause you may try to fix up\n"
+		"the remote tracking information by invoking:"));
+	if (remotes->nr == 1)
+		advise("  git branch --set-upstream-to=%s%s%s",
+			origin ? origin : "",
+			origin ? "/" : "",
+			remotes->items[0].string);
+	else {
+		advise("  git config --add branch.\"%s\".remote %s",
+			local, origin ? origin : ".");
+		for_each_string_list_item(item, remotes)
+			advise("  git config --add branch.\"%s\".merge %s",
+				local, item->string);
+	}
 
 	return -1;
+}
+
+int install_branch_config(int flag, const char *local, const char *origin,
+		const char *remote)
+{
+	int ret;
+	struct string_list remotes = STRING_LIST_INIT_DUP;
+
+	string_list_append(&remotes, remote);
+	ret = install_branch_config_multiple_remotes(flag, local, origin, &remotes);
+	string_list_clear(&remotes, 0);
+	return ret;
+}
+
+static int inherit_tracking(struct tracking *tracking, const char *orig_ref)
+{
+	const char *bare_ref;
+	struct branch *branch;
+	int i;
+
+	bare_ref = orig_ref;
+	skip_prefix(orig_ref, "refs/heads/", &bare_ref);
+
+	branch = branch_get(bare_ref);
+	if (!branch->remote_name) {
+		warning(_("asked to inherit tracking from '%s', but no remote is set"),
+			bare_ref);
+		return -1;
+	}
+
+	if (branch->merge_nr < 1 || !branch->merge_name || !branch->merge_name[0]) {
+		warning(_("asked to inherit tracking from '%s', but no merge configuration is set"),
+			bare_ref);
+		return -1;
+	}
+
+	tracking->remote = xstrdup(branch->remote_name);
+	for (i = 0; i < branch->merge_nr; i++)
+		string_list_append(tracking->srcs, branch->merge_name[i]);
+	return 0;
 }
 
 /*
@@ -135,11 +226,15 @@ static void setup_tracking(const char *new_ref, const char *orig_ref,
 			   enum branch_track track, int quiet)
 {
 	struct tracking tracking;
+	struct string_list tracking_srcs = STRING_LIST_INIT_DUP;
 	int config_flags = quiet ? 0 : BRANCH_CONFIG_VERBOSE;
 
 	memset(&tracking, 0, sizeof(tracking));
 	tracking.spec.dst = (char *)orig_ref;
-	if (for_each_remote(find_tracked_branch, &tracking))
+	tracking.srcs = &tracking_srcs;
+	if (track != BRANCH_TRACK_INHERIT)
+		for_each_remote(find_tracked_branch, &tracking);
+	else if (inherit_tracking(&tracking, orig_ref))
 		return;
 
 	if (!tracking.matches)
@@ -147,6 +242,7 @@ static void setup_tracking(const char *new_ref, const char *orig_ref,
 		case BRANCH_TRACK_ALWAYS:
 		case BRANCH_TRACK_EXPLICIT:
 		case BRANCH_TRACK_OVERRIDE:
+		case BRANCH_TRACK_INHERIT:
 			break;
 		default:
 			return;
@@ -156,11 +252,13 @@ static void setup_tracking(const char *new_ref, const char *orig_ref,
 		die(_("not tracking: ambiguous information for ref %s"),
 		    orig_ref);
 
-	if (install_branch_config(config_flags, new_ref, tracking.remote,
-			      tracking.src ? tracking.src : orig_ref) < 0)
+	if (tracking.srcs->nr < 1)
+		string_list_append(tracking.srcs, orig_ref);
+	if (install_branch_config_multiple_remotes(config_flags, new_ref,
+				tracking.remote, tracking.srcs) < 0)
 		exit(-1);
 
-	free(tracking.src);
+	string_list_clear(tracking.srcs, 0);
 }
 
 int read_branch_desc(struct strbuf *buf, const char *branch_name)

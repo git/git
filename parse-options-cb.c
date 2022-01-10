@@ -1,5 +1,6 @@
 #include "git-compat-util.h"
 #include "parse-options.h"
+#include "branch.h"
 #include "cache.h"
 #include "commit.h"
 #include "color.h"
@@ -290,6 +291,21 @@ int parse_opt_passthru_argv(const struct option *opt, const char *arg, int unset
 		return -1;
 
 	strvec_push(opt_value, sb.buf);
+
+	return 0;
+}
+
+int parse_opt_tracking_mode(const struct option *opt, const char *arg, int unset)
+{
+	if (unset)
+		*(enum branch_track *)opt->value = BRANCH_TRACK_NEVER;
+	else if (!arg || !strcmp(arg, "direct"))
+		*(enum branch_track *)opt->value = BRANCH_TRACK_EXPLICIT;
+	else if (!strcmp(arg, "inherit"))
+		*(enum branch_track *)opt->value = BRANCH_TRACK_INHERIT;
+	else
+		return error(_("option `%s' expects \"%s\" or \"%s\""),
+			     "--track", "direct", "inherit");
 
 	return 0;
 }
