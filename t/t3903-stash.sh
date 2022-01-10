@@ -10,6 +10,25 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
+test_expect_success 'usage on cmd and subcommand invalid option' '
+	test_expect_code 129 git stash --invalid-option 2>usage &&
+	grep "or: git stash" usage &&
+
+	test_expect_code 129 git stash push --invalid-option 2>usage &&
+	! grep "or: git stash" usage
+'
+
+test_expect_success 'usage on main command -h emits a summary of subcommands' '
+	test_expect_code 129 git stash -h >usage &&
+	grep -F "usage: git stash list" usage &&
+	grep -F "or: git stash show" usage
+'
+
+test_expect_failure 'usage for subcommands should emit subcommand usage' '
+	test_expect_code 129 git stash push -h >usage &&
+	grep -F "usage: git stash [push" usage
+'
+
 diff_cmp () {
 	for i in "$1" "$2"
 	do
