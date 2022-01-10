@@ -4,6 +4,7 @@
 #include "hash.h"
 #include "lockfile.h"
 #include "string-list.h"
+#include "strmap.h"
 
 struct repository;
 
@@ -24,20 +25,6 @@ enum apply_verbosity {
 	verbosity_normal = 0,
 	verbosity_verbose = 1
 };
-
-/*
- * We need to keep track of how symlinks in the preimage are
- * manipulated by the patches.  A patch to add a/b/c where a/b
- * is a symlink should not be allowed to affect the directory
- * the symlink points at, but if the same patch removes a/b,
- * it is perfectly fine, as the patch removes a/b to make room
- * to create a directory a/b so that a/b/c can be created.
- *
- * See also "struct string_list symlink_changes" in "struct
- * apply_state".
- */
-#define APPLY_SYMLINK_GOES_AWAY 01
-#define APPLY_SYMLINK_IN_RESULT 02
 
 struct apply_state {
 	const char *prefix;
@@ -86,7 +73,16 @@ struct apply_state {
 
 	/* Various "current state" */
 	int linenr; /* current line number */
-	struct string_list symlink_changes; /* we have to track symlinks */
+	/*
+	 * We need to keep track of how symlinks in the preimage are
+	 * manipulated by the patches.  A patch to add a/b/c where a/b
+	 * is a symlink should not be allowed to affect the directory
+	 * the symlink points at, but if the same patch removes a/b,
+	 * it is perfectly fine, as the patch removes a/b to make room
+	 * to create a directory a/b so that a/b/c can be created.
+	 */
+	struct strset removed_symlinks;
+	struct strset kept_symlinks;
 
 	/*
 	 * For "diff-stat" like behaviour, we keep track of the biggest change

@@ -103,7 +103,8 @@ int init_apply_state(struct apply_state *state,
 	state->linenr = 1;
 	string_list_init_nodup(&state->fn_table);
 	string_list_init_nodup(&state->limit_by_name);
-	string_list_init_nodup(&state->symlink_changes);
+	strset_init(&state->removed_symlinks);
+	strset_init(&state->kept_symlinks);
 	strbuf_init(&state->root, 0);
 
 	git_apply_config();
@@ -117,7 +118,8 @@ int init_apply_state(struct apply_state *state,
 void clear_apply_state(struct apply_state *state)
 {
 	string_list_clear(&state->limit_by_name, 0);
-	string_list_clear(&state->symlink_changes, 0);
+	strset_clear(&state->removed_symlinks);
+	strset_clear(&state->kept_symlinks);
 	strbuf_release(&state->root);
 
 	/* &state->fn_table is cleared at the end of apply_patch() */
@@ -3814,59 +3816,31 @@ static int check_to_create(struct apply_state *state,
 	return 0;
 }
 
-static uintptr_t register_symlink_changes(struct apply_state *state,
-					  const char *path,
-					  uintptr_t what)
-{
-	struct string_list_item *ent;
-
-	ent = string_list_lookup(&state->symlink_changes, path);
-	if (!ent) {
-		ent = string_list_insert(&state->symlink_changes, path);
-		ent->util = (void *)0;
-	}
-	ent->util = (void *)(what | ((uintptr_t)ent->util));
-	return (uintptr_t)ent->util;
-}
-
-static uintptr_t check_symlink_changes(struct apply_state *state, const char *path)
-{
-	struct string_list_item *ent;
-
-	ent = string_list_lookup(&state->symlink_changes, path);
-	if (!ent)
-		return 0;
-	return (uintptr_t)ent->util;
-}
-
 static void prepare_symlink_changes(struct apply_state *state, struct patch *patch)
 {
 	for ( ; patch; patch = patch->next) {
 		if ((patch->old_name && S_ISLNK(patch->old_mode)) &&
 		    (patch->is_rename || patch->is_delete))
 			/* the symlink at patch->old_name is removed */
-			register_symlink_changes(state, patch->old_name, APPLY_SYMLINK_GOES_AWAY);
+			strset_add(&state->removed_symlinks, patch->old_name);
 
 		if (patch->new_name && S_ISLNK(patch->new_mode))
 			/* the symlink at patch->new_name is created or remains */
-			register_symlink_changes(state, patch->new_name, APPLY_SYMLINK_IN_RESULT);
+			strset_add(&state->kept_symlinks, patch->new_name);
 	}
 }
 
 static int path_is_beyond_symlink_1(struct apply_state *state, struct strbuf *name)
 {
 	do {
-		unsigned int change;
-
 		while (--name->len && name->buf[name->len] != '/')
 			; /* scan backwards */
 		if (!name->len)
 			break;
 		name->buf[name->len] = '\0';
-		change = check_symlink_changes(state, name->buf);
-		if (change & APPLY_SYMLINK_IN_RESULT)
+		if (strset_contains(&state->kept_symlinks, name->buf))
 			return 1;
-		if (change & APPLY_SYMLINK_GOES_AWAY)
+		if (strset_contains(&state->removed_symlinks, name->buf))
 			/*
 			 * This cannot be "return 0", because we may
 			 * see a new one created at a higher level.
