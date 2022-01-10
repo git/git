@@ -3841,9 +3841,22 @@ static void process_entry(struct merge_options *opt,
 		if (opt->renormalize &&
 		    blob_unchanged(opt, &ci->stages[0], &ci->stages[side],
 				   path)) {
-			ci->merged.is_null = 1;
-			ci->merged.clean = 1;
-			assert(!ci->df_conflict && !ci->path_conflict);
+			if (!ci->path_conflict) {
+				/*
+				 * Blob unchanged after renormalization, so
+				 * there's no modify/delete conflict after all;
+				 * we can just remove the file.
+				 */
+				ci->merged.is_null = 1;
+				ci->merged.clean = 1;
+				 /*
+				  * file goes away => even if there was a
+				  * directory/file conflict there isn't one now.
+				  */
+				ci->df_conflict = 0;
+			} else {
+				/* rename/delete, so conflict remains */
+			}
 		} else if (ci->path_conflict &&
 			   oideq(&ci->stages[0].oid, &ci->stages[side].oid)) {
 			/*
