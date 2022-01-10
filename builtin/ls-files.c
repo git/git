@@ -775,7 +775,7 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 		 * would not make any sense with this option.
 		 */
 		if (show_stage || show_unmerged)
-			die("ls-files --with-tree is incompatible with -s or -u");
+			die(_("options '%s' and '%s' cannot be used together"), "ls-files --with-tree", "-s/-u");
 		overlay_tree_on_index(the_repository->index, with_tree, max_prefix);
 	}
 
