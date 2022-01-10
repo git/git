@@ -1510,21 +1510,30 @@ test_expect_success 'sparse-checkout completes directory names' '
 	(
 		cd sparse-checkout &&
 		test_completion "git sparse-checkout set f" <<-\EOF
-		folder1 Z
-		folder1/0 Z
-		folder1/0/1 Z
-		folder2 Z
-		folder2/0 Z
-		folder3 Z
+		folder1/
+		folder2/
+		folder3/
+		EOF
+	) &&
+
+	(
+		cd sparse-checkout &&
+		test_completion "git sparse-checkout set folder1/" <<-\EOF
+		folder1/0/
+		EOF
+	) &&
+
+	(
+		cd sparse-checkout &&
+		test_completion "git sparse-checkout set folder1/0/" <<-\EOF
+		folder1/0/1/
 		EOF
 	) &&
 
 	(
 		cd sparse-checkout/folder1 &&
-		test_completion "git sparse-checkout add " <<-\EOF
-		./ Z
-		0 Z
-		0/1 Z
+		test_completion "git sparse-checkout add 0" <<-\EOF
+		0/
 		EOF
 	)
 '
