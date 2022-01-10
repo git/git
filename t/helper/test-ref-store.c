@@ -269,7 +269,7 @@ static int cmd_delete_ref(struct ref_store *refs, const char **argv)
 	struct object_id old_oid;
 
 	if (get_oid_hex(sha1_buf, &old_oid))
-		die("not sha-1");
+		die("cannot parse %s as %s", sha1_buf, the_hash_algo->name);
 
 	return refs_delete_ref(refs, msg, refname, &old_oid, flags);
 }
@@ -284,9 +284,10 @@ static int cmd_update_ref(struct ref_store *refs, const char **argv)
 	struct object_id old_oid;
 	struct object_id new_oid;
 
-	if (get_oid_hex(old_sha1_buf, &old_oid) ||
-	    get_oid_hex(new_sha1_buf, &new_oid))
-		die("not sha-1");
+	if (get_oid_hex(old_sha1_buf, &old_oid))
+		die("cannot parse %s as %s", old_sha1_buf, the_hash_algo->name);
+	if (get_oid_hex(new_sha1_buf, &new_oid))
+		die("cannot parse %s as %s", new_sha1_buf, the_hash_algo->name);
 
 	return refs_update_ref(refs, msg, refname,
 			       &new_oid, &old_oid,
