@@ -94,10 +94,10 @@ test_expect_success 'creating a tag with --create-reflog should create reflog' '
 	git log -1 \
 		--format="format:tag: tagging %h (%s, %cd)%n" \
 		--date=format:%Y-%m-%d >expected &&
-	test_when_finished "git tag -d tag_with_reflog" &&
-	git tag --create-reflog tag_with_reflog &&
-	git reflog exists refs/tags/tag_with_reflog &&
-	sed -e "s/^.*	//" .git/logs/refs/tags/tag_with_reflog >actual &&
+	test_when_finished "git tag -d tag_with_reflog1" &&
+	git tag --create-reflog tag_with_reflog1 &&
+	git reflog exists refs/tags/tag_with_reflog1 &&
+	test-tool ref-store main for-each-reflog-ent refs/tags/tag_with_reflog1 | sed -e "s/^.*	//" >actual &&
 	test_cmp expected actual
 '
 
@@ -105,10 +105,10 @@ test_expect_success 'annotated tag with --create-reflog has correct message' '
 	git log -1 \
 		--format="format:tag: tagging %h (%s, %cd)%n" \
 		--date=format:%Y-%m-%d >expected &&
-	test_when_finished "git tag -d tag_with_reflog" &&
-	git tag -m "annotated tag" --create-reflog tag_with_reflog &&
-	git reflog exists refs/tags/tag_with_reflog &&
-	sed -e "s/^.*	//" .git/logs/refs/tags/tag_with_reflog >actual &&
+	test_when_finished "git tag -d tag_with_reflog2" &&
+	git tag -m "annotated tag" --create-reflog tag_with_reflog2 &&
+	git reflog exists refs/tags/tag_with_reflog2 &&
+	test-tool ref-store main for-each-reflog-ent refs/tags/tag_with_reflog2 | sed -e "s/^.*	//" >actual &&
 	test_cmp expected actual
 '
 
@@ -118,10 +118,10 @@ test_expect_success '--create-reflog does not create reflog on failure' '
 '
 
 test_expect_success 'option core.logAllRefUpdates=always creates reflog' '
-	test_when_finished "git tag -d tag_with_reflog" &&
+	test_when_finished "git tag -d tag_with_reflog3" &&
 	test_config core.logAllRefUpdates always &&
-	git tag tag_with_reflog &&
-	git reflog exists refs/tags/tag_with_reflog
+	git tag tag_with_reflog3 &&
+	git reflog exists refs/tags/tag_with_reflog3
 '
 
 test_expect_success 'listing all tags if one exists should succeed' '

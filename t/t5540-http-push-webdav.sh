@@ -18,6 +18,12 @@ then
 	test_done
 fi
 
+if test_have_prereq !REFFILES
+then
+	skip_all='skipping test; dumb HTTP protocol not supported with reftable.'
+	test_done
+fi
+
 LIB_HTTPD_DAV=t
 . "$TEST_DIRECTORY"/lib-httpd.sh
 ROOT_PATH="$PWD"
