@@ -24,8 +24,8 @@ https://developers.google.com/open-source/licenses/bsd
 static void write_test_table(struct strbuf *buf,
 			     struct reftable_ref_record refs[], int n)
 {
-	int min = 0xffffffff;
-	int max = 0;
+	uint64_t min = 0xffffffff;
+	uint64_t max = 0;
 	int i = 0;
 	int err;
 
