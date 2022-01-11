@@ -755,6 +755,60 @@ test_expect_success 'cherry-pick with conflicts' '
 	test_all_match test_must_fail git cherry-pick to-cherry-pick
 '
 
+test_expect_success 'checkout-index inside sparse definition' '
+	init_repos &&
+
+	run_on_all rm -f deep/a &&
+	test_all_match git checkout-index -- deep/a &&
+	test_all_match git status --porcelain=v2 &&
+
+	echo test >>new-a &&
+	run_on_all cp ../new-a a &&
+	test_all_match test_must_fail git checkout-index -- a &&
+	test_all_match git checkout-index -f -- a &&
+	test_all_match git status --porcelain=v2
+'
+
+test_expect_success 'checkout-index outside sparse definition' '
+	init_repos &&
+
+	# File does not exist on disk yet for sparse checkouts, so checkout-index
+	# succeeds without -f
+	test_sparse_match git checkout-index -- folder1/a &&
+	test_cmp sparse-checkout/folder1/a sparse-index/folder1/a &&
+	test_cmp sparse-checkout/folder1/a full-checkout/folder1/a &&
+
+	run_on_sparse rm -rf folder1 &&
+	echo test >new-a &&
+	run_on_sparse mkdir -p folder1 &&
+	run_on_all cp ../new-a folder1/a &&
+
+	test_all_match test_must_fail git checkout-index -- folder1/a &&
+	test_all_match git checkout-index -f -- folder1/a &&
+	test_cmp sparse-checkout/folder1/a sparse-index/folder1/a &&
+	test_cmp sparse-checkout/folder1/a full-checkout/folder1/a
+'
+
+test_expect_success 'checkout-index with folders' '
+	init_repos &&
+
+	# Inside checkout definition
+	test_all_match test_must_fail git checkout-index -f -- deep/ &&
+
+	# Outside checkout definition
+	test_all_match test_must_fail git checkout-index -f -- folder1/
+'
+
+# NEEDSWORK: even in sparse checkouts, checkout-index --all will create all
+# files (even those outside the sparse definition) on disk. However, these files
+# don't appear in the percentage of tracked files in git status.
+test_expect_failure 'checkout-index --all' '
+	init_repos &&
+
+	test_all_match git checkout-index --all &&
+	test_sparse_match test_path_is_missing folder1
+'
+
 test_expect_success 'clean' '
 	init_repos &&
 
