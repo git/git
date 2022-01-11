@@ -347,7 +347,7 @@ test_expect_success 'setup patch' '
 # Expected output, diff is similar to the patch but w/ diff at the top
 test_expect_success 'setup expected' '
 	echo diff --git a/file b/file >expected &&
-	cat patch |sed "/^index/s/ 100644/ 100755/" >>expected &&
+	sed "/^index/s/ 100644/ 100755/" patch >>expected &&
 	cat >expected-output <<-\EOF
 	--- a/file
 	+++ b/file
@@ -373,9 +373,9 @@ test_expect_success 'setup expected' '
 test_expect_success 'add first line works' '
 	git commit -am "clear local changes" &&
 	git apply patch &&
-	printf "%s\n" s y y | git add -p file 2>error |
-		sed -n -e "s/^([1-2]\/[1-2]) Stage this hunk[^@]*\(@@ .*\)/\1/" \
-		       -e "/^[-+@ \\\\]"/p  >output &&
+	test_write_lines s y y | git add -p file 2>error >raw-output &&
+	sed -n -e "s/^([1-2]\/[1-2]) Stage this hunk[^@]*\(@@ .*\)/\1/" \
+	       -e "/^[-+@ \\\\]"/p raw-output >output &&
 	test_must_be_empty error &&
 	git diff --cached >diff &&
 	diff_cmp expected diff &&
