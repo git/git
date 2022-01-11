@@ -1253,6 +1253,21 @@ test_expect_success 'sparse index is not expanded: diff' '
 	ensure_not_expanded diff --cached
 '
 
+test_expect_success 'sparse index is not expanded: update-index' '
+	init_repos &&
+
+	deep_a_oid=$(git -C full-checkout rev-parse update-deep:deep/a) &&
+	ensure_not_expanded update-index --cacheinfo 100644 $deep_a_oid deep/a &&
+
+	echo "test" >sparse-index/README.md &&
+	echo "test2" >sparse-index/a &&
+	rm -f sparse-index/deep/a &&
+
+	ensure_not_expanded update-index --add README.md &&
+	ensure_not_expanded update-index a &&
+	ensure_not_expanded update-index --remove deep/a
+'
+
 test_expect_success 'sparse index is not expanded: blame' '
 	init_repos &&
 
