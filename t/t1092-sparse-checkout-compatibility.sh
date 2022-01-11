@@ -772,9 +772,14 @@ test_expect_success 'checkout-index inside sparse definition' '
 test_expect_success 'checkout-index outside sparse definition' '
 	init_repos &&
 
-	# File does not exist on disk yet for sparse checkouts, so checkout-index
-	# succeeds without -f
-	test_sparse_match git checkout-index -- folder1/a &&
+	# Without --ignore-skip-worktree-bits, outside-of-cone files will trigger
+	# an error
+	test_sparse_match test_must_fail git checkout-index -- folder1/a &&
+	test_i18ngrep "folder1/a has skip-worktree enabled" sparse-checkout-err &&
+	test_path_is_missing folder1/a &&
+
+	# With --ignore-skip-worktree-bits, outside-of-cone files are checked out
+	test_sparse_match git checkout-index --ignore-skip-worktree-bits -- folder1/a &&
 	test_cmp sparse-checkout/folder1/a sparse-index/folder1/a &&
 	test_cmp sparse-checkout/folder1/a full-checkout/folder1/a &&
 
@@ -783,8 +788,8 @@ test_expect_success 'checkout-index outside sparse definition' '
 	run_on_sparse mkdir -p folder1 &&
 	run_on_all cp ../new-a folder1/a &&
 
-	test_all_match test_must_fail git checkout-index -- folder1/a &&
-	test_all_match git checkout-index -f -- folder1/a &&
+	test_all_match test_must_fail git checkout-index --ignore-skip-worktree-bits -- folder1/a &&
+	test_all_match git checkout-index -f --ignore-skip-worktree-bits -- folder1/a &&
 	test_cmp sparse-checkout/folder1/a sparse-index/folder1/a &&
 	test_cmp sparse-checkout/folder1/a full-checkout/folder1/a
 '
@@ -799,14 +804,16 @@ test_expect_success 'checkout-index with folders' '
 	test_all_match test_must_fail git checkout-index -f -- folder1/
 '
 
-# NEEDSWORK: even in sparse checkouts, checkout-index --all will create all
-# files (even those outside the sparse definition) on disk. However, these files
-# don't appear in the percentage of tracked files in git status.
-test_expect_failure 'checkout-index --all' '
+test_expect_success 'checkout-index --all' '
 	init_repos &&
 
 	test_all_match git checkout-index --all &&
-	test_sparse_match test_path_is_missing folder1
+	test_sparse_match test_path_is_missing folder1 &&
+
+	# --ignore-skip-worktree-bits will cause `skip-worktree` files to be
+	# checked out, causing the outside-of-cone `folder1` to exist on-disk
+	test_all_match git checkout-index --ignore-skip-worktree-bits --all &&
+	test_all_match test_path_exists folder1
 '
 
 test_expect_success 'clean' '
