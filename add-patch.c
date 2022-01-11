@@ -383,6 +383,17 @@ static int is_octal(const char *p, size_t len)
 	return 1;
 }
 
+static void complete_file(char marker, struct hunk *hunk)
+{
+	if (marker == '-' || marker == '+')
+		/*
+		 * Last hunk ended in non-context line (i.e. it
+		 * appended lines to the file, so there are no
+		 * trailing context lines).
+		 */
+		hunk->splittable_into++;
+}
+
 static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 {
 	struct strvec args = STRVEC_INIT;
@@ -472,6 +483,7 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 			eol = pend;
 
 		if (starts_with(p, "diff ")) {
+			complete_file(marker, hunk);
 			ALLOC_GROW_BY(s->file_diff, s->file_diff_nr, 1,
 				   file_diff_alloc);
 			file_diff = s->file_diff + s->file_diff_nr - 1;
@@ -598,13 +610,7 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 				file_diff->hunk->colored_end = hunk->colored_end;
 		}
 	}
-
-	if (marker == '-' || marker == '+')
-		/*
-		 * Last hunk ended in non-context line (i.e. it appended lines
-		 * to the file, so there are no trailing context lines).
-		 */
-		hunk->splittable_into++;
+	complete_file(marker, hunk);
 
 	/* non-colored shorter than colored? */
 	if (colored_p != colored_pend) {
