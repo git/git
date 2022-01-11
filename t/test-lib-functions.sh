@@ -680,6 +680,17 @@ test_have_prereq () {
 			# Keep a list of missing prerequisites; restore
 			# the negative marker if necessary.
 			prerequisite=${negative_prereq:+!}$prerequisite
+
+			# Abort if this prereq was marked as required
+			if test -n "$GIT_TEST_REQUIRE_PREREQ"
+			then
+				case " $GIT_TEST_REQUIRE_PREREQ " in
+				*" $prerequisite "*)
+					BAIL_OUT "required prereq $prerequisite failed"
+					;;
+				esac
+			fi
+
 			if test -z "$missing_prereq"
 			then
 				missing_prereq=$prerequisite
@@ -1745,6 +1756,40 @@ test_subcommand () {
 		! grep "\[$expr\]"
 	else
 		grep "\[$expr\]"
+	fi
+}
+
+# Check that the given command was invoked as part of the
+# trace2-format trace on stdin, but without an exact set of
+# arguments.
+#
+#	test_subcommand [!] <command> <args>... < <trace>
+#
+# For example, to look for an invocation of "git pack-objects"
+# with the "--honor-pack-keep" argument, use
+#
+#	GIT_TRACE2_EVENT=event.log git repack ... &&
+#	test_subcommand git pack-objects --honor-pack-keep <event.log
+#
+# If the first parameter passed is !, this instead checks that
+# the given command was not called.
+#
+test_subcommand_inexact () {
+	local negate=
+	if test "$1" = "!"
+	then
+		negate=t
+		shift
+	fi
+
+	local expr=$(printf '"%s".*' "$@")
+	expr="${expr%,}"
+
+	if test -n "$negate"
+	then
+		! grep "\"event\":\"child_start\".*\[$expr\]"
+	else
+		grep "\"event\":\"child_start\".*\[$expr\]"
 	fi
 }
 

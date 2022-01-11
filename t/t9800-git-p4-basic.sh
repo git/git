@@ -171,7 +171,7 @@ test_expect_success 'clone using non-numeric revision ranges' '
 			cd "$git" &&
 			git ls-files >lines &&
 			test_line_count = 8 lines
-		)
+		) || return 1
 	done
 '
 

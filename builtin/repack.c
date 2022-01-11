@@ -612,7 +612,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	struct tempfile *refs_snapshot = NULL;
 	int i, ext, ret;
 	FILE *out;
-	int show_progress = isatty(2);
+	int show_progress;
 
 	/* variables to be filled by option parsing */
 	int pack_everything = 0;
@@ -681,7 +681,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 
 	if (keep_unreachable &&
 	    (unpack_unreachable || (pack_everything & LOOSEN_UNREACHABLE)))
-		die(_("--keep-unreachable and -A are incompatible"));
+		die(_("options '%s' and '%s' cannot be used together"), "--keep-unreachable", "-A");
 
 	if (write_bitmaps < 0) {
 		if (!write_midx &&
@@ -693,7 +693,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		write_bitmaps = 0;
 	}
 	if (pack_kept_objects < 0)
-		pack_kept_objects = write_bitmaps > 0;
+		pack_kept_objects = write_bitmaps > 0 && !write_midx;
 
 	if (write_bitmaps && !(pack_everything & ALL_INTO_ONE) && !write_midx)
 		die(_(incremental_bitmap_conflict_error));
@@ -712,7 +712,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 
 	if (geometric_factor) {
 		if (pack_everything)
-			die(_("--geometric is incompatible with -A, -a"));
+			die(_("options '%s' and '%s' cannot be used together"), "--geometric", "-A/-a");
 		init_pack_geometry(&geometry);
 		split_pack_geometry(geometry, geometric_factor);
 	}
@@ -724,6 +724,8 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	sigchain_push_common(remove_pack_on_signal);
 
 	prepare_pack_objects(&cmd, &po_args);
+
+	show_progress = !po_args.quiet && isatty(2);
 
 	strvec_push(&cmd.args, "--keep-true-parents");
 	if (!pack_kept_objects)
@@ -926,7 +928,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 			}
 			strbuf_release(&buf);
 		}
-		if (!po_args.quiet && show_progress)
+		if (show_progress)
 			opts |= PRUNE_PACKED_VERBOSE;
 		prune_packed_objects(opts);
 

@@ -137,7 +137,7 @@ test_expect_success 'range_set_union' '
 	test_seq 1000 > c.c &&
 	git add c.c &&
 	git commit -m "modify many lines" &&
-	git log $(for x in $(test_seq 200); do echo -L $((2*x)),+1:c.c; done)
+	git log $(for x in $(test_seq 200); do echo -L $((2*x)),+1:c.c || return 1; done)
 '
 
 test_expect_success '-s shows only line-log commits' '

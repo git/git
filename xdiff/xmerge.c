@@ -230,7 +230,7 @@ static int fill_conflict_hunk(xdfenv_t *xe1, const char *name1,
 	size += xdl_recs_copy(xe1, m->i1, m->chg1, needs_cr, 1,
 			      dest ? dest + size : NULL);
 
-	if (style == XDL_MERGE_DIFF3) {
+	if (style == XDL_MERGE_DIFF3 || style == XDL_MERGE_ZEALOUS_DIFF3) {
 		/* Shared preimage */
 		if (!dest) {
 			size += marker_size + 1 + needs_cr + marker3_size;
@@ -320,6 +320,40 @@ static int xdl_fill_merge_buffer(xdfenv_t *xe1, const char *name1,
 	size += xdl_recs_copy(xe1, i, xe1->xdf2.nrec - i, 0, 0,
 			      dest ? dest + size : NULL);
 	return size;
+}
+
+static int recmatch(xrecord_t *rec1, xrecord_t *rec2, unsigned long flags)
+{
+	return xdl_recmatch(rec1->ptr, rec1->size,
+			    rec2->ptr, rec2->size, flags);
+}
+
+/*
+ * Remove any common lines from the beginning and end of the conflicted region.
+ */
+static void xdl_refine_zdiff3_conflicts(xdfenv_t *xe1, xdfenv_t *xe2, xdmerge_t *m,
+		xpparam_t const *xpp)
+{
+	xrecord_t **rec1 = xe1->xdf2.recs, **rec2 = xe2->xdf2.recs;
+	for (; m; m = m->next) {
+		/* let's handle just the conflicts */
+		if (m->mode)
+			continue;
+
+		while(m->chg1 && m->chg2 &&
+		      recmatch(rec1[m->i1], rec2[m->i2], xpp->flags)) {
+			m->chg1--;
+			m->chg2--;
+			m->i1++;
+			m->i2++;
+		}
+		while (m->chg1 && m->chg2 &&
+		       recmatch(rec1[m->i1 + m->chg1 - 1],
+				rec2[m->i2 + m->chg2 - 1], xpp->flags)) {
+			m->chg1--;
+			m->chg2--;
+		}
+	}
 }
 
 /*
@@ -482,7 +516,22 @@ static int xdl_do_merge(xdfenv_t *xe1, xdchange_t *xscr1,
 	int style = xmp->style;
 	int favor = xmp->favor;
 
-	if (style == XDL_MERGE_DIFF3) {
+	/*
+	 * XDL_MERGE_DIFF3 does not attempt to refine conflicts by looking
+	 * at common areas of sides 1 & 2, because the base (side 0) does
+	 * not match and is being shown.  Similarly, simplification of
+	 * non-conflicts is also skipped due to the skipping of conflict
+	 * refinement.
+	 *
+	 * XDL_MERGE_ZEALOUS_DIFF3, on the other hand, will attempt to
+	 * refine conflicts looking for common areas of sides 1 & 2.
+	 * However, since the base is being shown and does not match,
+	 * it will only look for common areas at the beginning or end
+	 * of the conflict block.  Since XDL_MERGE_ZEALOUS_DIFF3's
+	 * conflict refinement is much more limited in this fashion, the
+	 * conflict simplification will be skipped.
+	 */
+	if (style == XDL_MERGE_DIFF3 || style == XDL_MERGE_ZEALOUS_DIFF3) {
 		/*
 		 * "diff3 -m" output does not make sense for anything
 		 * more aggressive than XDL_MERGE_EAGER.
@@ -603,10 +652,12 @@ static int xdl_do_merge(xdfenv_t *xe1, xdchange_t *xscr1,
 	if (!changes)
 		changes = c;
 	/* refine conflicts */
-	if (XDL_MERGE_ZEALOUS <= level &&
-	    (xdl_refine_conflicts(xe1, xe2, changes, xpp) < 0 ||
-	     xdl_simplify_non_conflicts(xe1, changes,
-					XDL_MERGE_ZEALOUS < level) < 0)) {
+	if (style == XDL_MERGE_ZEALOUS_DIFF3) {
+		xdl_refine_zdiff3_conflicts(xe1, xe2, changes, xpp);
+	} else if (XDL_MERGE_ZEALOUS <= level &&
+		   (xdl_refine_conflicts(xe1, xe2, changes, xpp) < 0 ||
+		    xdl_simplify_non_conflicts(xe1, changes,
+					       XDL_MERGE_ZEALOUS < level) < 0)) {
 		xdl_cleanup_merge(changes);
 		return -1;
 	}

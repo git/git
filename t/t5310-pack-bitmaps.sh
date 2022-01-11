@@ -1,8 +1,6 @@
 #!/bin/sh
 
 test_description='exercise basic bitmap functionality'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-bitmap.sh
@@ -35,7 +33,7 @@ test_expect_success 'setup writing bitmaps during repack' '
 '
 
 test_expect_success 'full repack creates bitmaps' '
-	GIT_TRACE2_EVENT_NESTING=4 GIT_TRACE2_EVENT="$(pwd)/trace" \
+	GIT_TRACE2_EVENT="$(pwd)/trace" \
 		git repack -ad &&
 	ls .git/objects/pack/ | grep bitmap >output &&
 	test_line_count = 1 output &&
@@ -230,7 +228,7 @@ test_expect_success 'pack reuse respects --honor-pack-keep' '
 	test_when_finished "rm -f .git/objects/pack/*.keep" &&
 	for i in .git/objects/pack/*.pack
 	do
-		>${i%.pack}.keep
+		>${i%.pack}.keep || return 1
 	done &&
 	reusable_pack --honor-pack-keep >empty.pack &&
 	git index-pack empty.pack &&

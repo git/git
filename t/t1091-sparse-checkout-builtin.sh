@@ -41,7 +41,15 @@ test_expect_success 'setup' '
 	)
 '
 
-test_expect_success 'git sparse-checkout list (empty)' '
+test_expect_success 'git sparse-checkout list (not sparse)' '
+	test_must_fail git -C repo sparse-checkout list >list 2>err &&
+	test_must_be_empty list &&
+	test_i18ngrep "this worktree is not sparse" err
+'
+
+test_expect_success 'git sparse-checkout list (not sparse)' '
+	git -C repo sparse-checkout set &&
+	rm repo/.git/info/sparse-checkout &&
 	git -C repo sparse-checkout list >list 2>err &&
 	test_must_be_empty list &&
 	test_i18ngrep "this worktree is not sparse (sparse-checkout file may not exist)" err
@@ -101,6 +109,18 @@ test_expect_success 'clone --sparse' '
 	EOF
 	test_cmp expect actual &&
 	check_files clone a
+'
+
+test_expect_success 'switching to cone mode with non-cone mode patterns' '
+	git init bad-patterns &&
+	(
+		cd bad-patterns &&
+		git sparse-checkout init &&
+		git sparse-checkout add dir &&
+		git config core.sparseCheckoutCone true &&
+		test_must_fail git sparse-checkout add dir 2>err &&
+		grep "existing sparse-checkout patterns do not use cone mode" err
+	)
 '
 
 test_expect_success 'interaction with clone --no-checkout (unborn index)' '
@@ -165,12 +185,14 @@ test_expect_success 'set sparse-checkout using --stdin' '
 '
 
 test_expect_success 'add to sparse-checkout' '
-	cat repo/.git/info/sparse-checkout >expect &&
+	cat repo/.git/info/sparse-checkout >old &&
+	test_when_finished cp old repo/.git/info/sparse-checkout &&
 	cat >add <<-\EOF &&
 	pattern1
 	/folder1/
 	pattern2
 	EOF
+	cat old >expect &&
 	cat add >>expect &&
 	git -C repo sparse-checkout add --stdin <add &&
 	git -C repo sparse-checkout list >actual &&
@@ -212,12 +234,27 @@ test_expect_success 'sparse-index enabled and disabled' '
 
 		git -C repo sparse-checkout init --cone --sparse-index &&
 		test_cmp_config -C repo true index.sparse &&
-		test-tool -C repo read-cache --table >cache &&
-		grep " tree " cache &&
-
+		git -C repo ls-files --sparse >sparse &&
 		git -C repo sparse-checkout disable &&
-		test-tool -C repo read-cache --table >cache &&
-		! grep " tree " cache &&
+		git -C repo ls-files --sparse >full &&
+
+		cat >expect <<-\EOF &&
+		@@ -1,4 +1,7 @@
+		 a
+		-deep/
+		-folder1/
+		-folder2/
+		+deep/a
+		+deep/deeper1/a
+		+deep/deeper1/deepest/a
+		+deep/deeper2/a
+		+folder1/a
+		+folder2/a
+		EOF
+
+		diff -u sparse full | tail -n +3 >actual &&
+		test_cmp expect actual &&
+
 		git -C repo config --list >config &&
 		! grep index.sparse config
 	)
@@ -586,7 +623,7 @@ test_expect_success 'pattern-checks: contained glob characters' '
 		!/*/
 		something$c-else/
 		EOF
-		check_read_tree_errors repo "a" "disabling cone pattern matching"
+		check_read_tree_errors repo "a" "disabling cone pattern matching" || return 1
 	done
 '
 
@@ -706,6 +743,27 @@ test_expect_success 'cone mode clears ignored subdirectories' '
 	git -C repo status --porcelain=v2 >out &&
 	echo "? deep/deeper2/untracked" >expect &&
 	test_cmp expect out
+'
+
+test_expect_success 'malformed cone-mode patterns' '
+	git -C repo sparse-checkout init --cone &&
+	mkdir -p repo/foo/bar &&
+	touch repo/foo/bar/x repo/foo/y &&
+	cat >repo/.git/info/sparse-checkout <<-\EOF &&
+	/*
+	!/*/
+	/foo/
+	!/foo/*/
+	/foo/\*/
+	EOF
+
+	# Listing the patterns will notice the duplicate pattern and
+	# emit a warning. It will list the patterns directly instead
+	# of using the cone-mode translation to a set of directories.
+	git -C repo sparse-checkout list >actual 2>err &&
+	test_cmp repo/.git/info/sparse-checkout actual &&
+	grep "warning: your sparse-checkout file may have issues: pattern .* is repeated" err &&
+	grep "warning: disabling cone pattern matching" err
 '
 
 test_done

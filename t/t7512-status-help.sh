@@ -659,6 +659,7 @@ On branch am_empty
 You are in the middle of an am session.
 The current patch is empty.
   (use "git am --skip" to skip this patch)
+  (use "git am --allow-empty" to record this patch as an empty commit)
   (use "git am --abort" to restore the original branch)
 
 nothing to commit (use -u to show untracked files)

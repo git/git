@@ -1,6 +1,5 @@
 (
-# LINT: missing "&&" in block not currently detected (for consistency with
-# LINT: --chain-lint at top level and to provide escape hatch if needed)
+# LINT: missing "&&" after first "echo"
 	foo &&
 	{
 		echo a

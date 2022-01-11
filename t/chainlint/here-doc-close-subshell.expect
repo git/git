@@ -1,2 +1,2 @@
 (
->	cat)
+	cat <<-INPUT)

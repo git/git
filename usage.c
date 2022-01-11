@@ -6,7 +6,7 @@
 #include "git-compat-util.h"
 #include "cache.h"
 
-void vreportf(const char *prefix, const char *err, va_list params)
+static void vreportf(const char *prefix, const char *err, va_list params)
 {
 	char msg[4096];
 	char *p, *pend = msg + sizeof(msg);
@@ -55,6 +55,12 @@ static NORETURN void usage_builtin(const char *err, va_list params)
 	exit(129);
 }
 
+static void die_message_builtin(const char *err, va_list params)
+{
+	trace2_cmd_error_va(err, params);
+	vreportf("fatal: ", err, params);
+}
+
 /*
  * We call trace2_cmd_error_va() in the below functions first and
  * expect it to va_copy 'params' before using it (because an 'ap' can
@@ -62,10 +68,9 @@ static NORETURN void usage_builtin(const char *err, va_list params)
  */
 static NORETURN void die_builtin(const char *err, va_list params)
 {
-	trace2_cmd_error_va(err, params);
+	report_fn die_message_fn = get_die_message_routine();
 
-	vreportf("fatal: ", err, params);
-
+	die_message_fn(err, params);
 	exit(128);
 }
 
@@ -109,6 +114,7 @@ static int die_is_recursing_builtin(void)
  * (ugh), so keep things static. */
 static NORETURN_PTR report_fn usage_routine = usage_builtin;
 static NORETURN_PTR report_fn die_routine = die_builtin;
+static report_fn die_message_routine = die_message_builtin;
 static report_fn error_routine = error_builtin;
 static report_fn warn_routine = warn_builtin;
 static int (*die_is_recursing)(void) = die_is_recursing_builtin;
@@ -116,6 +122,11 @@ static int (*die_is_recursing)(void) = die_is_recursing_builtin;
 void set_die_routine(NORETURN_PTR report_fn routine)
 {
 	die_routine = routine;
+}
+
+report_fn get_die_message_routine(void)
+{
+	return die_message_routine;
 }
 
 void set_error_routine(report_fn routine)
@@ -209,6 +220,29 @@ void NORETURN die_errno(const char *fmt, ...)
 	va_start(params, fmt);
 	die_routine(fmt_with_err(buf, sizeof(buf), fmt), params);
 	va_end(params);
+}
+
+#undef die_message
+int die_message(const char *err, ...)
+{
+	va_list params;
+
+	va_start(params, err);
+	die_message_routine(err, params);
+	va_end(params);
+	return 128;
+}
+
+#undef die_message_errno
+int die_message_errno(const char *fmt, ...)
+{
+	char buf[1024];
+	va_list params;
+
+	va_start(params, fmt);
+	die_message_routine(fmt_with_err(buf, sizeof(buf), fmt), params);
+	va_end(params);
+	return 128;
 }
 
 #undef error_errno

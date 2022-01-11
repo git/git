@@ -88,19 +88,14 @@ struct region {
 #define REC(env, s, l) \
 	(env->xdf##s.recs[l - 1])
 
-static int cmp_recs(xpparam_t const *xpp,
-	xrecord_t *r1, xrecord_t *r2)
+static int cmp_recs(xrecord_t *r1, xrecord_t *r2)
 {
-	return r1->ha == r2->ha &&
-		xdl_recmatch(r1->ptr, r1->size, r2->ptr, r2->size,
-			    xpp->flags);
+	return r1->ha == r2->ha;
+
 }
 
-#define CMP_ENV(xpp, env, s1, l1, s2, l2) \
-	(cmp_recs(xpp, REC(env, s1, l1), REC(env, s2, l2)))
-
 #define CMP(i, s1, l1, s2, l2) \
-	(cmp_recs(i->xpp, REC(i->env, s1, l1), REC(i->env, s2, l2)))
+	(cmp_recs(REC(i->env, s1, l1), REC(i->env, s2, l2)))
 
 #define TABLE_HASH(index, side, line) \
 	XDL_HASHLONG((REC(index->env, side, line))->ha, index->table_bits)

@@ -469,7 +469,7 @@ test_expect_success 'rev-list dies for missing objects on cmd line' '
 		git -C repo rev-list --ignore-missing --objects \
 			--exclude-promisor-objects "$OBJ" &&
 		git -C repo rev-list --ignore-missing --objects-edge-aggressive \
-			--exclude-promisor-objects "$OBJ"
+			--exclude-promisor-objects "$OBJ" || return 1
 	done
 '
 

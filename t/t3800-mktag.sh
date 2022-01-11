@@ -72,7 +72,8 @@ check_verify_failure () {
 
 		# Manually create the broken, we cannot do it with
 		# update-ref
-		echo "$bad_tag" >"bad-tag/$tag_ref" &&
+		test-tool -C bad-tag ref-store main delete-refs 0 msg "$tag_ref" &&
+		test-tool -C bad-tag ref-store main update-ref msg "$tag_ref" $bad_tag $ZERO_OID REF_SKIP_OID_VERIFICATION &&
 
 		# Unlike fsck-ing unreachable content above, this
 		# will always fail.
@@ -83,7 +84,8 @@ check_verify_failure () {
 		# Make sure the earlier test created it for us
 		git rev-parse "$bad_tag" &&
 
-		echo "$bad_tag" >"bad-tag/$tag_ref" &&
+		test-tool -C bad-tag ref-store main delete-refs 0 msg "$tag_ref" &&
+		test-tool -C bad-tag ref-store main update-ref msg "$tag_ref" $bad_tag $ZERO_OID REF_SKIP_OID_VERIFICATION &&
 
 		printf "%s tag\t%s\n" "$bad_tag" "$tag_ref" >expected &&
 		git -C bad-tag for-each-ref "$tag_ref" >actual &&

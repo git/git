@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='test diff with a bogus tree containing the null sha1'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'create bogus tree' '

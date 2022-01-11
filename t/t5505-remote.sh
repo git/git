@@ -2,9 +2,6 @@
 
 test_description='git remote porcelain-ish'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
-
 . ./test-lib.sh
 
 setup_repository () {
@@ -1332,7 +1329,6 @@ test_expect_success 'unqualified <dst> refspec DWIM and advice' '
 	(
 		cd test &&
 		git tag -a -m "Some tag" some-tag main &&
-		exit_with=true &&
 		for type in commit tag tree blob
 		do
 			if test "$type" = "blob"
@@ -1348,9 +1344,8 @@ test_expect_success 'unqualified <dst> refspec DWIM and advice' '
 				push origin $oid:dst 2>err &&
 			test_i18ngrep "error: The destination you" err &&
 			test_i18ngrep ! "hint: Did you mean" err ||
-			exit_with=false
-		done &&
-		$exit_with
+			exit 1
+		done
 	)
 '
 

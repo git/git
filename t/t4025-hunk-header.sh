@@ -14,15 +14,9 @@ test_expect_success setup '
 
 	(
 		echo "A $NS" &&
-		for c in B C D E F G H I J K
-		do
-			echo "  $c"
-		done &&
+		printf "  %s\n" B C D E F G H I J K &&
 		echo "L  $NS" &&
-		for c in M N O P Q R S T U V
-		do
-			echo "  $c"
-		done
+		printf "  %s\n" M N O P Q R S T U V
 	) >file &&
 	git add file &&
 

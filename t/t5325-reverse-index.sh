@@ -46,7 +46,7 @@ test_expect_success 'index-pack with --[no-]rev-index' '
 		test_path_exists $rev &&
 
 		test_index_pack "$conf" --no-rev-index &&
-		test_path_is_missing $rev
+		test_path_is_missing $rev || return 1
 	done
 '
 

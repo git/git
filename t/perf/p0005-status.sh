@@ -24,17 +24,17 @@ test_perf_default_repo
 test_expect_success "setup repo" '
 	if git rev-parse --verify refs/heads/p0006-ballast^{commit}
 	then
-		echo Assuming synthetic repo from many-files.sh
-		git branch br_base            master
-		git branch br_ballast         p0006-ballast
-		git config --local core.sparsecheckout 1
+		echo Assuming synthetic repo from many-files.sh &&
+		git branch br_base            master &&
+		git branch br_ballast         p0006-ballast &&
+		git config --local core.sparsecheckout 1 &&
 		cat >.git/info/sparse-checkout <<-EOF
 		/*
 		!ballast/*
 		EOF
 	else
-		echo Assuming non-synthetic repo...
-		git branch br_base            $(git rev-list HEAD | tail -n 1)
+		echo Assuming non-synthetic repo... &&
+		git branch br_base            $(git rev-list HEAD | tail -n 1) &&
 		git branch br_ballast         HEAD
 	fi &&
 	git checkout -q br_ballast &&

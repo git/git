@@ -14,6 +14,7 @@ only the updates to dir/sub.
 Also tested are "git add -u" without limiting, and "git add -u"
 without contents changes, and other conditions'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '
@@ -150,13 +151,13 @@ test_expect_success 'add -u resolves unmerged paths' '
 	{
 		for path in path1 path2
 		do
-			echo "100644 $one 1	$path"
-			echo "100644 $two 2	$path"
-			echo "100644 $three 3	$path"
-		done
-		echo "100644 $one 1	path3"
-		echo "100644 $one 1	path4"
-		echo "100644 $one 3	path5"
+			echo "100644 $one 1	$path" &&
+			echo "100644 $two 2	$path" &&
+			echo "100644 $three 3	$path" || return 1
+		done &&
+		echo "100644 $one 1	path3" &&
+		echo "100644 $one 1	path4" &&
+		echo "100644 $one 3	path5" &&
 		echo "100644 $one 3	path6"
 	} |
 	git update-index --index-info &&
@@ -173,8 +174,8 @@ test_expect_success 'add -u resolves unmerged paths' '
 	git add -u &&
 	git ls-files -s path1 path2 path3 path4 path5 path6 >actual &&
 	{
-		echo "100644 $three 0	path1"
-		echo "100644 $two 0	path3"
+		echo "100644 $three 0	path1" &&
+		echo "100644 $two 0	path3" &&
 		echo "100644 $two 0	path5"
 	} >expect &&
 	test_cmp expect actual

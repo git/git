@@ -4,12 +4,15 @@ test_description='test show-branch'
 
 . ./test-lib.sh
 
+# arbitrary reference time: 2009-08-30 19:20:00
+GIT_TEST_DATE_NOW=1251660000; export GIT_TEST_DATE_NOW
+
 test_expect_success 'setup' '
 	test_commit initial &&
 	for i in $(test_seq 1 10)
 	do
 		git checkout -b branch$i initial &&
-		test_commit --no-tag branch$i
+		test_commit --no-tag branch$i || return 1
 	done &&
 	git for-each-ref \
 		--sort=version:refname \
@@ -49,7 +52,7 @@ test_expect_success 'show-branch with more than 8 branches' '
 test_expect_success 'show-branch with showbranch.default' '
 	for branch in $(cat branches.sorted)
 	do
-		test_config showbranch.default $branch --add
+		test_config showbranch.default $branch --add || return 1
 	done &&
 	git show-branch >actual &&
 	test_cmp expect actual
@@ -124,7 +127,7 @@ test_expect_success 'show branch --merge-base with one argument' '
 	do
 		git rev-parse $branch >expect &&
 		git show-branch --merge-base $branch >actual &&
-		test_cmp expect actual
+		test_cmp expect actual || return 1
 	done
 '
 
@@ -133,7 +136,7 @@ test_expect_success 'show branch --merge-base with two arguments' '
 	do
 		git rev-parse initial >expect &&
 		git show-branch --merge-base initial $branch >actual &&
-		test_cmp expect actual
+		test_cmp expect actual || return 1
 	done
 '
 
@@ -144,6 +147,18 @@ test_expect_success 'show branch --merge-base with N arguments' '
 
 	git merge-base $(cat branches.sorted) >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'show branch --reflog=2' '
+	sed "s/^>	//" >expect <<-\EOF &&
+	>	! [refs/heads/branch10@{0}] (4 years, 5 months ago) commit: branch10
+	>	 ! [refs/heads/branch10@{1}] (4 years, 5 months ago) commit: branch10
+	>	--
+	>	+  [refs/heads/branch10@{0}] branch10
+	>	++ [refs/heads/branch10@{1}] initial
+	EOF
+	git show-branch --reflog=2 >actual &&
+	test_cmp actual expect
 '
 
 test_done

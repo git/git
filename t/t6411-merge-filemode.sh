@@ -51,10 +51,10 @@ test_expect_success 'set up mode change in both branches' '
 	: >file2 &&
 	git add file2 &&
 	git commit -m b2 &&
-	{
-		echo "100755 $H 2	file2"
-		echo "100644 $H 3	file2"
-	} >expect
+	cat >expect <<-EOF
+	100755 $H 2	file2
+	100644 $H 3	file2
+	EOF
 '
 
 do_both_modes () {

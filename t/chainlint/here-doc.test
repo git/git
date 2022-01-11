@@ -14,13 +14,6 @@ boz
 woz
 Arbitrary_Tag_42
 
-# LINT: swallow 'quoted' here-doc
-cat <<'FUMP' >bar &&
-snoz
-boz
-woz
-FUMP
-
 # LINT: swallow "quoted" here-doc
 cat <<"zump" >boo &&
 snoz

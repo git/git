@@ -44,10 +44,15 @@ static inline int want_ancestry(const struct rev_info *revs);
 
 void show_object_with_name(FILE *out, struct object *obj, const char *name)
 {
-	const char *p;
-
 	fprintf(out, "%s ", oid_to_hex(&obj->oid));
-	for (p = name; *p && *p != '\n'; p++)
+	/*
+	 * This "for (const char *p = ..." is made as a first step towards
+	 * making use of such declarations elsewhere in our codebase.  If
+	 * it causes compilation problems on your platform, please report
+	 * it to the Git mailing list at git@vger.kernel.org. In the meantime,
+	 * adding -std=gnu99 to CFLAGS may help if you are with older GCC.
+	 */
+	for (const char *p = name; *p && *p != '\n'; p++)
 		fputc(*p, out);
 	fputc('\n', out);
 }
@@ -2295,11 +2300,11 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->left_only = 1;
 	} else if (!strcmp(arg, "--right-only")) {
 		if (revs->left_only)
-			die("--right-only is incompatible with --left-only");
+			die(_("options '%s' and '%s' cannot be used together"), "--right-only", "--left-only");
 		revs->right_only = 1;
 	} else if (!strcmp(arg, "--cherry")) {
 		if (revs->left_only)
-			die("--cherry is incompatible with --left-only");
+			die(_("options '%s' and '%s' cannot be used together"), "--cherry", "--left-only");
 		revs->cherry_mark = 1;
 		revs->right_only = 1;
 		revs->max_parents = 1;
@@ -2308,12 +2313,12 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->count = 1;
 	} else if (!strcmp(arg, "--cherry-mark")) {
 		if (revs->cherry_pick)
-			die("--cherry-mark is incompatible with --cherry-pick");
+			die(_("options '%s' and '%s' cannot be used together"), "--cherry-mark", "--cherry-pick");
 		revs->cherry_mark = 1;
 		revs->limited = 1; /* needs limit_list() */
 	} else if (!strcmp(arg, "--cherry-pick")) {
 		if (revs->cherry_mark)
-			die("--cherry-pick is incompatible with --cherry-mark");
+			die(_("options '%s' and '%s' cannot be used together"), "--cherry-pick", "--cherry-mark");
 		revs->cherry_pick = 1;
 		revs->limited = 1;
 	} else if (!strcmp(arg, "--objects")) {
@@ -2493,7 +2498,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	} else if (!strcmp(arg, "--all-match")) {
 		revs->grep_filter.all_match = 1;
 	} else if (!strcmp(arg, "--invert-grep")) {
-		revs->invert_grep = 1;
+		revs->grep_filter.no_body_match = 1;
 	} else if ((argcount = parse_long_opt("encoding", argv, &optarg))) {
 		if (strcmp(optarg, "none"))
 			git_log_output_encoding = xstrdup(optarg);
@@ -2519,7 +2524,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		return opts;
 	}
 	if (revs->graph && revs->track_linear)
-		die("--show-linear-break and --graph are incompatible");
+		die(_("options '%s' and '%s' cannot be used together"), "--show-linear-break", "--graph");
 
 	return 1;
 }
@@ -2862,24 +2867,24 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 	compile_grep_patterns(&revs->grep_filter);
 
 	if (revs->reverse && revs->reflog_info)
-		die("cannot combine --reverse with --walk-reflogs");
+		die(_("options '%s' and '%s' cannot be used together"), "--reverse", "--walk-reflogs");
 	if (revs->reflog_info && revs->limited)
 		die("cannot combine --walk-reflogs with history-limiting options");
 	if (revs->rewrite_parents && revs->children.name)
-		die("cannot combine --parents and --children");
+		die(_("options '%s' and '%s' cannot be used together"), "--parents", "--children");
 
 	/*
 	 * Limitations on the graph functionality
 	 */
 	if (revs->reverse && revs->graph)
-		die("cannot combine --reverse with --graph");
+		die(_("options '%s' and '%s' cannot be used together"), "--reverse", "--graph");
 
 	if (revs->reflog_info && revs->graph)
-		die("cannot combine --walk-reflogs with --graph");
+		die(_("options '%s' and '%s' cannot be used together"), "--walk-reflogs", "--graph");
 	if (revs->no_walk && revs->graph)
-		die("cannot combine --no-walk with --graph");
+		die(_("options '%s' and '%s' cannot be used together"), "--no-walk", "--graph");
 	if (!revs->reflog_info && revs->grep_filter.use_reflog_filter)
-		die("cannot use --grep-reflog without --walk-reflogs");
+		die(_("the option '%s' requires '%s'"), "--grep-reflog", "--walk-reflogs");
 
 	if (revs->line_level_traverse &&
 	    (revs->diffopt.output_format & ~(DIFF_FORMAT_PATCH | DIFF_FORMAT_NO_OUTPUT)))
@@ -3778,7 +3783,7 @@ static int commit_match(struct commit *commit, struct rev_info *opt)
 				     (char *)message, strlen(message));
 	strbuf_release(&buf);
 	unuse_commit_buffer(commit, message);
-	return opt->invert_grep ? !retval : retval;
+	return retval;
 }
 
 static inline int want_ancestry(const struct rev_info *revs)

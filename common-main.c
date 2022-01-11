@@ -26,6 +26,7 @@ static void restore_sigpipe_to_default(void)
 int main(int argc, const char **argv)
 {
 	int result;
+	struct strbuf tmp = STRBUF_INIT;
 
 	trace2_initialize_clock();
 
@@ -49,9 +50,15 @@ int main(int argc, const char **argv)
 	trace2_cmd_start(argv);
 	trace2_collect_process_info(TRACE2_PROCESS_INFO_STARTUP);
 
+	if (!strbuf_getcwd(&tmp))
+		tmp_original_cwd = strbuf_detach(&tmp, NULL);
+
 	result = cmd_main(argc, argv);
 
-	trace2_cmd_exit(result);
-
-	return result;
+	/*
+	 * We define exit() to call trace2_cmd_exit_fl() in
+	 * git-compat-util.h. Whether we reach this or exit()
+	 * elsewhere we'll always run our trace2 exit handler.
+	 */
+	exit(result);
 }

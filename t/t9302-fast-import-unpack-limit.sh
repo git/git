@@ -1,5 +1,7 @@
 #!/bin/sh
 test_description='test git fast-import unpack limit'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'create loose objects on import' '

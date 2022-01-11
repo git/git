@@ -34,10 +34,7 @@ fi
 test_expect_success 'blob and tree' '
 	test_tick &&
 	(
-		for i in 0 1 2 3 4 5 6 7 8 9
-		do
-			echo $i
-		done &&
+		test_write_lines 0 1 2 3 4 5 6 7 8 9 &&
 		echo &&
 		echo b1rwzyc3
 	) >a0blgqsjc &&
@@ -204,10 +201,7 @@ test_expect_success 'more history' '
 	git checkout v1.0.0^0 &&
 	git mv a0blgqsjc f5518nwu &&
 
-	for i in h62xsjeu j08bekfvt kg7xflhm
-	do
-		echo $i
-	done >>f5518nwu &&
+	test_write_lines h62xsjeu j08bekfvt kg7xflhm >>f5518nwu &&
 	git add f5518nwu &&
 
 	test_tick &&
@@ -387,7 +381,7 @@ test_expect_success 'ambiguous commits are printed by type first, then hash orde
 	do
 		grep $type objects >$type.objects &&
 		sort $type.objects >$type.objects.sorted &&
-		test_cmp $type.objects.sorted $type.objects
+		test_cmp $type.objects.sorted $type.objects || return 1
 	done
 '
 

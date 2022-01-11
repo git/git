@@ -480,7 +480,7 @@ static void run_service(const char **argv, int buffer_input)
 		strvec_pushf(&cld.env_array,
 			     "GIT_COMMITTER_EMAIL=%s@http.%s", user, host);
 
-	cld.argv = argv;
+	strvec_pushv(&cld.args, argv);
 	if (buffer_input || gzipped_request || req_len >= 0)
 		cld.in = -1;
 	cld.git_cmd = 1;
@@ -659,8 +659,9 @@ static NORETURN void die_webcgi(const char *err, va_list params)
 {
 	if (dead <= 1) {
 		struct strbuf hdr = STRBUF_INIT;
+		report_fn die_message_fn = get_die_message_routine();
 
-		vreportf("fatal: ", err, params);
+		die_message_fn(err, params);
 
 		http_status(&hdr, 500, "Internal Server Error");
 		hdr_nocache(&hdr);

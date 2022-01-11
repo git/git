@@ -335,10 +335,10 @@ static void fn_child_start_fl(const char *file, int line,
 	strbuf_addstr(&buf_payload, " argv:[");
 	if (cmd->git_cmd) {
 		strbuf_addstr(&buf_payload, "git");
-		if (cmd->argv[0])
+		if (cmd->args.nr)
 			strbuf_addch(&buf_payload, ' ');
 	}
-	sq_append_quote_argv_pretty(&buf_payload, cmd->argv);
+	sq_append_quote_argv_pretty(&buf_payload, cmd->args.v);
 	strbuf_addch(&buf_payload, ']');
 
 	perf_io_write_fl(file, line, event_name, NULL, &us_elapsed_absolute,

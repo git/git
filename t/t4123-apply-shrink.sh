@@ -2,6 +2,8 @@
 
 test_description='apply a patch that is larger than the preimage'
 
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 cat >F  <<\EOF
@@ -45,8 +47,8 @@ test_expect_success 'apply should fail gracefully' '
 		echo Oops, should not have succeeded
 		false
 	else
-		status=$?
-		echo "Status was $status"
+		status=$? &&
+		echo "Status was $status" &&
 		if test -f .git/index.lock
 		then
 			echo Oops, should not have crashed

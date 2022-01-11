@@ -60,6 +60,10 @@ test_expect_success 'fg bg attr...' '
 	color "blue bold dim ul blink reverse" "[1;2;4;5;7;34m"
 '
 
+test_expect_success 'reset fg bg attr...' '
+	color "reset blue bold dim ul blink reverse" "[;1;2;4;5;7;34m"
+'
+
 # note that nobold and nodim are the same code (22)
 test_expect_success 'attr negation' '
 	color "nobold nodim noul noblink noreverse" "[22;24;25;27m"
@@ -94,6 +98,18 @@ test_expect_success '256 colors' '
 
 test_expect_success '24-bit colors' '
 	color "#ff00ff black" "[38;2;255;0;255;40m"
+'
+
+test_expect_success '"default" foreground' '
+	color "default" "[39m"
+'
+
+test_expect_success '"normal default" to clear background' '
+	color "normal default" "[49m"
+'
+
+test_expect_success '"default" can be combined with attributes' '
+	color "default default no-reverse bold" "[1;27;39;49m"
 '
 
 test_expect_success '"normal" yields no color at all"' '

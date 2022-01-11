@@ -34,7 +34,7 @@ gpg.minTrustLevel::
 * `fully`
 * `ultimate`
 
-gpg.ssh.defaultKeyCommand:
+gpg.ssh.defaultKeyCommand::
 	This command that will be run when user.signingkey is not set and a ssh
 	signature is requested. On successful exit a valid ssh public key is
 	expected in the	first line of its output. To automatically use the first
@@ -44,7 +44,7 @@ gpg.ssh.allowedSignersFile::
 	A file containing ssh public keys which you are willing to trust.
 	The file consists of one or more lines of principals followed by an ssh
 	public key.
-	e.g.: user1@example.com,user2@example.com ssh-rsa AAAAX1...
+	e.g.: `user1@example.com,user2@example.com ssh-rsa AAAAX1...`
 	See ssh-keygen(1) "ALLOWED SIGNERS" for details.
 	The principal is only used to identify the key and is available when
 	verifying a signature.
@@ -63,6 +63,11 @@ from automation that already handles developer ssh keys.
 A repository that only allows signed commits can store the file
 in the repository itself using a path relative to the top-level of the working tree.
 This way only committers with an already valid key can add or change keys in the keyring.
++
+Since OpensSSH 8.8 this file allows specifying a key lifetime using valid-after &
+valid-before options. Git will mark signatures as valid if the signing key was
+valid at the time of the signatures creation. This allows users to change a
+signing key without invalidating all previously made signatures.
 +
 Using a SSH CA key with the cert-authority option
 (see ssh-keygen(1) "CERTIFICATES") is also valid.

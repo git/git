@@ -5,7 +5,6 @@ test_description='git patch-id'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -28,7 +27,8 @@ test_expect_success 'setup' '
 '
 
 test_expect_success 'patch-id output is well-formed' '
-	git log -p -1 | git patch-id >output &&
+	git log -p -1 >log.output &&
+	git patch-id <log.output >output &&
 	grep "^$OID_REGEX $(git rev-parse HEAD)$" output
 '
 
@@ -36,8 +36,8 @@ test_expect_success 'patch-id output is well-formed' '
 calc_patch_id () {
 	patch_name="$1"
 	shift
-	git patch-id "$@" |
-	sed "s/ .*//" >patch-id_"$patch_name" &&
+	git patch-id "$@" >patch-id.output &&
+	sed "s/ .*//" patch-id.output >patch-id_"$patch_name" &&
 	test_line_count -gt 0 patch-id_"$patch_name"
 }
 
@@ -46,7 +46,8 @@ get_top_diff () {
 }
 
 get_patch_id () {
-	get_top_diff "$1" | calc_patch_id "$@"
+	get_top_diff "$1" >top-diff.output &&
+	calc_patch_id <top-diff.output "$@"
 }
 
 test_expect_success 'patch-id detects equality' '
@@ -64,16 +65,18 @@ test_expect_success 'patch-id detects inequality' '
 test_expect_success 'patch-id supports git-format-patch output' '
 	get_patch_id main &&
 	git checkout same &&
-	git format-patch -1 --stdout | calc_patch_id same &&
+	git format-patch -1 --stdout >format-patch.output &&
+	calc_patch_id same <format-patch.output &&
 	test_cmp patch-id_main patch-id_same &&
-	set $(git format-patch -1 --stdout | git patch-id) &&
+	set $(git patch-id <format-patch.output) &&
 	test "$2" = $(git rev-parse HEAD)
 '
 
 test_expect_success 'whitespace is irrelevant in footer' '
 	get_patch_id main &&
 	git checkout same &&
-	git format-patch -1 --stdout | sed "s/ \$//" | calc_patch_id same &&
+	git format-patch -1 --stdout >format-patch.output &&
+	sed "s/ \$//" format-patch.output | calc_patch_id same &&
 	test_cmp patch-id_main patch-id_same
 '
 
@@ -92,10 +95,11 @@ test_patch_id_file_order () {
 	shift
 	name="order-${1}-$relevant"
 	shift
-	get_top_diff "main" | calc_patch_id "$name" "$@" &&
+	get_top_diff "main" >top-diff.output &&
+	calc_patch_id <top-diff.output "$name" "$@" &&
 	git checkout same &&
-	git format-patch -1 --stdout -O foo-then-bar |
-		calc_patch_id "ordered-$name" "$@" &&
+	git format-patch -1 --stdout -O foo-then-bar >format-patch.output &&
+	calc_patch_id <format-patch.output "ordered-$name" "$@" &&
 	cmp_patch_id $relevant "$name" "ordered-$name"
 
 }
@@ -143,7 +147,8 @@ test_expect_success '--stable overrides patchid.stable = false' '
 test_expect_success 'patch-id supports git-format-patch MIME output' '
 	get_patch_id main &&
 	git checkout same &&
-	git format-patch -1 --attach --stdout | calc_patch_id same &&
+	git format-patch -1 --attach --stdout >format-patch.output &&
+	calc_patch_id <format-patch.output same &&
 	test_cmp patch-id_main patch-id_same
 '
 

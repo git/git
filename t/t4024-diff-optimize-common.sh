@@ -2,6 +2,7 @@
 
 test_description='common tail optimization'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 z=zzzzzzzz ;# 8
@@ -148,7 +149,7 @@ test_expect_success 'diff -U0' '
 
 	for n in $sample
 	do
-		git diff -U0 file-?$n
+		git diff -U0 file-?$n || return 1
 	done | zc >actual &&
 	test_cmp expect actual
 

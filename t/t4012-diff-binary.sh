@@ -6,6 +6,7 @@
 test_description='Binary diff and apply
 '
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 cat >expect.binary-numstat <<\EOF
@@ -122,7 +123,7 @@ test_expect_success 'diff --stat with binary files and big change count' '
 	i=0 &&
 	while test $i -lt 10000; do
 		echo $i &&
-		i=$(($i + 1))
+		i=$(($i + 1)) || return 1
 	done >textfile &&
 	git add textfile &&
 	git diff --cached --stat binfile textfile >output &&

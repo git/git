@@ -120,48 +120,48 @@ test_expect_success 'diff-filter=A' '
 
 test_expect_success 'diff-filter=M' '
 
-	actual=$(git log --pretty="format:%s" --diff-filter=M HEAD) &&
-	expect=$(echo second) &&
-	verbose test "$actual" = "$expect"
+	git log --pretty="format:%s" --diff-filter=M HEAD >actual &&
+	printf "second" >expect &&
+	test_cmp expect actual
 
 '
 
 test_expect_success 'diff-filter=D' '
 
-	actual=$(git log --no-renames --pretty="format:%s" --diff-filter=D HEAD) &&
-	expect=$(echo sixth ; echo third) &&
-	verbose test "$actual" = "$expect"
+	git log --no-renames --pretty="format:%s" --diff-filter=D HEAD >actual &&
+	printf "sixth\nthird" >expect &&
+	test_cmp expect actual
 
 '
 
 test_expect_success 'diff-filter=R' '
 
-	actual=$(git log -M --pretty="format:%s" --diff-filter=R HEAD) &&
-	expect=$(echo third) &&
-	verbose test "$actual" = "$expect"
+	git log -M --pretty="format:%s" --diff-filter=R HEAD >actual &&
+	printf "third" >expect &&
+	test_cmp expect actual
 
 '
 
 test_expect_success 'diff-filter=C' '
 
-	actual=$(git log -C -C --pretty="format:%s" --diff-filter=C HEAD) &&
-	expect=$(echo fourth) &&
-	verbose test "$actual" = "$expect"
+	git log -C -C --pretty="format:%s" --diff-filter=C HEAD >actual &&
+	printf "fourth" >expect &&
+	test_cmp expect actual
 
 '
 
 test_expect_success 'git log --follow' '
 
-	actual=$(git log --follow --pretty="format:%s" ichi) &&
-	expect=$(echo third ; echo second ; echo initial) &&
-	verbose test "$actual" = "$expect"
+	git log --follow --pretty="format:%s" ichi >actual &&
+	printf "third\nsecond\ninitial" >expect &&
+	test_cmp expect actual
 '
 
 test_expect_success 'git config log.follow works like --follow' '
 	test_config log.follow true &&
-	actual=$(git log --pretty="format:%s" ichi) &&
-	expect=$(echo third ; echo second ; echo initial) &&
-	verbose test "$actual" = "$expect"
+	git log --pretty="format:%s" ichi >actual &&
+	printf "third\nsecond\ninitial" >expect &&
+	test_cmp expect actual
 '
 
 test_expect_success 'git config log.follow does not die with multiple paths' '
@@ -176,9 +176,9 @@ test_expect_success 'git config log.follow does not die with no paths' '
 
 test_expect_success 'git config log.follow is overridden by --no-follow' '
 	test_config log.follow true &&
-	actual=$(git log --no-follow --pretty="format:%s" ichi) &&
-	expect="third" &&
-	verbose test "$actual" = "$expect"
+	git log --no-follow --pretty="format:%s" ichi >actual &&
+	printf "third" >expect &&
+	test_cmp expect actual
 '
 
 # Note that these commits are intentionally listed out of order.
@@ -250,7 +250,7 @@ test_expect_success 'log --invert-grep --grep' '
 	test_cmp expect actual &&
 
 	# POSIX extended
-	git -c grep.patternType=basic log --pretty="tformat:%s" --invert-grep --grep=t[h] --grep=S[e]c >actual &&
+	git -c grep.patternType=extended log --pretty="tformat:%s" --invert-grep --grep=t[h] --grep=S[e]c >actual &&
 	test_cmp expect actual &&
 
 	# PCRE
@@ -950,6 +950,43 @@ test_expect_success 'decorate-refs-exclude and simplify-by-decoration' '
 		-n6 --decorate=short --pretty="tformat:%f%d" \
 		--simplify-by-decoration >actual &&
 	test_cmp expect.decorate actual
+'
+
+test_expect_success 'decorate-refs with implied decorate from format' '
+	cat >expect <<-\EOF &&
+	side-2 (tag: side-2)
+	side-1
+	EOF
+	git log --no-walk --format="%s%d" \
+		--decorate-refs="*side-2" side-1 side-2 \
+		>actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'implied decorate does not override option' '
+	cat >expect <<-\EOF &&
+	side-2 (tag: refs/tags/side-2, refs/heads/side)
+	side-1 (tag: refs/tags/side-1)
+	EOF
+	git log --no-walk --format="%s%d" \
+		--decorate=full side-1 side-2 \
+		>actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'decorate-refs and simplify-by-decoration without output' '
+	cat >expect <<-\EOF &&
+	side-2
+	initial
+	EOF
+	# Do not just use a --format without %d here; we want to
+	# make sure that we did not accidentally turn on displaying
+	# the decorations, too. And that requires one of the regular
+	# formats.
+	git log --decorate-refs="*side-2" --oneline \
+		--simplify-by-decoration >actual.raw &&
+	sed "s/^[0-9a-f]* //" <actual.raw >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'log.decorate config parsing' '
@@ -1677,6 +1714,24 @@ test_expect_success GPGSSH 'setup sshkey signed branch' '
 	git commit -S -m signed_commit
 '
 
+test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'create signed commits with keys having defined lifetimes' '
+	test_config gpg.format ssh &&
+	touch file &&
+	git add file &&
+
+	echo expired >file && test_tick && git commit -a -m expired -S"${GPGSSH_KEY_EXPIRED}" &&
+	git tag expired-signed &&
+
+	echo notyetvalid >file && test_tick && git commit -a -m notyetvalid -S"${GPGSSH_KEY_NOTYETVALID}" &&
+	git tag notyetvalid-signed &&
+
+	echo timeboxedvalid >file && test_tick && git commit -a -m timeboxedvalid -S"${GPGSSH_KEY_TIMEBOXEDVALID}" &&
+	git tag timeboxedvalid-signed &&
+
+	echo timeboxedinvalid >file && test_tick && git commit -a -m timeboxedinvalid -S"${GPGSSH_KEY_TIMEBOXEDINVALID}" &&
+	git tag timeboxedinvalid-signed
+'
+
 test_expect_success GPGSM 'log x509 fingerprint' '
 	echo "F8BF62E0693D0694816377099909C779FA23FD65 | " >expect &&
 	git log -n1 --format="%GF | %GP" signed-x509 >actual &&
@@ -1712,6 +1767,31 @@ test_expect_success GPGSSH 'log --graph --show-signature ssh' '
 	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
 	git log --graph --show-signature -n1 signed-ssh >actual &&
 	grep "${GOOD_SIGNATURE_TRUSTED}" actual
+'
+
+test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'log shows failure on expired signature key' '
+	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
+	git log --graph --show-signature -n1 expired-signed >actual &&
+	! grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual
+'
+
+test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'log shows failure on not yet valid signature key' '
+	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
+	git log --graph --show-signature -n1 notyetvalid-signed >actual &&
+	! grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual
+'
+
+test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'log show success with commit date and key validity matching' '
+	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
+	git log --graph --show-signature -n1 timeboxedvalid-signed >actual &&
+	grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
+	! grep "${GPGSSH_BAD_SIGNATURE}" actual
+'
+
+test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'log shows failure with commit date outside of key validity' '
+	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
+	git log --graph --show-signature -n1 timeboxedinvalid-signed >actual &&
+	! grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual
 '
 
 test_expect_success GPG 'log --graph --show-signature for merged tag' '
@@ -2008,6 +2088,25 @@ test_expect_success 'log --end-of-options' '
        git log --end-of-options --source >actual &&
        git log >expect &&
        test_cmp expect actual
+'
+
+test_expect_success 'set up commits with different authors' '
+	git checkout --orphan authors &&
+	test_commit --author "Jim <jim@example.com>" jim_1 &&
+	test_commit --author "Val <val@example.com>" val_1 &&
+	test_commit --author "Val <val@example.com>" val_2 &&
+	test_commit --author "Jim <jim@example.com>" jim_2 &&
+	test_commit --author "Val <val@example.com>" val_3 &&
+	test_commit --author "Jim <jim@example.com>" jim_3
+'
+
+test_expect_success 'log --invert-grep --grep --author' '
+	cat >expect <<-\EOF &&
+	val_3
+	val_1
+	EOF
+	git log --format=%s --author=Val --grep 2 --invert-grep >actual &&
+	test_cmp expect actual
 '
 
 test_done

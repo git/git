@@ -36,6 +36,9 @@ static const char *unpack_plumbing_errors[NB_UNPACK_TREES_WARNING_TYPES] = {
 	/* ERROR_NOT_UPTODATE_DIR */
 	"Updating '%s' would lose untracked files in it",
 
+	/* ERROR_CWD_IN_THE_WAY */
+	"Refusing to remove '%s' since it is the current working directory.",
+
 	/* ERROR_WOULD_LOSE_UNTRACKED_OVERWRITTEN */
 	"Untracked working tree file '%s' would be overwritten by merge.",
 
@@ -130,6 +133,9 @@ void setup_unpack_trees_porcelain(struct unpack_trees_options *opts,
 
 	msgs[ERROR_NOT_UPTODATE_DIR] =
 		_("Updating the following directories would lose untracked files in them:\n%s");
+
+	msgs[ERROR_CWD_IN_THE_WAY] =
+		_("Refusing to remove the current working directory:\n%s");
 
 	if (!strcmp(cmd, "checkout"))
 		msg = advice_enabled(ADVICE_COMMIT_BEFORE_MERGE)
@@ -1238,7 +1244,9 @@ static int find_cache_pos(struct traverse_info *info,
 
 /*
  * Given a sparse directory entry 'ce', compare ce->name to
- * info->name + '/' + p->path + '/' if info->name is non-empty.
+ * info->traverse_path + p->path + '/' if info->traverse_path
+ * is non-empty.
+ *
  * Compare ce->name to p->path + '/' otherwise. Note that
  * ce->name must end in a trailing '/' because it is a sparse
  * directory entry.
@@ -1250,11 +1258,11 @@ static int sparse_dir_matches_path(const struct cache_entry *ce,
 	assert(S_ISSPARSEDIR(ce->ce_mode));
 	assert(ce->name[ce->ce_namelen - 1] == '/');
 
-	if (info->namelen)
-		return ce->ce_namelen == info->namelen + p->pathlen + 2 &&
-		       ce->name[info->namelen] == '/' &&
-		       !strncmp(ce->name, info->name, info->namelen) &&
-		       !strncmp(ce->name + info->namelen + 1, p->path, p->pathlen);
+	if (info->pathlen)
+		return ce->ce_namelen == info->pathlen + p->pathlen + 1 &&
+		       ce->name[info->pathlen - 1] == '/' &&
+		       !strncmp(ce->name, info->traverse_path, info->pathlen) &&
+		       !strncmp(ce->name + info->pathlen, p->path, p->pathlen);
 	return ce->ce_namelen == p->pathlen + 1 &&
 	       !strncmp(ce->name, p->path, p->pathlen);
 }
@@ -2157,10 +2165,7 @@ static int verify_clean_subdirectory(const struct cache_entry *ce,
 		cnt++;
 	}
 
-	/*
-	 * Then we need to make sure that we do not lose a locally
-	 * present file that is not ignored.
-	 */
+	/* Do not lose a locally present file that is not ignored. */
 	pathbuf = xstrfmt("%.*s/", namelen, ce->name);
 
 	memset(&d, 0, sizeof(d));
@@ -2171,6 +2176,12 @@ static int verify_clean_subdirectory(const struct cache_entry *ce,
 	free(pathbuf);
 	if (i)
 		return add_rejected_path(o, ERROR_NOT_UPTODATE_DIR, ce->name);
+
+	/* Do not lose startup_info->original_cwd */
+	if (startup_info->original_cwd &&
+	    !strcmp(startup_info->original_cwd, ce->name))
+		return add_rejected_path(o, ERROR_CWD_IN_THE_WAY, ce->name);
+
 	return cnt;
 }
 
@@ -2263,9 +2274,18 @@ static int verify_absent_1(const struct cache_entry *ce,
 	int len;
 	struct stat st;
 
-	if (o->index_only || !o->update ||
-	    o->reset == UNPACK_RESET_OVERWRITE_UNTRACKED)
+	if (o->index_only || !o->update)
 		return 0;
+
+	if (o->reset == UNPACK_RESET_OVERWRITE_UNTRACKED) {
+		/* Avoid nuking startup_info->original_cwd... */
+		if (startup_info->original_cwd &&
+		    !strcmp(startup_info->original_cwd, ce->name))
+			return add_rejected_path(o, ERROR_CWD_IN_THE_WAY,
+						 ce->name);
+		/* ...but nuke anything else. */
+		return 0;
+	}
 
 	len = check_leading_path(ce->name, ce_namelen(ce), 0);
 	if (!len)

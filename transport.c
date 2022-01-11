@@ -1204,16 +1204,15 @@ static int run_pre_push_hook(struct transport *transport,
 	struct ref *r;
 	struct child_process proc = CHILD_PROCESS_INIT;
 	struct strbuf buf;
-	const char *argv[4];
+	const char *hook_path = find_hook("pre-push");
 
-	if (!(argv[0] = find_hook("pre-push")))
+	if (!hook_path)
 		return 0;
 
-	argv[1] = transport->remote->name;
-	argv[2] = transport->url;
-	argv[3] = NULL;
+	strvec_push(&proc.args, hook_path);
+	strvec_push(&proc.args, transport->remote->name);
+	strvec_push(&proc.args, transport->url);
 
-	proc.argv = argv;
 	proc.in = -1;
 	proc.trace2_hook_name = "pre-push";
 

@@ -296,10 +296,9 @@ cache_miss () {
 	done
 }
 
-# Usage: check_parents PARENTS_EXPR
+# Usage: check_parents [REVS...]
 check_parents () {
-	assert test $# = 1
-	missed=$(cache_miss "$1") || exit $?
+	missed=$(cache_miss "$@") || exit $?
 	local indent=$(($indent + 1))
 	for miss in $missed
 	do
@@ -753,7 +752,7 @@ process_split_commit () {
 	fi
 	createcount=$(($createcount + 1))
 	debug "parents: $parents"
-	check_parents "$parents"
+	check_parents $parents
 	newparents=$(cache_get $parents) || exit $?
 	debug "newparents: $newparents"
 

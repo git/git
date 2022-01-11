@@ -1,9 +1,6 @@
 #!/bin/sh
 
 test_description='git branch display tests'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
-
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
 

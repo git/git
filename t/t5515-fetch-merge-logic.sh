@@ -105,19 +105,19 @@ test_expect_success setup '
 	remotes="$remotes config-glob" &&
 
 	mkdir -p .git/remotes &&
-	{
-		echo "URL: ../.git/"
-		echo "Pull: refs/heads/main:remotes/rem/main"
-		echo "Pull: refs/heads/one:remotes/rem/one"
-		echo "Pull: two:remotes/rem/two"
-		echo "Pull: refs/heads/three:remotes/rem/three"
-	} >.git/remotes/remote-explicit &&
+	cat >.git/remotes/remote-explicit <<-\EOF &&
+	URL: ../.git/
+	Pull: refs/heads/main:remotes/rem/main
+	Pull: refs/heads/one:remotes/rem/one
+	Pull: two:remotes/rem/two
+	Pull: refs/heads/three:remotes/rem/three
+	EOF
 	remotes="$remotes remote-explicit" &&
 
-	{
-		echo "URL: ../.git/"
-		echo "Pull: refs/heads/*:refs/remotes/rem/*"
-	} >.git/remotes/remote-glob &&
+	cat >.git/remotes/remote-glob <<-\EOF &&
+	URL: ../.git/
+	Pull: refs/heads/*:refs/remotes/rem/*
+	EOF
 	remotes="$remotes remote-glob" &&
 
 	mkdir -p .git/branches &&
@@ -133,7 +133,7 @@ test_expect_success setup '
 		git config branch.br-$remote-merge.merge refs/heads/three &&
 		git config branch.br-$remote-octopus.remote $remote &&
 		git config branch.br-$remote-octopus.merge refs/heads/one &&
-		git config --add branch.br-$remote-octopus.merge two
+		git config --add branch.br-$remote-octopus.merge two || return 1
 	done &&
 	build_script sed_script
 '
@@ -191,17 +191,17 @@ do
 		cp "$expect_r" expect_r &&
 		convert_expected expect_r sed_script &&
 		{
-			echo "# $cmd"
-			set x $cmd; shift
-			git symbolic-ref HEAD refs/heads/$1 ; shift
-			rm -f .git/FETCH_HEAD
+			echo "# $cmd" &&
+			set x $cmd && shift &&
+			git symbolic-ref HEAD refs/heads/$1 && shift &&
+			rm -f .git/FETCH_HEAD &&
 			git for-each-ref \
 				refs/heads refs/remotes/rem refs/tags |
 			while read val type refname
 			do
-				git update-ref -d "$refname" "$val"
-			done
-			git fetch "$@" >/dev/null
+				git update-ref -d "$refname" "$val" || return 1
+			done &&
+			git fetch "$@" >/dev/null &&
 			cat .git/FETCH_HEAD
 		} >"$actual_f" &&
 		git show-ref >"$actual_r" &&

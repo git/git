@@ -2,6 +2,7 @@
 
 test_description='giving ignored paths to git add'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '

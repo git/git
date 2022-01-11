@@ -97,7 +97,7 @@ test_expect_success 'set up abbrev tests' '
 	test_commit abbrev &&
 	sha1=$(git rev-parse --verify HEAD) &&
 	check_abbrev () {
-		expect=$1; shift
+		expect=$1 && shift &&
 		echo $sha1 | cut -c 1-$expect >expect &&
 		git blame "$@" abbrev.t >actual &&
 		perl -lne "/[0-9a-f]+/ and print \$&" <actual >actual.sha &&

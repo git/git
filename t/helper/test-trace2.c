@@ -262,8 +262,9 @@ static int print_usage(void)
  *    [] the "cmd_name" event has been generated.
  *    [] this writes various "def_param" events for interesting config values.
  *
- * We further assume that if we return (rather than exit()), trace2_cmd_exit()
- * will be called by test-tool.c:cmd_main().
+ * We return from here and let test-tool.c::cmd_main() pass the exit
+ * code to common-main.c::main(), which will use it to call
+ * trace2_cmd_exit().
  */
 int cmd__trace2(int argc, const char **argv)
 {

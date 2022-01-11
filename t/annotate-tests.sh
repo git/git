@@ -161,7 +161,7 @@ test_expect_success 'blame huge graft' '
 			GIT_AUTHOR_NAME=$i$j GIT_AUTHOR_EMAIL=$i$j@test.git \
 			git commit -a -m "$i$j" &&
 			commit=$(git rev-parse --verify HEAD) &&
-			graft="$graft$commit "
+			graft="$graft$commit " || return 1
 		done
 	done &&
 	printf "%s " $graft >.git/info/grafts &&

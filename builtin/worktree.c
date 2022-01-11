@@ -72,7 +72,7 @@ static void delete_worktrees_dir_if_empty(void)
 static void prune_worktree(const char *id, const char *reason)
 {
 	if (show_only || verbose)
-		printf_ln(_("Removing %s/%s: %s"), "worktrees", id, reason);
+		fprintf_ln(stderr, _("Removing %s/%s: %s"), "worktrees", id, reason);
 	if (!show_only)
 		delete_git_dir(id);
 }
@@ -349,18 +349,18 @@ static int add_worktree(const char *path, const char *refname,
 			strvec_push(&cp.args, "--quiet");
 	}
 
-	cp.env = child_env.v;
+	strvec_pushv(&cp.env_array, child_env.v);
 	ret = run_command(&cp);
 	if (ret)
 		goto done;
 
 	if (opts->checkout) {
-		cp.argv = NULL;
-		strvec_clear(&cp.args);
+		struct child_process cp = CHILD_PROCESS_INIT;
+		cp.git_cmd = 1;
 		strvec_pushl(&cp.args, "reset", "--hard", "--no-recurse-submodules", NULL);
 		if (opts->quiet)
 			strvec_push(&cp.args, "--quiet");
-		cp.env = child_env.v;
+		strvec_pushv(&cp.env_array, child_env.v);
 		ret = run_command(&cp);
 		if (ret)
 			goto done;
@@ -385,12 +385,11 @@ done:
 		const char *hook = find_hook("post-checkout");
 		if (hook) {
 			const char *env[] = { "GIT_DIR", "GIT_WORK_TREE", NULL };
-			cp.git_cmd = 0;
+			struct child_process cp = CHILD_PROCESS_INIT;
 			cp.no_stdin = 1;
 			cp.stdout_to_stderr = 1;
 			cp.dir = path;
-			cp.env = env;
-			cp.argv = NULL;
+			strvec_pushv(&cp.env_array, env);
 			cp.trace2_hook_name = "post-checkout";
 			strvec_pushl(&cp.args, absolute_path(hook),
 				     oid_to_hex(null_oid()),
@@ -418,24 +417,24 @@ static void print_preparing_worktree_line(int detach,
 	if (force_new_branch) {
 		struct commit *commit = lookup_commit_reference_by_name(new_branch);
 		if (!commit)
-			printf_ln(_("Preparing worktree (new branch '%s')"), new_branch);
+			fprintf_ln(stderr, _("Preparing worktree (new branch '%s')"), new_branch);
 		else
-			printf_ln(_("Preparing worktree (resetting branch '%s'; was at %s)"),
+			fprintf_ln(stderr, _("Preparing worktree (resetting branch '%s'; was at %s)"),
 				  new_branch,
 				  find_unique_abbrev(&commit->object.oid, DEFAULT_ABBREV));
 	} else if (new_branch) {
-		printf_ln(_("Preparing worktree (new branch '%s')"), new_branch);
+		fprintf_ln(stderr, _("Preparing worktree (new branch '%s')"), new_branch);
 	} else {
 		struct strbuf s = STRBUF_INIT;
 		if (!detach && !strbuf_check_branch_ref(&s, branch) &&
 		    ref_exists(s.buf))
-			printf_ln(_("Preparing worktree (checking out '%s')"),
+			fprintf_ln(stderr, _("Preparing worktree (checking out '%s')"),
 				  branch);
 		else {
 			struct commit *commit = lookup_commit_reference_by_name(branch);
 			if (!commit)
 				die(_("invalid reference: %s"), branch);
-			printf_ln(_("Preparing worktree (detached HEAD %s)"),
+			fprintf_ln(stderr, _("Preparing worktree (detached HEAD %s)"),
 				  find_unique_abbrev(&commit->object.oid, DEFAULT_ABBREV));
 		}
 		strbuf_release(&s);
@@ -504,9 +503,9 @@ static int add(int ac, const char **av, const char *prefix)
 	opts.checkout = 1;
 	ac = parse_options(ac, av, prefix, options, worktree_usage, 0);
 	if (!!opts.detach + !!new_branch + !!new_branch_force > 1)
-		die(_("-b, -B, and --detach are mutually exclusive"));
+		die(_("options '%s', '%s', and '%s' cannot be used together"), "-b", "-B", "--detach");
 	if (lock_reason && !keep_locked)
-		die(_("--reason requires --lock"));
+		die(_("the option '%s' requires '%s'"), "--reason", "--lock");
 	if (lock_reason)
 		opts.keep_locked = lock_reason;
 	else if (keep_locked)
@@ -700,7 +699,7 @@ static int list(int ac, const char **av, const char *prefix)
 	if (ac)
 		usage_with_options(worktree_usage, options);
 	else if (verbose && porcelain)
-		die(_("--verbose and --porcelain are mutually exclusive"));
+		die(_("options '%s' and '%s' cannot be used together"), "--verbose", "--porcelain");
 	else {
 		struct worktree **worktrees = get_worktrees();
 		int path_maxlen = 0, abbrev = DEFAULT_ABBREV, i;
@@ -1006,7 +1005,7 @@ static int remove_worktree(int ac, const char **av, const char *prefix)
 static void report_repair(int iserr, const char *path, const char *msg, void *cb_data)
 {
 	if (!iserr) {
-		printf_ln(_("repair: %s: %s"), msg, path);
+		fprintf_ln(stderr, _("repair: %s: %s"), msg, path);
 	} else {
 		int *exit_status = (int *)cb_data;
 		fprintf_ln(stderr, _("error: %s: %s"), msg, path);

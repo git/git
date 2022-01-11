@@ -32,7 +32,6 @@ do
 		test_when_finished "git -C local push --delete origin new-branch" &&
 		cp -r "$LOCAL_PRISTINE" local &&
 		git -C local pull --no-rebase origin &&
-		GIT_TRACE2_EVENT_NESTING=5 \
 		GIT_TRACE2_EVENT="$(pwd)/tr2-client-events" \
 		git -c protocol.version=$PROTO -C local push \
 			--receive-pack "GIT_TRACE2_EVENT=\"$(pwd)/tr2-server-events\" git-receive-pack" \
@@ -65,7 +64,6 @@ do
 		test_when_finished "git -C local push --delete origin new-branch" &&
 		cp -r "$LOCAL_PRISTINE" local &&
 		git -C local pull --no-rebase origin &&
-		GIT_TRACE2_EVENT_NESTING=5 \
 		GIT_TRACE2_EVENT="$(pwd)/tr2-client-events" \
 		git -c protocol.version=$PROTO -C local push \
 			--receive-pack "GIT_TRACE2_EVENT=\"$(pwd)/tr2-server-events\" git-receive-pack" \

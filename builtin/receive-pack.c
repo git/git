@@ -175,7 +175,7 @@ static int receive_pack_config(const char *var, const char *value, void *cb)
 			strbuf_addf(&fsck_msg_types, "%c%s=%s",
 				fsck_msg_types.len ? ',' : '=', var, value);
 		else
-			warning("Skipping unknown msg id '%s'", var);
+			warning("skipping unknown msg id '%s'", var);
 		return 0;
 	}
 
@@ -769,8 +769,10 @@ static void prepare_push_cert_sha1(struct child_process *proc)
 		memset(&sigcheck, '\0', sizeof(sigcheck));
 
 		bogs = parse_signed_buffer(push_cert.buf, push_cert.len);
-		check_signature(push_cert.buf, bogs, push_cert.buf + bogs,
-				push_cert.len - bogs, &sigcheck);
+		sigcheck.payload = xmemdupz(push_cert.buf, bogs);
+		sigcheck.payload_len = bogs;
+		check_signature(&sigcheck, push_cert.buf + bogs,
+				push_cert.len - bogs);
 
 		nonce_status = check_nonce(push_cert.buf, bogs);
 	}
@@ -812,16 +814,13 @@ static int run_and_feed_hook(const char *hook_name, feed_fn feed,
 {
 	struct child_process proc = CHILD_PROCESS_INIT;
 	struct async muxer;
-	const char *argv[2];
 	int code;
+	const char *hook_path = find_hook(hook_name);
 
-	argv[0] = find_hook(hook_name);
-	if (!argv[0])
+	if (!hook_path)
 		return 0;
 
-	argv[1] = NULL;
-
-	proc.argv = argv;
+	strvec_push(&proc.args, hook_path);
 	proc.in = -1;
 	proc.stdout_to_stderr = 1;
 	proc.trace2_hook_name = hook_name;
@@ -943,23 +942,21 @@ static int run_receive_hook(struct command *commands,
 
 static int run_update_hook(struct command *cmd)
 {
-	const char *argv[5];
 	struct child_process proc = CHILD_PROCESS_INIT;
 	int code;
+	const char *hook_path = find_hook("update");
 
-	argv[0] = find_hook("update");
-	if (!argv[0])
+	if (!hook_path)
 		return 0;
 
-	argv[1] = cmd->ref_name;
-	argv[2] = oid_to_hex(&cmd->old_oid);
-	argv[3] = oid_to_hex(&cmd->new_oid);
-	argv[4] = NULL;
+	strvec_push(&proc.args, hook_path);
+	strvec_push(&proc.args, cmd->ref_name);
+	strvec_push(&proc.args, oid_to_hex(&cmd->old_oid));
+	strvec_push(&proc.args, oid_to_hex(&cmd->new_oid));
 
 	proc.no_stdin = 1;
 	proc.stdout_to_stderr = 1;
 	proc.err = use_sideband ? -1 : 0;
-	proc.argv = argv;
 	proc.trace2_hook_name = "update";
 
 	code = start_command(&proc);
@@ -1117,22 +1114,20 @@ static int run_proc_receive_hook(struct command *commands,
 	struct child_process proc = CHILD_PROCESS_INIT;
 	struct async muxer;
 	struct command *cmd;
-	const char *argv[2];
 	struct packet_reader reader;
 	struct strbuf cap = STRBUF_INIT;
 	struct strbuf errmsg = STRBUF_INIT;
 	int hook_use_push_options = 0;
 	int version = 0;
 	int code;
+	const char *hook_path = find_hook("proc-receive");
 
-	argv[0] = find_hook("proc-receive");
-	if (!argv[0]) {
+	if (!hook_path) {
 		rp_error("cannot find hook 'proc-receive'");
 		return -1;
 	}
-	argv[1] = NULL;
 
-	proc.argv = argv;
+	strvec_push(&proc.args, hook_path);
 	proc.in = -1;
 	proc.out = -1;
 	proc.trace2_hook_name = "proc-receive";
@@ -1370,23 +1365,11 @@ static const char *push_to_deploy(unsigned char *sha1,
 				  struct strvec *env,
 				  const char *work_tree)
 {
-	const char *update_refresh[] = {
-		"update-index", "-q", "--ignore-submodules", "--refresh", NULL
-	};
-	const char *diff_files[] = {
-		"diff-files", "--quiet", "--ignore-submodules", "--", NULL
-	};
-	const char *diff_index[] = {
-		"diff-index", "--quiet", "--cached", "--ignore-submodules",
-		NULL, "--", NULL
-	};
-	const char *read_tree[] = {
-		"read-tree", "-u", "-m", NULL, NULL
-	};
 	struct child_process child = CHILD_PROCESS_INIT;
 
-	child.argv = update_refresh;
-	child.env = env->v;
+	strvec_pushl(&child.args, "update-index", "-q", "--ignore-submodules",
+		     "--refresh", NULL);
+	strvec_pushv(&child.env_array, env->v);
 	child.dir = work_tree;
 	child.no_stdin = 1;
 	child.stdout_to_stderr = 1;
@@ -1396,8 +1379,9 @@ static const char *push_to_deploy(unsigned char *sha1,
 
 	/* run_command() does not clean up completely; reinitialize */
 	child_process_init(&child);
-	child.argv = diff_files;
-	child.env = env->v;
+	strvec_pushl(&child.args, "diff-files", "--quiet",
+		     "--ignore-submodules", "--", NULL);
+	strvec_pushv(&child.env_array, env->v);
 	child.dir = work_tree;
 	child.no_stdin = 1;
 	child.stdout_to_stderr = 1;
@@ -1405,12 +1389,13 @@ static const char *push_to_deploy(unsigned char *sha1,
 	if (run_command(&child))
 		return "Working directory has unstaged changes";
 
-	/* diff-index with either HEAD or an empty tree */
-	diff_index[4] = head_has_history() ? "HEAD" : empty_tree_oid_hex();
-
 	child_process_init(&child);
-	child.argv = diff_index;
-	child.env = env->v;
+	strvec_pushl(&child.args, "diff-index", "--quiet", "--cached",
+		     "--ignore-submodules",
+		     /* diff-index with either HEAD or an empty tree */
+		     head_has_history() ? "HEAD" : empty_tree_oid_hex(),
+		     "--", NULL);
+	strvec_pushv(&child.env_array, env->v);
 	child.no_stdin = 1;
 	child.no_stdout = 1;
 	child.stdout_to_stderr = 0;
@@ -1418,10 +1403,10 @@ static const char *push_to_deploy(unsigned char *sha1,
 	if (run_command(&child))
 		return "Working directory has staged changes";
 
-	read_tree[3] = hash_to_hex(sha1);
 	child_process_init(&child);
-	child.argv = read_tree;
-	child.env = env->v;
+	strvec_pushl(&child.args, "read-tree", "-u", "-m", hash_to_hex(sha1),
+		     NULL);
+	strvec_pushv(&child.env_array, env->v);
 	child.dir = work_tree;
 	child.no_stdin = 1;
 	child.no_stdout = 1;
@@ -1449,29 +1434,22 @@ static const char *push_to_checkout(unsigned char *hash,
 
 static const char *update_worktree(unsigned char *sha1, const struct worktree *worktree)
 {
-	const char *retval, *work_tree, *git_dir = NULL;
+	const char *retval, *git_dir;
 	struct strvec env = STRVEC_INIT;
 
-	if (worktree && worktree->path)
-		work_tree = worktree->path;
-	else if (git_work_tree_cfg)
-		work_tree = git_work_tree_cfg;
-	else
-		work_tree = "..";
+	if (!worktree || !worktree->path)
+		BUG("worktree->path must be non-NULL");
 
-	if (is_bare_repository())
+	if (worktree->is_bare)
 		return "denyCurrentBranch = updateInstead needs a worktree";
-	if (worktree)
-		git_dir = get_worktree_git_dir(worktree);
-	if (!git_dir)
-		git_dir = get_git_dir();
+	git_dir = get_worktree_git_dir(worktree);
 
 	strvec_pushf(&env, "GIT_DIR=%s", absolute_path(git_dir));
 
 	if (!hook_exists(push_to_checkout_hook))
-		retval = push_to_deploy(sha1, &env, work_tree);
+		retval = push_to_deploy(sha1, &env, worktree->path);
 	else
-		retval = push_to_checkout(sha1, &env, work_tree);
+		retval = push_to_checkout(sha1, &env, worktree->path);
 
 	strvec_clear(&env);
 	return retval;
@@ -1486,19 +1464,22 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 	struct object_id *old_oid = &cmd->old_oid;
 	struct object_id *new_oid = &cmd->new_oid;
 	int do_update_worktree = 0;
-	const struct worktree *worktree = is_bare_repository() ? NULL : find_shared_symref("HEAD", name);
+	struct worktree **worktrees = get_worktrees();
+	const struct worktree *worktree =
+		find_shared_symref(worktrees, "HEAD", name);
 
 	/* only refs/... are allowed */
 	if (!starts_with(name, "refs/") || check_refname_format(name + 5, 0)) {
 		rp_error("refusing to create funny ref '%s' remotely", name);
-		return "funny refname";
+		ret = "funny refname";
+		goto out;
 	}
 
 	strbuf_addf(&namespaced_name_buf, "%s%s", get_git_namespace(), name);
 	free(namespaced_name);
 	namespaced_name = strbuf_detach(&namespaced_name_buf, NULL);
 
-	if (worktree) {
+	if (worktree && !worktree->is_bare) {
 		switch (deny_current_branch) {
 		case DENY_IGNORE:
 			break;
@@ -1510,7 +1491,8 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 			rp_error("refusing to update checked out branch: %s", name);
 			if (deny_current_branch == DENY_UNCONFIGURED)
 				refuse_unconfigured_deny();
-			return "branch is currently checked out";
+			ret = "branch is currently checked out";
+			goto out;
 		case DENY_UPDATE_INSTEAD:
 			/* pass -- let other checks intervene first */
 			do_update_worktree = 1;
@@ -1521,13 +1503,15 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 	if (!is_null_oid(new_oid) && !has_object_file(new_oid)) {
 		error("unpack should have generated %s, "
 		      "but I can't find it!", oid_to_hex(new_oid));
-		return "bad pack";
+		ret = "bad pack";
+		goto out;
 	}
 
 	if (!is_null_oid(old_oid) && is_null_oid(new_oid)) {
 		if (deny_deletes && starts_with(name, "refs/heads/")) {
 			rp_error("denying ref deletion for %s", name);
-			return "deletion prohibited";
+			ret = "deletion prohibited";
+			goto out;
 		}
 
 		if (worktree || (head_name && !strcmp(namespaced_name, head_name))) {
@@ -1543,9 +1527,11 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 				if (deny_delete_current == DENY_UNCONFIGURED)
 					refuse_unconfigured_deny_delete_current();
 				rp_error("refusing to delete the current branch: %s", name);
-				return "deletion of the current branch prohibited";
+				ret = "deletion of the current branch prohibited";
+				goto out;
 			default:
-				return "Invalid denyDeleteCurrent setting";
+				ret = "Invalid denyDeleteCurrent setting";
+				goto out;
 			}
 		}
 	}
@@ -1563,25 +1549,28 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 		    old_object->type != OBJ_COMMIT ||
 		    new_object->type != OBJ_COMMIT) {
 			error("bad sha1 objects for %s", name);
-			return "bad ref";
+			ret = "bad ref";
+			goto out;
 		}
 		old_commit = (struct commit *)old_object;
 		new_commit = (struct commit *)new_object;
 		if (!in_merge_bases(old_commit, new_commit)) {
 			rp_error("denying non-fast-forward %s"
 				 " (you should pull first)", name);
-			return "non-fast-forward";
+			ret = "non-fast-forward";
+			goto out;
 		}
 	}
 	if (run_update_hook(cmd)) {
 		rp_error("hook declined to update %s", name);
-		return "hook declined";
+		ret = "hook declined";
+		goto out;
 	}
 
 	if (do_update_worktree) {
-		ret = update_worktree(new_oid->hash, find_shared_symref("HEAD", name));
+		ret = update_worktree(new_oid->hash, worktree);
 		if (ret)
-			return ret;
+			goto out;
 	}
 
 	if (is_null_oid(new_oid)) {
@@ -1589,9 +1578,9 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 		if (!parse_object(the_repository, old_oid)) {
 			old_oid = NULL;
 			if (ref_exists(name)) {
-				rp_warning("Allowing deletion of corrupt ref.");
+				rp_warning("allowing deletion of corrupt ref");
 			} else {
-				rp_warning("Deleting a non-existent ref.");
+				rp_warning("deleting a non-existent ref");
 				cmd->did_not_exist = 1;
 			}
 		}
@@ -1600,17 +1589,19 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 					   old_oid,
 					   0, "push", &err)) {
 			rp_error("%s", err.buf);
-			strbuf_release(&err);
-			return "failed to delete";
+			ret = "failed to delete";
+		} else {
+			ret = NULL; /* good */
 		}
 		strbuf_release(&err);
-		return NULL; /* good */
 	}
 	else {
 		struct strbuf err = STRBUF_INIT;
 		if (shallow_update && si->shallow_ref[cmd->index] &&
-		    update_shallow_ref(cmd, si))
-			return "shallow error";
+		    update_shallow_ref(cmd, si)) {
+			ret = "shallow error";
+			goto out;
+		}
 
 		if (ref_transaction_update(transaction,
 					   namespaced_name,
@@ -1618,14 +1609,16 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 					   0, "push",
 					   &err)) {
 			rp_error("%s", err.buf);
-			strbuf_release(&err);
-
-			return "failed to update ref";
+			ret = "failed to update ref";
+		} else {
+			ret = NULL; /* good */
 		}
 		strbuf_release(&err);
-
-		return NULL; /* good */
 	}
+
+out:
+	free_worktrees(worktrees);
+	return ret;
 }
 
 static void run_update_post_hook(struct command *commands)
@@ -2213,13 +2206,14 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 		strvec_push(&child.args, alt_shallow_file);
 	}
 
-	tmp_objdir = tmp_objdir_create();
+	tmp_objdir = tmp_objdir_create("incoming");
 	if (!tmp_objdir) {
 		if (err_fd > 0)
 			close(err_fd);
 		return "unable to create temporary object directory";
 	}
-	child.env = tmp_objdir_env(tmp_objdir);
+	if (tmp_objdir)
+		strvec_pushv(&child.env_array, tmp_objdir_env(tmp_objdir));
 
 	/*
 	 * Normally we just pass the tmp_objdir environment to the child
@@ -2490,9 +2484,9 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, options, receive_pack_usage, 0);
 
 	if (argc > 1)
-		usage_msg_opt(_("Too many arguments."), receive_pack_usage, options);
+		usage_msg_opt(_("too many arguments"), receive_pack_usage, options);
 	if (argc == 0)
-		usage_msg_opt(_("You must specify a directory."), receive_pack_usage, options);
+		usage_msg_opt(_("you must specify a directory"), receive_pack_usage, options);
 
 	service_dir = argv[0];
 
@@ -2566,25 +2560,25 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 				 &push_options);
 		if (pack_lockfile)
 			unlink_or_warn(pack_lockfile);
+		sigchain_push(SIGPIPE, SIG_IGN);
 		if (report_status_v2)
 			report_v2(commands, unpack_status);
 		else if (report_status)
 			report(commands, unpack_status);
+		sigchain_pop(SIGPIPE);
 		run_receive_hook(commands, "post-receive", 1,
 				 &push_options);
 		run_update_post_hook(commands);
 		string_list_clear(&push_options, 0);
 		if (auto_gc) {
-			const char *argv_gc_auto[] = {
-				"gc", "--auto", "--quiet", NULL,
-			};
 			struct child_process proc = CHILD_PROCESS_INIT;
 
 			proc.no_stdin = 1;
 			proc.stdout_to_stderr = 1;
 			proc.err = use_sideband ? -1 : 0;
 			proc.git_cmd = proc.close_object_store = 1;
-			proc.argv = argv_gc_auto;
+			strvec_pushl(&proc.args, "gc", "--auto", "--quiet",
+				     NULL);
 
 			if (!start_command(&proc)) {
 				if (use_sideband)

@@ -48,10 +48,10 @@ test_expect_success 'enable split index' '
 	# NEEDSWORK: Stop hard-coding checksums.
 	if test "$indexversion" = "4"
 	then
-		own=$(test_oid own_v4)
+		own=$(test_oid own_v4) &&
 		base=$(test_oid base_v4)
 	else
-		own=$(test_oid own_v3)
+		own=$(test_oid own_v3) &&
 		base=$(test_oid base_v3)
 	fi &&
 

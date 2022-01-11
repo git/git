@@ -26,10 +26,10 @@ static struct grep_opt grep_defaults = {
 	.pattern_type_option = GREP_PATTERN_TYPE_UNSPECIFIED,
 	.colors = {
 		[GREP_COLOR_CONTEXT] = "",
-		[GREP_COLOR_FILENAME] = "",
+		[GREP_COLOR_FILENAME] = GIT_COLOR_MAGENTA,
 		[GREP_COLOR_FUNCTION] = "",
-		[GREP_COLOR_LINENO] = "",
-		[GREP_COLOR_COLUMNNO] = "",
+		[GREP_COLOR_LINENO] = GIT_COLOR_GREEN,
+		[GREP_COLOR_COLUMNNO] = GIT_COLOR_GREEN,
 		[GREP_COLOR_MATCH_CONTEXT] = GIT_COLOR_BOLD_RED,
 		[GREP_COLOR_MATCH_SELECTED] = GIT_COLOR_BOLD_RED,
 		[GREP_COLOR_SELECTED] = "",
@@ -362,6 +362,7 @@ static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt
 	int jitret;
 	int patinforet;
 	size_t jitsizearg;
+	int literal = !opt->ignore_case && (p->fixed || p->is_fixed);
 
 	/*
 	 * Call pcre2_general_context_create() before calling any
@@ -382,8 +383,7 @@ static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt
 		}
 		options |= PCRE2_CASELESS;
 	}
-	if (!opt->ignore_locale && is_utf8_locale() && has_non_ascii(p->pattern) &&
-	    !(!opt->ignore_case && (p->fixed || p->is_fixed)))
+	if (!opt->ignore_locale && is_utf8_locale() && !literal)
 		options |= (PCRE2_UTF | PCRE2_MATCH_INVALID_UTF);
 
 #ifdef GIT_PCRE2_VERSION_10_36_OR_HIGHER
@@ -699,6 +699,14 @@ static struct grep_expr *compile_pattern_expr(struct grep_pat **list)
 	return compile_pattern_or(list);
 }
 
+static struct grep_expr *grep_not_expr(struct grep_expr *expr)
+{
+	struct grep_expr *z = xcalloc(1, sizeof(*z));
+	z->node = GREP_NODE_NOT;
+	z->u.unary = expr;
+	return z;
+}
+
 static struct grep_expr *grep_true_expr(void)
 {
 	struct grep_expr *z = xcalloc(1, sizeof(*z));
@@ -797,7 +805,7 @@ void compile_grep_patterns(struct grep_opt *opt)
 		}
 	}
 
-	if (opt->all_match || header_expr)
+	if (opt->all_match || opt->no_body_match || header_expr)
 		opt->extended = 1;
 	else if (!opt->extended)
 		return;
@@ -807,6 +815,9 @@ void compile_grep_patterns(struct grep_opt *opt)
 		opt->pattern_expression = compile_pattern_expr(&p);
 	if (p)
 		die("incomplete pattern expression: %s", p->pattern);
+
+	if (opt->no_body_match && opt->pattern_expression)
+		opt->pattern_expression = grep_not_expr(opt->pattern_expression);
 
 	if (!header_expr)
 		return;
@@ -1057,6 +1068,8 @@ static int match_expr_eval(struct grep_opt *opt, struct grep_expr *x,
 			if (h && (*col < 0 || tmp.rm_so < *col))
 				*col = tmp.rm_so;
 		}
+		if (x->u.atom->token == GREP_PATTERN_BODY)
+			opt->body_hit |= h;
 		break;
 	case GREP_NODE_NOT:
 		/*
@@ -1825,16 +1838,19 @@ int grep_source(struct grep_opt *opt, struct grep_source *gs)
 	 * we do not have to do the two-pass grep when we do not check
 	 * buffer-wide "all-match".
 	 */
-	if (!opt->all_match)
+	if (!opt->all_match && !opt->no_body_match)
 		return grep_source_1(opt, gs, 0);
 
 	/* Otherwise the toplevel "or" terms hit a bit differently.
 	 * We first clear hit markers from them.
 	 */
 	clr_hit_marker(opt->pattern_expression);
+	opt->body_hit = 0;
 	grep_source_1(opt, gs, 1);
 
-	if (!chk_hit_marker(opt->pattern_expression))
+	if (opt->all_match && !chk_hit_marker(opt->pattern_expression))
+		return 0;
+	if (opt->no_body_match && opt->body_hit)
 		return 0;
 
 	return grep_source_1(opt, gs, 0);

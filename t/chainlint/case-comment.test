@@ -1,0 +1,11 @@
+(
+	case "$x" in
+	# found foo
+	x) foo ;;
+	# found other
+	*)
+		# treat it as bar
+		bar
+		;;
+	esac
+)

@@ -1083,9 +1083,10 @@ int ref_transaction_update(struct ref_transaction *transaction,
 {
 	assert(err);
 
-	if ((new_oid && !is_null_oid(new_oid)) ?
-	    check_refname_format(refname, REFNAME_ALLOW_ONELEVEL) :
-	    !refname_is_safe(refname)) {
+	if (!(flags & REF_SKIP_REFNAME_VERIFICATION) &&
+	    ((new_oid && !is_null_oid(new_oid)) ?
+		     check_refname_format(refname, REFNAME_ALLOW_ONELEVEL) :
+			   !refname_is_safe(refname))) {
 		strbuf_addf(err, _("refusing to update ref with bad name '%s'"),
 			    refname);
 		return -1;
@@ -2006,10 +2007,12 @@ struct ref_store *get_worktree_ref_store(const struct worktree *wt)
 	return refs;
 }
 
-void base_ref_store_init(struct ref_store *refs,
-			 const struct ref_storage_be *be)
+void base_ref_store_init(struct ref_store *refs, struct repository *repo,
+			 const char *path, const struct ref_storage_be *be)
 {
 	refs->be = be;
+	refs->repo = repo;
+	refs->gitdir = xstrdup(path);
 }
 
 /* backend functions */
@@ -2144,7 +2147,7 @@ int ref_transaction_prepare(struct ref_transaction *transaction,
 		break;
 	}
 
-	if (getenv(GIT_QUARANTINE_ENVIRONMENT)) {
+	if (refs->repo->objects->odb->disable_ref_updates) {
 		strbuf_addstr(err,
 			      _("ref updates forbidden inside quarantine environment"));
 		return -1;

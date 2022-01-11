@@ -11,7 +11,7 @@ test_expect_success 'setup' '
 		fi &&
 		: >$p &&
 		git add $p &&
-		git commit -m $p
+		git commit -m $p || return 1
 	done &&
 	git log --oneline --format=%s >actual &&
 	cat <<EOF >expect &&
