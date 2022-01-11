@@ -1265,7 +1265,10 @@ test_expect_success 'sparse index is not expanded: update-index' '
 
 	ensure_not_expanded update-index --add README.md &&
 	ensure_not_expanded update-index a &&
-	ensure_not_expanded update-index --remove deep/a
+	ensure_not_expanded update-index --remove deep/a &&
+
+	ensure_not_expanded reset --soft update-deep &&
+	ensure_not_expanded update-index --add --remove --again
 '
 
 test_expect_success 'sparse index is not expanded: blame' '
