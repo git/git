@@ -27,8 +27,6 @@ env:
 jobs:
   bundle-artifacts:
     runs-on: windows-latest
-    outputs:
-      latest-sdk64-extra-build-id: ${{ steps.determine-latest-sdk64-extra-build-id.outputs.id }}
     steps:
       - name: Configure user
         shell: bash
@@ -100,8 +98,6 @@ jobs:
   pkg:
     runs-on: windows-latest
     needs: bundle-artifacts
-    outputs:
-      latest-sdk64-extra-build-id: ${{ needs.bundle-artifacts.outputs.latest-sdk64-extra-build-id }}
     strategy:
       matrix:
         arch:
