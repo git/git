@@ -1713,8 +1713,6 @@ const char *refs_resolve_ref_unsafe(struct ref_store *refs,
 		if (refs_read_raw_ref(refs, refname, oid, &sb_refname,
 				      &read_flags, failure_errno)) {
 			*flags |= read_flags;
-			if (errno)
-				*failure_errno = errno;
 
 			/* In reading mode, refs must eventually resolve */
 			if (resolve_flags & RESOLVE_REF_READING)
