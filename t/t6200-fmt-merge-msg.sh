@@ -126,6 +126,7 @@ test_expect_success GPG 'message for merging local tag signed by good key' '
 	git fetch . signed-good-tag &&
 	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
 	grep "^Merge tag ${apos}signed-good-tag${apos}" actual &&
+	grep "^signed-tag-msg" actual &&
 	grep "^# gpg: Signature made" actual &&
 	grep "^# gpg: Good signature from" actual
 '
@@ -135,6 +136,7 @@ test_expect_success GPG 'message for merging local tag signed by unknown key' '
 	git fetch . signed-good-tag &&
 	GNUPGHOME=. git fmt-merge-msg <.git/FETCH_HEAD >actual &&
 	grep "^Merge tag ${apos}signed-good-tag${apos}" actual &&
+	grep "^signed-tag-msg" actual &&
 	grep "^# gpg: Signature made" actual &&
 	grep -E "^# gpg: Can${apos}t check signature: (public key not found|No public key)" actual
 '
@@ -145,6 +147,7 @@ test_expect_success GPGSSH 'message for merging local tag signed by good ssh key
 	git fetch . signed-good-ssh-tag &&
 	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
 	grep "^Merge tag ${apos}signed-good-ssh-tag${apos}" actual &&
+	grep "^signed-ssh-tag-msg" actual &&
 	grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
 	! grep "${GPGSSH_BAD_SIGNATURE}" actual
 '
@@ -155,6 +158,7 @@ test_expect_success GPGSSH 'message for merging local tag signed by unknown ssh 
 	git fetch . signed-untrusted-ssh-tag &&
 	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
 	grep "^Merge tag ${apos}signed-untrusted-ssh-tag${apos}" actual &&
+	grep "^signed-ssh-tag-msg-untrusted" actual &&
 	grep "${GPGSSH_GOOD_SIGNATURE_UNTRUSTED}" actual &&
 	! grep "${GPGSSH_BAD_SIGNATURE}" actual &&
 	grep "${GPGSSH_KEY_NOT_TRUSTED}" actual
@@ -166,6 +170,7 @@ test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'message for merging local tag sign
 	git fetch . expired-signed &&
 	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
 	grep "^Merge tag ${apos}expired-signed${apos}" actual &&
+	grep "^expired-signed" actual &&
 	! grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual
 '
 
@@ -175,6 +180,7 @@ test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'message for merging local tag sign
 	git fetch . notyetvalid-signed &&
 	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
 	grep "^Merge tag ${apos}notyetvalid-signed${apos}" actual &&
+	grep "^notyetvalid-signed" actual &&
 	! grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual
 '
 
@@ -184,6 +190,7 @@ test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'message for merging local tag sign
 	git fetch . timeboxedvalid-signed &&
 	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
 	grep "^Merge tag ${apos}timeboxedvalid-signed${apos}" actual &&
+	grep "^timeboxedvalid-signed" actual &&
 	grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
 	! grep "${GPGSSH_BAD_SIGNATURE}" actual
 '
@@ -194,6 +201,7 @@ test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'message for merging local tag sign
 	git fetch . timeboxedinvalid-signed &&
 	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
 	grep "^Merge tag ${apos}timeboxedinvalid-signed${apos}" actual &&
+	grep "^timeboxedinvalid-signed" actual &&
 	! grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual
 '
 
