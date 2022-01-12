@@ -88,8 +88,9 @@ uint8_t block_writer_type(struct block_writer *bw)
 	return bw->buf[bw->header_off];
 }
 
-/* adds the reftable_record to the block. Returns -1 if it does not fit, 0 on
-   success */
+/* Adds the reftable_record to the block. Returns -1 if it does not fit, 0 on
+   success. Returns REFTABLE_API_ERROR if attempting to write a record with
+   empty key. */
 int block_writer_add(struct block_writer *w, struct reftable_record *rec)
 {
 	struct strbuf empty = STRBUF_INIT;
@@ -105,8 +106,14 @@ int block_writer_add(struct block_writer *w, struct reftable_record *rec)
 	int is_restart = 0;
 	struct strbuf key = STRBUF_INIT;
 	int n = 0;
+	int err = -1;
 
 	reftable_record_key(rec, &key);
+	if (!key.len) {
+		err = REFTABLE_API_ERROR;
+		goto done;
+	}
+
 	n = reftable_encode_key(&is_restart, out, last, key,
 				reftable_record_val_type(rec));
 	if (n < 0)
@@ -118,16 +125,11 @@ int block_writer_add(struct block_writer *w, struct reftable_record *rec)
 		goto done;
 	string_view_consume(&out, n);
 
-	if (block_writer_register_restart(w, start.len - out.len, is_restart,
-					  &key) < 0)
-		goto done;
-
-	strbuf_release(&key);
-	return 0;
-
+	err = block_writer_register_restart(w, start.len - out.len, is_restart,
+					    &key);
 done:
 	strbuf_release(&key);
-	return -1;
+	return err;
 }
 
 int block_writer_finish(struct block_writer *w)
@@ -332,6 +334,9 @@ int block_iter_next(struct block_iter *it, struct reftable_record *rec)
 	if (n < 0)
 		return -1;
 
+	if (!key.len)
+		return REFTABLE_FORMAT_ERROR;
+
 	string_view_consume(&in, n);
 	n = reftable_record_decode(rec, key, extra, in, it->br->hash_size);
 	if (n < 0)
@@ -358,6 +363,8 @@ int block_reader_first_key(struct block_reader *br, struct strbuf *key)
 	int n = reftable_decode_key(key, &extra, empty, in);
 	if (n < 0)
 		return n;
+	if (!key->len)
+		return REFTABLE_FORMAT_ERROR;
 
 	return 0;
 }
