@@ -143,8 +143,8 @@ static void get_is_being_debugged(void)
  */
 static void get_peak_memory_info(void)
 {
-	DECLARE_PROC_ADDR(psapi.dll, BOOL, GetProcessMemoryInfo, HANDLE,
-			  PPROCESS_MEMORY_COUNTERS, DWORD);
+	DECLARE_PROC_ADDR(psapi.dll, BOOL, WINAPI, GetProcessMemoryInfo,
+			  HANDLE, PPROCESS_MEMORY_COUNTERS, DWORD);
 
 	if (INIT_PROC_ADDR(GetProcessMemoryInfo)) {
 		PROCESS_MEMORY_COUNTERS pmc;
