@@ -9918,7 +9918,7 @@ msgstr "Zmiany do złożenia:"
 
 #: wt-status.c:234 wt-status.c:1134
 msgid "Changes not staged for commit:"
-msgstr "Zmiany nie przygotowane do złożenia:"
+msgstr "Zmiany nieprzygotowane do złożenia:"
 
 #: wt-status.c:238
 msgid "  (use \"git add <file>...\" to update what will be committed)"
