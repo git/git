@@ -100,7 +100,7 @@ static void write_table(char ***names, struct strbuf *buf, int N,
 	n = reftable_writer_close(w);
 	EXPECT(n == 0);
 
-	stats = writer_stats(w);
+	stats = reftable_writer_stats(w);
 	for (i = 0; i < stats->ref_stats.blocks; i++) {
 		int off = i * opts.block_size;
 		if (off == 0) {
@@ -239,7 +239,7 @@ static void test_log_write_read(void)
 	n = reftable_writer_close(w);
 	EXPECT(n == 0);
 
-	stats = writer_stats(w);
+	stats = reftable_writer_stats(w);
 	EXPECT(stats->log_stats.blocks > 0);
 	reftable_writer_free(w);
 	w = NULL;
@@ -330,7 +330,7 @@ static void test_log_zlib_corruption(void)
 	n = reftable_writer_close(w);
 	EXPECT(n == 0);
 
-	stats = writer_stats(w);
+	stats = reftable_writer_stats(w);
 	EXPECT(stats->log_stats.blocks > 0);
 	reftable_writer_free(w);
 	w = NULL;
@@ -698,7 +698,7 @@ static void test_write_object_id_min_length(void)
 
 	err = reftable_writer_close(w);
 	EXPECT_ERR(err);
-	EXPECT(writer_stats(w)->object_id_len == 2);
+	EXPECT(reftable_writer_stats(w)->object_id_len == 2);
 	reftable_writer_free(w);
 	strbuf_release(&buf);
 }
@@ -735,7 +735,7 @@ static void test_write_object_id_length(void)
 
 	err = reftable_writer_close(w);
 	EXPECT_ERR(err);
-	EXPECT(writer_stats(w)->object_id_len == 16);
+	EXPECT(reftable_writer_stats(w)->object_id_len == 16);
 	reftable_writer_free(w);
 	strbuf_release(&buf);
 }

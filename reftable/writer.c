@@ -695,7 +695,7 @@ static int writer_flush_block(struct reftable_writer *w)
 	return writer_flush_nonempty_block(w);
 }
 
-const struct reftable_stats *writer_stats(struct reftable_writer *w)
+const struct reftable_stats *reftable_writer_stats(struct reftable_writer *w)
 {
 	return &w->stats;
 }
