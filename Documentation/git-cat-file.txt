@@ -11,11 +11,11 @@ SYNOPSIS
 [verse]
 'git cat-file' <type> <object>
 'git cat-file' (-e | -p) <object>
-'git cat-file' ( -t | -s ) [--allow-unknown-type] <object>
+'git cat-file' (-t | -s) [--allow-unknown-type] <object>
 'git cat-file' (--batch | --batch-check) [--batch-all-objects]
 	     [--buffer] [--follow-symlinks] [--unordered]
 	     [--textconv | --filters]
-'git cat-file' (--textconv | --filters )
+'git cat-file' (--textconv | --filters)
 	     [<rev>:<path|tree-ish> | --path=<path|tree-ish> <rev>]
 
 DESCRIPTION
