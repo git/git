@@ -1456,13 +1456,18 @@ int transport_fetch_refs(struct transport *transport, struct ref *refs)
 	return rc;
 }
 
-void transport_unlock_pack(struct transport *transport)
+void transport_unlock_pack(struct transport *transport, unsigned int flags)
 {
+	int in_signal_handler = !!(flags & TRANSPORT_UNLOCK_PACK_IN_SIGNAL_HANDLER);
 	int i;
 
 	for (i = 0; i < transport->pack_lockfiles.nr; i++)
-		unlink_or_warn(transport->pack_lockfiles.items[i].string);
-	string_list_clear(&transport->pack_lockfiles, 0);
+		if (in_signal_handler)
+			unlink(transport->pack_lockfiles.items[i].string);
+		else
+			unlink_or_warn(transport->pack_lockfiles.items[i].string);
+	if (!in_signal_handler)
+		string_list_clear(&transport->pack_lockfiles, 0);
 }
 
 int transport_connect(struct transport *transport, const char *name,

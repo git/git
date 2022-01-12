@@ -1290,7 +1290,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	 */
 	submodule_progress = transport->progress;
 
-	transport_unlock_pack(transport);
+	transport_unlock_pack(transport, 0);
 	transport_disconnect(transport);
 
 	if (option_dissociate) {
