@@ -310,7 +310,7 @@ int validate_new_branchname(const char *name, struct strbuf *ref, int force)
 	worktrees = get_worktrees();
 	wt = find_shared_symref(worktrees, "HEAD", ref->buf);
 	if (wt && !wt->is_bare)
-		die(_("cannot force update the branch '%s'"
+		die(_("cannot force update the branch '%s' "
 		      "checked out at '%s'"),
 		    ref->buf + strlen("refs/heads/"), wt->path);
 	free_worktrees(worktrees);
