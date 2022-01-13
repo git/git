@@ -74,6 +74,14 @@ void strvec_pop(struct strvec *);
 void strvec_split(struct strvec *, const char *);
 
 /**
+ * strvec_split_delim() is a split function that behaves more like its
+ * string_list_split() cousin than the whitespace-splitting
+ * strvec_split().
+ */
+size_t strvec_split_delim(struct strvec *array, const char *string,
+			  int delim, int maxsplit);
+
+/**
  * Free all memory associated with the array and return it to the
  * initial, empty state.
  */
