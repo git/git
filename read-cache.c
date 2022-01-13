@@ -3732,7 +3732,7 @@ void prefetch_cache_entries(const struct index_state *istate,
 			    must_prefetch_predicate must_prefetch)
 {
 	int i;
-	struct oid_array to_fetch = OID_ARRAY_INIT;
+	struct oidset to_fetch = OIDSET_INIT;
 
 	for (i = 0; i < istate->cache_nr; i++) {
 		struct cache_entry *ce = istate->cache[i];
@@ -3743,9 +3743,8 @@ void prefetch_cache_entries(const struct index_state *istate,
 					      NULL,
 					      OBJECT_INFO_FOR_PREFETCH))
 			continue;
-		oid_array_append(&to_fetch, &ce->oid);
+		oidset_insert(&to_fetch, &ce->oid);
 	}
-	promisor_remote_get_direct(the_repository,
-				   to_fetch.oid, to_fetch.nr);
-	oid_array_clear(&to_fetch);
+	promisor_remote_get_direct(the_repository, &to_fetch);
+	oidset_clear(&to_fetch);
 }

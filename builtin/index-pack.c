@@ -1387,18 +1387,17 @@ static void fix_unresolved_deltas(struct hashfile *f)
 		/*
 		 * Prefetch the delta bases.
 		 */
-		struct oid_array to_fetch = OID_ARRAY_INIT;
+		struct oidset to_fetch = OIDSET_INIT;
 		for (i = 0; i < nr_ref_deltas; i++) {
 			struct ref_delta_entry *d = sorted_by_pos[i];
 			if (!oid_object_info_extended(the_repository, &d->oid,
 						      NULL,
 						      OBJECT_INFO_FOR_PREFETCH))
 				continue;
-			oid_array_append(&to_fetch, &d->oid);
+			oidset_insert(&to_fetch, &d->oid);
 		}
-		promisor_remote_get_direct(the_repository,
-					   to_fetch.oid, to_fetch.nr);
-		oid_array_clear(&to_fetch);
+		promisor_remote_get_direct(the_repository, &to_fetch);
+		oidset_clear(&to_fetch);
 	}
 
 	for (i = 0; i < nr_ref_deltas; i++) {

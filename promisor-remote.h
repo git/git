@@ -3,8 +3,7 @@
 
 #include "repository.h"
 
-struct object_id;
-
+struct oidset;
 /*
  * Promisor remote linked list
  *
@@ -45,7 +44,6 @@ static inline int has_promisor_remote(void)
  * If oid_nr is 0, this function returns 0 (success) immediately.
  */
 int promisor_remote_get_direct(struct repository *repo,
-			       const struct object_id *oids,
-			       int oid_nr);
+			       struct oidset *oids);
 
 #endif /* PROMISOR_REMOTE_H */

@@ -6609,14 +6609,14 @@ void diffcore_fix_diff_index(void)
 }
 
 void diff_add_if_missing(struct repository *r,
-			 struct oid_array *to_fetch,
+			 struct oidset *to_fetch,
 			 const struct diff_filespec *filespec)
 {
 	if (filespec && filespec->oid_valid &&
 	    !S_ISGITLINK(filespec->mode) &&
 	    oid_object_info_extended(r, &filespec->oid, NULL,
 				     OBJECT_INFO_FOR_PREFETCH))
-		oid_array_append(to_fetch, &filespec->oid);
+		oidset_insert(to_fetch, &filespec->oid);
 }
 
 void diff_queued_diff_prefetch(void *repository)
@@ -6624,7 +6624,7 @@ void diff_queued_diff_prefetch(void *repository)
 	struct repository *repo = repository;
 	int i;
 	struct diff_queue_struct *q = &diff_queued_diff;
-	struct oid_array to_fetch = OID_ARRAY_INIT;
+	struct oidset to_fetch = OIDSET_INIT;
 
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
@@ -6632,12 +6632,9 @@ void diff_queued_diff_prefetch(void *repository)
 		diff_add_if_missing(repo, &to_fetch, p->two);
 	}
 
-	/*
-	 * NEEDSWORK: Consider deduplicating the OIDs sent.
-	 */
-	promisor_remote_get_direct(repo, to_fetch.oid, to_fetch.nr);
+	promisor_remote_get_direct(repo, &to_fetch);
 
-	oid_array_clear(&to_fetch);
+	oidset_clear(&to_fetch);
 }
 
 void diffcore_std(struct diff_options *options)

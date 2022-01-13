@@ -1894,7 +1894,7 @@ static int can_reuse_delta(const struct object_id *base_oid,
 }
 
 static void prefetch_to_pack(uint32_t object_index_start) {
-	struct oid_array to_fetch = OID_ARRAY_INIT;
+	struct oidset to_fetch = OIDSET_INIT;
 	uint32_t i;
 
 	for (i = object_index_start; i < to_pack.nr_objects; i++) {
@@ -1905,11 +1905,10 @@ static void prefetch_to_pack(uint32_t object_index_start) {
 					      NULL,
 					      OBJECT_INFO_FOR_PREFETCH))
 			continue;
-		oid_array_append(&to_fetch, &entry->idx.oid);
+		oidset_insert(&to_fetch, &entry->idx.oid);
 	}
-	promisor_remote_get_direct(the_repository,
-				   to_fetch.oid, to_fetch.nr);
-	oid_array_clear(&to_fetch);
+	promisor_remote_get_direct(the_repository, &to_fetch);
+	oidset_clear(&to_fetch);
 }
 
 static void check_object(struct object_entry *entry, uint32_t object_index)

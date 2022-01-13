@@ -3903,7 +3903,7 @@ static void prefetch_for_content_merges(struct merge_options *opt,
 					struct string_list *plist)
 {
 	struct string_list_item *e;
-	struct oid_array to_fetch = OID_ARRAY_INIT;
+	struct oidset to_fetch = OIDSET_INIT;
 
 	if (opt->repo != the_repository || !has_promisor_remote())
 		return;
@@ -3939,12 +3939,12 @@ static void prefetch_for_content_merges(struct merge_options *opt,
 			    S_ISREG(vi->mode) &&
 			    oid_object_info_extended(opt->repo, &vi->oid, NULL,
 						     OBJECT_INFO_FOR_PREFETCH))
-				oid_array_append(&to_fetch, &vi->oid);
+				oidset_insert(&to_fetch, &vi->oid);
 		}
 	}
 
-	promisor_remote_get_direct(opt->repo, to_fetch.oid, to_fetch.nr);
-	oid_array_clear(&to_fetch);
+	promisor_remote_get_direct(opt->repo, &to_fetch);
+	oidset_clear(&to_fetch);
 }
 
 static void process_entries(struct merge_options *opt,
