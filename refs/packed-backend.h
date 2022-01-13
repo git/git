@@ -3,6 +3,7 @@
 
 struct repository;
 struct ref_transaction;
+struct string_list;
 
 /*
  * Support for storing references in a `packed-refs` file.
