@@ -94,13 +94,13 @@ test_expect_success 'object with hash and type mismatch' '
 	)
 '
 
-test_expect_success POSIXPERM 'zlib corrupt loose object output ' '
+test_expect_success 'zlib corrupt loose object output ' '
 	git init --bare corrupt-loose-output &&
 	(
 		cd corrupt-loose-output &&
 		oid=$(git hash-object -w --stdin --literally </dev/null) &&
 		oidf=objects/$(test_oid_to_path "$oid") &&
-		chmod 755 $oidf &&
+		chmod +w $oidf &&
 		echo extra garbage >>$oidf &&
 
 		cat >expect.error <<-EOF &&
