@@ -326,7 +326,9 @@ test_expect_success 'correct message when there is nothing to do' '
 test_expect_success 'setup again' '
 	git reset --hard &&
 	test_chmod +x file &&
-	echo content >>file
+	echo content >>file &&
+	test_write_lines A B C D>file2 &&
+	git add file2
 '
 
 # Write the patch file with a new line at the top and bottom
@@ -341,13 +343,27 @@ test_expect_success 'setup patch' '
 	 content
 	+lastline
 	\ No newline at end of file
+	diff --git a/file2 b/file2
+	index 8422d40..35b930a 100644
+	--- a/file2
+	+++ b/file2
+	@@ -1,4 +1,5 @@
+	-A
+	+Z
+	 B
+	+Y
+	 C
+	-D
+	+X
 	EOF
 '
 
 # Expected output, diff is similar to the patch but w/ diff at the top
 test_expect_success 'setup expected' '
 	echo diff --git a/file b/file >expected &&
-	cat patch |sed "/^index/s/ 100644/ 100755/" >>expected &&
+	sed -e "/^index 180b47c/s/ 100644/ 100755/" \
+	    -e /1,5/s//1,4/ \
+	    -e /Y/d patch >>expected &&
 	cat >expected-output <<-\EOF
 	--- a/file
 	+++ b/file
@@ -366,6 +382,28 @@ test_expect_success 'setup expected' '
 	 content
 	+lastline
 	\ No newline at end of file
+	--- a/file2
+	+++ b/file2
+	@@ -1,4 +1,5 @@
+	-A
+	+Z
+	 B
+	+Y
+	 C
+	-D
+	+X
+	@@ -1,2 +1,2 @@
+	-A
+	+Z
+	 B
+	@@ -2,2 +2,3 @@
+	 B
+	+Y
+	 C
+	@@ -3,2 +4,2 @@
+	 C
+	-D
+	+X
 	EOF
 '
 
@@ -373,9 +411,9 @@ test_expect_success 'setup expected' '
 test_expect_success 'add first line works' '
 	git commit -am "clear local changes" &&
 	git apply patch &&
-	printf "%s\n" s y y | git add -p file 2>error |
-		sed -n -e "s/^([1-2]\/[1-2]) Stage this hunk[^@]*\(@@ .*\)/\1/" \
-		       -e "/^[-+@ \\\\]"/p  >output &&
+	test_write_lines s y y s y n y | git add -p 2>error >raw-output &&
+	sed -n -e "s/^([1-9]\/[1-9]) Stage this hunk[^@]*\(@@ .*\)/\1/" \
+	       -e "/^[-+@ \\\\]"/p raw-output >output &&
 	test_must_be_empty error &&
 	git diff --cached >diff &&
 	diff_cmp expected diff &&
