@@ -1415,9 +1415,17 @@ static int process_ack(struct fetch_negotiator *negotiator,
 	 * otherwise.
 	 */
 	if (*received_ready && reader->status != PACKET_READ_DELIM)
-		die(_("expected packfile to be sent after 'ready'"));
+		/*
+		 * TRANSLATORS: The parameter will be 'ready', a protocol
+		 * keyword.
+		 */
+		die(_("expected packfile to be sent after '%s'"), "ready");
 	if (!*received_ready && reader->status != PACKET_READ_FLUSH)
-		die(_("expected no other sections to be sent after no 'ready'"));
+		/*
+		 * TRANSLATORS: The parameter will be 'ready', a protocol
+		 * keyword.
+		 */
+		die(_("expected no other sections to be sent after no '%s'"), "ready");
 
 	return 0;
 }
