@@ -7,6 +7,7 @@
 #include "strbuf.h"
 #include "object-store.h"
 #include "parse-options.h"
+#include "tree-walk.h"
 
 /*
  * submodule cache lookup structure
@@ -724,6 +725,65 @@ const struct submodule *submodule_from_path(struct repository *r,
 {
 	repo_read_gitmodules(r, 1);
 	return config_from(r->submodule_cache, treeish_name, path, lookup_path);
+}
+
+/**
+ * Used internally by submodules_of_tree(). Recurses into 'treeish_name'
+ * and appends submodule entries to 'out'. The submodule_cache expects
+ * a root-level treeish_name and paths, so keep track of these values
+ * with 'root_tree' and 'prefix'.
+ */
+static void traverse_tree_submodules(struct repository *r,
+				     const struct object_id *root_tree,
+				     char *prefix,
+				     const struct object_id *treeish_name,
+				     struct submodule_entry_list *out)
+{
+	struct tree_desc tree;
+	struct submodule_tree_entry *st_entry;
+	struct name_entry *name_entry;
+	char *tree_path = NULL;
+
+	name_entry = xmalloc(sizeof(*name_entry));
+
+	fill_tree_descriptor(r, &tree, treeish_name);
+	while (tree_entry(&tree, name_entry)) {
+		if (prefix)
+			tree_path =
+				mkpathdup("%s/%s", prefix, name_entry->path);
+		else
+			tree_path = xstrdup(name_entry->path);
+
+		if (S_ISGITLINK(name_entry->mode) &&
+		    is_tree_submodule_active(r, root_tree, tree_path)) {
+			st_entry = xmalloc(sizeof(*st_entry));
+			st_entry->name_entry = name_entry;
+			st_entry->submodule =
+				submodule_from_path(r, root_tree, tree_path);
+			st_entry->repo = xmalloc(sizeof(*st_entry->repo));
+			if (repo_submodule_init(st_entry->repo, r, tree_path,
+						root_tree))
+				FREE_AND_NULL(st_entry->repo);
+
+			ALLOC_GROW(out->entries, out->entry_nr + 1,
+				   out->entry_alloc);
+			out->entries[out->entry_nr++] = *st_entry;
+		} else if (S_ISDIR(name_entry->mode))
+			traverse_tree_submodules(r, root_tree, tree_path,
+						 &name_entry->oid, out);
+		free(tree_path);
+	}
+}
+
+void submodules_of_tree(struct repository *r,
+			const struct object_id *treeish_name,
+			struct submodule_entry_list *out)
+{
+	CALLOC_ARRAY(out->entries, 0);
+	out->entry_nr = 0;
+	out->entry_alloc = 0;
+
+	traverse_tree_submodules(r, treeish_name, NULL, treeish_name, out);
 }
 
 void submodule_free(struct repository *r)
