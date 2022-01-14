@@ -341,6 +341,27 @@ void ensure_correct_sparsity(struct index_state *istate)
 		ensure_full_index(istate);
 }
 
+void clear_skip_worktree_from_present_files(struct index_state *istate)
+{
+	int i;
+	if (!core_apply_sparse_checkout)
+		return;
+
+restart:
+	for (i = 0; i < istate->cache_nr; i++) {
+		struct cache_entry *ce = istate->cache[i];
+		struct stat st;
+
+		if (ce_skip_worktree(ce) && !lstat(ce->name, &st)) {
+			if (S_ISSPARSEDIR(ce->ce_mode)) {
+				ensure_full_index(istate);
+				goto restart;
+			}
+			ce->ce_flags &= ~CE_SKIP_WORKTREE;
+		}
+	}
+}
+
 /*
  * This static global helps avoid infinite recursion between
  * expand_to_path() and index_file_exists().

@@ -212,7 +212,7 @@ test_expect_success 'read-tree updates worktree, dirty case' '
 	echo sub/added >.git/info/sparse-checkout &&
 	git checkout -f top &&
 	echo dirty >init.t &&
-	read_tree_u_must_succeed -m -u HEAD^ &&
+	read_tree_u_must_fail -m -u HEAD^ &&
 	grep -q dirty init.t &&
 	rm init.t
 '
