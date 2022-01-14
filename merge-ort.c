@@ -3060,6 +3060,10 @@ static int detect_and_process_renames(struct merge_options *opt,
 	trace2_region_enter("merge", "regular renames", opt->repo);
 	detection_run |= detect_regular_renames(opt, MERGE_SIDE1);
 	detection_run |= detect_regular_renames(opt, MERGE_SIDE2);
+	if (renames->needed_limit != 0) {
+		renames->cached_pairs_valid_side = 0;
+		renames->redo_after_renames = 0;
+	}
 	if (renames->redo_after_renames && detection_run) {
 		int i, side;
 		struct diff_filepair *p;
