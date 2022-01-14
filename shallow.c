@@ -603,7 +603,7 @@ static int mark_uninteresting(const char *refname, const struct object_id *oid,
 	if (!commit)
 		return 0;
 	commit->object.flags |= UNINTERESTING;
-	mark_parents_uninteresting(commit);
+	mark_parents_uninteresting(NULL, commit);
 	return 0;
 }
 
