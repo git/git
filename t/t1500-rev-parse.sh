@@ -247,6 +247,15 @@ test_expect_success 'showing the superproject correctly' '
 	test_cmp expect out
 '
 
+test_expect_success 'show the superproject correctly without superprojectGitDir' '
+	# repos created before submodule.superprojectGitDir was introduced which
+	# have not been `git submodule update`-ed lately must not break
+	git -C super/dir/sub config --unset submodule.superprojectGitDir &&
+	echo $(pwd)/super >expect &&
+	git -C super/dir/sub rev-parse --show-superproject-working-tree >out &&
+	test_cmp expect out
+'
+
 # at least one external project depends on this behavior:
 test_expect_success 'rev-parse --since= unsqueezed ordering' '
 	x1=--since=1970-01-01T00:00:01Z &&

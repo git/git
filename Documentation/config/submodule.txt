@@ -105,3 +105,15 @@ submodule.alternateErrorStrategy::
 	`ignore`, `info`, `die`. Default is `die`. Note that if set to `ignore`
 	or `info`, and if there is an error with the computed alternate, the
 	clone proceeds as if no alternate was specified.
+
+submodule.superprojectGitDir::
+	The relative path from the submodule's gitdir to its superproject's
+	gitdir. When Git is run in a repository, it usually makes no
+	difference whether this repository is standalone or a submodule, but if
+	this configuration variable is present, additional behavior may be
+	possible, such as "git status" printing additional information about
+	this submodule's status with respect to its superproject. This config
+	should only be present in projects which are submodules, but is not
+	guaranteed to be present in every submodule, so only optional
+	value-added behavior should be linked to it. It is set automatically
+	during submodule creation.
