@@ -105,6 +105,29 @@ test_expect_success 'GIT_REFLOG_ACTION' '
 	test_cmp expect actual
 '
 
+test_expect_success 'rebase --apply reflog' '
+	git checkout -b reflog-apply start &&
+	old_head_reflog="$(git log -g --format=%gs -1 HEAD)" &&
+
+	git rebase --apply Y &&
+
+	git log -g --format=%gs -4 HEAD >actual &&
+	cat >expect <<-EOF &&
+	rebase finished: returning to refs/heads/reflog-apply
+	rebase: Z
+	rebase: checkout Y
+	$old_head_reflog
+	EOF
+	test_cmp expect actual &&
+
+	git log -g --format=%gs -2 reflog-apply >actual &&
+	cat >expect <<-EOF &&
+	rebase finished: refs/heads/reflog-apply onto $(git rev-parse Y)
+	branch: Created from start
+	EOF
+	test_cmp expect actual
+'
+
 test_expect_success 'rebase -i onto unrelated history' '
 	git init unrelated &&
 	test_commit -C unrelated 1 &&
