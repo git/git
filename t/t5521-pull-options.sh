@@ -252,4 +252,56 @@ test_expect_success 'git pull --no-verify --verify passed to merge' '
 	test_must_fail git -C dst pull --no-ff --no-verify --verify
 '
 
+test_expect_success 'git pull --rebase --autostash succeeds on ff' '
+	test_when_finished "rm -fr src dst actual" &&
+	git init src &&
+	test_commit -C src "initial" file "content" &&
+	git clone src dst &&
+	test_commit -C src --printf "more_content" file "more content\ncontent\n" &&
+	echo "dirty" >>dst/file &&
+	git -C dst pull --rebase --autostash >actual 2>&1 &&
+	grep -q "Fast-forward" actual &&
+	grep -q "Applied autostash." actual
+'
+
+test_expect_success 'git pull --rebase with rebase.autostash succeeds on ff' '
+	test_when_finished "rm -fr src dst actual" &&
+	git init src &&
+	test_commit -C src "initial" file "content" &&
+	git clone src dst &&
+	test_commit -C src --printf "more_content" file "more content\ncontent\n" &&
+	echo "dirty" >>dst/file &&
+	test_config -C dst rebase.autostash true &&
+	git -C dst pull --rebase  >actual 2>&1 &&
+	grep -q "Fast-forward" actual &&
+	grep -q "Applied autostash." actual
+'
+
+test_expect_success 'git pull --rebase --autostash succeeds on non-ff' '
+	test_when_finished "rm -fr src dst actual" &&
+	git init src &&
+	test_commit -C src "initial" file "content" &&
+	git clone src dst &&
+	test_commit -C src --printf "src_content" file "src content\ncontent\n" &&
+	test_commit -C dst --append "dst_content" file "dst content" &&
+	echo "dirty" >>dst/file &&
+	git -C dst pull --rebase --autostash >actual 2>&1 &&
+	grep -q "Successfully rebased and updated refs/heads/main." actual &&
+	grep -q "Applied autostash." actual
+'
+
+test_expect_success 'git pull --rebase with rebase.autostash succeeds on non-ff' '
+	test_when_finished "rm -fr src dst actual" &&
+	git init src &&
+	test_commit -C src "initial" file "content" &&
+	git clone src dst &&
+	test_commit -C src --printf "src_content" file "src content\ncontent\n" &&
+	test_commit -C dst --append "dst_content" file "dst content" &&
+	echo "dirty" >>dst/file &&
+	test_config -C dst rebase.autostash true &&
+	git -C dst pull --rebase >actual 2>&1 &&
+	grep -q "Successfully rebased and updated refs/heads/main." actual &&
+	grep -q "Applied autostash." actual
+'
+
 test_done
