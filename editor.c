@@ -4,6 +4,7 @@
 #include "strvec.h"
 #include "run-command.h"
 #include "sigchain.h"
+#include "compat/terminal.h"
 
 #ifndef DEFAULT_EDITOR
 #define DEFAULT_EDITOR "vi"
@@ -48,6 +49,16 @@ const char *git_sequence_editor(void)
 	return editor;
 }
 
+static int prepare_term(const char *editor)
+{
+	int need_saverestore = !strcmp(editor, DEFAULT_EDITOR);
+
+	git_config_get_bool("editor.stty", &need_saverestore);
+	if (need_saverestore)
+		return save_term(1);
+	return 0;
+}
+
 static int launch_specified_editor(const char *editor, const char *path,
 				   struct strbuf *buffer, const char *const *env)
 {
@@ -57,8 +68,10 @@ static int launch_specified_editor(const char *editor, const char *path,
 	if (strcmp(editor, ":")) {
 		struct strbuf realpath = STRBUF_INIT;
 		struct child_process p = CHILD_PROCESS_INIT;
-		int ret, sig;
-		int print_waiting_for_editor = advice_enabled(ADVICE_WAITING_FOR_EDITOR) && isatty(2);
+		int ret, sig, need_restore;
+		int is_interactive = isatty(2);
+		int print_waiting_for_editor = advice_enabled(ADVICE_WAITING_FOR_EDITOR) &&
+						is_interactive;
 
 		if (print_waiting_for_editor) {
 			/*
@@ -83,7 +96,10 @@ static int launch_specified_editor(const char *editor, const char *path,
 			strvec_pushv(&p.env_array, (const char **)env);
 		p.use_shell = 1;
 		p.trace2_child_class = "editor";
+		need_restore = is_interactive ? prepare_term(editor) : 0;
 		if (start_command(&p) < 0) {
+			if (need_restore)
+				restore_term();
 			strbuf_release(&realpath);
 			return error("unable to start editor '%s'", editor);
 		}
@@ -91,6 +107,8 @@ static int launch_specified_editor(const char *editor, const char *path,
 		sigchain_push(SIGINT, SIG_IGN);
 		sigchain_push(SIGQUIT, SIG_IGN);
 		ret = finish_command(&p);
+		if (need_restore)
+			restore_term();
 		strbuf_release(&realpath);
 		sig = ret - 128;
 		sigchain_pop(SIGINT);
