@@ -197,6 +197,12 @@
 #endif
 #include <windows.h>
 #define GIT_WINDOWS_NATIVE
+#ifdef HAVE_RTLGENRANDOM
+/* This is required to get access to RtlGenRandom. */
+#define SystemFunction036 NTAPI SystemFunction036
+#include <NTSecAPI.h>
+#undef SystemFunction036
+#endif
 #endif
 
 #include <unistd.h>
@@ -266,6 +272,12 @@
 #include <inttypes.h>
 #else
 #include <stdint.h>
+#endif
+#ifdef HAVE_ARC4RANDOM_LIBBSD
+#include <bsd/stdlib.h>
+#endif
+#ifdef HAVE_GETRANDOM
+#include <sys/random.h>
 #endif
 #ifdef NO_INTPTR_T
 /*
@@ -1431,5 +1443,12 @@ static inline void *container_of_or_null_offset(void *ptr, size_t offset)
 #endif /* !__GNUC__ */
 
 void sleep_millisec(int millisec);
+
+/*
+ * Generate len bytes from the system cryptographically secure PRNG.
+ * Returns 0 on success and -1 on error, setting errno.  The inability to
+ * satisfy the full request is an error.
+ */
+int csprng_bytes(void *buf, size_t len);
 
 #endif
