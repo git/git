@@ -24,8 +24,8 @@ https://developers.google.com/open-source/licenses/bsd
 static void write_test_table(struct strbuf *buf,
 			     struct reftable_ref_record refs[], int n)
 {
-	int min = 0xffffffff;
-	int max = 0;
+	uint64_t min = 0xffffffff;
+	uint64_t max = 0;
 	int i = 0;
 	int err;
 
@@ -207,11 +207,11 @@ static void test_merged(void)
 		},
 	};
 
-	struct reftable_ref_record want[] = {
-		r2[0],
-		r1[1],
-		r3[0],
-		r3[1],
+	struct reftable_ref_record *want[] = {
+		&r2[0],
+		&r1[1],
+		&r3[0],
+		&r3[1],
 	};
 
 	struct reftable_ref_record *refs[] = { r1, r2, r3 };
@@ -250,7 +250,7 @@ static void test_merged(void)
 
 	EXPECT(ARRAY_SIZE(want) == len);
 	for (i = 0; i < len; i++) {
-		EXPECT(reftable_ref_record_equal(&want[i], &out[i],
+		EXPECT(reftable_ref_record_equal(want[i], &out[i],
 						 GIT_SHA1_RAWSZ));
 	}
 	for (i = 0; i < len; i++) {
@@ -345,10 +345,10 @@ static void test_merged_logs(void)
 			.value_type = REFTABLE_LOG_DELETION,
 		},
 	};
-	struct reftable_log_record want[] = {
-		r2[0],
-		r3[0],
-		r1[1],
+	struct reftable_log_record *want[] = {
+		&r2[0],
+		&r3[0],
+		&r1[1],
 	};
 
 	struct reftable_log_record *logs[] = { r1, r2, r3 };
@@ -387,7 +387,7 @@ static void test_merged_logs(void)
 
 	EXPECT(ARRAY_SIZE(want) == len);
 	for (i = 0; i < len; i++) {
-		EXPECT(reftable_log_record_equal(&want[i], &out[i],
+		EXPECT(reftable_log_record_equal(want[i], &out[i],
 						 GIT_SHA1_RAWSZ));
 	}
 
