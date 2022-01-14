@@ -2775,7 +2775,7 @@ static int repo_verify_index(struct repository *repo)
 	return verify_index_from(repo->index, repo->index_file);
 }
 
-static int has_racy_timestamp(struct index_state *istate)
+int has_racy_timestamp(struct index_state *istate)
 {
 	int entries = istate->cache_nr;
 	int i;
