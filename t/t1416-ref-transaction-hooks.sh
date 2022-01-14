@@ -136,4 +136,54 @@ test_expect_success 'interleaving hook calls succeed' '
 	test_cmp expect target-repo.git/actual
 '
 
+test_expect_success 'hook does not get called on packing refs' '
+	# Pack references first such that we are in a known state.
+	git pack-refs --all &&
+
+	write_script .git/hooks/reference-transaction <<-\EOF &&
+		echo "$@" >>actual
+		cat >>actual
+	EOF
+	rm -f actual &&
+
+	git update-ref refs/heads/unpacked-ref $POST_OID &&
+	git pack-refs --all &&
+
+	# We only expect a single hook invocation, which is the call to
+	# git-update-ref(1).
+	cat >expect <<-EOF &&
+		prepared
+		$ZERO_OID $POST_OID refs/heads/unpacked-ref
+		committed
+		$ZERO_OID $POST_OID refs/heads/unpacked-ref
+	EOF
+
+	test_cmp expect actual
+'
+
+test_expect_success 'deleting packed ref calls hook once' '
+	# Create a reference and pack it.
+	git update-ref refs/heads/to-be-deleted $POST_OID &&
+	git pack-refs --all &&
+
+	write_script .git/hooks/reference-transaction <<-\EOF &&
+		echo "$@" >>actual
+		cat >>actual
+	EOF
+	rm -f actual &&
+
+	git update-ref -d refs/heads/to-be-deleted $POST_OID &&
+
+	# We only expect a single hook invocation, which is the logical
+	# deletion.
+	cat >expect <<-EOF &&
+		prepared
+		$POST_OID $ZERO_OID refs/heads/to-be-deleted
+		committed
+		$POST_OID $ZERO_OID refs/heads/to-be-deleted
+	EOF
+
+	test_cmp expect actual
+'
+
 test_done
