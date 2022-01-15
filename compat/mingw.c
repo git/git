@@ -20,6 +20,7 @@
 #include "gettext.h"
 #define SECURITY_WIN32
 #include <sspi.h>
+#include "../repository.h"
 
 #define HCAST(type, handle) ((type)(intptr_t)handle)
 
@@ -549,6 +550,7 @@ static int is_local_named_pipe_path(const char *filename)
 
 int mingw_open (const char *filename, int oflags, ...)
 {
+	static int append_atomically = -1;
 	typedef int (*open_fn_t)(wchar_t const *wfilename, int oflags, ...);
 	va_list args;
 	unsigned mode;
@@ -565,7 +567,16 @@ int mingw_open (const char *filename, int oflags, ...)
 		return -1;
 	}
 
-	if ((oflags & O_APPEND) && !is_local_named_pipe_path(filename))
+	/*
+	 * Only set append_atomically to default value(1) when repo is initialized
+	 * and fail to get config value
+	 */
+	if (append_atomically < 0 && the_repository && the_repository->commondir &&
+		git_config_get_bool("windows.appendatomically", &append_atomically))
+		append_atomically = 1;
+
+	if (append_atomically && (oflags & O_APPEND) &&
+		!is_local_named_pipe_path(filename))
 		open_fn = mingw_open_append;
 	else
 		open_fn = _wopen;
@@ -714,9 +725,28 @@ ssize_t mingw_write(int fd, const void *buf, size_t len)
 
 		/* check if fd is a pipe */
 		HANDLE h = (HANDLE) _get_osfhandle(fd);
-		if (GetFileType(h) != FILE_TYPE_PIPE)
+		if (GetFileType(h) != FILE_TYPE_PIPE) {
+			if (orig == EINVAL) {
+				wchar_t path[MAX_PATH];
+				DWORD ret = GetFinalPathNameByHandleW(h, path,
+								ARRAY_SIZE(path), 0);
+				UINT drive_type = ret > 0 && ret < ARRAY_SIZE(path) ?
+					GetDriveTypeW(path) : DRIVE_UNKNOWN;
+
+				/*
+				 * The default atomic append causes such an error on
+				 * network file systems, in such a case, it should be
+				 * turned off via config.
+				 *
+				 * `drive_type` of UNC path: DRIVE_NO_ROOT_DIR
+				 */
+				if (DRIVE_NO_ROOT_DIR == drive_type || DRIVE_REMOTE == drive_type)
+					warning("invalid write operation detected; you may try:\n"
+						"\n\tgit config windows.appendAtomically false");
+			}
+
 			errno = orig;
-		else if (orig == EINVAL)
+		} else if (orig == EINVAL)
 			errno = EPIPE;
 		else {
 			DWORD buf_size;
