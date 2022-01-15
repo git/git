@@ -558,4 +558,6 @@ include::config/versionsort.adoc[]
 
 include::config/web.adoc[]
 
+include::config/windows.adoc[]
+
 include::config/worktree.adoc[]
