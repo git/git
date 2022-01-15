@@ -1,29 +1,15 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jan 2022, #03; Thu, 13)
-X-master-at: 1ffcbaa1a5f10c9f706314d77f88de20a4a498c2
-X-next-at: 00780c9af44409a68481c82f63a97bd18bb2593e
+Subject: What's cooking in git.git (Jan 2022, #04; Fri, 14)
+X-master-at: df3c41adeb212432c53d93ce6ace5d5374dc6e11
+X-next-at: 5990c1f58f12b2d9f2b7f4f857bac2a6b2a461e0
 
-What's cooking in git.git (Jan 2022, #03; Thu, 13)
+What's cooking in git.git (Jan 2022, #04; Fri, 14)
 --------------------------------------------------
 
-There are a few "oops, what we merged recently is broken" topics
-that still are not in 'master', but otherwise what we have should
-be pretty much what we'll have in the final one.
-
- - I am reasonably happy with ab/refs-errno-cleanup (just one patch)
-   that fixes the incorrect state of the code left by the earlier
-   parts of the topic that have already been merged during this
-   cycle.
-
- - I am also OK with ab/reftable-build-fixes (two patches), one for
-   general type correctness fix, the other for helping older sub-C99
-   compilers.
-
-If there are fixes for regressions that we introduced during this
-cycle other than these two topics, I certainly am missing them, so
-please holler loudly and quickly, hopefully in time for me to tag
-the -rc1 tomorrow.
+I just tagged Git 2.35-rc1 with a few last-minute fixes.  Let's make
+sure we can find and fix any remaining regressions introduced during
+this cycle before the final.
 
 Here are the topics that have been cooking in my tree.  Commits
 prefixed with '+' are in 'next' (being in 'next' is a sign that a
@@ -67,543 +53,33 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ab/do-not-limit-stash-help-to-push (2021-12-16) 1 commit
-  (merged to 'next' on 2022-01-03 at adfc0c1f17)
- + stash: don't show "git stash push" usage on bad "git stash" usage
-
- "git stash" by default triggers its "push" action, but its
- implementation also made "git stash -h" to show short help only for
- "git stash push", which has been corrected.
- source: <patch-v3-1.1-6b33b104c84-20211216T125317Z-avarab@gmail.com>
-
-
-* ab/makefile-hook-list-dependency-fix (2021-12-25) 1 commit
-  (merged to 'next' on 2022-01-03 at 8c8ca0cbce)
- + Makefile: correct the dependency graph of hook-list.h
-
- Fix dependency rules to generate hook-list.h header file.
- source: <patch-1.1-1fafa6c643b-20211217T001137Z-avarab@gmail.com>
-
-
-* ab/makefile-msgfmt-wo-stats (2021-12-25) 1 commit
-  (merged to 'next' on 2022-01-03 at 2e2097c310)
- + Makefile: don't invoke msgfmt with --statistics
-
- Make the recipe that runs msgfmt less noisy.
- source: <patch-1.1-58408f384e7-20211217T000729Z-avarab@gmail.com>
-
-
-* ab/makefile-pager-env-is-used-only-by-pager.c (2021-12-25) 1 commit
-  (merged to 'next' on 2022-01-03 at 7ab1e1c5c4)
- + Makefile: move -DPAGER_ENV from BASIC_CFLAGS to EXTRA_CPPFLAGS
-
- source: <patch-1.1-90d1e77ad5e-20211217T001628Z-avarab@gmail.com>
-
-
-* ab/reflog-prep (2021-12-22) 9 commits
-  (merged to 'next' on 2022-01-03 at 07d2d78d86)
- + reflog + refs-backend: move "verbose" out of the backend
- + refs files-backend: assume cb->newlog if !EXPIRE_REFLOGS_DRY_RUN
- + reflog: reduce scope of "struct rev_info"
- + reflog expire: don't use lookup_commit_reference_gently()
- + reflog expire: refactor & use "tip_commit" only for UE_NORMAL
- + reflog expire: use "switch" over enum values
- + reflog: change one->many worktree->refnames to use a string_list
- + reflog expire: narrow scope of "cb" in cmd_reflog_expire()
- + reflog delete: narrow scope of "cmd" passed to count_reflog_ent()
- (this branch is used by jc/reflog-parse-options.)
-
- Code refactoring in the reflog part of refs API.
- source: <cover-v3-0.9-00000000000-20211222T040557Z-avarab@gmail.com>
-
-
-* ab/usage-die-message (2021-12-07) 6 commits
-  (merged to 'next' on 2022-01-03 at 0ef3860099)
- + config API: use get_error_routine(), not vreportf()
- + usage.c + gc: add and use a die_message_errno()
- + gc: return from cmd_gc(), don't call exit()
- + usage.c API users: use die_message() for error() + exit 128
- + usage.c API users: use die_message() for "fatal :" + exit 128
- + usage.c: add a die_message() routine
-
- Code clean-up to hide vreportf() from public API.
- source: <cover-v2-0.6-00000000000-20211207T182419Z-avarab@gmail.com>
-
-
-* ak/protect-any-current-branch (2022-01-12) 1 commit
-  (merged to 'next' on 2022-01-12 at 5ad87959d2)
- + branch: missing space fix at line 313
-
- source: <20220111123627.58625-1-bagasdotme@gmail.com>
-
-
-* ds/fetch-pull-with-sparse-index (2021-12-22) 5 commits
-  (merged to 'next' on 2022-01-03 at f58da4a878)
- + test-read-cache: remove --table, --expand options
- + t1091/t3705: remove 'test-tool read-cache --table'
- + t1092: replace 'read-cache --table' with 'ls-files --sparse'
- + ls-files: add --sparse option
- + fetch/pull: use the sparse index
-
- "git fetch" and "git pull" are now declared sparse-index clean.
- Also "git ls-files" learns the "--sparse" option to help debugging.
- source: <pull.1080.v4.git.1640182856.gitgitgadget@gmail.com>
-
-
-* ds/sparse-checkout-malformed-pattern-fix (2021-12-30) 3 commits
-  (merged to 'next' on 2021-12-30 at c8b2ade48c)
- + sparse-checkout: refuse to add to bad patterns
- + sparse-checkout: fix OOM error with mixed patterns
- + sparse-checkout: fix segfault on malformed patterns
-
- Certain sparse-checkout patterns that are valid in non-cone mode
- led to segfault in cone mode, which has been corrected.
- source: <pull.1069.v4.git.1639671222.gitgitgadget@gmail.com>
-
-
-* en/merge-ort-renorm-with-rename-delete-conflict-fix (2021-12-30) 1 commit
-  (merged to 'next' on 2022-01-05 at bb81dd432d)
- + merge-ort: fix bug with renormalization and rename/delete conflicts
-
- A corner case bug in the ort merge strategy has been corrected.
- source: <pull.1174.git.git.1640650846612.gitgitgadget@gmail.com>
-
-
-* en/stash-df-fix (2022-01-04) 1 commit
-  (merged to 'next' on 2022-01-06 at 22d0c6ccf7)
- + stash: do not return before restoring untracked files
-
- "git stash apply" forgot to attempt restoring untracked files when
- it failed to restore changes to tracked ones.
- source: <pull.1180.git.git.1641337498996.gitgitgadget@gmail.com>
-
-
-* fs/gpg-unknown-key-test-fix (2022-01-12) 1 commit
-  (merged to 'next' on 2022-01-12 at 80d3416168)
- + t/gpg: simplify test for unknown key
-
- Test simplification.
- source: <20220112120757.874714-1-fs@gigacodes.de>
-
-
-* fs/ssh-signing-key-lifetime (2022-01-10) 1 commit
-  (merged to 'next' on 2022-01-12 at 8541f3399c)
- + fmt-merge-msg: prevent use-after-free with signed tags
-
- "git merge $signed_tag" started to drop the tag message from the
- default merge message it uses by accident, which has been corrected.
- source: <6e08b73d602853b3de71257117e85e32b96b5c19.1641849502.git.me@ttaylorr.com>
-
-
-* hn/ref-api-tests-update (2021-12-22) 4 commits
-  (merged to 'next' on 2022-01-03 at 6815d4d8c1)
- + t7004: use "test-tool ref-store" for reflog inspection
- + t7004: create separate tags for different tests
- + t5550: require REFFILES
- + t5540: require REFFILES
-
- Test updates.
- source: <pull.1168.git.git.1640170784.gitgitgadget@gmail.com>
-
-
-* hn/refs-debug-update (2021-12-22) 3 commits
-  (merged to 'next' on 2022-01-03 at 1cd451c66c)
- + refs: centralize initialization of the base ref_store.
- + refs: print error message in debug output
- + refs: pass gitdir to packed_ref_store_create
-
- Debugging support for refs API.
- source: <pull.1163.v2.git.git.1640196714.gitgitgadget@gmail.com>
-
-
-* hn/reftable-fixes (2021-12-23) 3 commits
-  (merged to 'next' on 2022-01-03 at 532f9bbb27)
- + reftable: support preset file mode for writing
- + reftable: signal overflow
- + reftable: fix typo in header
-
- Assorted fixlets in reftable code.
- source: <pull.1164.git.git.1640287790.gitgitgadget@gmail.com>
-
-
-* hn/test-ref-store-show-hash-algo (2021-12-21) 1 commit
-  (merged to 'next' on 2022-01-03 at 3cdbfeeaf1)
- + test-ref-store: print hash algorithm
-
- Debugging support for refs API.
- source: <pull.1167.git.git.1640092500725.gitgitgadget@gmail.com>
-
-
-* ja/i18n-similar-messages (2022-01-05) 11 commits
-  (merged to 'next' on 2022-01-06 at 6440d8fdf2)
- + i18n: turn even more messages into "cannot be used together" ones
- + i18n: ref-filter: factorize "%(foo) atom used without %(bar) atom"
- + i18n: factorize "--foo outside a repository"
- + i18n: refactor "unrecognized %(foo) argument" strings
- + i18n: factorize "no directory given for --foo"
- + i18n: factorize "--foo requires --bar" and the like
- + i18n: tag.c factorize i18n strings
- + i18n: standardize "cannot open" and "cannot read"
- + i18n: turn "options are incompatible" into "cannot be used together"
- + i18n: refactor "%s, %s and %s are mutually exclusive"
- + i18n: refactor "foo and bar are mutually exclusive"
-
- Similar message templates have been consolidated so that
- translators need to work on fewer number of messages.
- source: <pull.1088.v5.git.1641412944.gitgitgadget@gmail.com>
-
-
-* ja/perf-use-specified-shell (2021-12-25) 1 commit
-  (merged to 'next' on 2022-01-03 at 8ca35ee3d0)
- + t/perf: do not run tests in user's $SHELL
-
- Perf tests were run with end-user's shell, but it has been
- corrected to use the shell specified by $TEST_SHELL_PATH.
- source: <20211225081656.1311583-1-aclopte@gmail.com>
-
-
-* jc/doc-submitting-patches-choice-of-base (2021-12-30) 1 commit
-  (merged to 'next' on 2022-01-05 at eb97c01c24)
- + SubmittingPatchs: clarify choice of base and testing
-
- Extend the guidance to choose the base commit to build your work
- on, and hint/nudge contributors to read others' changes.
- source: <xmqqh7apsv6s.fsf_-_@gitster.g>
-
-
-* jh/p4-human-unit-numbers (2021-12-20) 2 commits
-  (merged to 'next' on 2022-01-03 at c385766ff4)
- + git-p4: show progress as an integer
- + git-p4: print size values in appropriate units
-
- The way "git p4" shows file sizes in its output has been updated to
- use human-readable units.
- source: <20211219154028.3288756-1-jholdsworth@nvidia.com>
-
-
-* jh/p4-remove-unused (2021-12-22) 2 commits
-  (merged to 'next' on 2022-01-03 at 43f61b2fef)
- + git-p4: remove "rollback" verb
- + git-p4: remove "debug" verb
-
- Remove a few commands from "git p4" that aren't very useful.
- source: <20211222145552.93786-1-jholdsworth@nvidia.com>
-
-
-* jl/subtree-check-parents-argument-passing-fix (2022-01-04) 1 commit
-  (merged to 'next' on 2022-01-05 at 7dc995f026)
- + subtree: fix argument handling in check_parents
-
- Fix performance-releated bug in "git subtree" (in contrib/).
- source: <pull.1086.v4.git.1638929518657.gitgitgadget@gmail.com>
-
-
-* js/branch-track-inherit (2021-12-20) 3 commits
-  (merged to 'next' on 2022-01-03 at ab5fb34db3)
- + config: require lowercase for branch.*.autosetupmerge
- + branch: add flags and config to inherit tracking
- + branch: accept multiple upstream branches for tracking
- (this branch is used by gc/branch-recurse-submodules.)
-
- "git -c branch.autosetupmerge=inherit branch new old" makes "new"
- to have the same upstream as the "old" branch, instead of marking
- "old" itself as its upstream.
- source: <cover.1640039978.git.steadmon@google.com>
-
-
-* js/l10n-mention-ngettext-early-in-readme (2021-12-21) 1 commit
-  (merged to 'next' on 2022-01-03 at a644f898ce)
- + l10n: README: call more attention to plural strings
-
- Localization doc update.
- source: <25107068cbbf8c9ce6886e66e25dff19e072583f.1639425295.git.steadmon@google.com>
-
-
-* jt/pack-header-lshift-overflow (2022-01-12) 1 commit
-  (merged to 'next' on 2022-01-12 at fa27107ab3)
- + packfile: fix off-by-one error in decoding logic
-
- source: <xmqq4k68u30t.fsf@gitster.g>
-
-
-* jz/apply-3-corner-cases (2021-12-20) 1 commit
-  (merged to 'next' on 2022-01-03 at cb8e19c304)
- + git-apply: skip threeway in add / rename cases
-
- "git apply --3way" bypasses the attempt to do a three-way
- application in more cases to address the regression caused by the
- recent change to use direct application as a fallback.
- source: <20211217224328.7646-1-jerry@skydio.com>
-
-
-* lh/use-gnu-color-in-grep (2022-01-05) 1 commit
-  (merged to 'next' on 2022-01-05 at a0e2068cb7)
- + grep: align default colors with GNU grep ones
-
- The color palette used by "git grep" has been updated to match that
- of GNU grep.
- source: <20220105081835.4949-1-lenaic@lhuard.fr>
-
-
-* ma/header-dup-cleanup (2022-01-10) 1 commit
-  (merged to 'next' on 2022-01-12 at de7891f5e8)
- + cache.h: drop duplicate `ensure_full_index()` declaration
-
- Code clean-up.
- source: <20220110184134.18675-1-martin.agren@gmail.com>
-
-
-* ma/windows-dynload-fix (2022-01-09) 1 commit
-  (merged to 'next' on 2022-01-12 at af0a2e6c90)
- + lazyload: use correct calling conventions
-
- Fix calling dynamically loaded functions on Windows.
- source: <pull.1181.git.git.1641657750776.gitgitgadget@gmail.com>
-
-
-* ms/t-readme-typofix (2022-01-04) 1 commit
-  (merged to 'next' on 2022-01-06 at 59288ebb22)
- + t/README: fix typo
-
- Typofix.
- source: <pull.1110.git.1641338224631.gitgitgadget@gmail.com>
-
-
-* ps/lockfile-cleanup-fix (2022-01-07) 1 commit
-  (merged to 'next' on 2022-01-10 at ff0ae63f07)
- + fetch: fix deadlock when cleaning up lockfiles in async signals
-
- Some lockfile code called free() in signal-death code path, which
- has been corrected.
- source: <555ec6717ecab0fe6ef5660bcf0d61d59f84ef8b.1641552500.git.ps@pks.im>
-
-
-* rb/nonstop-lacks-uncompress2 (2022-01-12) 1 commit
-  (merged to 'next' on 2022-01-12 at 2387a47655)
- + build: NonStop ships with an older zlib
-
- source: <xmqqzgo0u5j7.fsf@gitster.g>
-
-
-* ws/fast-export-with-revision-options (2021-12-21) 1 commit
-  (merged to 'next' on 2022-01-03 at f94f7f70b6)
- + fast-export: fix surprising behavior with --first-parent
-
- Use of certain "git rev-list" options with "git fast-export"
- created nonsense results (the worst two of which being "--reverse"
- and "--invert-grep --grep=<foo>").  The use of "--first-parent" is
- made to behave a bit more sensible than before.
- source: <pull.1084.v2.git.1639037637231.gitgitgadget@gmail.com>
-
---------------------------------------------------
-[New Topics]
-
-* jh/p4-fix-use-of-process-error-exception (2022-01-06) 1 commit
-  (merged to 'next' on 2022-01-10 at 49d529bfd7)
- + git-p4: fix instantiation of CalledProcessError
-
- Will cook in 'next'.
- source: <20220106214156.90967-1-jholdsworth@nvidia.com>
-
-
-* jh/p4-spawning-external-commands-cleanup (2022-01-06) 3 commits
-  (merged to 'next' on 2022-01-10 at 54b36b4e66)
- + git-p4: don't print shell commands as python lists
- + git-p4: pass command arguments as lists instead of using shell
- + git-p4: don't select shell mode using the type of the command argument
-
- Will cook in 'next'.
- source: <20220106214035.90725-1-jholdsworth@nvidia.com>
-
-
-* pb/pull-rebase-autostash-fix (2022-01-06) 1 commit
- - pull --rebase: honor rebase.autostash even when fast-forwarding
-
- "git pull --rebase" ignored the rebase.autostash configuration
- variable when the remote history is a descendant of our history,
- which has been corrected.
-
- Expecting an ack or two.
- source: <4fe0e850-1c30-da70-5535-e2a4105ba734@gmail.com>
-
-
-* rs/grep-expr-cleanup (2022-01-06) 4 commits
-  (merged to 'next' on 2022-01-10 at b70a3bb0fa)
- + grep: use grep_and_expr() in compile_pattern_and()
- + grep: extract grep_binexp() from grep_or_expr()
- + grep: use grep_not_expr() in compile_pattern_not()
- + grep: use grep_or_expr() in compile_pattern_or()
-
- Code clean-up.
-
- Will cook in 'next'.
- source: <cover.1641498525.git.me@ttaylorr.com>
-
-
-* fs/ssh-signing-crlf (2022-01-07) 1 commit
- - gpg-interface: trim CR from ssh-keygen
-
- The code path that verifies signatures made with ssh were made to
- work better on a system with CRLF line endings.
-
- Will merge to 'next'?
- source: <20220103095337.600536-1-fs@gigacodes.de>
-
-
-* jc/qsort-s-alignment-fix (2022-01-07) 2 commits
-  (merged to 'next' on 2022-01-10 at 329fd6e09a)
- + stable-qsort: avoid using potentially unaligned access
- + compat/qsort_s.c: avoid using potentially unaligned access
-
- Fix a hand-rolled alloca() imitation that may have violated
- alignment requirement of data being sorted in compatibility
- implementation of qsort_s() and stable qsort().
-
- Will cook in 'next'.
- source: <f40c1b47-9aad-2dcc-ceeb-5dee2b517cd8@web.de>
- source: <xmqqzgo76xpj.fsf@gitster.g>
-
-
-* ps/avoid-unnecessary-hook-invocation-with-packed-refs (2022-01-12) 7 commits
- - fixup! refs: open-code deletion of packed refs
- - refs: skip hooks when deleting uncovered packed refs
- - refs: do not execute reference-transaction hook on packing refs
- - refs: demonstrate excessive execution of the reference-transaction hook
- - refs: allow skipping the reference-transaction hook
- - refs: allow passing flags when beginning transactions
- - refs: open-code deletion of packed refs
-
- Because a deletion of ref would need to remove it from both the
- loose ref store and the packed ref store, a delete-ref operation
- that logically removes one ref may end up invoking ref-transaction
- hook twice, which has been corrected.
-
- Under review.
- source: <cover.1641556319.git.ps@pks.im>
-
-
-* rs/apply-symlinks-use-strset (2022-01-07) 1 commit
-  (merged to 'next' on 2022-01-10 at 32497a67d5)
- + apply: use strsets to track symlinks
-
- "git apply" (ab)used the util pointer of the string-list to keep
- track of how each symbolic link needs to be handled, which has been
- simplified by using strset.
-
- Will cook in 'next'.
- source: <8739caad-aa3d-1f0f-b5dd-6174a8e059f6@web.de>
-
-
-* ld/sparse-index-bash-completion (2022-01-10) 3 commits
- - sparse-checkout: limit tab completion to a single level
- - sparse-checkout: custom tab completion
- - sparse-checkout: custom tab completion tests
-
- The command line completion (in contrib/) learns to complete
- arguments give to "git sparse-checkout" command.
- source: <pull.1108.v3.git.1641841193.gitgitgadget@gmail.com>
-
-
-* bc/clarify-eol-attr (2022-01-12) 2 commits
- - docs: correct documentation about eol attribute
- - t0027: add tests for eol without text in .gitattributes
-
- Doc and test update around the eol attribute.
- source: <20220111021507.531736-1-sandals@crustytoothpaste.net>
-
-
-* jz/rev-list-exclude-first-parent-only (2022-01-12) 1 commit
- - git-rev-list: add --exclude-first-parent-only flag
-
- "git log" and friends learned an option --exclude-first-parent-only
- to propagate UNINTERESTING bit down only along the first-parent
- chain, just like --first-parent option shows commits that lack the
- UNINTERESTING bit only along the first-parent chain.
- source: <20220111213941.30129-1-jerry@skydio.com>
-
-
 * ab/refs-errno-cleanup (2022-01-13) 1 commit
- - refs API: use "failure_errno", not "errno"
+  (merged to 'next' on 2022-01-14 at 00bb61876a)
+ + refs API: use "failure_errno", not "errno"
 
  A brown-paper-bag fix on top of a topic that was merged during this
  cycle.
-
- Will merge to 'next' and then to 'master'.
  source: <patch-v3-1.3-a45268ac24b-20220112T123117Z-avarab@gmail.com>
 
 
 * ab/reftable-build-fixes (2022-01-13) 2 commits
- - reftable tests: avoid "int" overflow, use "uint64_t"
- - reftable: avoid initializing structs from structs
+  (merged to 'next' on 2022-01-14 at ebd978ea66)
+ + reftable tests: avoid "int" overflow, use "uint64_t"
+ + reftable: avoid initializing structs from structs
 
  A few portability tweaks.
-
- Will merge to 'next' and then to 'master'?
  source: <cover-0.3-00000000000-20220111T163908Z-avarab@gmail.com>
 
 
-* en/present-despite-skipped (2022-01-13) 6 commits
- . Accelerate clear_skip_worktree_from_present_files() by caching
- . Update documentation related to sparsity and the skip-worktree bit
- . repo_read_index: clear SKIP_WORKTREE bit from files present in worktree
- . unpack-trees: fix accidental loss of user changes
- . t1011: add testcase demonstrating accidental loss of user modifications
- . Merge branch 'vd/sparse-clean-etc' into en/present-despite-skipped
- (this branch uses vd/sparse-clean-etc.)
-
- With this topic merged, 'seen' seems to fail t1092.
- source: <pull.1114.git.1642092230.gitgitgadget@gmail.com>
-
-
 * js/t1450-making-it-writable-does-not-need-full-posixperm (2022-01-13) 1 commit
- - t1450-fsck: exec-bit is not needed to make loose object writable
+  (merged to 'next' on 2022-01-14 at fd4f2f4bb4)
+ + t1450-fsck: exec-bit is not needed to make loose object writable
 
  Test fix.
-
- Will merge to 'next'.
  source: <529d99f3-13c8-ffc1-dd4c-3fc70330262a@kdbg.org>
 
 --------------------------------------------------
 [Stalled]
-
-* ds/sparse-checkout-requires-per-worktree-config (2021-12-21) 5 commits
- . sparse-checkout: use repo_config_set_worktree_gently()
- . config: add repo_config_set_worktree_gently()
- . worktree: add upgrade_to_worktree_config()
- . config: make some helpers repo-aware
- . setup: use a repository when upgrading format
-
- "git sparse-checkout" wants to work with per-worktree configration,
- but did not work well in a worktree attached to a bare repository.
- source: <pull.1101.v2.git.1640114048.gitgitgadget@gmail.com>
-
-
-* pw/add-p-hunk-split-fix (2022-01-12) 2 commits
- - builtin add -p: fix hunk splitting
- - t3701: clean up hunk splitting tests
-
- "git add -p" rewritten in C regressed hunk splitting in some cases,
- which has been corrected.
-
- Will merge to 'next'?
- source: <pull.1100.v2.git.1641899530.gitgitgadget@gmail.com>
-
-
-* gc/fetch-negotiate-only-early-return (2022-01-12) 3 commits
- - fetch --negotiate-only: do not update submodules
- - fetch: skip tasks related to fetching objects
- - fetch: use goto cleanup in cmd_fetch()
-
- "git fetch --nogotiate-only" is an internal command used by "git
- push" to figure out which part of our history is missing from the
- other side.  It should never recurse into submodules even when
- fetch.recursesubmodules configuration variable is set, nor it
- should trigger "gc".  The code has been tightened up to ensure it
- only does common ancestry discovery and nothing else.
-
- Almost there.
- source: <20220113004501.78822-1-chooglen@google.com>
-
 
 * je/http-better-error-output (2021-12-03) 1 commit
  . http-backend: give a hint that web browser access is not supported
@@ -655,6 +131,189 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* ds/sparse-checkout-requires-per-worktree-config (2022-01-14) 6 commits
+ - worktree: copy sparse-checkout patterns and config on add
+ - sparse-checkout: use repo_config_set_worktree_gently()
+ - config: add repo_config_set_worktree_gently()
+ - worktree: add 'init-worktree-config' subcommand
+ - config: make some helpers repo-aware
+ - setup: use a repository when upgrading format
+
+ "git sparse-checkout" wants to work with per-worktree configration,
+ but did not work well in a worktree attached to a bare repository.
+
+ Expecting an update.
+ cf. <1db0f601-4769-15c0-cd58-ecddfa1fc9d5@gmail.com>
+ source: <pull.1101.v3.git.1640727143.gitgitgadget@gmail.com>
+
+
+* pw/add-p-hunk-split-fix (2022-01-12) 2 commits
+ - builtin add -p: fix hunk splitting
+ - t3701: clean up hunk splitting tests
+
+ "git add -p" rewritten in C regressed hunk splitting in some cases,
+ which has been corrected.
+
+ Will merge to 'next'?
+ source: <pull.1100.v2.git.1641899530.gitgitgadget@gmail.com>
+
+
+* gc/fetch-negotiate-only-early-return (2022-01-12) 3 commits
+ - fetch --negotiate-only: do not update submodules
+ - fetch: skip tasks related to fetching objects
+ - fetch: use goto cleanup in cmd_fetch()
+
+ "git fetch --nogotiate-only" is an internal command used by "git
+ push" to figure out which part of our history is missing from the
+ other side.  It should never recurse into submodules even when
+ fetch.recursesubmodules configuration variable is set, nor it
+ should trigger "gc".  The code has been tightened up to ensure it
+ only does common ancestry discovery and nothing else.
+
+ Almost there.
+ source: <20220113004501.78822-1-chooglen@google.com>
+
+
+* jh/p4-fix-use-of-process-error-exception (2022-01-06) 1 commit
+  (merged to 'next' on 2022-01-10 at 49d529bfd7)
+ + git-p4: fix instantiation of CalledProcessError
+
+ Will cook in 'next'.
+ source: <20220106214156.90967-1-jholdsworth@nvidia.com>
+
+
+* jh/p4-spawning-external-commands-cleanup (2022-01-06) 3 commits
+  (merged to 'next' on 2022-01-10 at 54b36b4e66)
+ + git-p4: don't print shell commands as python lists
+ + git-p4: pass command arguments as lists instead of using shell
+ + git-p4: don't select shell mode using the type of the command argument
+
+ Will cook in 'next'.
+ source: <20220106214035.90725-1-jholdsworth@nvidia.com>
+
+
+* pb/pull-rebase-autostash-fix (2022-01-14) 1 commit
+  (merged to 'next' on 2022-01-14 at 83a388a7e2)
+ + pull --rebase: honor rebase.autostash when fast-forwarding
+
+ "git pull --rebase" ignored the rebase.autostash configuration
+ variable when the remote history is a descendant of our history,
+ which has been corrected.
+
+ Will cook in 'next'.
+ source: <xmqqr19aayxp.fsf@gitster.g>
+
+
+* rs/grep-expr-cleanup (2022-01-06) 4 commits
+  (merged to 'next' on 2022-01-10 at b70a3bb0fa)
+ + grep: use grep_and_expr() in compile_pattern_and()
+ + grep: extract grep_binexp() from grep_or_expr()
+ + grep: use grep_not_expr() in compile_pattern_not()
+ + grep: use grep_or_expr() in compile_pattern_or()
+
+ Code clean-up.
+
+ Will cook in 'next'.
+ source: <cover.1641498525.git.me@ttaylorr.com>
+
+
+* fs/ssh-signing-crlf (2022-01-07) 1 commit
+ - gpg-interface: trim CR from ssh-keygen
+
+ The code path that verifies signatures made with ssh were made to
+ work better on a system with CRLF line endings.
+
+ Will merge to 'next'?
+ source: <20220103095337.600536-1-fs@gigacodes.de>
+
+
+* jc/qsort-s-alignment-fix (2022-01-07) 2 commits
+  (merged to 'next' on 2022-01-10 at 329fd6e09a)
+ + stable-qsort: avoid using potentially unaligned access
+ + compat/qsort_s.c: avoid using potentially unaligned access
+
+ Fix a hand-rolled alloca() imitation that may have violated
+ alignment requirement of data being sorted in compatibility
+ implementation of qsort_s() and stable qsort().
+
+ Will cook in 'next'.
+ source: <f40c1b47-9aad-2dcc-ceeb-5dee2b517cd8@web.de>
+ source: <xmqqzgo76xpj.fsf@gitster.g>
+
+
+* ps/avoid-unnecessary-hook-invocation-with-packed-refs (2022-01-12) 7 commits
+ . fixup! refs: open-code deletion of packed refs
+ . refs: skip hooks when deleting uncovered packed refs
+ . refs: do not execute reference-transaction hook on packing refs
+ . refs: demonstrate excessive execution of the reference-transaction hook
+ . refs: allow skipping the reference-transaction hook
+ . refs: allow passing flags when beginning transactions
+ . refs: open-code deletion of packed refs
+
+ Because a deletion of ref would need to remove it from both the
+ loose ref store and the packed ref store, a delete-ref operation
+ that logically removes one ref may end up invoking ref-transaction
+ hook twice, which has been corrected.
+
+ Introduces new leaks when merged to 'seen'.
+ source: <cover.1641556319.git.ps@pks.im>
+
+
+* rs/apply-symlinks-use-strset (2022-01-07) 1 commit
+  (merged to 'next' on 2022-01-10 at 32497a67d5)
+ + apply: use strsets to track symlinks
+
+ "git apply" (ab)used the util pointer of the string-list to keep
+ track of how each symbolic link needs to be handled, which has been
+ simplified by using strset.
+
+ Will cook in 'next'.
+ source: <8739caad-aa3d-1f0f-b5dd-6174a8e059f6@web.de>
+
+
+* ld/sparse-index-bash-completion (2022-01-10) 3 commits
+ - sparse-checkout: limit tab completion to a single level
+ - sparse-checkout: custom tab completion
+ - sparse-checkout: custom tab completion tests
+
+ The command line completion (in contrib/) learns to complete
+ arguments give to "git sparse-checkout" command.
+ source: <pull.1108.v3.git.1641841193.gitgitgadget@gmail.com>
+
+
+* bc/clarify-eol-attr (2022-01-12) 2 commits
+ - docs: correct documentation about eol attribute
+ - t0027: add tests for eol without text in .gitattributes
+
+ Doc and test update around the eol attribute.
+ source: <20220111021507.531736-1-sandals@crustytoothpaste.net>
+
+
+* jz/rev-list-exclude-first-parent-only (2022-01-12) 1 commit
+ - git-rev-list: add --exclude-first-parent-only flag
+
+ "git log" and friends learned an option --exclude-first-parent-only
+ to propagate UNINTERESTING bit down only along the first-parent
+ chain, just like --first-parent option shows commits that lack the
+ UNINTERESTING bit only along the first-parent chain.
+ source: <20220111213941.30129-1-jerry@skydio.com>
+
+
+* en/present-despite-skipped (2022-01-14) 6 commits
+ - Accelerate clear_skip_worktree_from_present_files() by caching
+ - Update documentation related to sparsity and the skip-worktree bit
+ - repo_read_index: clear SKIP_WORKTREE bit from files present in worktree
+ - unpack-trees: fix accidental loss of user changes
+ - t1011: add testcase demonstrating accidental loss of user modifications
+ - Merge branch 'vd/sparse-clean-etc' into en/present-despite-skipped
+ (this branch uses vd/sparse-clean-etc.)
+
+ (NEEDSWORK: BY DOING WHAT), cope better with files on the working
+ tree that should not exist according to the sparse checkout
+ settings.
+ source: <pull.1114.v2.git.1642175983.gitgitgadget@gmail.com>
+
+
 * bc/csprng-mktemps (2022-01-04) 2 commits
  - wrapper: use a CSPRNG to generate random file names
  - wrapper: add a helper to generate numbers from a CSPRNG
@@ -696,15 +355,16 @@ Release tarballs are available at:
 
 
 * ms/update-index-racy (2022-01-07) 4 commits
- - update-index: refresh should rewrite index in case of racy timestamps
- - t7508: add tests capturing racy timestamp handling
- - t7508: fix bogus mtime verification
- - test-lib: introduce API for verifying file mtime
+  (merged to 'next' on 2022-01-14 at 705a33f63b)
+ + update-index: refresh should rewrite index in case of racy timestamps
+ + t7508: add tests capturing racy timestamp handling
+ + t7508: fix bogus mtime verification
+ + test-lib: introduce API for verifying file mtime
 
  "git update-index --refresh" has been taught to deal better with
  racy timestamps (just like "git status" already does).
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <pull.1105.v4.git.1641554252.gitgitgadget@gmail.com>
 
 
@@ -923,9 +583,9 @@ Release tarballs are available at:
  source: <cover-v7-0.6-00000000000-20220111T130811Z-avarab@gmail.com>
 
 
-* tl/ls-tree-oid-only (2022-01-06) 9 commits
- - cocci: allow padding with `strbuf_addf()`
+* tl/ls-tree-oid-only (2022-01-13) 9 commits
  - ls-tree.c: introduce "--format" option
+ - cocci: allow padding with `strbuf_addf()`
  - ls-tree.c: introduce struct "show_tree_data"
  - ls-tree.c: support --object-only option for "git-ls-tree"
  - ls-tree: optimize naming and handling of "return" in show_tree()
@@ -936,7 +596,7 @@ Release tarballs are available at:
 
  "git ls-tree" learns "--oid-only" option, similar to "--name-only",
  and more generalized "--format" option.
- source: <cover.1641440700.git.dyroneteng@gmail.com>
+ source: <cover.1641978175.git.dyroneteng@gmail.com>
 
 
 * ab/config-based-hooks-2 (2022-01-07) 17 commits
