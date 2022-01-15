@@ -21,10 +21,10 @@ static const char * const send_pack_usage[] = {
 	   "              [--receive-pack=<git-receive-pack>]\n"
 	   "              [--verbose] [--thin] [--atomic]\n"
 	   "              [<host>:]<directory> (--all | <ref>...)"),
-	NULL,
+	NULL, 
 };
 
-static struct send_pack_args args;
+static struct send_pack_args args; 
 
 static void print_helper_status(struct ref *ref)
 {
