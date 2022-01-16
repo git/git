@@ -63,6 +63,11 @@ ifeq ($(uname_S),Linux)
 	PROCFS_EXECUTABLE_PATH = /proc/self/exe
 	HAVE_PLATFORM_PROCINFO = YesPlease
 	COMPAT_OBJS += compat/linux/procinfo.o
+	# centos7/rhel7 provides gcc 4.8.5 and zlib 1.2.7.
+	ifneq ($(findstring .el7.,$(uname_R)),)
+		BASIC_CFLAGS += -std=c99
+		NO_UNCOMPRESS2 = YesPlease
+	endif
 endif
 ifeq ($(uname_S),GNU/kFreeBSD)
 	HAVE_ALLOCA_H = YesPlease
