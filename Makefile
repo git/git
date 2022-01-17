@@ -234,6 +234,14 @@ all::
 # Define NO_TRUSTABLE_FILEMODE if your filesystem may claim to support
 # the executable mode bit, but doesn't really do so.
 #
+# Define CSPRNG_METHOD to "arc4random" if your system has arc4random and
+# arc4random_buf, "libbsd" if your system has those functions from libbsd,
+# "getrandom" if your system has getrandom, "getentropy" if your system has
+# getentropy, "rtlgenrandom" for RtlGenRandom (Windows only), or "openssl" if
+# you'd want to use the OpenSSL CSPRNG.  You may set multiple options with
+# spaces, in which case a suitable option will be chosen.  If unset or set to
+# anything else, defaults to using "/dev/urandom".
+#
 # Define NEEDS_MODE_TRANSLATION if your OS strays from the typical file type
 # bits in mode values (e.g. z/OS defines I_SFMT to 0xFF000000 as opposed to the
 # usual 0xF000).
@@ -693,6 +701,7 @@ TEST_BUILTINS_OBJS += test-bloom.o
 TEST_BUILTINS_OBJS += test-chmtime.o
 TEST_BUILTINS_OBJS += test-config.o
 TEST_BUILTINS_OBJS += test-crontab.o
+TEST_BUILTINS_OBJS += test-csprng.o
 TEST_BUILTINS_OBJS += test-ctype.o
 TEST_BUILTINS_OBJS += test-date.o
 TEST_BUILTINS_OBJS += test-delta.o
@@ -1906,6 +1915,31 @@ endif
 
 ifdef HAVE_GETDELIM
 	BASIC_CFLAGS += -DHAVE_GETDELIM
+endif
+
+ifneq ($(findstring arc4random,$(CSPRNG_METHOD)),)
+	BASIC_CFLAGS += -DHAVE_ARC4RANDOM
+endif
+
+ifneq ($(findstring libbsd,$(CSPRNG_METHOD)),)
+	BASIC_CFLAGS += -DHAVE_ARC4RANDOM_LIBBSD
+	EXTLIBS += -lbsd
+endif
+
+ifneq ($(findstring getrandom,$(CSPRNG_METHOD)),)
+	BASIC_CFLAGS += -DHAVE_GETRANDOM
+endif
+
+ifneq ($(findstring getentropy,$(CSPRNG_METHOD)),)
+	BASIC_CFLAGS += -DHAVE_GETENTROPY
+endif
+
+ifneq ($(findstring rtlgenrandom,$(CSPRNG_METHOD)),)
+	BASIC_CFLAGS += -DHAVE_RTLGENRANDOM
+endif
+
+ifneq ($(findstring openssl,$(CSPRNG_METHOD)),)
+	BASIC_CFLAGS += -DHAVE_OPENSSL_CSPRNG
 endif
 
 ifneq ($(PROCFS_EXECUTABLE_PATH),)

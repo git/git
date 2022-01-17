@@ -702,3 +702,69 @@ int open_nofollow(const char *path, int flags)
 	return open(path, flags);
 #endif
 }
+
+int csprng_bytes(void *buf, size_t len)
+{
+#if defined(HAVE_ARC4RANDOM) || defined(HAVE_ARC4RANDOM_LIBBSD)
+	/* This function never returns an error. */
+	arc4random_buf(buf, len);
+	return 0;
+#elif defined(HAVE_GETRANDOM)
+	ssize_t res;
+	char *p = buf;
+	while (len) {
+		res = getrandom(p, len, 0);
+		if (res < 0)
+			return -1;
+		len -= res;
+		p += res;
+	}
+	return 0;
+#elif defined(HAVE_GETENTROPY)
+	int res;
+	char *p = buf;
+	while (len) {
+		/* getentropy has a maximum size of 256 bytes. */
+		size_t chunk = len < 256 ? len : 256;
+		res = getentropy(p, chunk);
+		if (res < 0)
+			return -1;
+		len -= chunk;
+		p += chunk;
+	}
+	return 0;
+#elif defined(HAVE_RTLGENRANDOM)
+	if (!RtlGenRandom(buf, len))
+		return -1;
+	return 0;
+#elif defined(HAVE_OPENSSL_CSPRNG)
+	int res = RAND_bytes(buf, len);
+	if (res == 1)
+		return 0;
+	if (res == -1)
+		errno = ENOTSUP;
+	else
+		errno = EIO;
+	return -1;
+#else
+	ssize_t res;
+	char *p = buf;
+	int fd, err;
+	fd = open("/dev/urandom", O_RDONLY);
+	if (fd < 0)
+		return -1;
+	while (len) {
+		res = xread(fd, p, len);
+		if (res < 0) {
+			err = errno;
+			close(fd);
+			errno = err;
+			return -1;
+		}
+		len -= res;
+		p += res;
+	}
+	close(fd);
+	return 0;
+#endif
+}
