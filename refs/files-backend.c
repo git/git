@@ -1121,7 +1121,8 @@ static void prune_ref(struct files_ref_store *refs, struct ref_to_prune *r)
 	if (check_refname_format(r->name, 0))
 		return;
 
-	transaction = ref_store_transaction_begin(&refs->base, 0, &err);
+	transaction = ref_store_transaction_begin(&refs->base,
+						  REF_TRANSACTION_SKIP_HOOK, &err);
 	if (!transaction)
 		goto cleanup;
 	ref_transaction_add_update(
@@ -1192,7 +1193,8 @@ static int files_pack_refs(struct ref_store *ref_store, unsigned int flags)
 	struct strbuf err = STRBUF_INIT;
 	struct ref_transaction *transaction;
 
-	transaction = ref_store_transaction_begin(refs->packed_ref_store, 0, &err);
+	transaction = ref_store_transaction_begin(refs->packed_ref_store,
+						  REF_TRANSACTION_SKIP_HOOK, &err);
 	if (!transaction)
 		return -1;
 

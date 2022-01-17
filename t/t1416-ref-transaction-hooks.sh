@@ -150,21 +150,12 @@ test_expect_success 'hook does not get called on packing refs' '
 	git pack-refs --all &&
 
 	# We only expect a single hook invocation, which is the call to
-	# git-update-ref(1). But currently, packing refs will also trigger the
-	# hook.
+	# git-update-ref(1).
 	cat >expect <<-EOF &&
 		prepared
 		$ZERO_OID $POST_OID refs/heads/unpacked-ref
 		committed
 		$ZERO_OID $POST_OID refs/heads/unpacked-ref
-		prepared
-		$ZERO_OID $POST_OID refs/heads/unpacked-ref
-		committed
-		$ZERO_OID $POST_OID refs/heads/unpacked-ref
-		prepared
-		$POST_OID $ZERO_OID refs/heads/unpacked-ref
-		committed
-		$POST_OID $ZERO_OID refs/heads/unpacked-ref
 	EOF
 
 	test_cmp expect actual
