@@ -100,7 +100,7 @@ Performance, Internal Implementation, Development Support etc.
  * Teach and encourage first-time contributors to this project to
    state the base commit when they submit their topic.
 
- * The command line complation for "git send-email" options have been
+ * The command line completion for "git send-email" options have been
    tweaked to make it easier to keep it in sync with the command itself.
 
  * Ensure that the sparseness of the in-core index matches the
@@ -367,6 +367,13 @@ Fixes since v2.34
    it failed to restore changes to tracked ones.
    (merge 71cade5a0b en/stash-df-fix later to maint).
 
+ * Calling dynamically loaded functions on Windows has been corrected.
+   (merge 4a9b204920 ma/windows-dynload-fix later to maint).
+
+ * Some lockfile code called free() in signal-death code path, which
+   has been corrected.
+   (merge 58d4d7f1c5 ps/lockfile-cleanup-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 74db416c9c cw/protocol-v2-doc-fix later to maint).
    (merge f9b2b6684d ja/doc-cleanup later to maint).
@@ -391,3 +398,5 @@ Fixes since v2.34
    (merge 999bba3e0b rs/daemon-plug-leak later to maint).
    (merge 786eb1ba39 js/l10n-mention-ngettext-early-in-readme later to maint).
    (merge 2f12b31b74 ab/makefile-msgfmt-wo-stats later to maint).
+   (merge 0517f591ca fs/gpg-unknown-key-test-fix later to maint).
+   (merge 97d6fb5a1f ma/header-dup-cleanup later to maint).
