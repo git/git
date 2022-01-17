@@ -1261,7 +1261,8 @@ static int files_delete_refs(struct ref_store *ref_store, const char *msg,
 	if (packed_refs_lock(refs->packed_ref_store, 0, &err))
 		goto error;
 
-	transaction = ref_store_transaction_begin(refs->packed_ref_store, 0, &err);
+	transaction = ref_store_transaction_begin(refs->packed_ref_store,
+						  REF_TRANSACTION_SKIP_HOOK, &err);
 	if (!transaction)
 		goto error;
 
@@ -2776,7 +2777,8 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 			 */
 			if (!packed_transaction) {
 				packed_transaction = ref_store_transaction_begin(
-						refs->packed_ref_store, 0, err);
+						refs->packed_ref_store,
+						REF_TRANSACTION_SKIP_HOOK, err);
 				if (!packed_transaction) {
 					ret = TRANSACTION_GENERIC_ERROR;
 					goto cleanup;
@@ -3047,7 +3049,8 @@ static int files_initial_transaction_commit(struct ref_store *ref_store,
 				 &affected_refnames))
 		BUG("initial ref transaction called with existing refs");
 
-	packed_transaction = ref_store_transaction_begin(refs->packed_ref_store, 0, err);
+	packed_transaction = ref_store_transaction_begin(refs->packed_ref_store,
+							 REF_TRANSACTION_SKIP_HOOK, err);
 	if (!packed_transaction) {
 		ret = TRANSACTION_GENERIC_ERROR;
 		goto cleanup;

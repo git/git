@@ -175,15 +175,10 @@ test_expect_success 'deleting packed ref calls hook once' '
 	git update-ref -d refs/heads/to-be-deleted $POST_OID &&
 
 	# We only expect a single hook invocation, which is the logical
-	# deletion. But currently, we see two interleaving transactions, once
-	# for deleting the loose refs and once for deleting the packed ref.
+	# deletion.
 	cat >expect <<-EOF &&
 		prepared
-		$ZERO_OID $ZERO_OID refs/heads/to-be-deleted
-		prepared
 		$POST_OID $ZERO_OID refs/heads/to-be-deleted
-		committed
-		$ZERO_OID $ZERO_OID refs/heads/to-be-deleted
 		committed
 		$POST_OID $ZERO_OID refs/heads/to-be-deleted
 	EOF
