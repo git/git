@@ -90,7 +90,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git Turkish Localization Project\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2022-01-11 09:38+0800\n"
+"POT-Creation-Date: 2022-01-17 08:34+0800\n"
 "PO-Revision-Date: 2022-01-11 18:00+0300\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish (https://github.com/bitigchi/git-po/)\n"
@@ -977,8 +977,8 @@ msgstr "tanımlanamayan boşluk yok sayma seçeneği '%s'"
 #: builtin/checkout.c:1644 builtin/checkout.c:1754 builtin/checkout.c:1757
 #: builtin/clone.c:906 builtin/commit.c:358 builtin/commit.c:361
 #: builtin/commit.c:1196 builtin/describe.c:593 builtin/diff-tree.c:155
-#: builtin/difftool.c:733 builtin/fast-export.c:1245 builtin/fetch.c:2033
-#: builtin/fetch.c:2038 builtin/index-pack.c:1852 builtin/init-db.c:560
+#: builtin/difftool.c:733 builtin/fast-export.c:1245 builtin/fetch.c:2038
+#: builtin/fetch.c:2043 builtin/index-pack.c:1852 builtin/init-db.c:560
 #: builtin/log.c:1946 builtin/log.c:1948 builtin/ls-files.c:778
 #: builtin/merge.c:1403 builtin/merge.c:1405 builtin/pack-objects.c:4073
 #: builtin/push.c:592 builtin/push.c:630 builtin/push.c:636 builtin/push.c:641
@@ -1966,8 +1966,9 @@ msgstr "%s ikili nesnesi %s yolunda okunamıyor"
 msgid ""
 "cannot inherit upstream tracking configuration of multiple refs when "
 "rebasing is requested"
-msgstr "yeniden temellendirme istendiğinde birden çok başvurunun üst kaynak "
-"izleme yapılandırması miras alınamıyor"
+msgstr ""
+"yeniden temellendirme istendiğinde birden çok başvurunun üst kaynak izleme "
+"yapılandırması miras alınamıyor"
 
 #: branch.c:88
 #, c-format
@@ -2007,13 +2008,15 @@ msgstr ""
 #: branch.c:203
 #, c-format
 msgid "asked to inherit tracking from '%s', but no remote is set"
-msgstr "'%s' konumundan izleme miras istendi; ancak bir uzak konum ayarlanmamış"
+msgstr ""
+"'%s' konumundan izleme miras istendi; ancak bir uzak konum ayarlanmamış"
 
 #: branch.c:209
 #, c-format
 msgid "asked to inherit tracking from '%s', but no merge configuration is set"
-msgstr "'%s' konumundan izleme miras istendi; ancak bir birleştirme "
-"yapılandırması ayarlanmamış"
+msgstr ""
+"'%s' konumundan izleme miras istendi; ancak bir birleştirme yapılandırması "
+"ayarlanmamış"
 
 #: branch.c:252
 #, c-format
@@ -2032,7 +2035,7 @@ msgstr "'%s' adında bir dal halihazırda var"
 
 #: branch.c:313
 #, c-format
-msgid "cannot force update the branch '%s'checked out at '%s'"
+msgid "cannot force update the branch '%s' checked out at '%s'"
 msgstr "'%s' dalı zorla güncellenemiyor, '%s' konumunda çıkış yapılmış"
 
 #: branch.c:336
@@ -3429,15 +3432,17 @@ msgstr "'%s', '%s' ve '%s' seçenekleri birlikte kullanılamaz"
 #: diff.c:4597
 #, c-format
 msgid "options '%s' and '%s' cannot be used together, use '%s' with '%s'"
-msgstr "'%s' ve '%s' seçenekleri birlikte kullanılamaz, '%s' seçeneğini '%s' "
-"ile kullanın"
+msgstr ""
+"'%s' ve '%s' seçenekleri birlikte kullanılamaz, '%s' seçeneğini '%s' ile "
+"kullanın"
 
 #: diff.c:4601
 #, c-format
 msgid ""
 "options '%s' and '%s' cannot be used together, use '%s' with '%s' and '%s'"
-msgstr "'%s' ve '%s' seçenekleri birlikte kullanılamaz, '%s' seçeneğini '%s' "
-"ve '%s' ile kullanın"
+msgstr ""
+"'%s' ve '%s' seçenekleri birlikte kullanılamaz, '%s' seçeneğini '%s' ve '%s' "
+"ile kullanın"
 
 #: diff.c:4681
 msgid "--follow requires exactly one pathspec"
@@ -5867,7 +5872,7 @@ msgstr "%s: veritabanına ekleme başarısız"
 msgid "%s: unsupported file type"
 msgstr "%s: desteklenmeyen dosya türü"
 
-#: object-file.c:2329 builtin/fetch.c:1448
+#: object-file.c:2329 builtin/fetch.c:1453
 #, c-format
 msgid "%s is not a valid object"
 msgstr "%s geçerli bir nesne değil"
@@ -7130,41 +7135,41 @@ msgstr "hatalı ada iye '%s' başvurusunu güncelleme reddediliyor"
 msgid "update_ref failed for ref '%s': %s"
 msgstr "'%s' başvurusu için update_ref başarısız oldu: %s"
 
-#: refs.c:2069
+#: refs.c:2067
 #, c-format
 msgid "multiple updates for ref '%s' not allowed"
 msgstr "'%s' başvurusu için birden çok güncellemeye izin verilmiyor"
 
-#: refs.c:2152
+#: refs.c:2150
 msgid "ref updates forbidden inside quarantine environment"
 msgstr "başvuru güncellemeleri karantina ortamı içinde yasak"
 
-#: refs.c:2163
+#: refs.c:2161
 msgid "ref updates aborted by hook"
 msgstr "başvuru güncellemeleri kanca tarafından iptal edildi"
 
-#: refs.c:2271 refs.c:2301
+#: refs.c:2269 refs.c:2299
 #, c-format
 msgid "'%s' exists; cannot create '%s'"
 msgstr "'%s' mevcut; '%s' oluşturulamıyor"
 
-#: refs.c:2277 refs.c:2312
+#: refs.c:2275 refs.c:2310
 #, c-format
 msgid "cannot process '%s' and '%s' at the same time"
 msgstr "'%s' ve '%s' aynı anda işlenemiyor"
 
-#: refs/files-backend.c:1268
+#: refs/files-backend.c:1267
 #, c-format
 msgid "could not remove reference %s"
 msgstr "%s başvurusu kaldırılamadı"
 
-#: refs/files-backend.c:1282 refs/packed-backend.c:1549
+#: refs/files-backend.c:1281 refs/packed-backend.c:1549
 #: refs/packed-backend.c:1559
 #, c-format
 msgid "could not delete reference %s: %s"
 msgstr "%s başvurusu silinemedi: %s"
 
-#: refs/files-backend.c:1285 refs/packed-backend.c:1562
+#: refs/files-backend.c:1284 refs/packed-backend.c:1562
 #, c-format
 msgid "could not delete references: %s"
 msgstr "başvurular silinemedi: %s"
@@ -8193,7 +8198,8 @@ msgstr "HEAD çözülemiyor"
 msgid "cannot abort from a branch yet to be born"
 msgstr "daha doğmamış bir daldan iptal edilemiyor"
 
-#: sequencer.c:3180 builtin/fetch.c:999 builtin/fetch.c:1411 builtin/grep.c:772
+#: sequencer.c:3180 builtin/fetch.c:1004 builtin/fetch.c:1416
+#: builtin/grep.c:772
 #, c-format
 msgid "cannot open '%s'"
 msgstr "'%s' açılamıyor"
@@ -9143,7 +9149,7 @@ msgstr "uzak servis yolu ayarlama protokol tarafından desteklenmiyor"
 msgid "invalid remote service path"
 msgstr "geçersiz uzak konum servis yolu"
 
-#: transport-helper.c:661 transport.c:1474
+#: transport-helper.c:661 transport.c:1479
 msgid "operation not supported by protocol"
 msgstr "işlem protokol tarafından desteklenmiyor"
 
@@ -10667,7 +10673,8 @@ msgstr "Eğer bu yamayı atlamayı yeğliyorsanız \"%s --skip\" çalıştırın
 #: builtin/am.c:1159
 #, c-format
 msgid "To record the empty patch as an empty commit, run \"%s --allow-empty\"."
-msgstr "Boş yamayı boş işleme kaydı olarak yazmak için \"%s --allow-empty\" "
+msgstr ""
+"Boş yamayı boş işleme kaydı olarak yazmak için \"%s --allow-empty\" "
 "çalıştırın."
 
 #: builtin/am.c:1161
@@ -13347,7 +13354,7 @@ msgstr "'%s' ve '%s %s' seçenekleri birlikte kullanılamaz"
 msgid "repository '%s' does not exist"
 msgstr "'%s' deposu mevcut değil"
 
-#: builtin/clone.c:924 builtin/fetch.c:2047
+#: builtin/clone.c:924 builtin/fetch.c:2052
 #, c-format
 msgid "depth %s is not a positive number"
 msgstr "%s derinliği pozitif bir sayı değil"
@@ -13932,7 +13939,8 @@ msgstr "Bir seç-al'ın tam ortasındasınız -- ileti değiştirilemiyor."
 #: builtin/commit.c:1232
 #, c-format
 msgid "reword option of '%s' and path '%s' cannot be used together"
-msgstr "'%s' ögesinin yeniden yazım seçeneği ve '%s' yolu birlikte kullanılamaz"
+msgstr ""
+"'%s' ögesinin yeniden yazım seçeneği ve '%s' yolu birlikte kullanılamaz"
 
 #: builtin/commit.c:1234
 #, c-format
@@ -15248,70 +15256,70 @@ msgstr "getirdikten sonra işleme grafiğini yaz"
 msgid "accept refspecs from stdin"
 msgstr "başvuru belirteçlerini stdin'den oku"
 
-#: builtin/fetch.c:587
+#: builtin/fetch.c:592
 msgid "couldn't find remote ref HEAD"
 msgstr "uzak HEAD başvurusu bulunamadı"
 
-#: builtin/fetch.c:761
+#: builtin/fetch.c:766
 #, c-format
 msgid "configuration fetch.output contains invalid value %s"
 msgstr "fetch.output yapılandırması geçersiz değer içeriyor: %s"
 
-#: builtin/fetch.c:862
+#: builtin/fetch.c:867
 #, c-format
 msgid "object %s not found"
 msgstr "%s nesnesi bulunamadı"
 
-#: builtin/fetch.c:866
+#: builtin/fetch.c:871
 msgid "[up to date]"
 msgstr "[güncel]"
 
-#: builtin/fetch.c:878 builtin/fetch.c:896 builtin/fetch.c:968
+#: builtin/fetch.c:883 builtin/fetch.c:901 builtin/fetch.c:973
 msgid "[rejected]"
 msgstr "[reddedildi]"
 
-#: builtin/fetch.c:880
+#: builtin/fetch.c:885
 msgid "can't fetch in current branch"
 msgstr "geçerli dalda getirme yapılamıyor"
 
-#: builtin/fetch.c:881
+#: builtin/fetch.c:886
 msgid "checked out in another worktree"
 msgstr "başka bir çalışma ağacında çıkış yapıldı"
 
-#: builtin/fetch.c:891
+#: builtin/fetch.c:896
 msgid "[tag update]"
 msgstr "[etiket güncellemesi]"
 
-#: builtin/fetch.c:892 builtin/fetch.c:929 builtin/fetch.c:951
-#: builtin/fetch.c:963
+#: builtin/fetch.c:897 builtin/fetch.c:934 builtin/fetch.c:956
+#: builtin/fetch.c:968
 msgid "unable to update local ref"
 msgstr "yerel başvuru güncellenemiyor"
 
-#: builtin/fetch.c:896
+#: builtin/fetch.c:901
 msgid "would clobber existing tag"
 msgstr "var olan etiketi değiştirecektir"
 
-#: builtin/fetch.c:918
+#: builtin/fetch.c:923
 msgid "[new tag]"
 msgstr "[yeni etiket]"
 
-#: builtin/fetch.c:921
+#: builtin/fetch.c:926
 msgid "[new branch]"
 msgstr "[yeni dal]"
 
-#: builtin/fetch.c:924
+#: builtin/fetch.c:929
 msgid "[new ref]"
 msgstr "[yeni başvuru]"
 
-#: builtin/fetch.c:963
+#: builtin/fetch.c:968
 msgid "forced update"
 msgstr "zorlanmış güncelleme"
 
-#: builtin/fetch.c:968
+#: builtin/fetch.c:973
 msgid "non-fast-forward"
 msgstr "ileri sarım değil"
 
-#: builtin/fetch.c:1071
+#: builtin/fetch.c:1076
 msgid ""
 "fetch normally indicates which branches had a forced update,\n"
 "but that check has been disabled; to re-enable, use '--show-forced-updates'\n"
@@ -15321,7 +15329,7 @@ msgstr ""
 "ancak bu denetleme kapatılmış. Yeniden açmak için '--show-forced-updates'\n"
 "bayrağını kullanın veya 'git config fetch.showForcedUpdates true' çalıştırın."
 
-#: builtin/fetch.c:1075
+#: builtin/fetch.c:1080
 #, c-format
 msgid ""
 "it took %.2f seconds to check forced updates; you can use\n"
@@ -15329,26 +15337,27 @@ msgid ""
 "false'\n"
 "to avoid this check\n"
 msgstr ""
-"Zorla güncellemeleri denetleme %.2f saniye sürdü. '--no-show-forced-updates'\n"
+"Zorla güncellemeleri denetleme %.2f saniye sürdü. '--no-show-forced-"
+"updates'\n"
 "kullanarak veya 'git config fetch.showForcedUpdates false' çalıştırarak\n"
 "bu denetlemeden kaçınabilirsiniz.\n"
 
-#: builtin/fetch.c:1107
+#: builtin/fetch.c:1112
 #, c-format
 msgid "%s did not send all necessary objects\n"
 msgstr "%s tüm gerekli nesneleri göndermedi\n"
 
-#: builtin/fetch.c:1136
+#: builtin/fetch.c:1141
 #, c-format
 msgid "rejected %s because shallow roots are not allowed to be updated"
 msgstr "%s reddedildi; çünkü sığ köklerin güncellenmesine izin verilmiyor"
 
-#: builtin/fetch.c:1226 builtin/fetch.c:1374
+#: builtin/fetch.c:1231 builtin/fetch.c:1379
 #, c-format
 msgid "From %.*s\n"
 msgstr "Şu konumdan: %.*s\n"
 
-#: builtin/fetch.c:1247
+#: builtin/fetch.c:1252
 #, c-format
 msgid ""
 "some local refs could not be updated; try running\n"
@@ -15357,49 +15366,49 @@ msgstr ""
 "bazı yerel başvurular güncellenemedi; 'git remote prune %s'\n"
 "kullanarak eski ve çakışan dalları kaldırmayı deneyin"
 
-#: builtin/fetch.c:1344
+#: builtin/fetch.c:1349
 #, c-format
 msgid "   (%s will become dangling)"
 msgstr "   (%s sarkacak)"
 
-#: builtin/fetch.c:1345
+#: builtin/fetch.c:1350
 #, c-format
 msgid "   (%s has become dangling)"
 msgstr "   (%s sarkmaya başladı)"
 
-#: builtin/fetch.c:1377
+#: builtin/fetch.c:1382
 msgid "[deleted]"
 msgstr "[silindi]"
 
-#: builtin/fetch.c:1378 builtin/remote.c:1128
+#: builtin/fetch.c:1383 builtin/remote.c:1128
 msgid "(none)"
 msgstr "(hiçbiri)"
 
-#: builtin/fetch.c:1400
+#: builtin/fetch.c:1405
 #, c-format
 msgid "refusing to fetch into branch '%s' checked out at '%s'"
 msgstr "'%s' dalına getirme reddediliyor, '%s' konumunda çıkış yapıldı"
 
-#: builtin/fetch.c:1420
+#: builtin/fetch.c:1425
 #, c-format
 msgid "option \"%s\" value \"%s\" is not valid for %s"
 msgstr "\"%s\" seçeneği \"%s\" değeri %s için geçerli değil"
 
-#: builtin/fetch.c:1423
+#: builtin/fetch.c:1428
 #, c-format
 msgid "option \"%s\" is ignored for %s\n"
 msgstr "\"%s\" seçeneği %s için yok sayılıyor\n"
 
-#: builtin/fetch.c:1450
+#: builtin/fetch.c:1455
 #, c-format
 msgid "the object %s does not exist"
 msgstr "%s diye bir nesne yok"
 
-#: builtin/fetch.c:1638
+#: builtin/fetch.c:1643
 msgid "multiple branches detected, incompatible with --set-upstream"
 msgstr "birden çok dal algılandı, --set-upstream ile uyumsuz"
 
-#: builtin/fetch.c:1650
+#: builtin/fetch.c:1655
 #, c-format
 msgid ""
 "could not set upstream of HEAD to '%s' from '%s' when it does not point to "
@@ -15408,19 +15417,19 @@ msgstr ""
 "HEAD'in üst kaynağı '%s' olarak '%s' konumundan ayarlanamadı; çünkü herhangi "
 "bir dala işaret etmiyor."
 
-#: builtin/fetch.c:1663
+#: builtin/fetch.c:1668
 msgid "not setting upstream for a remote remote-tracking branch"
 msgstr "bir uzak konum uzak izleme dalı için üstkaynak ayarlanmıyor"
 
-#: builtin/fetch.c:1665
+#: builtin/fetch.c:1670
 msgid "not setting upstream for a remote tag"
 msgstr "bir uzak konum etiketi için üstkaynak ayarlanmıyor"
 
-#: builtin/fetch.c:1667
+#: builtin/fetch.c:1672
 msgid "unknown branch type"
 msgstr "bilinmeyen dal türü"
 
-#: builtin/fetch.c:1669
+#: builtin/fetch.c:1674
 msgid ""
 "no source branch found;\n"
 "you need to specify exactly one branch with the --set-upstream option"
@@ -15428,22 +15437,22 @@ msgstr ""
 "Kaynak dal bulunamadı.\n"
 "--set-upstream seçeneği ile tam olarak bir dal belirtmeniz gerekiyor."
 
-#: builtin/fetch.c:1799 builtin/fetch.c:1862
+#: builtin/fetch.c:1804 builtin/fetch.c:1867
 #, c-format
 msgid "Fetching %s\n"
 msgstr "%s getiriliyor\n"
 
-#: builtin/fetch.c:1809 builtin/fetch.c:1864
+#: builtin/fetch.c:1814 builtin/fetch.c:1869
 #, c-format
 msgid "could not fetch %s"
 msgstr "%s getirilemedi"
 
-#: builtin/fetch.c:1821
+#: builtin/fetch.c:1826
 #, c-format
 msgid "could not fetch '%s' (exit code: %d)\n"
 msgstr "'%s' getirilemedi (çıkış kodu: %d)\n"
 
-#: builtin/fetch.c:1925
+#: builtin/fetch.c:1930
 msgid ""
 "no remote repository specified; please specify either a URL or a\n"
 "remote name from which new revisions should be fetched"
@@ -15451,50 +15460,50 @@ msgstr ""
 "Bir uzak dal belirtilmedi. Lütfen yeni revizyonların\n"
 "getirileceği bir URL veya uzak konum adı belirtin."
 
-#: builtin/fetch.c:1961
+#: builtin/fetch.c:1966
 msgid "you need to specify a tag name"
 msgstr "bir etiket adı belirtmeniz gerekiyor"
 
-#: builtin/fetch.c:2027
+#: builtin/fetch.c:2032
 msgid "--negotiate-only needs one or more --negotiate-tip=*"
 msgstr ""
 "--negotiate-only'nin bir veya daha çok --negotiate-tip=* gereksinimi var"
 
-#: builtin/fetch.c:2031
+#: builtin/fetch.c:2036
 msgid "negative depth in --deepen is not supported"
 msgstr "--deepen içinde negatif derinlik desteklenmiyor"
 
-#: builtin/fetch.c:2040
+#: builtin/fetch.c:2045
 msgid "--unshallow on a complete repository does not make sense"
 msgstr "tam bir depo üzerinde --unshallow bir anlam ifade etmiyor"
 
-#: builtin/fetch.c:2057
+#: builtin/fetch.c:2062
 msgid "fetch --all does not take a repository argument"
 msgstr "fetch --all bir depo argümanı almıyor"
 
-#: builtin/fetch.c:2059
+#: builtin/fetch.c:2064
 msgid "fetch --all does not make sense with refspecs"
 msgstr "fetch --all başvuru belirteçleri ile birlikte bir anlam ifade etmiyor"
 
-#: builtin/fetch.c:2068
+#: builtin/fetch.c:2073
 #, c-format
 msgid "no such remote or remote group: %s"
 msgstr "böyle bir uzak konum veya uzak konum grubu yok: %s"
 
-#: builtin/fetch.c:2076
+#: builtin/fetch.c:2081
 msgid "fetching a group and specifying refspecs does not make sense"
 msgstr ""
 "bir grubu getirme ve başvuru belirteçleri tanımlama bir anlam ifade etmiyor"
 
-#: builtin/fetch.c:2092
+#: builtin/fetch.c:2097
 msgid "must supply remote when using --negotiate-only"
 msgstr "--negotiate-only kullanırken uzak konum sağlanmalıdır"
 
-#: builtin/fetch.c:2097
+#: builtin/fetch.c:2102
 msgid "protocol does not support --negotiate-only, exiting"
 msgstr "protokol, --negotiate-only desteklemediğinden çıkılıyor"
 
-#: builtin/fetch.c:2116
+#: builtin/fetch.c:2121
 msgid ""
 "--filter can only be used with the remote configured in extensions."
 "partialclone"
@@ -15502,11 +15511,11 @@ msgstr ""
 "--filter yalnızca extensions.partialclone içinde yapılandırılmış uzak konum "
 "ile kullanılabilir."
 
-#: builtin/fetch.c:2120
+#: builtin/fetch.c:2125
 msgid "--atomic can only be used when fetching from one remote"
 msgstr "--atomic yalnızca bir uzak konumdan getirirken kullanılabilir"
 
-#: builtin/fetch.c:2124
+#: builtin/fetch.c:2129
 msgid "--stdin can only be used when fetching from one remote"
 msgstr ""
 "--stdin seçeneği yalnızca bir uzak konumdan getirilirken kullanılabilir"
@@ -22317,8 +22326,9 @@ msgstr "git sparse-checkout reapply [--[no-]cone] [--[no-]sparse-index]"
 
 #: builtin/sparse-checkout.c:785
 msgid "must be in a sparse-checkout to reapply sparsity patterns"
-msgstr "aralıklılık dizgilerinin yeniden uygulanması için bir aralıklı çıkış "
-"içinde olmalı"
+msgstr ""
+"aralıklılık dizgilerinin yeniden uygulanması için bir aralıklı çıkış içinde "
+"olmalı"
 
 #: builtin/sparse-checkout.c:803
 msgid "git sparse-checkout disable"
@@ -22695,8 +22705,7 @@ msgid ""
 "."
 msgstr ""
 "run_command, %s ögesinin iç içe geçmiş altmodülleri içinde özyinelerken "
-"sıfır olmayan durum döndürdü"
-"."
+"sıfır olmayan durum döndürdü."
 
 #: builtin/submodule--helper.c:561
 msgid "suppress output of entering each submodule command"
@@ -24653,7 +24662,8 @@ msgstr "uzak konum HEAD'i bir dal değil: '%.*s'"
 
 #: contrib/scalar/scalar.c:317
 msgid "failed to get default branch name from remote; using local default"
-msgstr "uzak konumdan öntanımlı dal adı alınamadı; yerel öntanımlı kullanılıyor"
+msgstr ""
+"uzak konumdan öntanımlı dal adı alınamadı; yerel öntanımlı kullanılıyor"
 
 #: contrib/scalar/scalar.c:330
 msgid "failed to get default branch name"
