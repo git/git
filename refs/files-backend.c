@@ -1121,7 +1121,7 @@ static void prune_ref(struct files_ref_store *refs, struct ref_to_prune *r)
 	if (check_refname_format(r->name, 0))
 		return;
 
-	transaction = ref_store_transaction_begin(&refs->base, &err);
+	transaction = ref_store_transaction_begin(&refs->base, 0, &err);
 	if (!transaction)
 		goto cleanup;
 	ref_transaction_add_update(
@@ -1192,7 +1192,7 @@ static int files_pack_refs(struct ref_store *ref_store, unsigned int flags)
 	struct strbuf err = STRBUF_INIT;
 	struct ref_transaction *transaction;
 
-	transaction = ref_store_transaction_begin(refs->packed_ref_store, &err);
+	transaction = ref_store_transaction_begin(refs->packed_ref_store, 0, &err);
 	if (!transaction)
 		return -1;
 
@@ -1259,7 +1259,7 @@ static int files_delete_refs(struct ref_store *ref_store, const char *msg,
 	if (packed_refs_lock(refs->packed_ref_store, 0, &err))
 		goto error;
 
-	transaction = ref_store_transaction_begin(refs->packed_ref_store, &err);
+	transaction = ref_store_transaction_begin(refs->packed_ref_store, 0, &err);
 	if (!transaction)
 		goto error;
 
@@ -2774,7 +2774,7 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 			 */
 			if (!packed_transaction) {
 				packed_transaction = ref_store_transaction_begin(
-						refs->packed_ref_store, err);
+						refs->packed_ref_store, 0, err);
 				if (!packed_transaction) {
 					ret = TRANSACTION_GENERIC_ERROR;
 					goto cleanup;
@@ -3045,7 +3045,7 @@ static int files_initial_transaction_commit(struct ref_store *ref_store,
 				 &affected_refnames))
 		BUG("initial ref transaction called with existing refs");
 
-	packed_transaction = ref_store_transaction_begin(refs->packed_ref_store, err);
+	packed_transaction = ref_store_transaction_begin(refs->packed_ref_store, 0, err);
 	if (!packed_transaction) {
 		ret = TRANSACTION_GENERIC_ERROR;
 		goto cleanup;
