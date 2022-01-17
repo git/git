@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2022-01-11 09:38+0800\n"
+"POT-Creation-Date: 2022-01-17 08:31+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -788,8 +788,8 @@ msgstr ""
 #: builtin/checkout.c:1644 builtin/checkout.c:1754 builtin/checkout.c:1757
 #: builtin/clone.c:906 builtin/commit.c:358 builtin/commit.c:361
 #: builtin/commit.c:1196 builtin/describe.c:593 builtin/diff-tree.c:155
-#: builtin/difftool.c:733 builtin/fast-export.c:1245 builtin/fetch.c:2033
-#: builtin/fetch.c:2038 builtin/index-pack.c:1852 builtin/init-db.c:560
+#: builtin/difftool.c:733 builtin/fast-export.c:1245 builtin/fetch.c:2038
+#: builtin/fetch.c:2043 builtin/index-pack.c:1852 builtin/init-db.c:560
 #: builtin/log.c:1946 builtin/log.c:1948 builtin/ls-files.c:778
 #: builtin/merge.c:1403 builtin/merge.c:1405 builtin/pack-objects.c:4073
 #: builtin/push.c:592 builtin/push.c:630 builtin/push.c:636 builtin/push.c:641
@@ -1807,7 +1807,7 @@ msgstr ""
 
 #: branch.c:313
 #, c-format
-msgid "cannot force update the branch '%s'checked out at '%s'"
+msgid "cannot force update the branch '%s' checked out at '%s'"
 msgstr ""
 
 #: branch.c:336
@@ -5409,7 +5409,7 @@ msgstr ""
 msgid "%s: unsupported file type"
 msgstr ""
 
-#: object-file.c:2329 builtin/fetch.c:1448
+#: object-file.c:2329 builtin/fetch.c:1453
 #, c-format
 msgid "%s is not a valid object"
 msgstr ""
@@ -6587,41 +6587,41 @@ msgstr ""
 msgid "update_ref failed for ref '%s': %s"
 msgstr ""
 
-#: refs.c:2069
+#: refs.c:2067
 #, c-format
 msgid "multiple updates for ref '%s' not allowed"
 msgstr ""
 
-#: refs.c:2152
+#: refs.c:2150
 msgid "ref updates forbidden inside quarantine environment"
 msgstr ""
 
-#: refs.c:2163
+#: refs.c:2161
 msgid "ref updates aborted by hook"
 msgstr ""
 
-#: refs.c:2271 refs.c:2301
+#: refs.c:2269 refs.c:2299
 #, c-format
 msgid "'%s' exists; cannot create '%s'"
 msgstr ""
 
-#: refs.c:2277 refs.c:2312
+#: refs.c:2275 refs.c:2310
 #, c-format
 msgid "cannot process '%s' and '%s' at the same time"
 msgstr ""
 
-#: refs/files-backend.c:1268
+#: refs/files-backend.c:1267
 #, c-format
 msgid "could not remove reference %s"
 msgstr ""
 
-#: refs/files-backend.c:1282 refs/packed-backend.c:1549
+#: refs/files-backend.c:1281 refs/packed-backend.c:1549
 #: refs/packed-backend.c:1559
 #, c-format
 msgid "could not delete reference %s: %s"
 msgstr ""
 
-#: refs/files-backend.c:1285 refs/packed-backend.c:1562
+#: refs/files-backend.c:1284 refs/packed-backend.c:1562
 #, c-format
 msgid "could not delete references: %s"
 msgstr ""
@@ -7574,7 +7574,8 @@ msgstr ""
 msgid "cannot abort from a branch yet to be born"
 msgstr ""
 
-#: sequencer.c:3180 builtin/fetch.c:999 builtin/fetch.c:1411 builtin/grep.c:772
+#: sequencer.c:3180 builtin/fetch.c:1004 builtin/fetch.c:1416
+#: builtin/grep.c:772
 #, c-format
 msgid "cannot open '%s'"
 msgstr ""
@@ -8461,7 +8462,7 @@ msgstr ""
 msgid "invalid remote service path"
 msgstr ""
 
-#: transport-helper.c:661 transport.c:1474
+#: transport-helper.c:661 transport.c:1479
 msgid "operation not supported by protocol"
 msgstr ""
 
@@ -12380,7 +12381,7 @@ msgstr ""
 msgid "repository '%s' does not exist"
 msgstr ""
 
-#: builtin/clone.c:924 builtin/fetch.c:2047
+#: builtin/clone.c:924 builtin/fetch.c:2052
 #, c-format
 msgid "depth %s is not a positive number"
 msgstr ""
@@ -14161,77 +14162,77 @@ msgstr ""
 msgid "accept refspecs from stdin"
 msgstr ""
 
-#: builtin/fetch.c:587
+#: builtin/fetch.c:592
 msgid "couldn't find remote ref HEAD"
 msgstr ""
 
-#: builtin/fetch.c:761
+#: builtin/fetch.c:766
 #, c-format
 msgid "configuration fetch.output contains invalid value %s"
 msgstr ""
 
-#: builtin/fetch.c:862
+#: builtin/fetch.c:867
 #, c-format
 msgid "object %s not found"
 msgstr ""
 
-#: builtin/fetch.c:866
+#: builtin/fetch.c:871
 msgid "[up to date]"
 msgstr ""
 
-#: builtin/fetch.c:878 builtin/fetch.c:896 builtin/fetch.c:968
+#: builtin/fetch.c:883 builtin/fetch.c:901 builtin/fetch.c:973
 msgid "[rejected]"
 msgstr ""
 
-#: builtin/fetch.c:880
+#: builtin/fetch.c:885
 msgid "can't fetch in current branch"
 msgstr ""
 
-#: builtin/fetch.c:881
+#: builtin/fetch.c:886
 msgid "checked out in another worktree"
 msgstr ""
 
-#: builtin/fetch.c:891
+#: builtin/fetch.c:896
 msgid "[tag update]"
 msgstr ""
 
-#: builtin/fetch.c:892 builtin/fetch.c:929 builtin/fetch.c:951
-#: builtin/fetch.c:963
+#: builtin/fetch.c:897 builtin/fetch.c:934 builtin/fetch.c:956
+#: builtin/fetch.c:968
 msgid "unable to update local ref"
 msgstr ""
 
-#: builtin/fetch.c:896
+#: builtin/fetch.c:901
 msgid "would clobber existing tag"
 msgstr ""
 
-#: builtin/fetch.c:918
+#: builtin/fetch.c:923
 msgid "[new tag]"
 msgstr ""
 
-#: builtin/fetch.c:921
+#: builtin/fetch.c:926
 msgid "[new branch]"
 msgstr ""
 
-#: builtin/fetch.c:924
+#: builtin/fetch.c:929
 msgid "[new ref]"
 msgstr ""
 
-#: builtin/fetch.c:963
+#: builtin/fetch.c:968
 msgid "forced update"
 msgstr ""
 
-#: builtin/fetch.c:968
+#: builtin/fetch.c:973
 msgid "non-fast-forward"
 msgstr ""
 
-#: builtin/fetch.c:1071
+#: builtin/fetch.c:1076
 msgid ""
 "fetch normally indicates which branches had a forced update,\n"
 "but that check has been disabled; to re-enable, use '--show-forced-updates'\n"
 "flag or run 'git config fetch.showForcedUpdates true'"
 msgstr ""
 
-#: builtin/fetch.c:1075
+#: builtin/fetch.c:1080
 #, c-format
 msgid ""
 "it took %.2f seconds to check forced updates; you can use\n"
@@ -14240,168 +14241,168 @@ msgid ""
 "to avoid this check\n"
 msgstr ""
 
-#: builtin/fetch.c:1107
+#: builtin/fetch.c:1112
 #, c-format
 msgid "%s did not send all necessary objects\n"
 msgstr ""
 
-#: builtin/fetch.c:1136
+#: builtin/fetch.c:1141
 #, c-format
 msgid "rejected %s because shallow roots are not allowed to be updated"
 msgstr ""
 
-#: builtin/fetch.c:1226 builtin/fetch.c:1374
+#: builtin/fetch.c:1231 builtin/fetch.c:1379
 #, c-format
 msgid "From %.*s\n"
 msgstr ""
 
-#: builtin/fetch.c:1247
+#: builtin/fetch.c:1252
 #, c-format
 msgid ""
 "some local refs could not be updated; try running\n"
 " 'git remote prune %s' to remove any old, conflicting branches"
 msgstr ""
 
-#: builtin/fetch.c:1344
+#: builtin/fetch.c:1349
 #, c-format
 msgid "   (%s will become dangling)"
 msgstr ""
 
-#: builtin/fetch.c:1345
+#: builtin/fetch.c:1350
 #, c-format
 msgid "   (%s has become dangling)"
 msgstr ""
 
-#: builtin/fetch.c:1377
+#: builtin/fetch.c:1382
 msgid "[deleted]"
 msgstr ""
 
-#: builtin/fetch.c:1378 builtin/remote.c:1128
+#: builtin/fetch.c:1383 builtin/remote.c:1128
 msgid "(none)"
 msgstr ""
 
-#: builtin/fetch.c:1400
+#: builtin/fetch.c:1405
 #, c-format
 msgid "refusing to fetch into branch '%s' checked out at '%s'"
 msgstr ""
 
-#: builtin/fetch.c:1420
+#: builtin/fetch.c:1425
 #, c-format
 msgid "option \"%s\" value \"%s\" is not valid for %s"
 msgstr ""
 
-#: builtin/fetch.c:1423
+#: builtin/fetch.c:1428
 #, c-format
 msgid "option \"%s\" is ignored for %s\n"
 msgstr ""
 
-#: builtin/fetch.c:1450
+#: builtin/fetch.c:1455
 #, c-format
 msgid "the object %s does not exist"
 msgstr ""
 
-#: builtin/fetch.c:1638
+#: builtin/fetch.c:1643
 msgid "multiple branches detected, incompatible with --set-upstream"
 msgstr ""
 
-#: builtin/fetch.c:1650
+#: builtin/fetch.c:1655
 #, c-format
 msgid ""
 "could not set upstream of HEAD to '%s' from '%s' when it does not point to "
 "any branch."
 msgstr ""
 
-#: builtin/fetch.c:1663
+#: builtin/fetch.c:1668
 msgid "not setting upstream for a remote remote-tracking branch"
 msgstr ""
 
-#: builtin/fetch.c:1665
+#: builtin/fetch.c:1670
 msgid "not setting upstream for a remote tag"
 msgstr ""
 
-#: builtin/fetch.c:1667
+#: builtin/fetch.c:1672
 msgid "unknown branch type"
 msgstr ""
 
-#: builtin/fetch.c:1669
+#: builtin/fetch.c:1674
 msgid ""
 "no source branch found;\n"
 "you need to specify exactly one branch with the --set-upstream option"
 msgstr ""
 
-#: builtin/fetch.c:1799 builtin/fetch.c:1862
+#: builtin/fetch.c:1804 builtin/fetch.c:1867
 #, c-format
 msgid "Fetching %s\n"
 msgstr ""
 
-#: builtin/fetch.c:1809 builtin/fetch.c:1864
+#: builtin/fetch.c:1814 builtin/fetch.c:1869
 #, c-format
 msgid "could not fetch %s"
 msgstr ""
 
-#: builtin/fetch.c:1821
+#: builtin/fetch.c:1826
 #, c-format
 msgid "could not fetch '%s' (exit code: %d)\n"
 msgstr ""
 
-#: builtin/fetch.c:1925
+#: builtin/fetch.c:1930
 msgid ""
 "no remote repository specified; please specify either a URL or a\n"
 "remote name from which new revisions should be fetched"
 msgstr ""
 
-#: builtin/fetch.c:1961
+#: builtin/fetch.c:1966
 msgid "you need to specify a tag name"
 msgstr ""
 
-#: builtin/fetch.c:2027
+#: builtin/fetch.c:2032
 msgid "--negotiate-only needs one or more --negotiate-tip=*"
 msgstr ""
 
-#: builtin/fetch.c:2031
+#: builtin/fetch.c:2036
 msgid "negative depth in --deepen is not supported"
 msgstr ""
 
-#: builtin/fetch.c:2040
+#: builtin/fetch.c:2045
 msgid "--unshallow on a complete repository does not make sense"
 msgstr ""
 
-#: builtin/fetch.c:2057
+#: builtin/fetch.c:2062
 msgid "fetch --all does not take a repository argument"
 msgstr ""
 
-#: builtin/fetch.c:2059
+#: builtin/fetch.c:2064
 msgid "fetch --all does not make sense with refspecs"
 msgstr ""
 
-#: builtin/fetch.c:2068
+#: builtin/fetch.c:2073
 #, c-format
 msgid "no such remote or remote group: %s"
 msgstr ""
 
-#: builtin/fetch.c:2076
+#: builtin/fetch.c:2081
 msgid "fetching a group and specifying refspecs does not make sense"
 msgstr ""
 
-#: builtin/fetch.c:2092
+#: builtin/fetch.c:2097
 msgid "must supply remote when using --negotiate-only"
 msgstr ""
 
-#: builtin/fetch.c:2097
+#: builtin/fetch.c:2102
 msgid "protocol does not support --negotiate-only, exiting"
 msgstr ""
 
-#: builtin/fetch.c:2116
+#: builtin/fetch.c:2121
 msgid ""
 "--filter can only be used with the remote configured in extensions."
 "partialclone"
 msgstr ""
 
-#: builtin/fetch.c:2120
+#: builtin/fetch.c:2125
 msgid "--atomic can only be used when fetching from one remote"
 msgstr ""
 
-#: builtin/fetch.c:2124
+#: builtin/fetch.c:2129
 msgid "--stdin can only be used when fetching from one remote"
 msgstr ""
 
