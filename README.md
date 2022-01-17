@@ -32,10 +32,16 @@ installed).
 The user discussion and development of Git take place on the Git
 mailing list -- everyone is welcome to post bug reports, feature
 requests, comments and patches to git@vger.kernel.org (read
-[Documentation/SubmittingPatches][] for instructions on patch submission).
+[Documentation/SubmittingPatches][] for instructions on patch submission
+and [Documentation/CodingGuidelines][]).
+
+Those wishing to help with error message, usage and informational message
+string translations (localization l10) should see [po/README.md][]
+(a `po` file is a Portable Object file that holds the translations).
+
 To subscribe to the list, send an email with just "subscribe git" in
-the body to majordomo@vger.kernel.org. The mailing list archives are
-available at <https://lore.kernel.org/git/>,
+the body to majordomo@vger.kernel.org (not the Git list). The mailing
+list archives are available at <https://lore.kernel.org/git/>,
 <http://marc.info/?l=git> and other archival sites.
 
 Issues which are security relevant should be disclosed privately to
@@ -64,3 +70,5 @@ and the name as (depending on your mood):
 [Documentation/giteveryday.txt]: Documentation/giteveryday.txt
 [Documentation/gitcvs-migration.txt]: Documentation/gitcvs-migration.txt
 [Documentation/SubmittingPatches]: Documentation/SubmittingPatches
+[Documentation/CodingGuidelines]: Documentation/CodingGuidelines
+[po/README.md]: po/README.md
