@@ -2084,6 +2084,9 @@ static int run_transaction_hook(struct ref_transaction *transaction,
 	const char *hook;
 	int ret = 0, i;
 
+	if (transaction->flags & REF_TRANSACTION_SKIP_HOOK)
+		return 0;
+
 	hook = find_hook("reference-transaction");
 	if (!hook)
 		return ret;
