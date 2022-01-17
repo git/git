@@ -3,6 +3,7 @@
 
 struct repository;
 struct ref_transaction;
+struct string_list;
 
 /*
  * Support for storing references in a `packed-refs` file.
@@ -26,6 +27,12 @@ int packed_refs_lock(struct ref_store *ref_store, int flags, struct strbuf *err)
 
 void packed_refs_unlock(struct ref_store *ref_store);
 int packed_refs_is_locked(struct ref_store *ref_store);
+
+int packed_refs_delete_refs(struct ref_store *ref_store,
+			    struct ref_transaction *transaction,
+			    const char *msg,
+			    struct string_list *refnames,
+			    unsigned int flags);
 
 /*
  * Return true if `transaction` really needs to be carried out against
