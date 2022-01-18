@@ -290,7 +290,7 @@ test_expect_success 'bisect run accepts exit code 126 as bad' '
 	grep "$HASH3 is the first bad commit" my_bisect_log.txt
 '
 
-test_expect_failure POSIXPERM 'bisect run fails with non-executable test script' '
+test_expect_success POSIXPERM 'bisect run fails with non-executable test script' '
 	test_when_finished "git bisect reset" &&
 	>not-executable.sh &&
 	chmod -x not-executable.sh &&
@@ -313,7 +313,7 @@ test_expect_success 'bisect run accepts exit code 127 as bad' '
 	grep "$HASH3 is the first bad commit" my_bisect_log.txt
 '
 
-test_expect_failure 'bisect run fails with missing test script' '
+test_expect_success 'bisect run fails with missing test script' '
 	test_when_finished "git bisect reset" &&
 	rm -f does-not-exist.sh &&
 	git bisect start &&
