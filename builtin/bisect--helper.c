@@ -1116,8 +1116,7 @@ static int bisect_run(struct bisect_terms *terms, const char **argv, int argc)
 		if (res < 0 || 128 <= res) {
 			error(_("bisect run failed: exit code %d from"
 				" '%s' is < 0 or >= 128"), res, command.buf);
-			strbuf_release(&command);
-			return res;
+			break;
 		}
 
 		if (res == 125)
@@ -1129,8 +1128,10 @@ static int bisect_run(struct bisect_terms *terms, const char **argv, int argc)
 
 		temporary_stdout_fd = open(git_path_bisect_run(), O_CREAT | O_WRONLY | O_TRUNC, 0666);
 
-		if (temporary_stdout_fd < 0)
-			return error_errno(_("cannot open file '%s' for writing"), git_path_bisect_run());
+		if (temporary_stdout_fd < 0) {
+			res = error_errno(_("cannot open file '%s' for writing"), git_path_bisect_run());
+			break;
+		}
 
 		fflush(stdout);
 		saved_stdout = dup(1);
@@ -1159,11 +1160,12 @@ static int bisect_run(struct bisect_terms *terms, const char **argv, int argc)
 		} else {
 			continue;
 		}
-
-		strbuf_release(&command);
-		strvec_clear(&run_args);
-		return res;
+		break;
 	}
+
+	strbuf_release(&command);
+	strvec_clear(&run_args);
+	return res;
 }
 
 int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
