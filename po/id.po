@@ -742,58 +742,62 @@ msgid ""
 "\n"
 "Disable this message with \"git config advice.%s false\""
 msgstr ""
+"\n"
+"Nonaktifkan pesan ini dengan \"git config advice.%s false\""
 
 #: advice.c:94
 #, c-format
 msgid "%shint: %.*s%s\n"
-msgstr ""
+msgstr "%shint: %.*s%s\n"
 
 #: advice.c:178
 msgid "Cherry-picking is not possible because you have unmerged files."
-msgstr ""
+msgstr "Pemetikan ceri tidak mungkin sebab Anda punya berkas tak tergabung."
 
 #: advice.c:180
 msgid "Committing is not possible because you have unmerged files."
-msgstr ""
+msgstr "Pengkomitan tidak mungkin sebab Anda punya berkas tak tergabung."
 
 #: advice.c:182
 msgid "Merging is not possible because you have unmerged files."
-msgstr ""
+msgstr "Penggabungan tidak mungkin sebab Anda punya berkas tak tergabung."
 
 #: advice.c:184
 msgid "Pulling is not possible because you have unmerged files."
-msgstr ""
+msgstr "Penarikan tidak mungkin sebab Anda punya berkas tak tergabung."
 
 #: advice.c:186
 msgid "Reverting is not possible because you have unmerged files."
-msgstr ""
+msgstr "Pembalikkan tidak mungkin sebab Anda punya berkas tak tergabung."
 
 #: advice.c:188
 #, c-format
 msgid "It is not possible to %s because you have unmerged files."
-msgstr ""
+msgstr "Tidak mungkin untuk %s sebab Anda punya berkas tak tergabung."
 
 #: advice.c:196
 msgid ""
 "Fix them up in the work tree, and then use 'git add/rm <file>'\n"
 "as appropriate to mark resolution and make a commit."
 msgstr ""
+"Perbaiki di dalam pohon kerja, lalu gunakan 'git add/rm <berkas>'\n"
+"sebagaimana mestinya untuk menandai resolusi dan membuat sebuah komit."
 
 #: advice.c:204
 msgid "Exiting because of an unresolved conflict."
-msgstr ""
+msgstr "Keluar karena sebuah konflik tak terselesaikan."
 
 #: advice.c:209 builtin/merge.c:1382
 msgid "You have not concluded your merge (MERGE_HEAD exists)."
-msgstr ""
+msgstr "Anda belum mengakhiri penggabungan Anda (MERGE_HEAD ada)."
 
 #: advice.c:211
 msgid "Please, commit your changes before merging."
-msgstr ""
+msgstr "Mohon komit perubahan Anda sebelum menggabungkan."
 
 #: advice.c:212
 msgid "Exiting because of unfinished merge."
-msgstr ""
+msgstr "Keluar karena penggabungan belum selesai."
 
 #: advice.c:217
 msgid "Not possible to fast-forward, aborting."
@@ -806,6 +810,9 @@ msgid ""
 "outside of your sparse-checkout definition, so will not be\n"
 "updated in the index:\n"
 msgstr ""
+"Jalur dan/atau spek jalur berikut cocok dengan jalur yang ada\n"
+"di luar definisi checkout tipis Anda, jadi tidak akan diperbarui\n"
+"di dalam indeks:\n"
 
 #: advice.c:234
 msgid ""
@@ -813,6 +820,9 @@ msgid ""
 "* Use the --sparse option.\n"
 "* Disable or modify the sparsity rules."
 msgstr ""
+"Jika Anda berniat memperbarui entri tersebut, coba salah satu dari:\n"
+"* Gunakan opsi --sparse\n"
+"* Nonaktifkan atau modifikasi aturan kejarangan."
 
 #: advice.c:242
 #, c-format
@@ -836,14 +846,33 @@ msgid ""
 "false\n"
 "\n"
 msgstr ""
+"Catatan: berganti ke '%s'.\n"
+"\n"
+"Anda berada dalam keadaan 'HEAD terpisah'. Anda dapat melihat-lihat, membuat\n"
+"perubahan eksperimental and komit, dan Anda dapat membuang komit apa saja yang\n"
+"Anda buat di dalam keadaan ini tanpa mempengaruhi cabang apapun dengan bergantin"
+"kembali ke sebuah cabang.\n"
+"\n"
+"Jika Anda ingin membuat cabang baru untuk menyimpan komit yang Anda buat, Anda\n"
+"dapat melakukannya (sekarang atau nanti) dengan:\n"
+"\n"
+"  git switch -c <nama cabang baru>\n"
+"\n"
+"Atau batalkan operasi ini dengan:\n"
+"\n"
+"  git switch -\n"
+"\n"
+"Matikan saran ini dengan menyetel variabel konfigurasi advice.detachedHead ke "
+"false\n"
+"\n"
 
 #: alias.c:50
 msgid "cmdline ends with \\"
-msgstr ""
+msgstr "baris perintah diakhiri dengan \\"
 
 #: alias.c:51
 msgid "unclosed quote"
-msgstr ""
+msgstr "tanda kutip tak ditutup"
 
 #: apply.c:70
 #, c-format
@@ -7322,41 +7351,43 @@ msgstr "ujung penerima tidak mendukung opsi dorong"
 #: sequencer.c:197
 #, c-format
 msgid "invalid commit message cleanup mode '%s'"
-msgstr ""
+msgstr "mode pembersihan pesan komit tidak valid '%s'"
 
 #: sequencer.c:325
 #, c-format
 msgid "could not delete '%s'"
-msgstr ""
+msgstr "tidak dapat menghapus '%s'"
 
 #: sequencer.c:345 sequencer.c:4751 builtin/rebase.c:563 builtin/rebase.c:1297
 #: builtin/rm.c:409
 #, c-format
 msgid "could not remove '%s'"
-msgstr ""
+msgstr "tidak dapat menghapus '%s'"
 
 #: sequencer.c:355
 msgid "revert"
-msgstr ""
+msgstr "balik"
 
 #: sequencer.c:357
 msgid "cherry-pick"
-msgstr ""
+msgstr "petik ceri"
 
 #: sequencer.c:359
 msgid "rebase"
-msgstr ""
+msgstr "dasar ulang"
 
 #: sequencer.c:361
 #, c-format
 msgid "unknown action: %d"
-msgstr ""
+msgstr "aksi tidak dikenal: %d"
 
 #: sequencer.c:420
 msgid ""
 "after resolving the conflicts, mark the corrected paths\n"
 "with 'git add <paths>' or 'git rm <paths>'"
 msgstr ""
+"setelah menyelesaikan konflik, tandai jalur yang terkoreksi\n"
+"dengan 'git add <jalur>' atau 'git rm <jalur>'"
 
 #: sequencer.c:423
 msgid ""
@@ -7367,6 +7398,12 @@ msgid ""
 "To abort and get back to the state before \"git cherry-pick\",\n"
 "run \"git cherry-pick --abort\"."
 msgstr ""
+"Setelah menyelesaikan konflik, tandai dengan\n"
+"\"git add/rm <spek jalur\", lalu jalankan\n"
+"\"git cherry-pick --continue\".\n"
+"Atau Anda dapat melewati komit ini dengan \"git cherry-pick --skip\".\n"
+"Untuk membatalkan dan kembali ke keadaan sebelum \"git cherry-pick\",\n"
+"jalankan \"git cherry-pick --abort\"."
 
 #: sequencer.c:430
 msgid ""
@@ -7377,28 +7414,34 @@ msgid ""
 "To abort and get back to the state before \"git revert\",\n"
 "run \"git revert --abort\"."
 msgstr ""
+"Setelah menyelesaikan konflik, tandai dengan\n"
+"\"git add/rm <spek jalur>\", lalu jalankan\n"
+"\"git revert --continue\".\n"
+"Atau Anda dapat melewati komit ini dengan \"git revert --skip\".\n"
+"Untuk membatalkan dan kembali ke keadaan sebelum \"git revert\",\n"
+"jalankan \"git revert --abort\"."
 
 #: sequencer.c:448 sequencer.c:3292
 #, c-format
 msgid "could not lock '%s'"
-msgstr ""
+msgstr "tidak dapat mengunci '%s'"
 
 #: sequencer.c:450 sequencer.c:3091 sequencer.c:3296 sequencer.c:3310
 #: sequencer.c:3561 sequencer.c:5618 strbuf.c:1188 wrapper.c:639
 #, c-format
 msgid "could not write to '%s'"
-msgstr ""
+msgstr "tidak dapat menulis ke '%s'"
 
 #: sequencer.c:455
 #, c-format
 msgid "could not write eol to '%s'"
-msgstr ""
+msgstr "tidak dapat menulis akhir baris ke '%s'"
 
 #: sequencer.c:460 sequencer.c:3096 sequencer.c:3298 sequencer.c:3312
 #: sequencer.c:3569
 #, c-format
 msgid "failed to finalize '%s'"
-msgstr ""
+msgstr "gagal mengakhiri '%s'"
 
 #: sequencer.c:473 sequencer.c:1934 sequencer.c:3116 sequencer.c:3551
 #: sequencer.c:3679 builtin/am.c:289 builtin/commit.c:834 builtin/merge.c:1148
@@ -7409,21 +7452,21 @@ msgstr "tidak dapat membaca '%s'"
 #: sequencer.c:499
 #, c-format
 msgid "your local changes would be overwritten by %s."
-msgstr ""
+msgstr "perubahan lokal Anda akan ditimpa oleh %s."
 
 #: sequencer.c:503
 msgid "commit your changes or stash them to proceed."
-msgstr ""
+msgstr "komit perubahan Anda atau stase untuk melanjutkan."
 
 #: sequencer.c:535
 #, c-format
 msgid "%s: fast-forward"
-msgstr ""
+msgstr "%s: maju-cepat"
 
 #: sequencer.c:574 builtin/tag.c:614
 #, c-format
 msgid "Invalid cleanup mode %s"
-msgstr ""
+msgstr "Mode pembersihan tidak valid %s"
 
 #. TRANSLATORS: %s will be "revert", "cherry-pick" or
 #. "rebase".
@@ -7431,60 +7474,60 @@ msgstr ""
 #: sequencer.c:685
 #, c-format
 msgid "%s: Unable to write new index file"
-msgstr ""
+msgstr "%s: Tidak dapat menulis berkas indeks baru"
 
 #: sequencer.c:699
 msgid "unable to update cache tree"
-msgstr ""
+msgstr "tidak dapat memperbarui pohon tembolok"
 
 #: sequencer.c:713
 msgid "could not resolve HEAD commit"
-msgstr ""
+msgstr "tidak dapat menguraikan komit HEAD"
 
 #: sequencer.c:793
 #, c-format
 msgid "no key present in '%.*s'"
-msgstr ""
+msgstr "tidak ada kunci yang ada di pada '%.*s'"
 
 #: sequencer.c:804
 #, c-format
 msgid "unable to dequote value of '%s'"
-msgstr ""
+msgstr "tidak dapat membatal-kutip nilai dari '%s'"
 
 #: sequencer.c:841 wrapper.c:209 wrapper.c:379 builtin/am.c:756
 #: builtin/am.c:848 builtin/rebase.c:694
 #, c-format
 msgid "could not open '%s' for reading"
-msgstr ""
+msgstr "tidak dapat membuka '%s' untuk dibaca"
 
 #: sequencer.c:851
 msgid "'GIT_AUTHOR_NAME' already given"
-msgstr ""
+msgstr "'GIT_AUTHOR_NAME' sudah diberikan"
 
 #: sequencer.c:856
 msgid "'GIT_AUTHOR_EMAIL' already given"
-msgstr ""
+msgstr "'GIT_AUTHOR_EMAIL' sudah diberikan"
 
 #: sequencer.c:861
 msgid "'GIT_AUTHOR_DATE' already given"
-msgstr ""
+msgstr "'GIT_AUTHOR_DATE' sudah diberikan"
 
 #: sequencer.c:865
 #, c-format
 msgid "unknown variable '%s'"
-msgstr ""
+msgstr "variabel tidak dikenal '%s'"
 
 #: sequencer.c:870
 msgid "missing 'GIT_AUTHOR_NAME'"
-msgstr ""
+msgstr "'GIT_AUTHOR_NAME' hilang"
 
 #: sequencer.c:872
 msgid "missing 'GIT_AUTHOR_EMAIL'"
-msgstr ""
+msgstr "'GIT_AUTHOR_EMAIL' hilang"
 
 #: sequencer.c:874
 msgid "missing 'GIT_AUTHOR_DATE'"
-msgstr ""
+msgstr "'GIT_AUTHOR_DATE' hilang"
 
 #: sequencer.c:939
 #, c-format
@@ -7502,10 +7545,21 @@ msgid ""
 "\n"
 "  git rebase --continue\n"
 msgstr ""
+"Anda punya perubahan tergelar di dalam pohon kerja Anda.\n"
+"Apabila perubahan tersebut dimaksudkan untuk dilumat ke komit sebelumnya, jalankan:\n"
+"\n"
+"  git commit --amend %s\n"
+"\n"
+"Apabila dimaksudkan untuk masuk ke komit baru, jalankan:\n"
+"\n"
+"  git commit %s\n"
+"Pada kedua kasus tersebut, setelah selesai, lanjutkan dengan:\n"
+"\n"
+"  git rebase --continue\n"
 
 #: sequencer.c:1225
 msgid "'prepare-commit-msg' hook failed"
-msgstr ""
+msgstr "kait 'prepare-commit-msg' gagal"
 
 #: sequencer.c:1231
 msgid ""
@@ -7521,6 +7575,17 @@ msgid ""
 "\n"
 "    git commit --amend --reset-author\n"
 msgstr ""
+"Nama dan email Anda dikonfigurasikan otomatis berdasarkan nama pengguna\n"
+"dan nama host Anda. Periksa jika itu benar. Anda dapat mematikan pesan\n"
+"ini dengan menyetel secara eksplisit. Jalankan perintah berikut dan ikuti\n"
+"petunjuk di dalam penyunting untuk menyunting berkas konfigurasi Anda:\n"
+"\n"
+"    git config --global --edit\n"
+"\n"
+"Setelah itu, Anda dapat memperbaiki identitas yang digunakan untuk komit\n"
+"ini dengan:\n"
+"\n"
+"    git commit --amend --reset-author\n"
 
 #: sequencer.c:1244
 msgid ""
@@ -7535,348 +7600,359 @@ msgid ""
 "\n"
 "    git commit --amend --reset-author\n"
 msgstr ""
+"Nama dan email Anda dikonfigurasikan otomatis berdasarkan nama pengguna\n"
+"dan nama host Anda. Periksa jika itu benar. Anda dapat mematikan pesan\n"
+"ini dengan menyetel secara eksplisit:\n"
+"\n"
+"    git config --global user.name \"Nama Anda\"\n"
+"    git config --global user.email anda@example.com\n"
+"\n"
+"Setelah itu, Anda dapat memperbaiki identitas yang digunakan untuk komit\n"
+"ini dengan:\n"
+"\n"
+"    git commit --amend --reset-author\n"
 
 #: sequencer.c:1288
 msgid "couldn't look up newly created commit"
-msgstr ""
+msgstr "tidak dapat mencari komit yang baru saja dibuat"
 
 #: sequencer.c:1290
 msgid "could not parse newly created commit"
-msgstr ""
+msgstr "tidak dapat menguraikan komit yang baru saja dibuat"
 
 #: sequencer.c:1339
 msgid "unable to resolve HEAD after creating commit"
-msgstr ""
+msgstr "tidak dapat menguraikan HEAD setelah membuat komit"
 
 #: sequencer.c:1342
 msgid "detached HEAD"
-msgstr ""
+msgstr "HEAD terpisah"
 
 #: sequencer.c:1346
 msgid " (root-commit)"
-msgstr ""
+msgstr " (komit-akar)"
 
 #: sequencer.c:1367
 msgid "could not parse HEAD"
-msgstr ""
+msgstr "tidak dapat menguraikan HEAD"
 
 #: sequencer.c:1369
 #, c-format
 msgid "HEAD %s is not a commit!"
-msgstr ""
+msgstr "HEAD %s bukan sebuah komit!"
 
 #: sequencer.c:1373 sequencer.c:1451 builtin/commit.c:1708
 msgid "could not parse HEAD commit"
-msgstr ""
+msgstr "tidak dapat menguraikan komit HEAD"
 
 #: sequencer.c:1429 sequencer.c:2314
 msgid "unable to parse commit author"
-msgstr ""
+msgstr "tidak dapat menguraikan pengarang komit"
 
 #: sequencer.c:1440 builtin/am.c:1643 builtin/merge.c:710
 msgid "git write-tree failed to write a tree"
-msgstr ""
+msgstr "git write-tree gagal menulis sebuah pohon"
 
 #: sequencer.c:1473 sequencer.c:1593
 #, c-format
 msgid "unable to read commit message from '%s'"
-msgstr ""
+msgstr "tidak dapat membaca pesan komit dari '%s'"
 
 #: sequencer.c:1504 sequencer.c:1536
 #, c-format
 msgid "invalid author identity '%s'"
-msgstr ""
+msgstr "identitas pengarang tidak valid '%s'"
 
 #: sequencer.c:1510
 msgid "corrupt author: missing date information"
-msgstr ""
+msgstr "pengarang rusak: informasi tanggal hilang"
 
 #: sequencer.c:1549 builtin/am.c:1670 builtin/commit.c:1822 builtin/merge.c:915
 #: builtin/merge.c:940 t/helper/test-fast-rebase.c:78
 msgid "failed to write commit object"
-msgstr ""
+msgstr "gagal menulis objek komit"
 
 #: sequencer.c:1576 sequencer.c:4523 t/helper/test-fast-rebase.c:199
 #: t/helper/test-fast-rebase.c:217
 #, c-format
 msgid "could not update %s"
-msgstr ""
+msgstr "tidak dapat memperbarui %s"
 
 #: sequencer.c:1625
 #, c-format
 msgid "could not parse commit %s"
-msgstr ""
+msgstr "tidak dapat menguraikan komit %s"
 
 #: sequencer.c:1630
 #, c-format
 msgid "could not parse parent commit %s"
-msgstr ""
+msgstr "tidak dapat menguraikan komit induk %s"
 
 #: sequencer.c:1713 sequencer.c:1994
 #, c-format
 msgid "unknown command: %d"
-msgstr ""
+msgstr "perintah tidak dikenal: %d"
 
 #: sequencer.c:1755
 msgid "This is the 1st commit message:"
-msgstr ""
+msgstr "Ini komit pertama:"
 
 #: sequencer.c:1756
 #, c-format
 msgid "This is the commit message #%d:"
-msgstr ""
+msgstr "Ini komit ke-%d:"
 
 #: sequencer.c:1757
 msgid "The 1st commit message will be skipped:"
-msgstr ""
+msgstr "Pesan komit pertama akan dilewati:"
 
 #: sequencer.c:1758
 #, c-format
 msgid "The commit message #%d will be skipped:"
-msgstr ""
+msgstr "Pesan komit ke-%d akan dilewati"
 
 #: sequencer.c:1759
 #, c-format
 msgid "This is a combination of %d commits."
-msgstr ""
+msgstr "Ini kombinasi dari %d komit."
 
 #: sequencer.c:1906 sequencer.c:1963
 #, c-format
 msgid "cannot write '%s'"
-msgstr ""
+msgstr "tidak dapat menulis '%s'"
 
 #: sequencer.c:1953
 msgid "need a HEAD to fixup"
-msgstr ""
+msgstr "butuh sebuah HEAD untuk memperbaiki"
 
 #: sequencer.c:1955 sequencer.c:3596
 msgid "could not read HEAD"
-msgstr ""
+msgstr "tidak dapat membaca HEAD"
 
 #: sequencer.c:1957
 msgid "could not read HEAD's commit message"
-msgstr ""
+msgstr "tidak dapat membaca pesan komit HEAD"
 
 #: sequencer.c:1981
 #, c-format
 msgid "could not read commit message of %s"
-msgstr ""
+msgstr "tidak dapat membaca pesan komit %s"
 
 #: sequencer.c:2091
 msgid "your index file is unmerged."
-msgstr ""
+msgstr "berkas indeks Anda tak tergabung."
 
 #: sequencer.c:2098
 msgid "cannot fixup root commit"
-msgstr ""
+msgstr "tidak dapat memperbaiki komit akar"
 
 #: sequencer.c:2117
 #, c-format
 msgid "commit %s is a merge but no -m option was given."
-msgstr ""
+msgstr "komit %s adalah penggabungan tetapi opsi -m tidak diberikan."
 
 #: sequencer.c:2125 sequencer.c:2133
 #, c-format
 msgid "commit %s does not have parent %d"
-msgstr ""
+msgstr "komit %s tidak punya induk %d"
 
 #: sequencer.c:2139
 #, c-format
 msgid "cannot get commit message for %s"
-msgstr ""
+msgstr "tidak dapat mendapatkan pesan komit untuk %s"
 
 #. TRANSLATORS: The first %s will be a "todo" command like
 #. "revert" or "pick", the second %s a SHA1.
 #: sequencer.c:2158
 #, c-format
 msgid "%s: cannot parse parent commit %s"
-msgstr ""
+msgstr "%s: tidak dapat menguraikan komit induk %s"
 
 #: sequencer.c:2224
 #, c-format
 msgid "could not rename '%s' to '%s'"
-msgstr ""
+msgstr "tidak dapat menamai ulang '%s' ke '%s'"
 
 #: sequencer.c:2284
 #, c-format
 msgid "could not revert %s... %s"
-msgstr ""
+msgstr "tidak dapat membalikkan %s... %s"
 
 #: sequencer.c:2285
 #, c-format
 msgid "could not apply %s... %s"
-msgstr ""
+msgstr "tidak dapat menerapkan %s... %s"
 
 #: sequencer.c:2306
 #, c-format
 msgid "dropping %s %s -- patch contents already upstream\n"
-msgstr ""
+msgstr "menjatuhkan %s %s -- isi tambalan sudah di hulu\n"
 
 #: sequencer.c:2364
 #, c-format
 msgid "git %s: failed to read the index"
-msgstr ""
+msgstr "git %s: gagal membaca indeks"
 
 #: sequencer.c:2372
 #, c-format
 msgid "git %s: failed to refresh the index"
-msgstr ""
+msgstr "git %s: gagal menyegarkan indeks"
 
 #: sequencer.c:2452
 #, c-format
 msgid "%s does not accept arguments: '%s'"
-msgstr ""
+msgstr "%s tidak menerima argumen: '%s'"
 
 #: sequencer.c:2461
 #, c-format
 msgid "missing arguments for %s"
-msgstr ""
+msgstr "argumen hilang untuk %s"
 
 #: sequencer.c:2504
 #, c-format
 msgid "could not parse '%s'"
-msgstr ""
+msgstr "tidak dapat menguraikan '%s'"
 
 #: sequencer.c:2565
 #, c-format
 msgid "invalid line %d: %.*s"
-msgstr ""
+msgstr "baris %d tidak valid: %.*s"
 
 #: sequencer.c:2576
 #, c-format
 msgid "cannot '%s' without a previous commit"
-msgstr ""
+msgstr "tidak dapat '%s' tanpa komit sebelumnya"
 
 #: sequencer.c:2624 builtin/rebase.c:184
 #, c-format
 msgid "could not read '%s'."
-msgstr ""
+msgstr "tidak dapat membaca '%s'."
 
 #: sequencer.c:2662
 msgid "cancelling a cherry picking in progress"
-msgstr ""
+msgstr "membatalkan pemetikan ceri yang sedang berlangsung"
 
 #: sequencer.c:2671
 msgid "cancelling a revert in progress"
-msgstr ""
+msgstr "membatalkan pembalikkan yang sedang berlangsung"
 
 #: sequencer.c:2711
 msgid "please fix this using 'git rebase --edit-todo'."
-msgstr ""
+msgstr "mohon perbaiki menggunakan 'git rebase --edit-todo'."
 
 #: sequencer.c:2713
 #, c-format
 msgid "unusable instruction sheet: '%s'"
-msgstr ""
+msgstr "lembar perintah tidak dapat digunakan: '%s'"
 
 #: sequencer.c:2718
 msgid "no commits parsed."
-msgstr ""
+msgstr "tidak ada komit yang diuraikan."
 
 #: sequencer.c:2729
 msgid "cannot cherry-pick during a revert."
-msgstr ""
+msgstr "tidak dapat memetik ceri selama pembalikkan."
 
 #: sequencer.c:2731
 msgid "cannot revert during a cherry-pick."
-msgstr ""
+msgstr "tidak dapat membalikkan selama petik ceri."
 
 #: sequencer.c:2809
 #, c-format
 msgid "invalid value for %s: %s"
-msgstr ""
+msgstr "nilai tidak valid untuk %s: %s"
 
 #: sequencer.c:2918
 msgid "unusable squash-onto"
-msgstr ""
+msgstr "squash-onto tidak dapat digunakan"
 
 #: sequencer.c:2938
 #, c-format
 msgid "malformed options sheet: '%s'"
-msgstr ""
+msgstr "lembar opsi jelek: '%s'"
 
 #: sequencer.c:3033 sequencer.c:4902
 msgid "empty commit set passed"
-msgstr ""
+msgstr "himpunan komit kosong dilewatkan"
 
 #: sequencer.c:3050
 msgid "revert is already in progress"
-msgstr ""
+msgstr "pembalikkan sudah berjalan"
 
 #: sequencer.c:3052
 #, c-format
 msgid "try \"git revert (--continue | %s--abort | --quit)\""
-msgstr ""
+msgstr "coba \"git revert (--continue | %s--abort | --quit)\""
 
 #: sequencer.c:3055
 msgid "cherry-pick is already in progress"
-msgstr ""
+msgstr "pemetikan ceri sudah berjalan"
 
 #: sequencer.c:3057
 #, c-format
 msgid "try \"git cherry-pick (--continue | %s--abort | --quit)\""
-msgstr ""
+msgstr "coba \"git cherry-pick (--continue | %s--abort | --quit)\""
 
 #: sequencer.c:3071
 #, c-format
 msgid "could not create sequencer directory '%s'"
-msgstr ""
+msgstr "tidak dapat membuat direktori pembaris '%s'"
 
 #: sequencer.c:3086
 msgid "could not lock HEAD"
-msgstr ""
+msgstr "tidak dapat mengunci HEAD"
 
 #: sequencer.c:3146 sequencer.c:4612
 msgid "no cherry-pick or revert in progress"
-msgstr ""
+msgstr "tidak ada pemetikan ceri atau pembalikkan yang sedang berjalan"
 
 #: sequencer.c:3148 sequencer.c:3159
 msgid "cannot resolve HEAD"
-msgstr ""
+msgstr "tidak dapat menguraikan HEAD"
 
 #: sequencer.c:3150 sequencer.c:3194
 msgid "cannot abort from a branch yet to be born"
-msgstr ""
+msgstr "tidak dapat membatalkan dari cabang yang belum lahir"
 
 #: sequencer.c:3180 builtin/fetch.c:1004 builtin/fetch.c:1416
 #: builtin/grep.c:772
 #, c-format
 msgid "cannot open '%s'"
-msgstr ""
+msgstr "tidak dapat membuka '%s'"
 
 #: sequencer.c:3182
 #, c-format
 msgid "cannot read '%s': %s"
-msgstr ""
+msgstr "tidak dapat membaca '%s': %s"
 
 #: sequencer.c:3183
 msgid "unexpected end of file"
-msgstr ""
+msgstr "akhir berkas tidak diharapkan"
 
 #: sequencer.c:3189
 #, c-format
 msgid "stored pre-cherry-pick HEAD file '%s' is corrupt"
-msgstr ""
+msgstr "berkas HEAD pra-petik-ceri yang tersimpan '%s' rusak"
 
 #: sequencer.c:3200
 msgid "You seem to have moved HEAD. Not rewinding, check your HEAD!"
-msgstr ""
+msgstr "Sepertinya Anda sudah memindahkan HEAD. Tidak memutar ulang, periksa HEAD Anda!"
 
 #: sequencer.c:3241
 msgid "no revert in progress"
-msgstr ""
+msgstr "tidak ada pembalikkan yang sedang berjalan"
 
 #: sequencer.c:3250
 msgid "no cherry-pick in progress"
-msgstr ""
+msgstr "tidak ada pemetikan ceri yang sedang berjalan"
 
 #: sequencer.c:3260
 msgid "failed to skip the commit"
-msgstr ""
+msgstr "gagal melewati komit"
 
 #: sequencer.c:3267
 msgid "there is nothing to skip"
-msgstr ""
+msgstr "tidak ada yang dilewati"
 
 #: sequencer.c:3270
 #, c-format
@@ -7884,15 +7960,17 @@ msgid ""
 "have you committed already?\n"
 "try \"git %s --continue\""
 msgstr ""
+"sudahkah Anda komit?\n"
+"coba \"git %s --continue\""
 
 #: sequencer.c:3432 sequencer.c:4503
 msgid "cannot read HEAD"
-msgstr ""
+msgstr "tidak dapat membaca HEAD"
 
 #: sequencer.c:3449
 #, c-format
 msgid "unable to copy '%s' to '%s'"
-msgstr ""
+msgstr "tidak dapat menyalin '%s' ke '%s'"
 
 #: sequencer.c:3457
 #, c-format
@@ -7905,26 +7983,33 @@ msgid ""
 "\n"
 "  git rebase --continue\n"
 msgstr ""
+"Anda dapat mengubah komit sekarang, dengan\n"
+"\n"
+"  git commit --amend %s\n"
+"\n"
+"Setelah Anda puas dengan perubahan Anda, jalankan\n"
+"\n"
+"  git rebase --continue\n"
 
 #: sequencer.c:3467
 #, c-format
 msgid "Could not apply %s... %.*s"
-msgstr ""
+msgstr "Tidak dapat menerapkan %s... %.*s"
 
 #: sequencer.c:3474
 #, c-format
 msgid "Could not merge %.*s"
-msgstr ""
+msgstr "Tidak dapat menggabungkan %.*s"
 
 #: sequencer.c:3488 sequencer.c:3492 builtin/difftool.c:633
 #, c-format
 msgid "could not copy '%s' to '%s'"
-msgstr ""
+msgstr "tidak dapat menyalin '%s' ke '%s'"
 
 #: sequencer.c:3503
 #, c-format
 msgid "Executing: %s\n"
-msgstr ""
+msgstr "Mengeksekusi: %s\n"
 
 #: sequencer.c:3514
 #, c-format
@@ -7935,10 +8020,15 @@ msgid ""
 "  git rebase --continue\n"
 "\n"
 msgstr ""
+"eksekusi gagal: %s\n"
+"%sAnda dapat memperbaiki masalah, lalu jalankan\n"
+"\n"
+"  git rebase --continue\n"
+"\n"
 
 #: sequencer.c:3520
 msgid "and made changes to the index and/or the working tree\n"
-msgstr ""
+msgstr "dan buat perubahan ke indeks dan/atau pohon kerja\n"
 
 #: sequencer.c:3526
 #, c-format
@@ -7950,89 +8040,95 @@ msgid ""
 "  git rebase --continue\n"
 "\n"
 msgstr ""
+"eksekusi berhasil: %s\n"
+"tapi meninggalkan perubahan ke indeks dan/atau pohon kerja\n"
+"Komit atau stase perubahan Anda, lalu jalankan\n"
+"\n"
+"  git rebase --continue\n"
+"\n"
 
 #: sequencer.c:3586
 #, c-format
 msgid "illegal label name: '%.*s'"
-msgstr ""
+msgstr "nama label ilegal: '%.*s'"
 
 #: sequencer.c:3659
 msgid "writing fake root commit"
-msgstr ""
+msgstr "menulis komit akar palsu"
 
 #: sequencer.c:3664
 msgid "writing squash-onto"
-msgstr ""
+msgstr "menulis squash-onto"
 
 #: sequencer.c:3743
 #, c-format
 msgid "could not resolve '%s'"
-msgstr ""
+msgstr "tidak dapat menguraikan '%s'"
 
 #: sequencer.c:3775
 msgid "cannot merge without a current revision"
-msgstr ""
+msgstr "tidak dapat menggabungkan tanpa revisi saat ini"
 
 #: sequencer.c:3797
 #, c-format
 msgid "unable to parse '%.*s'"
-msgstr ""
+msgstr "tidak dapat menguraikan '%.*s'"
 
 #: sequencer.c:3806
 #, c-format
 msgid "nothing to merge: '%.*s'"
-msgstr ""
+msgstr "tidak ada yang digabungkan: '%.*s'"
 
 #: sequencer.c:3818
 msgid "octopus merge cannot be executed on top of a [new root]"
-msgstr ""
+msgstr "penggabungan gurita tidak dapat dieksekusi di atas sebuah [akar baru]"
 
 #: sequencer.c:3873
 #, c-format
 msgid "could not get commit message of '%s'"
-msgstr ""
+msgstr "tidak dapat mendapatkan pesan komit dari '%s'"
 
 #: sequencer.c:4019
 #, c-format
 msgid "could not even attempt to merge '%.*s'"
-msgstr ""
+msgstr "bahkan tidak dapat mencoba menggabungkan '%.*s'"
 
 #: sequencer.c:4035
 msgid "merge: Unable to write new index file"
-msgstr ""
+msgstr "merge: Tidak dapat menulis berkas indeks baru"
 
 #: sequencer.c:4116
 msgid "Cannot autostash"
-msgstr ""
+msgstr "Tidak dapat menstase otomatis"
 
 #: sequencer.c:4119
 #, c-format
 msgid "Unexpected stash response: '%s'"
-msgstr ""
+msgstr "Respons stase tidak diharapkan: '%s'"
 
 #: sequencer.c:4125
 #, c-format
 msgid "Could not create directory for '%s'"
-msgstr ""
+msgstr "Tidak dapat membuat direktori untuk '%s'"
 
 #: sequencer.c:4128
 #, c-format
 msgid "Created autostash: %s\n"
-msgstr ""
+msgstr "Stase otomatis dibuat: %s\n"
 
 #: sequencer.c:4132
 msgid "could not reset --hard"
-msgstr ""
+msgstr "tidak dapat reset --hard"
 
 #: sequencer.c:4157
 #, c-format
 msgid "Applied autostash.\n"
-msgstr ""
+msgstr "Stase otomatis diterapkan.\n"
 
 #: sequencer.c:4169
 #, c-format
 msgid "cannot store %s"
-msgstr ""
+msgstr "tidak dapat menyimpan %s"
 
 #: sequencer.c:4172
 #, c-format
@@ -8041,28 +8137,31 @@ msgid ""
 "Your changes are safe in the stash.\n"
 "You can run \"git stash pop\" or \"git stash drop\" at any time.\n"
 msgstr ""
+"%s\n"
+"Perubahan Anda aman di dalam stase.\n"
+"Anda dapat menjalankan \"git stash pop\" atau \"git stash drop\" kapanpun.\n"
 
 #: sequencer.c:4177
 msgid "Applying autostash resulted in conflicts."
-msgstr ""
+msgstr "Menerapkan stase otomatis menghasilkan konflik."
 
 #: sequencer.c:4178
 msgid "Autostash exists; creating a new stash entry."
-msgstr ""
+msgstr "Stase otomatis sudah ada; membuat entri stase baru."
 
 #: sequencer.c:4252
 msgid "could not detach HEAD"
-msgstr ""
+msgstr "tidak dapat melepas HEAD"
 
 #: sequencer.c:4267
 #, c-format
 msgid "Stopped at HEAD\n"
-msgstr ""
+msgstr "Berhenti pada HEAD\n"
 
 #: sequencer.c:4269
 #, c-format
 msgid "Stopped at %s\n"
-msgstr ""
+msgstr "Berhenti pada %s\n"
 
 #: sequencer.c:4301
 #, c-format
@@ -8076,57 +8175,65 @@ msgid ""
 "    git rebase --edit-todo\n"
 "    git rebase --continue\n"
 msgstr ""
+"Tidak dapat mengeksekusi perintah todo\n"
+"\n"
+"    %.*s\n"
+"Itu sudah dijadwalkan ulang; Untuk menyunting perintah sebelum melanjutkan,\n"
+"mohon sunting daftar todo terlebih dahulu:\n"
+"\n"
+"    git rebase --edit-todo\n"
+"    git rebase --continue\n"
 
 #: sequencer.c:4347
 #, c-format
 msgid "Rebasing (%d/%d)%s"
-msgstr ""
+msgstr "Mendasarkan ulang (%d/%d)%s"
 
 #: sequencer.c:4393
 #, c-format
 msgid "Stopped at %s...  %.*s\n"
-msgstr ""
+msgstr "Berhenti pada %s... %.*s\n"
 
 #: sequencer.c:4463
 #, c-format
 msgid "unknown command %d"
-msgstr ""
+msgstr "perintah tidak dikenal %d"
 
 #: sequencer.c:4511
 msgid "could not read orig-head"
-msgstr ""
+msgstr "tidak dapat membaca orig-head"
 
 #: sequencer.c:4516
 msgid "could not read 'onto'"
-msgstr ""
+msgstr "tidak dapat membaca 'onto'"
 
 #: sequencer.c:4530
 #, c-format
 msgid "could not update HEAD to %s"
-msgstr ""
+msgstr "tidak dapat memperbarui HEAD ke %s"
 
 #: sequencer.c:4590
 #, c-format
 msgid "Successfully rebased and updated %s.\n"
-msgstr ""
+msgstr "%s didasarkan ulang dan diperbarui dengan sukses.\n"
 
 #: sequencer.c:4642
 msgid "cannot rebase: You have unstaged changes."
-msgstr ""
+msgstr "tidak dapat mendasarkan ulang: Anda punya perubahan tak tergelar."
 
 #: sequencer.c:4651
 msgid "cannot amend non-existing commit"
-msgstr ""
+msgstr "tidak dapat mengubah komit yang tidak ada"
 
 #: sequencer.c:4653
 #, c-format
 msgid "invalid file: '%s'"
-msgstr ""
+msgstr "berkas tidak valid: '%s'"
 
 #: sequencer.c:4655
 #, c-format
 msgid "invalid contents: '%s'"
-msgstr ""
+msgstr "konten tidak valid: '%s'"
 
 #: sequencer.c:4658
 msgid ""
@@ -8134,62 +8241,65 @@ msgid ""
 "You have uncommitted changes in your working tree. Please, commit them\n"
 "first and then run 'git rebase --continue' again."
 msgstr ""
+"\n"
+"Anda punya perubahan tak tergelar di dalam pohon kerja Anda. Mohon komit\n"
+"terlebih dahulu dan jalankan 'git rebase --continue' lagi."
 
 #: sequencer.c:4694 sequencer.c:4733
 #, c-format
 msgid "could not write file: '%s'"
-msgstr ""
+msgstr "tidak dapat menulis berkas: '%s'"
 
 #: sequencer.c:4749
 msgid "could not remove CHERRY_PICK_HEAD"
-msgstr ""
+msgstr "tidak dapat menghapus CHERRY_PICK_HEAD"
 
 #: sequencer.c:4759
 msgid "could not commit staged changes."
-msgstr ""
+msgstr "tidak dapat mengkomit perubahan tergelar."
 
 #: sequencer.c:4879
 #, c-format
 msgid "%s: can't cherry-pick a %s"
-msgstr ""
+msgstr "%s: tidak dapat memetik ceri sebuah %s"
 
 #: sequencer.c:4883
 #, c-format
 msgid "%s: bad revision"
-msgstr ""
+msgstr "%s: revisi jelek"
 
 #: sequencer.c:4918
 msgid "can't revert as initial commit"
-msgstr ""
+msgstr "tidak dapat membalikkan sebagai komit awal"
 
 #: sequencer.c:5189 sequencer.c:5418
 #, c-format
 msgid "skipped previously applied commit %s"
-msgstr ""
+msgstr "melewatkan komit yang sudah diterapkan sebelumnya %s"
 
 #: sequencer.c:5259 sequencer.c:5434
 msgid "use --reapply-cherry-picks to include skipped commits"
-msgstr ""
+msgstr "gunakan --reapply-cherry-picks untuk memasukkan komit yang terlewat"
 
 #: sequencer.c:5405
 msgid "make_script: unhandled options"
-msgstr ""
+msgstr "make_script: opsi tak ditangani"
 
 #: sequencer.c:5408
 msgid "make_script: error preparing revisions"
-msgstr ""
+msgstr "make_script: kesalahan membuat revisi"
 
 #: sequencer.c:5666 sequencer.c:5683
 msgid "nothing to do"
-msgstr ""
+msgstr "tidak ada yang dilakukan"
 
 #: sequencer.c:5702
 msgid "could not skip unnecessary pick commands"
-msgstr ""
+msgstr "tidak dapat melewatkan perintah pick yang tidak perlu"
 
 #: sequencer.c:5802
 msgid "the script was already rearranged."
-msgstr ""
+msgstr "skrip sudah ditata ulang."
 
 #: setup.c:134
 #, c-format
@@ -8342,7 +8452,7 @@ msgstr ""
 #: sparse-index.c:289
 #, c-format
 msgid "index entry is a directory, but not sparse (%08x)"
-msgstr ""
+msgstr "entri indeks adalah direktori, tapi bukan tipis (%08x)"
 
 #. TRANSLATORS: IEC 80000-13:2008 gibibyte
 #: strbuf.c:850
@@ -21645,19 +21755,19 @@ msgstr ""
 
 #: builtin/sparse-checkout.c:22
 msgid "git sparse-checkout (init|list|set|add|reapply|disable) <options>"
-msgstr ""
+msgstr "git sparse-checkout (init|list|set|add|reapply|disable) <opsi>"
 
 #: builtin/sparse-checkout.c:46
 msgid "git sparse-checkout list"
-msgstr ""
+msgstr "git sparse-checkout list"
 
 #: builtin/sparse-checkout.c:60
 msgid "this worktree is not sparse"
-msgstr ""
+msgstr "pohon kerja ini bukan tipis"
 
 #: builtin/sparse-checkout.c:75
 msgid "this worktree is not sparse (sparse-checkout file may not exist)"
-msgstr ""
+msgstr "pohon kerja ini bukan tipis (berkas sparse-checkout mungkin tidak ada)"
 
 #: builtin/sparse-checkout.c:176
 #, c-format
@@ -21665,98 +21775,102 @@ msgid ""
 "directory '%s' contains untracked files, but is not in the sparse-checkout "
 "cone"
 msgstr ""
+"directori '%s' berisi berkas tak teracak, tapi tidak di dalam kerucut "
+"sparse-checkout"
 
 #: builtin/sparse-checkout.c:184
 #, c-format
 msgid "failed to remove directory '%s'"
-msgstr ""
+msgstr "gagal menghapus direktori '%s'"
 
 #: builtin/sparse-checkout.c:324
 msgid "failed to create directory for sparse-checkout file"
-msgstr ""
+msgstr "gagal membuat direktori untuk berkas sparse-checkout"
 
 #: builtin/sparse-checkout.c:365
 msgid "unable to upgrade repository format to enable worktreeConfig"
-msgstr ""
+msgstr "gagal mengupgrade format repositori untuk mengaktifkan worktreeConfig"
 
 #: builtin/sparse-checkout.c:367
 msgid "failed to set extensions.worktreeConfig setting"
-msgstr ""
+msgstr "gagal menyetel setelan extensions.worktreeConfig"
 
 #: builtin/sparse-checkout.c:411
 msgid "failed to modify sparse-index config"
-msgstr ""
+msgstr "gagal memodifikasi konfigurasi sparse-index"
 
 #: builtin/sparse-checkout.c:422
 msgid "git sparse-checkout init [--cone] [--[no-]sparse-index]"
-msgstr ""
+msgstr "git sparse-checkout init [--cone] [--[no-]sparse-index]"
 
 #: builtin/sparse-checkout.c:441 builtin/sparse-checkout.c:729
 #: builtin/sparse-checkout.c:778
 msgid "initialize the sparse-checkout in cone mode"
-msgstr ""
+msgstr "inisialisasi checkout tipis dalam mode kerucut"
 
 #: builtin/sparse-checkout.c:443 builtin/sparse-checkout.c:731
 #: builtin/sparse-checkout.c:780
 msgid "toggle the use of a sparse index"
-msgstr ""
+msgstr "gunakan indeks tipis"
 
 #: builtin/sparse-checkout.c:476
 #, c-format
 msgid "failed to open '%s'"
-msgstr ""
+msgstr "gagal membuka '%s'"
 
 #: builtin/sparse-checkout.c:528
 #, c-format
 msgid "could not normalize path %s"
-msgstr ""
+msgstr "tidak dapat menormalkan jalur %s"
 
 #: builtin/sparse-checkout.c:557
 #, c-format
 msgid "unable to unquote C-style string '%s'"
-msgstr ""
+msgstr "tidak dapat membatal-kutip untai gaya C '%s'"
 
 #: builtin/sparse-checkout.c:612 builtin/sparse-checkout.c:640
 msgid "unable to load existing sparse-checkout patterns"
-msgstr ""
+msgstr "tidak dapat memuat pola checkout tipis yang sudah ada"
 
 #: builtin/sparse-checkout.c:616
 msgid "existing sparse-checkout patterns do not use cone mode"
-msgstr ""
+msgstr "pola checkout tipis yang sudah ada tidak menggunakan mode kerucut"
 
 #: builtin/sparse-checkout.c:682
 msgid "git sparse-checkout add (--stdin | <patterns>)"
-msgstr ""
+msgstr "git sparse-checkout add (--stdin | <pola>)"
 
 #: builtin/sparse-checkout.c:694 builtin/sparse-checkout.c:733
 msgid "read patterns from standard in"
-msgstr ""
+msgstr "baca pola dari masukan standar"
 
 #: builtin/sparse-checkout.c:699
 msgid "no sparse-checkout to add to"
-msgstr ""
+msgstr "tidak ada checkout tipis untuk ditambahkan"
 
 #: builtin/sparse-checkout.c:712
 msgid ""
 "git sparse-checkout set [--[no-]cone] [--[no-]sparse-index] (--stdin | "
 "<patterns>)"
 msgstr ""
+"git sparse-checkout set [--[no-]cone] [--[no-]sparse-index] (--stdin | "
+"<pola>)"
 
 #: builtin/sparse-checkout.c:765
 msgid "git sparse-checkout reapply [--[no-]cone] [--[no-]sparse-index]"
-msgstr ""
+msgstr "git sparse-checkout reapply [--[no-]cone] [--[no-]sparse-index]"
 
 #: builtin/sparse-checkout.c:785
 msgid "must be in a sparse-checkout to reapply sparsity patterns"
-msgstr ""
+msgstr "harus berada di dalam checkout tipis untuk menerapkan ulang pola kejarangan"
 
 #: builtin/sparse-checkout.c:803
 msgid "git sparse-checkout disable"
-msgstr ""
+msgstr "git sparse-checkout disable"
 
 #: builtin/sparse-checkout.c:845
 msgid "error while refreshing working directory"
-msgstr ""
+msgstr "kesalahan saat menyegarkan direktori kerja"
 
 #: builtin/stash.c:24 builtin/stash.c:40
 msgid "git stash list [<options>]"
