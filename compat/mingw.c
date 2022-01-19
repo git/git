@@ -1127,6 +1127,10 @@ char *mingw_getcwd(char *pointer, int len)
 	}
 	if (!ret || ret >= ARRAY_SIZE(wpointer))
 		return NULL;
+	if (GetFileAttributesW(wpointer) == INVALID_FILE_ATTRIBUTES) {
+		errno = ENOENT;
+		return NULL;
+	}
 	if (xwcstoutf(pointer, wpointer, len) < 0)
 		return NULL;
 	convert_slashes(pointer);
