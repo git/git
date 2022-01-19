@@ -136,7 +136,7 @@ static int is_sparse_index_allowed(struct index_state *istate, int flags)
 		/*
 		 * The sparse index is not (yet) integrated with a split index.
 		 */
-		if (istate->split_index)
+		if (istate->split_index || git_env_bool("GIT_TEST_SPLIT_INDEX", 0))
 			return 0;
 		/*
 		 * The GIT_TEST_SPARSE_INDEX environment variable triggers the
