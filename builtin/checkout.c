@@ -1549,9 +1549,9 @@ static struct option *add_common_switch_branch_options(
 {
 	struct option options[] = {
 		OPT_BOOL('d', "detach", &opts->force_detach, N_("detach HEAD at named commit")),
-		OPT_CALLBACK_F('t', "track",  &opts->track, "direct|inherit",
-			N_("set up tracking mode (see git-pull(1))"),
-			PARSE_OPT_OPTARG | PARSE_OPT_LITERAL_ARGHELP,
+		OPT_CALLBACK_F('t', "track",  &opts->track, N_("mode"),
+			N_("set branch tracking configuration"),
+			PARSE_OPT_OPTARG,
 			parse_opt_tracking_mode),
 		OPT__FORCE(&opts->force, N_("force checkout (throw away local modifications)"),
 			   PARSE_OPT_NOCOMPLETE),
