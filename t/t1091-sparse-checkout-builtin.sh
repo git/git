@@ -5,6 +5,9 @@ test_description='sparse checkout builtin tests'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+GIT_TEST_SPLIT_INDEX=false
+export GIT_TEST_SPLIT_INDEX
+
 . ./test-lib.sh
 
 list_files() {
@@ -228,36 +231,31 @@ test_expect_success 'sparse-checkout disable' '
 '
 
 test_expect_success 'sparse-index enabled and disabled' '
-	(
-		sane_unset GIT_TEST_SPLIT_INDEX &&
-		git -C repo update-index --no-split-index &&
+	git -C repo sparse-checkout init --cone --sparse-index &&
+	test_cmp_config -C repo true index.sparse &&
+	git -C repo ls-files --sparse >sparse &&
+	git -C repo sparse-checkout disable &&
+	git -C repo ls-files --sparse >full &&
 
-		git -C repo sparse-checkout init --cone --sparse-index &&
-		test_cmp_config -C repo true index.sparse &&
-		git -C repo ls-files --sparse >sparse &&
-		git -C repo sparse-checkout disable &&
-		git -C repo ls-files --sparse >full &&
+	cat >expect <<-\EOF &&
+	@@ -1,4 +1,7 @@
+	 a
+	-deep/
+	-folder1/
+	-folder2/
+	+deep/a
+	+deep/deeper1/a
+	+deep/deeper1/deepest/a
+	+deep/deeper2/a
+	+folder1/a
+	+folder2/a
+	EOF
 
-		cat >expect <<-\EOF &&
-		@@ -1,4 +1,7 @@
-		 a
-		-deep/
-		-folder1/
-		-folder2/
-		+deep/a
-		+deep/deeper1/a
-		+deep/deeper1/deepest/a
-		+deep/deeper2/a
-		+folder1/a
-		+folder2/a
-		EOF
+	diff -u sparse full | tail -n +3 >actual &&
+	test_cmp expect actual &&
 
-		diff -u sparse full | tail -n +3 >actual &&
-		test_cmp expect actual &&
-
-		git -C repo config --list >config &&
-		! grep index.sparse config
-	)
+	git -C repo config --list >config &&
+	! grep index.sparse config
 '
 
 test_expect_success 'cone mode: init and set' '
