@@ -395,6 +395,7 @@ struct merge_tree_options {
 	int real;
 	int trivial;
 	int show_messages;
+	int exclude_oids_and_modes;
 };
 
 static int real_merge(struct merge_tree_options *o,
@@ -461,7 +462,11 @@ static int real_merge(struct merge_tree_options *o,
 		merge_get_conflicted_files(&result, &conflicted_files);
 		for (i = 0; i < conflicted_files.nr; i++) {
 			const char *name = conflicted_files.items[i].string;
-			if (last && !strcmp(last, name))
+			struct stage_info *c = conflicted_files.items[i].util;
+			if (!o->exclude_oids_and_modes)
+				printf("%06o %s %d\t",
+				       c->mode, oid_to_hex(&c->oid), c->stage);
+			else if (last && !strcmp(last, name))
 				continue;
 			write_name_quoted_relative(
 				name, prefix, stdout, line_termination);
@@ -495,6 +500,10 @@ int cmd_merge_tree(int argc, const char **argv, const char *prefix)
 			 N_("do a trivial merge only")),
 		OPT_BOOL(0, "messages", &o.show_messages,
 			 N_("also show informational/conflict messages")),
+		OPT_BOOL_F(0, "exclude-oids-and-modes",
+			   &o.exclude_oids_and_modes,
+			   N_("list conflicted files without oids and modes"),
+			   PARSE_OPT_NONEG),
 		OPT_END()
 	};
 
