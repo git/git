@@ -1,15 +1,15 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jan 2022, #04; Fri, 14)
-X-master-at: df3c41adeb212432c53d93ce6ace5d5374dc6e11
-X-next-at: 5990c1f58f12b2d9f2b7f4f857bac2a6b2a461e0
+Subject: What's cooking in git.git (Jan 2022, #05; Wed, 19)
+X-master-at: 50b2d72e110cad39ecaf2322bfdf1b60cd13dd96
+X-next-at: 594b6da22c98ab74f60dd322406863ad10d5d798
 
-What's cooking in git.git (Jan 2022, #04; Fri, 14)
+What's cooking in git.git (Jan 2022, #05; Wed, 19)
 --------------------------------------------------
 
-I just tagged Git 2.35-rc1 with a few last-minute fixes.  Let's make
-sure we can find and fix any remaining regressions introduced during
-this cycle before the final.
+We are at -rc2 now.  A few more topics are now in 'next' but it is
+not a big deal anyway, as they are not about any regression fixes
+and will not go anywhere during the prerelease freeze.
 
 Here are the topics that have been cooking in my tree.  Commits
 prefixed with '+' are in 'next' (being in 'next' is a sign that a
@@ -53,30 +53,109 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ab/refs-errno-cleanup (2022-01-13) 1 commit
-  (merged to 'next' on 2022-01-14 at 00bb61876a)
- + refs API: use "failure_errno", not "errno"
+* da/rhel7-lacks-uncompress2-and-c99 (2022-01-16) 1 commit
+  (merged to 'next' on 2022-01-16 at 1aeeab2aa6)
+ + build: centos/RHEL 7 ships with an older gcc and zlib
 
- A brown-paper-bag fix on top of a topic that was merged during this
- cycle.
- source: <patch-v3-1.3-a45268ac24b-20220112T123117Z-avarab@gmail.com>
-
-
-* ab/reftable-build-fixes (2022-01-13) 2 commits
-  (merged to 'next' on 2022-01-14 at ebd978ea66)
- + reftable tests: avoid "int" overflow, use "uint64_t"
- + reftable: avoid initializing structs from structs
-
- A few portability tweaks.
- source: <cover-0.3-00000000000-20220111T163908Z-avarab@gmail.com>
+ Adjust build on RHEL 7 to explicitly ask C99 support and use
+ the fallback implementation of uncompress2 we ship.
+ source: <20220116020520.26895-1-davvid@gmail.com>
 
 
-* js/t1450-making-it-writable-does-not-need-full-posixperm (2022-01-13) 1 commit
-  (merged to 'next' on 2022-01-14 at fd4f2f4bb4)
- + t1450-fsck: exec-bit is not needed to make loose object writable
+* jc/freebsd-without-c99-only-build (2022-01-18) 1 commit
+  (merged to 'next' on 2022-01-18 at 6ab02e9ee4)
+ + Makefile: FreeBSD cannot do C99-or-below build
 
- Test fix.
- source: <529d99f3-13c8-ffc1-dd4c-3fc70330262a@kdbg.org>
+ FreeBSD 13.0 headers have unconditional dependency on C11 language
+ features, and adding -std=gnu99 to DEVELOPER_CFLAGS would just
+ break the developer build.
+ source: <xmqq1r15szpg.fsf_-_@gitster.g>
+
+
+* js/branch-track-inherit (2022-01-18) 1 commit
+  (merged to 'next' on 2022-01-18 at 6a6a1b2bbf)
+ + branch,checkout: fix --track usage strings
+
+ "git branch -h" incorrectly said "--track[=direct|inherit]",
+ implying that "--trackinherit" is a valid option, which has been
+ corrected.
+ source: <3de40324bea6a1dd9bca2654721471e3809e87d8.1642538935.git.steadmon@google.com>
+
+--------------------------------------------------
+[New Topics]
+
+* en/merge-ort-restart-optim-fix (2022-01-17) 1 commit
+  (merged to 'next' on 2022-01-19 at 84da10b057)
+ + merge-ort: avoid assuming all renames detected
+
+ The merge-ort misbehaved when merge.renameLimit configuration is
+ set too low and failed to find all renames.
+
+ Will cook in 'next'.
+ source: <pull.1194.v2.git.git.1642443955836.gitgitgadget@gmail.com>
+
+
+* jh/p4-various-fixups (2022-01-16) 23 commits
+ . git-p4: seperate multiple statements onto seperate lines
+ . git-p4: move inline comments to line above
+ . git-p4: only seperate code blocks by a single empty line
+ . git-p4: compare to singletons with "is" and "is not"
+ . git-p4: normalize indentation of lines in conditionals
+ . git-p4: ensure there is a single space around all operators
+ . git-p4: ensure every comment has a single #
+ . git-p4: remove spaces between dictionary keys and colons
+ . git-p4: remove redundant backslash-continuations inside brackets
+ . git-p4: remove extraneous spaces before function arguments
+ . git-p4: place a single space after every comma
+ . git-p4: removed brackets when assigning multiple return values
+ . git-p4: remove spaces around default arguments
+ . git-p4: remove padding from lists, tuples and function arguments
+ . git-p4: sort and de-duplcate pylint disable list
+ . git-p4: remove commented code
+ . git-p4: convert descriptive class and function comments into docstrings
+ . git-p4: improve consistency of docstring formatting
+ . git-p4: indent with 4-spaces
+ . git-p4: remove unneeded semicolons from statements
+ . git-p4: add blank lines between functions and class definitions
+ . Merge branch 'jh/p4-spawning-external-commands-cleanup' into jh/p4-various-fixups
+ . Merge branch 'jh/p4-fix-use-of-process-error-exception' into jh/p4-various-fixups
+ (this branch uses jh/p4-fix-use-of-process-error-exception and jh/p4-spawning-external-commands-cleanup.)
+
+ Various cleanups to "git p4".
+
+ Breaks its own test suite.
+ source: <20220116160550.514637-1-jholdsworth@nvidia.com>
+
+
+* po/readme-mention-contributor-hints (2022-01-17) 1 commit
+  (merged to 'next' on 2022-01-19 at 7e14690eb9)
+ + README.md: add CodingGuidelines and a link for Translators
+
+ Doc update.
+
+ Will cook in 'next'.
+ source: <pull.1115.v3.git.1642443491609.gitgitgadget@gmail.com>
+
+
+* tl/doc-cli-options-first (2022-01-17) 1 commit
+  (merged to 'next' on 2022-01-19 at 9ec14cfe73)
+ + git-cli.txt: clarify "options first and then args"
+
+ We explain that revs come first before the pathspec among command
+ line arguments, but did not spell out that dashed options come
+ before other args, which has been corrected.
+
+ Will cook in 'next'.
+ source: <fe748304d94e0ae25fd3549aadc49cf951ff2d64.1642405806.git.dyroneteng@gmail.com>
+
+
+* rs/bisect-executable-not-found (2022-01-19) 4 commits
+ - bisect--helper: double-check run command on exit code 126 and 127
+ - bisect: document run behavior with exit codes 126 and 127
+ - bisect--helper: release strbuf and strvec on run error
+ - bisect--helper: report actual bisect_state() argument on error
+
+ source: <fead25d6-6f5f-487a-ad4c-0657fe9785fd@www.fastmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -132,51 +211,56 @@ Release tarballs are available at:
 [Cooking]
 
 * ds/sparse-checkout-requires-per-worktree-config (2022-01-14) 6 commits
- - worktree: copy sparse-checkout patterns and config on add
- - sparse-checkout: use repo_config_set_worktree_gently()
- - config: add repo_config_set_worktree_gently()
- - worktree: add 'init-worktree-config' subcommand
- - config: make some helpers repo-aware
- - setup: use a repository when upgrading format
+ . worktree: copy sparse-checkout patterns and config on add
+ . sparse-checkout: use repo_config_set_worktree_gently()
+ . config: add repo_config_set_worktree_gently()
+ . worktree: add 'init-worktree-config' subcommand
+ . config: make some helpers repo-aware
+ . setup: use a repository when upgrading format
 
  "git sparse-checkout" wants to work with per-worktree configration,
  but did not work well in a worktree attached to a bare repository.
 
  Expecting an update.
  cf. <1db0f601-4769-15c0-cd58-ecddfa1fc9d5@gmail.com>
+ Introduces new leaks.
+ cf. https://github.com/git/git/runs/4823667255?check_suite_focus=true
  source: <pull.1101.v3.git.1640727143.gitgitgadget@gmail.com>
 
 
 * pw/add-p-hunk-split-fix (2022-01-12) 2 commits
- - builtin add -p: fix hunk splitting
- - t3701: clean up hunk splitting tests
+  (merged to 'next' on 2022-01-19 at ea57b2c9a6)
+ + builtin add -p: fix hunk splitting
+ + t3701: clean up hunk splitting tests
 
  "git add -p" rewritten in C regressed hunk splitting in some cases,
  which has been corrected.
 
- Will merge to 'next'?
+ Will cook in 'next'.
  source: <pull.1100.v2.git.1641899530.gitgitgadget@gmail.com>
 
 
-* gc/fetch-negotiate-only-early-return (2022-01-12) 3 commits
- - fetch --negotiate-only: do not update submodules
- - fetch: skip tasks related to fetching objects
- - fetch: use goto cleanup in cmd_fetch()
+* gc/fetch-negotiate-only-early-return (2022-01-18) 3 commits
+  (merged to 'next' on 2022-01-19 at 0f15147cfa)
+ + fetch --negotiate-only: do not update submodules
+ + fetch: skip tasks related to fetching objects
+ + fetch: use goto cleanup in cmd_fetch()
 
- "git fetch --nogotiate-only" is an internal command used by "git
+ "git fetch --negotiate-only" is an internal command used by "git
  push" to figure out which part of our history is missing from the
  other side.  It should never recurse into submodules even when
  fetch.recursesubmodules configuration variable is set, nor it
  should trigger "gc".  The code has been tightened up to ensure it
  only does common ancestry discovery and nothing else.
 
- Almost there.
- source: <20220113004501.78822-1-chooglen@google.com>
+ Will cook in 'next'.
+ source: <20220119000056.58503-1-chooglen@google.com>
 
 
 * jh/p4-fix-use-of-process-error-exception (2022-01-06) 1 commit
   (merged to 'next' on 2022-01-10 at 49d529bfd7)
  + git-p4: fix instantiation of CalledProcessError
+ (this branch is used by jh/p4-various-fixups.)
 
  Will cook in 'next'.
  source: <20220106214156.90967-1-jholdsworth@nvidia.com>
@@ -187,6 +271,7 @@ Release tarballs are available at:
  + git-p4: don't print shell commands as python lists
  + git-p4: pass command arguments as lists instead of using shell
  + git-p4: don't select shell mode using the type of the command argument
+ (this branch is used by jh/p4-various-fixups.)
 
  Will cook in 'next'.
  source: <20220106214035.90725-1-jholdsworth@nvidia.com>
@@ -218,13 +303,14 @@ Release tarballs are available at:
 
 
 * fs/ssh-signing-crlf (2022-01-07) 1 commit
- - gpg-interface: trim CR from ssh-keygen
+  (merged to 'next' on 2022-01-19 at 76b86faafb)
+ + gpg-interface: trim CR from ssh-keygen
 
  The code path that verifies signatures made with ssh were made to
  work better on a system with CRLF line endings.
 
- Will merge to 'next'?
- source: <20220103095337.600536-1-fs@gigacodes.de>
+ Will cook in 'next'.
+ source: <20220107090735.580225-1-fs@gigacodes.de>
 
 
 * jc/qsort-s-alignment-fix (2022-01-07) 2 commits
@@ -241,14 +327,13 @@ Release tarballs are available at:
  source: <xmqqzgo76xpj.fsf@gitster.g>
 
 
-* ps/avoid-unnecessary-hook-invocation-with-packed-refs (2022-01-12) 7 commits
- . fixup! refs: open-code deletion of packed refs
- . refs: skip hooks when deleting uncovered packed refs
- . refs: do not execute reference-transaction hook on packing refs
- . refs: demonstrate excessive execution of the reference-transaction hook
- . refs: allow skipping the reference-transaction hook
- . refs: allow passing flags when beginning transactions
- . refs: open-code deletion of packed refs
+* ps/avoid-unnecessary-hook-invocation-with-packed-refs (2022-01-17) 6 commits
+ - refs: skip hooks when deleting uncovered packed refs
+ - refs: do not execute reference-transaction hook on packing refs
+ - refs: demonstrate excessive execution of the reference-transaction hook
+ - refs: allow skipping the reference-transaction hook
+ - refs: allow passing flags when beginning transactions
+ - refs: extract packed_refs_delete_refs() to allow control of transaction
 
  Because a deletion of ref would need to remove it from both the
  loose ref store and the packed ref store, a delete-ref operation
@@ -256,7 +341,7 @@ Release tarballs are available at:
  hook twice, which has been corrected.
 
  Introduces new leaks when merged to 'seen'.
- source: <cover.1641556319.git.ps@pks.im>
+ source: <cover.1642406989.git.ps@pks.im>
 
 
 * rs/apply-symlinks-use-strset (2022-01-07) 1 commit
@@ -308,22 +393,23 @@ Release tarballs are available at:
  - Merge branch 'vd/sparse-clean-etc' into en/present-despite-skipped
  (this branch uses vd/sparse-clean-etc.)
 
- (NEEDSWORK: BY DOING WHAT), cope better with files on the working
- tree that should not exist according to the sparse checkout
- settings.
+ In sparse-checkouts, files mis-marked as missing from the working tree
+ could lead to later problems.  Such files were hard to discover, and
+ harder to correct.  Automatically detecting and correcting the marking
+ of such files has been added to avoid these problems.
  source: <pull.1114.v2.git.1642175983.gitgitgadget@gmail.com>
 
 
-* bc/csprng-mktemps (2022-01-04) 2 commits
+* bc/csprng-mktemps (2022-01-17) 2 commits
  - wrapper: use a CSPRNG to generate random file names
  - wrapper: add a helper to generate numbers from a CSPRNG
 
  Pick a better random number generator and use it when we prepare
  temporary filenames.
 
- Expecting a reroll.
- cf. <YdTQodIhZ9273nJE@camp.crustytoothpaste.net>
- source: <20220104015555.3387101-1-sandals@crustytoothpaste.net>
+ Are we solving the right problem?
+ cf. <220118.86zgntpegy.gmgdl@evledraar.gmail.com>
+ source: <20220117215617.843190-1-sandals@crustytoothpaste.net>
 
 
 * jc/reflog-parse-options (2022-01-10) 2 commits
@@ -379,13 +465,14 @@ Release tarballs are available at:
 
 
 * jc/name-rev-stdin (2022-01-10) 2 commits
- - name-rev.c: use strbuf_getline instead of limited size buffer
- - name-rev: deprecate --stdin in favor of --annotate-stdin
+  (merged to 'next' on 2022-01-19 at a58e05fabe)
+ + name-rev.c: use strbuf_getline instead of limited size buffer
+ + name-rev: deprecate --stdin in favor of --annotate-stdin
 
  "git name-rev --stdin" does not behave like usual "--stdin" at
  all.  Start the process of renaming it to "--annotate-stdin".
 
- Will merge to 'next'?
+ Will cook in 'next'.
  source: <pull.1171.v7.git.git.1641425372.gitgitgadget@gmail.com>
 
 
@@ -404,7 +491,8 @@ Release tarballs are available at:
  "git log --remerge-diff" shows the difference from mechanical merge
  result and the merge result that is actually recorded.
 
- Will merge to 'next'?
+ Plug new leaks?
+ cf. <220119.86pmonn2mb.gmgdl@evledraar.gmail.com>
  source: <pull.1103.v3.git.1640907369.gitgitgadget@gmail.com>
 
 
@@ -428,7 +516,8 @@ Release tarballs are available at:
 
  "git branch" learned the "--recurse-submodules" option.
 
- Will merge to 'next'?
+ Expecting a reroll.
+ cf. <kl6l7db6kvp2.fsf@chooglen-macbookpro.roam.corp.google.com>
  source: <20211220233459.45739-1-chooglen@google.com>
 
 
@@ -529,19 +618,22 @@ Release tarballs are available at:
  source: <cover-0.2-00000000000-20220110T220553Z-avarab@gmail.com>
 
 
-* ab/grep-patterntype (2021-12-27) 7 commits
+* ab/grep-patterntype (2022-01-18) 10 commits
+ - grep.[ch]: remove GREP_PATTERN_TYPE_UNSPECIFIED
+ - grep: simplify config parsing and option parsing
+ - grep.c: do "if (bool && memchr())" not "if (memchr() && bool)"
+ - grep.h: make "grep_opt.pattern_type_option" use its enum
  - grep API: call grep_config() after grep_init()
  - grep.c: don't pass along NULL callback value
  - built-ins: trust the "prefix" from run_builtin()
- - fixup! grep tests: add missing "grep.patternType" config tests
  - grep tests: add missing "grep.patternType" config tests
  - log tests: check if grep_config() is called by "log"-like cmds
  - grep.h: remove unused "regex_t regexp" from grep_opt
 
  Some code clean-up in the "git grep" machinery.
 
- Reroll exists.
- source: <cover-v6-0.7-00000000000-20211226T223035Z-avarab@gmail.com>
+ Looking good, except for the last two steps.
+ source: <cover-v8-00.10-00000000000-20220118T155211Z-avarab@gmail.com>
 
 
 * js/use-builtin-add-i (2021-12-01) 2 commits
@@ -558,16 +650,17 @@ Release tarballs are available at:
  source: <pull.1087.git.1638281655.gitgitgadget@gmail.com>
 
 
-* jt/conditional-config-on-remote-url (2021-12-15) 2 commits
- - config: include file if remote URL matches a glob
- - config: make git_config_include() static
+* jt/conditional-config-on-remote-url (2022-01-18) 2 commits
+  (merged to 'next' on 2022-01-19 at 3c2df266eb)
+ + config: include file if remote URL matches a glob
+ + config: make git_config_include() static
 
  The conditional inclusion mechanism of configuration files using
  "[includeIf <condition>]" learns to base its decision on the
  URL of the remote repository the repository interacts with.
 
- How does this one look these days?
- source: <cover.1639509048.git.jonathantanmy@google.com>
+ Will cook in 'next'.
+ source: <cover.1642527965.git.jonathantanmy@google.com>
 
 
 * ab/ambiguous-object-name (2022-01-13) 6 commits
@@ -600,27 +693,28 @@ Release tarballs are available at:
 
 
 * ab/config-based-hooks-2 (2022-01-07) 17 commits
- - run-command: remove old run_hook_{le,ve}() hook API
- - receive-pack: convert push-to-checkout hook to hook.h
- - read-cache: convert post-index-change to use hook.h
- - commit: convert {pre-commit,prepare-commit-msg} hook to hook.h
- - git-p4: use 'git hook' to run hooks
- - send-email: use 'git hook run' for 'sendemail-validate'
- - git hook run: add an --ignore-missing flag
- - hooks: convert worktree 'post-checkout' hook to hook library
- - hooks: convert non-worktree 'post-checkout' hook to hook library
- - merge: convert post-merge to use hook.h
- - am: convert applypatch-msg to use hook.h
- - rebase: convert pre-rebase to use hook.h
- - hook API: add a run_hooks_l() wrapper
- - am: convert {pre,post}-applypatch to use hook.h
- - gc: use hook library for pre-auto-gc hook
- - hook API: add a run_hooks() wrapper
- - hook: add 'run' subcommand
+  (merged to 'next' on 2022-01-19 at 594b6da22c)
+ + run-command: remove old run_hook_{le,ve}() hook API
+ + receive-pack: convert push-to-checkout hook to hook.h
+ + read-cache: convert post-index-change to use hook.h
+ + commit: convert {pre-commit,prepare-commit-msg} hook to hook.h
+ + git-p4: use 'git hook' to run hooks
+ + send-email: use 'git hook run' for 'sendemail-validate'
+ + git hook run: add an --ignore-missing flag
+ + hooks: convert worktree 'post-checkout' hook to hook library
+ + hooks: convert non-worktree 'post-checkout' hook to hook library
+ + merge: convert post-merge to use hook.h
+ + am: convert applypatch-msg to use hook.h
+ + rebase: convert pre-rebase to use hook.h
+ + hook API: add a run_hooks_l() wrapper
+ + am: convert {pre,post}-applypatch to use hook.h
+ + gc: use hook library for pre-auto-gc hook
+ + hook API: add a run_hooks() wrapper
+ + hook: add 'run' subcommand
 
  More "config-based hooks".
 
- Will merge to 'next', with minor nits?
+ Will cook in 'next'.
  source: <cover-v6-00.17-00000000000-20211222T035755Z-avarab@gmail.com>
 
 
