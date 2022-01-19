@@ -7,6 +7,7 @@
 #include "tree-walk.h"
 #include "tree.h"
 #include "unpack-trees.h"
+#include "hook.h"
 
 int reset_head(struct repository *r, struct object_id *oid, const char *action,
 	       const char *switch_to_branch, unsigned flags,
@@ -127,7 +128,7 @@ reset_head_refs:
 					    reflog_head);
 	}
 	if (run_hook)
-		run_hook_le(NULL, "post-checkout",
+		run_hooks_l("post-checkout",
 			    oid_to_hex(orig ? orig : null_oid()),
 			    oid_to_hex(oid), "1", NULL);
 
