@@ -2014,7 +2014,8 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 			break;
 
 		default:
-			die(_("--negotiate-only and --recurse-submodules cannot be used together"));
+			die(_("options '%s' and '%s' cannot be used together"),
+			    "--negotiate-only", "--recurse-submodules");
 		}
 	}
 
