@@ -16,7 +16,7 @@ SYNOPSIS
 	[--points-at <object>] [--format=<format>]
 	[(-r | --remotes) | (-a | --all)]
 	[--list] [<pattern>...]
-'git branch' [--track [direct|inherit] | --no-track] [-f] <branchname> [<start-point>]
+'git branch' [--track[=(direct|inherit)] | --no-track] [-f] <branchname> [<start-point>]
 'git branch' (--set-upstream-to=<upstream> | -u <upstream>) [<branchname>]
 'git branch' --unset-upstream [<branchname>]
 'git branch' (-m | -M) [<oldbranch>] <newbranch>
@@ -206,7 +206,7 @@ This option is only applicable in non-verbose mode.
 	Display the full sha1s in the output listing rather than abbreviating them.
 
 -t::
---track [inherit|direct]::
+--track[=(direct|inherit)]::
 	When creating a new branch, set up `branch.<name>.remote` and
 	`branch.<name>.merge` configuration entries to set "upstream" tracking
 	configuration for the new branch. This
@@ -216,11 +216,11 @@ This option is only applicable in non-verbose mode.
 	upstream when the new branch is checked out.
 +
 The exact upstream branch is chosen depending on the optional argument:
-`--track` or `--track direct` means to use the start-point branch itself as the
-upstream; `--track inherit` means to copy the upstream configuration of the
-start-point branch.
+`-t`, `--track`, or `--track=direct` means to use the start-point branch
+itself as the upstream; `--track=inherit` means to copy the upstream
+configuration of the start-point branch.
 +
-`--track direct` is the default when the start point is a remote-tracking branch.
+`--track=direct` is the default when the start point is a remote-tracking branch.
 Set the branch.autoSetupMerge configuration variable to `false` if you
 want `git switch`, `git checkout` and `git branch` to always behave as if `--no-track`
 were given. Set it to `always` if you want this behavior when the
