@@ -632,7 +632,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		OPT__VERBOSE(&filter.verbose,
 			N_("show hash and subject, give twice for upstream branch")),
 		OPT__QUIET(&quiet, N_("suppress informational messages")),
-		OPT_CALLBACK_F('t', "track",  &track, N_("mode"),
+		OPT_CALLBACK_F('t', "track",  &track, "(direct|inherit)",
 			N_("set branch tracking configuration"),
 			PARSE_OPT_OPTARG,
 			parse_opt_tracking_mode),
