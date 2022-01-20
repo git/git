@@ -421,7 +421,7 @@ int block_reader_seek(struct block_reader *br, struct block_iter *it,
 done:
 	strbuf_release(&key);
 	strbuf_release(&next.last_key);
-	reftable_record_destroy(&rec);
+	reftable_record_release(&rec);
 
 	return err;
 }

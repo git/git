@@ -26,8 +26,9 @@ static void test_block_read_write(void)
 	struct block_writer bw = {
 		.last_key = STRBUF_INIT,
 	};
-	struct reftable_ref_record ref = { NULL };
-	struct reftable_record rec = { NULL };
+	struct reftable_record rec = {
+		.type = BLOCK_TYPE_REF,
+	};
 	int i = 0;
 	int n;
 	struct block_reader br = { 0 };
@@ -40,7 +41,6 @@ static void test_block_read_write(void)
 	block.source = malloc_block_source();
 	block_writer_init(&bw, BLOCK_TYPE_REF, block.data, block_size,
 			  header_off, hash_size(GIT_SHA1_FORMAT_ID));
-	reftable_record_from_ref(&rec, &ref);
 
 	for (i = 0; i < N; i++) {
 		char name[100];
@@ -48,14 +48,14 @@ static void test_block_read_write(void)
 		snprintf(name, sizeof(name), "branch%02d", i);
 		memset(hash, i, sizeof(hash));
 
-		ref.refname = name;
-		ref.value_type = REFTABLE_REF_VAL1;
-		ref.value.val1 = hash;
+		rec.u.ref.refname = name;
+		rec.u.ref.value_type = REFTABLE_REF_VAL1;
+		rec.u.ref.value.val1 = hash;
 
 		names[i] = xstrdup(name);
 		n = block_writer_add(&bw, &rec);
-		ref.refname = NULL;
-		ref.value_type = REFTABLE_REF_DELETION;
+		rec.u.ref.refname = NULL;
+		rec.u.ref.value_type = REFTABLE_REF_DELETION;
 		EXPECT(n == 0);
 	}
 
@@ -74,7 +74,7 @@ static void test_block_read_write(void)
 		if (r > 0) {
 			break;
 		}
-		EXPECT_STREQ(names[j], ref.refname);
+		EXPECT_STREQ(names[j], rec.u.ref.refname);
 		j++;
 	}
 
@@ -92,7 +92,7 @@ static void test_block_read_write(void)
 		n = block_iter_next(&it, &rec);
 		EXPECT(n == 0);
 
-		EXPECT_STREQ(names[i], ref.refname);
+		EXPECT_STREQ(names[i], rec.u.ref.refname);
 
 		want.len--;
 		n = block_reader_seek(&br, &it, &want);
@@ -100,7 +100,7 @@ static void test_block_read_write(void)
 
 		n = block_iter_next(&it, &rec);
 		EXPECT(n == 0);
-		EXPECT_STREQ(names[10 * (i / 10)], ref.refname);
+		EXPECT_STREQ(names[10 * (i / 10)], rec.u.ref.refname);
 
 		block_iter_close(&it);
 	}
