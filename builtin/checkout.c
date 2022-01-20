@@ -1549,7 +1549,7 @@ static struct option *add_common_switch_branch_options(
 {
 	struct option options[] = {
 		OPT_BOOL('d', "detach", &opts->force_detach, N_("detach HEAD at named commit")),
-		OPT_CALLBACK_F('t', "track",  &opts->track, N_("mode"),
+		OPT_CALLBACK_F('t', "track",  &opts->track, "(direct|inherit)",
 			N_("set branch tracking configuration"),
 			PARSE_OPT_OPTARG,
 			parse_opt_tracking_mode),
