@@ -85,6 +85,11 @@ typedef enum parse_opt_result parse_opt_ll_cb(struct parse_opt_ctx_t *ctx,
  *   token to explain the kind of argument this option wants. Does not
  *   begin in capital letter, and does not end with a full stop.
  *   Should be wrapped by N_() for translation.
+ *   Is automatically enclosed in brackets when printed, unless it
+ *   contains any of the following characters: ()<>[]|
+ *   E.g. "name" is shown as "<name>" to indicate that a name value
+ *   needs to be supplied, not the literal string "name", but
+ *   "<start>,<end>" and "(this|that)" are printed verbatim.
  *
  * `help`::
  *   the short help associated to what the option does.
