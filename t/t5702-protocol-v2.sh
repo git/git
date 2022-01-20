@@ -630,7 +630,7 @@ test_expect_success 'usage: --negotiate-only without --negotiation-tip' '
 
 test_expect_success 'usage: --negotiate-only with --recurse-submodules' '
 	cat >err.expect <<-\EOF &&
-	fatal: --negotiate-only and --recurse-submodules cannot be used together
+	fatal: options '\''--negotiate-only'\'' and '\''--recurse-submodules'\'' cannot be used together
 	EOF
 
 	test_must_fail git -c protocol.version=2 -C client fetch \
