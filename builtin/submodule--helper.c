@@ -20,6 +20,7 @@
 #include "diff.h"
 #include "object-store.h"
 #include "advice.h"
+#include "list-objects-filter-options.h"
 
 #define OPT_QUIET (1 << 0)
 #define OPT_CACHED (1 << 1)
@@ -1630,6 +1631,7 @@ struct module_clone_data {
 	const char *name;
 	const char *url;
 	const char *depth;
+	struct list_objects_filter_options *filter_options;
 	struct string_list reference;
 	unsigned int quiet: 1;
 	unsigned int progress: 1;
@@ -1796,6 +1798,10 @@ static int clone_submodule(struct module_clone_data *clone_data)
 			strvec_push(&cp.args, "--dissociate");
 		if (sm_gitdir && *sm_gitdir)
 			strvec_pushl(&cp.args, "--separate-git-dir", sm_gitdir, NULL);
+		if (clone_data->filter_options && clone_data->filter_options->choice)
+			strvec_pushf(&cp.args, "--filter=%s",
+				     expand_list_objects_filter_spec(
+					     clone_data->filter_options));
 		if (clone_data->single_branch >= 0)
 			strvec_push(&cp.args, clone_data->single_branch ?
 				    "--single-branch" :
@@ -1852,6 +1858,7 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 {
 	int dissociate = 0, quiet = 0, progress = 0, require_init = 0;
 	struct module_clone_data clone_data = MODULE_CLONE_DATA_INIT;
+	struct list_objects_filter_options filter_options;
 
 	struct option module_clone_options[] = {
 		OPT_STRING(0, "prefix", &clone_data.prefix,
@@ -1881,17 +1888,19 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 			   N_("disallow cloning into non-empty directory")),
 		OPT_BOOL(0, "single-branch", &clone_data.single_branch,
 			 N_("clone only one branch, HEAD or --branch")),
+		OPT_PARSE_LIST_OBJECTS_FILTER(&filter_options),
 		OPT_END()
 	};
 
 	const char *const git_submodule_helper_usage[] = {
 		N_("git submodule--helper clone [--prefix=<path>] [--quiet] "
 		   "[--reference <repository>] [--name <name>] [--depth <depth>] "
-		   "[--single-branch] "
+		   "[--single-branch] [--filter <filter-spec>]"
 		   "--url <url> --path <path>"),
 		NULL
 	};
 
+	memset(&filter_options, 0, sizeof(filter_options));
 	argc = parse_options(argc, argv, prefix, module_clone_options,
 			     git_submodule_helper_usage, 0);
 
@@ -1899,12 +1908,14 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 	clone_data.quiet = !!quiet;
 	clone_data.progress = !!progress;
 	clone_data.require_init = !!require_init;
+	clone_data.filter_options = &filter_options;
 
 	if (argc || !clone_data.url || !clone_data.path || !*(clone_data.path))
 		usage_with_options(git_submodule_helper_usage,
 				   module_clone_options);
 
 	clone_submodule(&clone_data);
+	list_objects_filter_release(&filter_options);
 	return 0;
 }
 
@@ -1994,6 +2005,7 @@ struct submodule_update_clone {
 	const char *recursive_prefix;
 	const char *prefix;
 	int single_branch;
+	struct list_objects_filter_options *filter_options;
 
 	/* to be consumed by git-submodule.sh */
 	struct update_clone_data *update_clone;
@@ -2154,6 +2166,9 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 		strvec_pushl(&child->args, "--prefix", suc->prefix, NULL);
 	if (suc->recommend_shallow && sub->recommend_shallow == 1)
 		strvec_push(&child->args, "--depth=1");
+	if (suc->filter_options && suc->filter_options->choice)
+		strvec_pushf(&child->args, "--filter=%s",
+			     expand_list_objects_filter_spec(suc->filter_options));
 	if (suc->require_init)
 		strvec_push(&child->args, "--require-init");
 	strvec_pushl(&child->args, "--path", sub->path, NULL);
@@ -2498,6 +2513,8 @@ static int update_clone(int argc, const char **argv, const char *prefix)
 	const char *update = NULL;
 	struct pathspec pathspec;
 	struct submodule_update_clone suc = SUBMODULE_UPDATE_CLONE_INIT;
+	struct list_objects_filter_options filter_options;
+	int ret;
 
 	struct option module_update_clone_options[] = {
 		OPT_STRING(0, "prefix", &prefix,
@@ -2528,6 +2545,7 @@ static int update_clone(int argc, const char **argv, const char *prefix)
 			   N_("disallow cloning into non-empty directory")),
 		OPT_BOOL(0, "single-branch", &suc.single_branch,
 			 N_("clone only one branch, HEAD or --branch")),
+		OPT_PARSE_LIST_OBJECTS_FILTER(&filter_options),
 		OPT_END()
 	};
 
@@ -2540,20 +2558,26 @@ static int update_clone(int argc, const char **argv, const char *prefix)
 	update_clone_config_from_gitmodules(&suc.max_jobs);
 	git_config(git_update_clone_config, &suc.max_jobs);
 
+	memset(&filter_options, 0, sizeof(filter_options));
 	argc = parse_options(argc, argv, prefix, module_update_clone_options,
 			     git_submodule_helper_usage, 0);
+	suc.filter_options = &filter_options;
 
 	if (update)
 		if (parse_submodule_update_strategy(update, &suc.update) < 0)
 			die(_("bad value for update parameter"));
 
-	if (module_list_compute(argc, argv, prefix, &pathspec, &suc.list) < 0)
+	if (module_list_compute(argc, argv, prefix, &pathspec, &suc.list) < 0) {
+		list_objects_filter_release(&filter_options);
 		return 1;
+	}
 
 	if (pathspec.nr)
 		suc.warn_if_uninitialized = 1;
 
-	return update_submodules(&suc);
+	ret = update_submodules(&suc);
+	list_objects_filter_release(&filter_options);
+	return ret;
 }
 
 static int run_update_procedure(int argc, const char **argv, const char *prefix)
