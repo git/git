@@ -22,19 +22,19 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2022-01-11 09:38+0800\n"
-"PO-Revision-Date: 2022-01-12 17:01+0000\n"
+"POT-Creation-Date: 2022-01-17 08:31+0800\n"
+"PO-Revision-Date: 2022-01-22 07:05+0800\n"
 "Last-Translator: Yi-Jyun Pan <pan93412@gmail.com>\n"
-"Language-Team: Chinese (Traditional) <http://weblate.slat.org/projects/"
-"git-po/git-cli/zh_Hant/>\n"
+"Language-Team: Chinese (Traditional) <http://weblate.slat.org/projects/git-"
+"po/git-cli/zh_Hant/>\n"
 "Language: zh_TW\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 4.8.1\n"
-"X-ZhConverter: 繁化姬 dict-f4bc617e-r910 @ 2019/11/16 20:23:12 | "
-"https://zhconvert.org\n"
+"X-Generator: Poedit 3.0.1\n"
+"X-ZhConverter: 繁化姬 dict-f4bc617e-r910 @ 2019/11/16 20:23:12 | https://"
+"zhconvert.org\n"
 
 #: add-interactive.c:380
 #, c-format
@@ -893,8 +893,8 @@ msgstr "無法識別的空白字元忽略選項 '%s'"
 #: builtin/checkout.c:1644 builtin/checkout.c:1754 builtin/checkout.c:1757
 #: builtin/clone.c:906 builtin/commit.c:358 builtin/commit.c:361
 #: builtin/commit.c:1196 builtin/describe.c:593 builtin/diff-tree.c:155
-#: builtin/difftool.c:733 builtin/fast-export.c:1245 builtin/fetch.c:2033
-#: builtin/fetch.c:2038 builtin/index-pack.c:1852 builtin/init-db.c:560
+#: builtin/difftool.c:733 builtin/fast-export.c:1245 builtin/fetch.c:2038
+#: builtin/fetch.c:2043 builtin/index-pack.c:1852 builtin/init-db.c:560
 #: builtin/log.c:1946 builtin/log.c:1948 builtin/ls-files.c:778
 #: builtin/merge.c:1403 builtin/merge.c:1405 builtin/pack-objects.c:4073
 #: builtin/push.c:592 builtin/push.c:630 builtin/push.c:636 builtin/push.c:641
@@ -1926,7 +1926,7 @@ msgstr "已有同名「%s」分支"
 
 #: branch.c:313
 #, c-format
-msgid "cannot force update the branch '%s'checked out at '%s'"
+msgid "cannot force update the branch '%s' checked out at '%s'"
 msgstr "無法強制更新在「%2$s」簽出的「%1$s」分支"
 
 #: branch.c:336
@@ -5648,7 +5648,7 @@ msgstr "%s：插入資料庫失敗"
 msgid "%s: unsupported file type"
 msgstr "%s：不支援的檔案類型"
 
-#: object-file.c:2329 builtin/fetch.c:1448
+#: object-file.c:2329 builtin/fetch.c:1453
 #, c-format
 msgid "%s is not a valid object"
 msgstr "%s 不是一個有效的物件"
@@ -6897,41 +6897,41 @@ msgstr "拒絕更新有錯誤名稱 '%s' 的引用"
 msgid "update_ref failed for ref '%s': %s"
 msgstr "對引用 '%s' 執行 update_ref 失敗：%s"
 
-#: refs.c:2069
+#: refs.c:2067
 #, c-format
 msgid "multiple updates for ref '%s' not allowed"
 msgstr "不允許對引用 '%s' 多次更新"
 
-#: refs.c:2152
+#: refs.c:2150
 msgid "ref updates forbidden inside quarantine environment"
 msgstr "在隔離環境中禁止更新引用"
 
-#: refs.c:2163
+#: refs.c:2161
 msgid "ref updates aborted by hook"
 msgstr "引用更新被掛鉤拒絕"
 
-#: refs.c:2271 refs.c:2301
+#: refs.c:2269 refs.c:2299
 #, c-format
 msgid "'%s' exists; cannot create '%s'"
 msgstr "'%s' 已存在，無法建立 '%s'"
 
-#: refs.c:2277 refs.c:2312
+#: refs.c:2275 refs.c:2310
 #, c-format
 msgid "cannot process '%s' and '%s' at the same time"
 msgstr "無法同時處理 '%s' 和 '%s'"
 
-#: refs/files-backend.c:1268
+#: refs/files-backend.c:1267
 #, c-format
 msgid "could not remove reference %s"
 msgstr "無法刪除引用 %s"
 
-#: refs/files-backend.c:1282 refs/packed-backend.c:1549
+#: refs/files-backend.c:1281 refs/packed-backend.c:1549
 #: refs/packed-backend.c:1559
 #, c-format
 msgid "could not delete reference %s: %s"
 msgstr "無法刪除引用 %s：%s"
 
-#: refs/files-backend.c:1285 refs/packed-backend.c:1562
+#: refs/files-backend.c:1284 refs/packed-backend.c:1562
 #, c-format
 msgid "could not delete references: %s"
 msgstr "無法刪除引用：%s"
@@ -7950,7 +7950,8 @@ msgstr "不能解析 HEAD"
 msgid "cannot abort from a branch yet to be born"
 msgstr "不能從尚未建立的分支終止"
 
-#: sequencer.c:3180 builtin/fetch.c:999 builtin/fetch.c:1411 builtin/grep.c:772
+#: sequencer.c:3180 builtin/fetch.c:1004 builtin/fetch.c:1416
+#: builtin/grep.c:772
 #, c-format
 msgid "cannot open '%s'"
 msgstr "不能開啟 '%s'"
@@ -8883,7 +8884,7 @@ msgstr "協定不支援設定遠端服務路徑"
 msgid "invalid remote service path"
 msgstr "無效的遠端服務路徑"
 
-#: transport-helper.c:661 transport.c:1474
+#: transport-helper.c:661 transport.c:1479
 msgid "operation not supported by protocol"
 msgstr "協定不支援該動作"
 
@@ -13040,7 +13041,7 @@ msgstr "「%s」和「%s %s」選項不得同時使用"
 msgid "repository '%s' does not exist"
 msgstr "版本庫 '%s' 不存在"
 
-#: builtin/clone.c:924 builtin/fetch.c:2047
+#: builtin/clone.c:924 builtin/fetch.c:2052
 #, c-format
 msgid "depth %s is not a positive number"
 msgstr "深度 %s 不是一個正數"
@@ -14894,70 +14895,70 @@ msgstr "抓取後寫入分支圖"
 msgid "accept refspecs from stdin"
 msgstr "從標準輸入中接受引用規格"
 
-#: builtin/fetch.c:587
+#: builtin/fetch.c:592
 msgid "couldn't find remote ref HEAD"
 msgstr "找不到遠端 HEAD 引用"
 
-#: builtin/fetch.c:761
+#: builtin/fetch.c:766
 #, c-format
 msgid "configuration fetch.output contains invalid value %s"
 msgstr "設定變數 fetch.output 包含無效值 %s"
 
-#: builtin/fetch.c:862
+#: builtin/fetch.c:867
 #, c-format
 msgid "object %s not found"
 msgstr "物件 %s 未發現"
 
-#: builtin/fetch.c:866
+#: builtin/fetch.c:871
 msgid "[up to date]"
 msgstr "[最新]"
 
-#: builtin/fetch.c:878 builtin/fetch.c:896 builtin/fetch.c:968
+#: builtin/fetch.c:883 builtin/fetch.c:901 builtin/fetch.c:973
 msgid "[rejected]"
 msgstr "[已拒絕]"
 
-#: builtin/fetch.c:880
+#: builtin/fetch.c:885
 msgid "can't fetch in current branch"
 msgstr "目前分支下不能執行取得動作"
 
-#: builtin/fetch.c:881
+#: builtin/fetch.c:886
 msgid "checked out in another worktree"
 msgstr "已在其他工作區簽出"
 
-#: builtin/fetch.c:891
+#: builtin/fetch.c:896
 msgid "[tag update]"
 msgstr "[標籤更新]"
 
-#: builtin/fetch.c:892 builtin/fetch.c:929 builtin/fetch.c:951
-#: builtin/fetch.c:963
+#: builtin/fetch.c:897 builtin/fetch.c:934 builtin/fetch.c:956
+#: builtin/fetch.c:968
 msgid "unable to update local ref"
 msgstr "不能更新本機引用"
 
-#: builtin/fetch.c:896
+#: builtin/fetch.c:901
 msgid "would clobber existing tag"
 msgstr "會破壞現有的標籤"
 
-#: builtin/fetch.c:918
+#: builtin/fetch.c:923
 msgid "[new tag]"
 msgstr "[新標籤]"
 
-#: builtin/fetch.c:921
+#: builtin/fetch.c:926
 msgid "[new branch]"
 msgstr "[新分支]"
 
-#: builtin/fetch.c:924
+#: builtin/fetch.c:929
 msgid "[new ref]"
 msgstr "[新引用]"
 
-#: builtin/fetch.c:963
+#: builtin/fetch.c:968
 msgid "forced update"
 msgstr "強制更新"
 
-#: builtin/fetch.c:968
+#: builtin/fetch.c:973
 msgid "non-fast-forward"
 msgstr "非快轉"
 
-#: builtin/fetch.c:1071
+#: builtin/fetch.c:1076
 msgid ""
 "fetch normally indicates which branches had a forced update,\n"
 "but that check has been disabled; to re-enable, use '--show-forced-updates'\n"
@@ -14967,7 +14968,7 @@ msgstr ""
 "要重新啟用，請使用「--show-forced-updates」選項，或執行\n"
 "「git config fetch.showForcedUpdates true」"
 
-#: builtin/fetch.c:1075
+#: builtin/fetch.c:1080
 #, c-format
 msgid ""
 "it took %.2f seconds to check forced updates; you can use\n"
@@ -14978,22 +14979,22 @@ msgstr ""
 "花了 %.2f 秒檢查強制更新。您可以使用「--no-show-forced-updates」\n"
 "或執行「git config fetch.showForcedUpdates false」避免此項檢查\n"
 
-#: builtin/fetch.c:1107
+#: builtin/fetch.c:1112
 #, c-format
 msgid "%s did not send all necessary objects\n"
 msgstr "%s 未傳送所有必需的物件\n"
 
-#: builtin/fetch.c:1136
+#: builtin/fetch.c:1141
 #, c-format
 msgid "rejected %s because shallow roots are not allowed to be updated"
 msgstr "已拒絕 %s，不允許更新淺複製"
 
-#: builtin/fetch.c:1226 builtin/fetch.c:1374
+#: builtin/fetch.c:1231 builtin/fetch.c:1379
 #, c-format
 msgid "From %.*s\n"
 msgstr "來自 %.*s\n"
 
-#: builtin/fetch.c:1247
+#: builtin/fetch.c:1252
 #, c-format
 msgid ""
 "some local refs could not be updated; try running\n"
@@ -15003,69 +15004,70 @@ msgstr ""
 " 'git remote prune %s' 來刪除舊的、有衝突的分支"
 
 #  譯者：請維持前導空格
-#: builtin/fetch.c:1344
+#: builtin/fetch.c:1349
 #, c-format
 msgid "   (%s will become dangling)"
 msgstr "   （%s 將成為懸空狀態）"
 
 #  譯者：請維持前導空格
-#: builtin/fetch.c:1345
+#: builtin/fetch.c:1350
 #, c-format
 msgid "   (%s has become dangling)"
 msgstr "   （%s 已成為懸空狀態）"
 
-#: builtin/fetch.c:1377
+#: builtin/fetch.c:1382
 msgid "[deleted]"
 msgstr "[已刪除]"
 
-#: builtin/fetch.c:1378 builtin/remote.c:1128
+#: builtin/fetch.c:1383 builtin/remote.c:1128
 msgid "(none)"
 msgstr "（無）"
 
-#: builtin/fetch.c:1400
+#: builtin/fetch.c:1405
 #, c-format
 msgid "refusing to fetch into branch '%s' checked out at '%s'"
 msgstr "拒絕取得在「%2$s」簽出的「%1$s」分支"
 
-#: builtin/fetch.c:1420
+#: builtin/fetch.c:1425
 #, c-format
 msgid "option \"%s\" value \"%s\" is not valid for %s"
 msgstr "選項「%s」的值「%s」對 %s 無效"
 
-#: builtin/fetch.c:1423
+#: builtin/fetch.c:1428
 #, c-format
 msgid "option \"%s\" is ignored for %s\n"
 msgstr "選項「%s」被 %s 忽略\n"
 
-#: builtin/fetch.c:1450
+#: builtin/fetch.c:1455
 #, c-format
 msgid "the object %s does not exist"
 msgstr "%s 物件不存在"
 
-#: builtin/fetch.c:1638
+#: builtin/fetch.c:1643
 msgid "multiple branches detected, incompatible with --set-upstream"
 msgstr "檢測到多分支，和 --set-upstream 不相容"
 
-#: builtin/fetch.c:1650
+#: builtin/fetch.c:1655
 #, c-format
 msgid ""
 "could not set upstream of HEAD to '%s' from '%s' when it does not point to "
 "any branch."
-msgstr "無法將 HEAD 的上游從「%2$s」設定為「%1$s」，因為 HEAD 沒有指向任何分支。"
+msgstr ""
+"無法將 HEAD 的上游從「%2$s」設定為「%1$s」，因為 HEAD 沒有指向任何分支。"
 
-#: builtin/fetch.c:1663
+#: builtin/fetch.c:1668
 msgid "not setting upstream for a remote remote-tracking branch"
 msgstr "沒有為一個遠端追蹤分支設定上游"
 
-#: builtin/fetch.c:1665
+#: builtin/fetch.c:1670
 msgid "not setting upstream for a remote tag"
 msgstr "沒有為一個遠端標籤設定上游"
 
-#: builtin/fetch.c:1667
+#: builtin/fetch.c:1672
 msgid "unknown branch type"
 msgstr "未知的分支類型"
 
-#: builtin/fetch.c:1669
+#: builtin/fetch.c:1674
 msgid ""
 "no source branch found;\n"
 "you need to specify exactly one branch with the --set-upstream option"
@@ -15073,22 +15075,22 @@ msgstr ""
 "找不到來源分支。\n"
 "您得使用 --set-upstream 選項明確指定一個分支"
 
-#: builtin/fetch.c:1799 builtin/fetch.c:1862
+#: builtin/fetch.c:1804 builtin/fetch.c:1867
 #, c-format
 msgid "Fetching %s\n"
 msgstr "正在取得 %s\n"
 
-#: builtin/fetch.c:1809 builtin/fetch.c:1864
+#: builtin/fetch.c:1814 builtin/fetch.c:1869
 #, c-format
 msgid "could not fetch %s"
 msgstr "不能取得 %s"
 
-#: builtin/fetch.c:1821
+#: builtin/fetch.c:1826
 #, c-format
 msgid "could not fetch '%s' (exit code: %d)\n"
 msgstr "無法取得 '%s'（離開碼：%d）\n"
 
-#: builtin/fetch.c:1925
+#: builtin/fetch.c:1930
 msgid ""
 "no remote repository specified; please specify either a URL or a\n"
 "remote name from which new revisions should be fetched"
@@ -15096,58 +15098,58 @@ msgstr ""
 "未指定遠端版本庫。請指定用以取得新修訂版本之\n"
 "來源 URL 或者遠端版本庫名稱"
 
-#: builtin/fetch.c:1961
+#: builtin/fetch.c:1966
 msgid "you need to specify a tag name"
 msgstr "您需要指定標籤名稱"
 
-#: builtin/fetch.c:2027
+#: builtin/fetch.c:2032
 msgid "--negotiate-only needs one or more --negotiate-tip=*"
 msgstr "--negotiate-only 需要一或多個 --negotiate-tip=*"
 
-#: builtin/fetch.c:2031
+#: builtin/fetch.c:2036
 msgid "negative depth in --deepen is not supported"
 msgstr "--deepen 不支援負數深度"
 
-#: builtin/fetch.c:2040
+#: builtin/fetch.c:2045
 msgid "--unshallow on a complete repository does not make sense"
 msgstr "對於一個完整的版本庫，參數 --unshallow 沒有意義"
 
-#: builtin/fetch.c:2057
+#: builtin/fetch.c:2062
 msgid "fetch --all does not take a repository argument"
 msgstr "fetch --all 不能帶一個版本庫參數"
 
-#: builtin/fetch.c:2059
+#: builtin/fetch.c:2064
 msgid "fetch --all does not make sense with refspecs"
 msgstr "fetch --all 帶引用規格沒有任何意義"
 
-#: builtin/fetch.c:2068
+#: builtin/fetch.c:2073
 #, c-format
 msgid "no such remote or remote group: %s"
 msgstr "無此遠端或遠端群組：%s"
 
-#: builtin/fetch.c:2076
+#: builtin/fetch.c:2081
 msgid "fetching a group and specifying refspecs does not make sense"
 msgstr "取得群組並指定引用規格無意義"
 
-#: builtin/fetch.c:2092
+#: builtin/fetch.c:2097
 msgid "must supply remote when using --negotiate-only"
 msgstr "使用 --negotiate-only 時必須提供遠端"
 
-#: builtin/fetch.c:2097
+#: builtin/fetch.c:2102
 msgid "protocol does not support --negotiate-only, exiting"
 msgstr "通訊協定不支援 --negotiate-only。結束"
 
-#: builtin/fetch.c:2116
+#: builtin/fetch.c:2121
 msgid ""
 "--filter can only be used with the remote configured in extensions."
 "partialclone"
 msgstr "只可以將 --filter 用於在 extensions.partialclone 中設定的遠端版本庫"
 
-#: builtin/fetch.c:2120
+#: builtin/fetch.c:2125
 msgid "--atomic can only be used when fetching from one remote"
 msgstr "--atomic 只能在擷取 (fetch) 一個遠端時使用"
 
-#: builtin/fetch.c:2124
+#: builtin/fetch.c:2129
 msgid "--stdin can only be used when fetching from one remote"
 msgstr "--stdin 只能在取得一個遠端時使用"
 
@@ -17221,10 +17223,8 @@ msgid "suppress duplicate entries"
 msgstr "不顯示重複項目"
 
 #: builtin/ls-files.c:677
-#, fuzzy
-#| msgid "toggle the use of a sparse index"
 msgid "show sparse directories in the presence of a sparse index"
-msgstr "對稀疏索引顯示稀疏目錄"
+msgstr "在稀疏索引存在時顯示稀疏目錄"
 
 #: builtin/ls-remote.c:9
 msgid ""
@@ -21874,8 +21874,8 @@ msgid ""
 "          [--pathspec-from-file=<file> [--pathspec-file-nul]]\n"
 "          [--] [<pathspec>...]]"
 msgstr ""
-"git stash [push [-p|--patch] [-S|--staged] [-k|--[no-]keep-index] "
-"[-q|--quiet]\n"
+"git stash [push [-p|--patch] [-S|--staged] [-k|--[no-]keep-index] [-q|--"
+"quiet]\n"
 "          [-u|--include-untracked] [-a|--all] [-m|--message <訊息>]\n"
 "          [--pathspec-from-file=<檔案> [--pathspec-file-nul]]\n"
 "          [--] [<路徑規格>...]]"
@@ -21886,8 +21886,8 @@ msgid ""
 "quiet]\n"
 "          [-u|--include-untracked] [-a|--all] [<message>]"
 msgstr ""
-"git stash save [-p|--patch] [-S|--staged] [-k|--[no-]keep-index] [-q|--quiet]"
-"\n"
+"git stash save [-p|--patch] [-S|--staged] [-k|--[no-]keep-index] [-q|--"
+"quiet]\n"
 "          [-u|--include-untracked] [-a|--all] [<訊息>]"
 
 #: builtin/stash.c:55
@@ -22368,7 +22368,8 @@ msgstr "git submodule--helper sync [--quiet] [--recursive] [<路徑>]"
 msgid ""
 "Submodule work tree '%s' contains a .git directory. This will be replaced "
 "with a .git file by using absorbgitdirs."
-msgstr "子模組工作區「%s」內有 .git 目錄。使用 absorbgitdirs 會將其替換為 .git 檔案。"
+msgstr ""
+"子模組工作區「%s」內有 .git 目錄。使用 absorbgitdirs 會將其替換為 .git 檔案。"
 
 #: builtin/submodule--helper.c:1525
 #, c-format
