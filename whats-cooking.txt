@@ -1,15 +1,35 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jan 2022, #05; Wed, 19)
-X-master-at: 50b2d72e110cad39ecaf2322bfdf1b60cd13dd96
-X-next-at: 594b6da22c98ab74f60dd322406863ad10d5d798
+Subject: What's cooking in git.git (Jan 2022, #06; Fri, 21)
+X-master-at: 297ca895a27a6bbdb7906371d533f72a12ad25b2
+X-next-at: 9bf600f5edf4beea0ee980660bdc5ff523e7b5c5
 
-What's cooking in git.git (Jan 2022, #05; Wed, 19)
+What's cooking in git.git (Jan 2022, #06; Fri, 21)
 --------------------------------------------------
 
-We are at -rc2 now.  A few more topics are now in 'next' but it is
-not a big deal anyway, as they are not about any regression fixes
-and will not go anywhere during the prerelease freeze.
+Possibly a few more last-minute fixes may want to be on 'master'
+before the final:
+
+ - ab/checkout-branch-info-leakfix is to stop "git checkout -f
+   <ref>" from triggering BUG() when <ref> is a symbolic ref that
+   points at a strange place.
+
+ - en/merge-ort-restart-optim-fix is to avoid triggering assertion
+   failure when merge.renameLimit is set to a value that is too low.
+
+ - js/test-unset-trace2-parents is to help those developers who run
+   "make test" inside a git that is being traced via GIT_TRACE2
+   mechanism.
+
+ - ab/auto-detect-zlib-compress2 is to automate use of replacement
+   uncompress2() implementation on platforms with zlib that is too
+   old.
+
+ - pb/pull-rebase-autostash-fix is to fix the remaining case where
+   "git pull --rebase" that reused the merge machinery when the
+   update can be fast-forwarded did not behave well.
+
+but we can probably do without many of them in the worst case.
 
 Here are the topics that have been cooking in my tree.  Commits
 prefixed with '+' are in 'next' (being in 'next' is a sign that a
@@ -51,38 +71,142 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
+[New Topics]
 
-* da/rhel7-lacks-uncompress2-and-c99 (2022-01-16) 1 commit
-  (merged to 'next' on 2022-01-16 at 1aeeab2aa6)
- + build: centos/RHEL 7 ships with an older gcc and zlib
+* ab/auto-detect-zlib-compress2 (2022-01-21) 1 commit
+ - cache.h: auto-detect if zlib has uncompress2()
 
- Adjust build on RHEL 7 to explicitly ask C99 support and use
- the fallback implementation of uncompress2 we ship.
- source: <20220116020520.26895-1-davvid@gmail.com>
+ Notice older zlib to enable our replacement uncompress2()
+ automatically.
 
-
-* jc/freebsd-without-c99-only-build (2022-01-18) 1 commit
-  (merged to 'next' on 2022-01-18 at 6ab02e9ee4)
- + Makefile: FreeBSD cannot do C99-or-below build
-
- FreeBSD 13.0 headers have unconditional dependency on C11 language
- features, and adding -std=gnu99 to DEVELOPER_CFLAGS would just
- break the developer build.
- source: <xmqq1r15szpg.fsf_-_@gitster.g>
+ Will merge to 'next'.
+ source: <patch-v3-1.1-e9cb8763fd4-20220120T011414Z-avarab@gmail.com>
 
 
-* js/branch-track-inherit (2022-01-18) 1 commit
-  (merged to 'next' on 2022-01-18 at 6a6a1b2bbf)
- + branch,checkout: fix --track usage strings
+* ab/checkout-branch-info-leakfix (2022-01-21) 1 commit
+ - checkout: avoid BUG() when hitting a broken repository
 
- "git branch -h" incorrectly said "--track[=direct|inherit]",
- implying that "--trackinherit" is a valid option, which has been
- corrected.
- source: <3de40324bea6a1dd9bca2654721471e3809e87d8.1642538935.git.steadmon@google.com>
+ We added an unrelated sanity checking that leads to a BUG() while
+ plugging a leak, which triggered in a repository with symrefs in
+ the local branch namespace that point at a ref outside.  Partially
+ revert the change to avoid triggering the BUG().
+
+ Will merge to 'next' and then to 'master'?
+ source: <xmqqbl04d1s9.fsf_-_@gitster.g>
+
+
+* en/plug-leaks-in-merge (2022-01-21) 2 commits
+ - merge: fix memory leaks in cmd_merge()
+ - merge-ort: fix memory leak in merge_ort_internal()
+
+ Leakfix.
+
+ Will merge to 'next'.
+ source: <pull.1200.git.git.1642664835.gitgitgadget@gmail.com>
+
+
+* js/apply-partial-clone-filters-recursively (2022-01-21) 1 commit
+ - clone, submodule: pass partial clone filters to submodules
+
+ "git clone --filter=... --recurse-submodules" only makes the
+ top-level a partial clone, while submodules are fully cloned.  This
+ behaviour is changed to pass the same filter down to the submodules.
+
+ source: <50ebf7bd39adf34fa4ada27cd433d81b5381abe5.1642735881.git.steadmon@google.com>
+
+
+* js/sparse-vs-split-index (2022-01-21) 3 commits
+ - split-index: it really is incompatible with the sparse index
+ - t1091: disable split index
+ - sparse-index: sparse index is disallowed when split index is active
+
+ Mark in various places in the code that the sparse index and the
+ split index features are mutually incompatible.
+
+ source: <pull.1119.git.1642613379.gitgitgadget@gmail.com>
+
+
+* js/test-unset-trace2-parents (2022-01-20) 1 commit
+  (merged to 'next' on 2022-01-20 at ebb085e3e4)
+ + test-lib: unset trace2 parent envvars
+
+ Avoid tests that are run under GIT_TRACE2 set from failing
+ unnecessarily.
+
+ Will cook in 'next'.
+ source: <82e51a52e20fbe13a5a898a0a2f6dbe1188e3fa3.1642116539.git.steadmon@google.com>
+
+
+* jt/sparse-checkout-leading-dir-fix (2022-01-21) 1 commit
+ - sparse-checkout: create leading directory
+
+ "git sparse-checkout init" failed to write into $GIT_DIR/info
+ directory when the repository was created without one, which has
+ been corrected to auto-create it.
+
+ Will merge to 'next'.
+ source: <20220121174441.3991963-1-jonathantanmy@google.com>
+
+
+* rs/parse-options-lithelp-help (2022-01-20) 1 commit
+ - parse-options: document bracketing of argh
+
+ Comment update.
+
+ source: <c6ab4408-1091-4d14-849e-afe5f3053e8b@web.de>
 
 --------------------------------------------------
-[New Topics]
+[Stalled]
+
+* je/http-better-error-output (2021-12-03) 1 commit
+ . http-backend: give a hint that web browser access is not supported
+
+ When the http-backend program, which is the server-side component
+ for the smart HTTP transport, sends a "404 Not found" error, we
+ deliberately did not say anything to the requesting client.  We now
+ send a message back to the browser to tell the user that they do
+ not want to visit the URL via their browser, instead of a totally
+ blank page.
+
+ Expecting a reroll.
+ Breaks its self tests.
+ cf. <7r23s082-o3q0-479o-srqn-r45q778s5nq7@vanv.qr>
+ source: <20211202102855.23907-1-jengelh@inai.de>
+
+
+* cb/save-term-across-editor-invocation (2021-12-01) 3 commits
+ - fixup! editor: allow for saving/restoring terminal state
+ - editor: allow for saving/restoring terminal state
+ - terminal: teach save_term to fail when not foreground
+
+ Some editors are reported to leave the terminal in funny state
+ after they exit on Windows.  Work it around by saving and restoring
+ the terminal state when needed.
+
+ Expecting a reroll.
+ cf. <CAPUEsphktbdxeV7hvF52Or3CVHS8oOk5-WV=xfEZa8kfCVVnVg@mail.gmail.com>
+ source: <20211202035446.1154-1-carenas@gmail.com>
+
+
+* ar/submodule-update (2021-10-13) 9 commits
+ . submodule--helper: rename helper functions
+ . submodule--helper: remove unused helpers
+ . submodule: move core cmd_update() logic to C
+ . submodule--helper: run update using child process struct
+ . submodule--helper: allow setting superprefix for init_submodule()
+ . submodule--helper: refactor get_submodule_displaypath()
+ . submodule--helper: rename helpers for update-clone
+ . submodule--helper: get remote names from any repository
+ . submodule--helper: split up ensure_core_worktree()
+
+ Rewrite of "git submodule update" in C.
+
+ Expecting a reroll?
+ cf. <YWiXL+plA7GHfuVv@google.com>
+ source: <20211013051805.45662-10-raykar.ath@gmail.com>
+
+--------------------------------------------------
+[Cooking]
 
 * en/merge-ort-restart-optim-fix (2022-01-17) 1 commit
   (merged to 'next' on 2022-01-19 at 84da10b057)
@@ -157,58 +281,6 @@ Release tarballs are available at:
 
  source: <fead25d6-6f5f-487a-ad4c-0657fe9785fd@www.fastmail.com>
 
---------------------------------------------------
-[Stalled]
-
-* je/http-better-error-output (2021-12-03) 1 commit
- . http-backend: give a hint that web browser access is not supported
-
- When the http-backend program, which is the server-side component
- for the smart HTTP transport, sends a "404 Not found" error, we
- deliberately did not say anything to the requesting client.  We now
- send a message back to the browser to tell the user that they do
- not want to visit the URL via their browser, instead of a totally
- blank page.
-
- Expecting a reroll.
- Breaks its self tests.
- cf. <7r23s082-o3q0-479o-srqn-r45q778s5nq7@vanv.qr>
- source: <20211202102855.23907-1-jengelh@inai.de>
-
-
-* cb/save-term-across-editor-invocation (2021-12-01) 3 commits
- - fixup! editor: allow for saving/restoring terminal state
- - editor: allow for saving/restoring terminal state
- - terminal: teach save_term to fail when not foreground
-
- Some editors are reported to leave the terminal in funny state
- after they exit on Windows.  Work it around by saving and restoring
- the terminal state when needed.
-
- Expecting a reroll.
- cf. <CAPUEsphktbdxeV7hvF52Or3CVHS8oOk5-WV=xfEZa8kfCVVnVg@mail.gmail.com>
- source: <20211202035446.1154-1-carenas@gmail.com>
-
-
-* ar/submodule-update (2021-10-13) 9 commits
- . submodule--helper: rename helper functions
- . submodule--helper: remove unused helpers
- . submodule: move core cmd_update() logic to C
- . submodule--helper: run update using child process struct
- . submodule--helper: allow setting superprefix for init_submodule()
- . submodule--helper: refactor get_submodule_displaypath()
- . submodule--helper: rename helpers for update-clone
- . submodule--helper: get remote names from any repository
- . submodule--helper: split up ensure_core_worktree()
-
- Rewrite of "git submodule update" in C.
-
- Expecting a reroll?
- cf. <YWiXL+plA7GHfuVv@google.com>
- source: <20211013051805.45662-10-raykar.ath@gmail.com>
-
---------------------------------------------------
-[Cooking]
 
 * ds/sparse-checkout-requires-per-worktree-config (2022-01-14) 6 commits
  . worktree: copy sparse-checkout patterns and config on add
@@ -240,7 +312,9 @@ Release tarballs are available at:
  source: <pull.1100.v2.git.1641899530.gitgitgadget@gmail.com>
 
 
-* gc/fetch-negotiate-only-early-return (2022-01-18) 3 commits
+* gc/fetch-negotiate-only-early-return (2022-01-20) 4 commits
+  (merged to 'next' on 2022-01-20 at e7616428eb)
+ + fetch: help translators by reusing the same message template
   (merged to 'next' on 2022-01-19 at 0f15147cfa)
  + fetch --negotiate-only: do not update submodules
  + fetch: skip tasks related to fetching objects
@@ -476,7 +550,8 @@ Release tarballs are available at:
  source: <pull.1171.v7.git.git.1641425372.gitgitgadget@gmail.com>
 
 
-* en/remerge-diff (2021-12-30) 10 commits
+* en/remerge-diff (2022-01-21) 11 commits
+ - diff-merges: avoid history simplifications when diffing merges
  - merge-ort: mark conflict/warning messages from inner merges as omittable
  - show, log: include conflict/warning messages in --remerge-diff headers
  - diff: add ability to insert additional headers for paths
@@ -491,9 +566,8 @@ Release tarballs are available at:
  "git log --remerge-diff" shows the difference from mechanical merge
  result and the merge result that is actually recorded.
 
- Plug new leaks?
- cf. <220119.86pmonn2mb.gmgdl@evledraar.gmail.com>
- source: <pull.1103.v3.git.1640907369.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <pull.1103.v4.git.1642792341.gitgitgadget@gmail.com>
 
 
 * bs/forbid-i18n-of-protocol-token-in-fetch-pack (2021-12-22) 2 commits
@@ -521,8 +595,7 @@ Release tarballs are available at:
  source: <20211220233459.45739-1-chooglen@google.com>
 
 
-* hn/reftable-coverity-fixes (2021-12-22) 18 commits
- - reftable: be more paranoid about 0-length memcpy calls
+* hn/reftable-coverity-fixes (2022-01-20) 17 commits
  - reftable: add print functions to the record types
  - reftable: make reftable_record a tagged union
  - reftable: remove outdated file reftable.c
@@ -544,9 +617,8 @@ Release tarballs are available at:
  Problems identified by Coverity in the reftable code have been
  corrected.
 
- Expecting a reroll.
- cf. <211228.86lf04j0lg.gmgdl@evledraar.gmail.com>
- source: <pull.1152.v5.git.git.1640199396.gitgitgadget@gmail.com>
+ Will merge to 'next'.
+ source: <pull.1152.v6.git.git.1642691534.gitgitgadget@gmail.com>
 
 
 * tb/midx-bitmap-corruption-fix (2022-01-04) 9 commits
@@ -787,51 +859,3 @@ Release tarballs are available at:
 
  Getting there.
  source: <cover-v8-0.7-00000000000-20211228T150728Z-avarab@gmail.com>
-
---------------------------------------------------
-[Discarded]
-
-* ms/customizable-ident-expansion (2021-12-25) 2 commits
- . fixup! keyword expansion: make "$Id$" string configurable
- . keyword expansion: make "$Id$" string configurable
-
- Instead of "$Id$", user-specified string (like $FreeBSD$) can be
- used as an in-blob placeholder for keyword expansion.
-
- Will discard.
- Stalled for too long.
- cf. <xmqqfsuosvrh.fsf@gitster.g>
- cf. <211101.86fssf3bn3.gmgdl@evledraar.gmail.com>
- source: <pull.1074.v3.git.git.1630462385587.gitgitgadget@gmail.com>
-
-
-* tb/cruft-packs (2021-11-29) 17 commits
- . sha1-file.c: don't freshen cruft packs
- . builtin/gc.c: conditionally avoid pruning objects via loose
- . builtin/repack.c: add cruft packs to MIDX during geometric repack
- . builtin/repack.c: use named flags for existing_packs
- . builtin/repack.c: allow configuring cruft pack generation
- . builtin/repack.c: support generating a cruft pack
- . builtin/pack-objects.c: --cruft with expiration
- . reachable: report precise timestamps from objects in cruft packs
- . reachable: add options to add_unseen_recent_objects_to_traversal
- . builtin/pack-objects.c: --cruft without expiration
- . builtin/pack-objects.c: return from create_object_entry()
- . t/helper: add 'pack-mtimes' test-tool
- . pack-mtimes: support writing pack .mtimes files
- . chunk-format.h: extract oid_version()
- . pack-write: pass 'struct packing_data' to 'stage_tmp_packfiles'
- . pack-mtimes: support reading .mtimes files
- . Documentation/technical: add cruft-packs.txt
-
- Instead of leaving unreachable objects in loose form when packing,
- or ejecting them into loose form when repacking, gather them in a
- packfile with an auxiliary file that records the last-use time of
- these objects.
-
- Dropped per author request.
- cf. <Ydcev8HqCjycBJS+@nand.local>
- cf. <865b99dd-0b18-9a07-49c1-3959a777c685@gmail.com>
- cf. <c9437c89-9258-4034-9886-8a2aec46aa6b@gmail.com>
- cf. <YaqiYGM48p5F9lS1@nand.local>
- source: <cover.1638224692.git.me@ttaylorr.com>
