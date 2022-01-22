@@ -85,6 +85,19 @@ test_expect_success 'setup' '
 	git branch -m branch1
 '
 
+test_expect_success 'checkout a branch without refs/heads/* prefix' '
+	git clone --no-tags . repo-odd-prefix &&
+	(
+		cd repo-odd-prefix &&
+
+		origin=$(git symbolic-ref refs/remotes/origin/HEAD) &&
+		git symbolic-ref refs/heads/a-branch "$origin" &&
+
+		git checkout -f a-branch &&
+		git checkout -f a-branch
+	)
+'
+
 test_expect_success 'checkout -b to a new branch, set to HEAD' '
 	test_when_finished "
 		git checkout branch1 &&
