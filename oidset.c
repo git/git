@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "oidset.h"
+#include "object-store.h"
 
 void oidset_init(struct oidset *set, size_t initial_size)
 {
@@ -41,6 +42,29 @@ void oidset_parse_file(struct oidset *set, const char *path)
 	oidset_parse_file_carefully(set, path, NULL, NULL);
 }
 
+static int read_oidset_line(struct strbuf sb, struct object_id *oid)
+{
+       const char *p;
+       const char *name;
+
+       /*
+	* Allow trailing comments, leading whitespace
+	* (including before commits), and empty or whitespace
+	* only lines.
+	*/
+       name = strchr(sb.buf, '#');
+       if (name)
+	       strbuf_setlen(&sb, name - sb.buf);
+       strbuf_trim(&sb);
+       if (!sb.len)
+	       return 0;
+
+       if (parse_oid_hex(sb.buf, oid, &p) || *p != '\0')
+	       die("invalid object name: %s", sb.buf);
+
+       return 1;
+}
+
 void oidset_parse_file_carefully(struct oidset *set, const char *path,
 				 oidset_parse_tweak_fn fn, void *cbdata)
 {
@@ -52,23 +76,8 @@ void oidset_parse_file_carefully(struct oidset *set, const char *path,
 	if (!fp)
 		die("could not open object name list: %s", path);
 	while (!strbuf_getline(&sb, fp)) {
-		const char *p;
-		const char *name;
-
-		/*
-		 * Allow trailing comments, leading whitespace
-		 * (including before commits), and empty or whitespace
-		 * only lines.
-		 */
-		name = strchr(sb.buf, '#');
-		if (name)
-			strbuf_setlen(&sb, name - sb.buf);
-		strbuf_trim(&sb);
-		if (!sb.len)
+		if (!read_oidset_line(sb, &oid))
 			continue;
-
-		if (parse_oid_hex(sb.buf, &oid, &p) || *p != '\0')
-			die("invalid object name: %s", sb.buf);
 		if (fn && fn(&oid, cbdata))
 			continue;
 		oidset_insert(set, &oid);
@@ -77,4 +86,47 @@ void oidset_parse_file_carefully(struct oidset *set, const char *path,
 		die_errno("Could not read '%s'", path);
 	fclose(fp);
 	strbuf_release(&sb);
+}
+
+static void read_oidset_string(struct oidset *set, oidset_parse_tweak_fn fn,
+			       void *cbdata, const char *buf, unsigned long size)
+{
+	struct object_id oid;
+	struct strbuf **lines;
+	struct strbuf **line;
+
+	lines = strbuf_split_buf(buf, size, '\n', 0);
+
+	for (line = lines; *line; line++) {
+		if (!read_oidset_line(**line, &oid))
+			continue;
+		if (fn && fn(&oid, cbdata))
+			continue;
+		oidset_insert(set, &oid);
+	}
+	strbuf_list_free(lines);
+}
+
+void oidset_parse_blob(struct oidset *set, const char *name,
+				 oidset_parse_tweak_fn fn, void *cbdata)
+{
+	struct object_id oid;
+	char *buf;
+	unsigned long size;
+	enum object_type type;
+
+	if (!name) {
+		return;
+	}
+	if (get_oid(name, &oid) < 0) {
+		die("unable to read object id for %s", name);
+	}
+	buf = read_object_file(&oid, &type, &size);
+	if (!buf)
+		die("unable to read oidset file at %s", name);
+	if (type != OBJ_BLOB)
+		die("oidset file is not a blob: %s", name);
+
+	read_oidset_string(set, fn, cbdata, buf, size);
+	free(buf);
 }
