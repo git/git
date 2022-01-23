@@ -61,7 +61,7 @@ msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
 "POT-Creation-Date: 2022-01-17 08:31+0800\n"
-"PO-Revision-Date: 2021-01-21 19:00-0600\n"
+"PO-Revision-Date: 2022-01-23 19:00-0600\n"
 "Last-Translator: Jordi Mas i Hernàndez <jmas@softcatala.org>\n"
 "Language-Team: Catalan\n"
 "Language: ca\n"
@@ -1463,7 +1463,7 @@ msgstr "aplica els canvis que coincideixin amb el camí donat"
 
 #: apply.c:5026 builtin/am.c:2376
 msgid "num"
-msgstr "número"
+msgstr "nombre"
 
 #: apply.c:5027
 msgid "remove <num> leading slashes from traditional diff paths"
@@ -1561,7 +1561,7 @@ msgstr "deixa els trossos rebutjats en fitxers *.rej corresponents"
 
 #: apply.c:5077
 msgid "allow overlapping hunks"
-msgstr "permet trossos encavalcants"
+msgstr "permet trossos superposats"
 
 #: apply.c:5080
 msgid "tolerate incorrectly detected missing new-line at the end of file"
@@ -2080,7 +2080,7 @@ msgstr "no és un nom d'objecte vàlid: «%s»"
 #: branch.c:404
 #, c-format
 msgid "ambiguous object name: '%s'"
-msgstr "nom d'objecte ambigu: «%s»."
+msgstr "nom d'objecte ambigu: «%s»"
 
 #: branch.c:409
 #, c-format
@@ -3579,7 +3579,7 @@ msgstr "Opcions del format de sortida del diff"
 
 #: diff.c:5340 diff.c:5346
 msgid "generate patch"
-msgstr "generant pedaç"
+msgstr "genera el pedaç"
 
 #: diff.c:5343 builtin/log.c:179
 msgid "suppress diff output"
@@ -6294,7 +6294,7 @@ msgstr "opció desconeguda «%s»"
 #: parse-options.c:894
 #, c-format
 msgid "unknown switch `%c'"
-msgstr "«switch» «%c» desconegut"
+msgstr "opció «%c» desconeguda"
 
 #: parse-options.c:896
 #, c-format
@@ -11003,7 +11003,7 @@ msgstr "passa l'indicador --keep-cr a git-mailsplit per al format mbox"
 #: builtin/am.c:2348
 msgid "do not pass --keep-cr flag to git-mailsplit independent of am.keepcr"
 msgstr ""
-"no passis l'indicador --keep-cr a git-mailsplit independent d'am.keepcr"
+"no passis l'indicador --keep-cr a git-mailsplit independentment d'am.keepcr"
 
 #: builtin/am.c:2351
 msgid "strip everything before a scissors line"
@@ -11077,7 +11077,7 @@ msgstr "menteix sobre la data del comitent"
 
 #: builtin/am.c:2414
 msgid "use current timestamp for author date"
-msgstr "usa el marc de temps actual per la data d'autor"
+msgstr "usa la marca de temps actual per a la data d'autor"
 
 #: builtin/am.c:2416 builtin/commit-tree.c:118 builtin/commit.c:1643
 #: builtin/merge.c:302 builtin/pull.c:179 builtin/rebase.c:1099
@@ -11498,7 +11498,7 @@ msgstr "marca l'estat de la referència o referències"
 
 #: builtin/bisect--helper.c:1204
 msgid "list the bisection steps so far"
-msgstr "mostra les passes de la la bisecció fins ara"
+msgstr "mostra les passes de la bisecció fins ara"
 
 #: builtin/bisect--helper.c:1206
 msgid "replay the bisection process from the given file"
@@ -15601,7 +15601,7 @@ msgid ""
 "remote name from which new revisions should be fetched"
 msgstr ""
 "no s'ha especificat cap repositori remot. Especifiqueu un URL o\n"
-"un nom remot del qual s'han d'obtenir les revisions noves."
+"un nom remot del qual s'han d'obtenir les revisions noves"
 
 #: builtin/fetch.c:1966
 msgid "you need to specify a tag name"
@@ -15642,7 +15642,7 @@ msgstr "s'ha de subministrar el remot en usar --negotiate-only"
 
 #: builtin/fetch.c:2102
 msgid "protocol does not support --negotiate-only, exiting"
-msgstr "el protocol no admet --negotiate-only, se surt."
+msgstr "el protocol no admet --negotiate-only, se surt"
 
 #: builtin/fetch.c:2121
 msgid ""
@@ -15977,12 +15977,12 @@ msgstr "informa dels nodes d'arrel"
 
 #: builtin/fsck.c:794
 msgid "make index objects head nodes"
-msgstr "fes els objectes d'índex nodes de cap"
+msgstr "fes dels objectes d'índex nodes cap"
 
 #: builtin/fsck.c:795
 msgid "make reflogs head nodes (default)"
 msgstr ""
-"fes que els registres de referències siguin nodes de cap (per defecte)"
+"fes que els registres de referències siguin nodes cap (per defecte)"
 
 #: builtin/fsck.c:796
 msgid "also consider packs and alternate objects"
@@ -19686,7 +19686,7 @@ msgstr "No hi ha cap informació de seguiment per a la branca actual."
 msgid ""
 "If you wish to set tracking information for this branch you can do so with:"
 msgstr ""
-"Si voleu establir informació de seguiment per a aquesta branca, podeu fer-ho"
+"Si voleu establir la informació de seguiment per a aquesta branca, podeu fer-ho"
 " amb:"
 
 #: builtin/pull.c:489
@@ -25281,7 +25281,7 @@ msgstr "Mostra els canvis usant eines diff comunes"
 
 #: command-list.h:92
 msgid "Git data exporter"
-msgstr "Explorador de dades del Git"
+msgstr "Exportador de dades del Git"
 
 #: command-list.h:93
 msgid "Backend for fast Git data importers"
@@ -25805,7 +25805,7 @@ msgid ""
 "Error: Your local changes to the following files would be overwritten by "
 "merge"
 msgstr ""
-"Error: Els vostres canvis locals als fitxers següents se sobreescriurien per"
+"Error: Els vostres canvis locals als fitxers següents se sobreescriurien per "
 "a fusionar"
 
 #: git-merge-octopus.sh:61
