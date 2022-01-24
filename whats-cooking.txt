@@ -1,35 +1,15 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jan 2022, #06; Fri, 21)
-X-master-at: 297ca895a27a6bbdb7906371d533f72a12ad25b2
-X-next-at: 9bf600f5edf4beea0ee980660bdc5ff523e7b5c5
+Subject: What's cooking in git.git (Jan 2022, #07; Mon, 24)
+X-master-at: 89bece5c8c96f0b962cfc89e63f82d603fd60bed
+X-next-at: 8bbb082509e826de6735dfa02922cfc3d7ffb8bc
 
-What's cooking in git.git (Jan 2022, #06; Fri, 21)
+What's cooking in git.git (Jan 2022, #07; Mon, 24)
 --------------------------------------------------
 
-Possibly a few more last-minute fixes may want to be on 'master'
-before the final:
-
- - ab/checkout-branch-info-leakfix is to stop "git checkout -f
-   <ref>" from triggering BUG() when <ref> is a symbolic ref that
-   points at a strange place.
-
- - en/merge-ort-restart-optim-fix is to avoid triggering assertion
-   failure when merge.renameLimit is set to a value that is too low.
-
- - js/test-unset-trace2-parents is to help those developers who run
-   "make test" inside a git that is being traced via GIT_TRACE2
-   mechanism.
-
- - ab/auto-detect-zlib-compress2 is to automate use of replacement
-   uncompress2() implementation on platforms with zlib that is too
-   old.
-
- - pb/pull-rebase-autostash-fix is to fix the remaining case where
-   "git pull --rebase" that reused the merge machinery when the
-   update can be fast-forwarded did not behave well.
-
-but we can probably do without many of them in the worst case.
+Git 2.35 final has been tagged.  Let's wait for a few days to see if
+there are regressions that needs brown-paper-bag fixes before we
+start moving topics from 'next' to 'master' for the new cycle.
 
 Here are the topics that have been cooking in my tree.  Commits
 prefixed with '+' are in 'next' (being in 'next' is a sign that a
@@ -71,89 +51,28 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[New Topics]
-
-* ab/auto-detect-zlib-compress2 (2022-01-21) 1 commit
- - cache.h: auto-detect if zlib has uncompress2()
-
- Notice older zlib to enable our replacement uncompress2()
- automatically.
-
- Will merge to 'next'.
- source: <patch-v3-1.1-e9cb8763fd4-20220120T011414Z-avarab@gmail.com>
-
+[Graduated to 'master']
 
 * ab/checkout-branch-info-leakfix (2022-01-21) 1 commit
- - checkout: avoid BUG() when hitting a broken repository
+  (merged to 'next' on 2022-01-23 at 8bbb082509)
+ + checkout: avoid BUG() when hitting a broken repository
 
  We added an unrelated sanity checking that leads to a BUG() while
  plugging a leak, which triggered in a repository with symrefs in
  the local branch namespace that point at a ref outside.  Partially
  revert the change to avoid triggering the BUG().
-
- Will merge to 'next' and then to 'master'?
  source: <xmqqbl04d1s9.fsf_-_@gitster.g>
 
+--------------------------------------------------
+[New Topics]
 
-* en/plug-leaks-in-merge (2022-01-21) 2 commits
- - merge: fix memory leaks in cmd_merge()
- - merge-ort: fix memory leak in merge_ort_internal()
+* jc/mem-pool-alignment (2022-01-24) 1 commit
+ - mem-pool: don't assume uintmax_t is aligned enough for all types
 
- Leakfix.
+ Update the logic to compute alignment requirement for our mem-pool.
 
- Will merge to 'next'.
- source: <pull.1200.git.git.1642664835.gitgitgadget@gmail.com>
-
-
-* js/apply-partial-clone-filters-recursively (2022-01-21) 1 commit
- - clone, submodule: pass partial clone filters to submodules
-
- "git clone --filter=... --recurse-submodules" only makes the
- top-level a partial clone, while submodules are fully cloned.  This
- behaviour is changed to pass the same filter down to the submodules.
-
- source: <50ebf7bd39adf34fa4ada27cd433d81b5381abe5.1642735881.git.steadmon@google.com>
-
-
-* js/sparse-vs-split-index (2022-01-21) 3 commits
- - split-index: it really is incompatible with the sparse index
- - t1091: disable split index
- - sparse-index: sparse index is disallowed when split index is active
-
- Mark in various places in the code that the sparse index and the
- split index features are mutually incompatible.
-
- source: <pull.1119.git.1642613379.gitgitgadget@gmail.com>
-
-
-* js/test-unset-trace2-parents (2022-01-20) 1 commit
-  (merged to 'next' on 2022-01-20 at ebb085e3e4)
- + test-lib: unset trace2 parent envvars
-
- Avoid tests that are run under GIT_TRACE2 set from failing
- unnecessarily.
-
- Will cook in 'next'.
- source: <82e51a52e20fbe13a5a898a0a2f6dbe1188e3fa3.1642116539.git.steadmon@google.com>
-
-
-* jt/sparse-checkout-leading-dir-fix (2022-01-21) 1 commit
- - sparse-checkout: create leading directory
-
- "git sparse-checkout init" failed to write into $GIT_DIR/info
- directory when the repository was created without one, which has
- been corrected to auto-create it.
-
- Will merge to 'next'.
- source: <20220121174441.3991963-1-jonathantanmy@google.com>
-
-
-* rs/parse-options-lithelp-help (2022-01-20) 1 commit
- - parse-options: document bracketing of argh
-
- Comment update.
-
- source: <c6ab4408-1091-4d14-849e-afe5f3053e8b@web.de>
+ Will merge to 'next'?
+ source: <20220123203347.74869-1-jrtc27@jrtc27.com>
 
 --------------------------------------------------
 [Stalled]
@@ -207,6 +126,76 @@ Release tarballs are available at:
 
 --------------------------------------------------
 [Cooking]
+
+* ab/auto-detect-zlib-compress2 (2022-01-24) 1 commit
+ - compat: auto-detect if zlib has uncompress2()
+
+ Notice older zlib to enable our replacement uncompress2()
+ automatically.
+
+ Will merge to 'next'?
+ source: <xmqqr18x3s5s.fsf@gitster.g>
+
+
+* en/plug-leaks-in-merge (2022-01-21) 2 commits
+ - merge: fix memory leaks in cmd_merge()
+ - merge-ort: fix memory leak in merge_ort_internal()
+
+ Leakfix.
+
+ Will merge to 'next'.
+ source: <pull.1200.git.git.1642664835.gitgitgadget@gmail.com>
+
+
+* js/apply-partial-clone-filters-recursively (2022-01-21) 1 commit
+ - clone, submodule: pass partial clone filters to submodules
+
+ "git clone --filter=... --recurse-submodules" only makes the
+ top-level a partial clone, while submodules are fully cloned.  This
+ behaviour is changed to pass the same filter down to the submodules.
+ source: <50ebf7bd39adf34fa4ada27cd433d81b5381abe5.1642735881.git.steadmon@google.com>
+
+
+* js/sparse-vs-split-index (2022-01-23) 3 commits
+ - split-index: it really is incompatible with the sparse index
+ - t1091: disable split index
+ - sparse-index: sparse index is disallowed when split index is active
+
+ Mark in various places in the code that the sparse index and the
+ split index features are mutually incompatible.
+
+ Will merge to 'next'.
+ source: <pull.1119.git.1642613379.gitgitgadget@gmail.com>
+
+
+* js/test-unset-trace2-parents (2022-01-20) 1 commit
+  (merged to 'next' on 2022-01-20 at ebb085e3e4)
+ + test-lib: unset trace2 parent envvars
+
+ Avoid tests that are run under GIT_TRACE2 set from failing
+ unnecessarily.
+
+ Will cook in 'next'.
+ source: <82e51a52e20fbe13a5a898a0a2f6dbe1188e3fa3.1642116539.git.steadmon@google.com>
+
+
+* jt/sparse-checkout-leading-dir-fix (2022-01-21) 1 commit
+ - sparse-checkout: create leading directory
+
+ "git sparse-checkout init" failed to write into $GIT_DIR/info
+ directory when the repository was created without one, which has
+ been corrected to auto-create it.
+
+ Will merge to 'next'.
+ source: <20220121174441.3991963-1-jonathantanmy@google.com>
+
+
+* rs/parse-options-lithelp-help (2022-01-20) 1 commit
+ - parse-options: document bracketing of argh
+
+ Comment update.
+ source: <c6ab4408-1091-4d14-849e-afe5f3053e8b@web.de>
+
 
 * en/merge-ort-restart-optim-fix (2022-01-17) 1 commit
   (merged to 'next' on 2022-01-19 at 84da10b057)
