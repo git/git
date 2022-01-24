@@ -38,8 +38,8 @@ annotate_merge () {
 			s/^\s*//;
 			if (/^Will (?:\S+ ){0,2}(fast-track|hold|keep|merge|drop|discard|cook|kick|defer|eject|be re-?rolled|wait)[,. ]/ ||
 			    /^Not urgent/ || /^Not ready/ || /^Waiting for / ||
-			    /^Can wait in / || /^Still / || /^Stuck / || /^On hold/ ||
-			    /^Needs? / || /^Expecting / || /^May want to /) {
+			    /^Can wait in / || /^Still / || /^Stuck / || /^On hold/ || /^Breaks / ||
+			    /^Needs? / || /^Expecting / || /^May want to / || /^Under review/) {
 				return 1;
 			}
 			return 0;
