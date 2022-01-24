@@ -66,7 +66,6 @@ ifeq ($(uname_S),Linux)
 	# centos7/rhel7 provides gcc 4.8.5 and zlib 1.2.7.
 	ifneq ($(findstring .el7.,$(uname_R)),)
 		BASIC_CFLAGS += -std=c99
-		NO_UNCOMPRESS2 = YesPlease
 	endif
 endif
 ifeq ($(uname_S),GNU/kFreeBSD)
@@ -266,10 +265,6 @@ ifeq ($(uname_S),FreeBSD)
 	FILENO_IS_A_MACRO = UnfortunatelyYes
 endif
 ifeq ($(uname_S),OpenBSD)
-	# Versions < 7.0 need compatibility layer
-	ifeq ($(shell expr "$(uname_R)" : "[1-6]\."),2)
-		NO_UNCOMPRESS2 = UnfortunatelyYes
-	endif
 	NO_STRCASESTR = YesPlease
 	NO_MEMMEM = YesPlease
 	USE_ST_TIMESPEC = YesPlease
@@ -525,7 +520,6 @@ ifeq ($(uname_S),Interix)
 	endif
 endif
 ifeq ($(uname_S),Minix)
-	NO_UNCOMPRESS2 = YesPlease
 	NO_IPV6 = YesPlease
 	NO_ST_BLOCKS_IN_STRUCT_STAT = YesPlease
 	NO_NSEC = YesPlease
@@ -581,7 +575,6 @@ ifeq ($(uname_S),NONSTOP_KERNEL)
 	NO_SETENV = YesPlease
 	NO_UNSETENV = YesPlease
 	NO_MKDTEMP = YesPlease
-	NO_UNCOMPRESS2 = YesPlease
 	# Currently libiconv-1.9.1.
 	OLD_ICONV = UnfortunatelyYes
 	NO_REGEX = NeedsStartEnd
