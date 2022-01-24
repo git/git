@@ -7,14 +7,14 @@ This message is written by the maintainer and talks about how Git
 project is managed, and how you can work with it.
 
 The current maintainer is Junio C Hamano <gitster@pobox.com>; please
-do not send any private message to this address, because it is likely
-that such a message will not be seen by any human being.  Spam filters
-learned that legitimate messages to the address come only from a very
-few sender addresses that are known to be good, and messages from all
-others are likely to be spam unless they are also sent to the mailing
-list at the same time (i.e. "Reply-all" to the list message would
-reach the mailbox, but "Reply" will likely be thrown into the spam
-folder).
+do not send any message to this address unless it also goes to the
+mailing list, because it is likely that such a message will not be
+seen by any human being.  Spam filters learned that legitimate
+messages to the address come only from a very few sender addresses
+that are known to be good, and messages from all others are likely to
+be spam unless they are also sent to the mailing list at the same time
+(i.e. "Reply-all" to the list message would reach the mailbox, but
+"Reply" will likely be thrown into the spam folder).
 
 
 * Mailing list and the community
@@ -180,9 +180,9 @@ named with three dotted decimal digits (e.g. "1.8.5"), but we have
 switched the versioning scheme and "feature releases" are named with
 three-dotted decimal digits that ends with ".0" (e.g. "1.9.0").
 
-The last such release was 2.33 done on August 16th, 2021.  You can
-expect that the tip of the "master" branch is always more stable than
-any of the released versions.
+The last such release was 2.35 done on Jan 24th, 2022.  You can expect
+that the tip of the "master" branch is always more stable than any of
+the released versions.
 
 Whenever a feature release is made, "maint" branch is forked off from
 "master" at that point.  Obvious and safe fixes after a feature
