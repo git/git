@@ -1094,9 +1094,6 @@ static int switch_branches(const struct checkout_opts *opts,
 		const char *p;
 		if (skip_prefix(old_branch_info.path, prefix, &p))
 			old_branch_info.name = xstrdup(p);
-		else
-			BUG("should be able to skip past '%s' in '%s'!",
-			    prefix, old_branch_info.path);
 	}
 
 	if (opts->new_orphan_branch && opts->orphan_from_empty_tree) {
