@@ -68,14 +68,14 @@ static int block_writer_register_restart(struct block_writer *w, int n,
 	return 0;
 }
 
-void block_writer_init(struct block_writer *bw, uint8_t typ, uint8_t *buf,
+void block_writer_init(struct block_writer *bw, uint8_t type, uint8_t *buf,
 		       uint32_t block_size, uint32_t header_off, int hash_size)
 {
 	bw->buf = buf;
 	bw->hash_size = hash_size;
 	bw->block_size = block_size;
 	bw->header_off = header_off;
-	bw->buf[header_off] = typ;
+	bw->buf[header_off] = type;
 	bw->next = header_off + 4;
 	bw->restart_interval = 16;
 	bw->entries = 0;
@@ -186,7 +186,7 @@ int block_reader_init(struct block_reader *br, struct reftable_block *block,
 		      int hash_size)
 {
 	uint32_t full_block_size = table_block_size;
-	uint8_t typ = block->data[header_off];
+	uint8_t type = block->data[header_off];
 	uint32_t sz = get_be24(block->data + header_off + 1);
 
 	int err = 0;
@@ -195,12 +195,12 @@ int block_reader_init(struct block_reader *br, struct reftable_block *block,
 	uint8_t *restart_bytes = NULL;
 	uint8_t *uncompressed = NULL;
 
-	if (!reftable_is_block_type(typ)) {
+	if (!reftable_is_block_type(type)) {
 		err =  REFTABLE_FORMAT_ERROR;
 		goto done;
 	}
 
-	if (typ == BLOCK_TYPE_LOG) {
+	if (type == BLOCK_TYPE_LOG) {
 		int block_header_skip = 4 + header_off;
 		uLongf dst_len = sz - block_header_skip; /* total size of dest
 							    buffer. */

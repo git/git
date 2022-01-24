@@ -22,7 +22,7 @@ static int merged_iter_init(struct merged_iter *mi)
 {
 	int i = 0;
 	for (i = 0; i < mi->stack_len; i++) {
-		struct reftable_record rec = reftable_new_record(mi->typ);
+		struct reftable_record rec = reftable_new_record(mi->type);
 		int err = iterator_next(&mi->stack[i], &rec);
 		if (err < 0) {
 			return err;
@@ -58,7 +58,7 @@ static int merged_iter_advance_nonnull_subiter(struct merged_iter *mi,
 					       size_t idx)
 {
 	struct pq_entry e = {
-		.rec = reftable_new_record(mi->typ),
+		.rec = reftable_new_record(mi->type),
 		.index = idx,
 	};
 	int err = iterator_next(&mi->stack[idx], &e.rec);
@@ -245,7 +245,7 @@ static int merged_table_seek_record(struct reftable_merged_table *mt,
 		sizeof(struct reftable_iterator) * mt->stack_len);
 	struct merged_iter merged = {
 		.stack = iters,
-		.typ = reftable_record_type(rec),
+		.type = reftable_record_type(rec),
 		.hash_id = mt->hash_id,
 		.suppress_deletions = mt->suppress_deletions,
 	};

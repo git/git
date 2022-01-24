@@ -78,9 +78,9 @@ int put_var_int(struct string_view *dest, uint64_t val)
 	return n;
 }
 
-int reftable_is_block_type(uint8_t typ)
+int reftable_is_block_type(uint8_t type)
 {
-	switch (typ) {
+	switch (type) {
 	case BLOCK_TYPE_REF:
 	case BLOCK_TYPE_LOG:
 	case BLOCK_TYPE_OBJ:

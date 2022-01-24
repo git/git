@@ -26,9 +26,9 @@ static void writer_clear_index(struct reftable_writer *w);
 static int writer_finish_public_section(struct reftable_writer *w);
 
 static struct reftable_block_stats *
-writer_reftable_block_stats(struct reftable_writer *w, uint8_t typ)
+writer_reftable_block_stats(struct reftable_writer *w, uint8_t type)
 {
-	switch (typ) {
+	switch (type) {
 	case 'r':
 		return &w->stats.ref_stats;
 	case 'o':
@@ -102,7 +102,7 @@ static int writer_write_header(struct reftable_writer *w, uint8_t *dest)
 	return header_size(writer_version(w));
 }
 
-static void writer_reinit_block_writer(struct reftable_writer *w, uint8_t typ)
+static void writer_reinit_block_writer(struct reftable_writer *w, uint8_t type)
 {
 	int block_start = 0;
 	if (w->next == 0) {
@@ -110,7 +110,7 @@ static void writer_reinit_block_writer(struct reftable_writer *w, uint8_t typ)
 	}
 
 	strbuf_release(&w->last_key);
-	block_writer_init(&w->block_writer_data, typ, w->block,
+	block_writer_init(&w->block_writer_data, type, w->block,
 			  w->opts.block_size, block_start,
 			  hash_size(w->opts.hash_id));
 	w->block_writer = &w->block_writer_data;
@@ -375,7 +375,7 @@ int reftable_writer_add_logs(struct reftable_writer *w,
 
 static int writer_finish_section(struct reftable_writer *w)
 {
-	uint8_t typ = block_writer_type(w->block_writer);
+	uint8_t type = block_writer_type(w->block_writer);
 	uint64_t index_start = 0;
 	int max_level = 0;
 	int threshold = w->opts.unpadded ? 1 : 3;
@@ -434,7 +434,7 @@ static int writer_finish_section(struct reftable_writer *w)
 	if (err < 0)
 		return err;
 
-	bstats = writer_reftable_block_stats(w, typ);
+	bstats = writer_reftable_block_stats(w, type);
 	bstats->index_blocks = w->stats.idx_stats.blocks - before_blocks;
 	bstats->index_offset = index_start;
 	bstats->max_index_level = max_level;
@@ -536,17 +536,17 @@ static int writer_dump_object_index(struct reftable_writer *w)
 
 static int writer_finish_public_section(struct reftable_writer *w)
 {
-	uint8_t typ = 0;
+	uint8_t type = 0;
 	int err = 0;
 
 	if (w->block_writer == NULL)
 		return 0;
 
-	typ = block_writer_type(w->block_writer);
+	type = block_writer_type(w->block_writer);
 	err = writer_finish_section(w);
 	if (err < 0)
 		return err;
-	if (typ == BLOCK_TYPE_REF && !w->opts.skip_index_objects &&
+	if (type == BLOCK_TYPE_REF && !w->opts.skip_index_objects &&
 	    w->stats.ref_stats.index_blocks > 0) {
 		err = writer_dump_object_index(w);
 		if (err < 0)
@@ -630,10 +630,10 @@ static const int debug = 0;
 
 static int writer_flush_nonempty_block(struct reftable_writer *w)
 {
-	uint8_t typ = block_writer_type(w->block_writer);
+	uint8_t type = block_writer_type(w->block_writer);
 	struct reftable_block_stats *bstats =
-		writer_reftable_block_stats(w, typ);
-	uint64_t block_typ_off = (bstats->blocks == 0) ? w->next : 0;
+		writer_reftable_block_stats(w, type);
+	uint64_t block_type_off = (bstats->blocks == 0) ? w->next : 0;
 	int raw_bytes = block_writer_finish(w->block_writer);
 	int padding = 0;
 	int err = 0;
@@ -641,12 +641,12 @@ static int writer_flush_nonempty_block(struct reftable_writer *w)
 	if (raw_bytes < 0)
 		return raw_bytes;
 
-	if (!w->opts.unpadded && typ != BLOCK_TYPE_LOG) {
+	if (!w->opts.unpadded && type != BLOCK_TYPE_LOG) {
 		padding = w->opts.block_size - raw_bytes;
 	}
 
-	if (block_typ_off > 0) {
-		bstats->offset = block_typ_off;
+	if (block_type_off > 0) {
+		bstats->offset = block_type_off;
 	}
 
 	bstats->entries += w->block_writer->entries;
@@ -655,7 +655,7 @@ static int writer_flush_nonempty_block(struct reftable_writer *w)
 	w->stats.blocks++;
 
 	if (debug) {
-		fprintf(stderr, "block %c off %" PRIu64 " sz %d (%d)\n", typ,
+		fprintf(stderr, "block %c off %" PRIu64 " sz %d (%d)\n", type,
 			w->next, raw_bytes,
 			get_be24(w->block + w->block_writer->header_off + 1));
 	}

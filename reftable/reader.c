@@ -43,9 +43,9 @@ void block_source_close(struct reftable_block_source *source)
 }
 
 static struct reftable_reader_offsets *
-reader_offsets_for(struct reftable_reader *r, uint8_t typ)
+reader_offsets_for(struct reftable_reader *r, uint8_t type)
 {
-	switch (typ) {
+	switch (type) {
 	case BLOCK_TYPE_REF:
 		return &r->ref_offsets;
 	case BLOCK_TYPE_LOG:
@@ -84,7 +84,7 @@ static int parse_footer(struct reftable_reader *r, uint8_t *footer,
 			uint8_t *header)
 {
 	uint8_t *f = footer;
-	uint8_t first_block_typ;
+	uint8_t first_block_type;
 	int err = 0;
 	uint32_t computed_crc;
 	uint32_t file_crc;
@@ -149,10 +149,10 @@ static int parse_footer(struct reftable_reader *r, uint8_t *footer,
 		goto done;
 	}
 
-	first_block_typ = header[header_size(r->version)];
-	r->ref_offsets.is_present = (first_block_typ == BLOCK_TYPE_REF);
+	first_block_type = header[header_size(r->version)];
+	r->ref_offsets.is_present = (first_block_type == BLOCK_TYPE_REF);
 	r->ref_offsets.offset = 0;
-	r->log_offsets.is_present = (first_block_typ == BLOCK_TYPE_LOG ||
+	r->log_offsets.is_present = (first_block_type == BLOCK_TYPE_LOG ||
 				     r->log_offsets.offset > 0);
 	r->obj_offsets.is_present = r->obj_offsets.offset > 0;
 	err = 0;
@@ -214,7 +214,7 @@ done:
 
 struct table_iter {
 	struct reftable_reader *r;
-	uint8_t typ;
+	uint8_t type;
 	uint64_t block_off;
 	struct block_iter bi;
 	int is_finished;
@@ -228,7 +228,7 @@ static void table_iter_copy_from(struct table_iter *dest,
 				 struct table_iter *src)
 {
 	dest->r = src->r;
-	dest->typ = src->typ;
+	dest->type = src->type;
 	dest->block_off = src->block_off;
 	dest->is_finished = src->is_finished;
 	block_iter_copy_from(&dest->bi, &src->bi);
@@ -257,7 +257,7 @@ static void table_iter_block_done(struct table_iter *ti)
 	ti->bi.next_off = 0;
 }
 
-static int32_t extract_block_size(uint8_t *data, uint8_t *typ, uint64_t off,
+static int32_t extract_block_size(uint8_t *data, uint8_t *type, uint64_t off,
 				  int version)
 {
 	int32_t result = 0;
@@ -266,20 +266,20 @@ static int32_t extract_block_size(uint8_t *data, uint8_t *typ, uint64_t off,
 		data += header_size(version);
 	}
 
-	*typ = data[0];
-	if (reftable_is_block_type(*typ)) {
+	*type = data[0];
+	if (reftable_is_block_type(*type)) {
 		result = get_be24(data + 1);
 	}
 	return result;
 }
 
 int reader_init_block_reader(struct reftable_reader *r, struct block_reader *br,
-			     uint64_t next_off, uint8_t want_typ)
+			     uint64_t next_off, uint8_t want_type)
 {
 	int32_t guess_block_size = r->block_size ? r->block_size :
 							 DEFAULT_BLOCK_SIZE;
 	struct reftable_block block = { NULL };
-	uint8_t block_typ = 0;
+	uint8_t block_type = 0;
 	int err = 0;
 	uint32_t header_off = next_off ? 0 : header_size(r->version);
 	int32_t block_size = 0;
@@ -291,13 +291,13 @@ int reader_init_block_reader(struct reftable_reader *r, struct block_reader *br,
 	if (err < 0)
 		goto done;
 
-	block_size = extract_block_size(block.data, &block_typ, next_off,
+	block_size = extract_block_size(block.data, &block_type, next_off,
 					r->version);
 	if (block_size < 0) {
 		err = block_size;
 		goto done;
 	}
-	if (want_typ != BLOCK_TYPE_ANY && block_typ != want_typ) {
+	if (want_type != BLOCK_TYPE_ANY && block_type != want_type) {
 		err = 1;
 		goto done;
 	}
@@ -326,10 +326,10 @@ static int table_iter_next_block(struct table_iter *dest,
 	int err = 0;
 
 	dest->r = src->r;
-	dest->typ = src->typ;
+	dest->type = src->type;
 	dest->block_off = next_block_off;
 
-	err = reader_init_block_reader(src->r, &br, next_block_off, src->typ);
+	err = reader_init_block_reader(src->r, &br, next_block_off, src->type);
 	if (err > 0) {
 		dest->is_finished = 1;
 		return 1;
@@ -349,7 +349,7 @@ static int table_iter_next_block(struct table_iter *dest,
 
 static int table_iter_next(struct table_iter *ti, struct reftable_record *rec)
 {
-	if (reftable_record_type(rec) != ti->typ)
+	if (reftable_record_type(rec) != ti->type)
 		return REFTABLE_API_ERROR;
 
 	while (1) {
@@ -404,38 +404,38 @@ static void iterator_from_table_iter(struct reftable_iterator *it,
 
 static int reader_table_iter_at(struct reftable_reader *r,
 				struct table_iter *ti, uint64_t off,
-				uint8_t typ)
+				uint8_t type)
 {
 	struct block_reader br = { 0 };
 	struct block_reader *brp = NULL;
 
-	int err = reader_init_block_reader(r, &br, off, typ);
+	int err = reader_init_block_reader(r, &br, off, type);
 	if (err != 0)
 		return err;
 
 	brp = reftable_malloc(sizeof(struct block_reader));
 	*brp = br;
 	ti->r = r;
-	ti->typ = block_reader_type(brp);
+	ti->type = block_reader_type(brp);
 	ti->block_off = off;
 	block_reader_start(brp, &ti->bi);
 	return 0;
 }
 
 static int reader_start(struct reftable_reader *r, struct table_iter *ti,
-			uint8_t typ, int index)
+			uint8_t type, int index)
 {
-	struct reftable_reader_offsets *offs = reader_offsets_for(r, typ);
+	struct reftable_reader_offsets *offs = reader_offsets_for(r, type);
 	uint64_t off = offs->offset;
 	if (index) {
 		off = offs->index_offset;
 		if (off == 0) {
 			return 1;
 		}
-		typ = BLOCK_TYPE_INDEX;
+		type = BLOCK_TYPE_INDEX;
 	}
 
-	return reader_table_iter_at(r, ti, off, typ);
+	return reader_table_iter_at(r, ti, off, type);
 }
 
 static int reader_seek_linear(struct reftable_reader *r, struct table_iter *ti,
@@ -522,12 +522,12 @@ static int reader_seek_indexed(struct reftable_reader *r,
 		if (err < 0)
 			goto done;
 
-		if (next.typ == reftable_record_type(rec)) {
+		if (next.type == reftable_record_type(rec)) {
 			err = 0;
 			break;
 		}
 
-		if (next.typ != BLOCK_TYPE_INDEX) {
+		if (next.type != BLOCK_TYPE_INDEX) {
 			err = REFTABLE_FORMAT_ERROR;
 			break;
 		}
@@ -582,9 +582,9 @@ static int reader_seek_internal(struct reftable_reader *r,
 static int reader_seek(struct reftable_reader *r, struct reftable_iterator *it,
 		       struct reftable_record *rec)
 {
-	uint8_t typ = reftable_record_type(rec);
+	uint8_t type = reftable_record_type(rec);
 
-	struct reftable_reader_offsets *offs = reader_offsets_for(r, typ);
+	struct reftable_reader_offsets *offs = reader_offsets_for(r, type);
 	if (!offs->is_present) {
 		iterator_set_empty(it);
 		return 0;
