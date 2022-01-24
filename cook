@@ -127,6 +127,7 @@ sub get_source {
 	my ($branch) = @_;
 	my @id = ();
 	my %msgs = ();
+	my @msgs = ();
 	my %source = ();
 	my %skip_me = ();
 
@@ -137,27 +138,51 @@ sub get_source {
 		if (s/^message-id:\s*<(.*)>\s*$/$1/i) {
 			my $msg = $_;
 			$msgs{$msg} = [get_message_parent($msg)];
-			if (!%source) {
-				$source{$msg} = $msg;
-			}
+			push @msgs, $msg;
 		}
 	}
 	close($fh);
 
 	# Collect parent messages that are not in the series,
 	# as they are likely to be the cover letters.
-	for my $msg (keys %msgs) {
+	for my $msg (@msgs) {
 		for my $parent (@{$msgs{$msg}}) {
 			if (!exists $msgs{$parent}) {
-				$source{$parent} = 1;
+				$source{$parent}++;
 			}
 		}
 	}
+
+	reduce_sources(\@msgs, \%msgs, \%source);
 
 	map {
 		" source: <$_>";
 	}
 	(keys %source);
+}
+
+sub reduce_sources {
+	# Message-source specific hack
+	my ($msgs_array, $msgs_map, $src_map) = @_;
+
+	# messages without parent, or a singleton patch
+	if ((! %$src_map && @{$msgs_array}) || (@{$msgs_array} == 1)) {
+		%{$src_map} = ($msgs_array->[0] => 1);
+		return;
+	}
+
+	# Is it from GGG?
+	my @ggg_source = ();
+	for my $msg (keys %$src_map) {
+		if ($msg =~ /^pull\.[^@]*\.gitgitgadget\@/) {
+			push @ggg_source, $msg;
+		}
+	}
+	if (@ggg_source == 1) {
+		%{$src_map} = ($ggg_source[0] => 1);
+		return;
+	}
+
 }
 
 =head1
@@ -676,7 +701,7 @@ sub tweak_willdo {
 
 	if (!defined $mergetomaster) {
 		my $master = `git describe $MASTER`;
-		if ($master =~ /-rc\d+(-\d+-g[0-9a-f]+)?$/) {
+		if ($master =~ /-rc(\d+)(-\d+-g[0-9a-f]+)?$/ && $1 != 0) {
 			$mergetomaster = "Will cook in 'next'.";
 		} else {
 			$mergetomaster = "Will merge to '$MASTER'.";
@@ -844,7 +869,7 @@ sub wildo_match {
 	# NEEDSWORK: unify with Reintegrate::annotate_merge
 	if (/^Will (?:\S+ ){0,2}(fast-track|hold|keep|merge|drop|discard|cook|kick|defer|eject|be re-?rolled|wait)[,. ]/ ||
 	    /^Not urgent/ || /^Not ready/ || /^Waiting for / || /^Under discussion/ ||
-	    /^Can wait in / || /^Still / || /^Stuck / || /^On hold/ ||
+	    /^Can wait in / || /^Still / || /^Stuck / || /^On hold/ || /^Breaks / ||
 	    /^Needs? / || /^Expecting / || /^May want to / || /^Under review/) {
 		return 1;
 	}
