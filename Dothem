@@ -209,6 +209,8 @@ do
 
 		Meta/Make $M $jobs -- SPARSE_FLAGS=-Wsparse-error sparse &&
 
+		Meta/Make $M $jobs -- hdr-check &&
+
 		Meta/Make $M $noprove ${test+"$test"} $jobs $test_long $memtrash \
 		    -- ${with_dash:+SHELL_PATH=/bin/dash} "$@" $dotest &&
 
