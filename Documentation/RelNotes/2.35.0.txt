@@ -13,6 +13,16 @@ Backward compatibility warts
    of GNU grep.
 
 
+Note to those who build from the source
+
+ * You may need to define NO_UNCOMPRESS2 Makefile macro if you build
+   with zlib older than 1.2.9.
+
+ * If your compiler cannot grok C99, the build will fail.  See the
+   instruction at the beginning of git-compat-util.h if this happens
+   to you.
+
+
 UI, Workflows & Features
 
  * "git status --porcelain=v2" now show the number of stash entries
