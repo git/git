@@ -395,4 +395,35 @@ test_expect_success 'hash-cache values are propagated from pack bitmaps' '
 	)
 '
 
+test_expect_failure 'changing the preferred pack does not corrupt bitmaps' '
+	rm -fr repo &&
+	git init repo &&
+	test_when_finished "rm -fr repo" &&
+	(
+		cd repo &&
+
+		test_commit A &&
+		test_commit B &&
+
+		git rev-list --objects --no-object-names HEAD^ >A.objects &&
+		git rev-list --objects --no-object-names HEAD^.. >B.objects &&
+
+		A=$(git pack-objects $objdir/pack/pack <A.objects) &&
+		B=$(git pack-objects $objdir/pack/pack <B.objects) &&
+
+		cat >indexes <<-EOF &&
+		pack-$A.idx
+		pack-$B.idx
+		EOF
+
+		git multi-pack-index write --bitmap --stdin-packs \
+			--preferred-pack=pack-$A.pack <indexes &&
+		git rev-list --test-bitmap A &&
+
+		git multi-pack-index write --bitmap --stdin-packs \
+			--preferred-pack=pack-$B.pack <indexes &&
+		git rev-list --test-bitmap A
+	)
+'
+
 test_done
