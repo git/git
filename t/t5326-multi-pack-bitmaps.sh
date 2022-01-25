@@ -17,15 +17,28 @@ midx_pack_source () {
 	test-tool read-midx --show-objects .git/objects | grep "^$1 " | cut -f2
 }
 
+test_rev_exists () {
+	commit="$1"
+
+	test_expect_success 'reverse index exists' '
+		GIT_TRACE2_EVENT=$(pwd)/event.trace \
+			git rev-list --test-bitmap "$commit" &&
+
+		test_path_is_file $midx-$(midx_checksum $objdir).rev &&
+		grep "\"category\":\"load_midx_revindex\",\"key\":\"source\",\"value\":\"rev\"" event.trace
+	'
+}
+
 setup_bitmap_history
 
 test_expect_success 'create single-pack midx with bitmaps' '
 	git repack -ad &&
 	git multi-pack-index write --bitmap &&
 	test_path_is_file $midx &&
-	test_path_is_file $midx-$(midx_checksum $objdir).bitmap &&
-	test_path_is_file $midx-$(midx_checksum $objdir).rev
+	test_path_is_file $midx-$(midx_checksum $objdir).bitmap
 '
+
+test_rev_exists HEAD
 
 basic_bitmap_tests
 
@@ -52,9 +65,10 @@ test_expect_success 'create multi-pack midx with bitmaps' '
 	test_line_count = 25 packs &&
 
 	test_path_is_file $midx &&
-	test_path_is_file $midx-$(midx_checksum $objdir).bitmap &&
-	test_path_is_file $midx-$(midx_checksum $objdir).rev
+	test_path_is_file $midx-$(midx_checksum $objdir).bitmap
 '
+
+test_rev_exists HEAD
 
 basic_bitmap_tests
 
@@ -66,7 +80,6 @@ test_expect_success '--no-bitmap is respected when bitmaps exist' '
 
 	test_path_is_file $midx &&
 	test_path_is_file $midx-$(midx_checksum $objdir).bitmap &&
-	test_path_is_file $midx-$(midx_checksum $objdir).rev &&
 
 	git multi-pack-index write --no-bitmap &&
 
@@ -206,9 +219,10 @@ test_expect_success 'setup partial bitmaps' '
 	test_commit loose &&
 	git multi-pack-index write --bitmap 2>err &&
 	test_path_is_file $midx &&
-	test_path_is_file $midx-$(midx_checksum $objdir).bitmap &&
-	test_path_is_file $midx-$(midx_checksum $objdir).rev
+	test_path_is_file $midx-$(midx_checksum $objdir).bitmap
 '
+
+test_rev_exists HEAD~
 
 basic_bitmap_tests HEAD~
 
@@ -224,7 +238,6 @@ test_expect_success 'removing a MIDX clears stale bitmaps' '
 
 		# Write a MIDX and bitmap; remove the MIDX but leave the bitmap.
 		stale_bitmap=$midx-$(midx_checksum $objdir).bitmap &&
-		stale_rev=$midx-$(midx_checksum $objdir).rev &&
 		rm $midx &&
 
 		# Then write a new MIDX.
@@ -234,9 +247,7 @@ test_expect_success 'removing a MIDX clears stale bitmaps' '
 
 		test_path_is_file $midx &&
 		test_path_is_file $midx-$(midx_checksum $objdir).bitmap &&
-		test_path_is_file $midx-$(midx_checksum $objdir).rev &&
-		test_path_is_missing $stale_bitmap &&
-		test_path_is_missing $stale_rev
+		test_path_is_missing $stale_bitmap
 	)
 '
 
@@ -257,7 +268,6 @@ test_expect_success 'pack.preferBitmapTips' '
 		git multi-pack-index write --bitmap &&
 		test_path_is_file $midx &&
 		test_path_is_file $midx-$(midx_checksum $objdir).bitmap &&
-		test_path_is_file $midx-$(midx_checksum $objdir).rev &&
 
 		test-tool bitmap list-commits | sort >bitmaps &&
 		comm -13 bitmaps commits >before &&
@@ -267,7 +277,6 @@ test_expect_success 'pack.preferBitmapTips' '
 			<before | git update-ref --stdin &&
 
 		rm -fr $midx-$(midx_checksum $objdir).bitmap &&
-		rm -fr $midx-$(midx_checksum $objdir).rev &&
 		rm -fr $midx &&
 
 		git -c pack.preferBitmapTips=refs/tags/include \
@@ -305,7 +314,6 @@ test_expect_success 'writing a bitmap with --refs-snapshot' '
 		grep "$(git rev-parse two)" bitmaps &&
 
 		rm -fr $midx-$(midx_checksum $objdir).bitmap &&
-		rm -fr $midx-$(midx_checksum $objdir).rev &&
 		rm -fr $midx &&
 
 		# Then again, but with a refs snapshot which only sees
@@ -350,7 +358,6 @@ test_expect_success 'write a bitmap with --refs-snapshot (preferred tips)' '
 		) >snapshot &&
 
 		rm -fr $midx-$(midx_checksum $objdir).bitmap &&
-		rm -fr $midx-$(midx_checksum $objdir).rev &&
 		rm -fr $midx &&
 
 		git multi-pack-index write --bitmap --refs-snapshot=snapshot &&
