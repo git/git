@@ -266,4 +266,23 @@ test_expect_success 'hash-cache values are propagated from pack bitmaps' '
 	)
 '
 
+test_expect_success 'graceful fallback when missing reverse index' '
+	rm -fr repo &&
+	git init repo &&
+	test_when_finished "rm -fr repo" &&
+	(
+		cd repo &&
+
+		test_commit base &&
+
+		# write a pack and MIDX bitmap containing base
+		git repack -adb &&
+		git multi-pack-index write --bitmap &&
+
+		GIT_TEST_MIDX_READ_RIDX=0 \
+			git rev-list --use-bitmap-index HEAD 2>err &&
+		! grep "ignoring extra bitmap file" err
+	)
+'
+
 test_done
