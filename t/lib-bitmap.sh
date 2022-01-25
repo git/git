@@ -275,17 +275,23 @@ midx_pack_source () {
 
 test_rev_exists () {
 	commit="$1"
+	kind="$2"
 
-	test_expect_success 'reverse index exists' '
+	test_expect_success "reverse index exists ($kind)" '
 		GIT_TRACE2_EVENT=$(pwd)/event.trace \
 			git rev-list --test-bitmap "$commit" &&
 
-		test_path_is_file $midx-$(midx_checksum $objdir).rev &&
-		grep "\"category\":\"load_midx_revindex\",\"key\":\"source\",\"value\":\"rev\"" event.trace
+		if test "rev" = "$kind"
+		then
+			test_path_is_file $midx-$(midx_checksum $objdir).rev
+		fi &&
+		grep "\"category\":\"load_midx_revindex\",\"key\":\"source\",\"value\":\"$kind\"" event.trace
 	'
 }
 
 midx_bitmap_core () {
+	rev_kind="${1:-rev}"
+
 	setup_bitmap_history
 
 	test_expect_success 'create single-pack midx with bitmaps' '
@@ -295,7 +301,7 @@ midx_bitmap_core () {
 		test_path_is_file $midx-$(midx_checksum $objdir).bitmap
 	'
 
-	test_rev_exists HEAD
+	test_rev_exists HEAD "$rev_kind"
 
 	basic_bitmap_tests
 
@@ -325,7 +331,7 @@ midx_bitmap_core () {
 		test_path_is_file $midx-$(midx_checksum $objdir).bitmap
 	'
 
-	test_rev_exists HEAD
+	test_rev_exists HEAD "$rev_kind"
 
 	basic_bitmap_tests
 
@@ -428,6 +434,8 @@ midx_bitmap_core () {
 }
 
 midx_bitmap_partial_tests () {
+	rev_kind="${1:-rev}"
+
 	test_expect_success 'setup partial bitmaps' '
 		test_commit packed &&
 		git repack &&
@@ -437,7 +445,7 @@ midx_bitmap_partial_tests () {
 		test_path_is_file $midx-$(midx_checksum $objdir).bitmap
 	'
 
-	test_rev_exists HEAD~
+	test_rev_exists HEAD~ "$rev_kind"
 
 	basic_bitmap_tests HEAD~
 }
