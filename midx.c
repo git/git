@@ -162,6 +162,9 @@ struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local
 
 	pair_chunk(cf, MIDX_CHUNKID_LARGEOFFSETS, &m->chunk_large_offsets);
 
+	if (git_env_bool("GIT_TEST_MIDX_READ_RIDX", 1))
+		pair_chunk(cf, MIDX_CHUNKID_REVINDEX, &m->chunk_revindex);
+
 	m->num_objects = ntohl(m->chunk_oid_fanout[255]);
 
 	CALLOC_ARRAY(m->pack_names, m->num_packs);
@@ -1429,7 +1432,8 @@ static int write_midx_internal(const char *object_dir,
 	finalize_hashfile(f, midx_hash, CSUM_FSYNC | CSUM_HASH_IN_STREAM);
 	free_chunkfile(cf);
 
-	if (flags & MIDX_WRITE_REV_INDEX)
+	if (flags & MIDX_WRITE_REV_INDEX &&
+	    git_env_bool("GIT_TEST_MIDX_WRITE_REV", 0))
 		write_midx_reverse_index(midx_name.buf, midx_hash, &ctx);
 	if (flags & MIDX_WRITE_BITMAP) {
 		if (write_midx_bitmap(midx_name.buf, midx_hash, &ctx,

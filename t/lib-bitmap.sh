@@ -290,7 +290,7 @@ test_rev_exists () {
 }
 
 midx_bitmap_core () {
-	rev_kind="${1:-rev}"
+	rev_kind="${1:-midx}"
 
 	setup_bitmap_history
 
@@ -434,7 +434,7 @@ midx_bitmap_core () {
 }
 
 midx_bitmap_partial_tests () {
-	rev_kind="${1:-rev}"
+	rev_kind="${1:-midx}"
 
 	test_expect_success 'setup partial bitmaps' '
 		test_commit packed &&

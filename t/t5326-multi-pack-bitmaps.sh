@@ -9,6 +9,12 @@ test_description='exercise basic multi-pack bitmap functionality'
 GIT_TEST_MULTI_PACK_INDEX=0
 GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=0
 
+# This test exercise multi-pack bitmap functionality where the object order is
+# stored and read from a special chunk within the MIDX, so use the default
+# behavior here.
+sane_unset GIT_TEST_MIDX_WRITE_REV
+sane_unset GIT_TEST_MIDX_READ_RIDX
+
 midx_bitmap_core
 
 bitmap_reuse_tests() {
