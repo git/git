@@ -395,7 +395,7 @@ test_expect_success 'hash-cache values are propagated from pack bitmaps' '
 	)
 '
 
-test_expect_failure 'changing the preferred pack does not corrupt bitmaps' '
+test_expect_success 'changing the preferred pack does not corrupt bitmaps' '
 	rm -fr repo &&
 	git init repo &&
 	test_when_finished "rm -fr repo" &&
