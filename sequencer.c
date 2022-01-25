@@ -4223,8 +4223,11 @@ static int run_git_checkout(struct repository *r, struct replay_opts *opts,
 
 	cmd.git_cmd = 1;
 
-	if (startup_info->original_cwd)
+	if (startup_info->original_cwd) {
 		cmd.dir = startup_info->original_cwd;
+		strvec_pushf(&cmd.env_array, "%s=%s",
+			     GIT_WORK_TREE_ENVIRONMENT, r->worktree);
+	}
 	strvec_push(&cmd.args, "checkout");
 	strvec_push(&cmd.args, commit);
 	strvec_pushf(&cmd.env_array, GIT_REFLOG_ACTION "=%s", action);
