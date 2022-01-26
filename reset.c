@@ -18,7 +18,7 @@ int reset_head(struct repository *r, struct object_id *oid, const char *action,
 	unsigned run_hook = flags & RESET_HEAD_RUN_POST_CHECKOUT_HOOK;
 	unsigned refs_only = flags & RESET_HEAD_REFS_ONLY;
 	unsigned update_orig_head = flags & RESET_ORIG_HEAD;
-	struct object_id head_oid;
+	struct object_id *head = NULL, head_oid;
 	struct tree_desc desc[2] = { { NULL }, { NULL } };
 	struct lock_file lock = LOCK_INIT;
 	struct unpack_trees_options unpack_tree_opts = { 0 };
@@ -26,8 +26,7 @@ int reset_head(struct repository *r, struct object_id *oid, const char *action,
 	const char *reflog_action;
 	struct strbuf msg = STRBUF_INIT;
 	size_t prefix_len;
-	struct object_id *orig = NULL, oid_orig,
-		*old_orig = NULL, oid_old_orig;
+	struct object_id *old_orig = NULL, oid_old_orig;
 	int ret = 0, nr = 0;
 
 	if (switch_to_branch && !starts_with(switch_to_branch, "refs/"))
@@ -38,7 +37,9 @@ int reset_head(struct repository *r, struct object_id *oid, const char *action,
 		goto leave_reset_head;
 	}
 
-	if ((!oid || !reset_hard) && get_oid("HEAD", &head_oid)) {
+	if (!get_oid("HEAD", &head_oid)) {
+		head = &head_oid;
+	} else if (!oid || !reset_hard) {
 		ret = error(_("could not determine HEAD revision"));
 		goto leave_reset_head;
 	}
@@ -98,13 +99,12 @@ reset_head_refs:
 	if (update_orig_head) {
 		if (!get_oid("ORIG_HEAD", &oid_old_orig))
 			old_orig = &oid_old_orig;
-		if (!get_oid("HEAD", &oid_orig)) {
-			orig = &oid_orig;
+		if (head) {
 			if (!reflog_orig_head) {
 				strbuf_addstr(&msg, "updating ORIG_HEAD");
 				reflog_orig_head = msg.buf;
 			}
-			update_ref(reflog_orig_head, "ORIG_HEAD", orig,
+			update_ref(reflog_orig_head, "ORIG_HEAD", head,
 				   old_orig, 0, UPDATE_REFS_MSG_ON_ERR);
 		} else if (old_orig)
 			delete_ref(NULL, "ORIG_HEAD", old_orig, 0);
@@ -116,7 +116,7 @@ reset_head_refs:
 		reflog_head = msg.buf;
 	}
 	if (!switch_to_branch)
-		ret = update_ref(reflog_head, "HEAD", oid, orig,
+		ret = update_ref(reflog_head, "HEAD", oid, head,
 				 detach_head ? REF_NO_DEREF : 0,
 				 UPDATE_REFS_MSG_ON_ERR);
 	else {
@@ -128,7 +128,7 @@ reset_head_refs:
 	}
 	if (run_hook)
 		run_hook_le(NULL, "post-checkout",
-			    oid_to_hex(orig ? orig : null_oid()),
+			    oid_to_hex(head ? head : null_oid()),
 			    oid_to_hex(oid), "1", NULL);
 
 leave_reset_head:

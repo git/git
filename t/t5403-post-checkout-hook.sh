@@ -72,6 +72,19 @@ test_rebase () {
 		test_cmp_rev rebase-on-me $new &&
 		test $flag = 1
 	'
+
+	test_expect_success "rebase $args fast-forward branch checkout runs post-checkout hook" '
+		test_when_finished "test_might_fail git rebase --abort" &&
+		test_when_finished "rm -f .git/post-checkout.args" &&
+		git update-ref refs/heads/rebase-fast-forward three &&
+		git checkout two  &&
+		rm -f .git/post-checkout.args &&
+		git rebase $args HEAD rebase-fast-forward  &&
+		read old new flag <.git/post-checkout.args &&
+		test_cmp_rev two $old &&
+		test_cmp_rev three $new &&
+		test $flag = 1
+	'
 }
 
 test_rebase --apply &&
