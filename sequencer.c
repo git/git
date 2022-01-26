@@ -1281,7 +1281,7 @@ void print_commit_summary(struct repository *r,
 	struct strbuf author_ident = STRBUF_INIT;
 	struct strbuf committer_ident = STRBUF_INIT;
 	struct ref_store *refs;
-	int resolve_errno;
+	int ignore_errno;
 
 	commit = lookup_commit(r, oid);
 	if (!commit)
@@ -1333,11 +1333,9 @@ void print_commit_summary(struct repository *r,
 
 	refs = get_main_ref_store(the_repository);
 	head = refs_resolve_ref_unsafe(refs, "HEAD", 0, NULL, NULL,
-				       &resolve_errno);
-	if (!head) {
-		errno = resolve_errno;
-		die_errno(_("unable to resolve HEAD after creating commit"));
-	}
+				       &ignore_errno);
+	if (!head)
+		die(_("unable to resolve HEAD after creating commit"));
 	if (!strcmp(head, "HEAD"))
 		head = _("detached HEAD");
 	else
