@@ -23,6 +23,10 @@ struct reset_head_opts {
 	 */
 	const struct object_id *oid;
 	/*
+	 * Optional value to set ORIG_HEAD. Defaults to HEAD.
+	 */
+	const struct object_id *orig_head;
+	/*
 	 * Optional branch to switch to.
 	 */
 	const char *branch;
