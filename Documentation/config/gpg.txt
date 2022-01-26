@@ -66,7 +66,7 @@ This way only committers with an already valid key can add or change keys in the
 +
 Since OpensSSH 8.8 this file allows specifying a key lifetime using valid-after &
 valid-before options. Git will mark signatures as valid if the signing key was
-valid at the time of the signatures creation. This allows users to change a
+valid at the time of the signature's creation. This allows users to change a
 signing key without invalidating all previously made signatures.
 +
 Using a SSH CA key with the cert-authority option
