@@ -85,6 +85,16 @@ test_rebase () {
 		test_cmp_rev three $new &&
 		test $flag = 1
 	'
+
+	test_expect_success "rebase $args checkout does not remove untracked files" '
+		test_when_finished "test_might_fail git rebase --abort" &&
+		git update-ref refs/heads/rebase-fast-forward three &&
+		git checkout two &&
+		echo untracked >three.t &&
+		test_when_finished "rm three.t" &&
+		test_must_fail git rebase $args HEAD rebase-fast-forward 2>err &&
+		grep "untracked working tree files would be overwritten by checkout" err
+'
 }
 
 test_rebase --apply &&
