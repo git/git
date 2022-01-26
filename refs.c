@@ -269,10 +269,9 @@ char *refs_resolve_refdup(struct ref_store *refs,
 			  struct object_id *oid, int *flags)
 {
 	const char *result;
-	int ignore_errno;
 
 	result = refs_resolve_ref_unsafe(refs, refname, resolve_flags,
-					 oid, flags, &ignore_errno);
+					 oid, flags);
 	return xstrdup_or_null(result);
 }
 
@@ -294,11 +293,10 @@ struct ref_filter {
 
 int read_ref_full(const char *refname, int resolve_flags, struct object_id *oid, int *flags)
 {
-	int ignore_errno;
 	struct ref_store *refs = get_main_ref_store(the_repository);
 
 	if (refs_resolve_ref_unsafe(refs, refname, resolve_flags,
-				    oid, flags, &ignore_errno))
+				    oid, flags))
 		return 0;
 	return -1;
 }
@@ -310,9 +308,8 @@ int read_ref(const char *refname, struct object_id *oid)
 
 int refs_ref_exists(struct ref_store *refs, const char *refname)
 {
-	int ignore_errno;
 	return !!refs_resolve_ref_unsafe(refs, refname, RESOLVE_REF_READING,
-					 NULL, NULL, &ignore_errno);
+					 NULL, NULL);
 }
 
 int ref_exists(const char *refname)
@@ -656,15 +653,13 @@ int expand_ref(struct repository *repo, const char *str, int len,
 		struct object_id *this_result;
 		int flag;
 		struct ref_store *refs = get_main_ref_store(repo);
-		int ignore_errno;
 
 		this_result = refs_found ? &oid_from_ref : oid;
 		strbuf_reset(&fullref);
 		strbuf_addf(&fullref, *p, len, str);
 		r = refs_resolve_ref_unsafe(refs, fullref.buf,
 					    RESOLVE_REF_READING,
-					    this_result, &flag,
-					    &ignore_errno);
+					    this_result, &flag);
 		if (r) {
 			if (!refs_found++)
 				*ref = xstrdup(r);
@@ -693,14 +688,12 @@ int repo_dwim_log(struct repository *r, const char *str, int len,
 	for (p = ref_rev_parse_rules; *p; p++) {
 		struct object_id hash;
 		const char *ref, *it;
-		int ignore_errno;
 
 		strbuf_reset(&path);
 		strbuf_addf(&path, *p, len, str);
 		ref = refs_resolve_ref_unsafe(refs, path.buf,
 					      RESOLVE_REF_READING,
-					      oid ? &hash : NULL, NULL,
-					      &ignore_errno);
+					      oid ? &hash : NULL, NULL);
 		if (!ref)
 			continue;
 		if (refs_reflog_exists(refs, path.buf))
@@ -1390,10 +1383,9 @@ int refs_head_ref(struct ref_store *refs, each_ref_fn fn, void *cb_data)
 {
 	struct object_id oid;
 	int flag;
-	int ignore_errno;
 
 	if (refs_resolve_ref_unsafe(refs, "HEAD", RESOLVE_REF_READING,
-				    &oid, &flag, &ignore_errno))
+				    &oid, &flag))
 		return fn("HEAD", &oid, flag, cb_data);
 
 	return 0;
@@ -1682,14 +1674,12 @@ const char *refs_resolve_ref_unsafe(struct ref_store *refs,
 				    const char *refname,
 				    int resolve_flags,
 				    struct object_id *oid,
-				    int *flags, int *failure_errno)
+				    int *flags)
 {
 	static struct strbuf sb_refname = STRBUF_INIT;
 	struct object_id unused_oid;
 	int unused_flags;
 	int symref_count;
-
-	assert(failure_errno);
 
 	if (!oid)
 		oid = &unused_oid;
@@ -1700,10 +1690,8 @@ const char *refs_resolve_ref_unsafe(struct ref_store *refs,
 
 	if (check_refname_format(refname, REFNAME_ALLOW_ONELEVEL)) {
 		if (!(resolve_flags & RESOLVE_REF_ALLOW_BAD_NAME) ||
-		    !refname_is_safe(refname)) {
-			*failure_errno = EINVAL;
+		    !refname_is_safe(refname))
 			return NULL;
-		}
 
 		/*
 		 * dwim_ref() uses REF_ISBROKEN to distinguish between
@@ -1718,9 +1706,10 @@ const char *refs_resolve_ref_unsafe(struct ref_store *refs,
 
 	for (symref_count = 0; symref_count < SYMREF_MAXDEPTH; symref_count++) {
 		unsigned int read_flags = 0;
+		int failure_errno;
 
 		if (refs_read_raw_ref(refs, refname, oid, &sb_refname,
-				      &read_flags, failure_errno)) {
+				      &read_flags, &failure_errno)) {
 			*flags |= read_flags;
 
 			/* In reading mode, refs must eventually resolve */
@@ -1732,9 +1721,9 @@ const char *refs_resolve_ref_unsafe(struct ref_store *refs,
 			 * may show errors besides ENOENT if there are
 			 * similarly-named refs.
 			 */
-			if (*failure_errno != ENOENT &&
-			    *failure_errno != EISDIR &&
-			    *failure_errno != ENOTDIR)
+			if (failure_errno != ENOENT &&
+			    failure_errno != EISDIR &&
+			    failure_errno != ENOTDIR)
 				return NULL;
 
 			oidclr(oid);
@@ -1760,16 +1749,13 @@ const char *refs_resolve_ref_unsafe(struct ref_store *refs,
 		}
 		if (check_refname_format(refname, REFNAME_ALLOW_ONELEVEL)) {
 			if (!(resolve_flags & RESOLVE_REF_ALLOW_BAD_NAME) ||
-			    !refname_is_safe(refname)) {
-				*failure_errno = EINVAL;
+			    !refname_is_safe(refname))
 				return NULL;
-			}
 
 			*flags |= REF_ISBROKEN | REF_BAD_NAME;
 		}
 	}
 
-	*failure_errno = ELOOP;
 	return NULL;
 }
 
@@ -1784,10 +1770,8 @@ int refs_init_db(struct strbuf *err)
 const char *resolve_ref_unsafe(const char *refname, int resolve_flags,
 			       struct object_id *oid, int *flags)
 {
-	int ignore_errno;
-
 	return refs_resolve_ref_unsafe(get_main_ref_store(the_repository), refname,
-				       resolve_flags, oid, flags, &ignore_errno);
+				       resolve_flags, oid, flags);
 }
 
 int resolve_gitlink_ref(const char *submodule, const char *refname,
@@ -1795,15 +1779,14 @@ int resolve_gitlink_ref(const char *submodule, const char *refname,
 {
 	struct ref_store *refs;
 	int flags;
-	int ignore_errno;
 
 	refs = get_submodule_ref_store(submodule);
 
 	if (!refs)
 		return -1;
 
-	if (!refs_resolve_ref_unsafe(refs, refname, 0, oid, &flags,
-				     &ignore_errno) || is_null_oid(oid))
+	if (!refs_resolve_ref_unsafe(refs, refname, 0, oid, &flags) ||
+	    is_null_oid(oid))
 		return -1;
 	return 0;
 }
