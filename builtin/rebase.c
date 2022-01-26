@@ -571,6 +571,7 @@ static int finish_rebase(struct rebase_options *opts)
 static int move_to_original_branch(struct rebase_options *opts)
 {
 	struct strbuf orig_head_reflog = STRBUF_INIT, head_reflog = STRBUF_INIT;
+	struct reset_head_opts ropts = { 0 };
 	int ret;
 
 	if (!opts->head_name)
@@ -583,9 +584,11 @@ static int move_to_original_branch(struct rebase_options *opts)
 		    opts->head_name, oid_to_hex(&opts->onto->object.oid));
 	strbuf_addf(&head_reflog, "rebase finished: returning to %s",
 		    opts->head_name);
-	ret = reset_head(the_repository, NULL, opts->head_name,
-			 RESET_HEAD_REFS_ONLY,
-			 orig_head_reflog.buf, head_reflog.buf, NULL);
+	ropts.branch = opts->head_name;
+	ropts.flags = RESET_HEAD_REFS_ONLY;
+	ropts.orig_head_msg = orig_head_reflog.buf;
+	ropts.head_msg = head_reflog.buf;
+	ret = reset_head(the_repository, &ropts);
 
 	strbuf_release(&orig_head_reflog);
 	strbuf_release(&head_reflog);
@@ -669,13 +672,15 @@ static int run_am(struct rebase_options *opts)
 
 	status = run_command(&format_patch);
 	if (status) {
+		struct reset_head_opts ropts = { 0 };
 		unlink(rebased_patches);
 		free(rebased_patches);
 		strvec_clear(&am.args);
 
-		reset_head(the_repository, &opts->orig_head,
-			   opts->head_name, 0,
-			   NULL, NULL, DEFAULT_REFLOG_ACTION);
+		ropts.oid = &opts->orig_head;
+		ropts.branch = opts->head_name;
+		ropts.default_reflog_action = DEFAULT_REFLOG_ACTION;
+		reset_head(the_repository, &ropts);
 		error(_("\ngit encountered an error while preparing the "
 			"patches to replay\n"
 			"these revisions:\n"
@@ -814,14 +819,17 @@ static int rebase_config(const char *var, const char *value, void *data)
 static int checkout_up_to_date(struct rebase_options *options)
 {
 	struct strbuf buf = STRBUF_INIT;
+	struct reset_head_opts ropts = { 0 };
 	int ret = 0;
 
 	strbuf_addf(&buf, "%s: checkout %s",
 		    getenv(GIT_REFLOG_ACTION_ENVIRONMENT),
 		    options->switch_to);
-	if (reset_head(the_repository, &options->orig_head,
-		       options->head_name, RESET_HEAD_RUN_POST_CHECKOUT_HOOK,
-		       NULL, buf.buf, NULL) < 0)
+	ropts.oid = &options->orig_head;
+	ropts.branch = options->head_name;
+	ropts.flags = RESET_HEAD_RUN_POST_CHECKOUT_HOOK;
+	ropts.head_msg = buf.buf;
+	if (reset_head(the_repository, &ropts) < 0)
 		ret = error(_("could not switch to %s"), options->switch_to);
 	strbuf_release(&buf);
 
@@ -1033,6 +1041,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	int reschedule_failed_exec = -1;
 	int allow_preemptive_ff = 1;
 	int preserve_merges_selected = 0;
+	struct reset_head_opts ropts = { 0 };
 	struct option builtin_rebase_options[] = {
 		OPT_STRING(0, "onto", &options.onto_name,
 			   N_("revision"),
@@ -1270,9 +1279,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 		rerere_clear(the_repository, &merge_rr);
 		string_list_clear(&merge_rr, 1);
-
-		if (reset_head(the_repository, NULL, NULL, RESET_HEAD_HARD,
-			       NULL, NULL, NULL) < 0)
+		ropts.flags = RESET_HEAD_HARD;
+		if (reset_head(the_repository, &ropts) < 0)
 			die(_("could not discard worktree changes"));
 		remove_branch_state(the_repository, 0);
 		if (read_basic_state(&options))
@@ -1289,9 +1297,11 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 		if (read_basic_state(&options))
 			exit(1);
-		if (reset_head(the_repository, &options.orig_head,
-			       options.head_name, RESET_HEAD_HARD,
-			       NULL, NULL, DEFAULT_REFLOG_ACTION) < 0)
+		ropts.oid = &options.orig_head;
+		ropts.branch = options.head_name;
+		ropts.flags = RESET_HEAD_HARD;
+		ropts.default_reflog_action = DEFAULT_REFLOG_ACTION;
+		if (reset_head(the_repository, &ropts) < 0)
 			die(_("could not move back to %s"),
 			    oid_to_hex(&options.orig_head));
 		remove_branch_state(the_repository, 0);
@@ -1758,10 +1768,12 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 	strbuf_addf(&msg, "%s: checkout %s",
 		    getenv(GIT_REFLOG_ACTION_ENVIRONMENT), options.onto_name);
-	if (reset_head(the_repository, &options.onto->object.oid, NULL,
-		       RESET_HEAD_DETACH | RESET_ORIG_HEAD |
-		       RESET_HEAD_RUN_POST_CHECKOUT_HOOK,
-		       NULL, msg.buf, DEFAULT_REFLOG_ACTION))
+	ropts.oid = &options.onto->object.oid;
+	ropts.flags = RESET_HEAD_DETACH | RESET_ORIG_HEAD |
+			RESET_HEAD_RUN_POST_CHECKOUT_HOOK;
+	ropts.head_msg = msg.buf;
+	ropts.default_reflog_action = DEFAULT_REFLOG_ACTION;
+	if (reset_head(the_repository, &ropts))
 		die(_("Could not detach HEAD"));
 	strbuf_release(&msg);
 
@@ -1776,8 +1788,11 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		strbuf_addf(&msg, "rebase finished: %s onto %s",
 			options.head_name ? options.head_name : "detached HEAD",
 			oid_to_hex(&options.onto->object.oid));
-		reset_head(the_repository, NULL, options.head_name,
-			   RESET_HEAD_REFS_ONLY, NULL, msg.buf, NULL);
+		memset(&ropts, 0, sizeof(ropts));
+		ropts.branch = options.head_name;
+		ropts.flags = RESET_HEAD_REFS_ONLY;
+		ropts.head_msg = msg.buf;
+		reset_head(the_repository, &ropts);
 		strbuf_release(&msg);
 		ret = finish_rebase(&options);
 		goto cleanup;

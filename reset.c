@@ -8,14 +8,17 @@
 #include "tree.h"
 #include "unpack-trees.h"
 
-static int update_refs(const struct object_id *oid, const char *switch_to_branch,
-		       const struct object_id *head, const char *reflog_head,
-		       const char *reflog_orig_head,
-		       const char *default_reflog_action, unsigned flags)
+static int update_refs(const struct reset_head_opts *opts,
+		       const struct object_id *oid,
+		       const struct object_id *head)
 {
-	unsigned detach_head = flags & RESET_HEAD_DETACH;
-	unsigned run_hook = flags & RESET_HEAD_RUN_POST_CHECKOUT_HOOK;
-	unsigned update_orig_head = flags & RESET_ORIG_HEAD;
+	unsigned detach_head = opts->flags & RESET_HEAD_DETACH;
+	unsigned run_hook = opts->flags & RESET_HEAD_RUN_POST_CHECKOUT_HOOK;
+	unsigned update_orig_head = opts->flags & RESET_ORIG_HEAD;
+	const char *switch_to_branch = opts->branch;
+	const char *reflog_head = opts->head_msg;
+	const char *reflog_orig_head = opts->orig_head_msg;
+	const char *default_reflog_action = opts->default_reflog_action;
 	struct object_id *old_orig = NULL, oid_old_orig;
 	struct strbuf msg = STRBUF_INIT;
 	const char *reflog_action;
@@ -69,14 +72,13 @@ static int update_refs(const struct object_id *oid, const char *switch_to_branch
 	return ret;
 }
 
-int reset_head(struct repository *r, struct object_id *oid,
-	       const char *switch_to_branch, unsigned flags,
-	       const char *reflog_orig_head, const char *reflog_head,
-	       const char *default_reflog_action)
+int reset_head(struct repository *r, const struct reset_head_opts *opts)
 {
-	unsigned reset_hard = flags & RESET_HEAD_HARD;
-	unsigned refs_only = flags & RESET_HEAD_REFS_ONLY;
-	unsigned update_orig_head = flags & RESET_ORIG_HEAD;
+	const struct object_id *oid = opts->oid;
+	const char *switch_to_branch = opts->branch;
+	unsigned reset_hard = opts->flags & RESET_HEAD_HARD;
+	unsigned refs_only = opts->flags & RESET_HEAD_REFS_ONLY;
+	unsigned update_orig_head = opts->flags & RESET_ORIG_HEAD;
 	struct object_id *head = NULL, head_oid;
 	struct tree_desc desc[2] = { { NULL }, { NULL } };
 	struct lock_file lock = LOCK_INIT;
@@ -104,9 +106,7 @@ int reset_head(struct repository *r, struct object_id *oid,
 		oid = &head_oid;
 
 	if (refs_only)
-		return update_refs(oid, switch_to_branch, head, reflog_head,
-				   reflog_orig_head, default_reflog_action,
-				   flags);
+		return update_refs(opts, oid, head);
 
 	action = reset_hard ? "reset" : "checkout";
 	setup_unpack_trees_porcelain(&unpack_tree_opts, action);
@@ -151,9 +151,7 @@ int reset_head(struct repository *r, struct object_id *oid,
 	}
 
 	if (oid != &head_oid || update_orig_head || switch_to_branch)
-		ret = update_refs(oid, switch_to_branch, head, reflog_head,
-				  reflog_orig_head, default_reflog_action,
-				  flags);
+		ret = update_refs(opts, oid, head);
 
 leave_reset_head:
 	rollback_lock_file(&lock);
