@@ -570,7 +570,7 @@ static int finish_rebase(struct rebase_options *opts)
 
 static int move_to_original_branch(struct rebase_options *opts)
 {
-	struct strbuf orig_head_reflog = STRBUF_INIT, head_reflog = STRBUF_INIT;
+	struct strbuf branch_reflog = STRBUF_INIT, head_reflog = STRBUF_INIT;
 	struct reset_head_opts ropts = { 0 };
 	int ret;
 
@@ -580,17 +580,17 @@ static int move_to_original_branch(struct rebase_options *opts)
 	if (!opts->onto)
 		BUG("move_to_original_branch without onto");
 
-	strbuf_addf(&orig_head_reflog, "rebase finished: %s onto %s",
+	strbuf_addf(&branch_reflog, "rebase finished: %s onto %s",
 		    opts->head_name, oid_to_hex(&opts->onto->object.oid));
 	strbuf_addf(&head_reflog, "rebase finished: returning to %s",
 		    opts->head_name);
 	ropts.branch = opts->head_name;
 	ropts.flags = RESET_HEAD_REFS_ONLY;
-	ropts.orig_head_msg = orig_head_reflog.buf;
+	ropts.branch_msg = branch_reflog.buf;
 	ropts.head_msg = head_reflog.buf;
 	ret = reset_head(the_repository, &ropts);
 
-	strbuf_release(&orig_head_reflog);
+	strbuf_release(&branch_reflog);
 	strbuf_release(&head_reflog);
 	return ret;
 }

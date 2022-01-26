@@ -16,6 +16,7 @@ static int update_refs(const struct reset_head_opts *opts,
 	unsigned run_hook = opts->flags & RESET_HEAD_RUN_POST_CHECKOUT_HOOK;
 	unsigned update_orig_head = opts->flags & RESET_ORIG_HEAD;
 	const char *switch_to_branch = opts->branch;
+	const char *reflog_branch = opts->branch_msg;
 	const char *reflog_head = opts->head_msg;
 	const char *reflog_orig_head = opts->orig_head_msg;
 	const char *default_reflog_action = opts->default_reflog_action;
@@ -58,8 +59,9 @@ static int update_refs(const struct reset_head_opts *opts,
 				 detach_head ? REF_NO_DEREF : 0,
 				 UPDATE_REFS_MSG_ON_ERR);
 	else {
-		ret = update_ref(reflog_head, switch_to_branch, oid,
-				 NULL, 0, UPDATE_REFS_MSG_ON_ERR);
+		ret = update_ref(reflog_branch ? reflog_branch : reflog_head,
+				 switch_to_branch, oid, NULL, 0,
+				 UPDATE_REFS_MSG_ON_ERR);
 		if (!ret)
 			ret = create_symref("HEAD", switch_to_branch,
 					    reflog_head);
@@ -89,6 +91,12 @@ int reset_head(struct repository *r, const struct reset_head_opts *opts)
 
 	if (switch_to_branch && !starts_with(switch_to_branch, "refs/"))
 		BUG("Not a fully qualified branch: '%s'", switch_to_branch);
+
+	if (opts->orig_head_msg && !update_orig_head)
+		BUG("ORIG_HEAD reflog message given without updating ORIG_HEAD");
+
+	if (opts->branch_msg && !opts->branch)
+		BUG("branch reflog message given without a branch");
 
 	if (!refs_only && repo_hold_locked_index(r, &lock, LOCK_REPORT_ON_ERROR) < 0) {
 		ret = -1;
