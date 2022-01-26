@@ -49,23 +49,33 @@ test_expect_success 'post-checkout receives the right args when not switching br
 	test $old = $new && test $flag = 0
 '
 
-test_expect_success 'post-checkout is triggered on rebase' '
-	test_when_finished "rm -f .git/post-checkout.args" &&
-	git checkout -b rebase-test main &&
-	rm -f .git/post-checkout.args &&
-	git rebase rebase-on-me &&
-	read old new flag <.git/post-checkout.args &&
-	test $old != $new && test $flag = 1
-'
+test_rebase () {
+	args="$*" &&
+	test_expect_success "post-checkout is triggered on rebase $args" '
+		test_when_finished "rm -f .git/post-checkout.args" &&
+		git checkout -B rebase-test main &&
+		rm -f .git/post-checkout.args &&
+		git rebase $args rebase-on-me &&
+		read old new flag <.git/post-checkout.args &&
+		test_cmp_rev main $old &&
+		test_cmp_rev rebase-on-me $new &&
+		test $flag = 1
+	'
 
-test_expect_success 'post-checkout is triggered on rebase with fast-forward' '
-	test_when_finished "rm -f .git/post-checkout.args" &&
-	git checkout -b ff-rebase-test rebase-on-me^ &&
-	rm -f .git/post-checkout.args &&
-	git rebase rebase-on-me &&
-	read old new flag <.git/post-checkout.args &&
-	test $old != $new && test $flag = 1
-'
+	test_expect_success "post-checkout is triggered on rebase $args with fast-forward" '
+		test_when_finished "rm -f .git/post-checkout.args" &&
+		git checkout -B ff-rebase-test rebase-on-me^ &&
+		rm -f .git/post-checkout.args &&
+		git rebase $args rebase-on-me &&
+		read old new flag <.git/post-checkout.args &&
+		test_cmp_rev rebase-on-me^ $old &&
+		test_cmp_rev rebase-on-me $new &&
+		test $flag = 1
+	'
+}
+
+test_rebase --apply &&
+test_rebase --merge
 
 test_expect_success 'post-checkout hook is triggered by clone' '
 	mkdir -p templates/hooks &&
