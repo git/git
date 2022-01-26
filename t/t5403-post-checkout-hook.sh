@@ -88,12 +88,16 @@ test_rebase () {
 
 	test_expect_success "rebase $args checkout does not remove untracked files" '
 		test_when_finished "test_might_fail git rebase --abort" &&
+		test_when_finished "rm -f .git/post-checkout.args" &&
 		git update-ref refs/heads/rebase-fast-forward three &&
 		git checkout two &&
+		rm -f .git/post-checkout.args &&
 		echo untracked >three.t &&
 		test_when_finished "rm three.t" &&
 		test_must_fail git rebase $args HEAD rebase-fast-forward 2>err &&
-		grep "untracked working tree files would be overwritten by checkout" err
+		grep "untracked working tree files would be overwritten by checkout" err &&
+		test_path_is_missing .git/post-checkout.args
+
 '
 }
 

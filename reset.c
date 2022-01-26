@@ -126,7 +126,7 @@ reset_head_refs:
 			ret = create_symref("HEAD", switch_to_branch,
 					    reflog_head);
 	}
-	if (run_hook)
+	if (!ret && run_hook)
 		run_hook_le(NULL, "post-checkout",
 			    oid_to_hex(head ? head : null_oid()),
 			    oid_to_hex(oid), "1", NULL);
