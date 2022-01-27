@@ -354,6 +354,7 @@ static int init_object_disambiguation(struct repository *r,
 struct ambiguous_output {
 	const struct disambiguate_state *ds;
 	struct strbuf advice;
+	struct strbuf sb;
 };
 
 static int show_ambiguous_object(const struct object_id *oid, void *data)
@@ -361,7 +362,7 @@ static int show_ambiguous_object(const struct object_id *oid, void *data)
 	struct ambiguous_output *state = data;
 	const struct disambiguate_state *ds = state->ds;
 	struct strbuf *advice = &state->advice;
-	struct strbuf desc = STRBUF_INIT;
+	struct strbuf *sb = &state->sb;
 	int type;
 	const char *hash;
 
@@ -377,7 +378,7 @@ static int show_ambiguous_object(const struct object_id *oid, void *data)
 		 * output shown when we cannot look up or parse the
 		 * object in question. E.g. "deadbeef [bad object]".
 		 */
-		strbuf_addf(&desc, _("%s [bad object]"), hash);
+		strbuf_addf(sb, _("%s [bad object]"), hash);
 		goto out;
 	}
 
@@ -402,8 +403,8 @@ static int show_ambiguous_object(const struct object_id *oid, void *data)
 		 *
 		 *    "deadbeef commit 2021-01-01 - Some Commit Message"
 		 */
-		strbuf_addf(&desc, _("%s commit %s - %s"),
-			    hash, date.buf, msg.buf);
+		strbuf_addf(sb, _("%s commit %s - %s"), hash, date.buf,
+			    msg.buf);
 
 		strbuf_release(&date);
 		strbuf_release(&msg);
@@ -423,7 +424,7 @@ static int show_ambiguous_object(const struct object_id *oid, void *data)
 			 * The third argument is the "tag" string
 			 * from object.c.
 			 */
-			strbuf_addf(&desc, _("%s tag %s - %s"), hash,
+			strbuf_addf(sb, _("%s tag %s - %s"), hash,
 				    show_date(tag->date, 0, DATE_MODE(SHORT)),
 				    tag->tag);
 		} else {
@@ -434,7 +435,7 @@ static int show_ambiguous_object(const struct object_id *oid, void *data)
 			 *
 			 *    "deadbeef [bad tag, could not parse it]"
 			 */
-			strbuf_addf(&desc, _("%s [bad tag, could not parse it]"),
+			strbuf_addf(sb, _("%s [bad tag, could not parse it]"),
 				    hash);
 		}
 	} else if (type == OBJ_TREE) {
@@ -442,13 +443,13 @@ static int show_ambiguous_object(const struct object_id *oid, void *data)
 		 * TRANSLATORS: This is a line of ambiguous <type>
 		 * object output. E.g. "deadbeef tree".
 		 */
-		strbuf_addf(&desc, _("%s tree"), hash);
+		strbuf_addf(sb, _("%s tree"), hash);
 	} else if (type == OBJ_BLOB) {
 		/*
 		 * TRANSLATORS: This is a line of ambiguous <type>
 		 * object output. E.g. "deadbeef blob".
 		 */
-		strbuf_addf(&desc, _("%s blob"), hash);
+		strbuf_addf(sb, _("%s blob"), hash);
 	}
 
 
@@ -459,9 +460,9 @@ out:
 	 * you'll probably want to swap the "%s" and leading " " space
 	 * around.
 	 */
-	strbuf_addf(advice, _("  %s\n"), desc.buf);
+	strbuf_addf(advice, _("  %s\n"), sb->buf);
 
-	strbuf_release(&desc);
+	strbuf_reset(sb);
 	return 0;
 }
 
@@ -560,6 +561,7 @@ static enum get_oid_result get_short_oid(struct repository *r,
 		struct oid_array collect = OID_ARRAY_INIT;
 		struct ambiguous_output out = {
 			.ds = &ds,
+			.sb = STRBUF_INIT,
 			.advice = STRBUF_INIT,
 		};
 
@@ -589,6 +591,7 @@ static enum get_oid_result get_short_oid(struct repository *r,
 
 		oid_array_clear(&collect);
 		strbuf_release(&out.advice);
+		strbuf_release(&out.sb);
 	}
 
 	return status;
