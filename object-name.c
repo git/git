@@ -382,6 +382,8 @@ static int show_ambiguous_object(const struct object_id *oid, void *data)
 		struct tag *tag = lookup_tag(ds->repo, oid);
 		if (!parse_tag(tag) && tag->tag)
 			strbuf_addf(&desc, " %s", tag->tag);
+		else
+			strbuf_addstr(&desc, " [tag could not be parsed]");
 	}
 
 out:
