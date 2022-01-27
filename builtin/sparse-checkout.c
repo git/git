@@ -471,6 +471,9 @@ static int sparse_checkout_init(int argc, const char **argv)
 		FILE *fp;
 
 		/* assume we are in a fresh repo, but update the sparse-checkout file */
+		if (safe_create_leading_directories(sparse_filename))
+			die(_("unable to create leading directories of %s"),
+			    sparse_filename);
 		fp = xfopen(sparse_filename, "w");
 		if (!fp)
 			die(_("failed to open '%s'"), sparse_filename);
