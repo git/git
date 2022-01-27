@@ -408,19 +408,24 @@ static int show_ambiguous_object(const struct object_id *oid, void *data)
 			 * TRANSLATORS: This is a line of ambiguous
 			 * tag object output. E.g.:
 			 *
-			 *    "deadbeef tag Some Tag Message"
+			 *    "deadbeef tag 2022-01-01 - Some Tag Message"
 			 *
-			 * The second argument is the "tag" string
+			 * The second argument is the YYYY-MM-DD found
+			 * in the tag.
+			 *
+			 * The third argument is the "tag" string
 			 * from object.c.
 			 */
-			strbuf_addf(&desc, _("%s tag %s"), hash, tag->tag);
+			strbuf_addf(&desc, _("%s tag %s - %s"), hash,
+				    show_date(tag->date, 0, DATE_MODE(SHORT)),
+				    tag->tag);
 		} else {
 			/*
 			 * TRANSLATORS: This is a line of ambiguous
 			 * tag object output where we couldn't parse
 			 * the tag itself. E.g.:
 			 *
-			 *    "deadbeef tag [bad tag, could not parse it]"
+			 *    "deadbeef [bad tag, could not parse it]"
 			 */
 			strbuf_addf(&desc, _("%s [bad tag, could not parse it]"),
 				    hash);
