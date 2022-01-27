@@ -99,7 +99,7 @@ test_expect_success POSIXPERM 'ambigous zlib corrupt loose blob' '
 	error: unable to unpack cafe... header
 	error: inflate: data stream error (incorrect header check)
 	error: unable to unpack cafe... header
-	hint:   cafe... unknown type
+	hint:   cafe... [bad object]
 	hint:   cafe... blob
 	fatal: ambiguous argument '\''cafe...'\'': unknown revision or path not in the working tree.
 	Use '\''--'\'' to separate paths from revisions, like this:
