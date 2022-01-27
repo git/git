@@ -142,6 +142,13 @@ The body should provide a meaningful commit message, which:
 
 . alternate solutions considered but discarded, if any.
 
+[[present-tense]]
+The problem statement that describes the status quo is written in the
+present tense.  Write "The code does X when it is given input Y",
+instead of "The code used to do Y when given input X".  You do not
+have to say "Currently"---the status quo in the problem statement is
+about the code _without_ your change, by project convention.
+
 [[imperative-mood]]
 Describe your changes in imperative mood, e.g. "make xyzzy do frotz"
 instead of "[This patch] makes xyzzy do frotz" or "[I] changed xyzzy
