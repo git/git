@@ -48,12 +48,6 @@ static int parse_pattern_type_arg(const char *opt, const char *arg)
 
 define_list_config_array_extra(color_grep_slots, {"match"});
 
-static void adjust_pattern_type(enum grep_pattern_type *pto, const int ero)
-{
-	if (*pto == GREP_PATTERN_TYPE_UNSPECIFIED)
-		*pto = ero ? GREP_PATTERN_TYPE_ERE : GREP_PATTERN_TYPE_BRE;
-}
-
 /*
  * Read the configuration file once and store it in
  * the grep_defaults template.
@@ -68,17 +62,11 @@ int grep_config(const char *var, const char *value, void *cb)
 
 	if (!strcmp(var, "grep.extendedregexp")) {
 		opt->extended_regexp_option = git_config_bool(var, value);
-		adjust_pattern_type(&opt->pattern_type_option,
-				    opt->extended_regexp_option);
 		return 0;
 	}
 
 	if (!strcmp(var, "grep.patterntype")) {
 		opt->pattern_type_option = parse_pattern_type_arg(var, value);
-		if (opt->extended_regexp_option == -1)
-			return 0;
-		adjust_pattern_type(&opt->pattern_type_option,
-				    opt->extended_regexp_option);
 		return 0;
 	}
 
@@ -443,6 +431,11 @@ static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 {
 	int err;
 	int regflags = REG_NEWLINE;
+
+	if (opt->pattern_type_option == GREP_PATTERN_TYPE_UNSPECIFIED)
+		opt->pattern_type_option = (opt->extended_regexp_option
+					    ? GREP_PATTERN_TYPE_ERE
+					    : GREP_PATTERN_TYPE_BRE);
 
 	p->word_regexp = opt->word_regexp;
 	p->ignore_case = opt->ignore_case;
