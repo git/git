@@ -110,6 +110,35 @@ run `git diff --check` on your changes before you commit.
 [[describe-changes]]
 === Describe your changes well.
 
+The log message that explains your changes is just as important as the
+changes themselves.  Your code may be clearly written with in-code
+comment to sufficiently explain how it works with the surrounding
+code, but those who need to fix or enhance your code in the future
+will need to know _why_ your code does what it does, for a few
+reasons:
+
+. Your code may be doing something differently from what you wanted it
+  to do.  Writing down what you actually wanted to achieve will help
+  them fix your code and make it do what it should have been doing
+  (also, you often discover your own bugs yourself, while writing the
+  log message to summarize the thought behind it).
+
+. Your code may be doing things that were only necessary for your
+  immediate needs (e.g. "do X to directories" without implementing or
+  even designing what is to be done on files).  Writing down why you
+  excluded what the code does not do will help guide future developers.
+  Writing down "we do X to directories, because directories have
+  characteristic Y" would help them infer "oh, files also have the same
+  characteristic Y, so perhaps doing X to them would also make sense?".
+  Saying "we don't do the same X to files, because ..." will help them
+  decide if the reasoning is sound (in which case they do not waste
+  time extending your code to cover files), or reason differently (in
+  which case, they can explain why they extend your code to cover
+  files, too).
+
+The goal of your log message is to convey the _why_ behind your
+change to help future developers.
+
 The first line of the commit message should be a short description (50
 characters is the soft limit, see DISCUSSION in linkgit:git-commit[1]),
 and should skip the full stop.  It is also conventional in most cases to
