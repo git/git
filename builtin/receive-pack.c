@@ -1972,6 +1972,22 @@ static void execute_commands(struct command *commands,
 	}
 
 	/*
+	 * Send a keepalive packet on sideband 2 (progress info) to notice
+	 * a client that has disconnected (e.g. killed with ^C) while
+	 * pre-receive was running.
+	 */
+	if (use_sideband) {
+		static const char buf[] = "0005\2";
+		if (write_in_full(1, buf, sizeof(buf) - 1) < 0) {
+			for (cmd = commands; cmd; cmd = cmd->next) {
+				if (!cmd->error_string)
+					cmd->error_string = "pusher went away";
+			}
+			return;
+		}
+	}
+
+	/*
 	 * Now we'll start writing out refs, which means the objects need
 	 * to be in their final positions so that other processes can see them.
 	 */
