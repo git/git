@@ -283,7 +283,7 @@ struct diff_options {
 	struct diff_flags flags;
 
 	/* diff-filter bits */
-	unsigned int filter;
+	unsigned int filter, filter_not;
 
 	int use_color;
 

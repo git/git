@@ -4720,6 +4720,12 @@ void diff_setup_done(struct diff_options *options)
 	if (!options->use_color || external_diff())
 		options->color_moved = 0;
 
+	if (options->filter_not) {
+		if (!options->filter)
+			options->filter = ~filter_bit[DIFF_STATUS_FILTER_AON];
+		options->filter &= ~options->filter_not;
+	}
+
 	FREE_AND_NULL(options->parseopts);
 }
 
@@ -4820,21 +4826,6 @@ static int diff_opt_diff_filter(const struct option *option,
 	BUG_ON_OPT_NEG(unset);
 	prepare_filter_bits();
 
-	/*
-	 * If there is a negation e.g. 'd' in the input, and we haven't
-	 * initialized the filter field with another --diff-filter, start
-	 * from full set of bits, except for AON.
-	 */
-	if (!opt->filter) {
-		for (i = 0; (optch = optarg[i]) != '\0'; i++) {
-			if (optch < 'a' || 'z' < optch)
-				continue;
-			opt->filter = (1 << (ARRAY_SIZE(diff_status_letters) - 1)) - 1;
-			opt->filter &= ~filter_bit[DIFF_STATUS_FILTER_AON];
-			break;
-		}
-	}
-
 	for (i = 0; (optch = optarg[i]) != '\0'; i++) {
 		unsigned int bit;
 		int negate;
@@ -4851,7 +4842,7 @@ static int diff_opt_diff_filter(const struct option *option,
 			return error(_("unknown change class '%c' in --diff-filter=%s"),
 				     optarg[i], optarg);
 		if (negate)
-			opt->filter &= ~bit;
+			opt->filter_not |= bit;
 		else
 			opt->filter |= bit;
 	}
