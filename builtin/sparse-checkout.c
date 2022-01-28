@@ -182,6 +182,8 @@ static void clean_tracked_sparse_directories(struct repository *r)
 				item->string);
 		}
 
+		strvec_clear(&s);
+		clear_pathspec(&p);
 		dir_clear(&dir);
 	}
 
