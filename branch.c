@@ -423,7 +423,7 @@ static void dwim_branch_start(struct repository *r, const char *start_name,
 void create_branch(struct repository *r,
 		   const char *name, const char *start_name,
 		   int force, int clobber_head_ok, int reflog,
-		   int quiet, enum branch_track track)
+		   int quiet, enum branch_track track, int dry_run)
 {
 	struct object_id oid;
 	char *real_ref;
@@ -445,6 +445,8 @@ void create_branch(struct repository *r,
 	}
 
 	dwim_branch_start(r, start_name, track, &real_ref, &oid);
+	if (dry_run)
+		goto cleanup;
 
 	if (reflog)
 		log_all_ref_updates = LOG_REFS_NORMAL;
@@ -467,6 +469,7 @@ void create_branch(struct repository *r,
 	if (real_ref && track)
 		setup_tracking(ref.buf + 11, real_ref, track, quiet);
 
+cleanup:
 	strbuf_release(&ref);
 	free(real_ref);
 }
