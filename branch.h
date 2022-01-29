@@ -72,6 +72,35 @@ void create_branch(struct repository *r,
 		   int dry_run);
 
 /*
+ * Creates a new branch in a repository and its submodules (and its
+ * submodules, recursively). The parameters are mostly analogous to
+ * those of create_branch() except for start_name, which is represented
+ * by two different parameters:
+ *
+ * - start_commitish is the commit-ish, in repository r, that determines
+ *   which commits the branches will point to. The superproject branch
+ *   will point to the commit of start_commitish and the submodule
+ *   branches will point to the gitlink commit oids in start_commitish's
+ *   tree.
+ *
+ * - tracking_name is the name of the ref, in repository r, that will be
+ *   used to set up tracking information. This value is propagated to
+ *   all submodules, which will evaluate the ref using their own ref
+ *   stores. If NULL, this defaults to start_commitish.
+ *
+ * When this function is called on the superproject, start_commitish
+ * can be any user-provided ref and tracking_name can be NULL (similar
+ * to create_branches()). But when recursing through submodules,
+ * start_commitish is the plain gitlink commit oid. Since the oid cannot
+ * be used for tracking information, tracking_name is propagated and
+ * used for tracking instead.
+ */
+void create_branches_recursively(struct repository *r, const char *name,
+				 const char *start_commitish,
+				 const char *tracking_name, int force,
+				 int reflog, int quiet, enum branch_track track,
+				 int dry_run);
+/*
  * Check if 'name' can be a valid name for a branch; die otherwise.
  * Return 1 if the named branch already exists; return 0 otherwise.
  * Fill ref with the full refname for the branch.
