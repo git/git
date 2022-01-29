@@ -1,0 +1,34 @@
+Git 2.36 Release Notes
+======================
+
+Updates since Git 2.35
+----------------------
+
+Backward compatibility warts
+
+ *
+
+
+Note to those who build from the source
+
+ *
+
+
+UI, Workflows & Features
+
+ *
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ *
+
+
+Fixes since v2.35
+-----------------
+
+ * "rebase" and "stash" in secondary worktrees are broken in
+   Git 2.35.0, which has been corrected.
+   (merge ff5b7913f0 en/keep-cwd later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
