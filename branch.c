@@ -8,6 +8,8 @@
 #include "sequencer.h"
 #include "commit.h"
 #include "worktree.h"
+#include "submodule-config.h"
+#include "run-command.h"
 
 struct tracking {
 	struct refspec_item spec;
@@ -481,6 +483,145 @@ void dwim_and_setup_tracking(struct repository *r, const char *new_ref,
 	char *real_orig_ref;
 	dwim_branch_start(r, orig_ref, track, &real_orig_ref, NULL);
 	setup_tracking(new_ref, real_orig_ref, track, quiet);
+}
+
+/**
+ * Creates a branch in a submodule by calling
+ * create_branches_recursively() in a child process. The child process
+ * is necessary because install_branch_config_multiple_remotes() (which
+ * is called by setup_tracking()) does not support writing configs to
+ * submodules.
+ */
+static int submodule_create_branch(struct repository *r,
+				   const struct submodule *submodule,
+				   const char *name, const char *start_oid,
+				   const char *tracking_name, int force,
+				   int reflog, int quiet,
+				   enum branch_track track, int dry_run)
+{
+	int ret = 0;
+	struct child_process child = CHILD_PROCESS_INIT;
+	struct strbuf child_err = STRBUF_INIT;
+	struct strbuf out_buf = STRBUF_INIT;
+	char *out_prefix = xstrfmt("submodule '%s': ", submodule->name);
+	child.git_cmd = 1;
+	child.err = -1;
+	child.stdout_to_stderr = 1;
+
+	prepare_other_repo_env(&child.env_array, r->gitdir);
+	/*
+	 * submodule_create_branch() is indirectly invoked by "git
+	 * branch", but we cannot invoke "git branch" in the child
+	 * process. "git branch" accepts a branch name and start point,
+	 * where the start point is assumed to provide both the OID
+	 * (start_oid) and the branch to use for tracking
+	 * (tracking_name). But when recursing through submodules,
+	 * start_oid and tracking name need to be specified separately
+	 * (see create_branches_recursively()).
+	 */
+	strvec_pushl(&child.args, "submodule--helper", "create-branch", NULL);
+	if (dry_run)
+		strvec_push(&child.args, "--dry-run");
+	if (force)
+		strvec_push(&child.args, "--force");
+	if (quiet)
+		strvec_push(&child.args, "--quiet");
+	if (reflog)
+		strvec_push(&child.args, "--create-reflog");
+	if (track == BRANCH_TRACK_ALWAYS || track == BRANCH_TRACK_EXPLICIT)
+		strvec_push(&child.args, "--track");
+
+	strvec_pushl(&child.args, name, start_oid, tracking_name, NULL);
+
+	if ((ret = start_command(&child)))
+		return ret;
+	ret = finish_command(&child);
+	strbuf_read(&child_err, child.err, 0);
+	strbuf_add_lines(&out_buf, out_prefix, child_err.buf, child_err.len);
+
+	if (ret)
+		fprintf(stderr, "%s", out_buf.buf);
+	else
+		printf("%s", out_buf.buf);
+
+	strbuf_release(&child_err);
+	strbuf_release(&out_buf);
+	return ret;
+}
+
+void create_branches_recursively(struct repository *r, const char *name,
+				 const char *start_commitish,
+				 const char *tracking_name, int force,
+				 int reflog, int quiet, enum branch_track track,
+				 int dry_run)
+{
+	int i = 0;
+	char *branch_point = NULL;
+	struct object_id super_oid;
+	struct submodule_entry_list submodule_entry_list;
+
+	/* Perform dwim on start_commitish to get super_oid and branch_point. */
+	dwim_branch_start(r, start_commitish, BRANCH_TRACK_NEVER,
+			  &branch_point, &super_oid);
+
+	/*
+	 * If we were not given an explicit name to track, then assume we are at
+	 * the top level and, just like the non-recursive case, the tracking
+	 * name is the branch point.
+	 */
+	if (!tracking_name)
+		tracking_name = branch_point;
+
+	submodules_of_tree(r, &super_oid, &submodule_entry_list);
+	/*
+	 * Before creating any branches, first check that the branch can
+	 * be created in every submodule.
+	 */
+	for (i = 0; i < submodule_entry_list.entry_nr; i++) {
+		if (submodule_entry_list.entries[i].repo == NULL) {
+			if (advice_enabled(ADVICE_SUBMODULES_NOT_UPDATED))
+				advise(_("You may try updating the submodules using 'git checkout %s && git submodule update --init'"),
+				       start_commitish);
+			die(_("submodule '%s': unable to find submodule"),
+			    submodule_entry_list.entries[i].submodule->name);
+		}
+
+		if (submodule_create_branch(
+			    submodule_entry_list.entries[i].repo,
+			    submodule_entry_list.entries[i].submodule, name,
+			    oid_to_hex(&submodule_entry_list.entries[i]
+						.name_entry->oid),
+			    tracking_name, force, reflog, quiet, track, 1))
+			die(_("submodule '%s': cannot create branch '%s'"),
+			    submodule_entry_list.entries[i].submodule->name,
+			    name);
+	}
+
+	create_branch(the_repository, name, start_commitish, force, 0, reflog, quiet,
+		      BRANCH_TRACK_NEVER, dry_run);
+	if (dry_run)
+		return;
+	/*
+	 * NEEDSWORK If tracking was set up in the superproject but not the
+	 * submodule, users might expect "git branch --recurse-submodules" to
+	 * fail or give a warning, but this is not yet implemented because it is
+	 * tedious to determine whether or not tracking was set up in the
+	 * superproject.
+	 */
+	setup_tracking(name, tracking_name, track, quiet);
+
+	for (i = 0; i < submodule_entry_list.entry_nr; i++) {
+		if (submodule_create_branch(
+			    submodule_entry_list.entries[i].repo,
+			    submodule_entry_list.entries[i].submodule, name,
+			    oid_to_hex(&submodule_entry_list.entries[i]
+						.name_entry->oid),
+			    tracking_name, force, reflog, quiet, track, 0))
+			die(_("submodule '%s': cannot create branch '%s'"),
+			    submodule_entry_list.entries[i].submodule->name,
+			    name);
+		repo_clear(submodule_entry_list.entries[i].repo);
+	}
 }
 
 void remove_merge_branch_state(struct repository *r)
