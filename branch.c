@@ -239,7 +239,7 @@ static void setup_tracking(const char *new_ref, const char *orig_ref,
 	if (track != BRANCH_TRACK_INHERIT)
 		for_each_remote(find_tracked_branch, &tracking);
 	else if (inherit_tracking(&tracking, orig_ref))
-		return;
+		goto cleanup;
 
 	if (!tracking.matches)
 		switch (track) {
@@ -249,7 +249,7 @@ static void setup_tracking(const char *new_ref, const char *orig_ref,
 		case BRANCH_TRACK_INHERIT:
 			break;
 		default:
-			return;
+			goto cleanup;
 		}
 
 	if (tracking.matches > 1)
@@ -262,7 +262,8 @@ static void setup_tracking(const char *new_ref, const char *orig_ref,
 				tracking.remote, tracking.srcs) < 0)
 		exit(-1);
 
-	string_list_clear(tracking.srcs, 0);
+cleanup:
+	string_list_clear(&tracking_srcs, 0);
 }
 
 int read_branch_desc(struct strbuf *buf, const char *branch_name)
