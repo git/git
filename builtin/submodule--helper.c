@@ -2883,7 +2883,7 @@ static int module_config(int argc, const char **argv, const char *prefix)
 	const char *const git_submodule_helper_usage[] = {
 		N_("git submodule--helper config <name> [<value>]"),
 		N_("git submodule--helper config --unset <name>"),
-		N_("git submodule--helper config --check-writeable"),
+		"git submodule--helper config --check-writeable",
 		NULL
 	};
 
