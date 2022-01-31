@@ -1609,12 +1609,14 @@ static int do_fetch(struct transport *transport,
 		 * don't care whether --tags was specified.
 		 */
 		if (rs->nr) {
-			prune_refs(rs, ref_map, transport->url);
+			retcode = prune_refs(rs, ref_map, transport->url);
 		} else {
-			prune_refs(&transport->remote->fetch,
-				   ref_map,
-				   transport->url);
+			retcode = prune_refs(&transport->remote->fetch,
+					     ref_map,
+					     transport->url);
 		}
+		if (retcode != 0)
+			retcode = 1;
 	}
 	if (fetch_and_consume_refs(transport, ref_map, worktrees)) {
 		free_refs(ref_map);
