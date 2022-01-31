@@ -3504,7 +3504,7 @@ static int option_parse_missing_action(const struct option *opt,
 		return 0;
 	}
 
-	die(_("invalid value for --missing"));
+	die(_("invalid value for '%s': '%s'"), "--missing", arg);
 	return 0;
 }
 
