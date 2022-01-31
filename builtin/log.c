@@ -1978,8 +1978,9 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	if (rev.show_notes)
 		load_display_notes(&rev.notes_opt);
 
-	if (use_stdout + rev.diffopt.close_file + !!output_directory > 1)
-		die(_("options '%s', '%s', and '%s' cannot be used together"), "--stdout", "--output", "--output-directory");
+	die_for_incompatible_opt3(use_stdout, "--stdout",
+				  rev.diffopt.close_file, "--output",
+				  !!output_directory, "--output-directory");
 
 	if (use_stdout) {
 		setup_pager();
