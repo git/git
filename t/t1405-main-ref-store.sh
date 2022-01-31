@@ -111,7 +111,7 @@ test_expect_success 'delete_reflog(HEAD)' '
 	test_must_fail git reflog exists HEAD
 '
 
-test_expect_success 'create-reflog(HEAD)' '
+test_expect_success REFFILES 'create-reflog(HEAD)' '
 	$RUN create-reflog HEAD &&
 	git reflog exists HEAD
 '
