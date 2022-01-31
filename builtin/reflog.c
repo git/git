@@ -17,10 +17,10 @@ static const char reflog_expire_usage[] =
 N_("git reflog expire [--expire=<time>] "
    "[--expire-unreachable=<time>] "
    "[--rewrite] [--updateref] [--stale-fix] [--dry-run | -n] "
-   "[--verbose] [--all] <refs>...");
+   "[--verbose] [--all] <ref>...");
 static const char reflog_delete_usage[] =
 N_("git reflog delete [--rewrite] [--updateref] "
-   "[--dry-run | -n] [--verbose] <refs>...");
+   "[--dry-run | -n] [--verbose] <ref>...");
 static const char reflog_exists_usage[] =
 N_("git reflog exists <ref>");
 
