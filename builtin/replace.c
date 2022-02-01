@@ -409,7 +409,7 @@ static int check_one_mergetag(struct commit *commit,
 	int i;
 
 	hash_object_file(the_hash_algo, extra->value, extra->len,
-			 type_name(OBJ_TAG), &tag_oid);
+			 OBJ_TAG, &tag_oid);
 	tag = lookup_tag(the_repository, &tag_oid);
 	if (!tag)
 		return error(_("bad mergetag in commit '%s'"), ref);
