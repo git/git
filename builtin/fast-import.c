@@ -937,8 +937,8 @@ static int store_object(
 	git_hash_ctx c;
 	git_zstream s;
 
-	hdrlen = xsnprintf((char *)hdr, sizeof(hdr), "%s %lu",
-			   type_name(type), (unsigned long)dat->len) + 1;
+	hdrlen = format_object_header((char *)hdr, sizeof(hdr), type,
+				      dat->len);
 	the_hash_algo->init_fn(&c);
 	the_hash_algo->update_fn(&c, hdr, hdrlen);
 	the_hash_algo->update_fn(&c, dat->buf, dat->len);
@@ -1091,7 +1091,7 @@ static void stream_blob(uintmax_t len, struct object_id *oidout, uintmax_t mark)
 	hashfile_checkpoint(pack_file, &checkpoint);
 	offset = checkpoint.offset;
 
-	hdrlen = xsnprintf((char *)out_buf, out_sz, "blob %" PRIuMAX, len) + 1;
+	hdrlen = format_object_header((char *)out_buf, out_sz, OBJ_BLOB, len);
 
 	the_hash_algo->init_fn(&c);
 	the_hash_algo->update_fn(&c, out_buf, hdrlen);
