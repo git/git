@@ -79,7 +79,7 @@ create_expected_failure_merge () {
 
 testrebase () {
 	type=$1
-	dotest=$2
+	test_type=$2
 
 	test_expect_success "rebase$type: dirty worktree, --no-autostash" '
 		test_config rebase.autostash true &&
@@ -133,9 +133,10 @@ testrebase () {
 		test_when_finished git branch -D rebased-feature-branch &&
 		echo dirty >>file3 &&
 		test_must_fail git rebase$type related-onto-branch &&
-		test_path_is_file $dotest/autostash &&
+		git rev-parse $test_type/autostash &&
 		test_path_is_missing file3 &&
-		rm -rf $dotest &&
+		test-tool ref-store main delete-refs REF_SKIP_REFNAME_VERIFICATION msg $test_type/autostash &&
+		rm -rf .git/$test_type &&
 		git reset --hard &&
 		git checkout feature-branch
 	'
@@ -147,12 +148,12 @@ testrebase () {
 		test_when_finished git branch -D rebased-feature-branch &&
 		echo dirty >>file3 &&
 		test_must_fail git rebase$type related-onto-branch &&
-		test_path_is_file $dotest/autostash &&
+		git rev-parse $test_type/autostash &&
 		test_path_is_missing file3 &&
 		echo "conflicting-plus-goodbye" >file2 &&
 		git add file2 &&
 		git rebase --continue &&
-		test_path_is_missing $dotest/autostash &&
+		test_must_fail git rev-parse $test_type/autostash &&
 		grep dirty file3 &&
 		git checkout feature-branch
 	'
@@ -164,10 +165,10 @@ testrebase () {
 		test_when_finished git branch -D rebased-feature-branch &&
 		echo dirty >>file3 &&
 		test_must_fail git rebase$type related-onto-branch &&
-		test_path_is_file $dotest/autostash &&
+		git rev-parse $test_type/autostash &&
 		test_path_is_missing file3 &&
 		git rebase --skip &&
-		test_path_is_missing $dotest/autostash &&
+		test_must_fail git rev-parse $test_type/autostash &&
 		grep dirty file3 &&
 		git checkout feature-branch
 	'
@@ -179,10 +180,10 @@ testrebase () {
 		test_when_finished git branch -D rebased-feature-branch &&
 		echo dirty >>file3 &&
 		test_must_fail git rebase$type related-onto-branch &&
-		test_path_is_file $dotest/autostash &&
+		git rev-parse $test_type/autostash &&
 		test_path_is_missing file3 &&
 		git rebase --abort &&
-		test_path_is_missing $dotest/autostash &&
+		test_must_fail git rev-parse $test_type/autostash &&
 		grep dirty file3 &&
 		git checkout feature-branch
 	'
@@ -195,11 +196,11 @@ testrebase () {
 		echo dirty >>file3 &&
 		git diff >expect &&
 		test_must_fail git rebase$type related-onto-branch &&
-		test_path_is_file $dotest/autostash &&
+		git rev-parse $test_type/autostash &&
 		test_path_is_missing file3 &&
 		git rebase --quit &&
 		test_when_finished git stash drop &&
-		test_path_is_missing $dotest/autostash &&
+		test_must_fail git rev-parse $test_type/autostash &&
 		! grep dirty file3 &&
 		git stash show -p >actual &&
 		test_cmp expect actual &&
@@ -214,7 +215,7 @@ testrebase () {
 		echo dirty >file4 &&
 		git add file4 &&
 		git rebase$type unrelated-onto-branch >actual 2>&1 &&
-		test_path_is_missing $dotest &&
+		test_must_fail git rev-parse $test_type/autostash &&
 		git reset --hard &&
 		grep unrelated file4 &&
 		! grep dirty file4 &&
@@ -257,9 +258,9 @@ test_expect_success "rebase: noop rebase" '
 	git checkout feature-branch
 '
 
-testrebase " --apply" .git/rebase-apply
-testrebase " --merge" .git/rebase-merge
-testrebase " --interactive" .git/rebase-merge
+testrebase " --apply" rebase-apply
+testrebase " --merge" rebase-merge
+testrebase " --interactive" rebase-merge
 
 test_expect_success 'abort rebase -i with --autostash' '
 	test_when_finished "git reset --hard" &&
