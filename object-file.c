@@ -1862,6 +1862,19 @@ void hash_object_file(const struct git_hash_algo *algo, const void *buf,
 	write_object_file_prepare(algo, buf, len, type, oid, hdr, &hdrlen);
 }
 
+int hash_object_file_oideq(const struct git_hash_algo *algo, const void *buf,
+			   unsigned long len, enum object_type type,
+			   const struct object_id *oid,
+			   struct object_id *real_oidp)
+{
+	struct object_id tmp;
+	struct object_id *real_oid = real_oidp ? real_oidp : &tmp;
+
+	hash_object_file(algo, buf, len, type_name(type), real_oid);
+
+	return oideq(oid, real_oid);
+}
+
 /* Finalize a file on disk, and close it. */
 static void close_loose_object(int fd)
 {

@@ -289,8 +289,8 @@ struct object *parse_object(struct repository *r, const struct object_id *oid)
 
 	buffer = repo_read_object_file(r, oid, &type, &size);
 	if (buffer) {
-		if (check_object_signature(r, repl, buffer, size,
-					   type_name(type), NULL) < 0) {
+		if (!hash_object_file_oideq(r->hash_algo, buffer, size,
+					    type, repl, NULL)) {
 			free(buffer);
 			error(_("hash mismatch %s"), oid_to_hex(repl));
 			return NULL;

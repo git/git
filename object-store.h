@@ -249,6 +249,20 @@ void hash_object_file(const struct git_hash_algo *algo, const void *buf,
 		      unsigned long len, const char *type,
 		      struct object_id *oid);
 
+/**
+ * hash_object_file_oideq() is like hash_object_file() except that
+ * asserts that "real_oid" is equivalent to an input "oid", and the
+ * return value is that of oideq(oid, real_oid).
+ *
+ * The "real_oid" can be NULL, when non-NULL the caller provides a
+ * "struct object_id *" that can be used to print what the real OID
+ * was.
+ */
+int hash_object_file_oideq(const struct git_hash_algo *algo, const void *buf,
+			   unsigned long len, enum object_type type,
+			   const struct object_id *oid,
+			   struct object_id *real_oidp);
+
 int write_object_file_flags(const void *buf, unsigned long len,
 			    enum object_type type, struct object_id *oid,
 			    unsigned flags);

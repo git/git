@@ -1412,9 +1412,8 @@ static void fix_unresolved_deltas(struct hashfile *f)
 		if (!data)
 			continue;
 
-		if (check_object_signature(the_repository, &d->oid,
-					   data, size,
-					   type_name(type), NULL))
+		if (!hash_object_file_oideq(the_repository->hash_algo, data,
+					    size, type, &d->oid, NULL))
 			die(_("local object %s is corrupt"), oid_to_hex(&d->oid));
 
 		/*
