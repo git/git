@@ -598,8 +598,10 @@ int fscache_lstat(const char *filename, struct stat *st)
 	fsentry_init(&key[0].u.ent, NULL, filename, dirlen);
 	fsentry_init(&key[1].u.ent, &key[0].u.ent, filename + base, len - base);
 	fse = fscache_get(cache, &key[1].u.ent);
-	if (!fse)
+	if (!fse) {
+		errno = ENOENT;
 		return -1;
+	}
 
 	/*
 	 * Special case symbolic links: FindFirstFile()/FindNextFile() did not
