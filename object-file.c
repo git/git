@@ -1862,6 +1862,13 @@ void hash_object_file(const struct git_hash_algo *algo, const void *buf,
 	write_object_file_prepare(algo, buf, len, type, oid, hdr, &hdrlen);
 }
 
+static void hash_object_file_literally(const struct git_hash_algo *algo, const void *buf,
+				       unsigned long len, const char *type,
+				       struct object_id *oid)
+{
+	hash_object_file(algo, buf, len, type, oid);
+}
+
 int hash_object_file_oideq(const struct git_hash_algo *algo, const void *buf,
 			   unsigned long len, enum object_type type,
 			   const struct object_id *oid,
@@ -2043,9 +2050,9 @@ int write_object_file_flags(const void *buf, unsigned long len,
 	return write_loose_object(oid, hdr, hdrlen, buf, len, 0, flags);
 }
 
-int hash_object_file_literally(const void *buf, unsigned long len,
-			       const char *type, struct object_id *oid,
-			       unsigned flags)
+int hash_write_object_file_literally(const void *buf, unsigned long len,
+				     const char *type, struct object_id *oid,
+				     unsigned flags)
 {
 	char *header;
 	int hdrlen, status = 0;
@@ -2630,9 +2637,10 @@ int read_loose_object(const char *path,
 			git_inflate_end(&stream);
 			goto out;
 		}
-		if (check_object_signature(the_repository, expected_oid,
+		hash_object_file_literally(the_repository->hash_algo,
 					   *contents, *size,
-					   oi->type_name->buf, real_oid))
+					   oi->type_name->buf, real_oid);
+		if (!oideq(expected_oid, real_oid))
 			goto out;
 	}
 
