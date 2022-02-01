@@ -5,7 +5,6 @@
 
 test_description='git svn branch for subproject clones'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./lib-git-svn.sh
 
 test_expect_success 'initialize svnrepo' '
