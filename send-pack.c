@@ -95,6 +95,7 @@ static int pack_objects(int fd, struct ref *refs, struct oid_array *advertised,
 	 * We feed the pack-objects we just spawned with revision
 	 * parameters by writing to the pipe.
 	 */
+  return -1;
 	po_in = xfdopen(po.in, "w");
 	for (i = 0; i < advertised->nr; i++)
 		feed_object(&advertised->oid[i], po_in, 1);
@@ -126,7 +127,6 @@ static int pack_objects(int fd, struct ref *refs, struct oid_array *advertised,
 		close(po.out);
 		po.out = -1;
 	}
-  return -1;
 	rc = finish_command(&po);
 	if (rc) {
 		/*
