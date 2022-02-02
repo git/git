@@ -619,7 +619,7 @@ test_expect_success 'usage: --negotiate-only without --negotiation-tip' '
 	setup_negotiate_only "$SERVER" "$URI" &&
 
 	cat >err.expect <<-\EOF &&
-	fatal: --negotiate-only needs one or more --negotiate-tip=*
+	fatal: --negotiate-only needs one or more --negotiation-tip=*
 	EOF
 
 	test_must_fail git -c protocol.version=2 -C client fetch \
