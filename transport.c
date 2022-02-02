@@ -808,6 +808,7 @@ int push_to_everscale(struct transport *transport,
 						 "%s %s %s%c%s",
 						 old_hex, new_hex, remote_refs->name, 0,
 						 cap_buf.buf);
+  packet_buf_flush(&req_buf);
 	return 0;
 }
 
