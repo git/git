@@ -1840,6 +1840,17 @@ static int clone_submodule(struct module_clone_data *clone_data)
 		git_config_set_in_file(p, "submodule.alternateErrorStrategy",
 				       error_strategy);
 
+	/*
+	 * Set the path from submodule's new gitdir to superproject's gitdir.
+	 * The latter may be a worktree gitdir. However, it is not possible for
+	 * the submodule to have a worktree-specific gitdir or config at clone
+	 * time, because "extensions.worktreeConfig" is only valid when set in
+	 * the local gitconfig, which the brand new submodule does not have yet.
+	 */
+	git_config_set_in_file(p, "submodule.superprojectGitDir",
+			       relative_path(absolute_path(get_git_dir()),
+					     sm_gitdir, &sb));
+
 	free(sm_alternate);
 	free(error_strategy);
 
