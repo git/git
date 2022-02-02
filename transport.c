@@ -1387,8 +1387,8 @@ int transport_push(struct repository *r,
 					verbose | porcelain, porcelain,
 					reject_reasons);
 
-		if (flags & TRANSPORT_PUSH_SET_UPSTREAM)
-			set_upstreams(transport, remote_refs, pretend);
+//		if (flags & TRANSPORT_PUSH_SET_UPSTREAM)
+//			set_upstreams(transport, remote_refs, pretend);
 
 		if (!(flags & (TRANSPORT_PUSH_DRY_RUN |
 			       TRANSPORT_RECURSE_SUBMODULES_ONLY))) {
