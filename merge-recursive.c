@@ -3738,7 +3738,8 @@ static void merge_finalize(struct merge_options *opt)
 		strbuf_release(&opt->obuf);
 	if (show(opt, 2))
 		diff_warn_rename_limit("merge.renamelimit",
-				       opt->priv->needed_rename_limit, 0);
+				       opt->priv->needed_rename_limit, 0,
+				       stderr);
 	FREE_AND_NULL(opt->priv);
 }
 

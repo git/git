@@ -520,6 +520,7 @@ int error(const char *err, ...) __attribute__((format (printf, 1, 2)));
 int error_errno(const char *err, ...) __attribute__((format (printf, 1, 2)));
 void warning(const char *err, ...) __attribute__((format (printf, 1, 2)));
 void warning_errno(const char *err, ...) __attribute__((format (printf, 1, 2)));
+void warning_fp(FILE *out, const char *warn, ...) __attribute__((format (printf, 2, 3)));
 
 #ifndef NO_OPENSSL
 #ifdef APPLE_COMMON_CRYPTO
