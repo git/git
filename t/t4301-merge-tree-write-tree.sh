@@ -95,6 +95,8 @@ test_expect_success 'test conflict notices and such' '
 	#   "whatever" has *both* a modify/delete and a file/directory conflict
 	cat <<-EOF >expect &&
 	HASH
+	greeting
+	whatever~side1
 
 	Auto-merging greeting
 	CONFLICT (content): Merge conflict in greeting
@@ -102,6 +104,15 @@ test_expect_success 'test conflict notices and such' '
 	CONFLICT (file/directory): directory in the way of whatever from side1; moving it to whatever~side1 instead.
 	CONFLICT (modify/delete): whatever~side1 deleted in side2 and modified in side1.  Version side1 of whatever~side1 left in tree.
 	EOF
+
+	test_cmp expect actual
+'
+
+test_expect_success 'Just the conflicted files without the messages' '
+	test_expect_code 1 git merge-tree --write-tree --no-messages side1 side2 >out &&
+	sed -e "s/[0-9a-f]\{40,\}/HASH/g" out >actual &&
+
+	test_write_lines HASH greeting whatever~side1 >expect &&
 
 	test_cmp expect actual
 '
