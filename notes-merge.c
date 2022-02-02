@@ -344,7 +344,7 @@ static int ll_merge_in_worktree(struct notes_merge_options *o,
 {
 	mmbuffer_t result_buf;
 	mmfile_t base, local, remote;
-	int status;
+	enum ll_merge_result status;
 
 	read_mmblob(&base, &p->base);
 	read_mmblob(&local, &p->local);
@@ -358,6 +358,9 @@ static int ll_merge_in_worktree(struct notes_merge_options *o,
 	free(local.ptr);
 	free(remote.ptr);
 
+	if (status == LL_MERGE_BINARY_CONFLICT)
+		warning("Cannot merge binary files: %s (%s vs. %s)",
+			oid_to_hex(&p->obj), o->local_ref, o->remote_ref);
 	if ((status < 0) || !result_buf.ptr)
 		die("Failed to execute internal merge");
 
