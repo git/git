@@ -614,16 +614,15 @@ int send_pack(struct send_pack_args *args,
 			ref->status = REF_STATUS_EXPECTING_REPORT;
 	}
 
-  return 0;
 	if (!args->dry_run)
 		advertise_shallow_grafts_buf(&req_buf);
 
 	/*
 	 * Finally, tell the other end!
 	 */
-	if (!args->dry_run && push_cert_nonce)
-		cmds_sent = generate_push_cert(&req_buf, remote_refs, args,
-					       cap_buf.buf, push_cert_nonce);
+	if (!args->dry_run && push_cert_nonce) printf ("1\n");
+//		cmds_sent = generate_push_cert(&req_buf, remote_refs, args,
+//					       cap_buf.buf, push_cert_nonce);
 	else if (!args->dry_run)
 		for (ref = remote_refs; ref; ref = ref->next) {
 			char *old_hex, *new_hex;
@@ -644,7 +643,6 @@ int send_pack(struct send_pack_args *args,
 						 old_hex, new_hex, ref->name);
 			}
 		}
-
 	if (use_push_options) {
 		struct string_list_item *item;
 
