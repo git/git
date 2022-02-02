@@ -227,7 +227,63 @@ test_expect_success 'remerge-diff w/ pathspec: limits to relevant file including
 	# with sha256
 	sed -e "s/[0-9a-f]\{7,\}/HASH/g" tmp >expect &&
 
-	git show --oneline --remerge-diff --full-history resolution -- "letters*" >tmp &&
+	git show --oneline --remerge-diff resolution -- "letters*" >tmp &&
+	sed -e "s/[0-9a-f]\{7,\}/HASH/g" tmp >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'setup non-content conflicts' '
+	git switch --orphan newbase &&
+
+	test_write_lines 1 2 3 4 5 6 7 8 9 >numbers &&
+	git add numbers &&
+	git commit -m base &&
+
+	git branch newside1 &&
+	git branch newside2 &&
+
+	git checkout newside1 &&
+	test_write_lines 1 2 three 4 5 6 7 8 9 >numbers &&
+	git add numbers &&
+	git commit -m side1 &&
+
+	git checkout newside2 &&
+	test_write_lines 1 2 drei 4 5 6 7 8 9 >numbers &&
+	git add numbers &&
+	git commit -m side2 &&
+
+	git checkout -b newresolution newside1 &&
+	test_must_fail git merge newside2 &&
+	git checkout --theirs numbers &&
+	git add -u numbers &&
+	git commit -m resolved
+'
+
+test_expect_success 'remerge-diff turns off history simplification' '
+	git log -1 --oneline newresolution >tmp &&
+	cat <<-EOF >>tmp &&
+	diff --git a/numbers b/numbers
+	remerge CONFLICT (content): Merge conflict in numbers
+	index 070e9e7..5335e78 100644
+	--- a/numbers
+	+++ b/numbers
+	@@ -1,10 +1,6 @@
+	 1
+	 2
+	-<<<<<<< 96f1e45 (side1)
+	-three
+	-=======
+	 drei
+	->>>>>>> 4fd522f (side2)
+	 4
+	 5
+	 6
+	EOF
+	# We still have some sha1 hashes above; rip them out so test works
+	# with sha256
+	sed -e "s/[0-9a-f]\{7,\}/HASH/g" tmp >expect &&
+
+	git show --oneline --remerge-diff newresolution -- numbers >tmp &&
 	sed -e "s/[0-9a-f]\{7,\}/HASH/g" tmp >actual &&
 	test_cmp expect actual
 '

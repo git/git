@@ -24,6 +24,7 @@ static void set_separate(struct rev_info *revs)
 {
 	suppress(revs);
 	revs->separate_merges = 1;
+	revs->simplify_history = 0;
 }
 
 static void set_first_parent(struct rev_info *revs)
@@ -50,6 +51,7 @@ static void set_remerge_diff(struct rev_info *revs)
 {
 	suppress(revs);
 	revs->remerge_diff = 1;
+	revs->simplify_history = 0;
 }
 
 static diff_merges_setup_func_t func_by_opt(const char *optarg)
