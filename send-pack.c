@@ -575,7 +575,6 @@ int send_pack(struct send_pack_args *args,
 	 * send-pack machinery that set_ref_status_for_push() cannot
 	 * set this bit for us???
 	 */
-  return 0;
 	for (ref = remote_refs; ref; ref = ref->next)
 		if (ref->deletion && !allow_deleting_refs)
 			ref->status = REF_STATUS_REJECT_NODELETE;
@@ -615,6 +614,7 @@ int send_pack(struct send_pack_args *args,
 			ref->status = REF_STATUS_EXPECTING_REPORT;
 	}
 
+  return 0;
 	if (!args->dry_run)
 		advertise_shallow_grafts_buf(&req_buf);
 
