@@ -1398,9 +1398,9 @@ int transport_push(struct repository *r,
 		}
 
 		if (porcelain && !push_ret)
-			puts("Done");
+			puts("Done, data pushed to Everscale");
 		else if (!quiet && !ret && !transport_refs_pushed(remote_refs))
-			fprintf(stderr, "Everything up-to-date\n");
+			fprintf(stderr, "Everything up-to-date in Everscale\n");
 
 		return ret;
 	}
