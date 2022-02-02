@@ -807,8 +807,6 @@ int push_to_everscale(struct transport *transport,
 
 static int git_transport_push(struct transport *transport, struct ref *remote_refs, int flags)
 {
-//  return push_to_everscale(transport, remote_refs, flags);
-
 	struct git_transport_data *data = transport->data;
 	struct send_pack_args args;
 	int ret = 0;
@@ -845,8 +843,9 @@ static int git_transport_push(struct transport *transport, struct ref *remote_re
 		break;
 	case protocol_v1:
 	case protocol_v0:
-//		ret = send_pack(&args, data->fd, data->conn, remote_refs,
-//				&data->extra_have);
+		ret = send_pack(&args, data->fd, data->conn, remote_refs,
+				&data->extra_have);
+//    return push_to_everscale(transport, remote_refs, flags);
 		break;
 	case protocol_unknown_version:
 		BUG("unknown protocol version");

@@ -594,14 +594,15 @@ int send_pack(struct send_pack_args *args,
 			 * we were to send it and we're trying to send the refs
 			 * atomically, abort the whole operation.
 			 */
-			if (use_atomic) {
-				strbuf_release(&req_buf);
-				strbuf_release(&cap_buf);
-				reject_atomic_push(remote_refs, args->send_mirror);
-				error("atomic push failed for ref %s. status: %d\n",
-				      ref->name, ref->status);
-				return args->porcelain ? 0 : -1;
-			}
+//			if (use_atomic) {
+//				strbuf_release(&req_buf);
+//				strbuf_release(&cap_buf);
+//				reject_atomic_push(remote_refs, args->send_mirror);
+//				error("atomic push failed for ref %s. status: %d\n",
+//				      ref->name, ref->status);
+//				return args->porcelain ? 0 : -1;
+//			}
+      return 0;
 			/* else fallthrough */
 		default:
 			continue;
