@@ -19,6 +19,7 @@
 #include "line-log.h"
 #include "help.h"
 #include "range-diff.h"
+#include "strmap.h"
 
 static struct decoration name_decoration = { "object names" };
 static int decoration_loaded;
@@ -907,6 +908,52 @@ static int do_diff_combined(struct rev_info *opt, struct commit *commit)
 	return !opt->loginfo;
 }
 
+static void setup_additional_headers(struct diff_options *o,
+				     struct strmap *all_headers)
+{
+	struct hashmap_iter iter;
+	struct strmap_entry *entry;
+
+	/*
+	 * Make o->additional_path_headers contain the subset of all_headers
+	 * that match o->pathspec.  If there aren't any that match o->pathspec,
+	 * then make o->additional_path_headers be NULL.
+	 */
+
+	if (!o->pathspec.nr) {
+		o->additional_path_headers = all_headers;
+		return;
+	}
+
+	o->additional_path_headers = xmalloc(sizeof(struct strmap));
+	strmap_init_with_options(o->additional_path_headers, NULL, 0);
+	strmap_for_each_entry(all_headers, &iter, entry) {
+		if (match_pathspec(the_repository->index, &o->pathspec,
+				   entry->key, strlen(entry->key),
+				   0 /* prefix */, NULL /* seen */,
+				   0 /* is_dir */))
+			strmap_put(o->additional_path_headers,
+				   entry->key, entry->value);
+	}
+	if (!strmap_get_size(o->additional_path_headers)) {
+		strmap_clear(o->additional_path_headers, 0);
+		FREE_AND_NULL(o->additional_path_headers);
+	}
+}
+
+static void cleanup_additional_headers(struct diff_options *o)
+{
+	if (!o->pathspec.nr) {
+		o->additional_path_headers = NULL;
+		return;
+	}
+	if (!o->additional_path_headers)
+		return;
+
+	strmap_clear(o->additional_path_headers, 0);
+	FREE_AND_NULL(o->additional_path_headers);
+}
+
 static int do_remerge_diff(struct rev_info *opt,
 			   struct commit_list *parents,
 			   struct object_id *oid,
@@ -924,6 +971,8 @@ static int do_remerge_diff(struct rev_info *opt,
 	/* Setup merge options */
 	init_merge_options(&o, the_repository);
 	o.show_rename_progress = 0;
+	o.record_conflict_msgs_as_headers = 1;
+	o.msg_header_prefix = "remerge";
 
 	ctx.abbrev = DEFAULT_ABBREV;
 	format_commit_message(parent1, "%h (%s)", &parent1_desc, &ctx);
@@ -940,10 +989,12 @@ static int do_remerge_diff(struct rev_info *opt,
 	merge_incore_recursive(&o, bases, parent1, parent2, &res);
 
 	/* Show the diff */
+	setup_additional_headers(&opt->diffopt, res.path_messages);
 	diff_tree_oid(&res.tree->object.oid, oid, "", &opt->diffopt);
 	log_tree_diff_flush(opt);
 
 	/* Cleanup */
+	cleanup_additional_headers(&opt->diffopt);
 	strbuf_release(&parent1_desc);
 	strbuf_release(&parent2_desc);
 	merge_finalize(&o, &res);
