@@ -1089,14 +1089,52 @@ static int bisect_visualize(struct bisect_terms *terms, const char **argv, int a
 	return res;
 }
 
+static int get_first_good(const char *refname, const struct object_id *oid,
+			  int flag, void *cb_data)
+{
+	oidcpy(cb_data, oid);
+	return 1;
+}
+
+static int verify_good(const struct bisect_terms *terms,
+		       const char **quoted_argv)
+{
+	int rc;
+	enum bisect_error res;
+	struct object_id good_rev;
+	struct object_id current_rev;
+	char *good_glob = xstrfmt("%s-*", terms->term_good);
+	int no_checkout = ref_exists("BISECT_HEAD");
+
+	for_each_glob_ref_in(get_first_good, good_glob, "refs/bisect/",
+			     &good_rev);
+	free(good_glob);
+
+	if (read_ref(no_checkout ? "BISECT_HEAD" : "HEAD", &current_rev))
+		return -1;
+
+	res = bisect_checkout(&good_rev, no_checkout);
+	if (res != BISECT_OK)
+		return -1;
+
+	printf(_("running %s\n"), quoted_argv[0]);
+	rc = run_command_v_opt(quoted_argv, RUN_USING_SHELL);
+
+	res = bisect_checkout(&current_rev, no_checkout);
+	if (res != BISECT_OK)
+		return -1;
+
+	return rc;
+}
+
 static int bisect_run(struct bisect_terms *terms, const char **argv, int argc)
 {
 	int res = BISECT_OK;
 	struct strbuf command = STRBUF_INIT;
-	struct strvec args = STRVEC_INIT;
 	struct strvec run_args = STRVEC_INIT;
 	const char *new_state;
 	int temporary_stdout_fd, saved_stdout;
+	int is_first_run = 1;
 
 	if (bisect_next_check(terms, NULL))
 		return BISECT_FAILED;
@@ -1111,16 +1149,37 @@ static int bisect_run(struct bisect_terms *terms, const char **argv, int argc)
 	strvec_push(&run_args, command.buf);
 
 	while (1) {
-		strvec_clear(&args);
-
 		printf(_("running %s\n"), command.buf);
 		res = run_command_v_opt(run_args.v, RUN_USING_SHELL);
+
+		/*
+		 * Exit code 126 and 127 can either come from the shell
+		 * if it was unable to execute or even find the script,
+		 * or from the script itself.  Check with a known-good
+		 * revision to avoid trashing the bisect run due to a
+		 * missing or non-executable script.
+		 */
+		if (is_first_run && (res == 126 || res == 127)) {
+			int rc = verify_good(terms, run_args.v);
+			is_first_run = 0;
+			if (rc < 0) {
+				error(_("unable to verify '%s' on good"
+					" revision"), command.buf);
+				res = BISECT_FAILED;
+				break;
+			}
+			if (rc == res) {
+				error(_("bogus exit code %d for good revision"),
+				      rc);
+				res = BISECT_FAILED;
+				break;
+			}
+		}
 
 		if (res < 0 || 128 <= res) {
 			error(_("bisect run failed: exit code %d from"
 				" '%s' is < 0 or >= 128"), res, command.buf);
-			strbuf_release(&command);
-			return res;
+			break;
 		}
 
 		if (res == 125)
@@ -1132,8 +1191,10 @@ static int bisect_run(struct bisect_terms *terms, const char **argv, int argc)
 
 		temporary_stdout_fd = open(git_path_bisect_run(), O_CREAT | O_WRONLY | O_TRUNC, 0666);
 
-		if (temporary_stdout_fd < 0)
-			return error_errno(_("cannot open file '%s' for writing"), git_path_bisect_run());
+		if (temporary_stdout_fd < 0) {
+			res = error_errno(_("cannot open file '%s' for writing"), git_path_bisect_run());
+			break;
+		}
 
 		fflush(stdout);
 		saved_stdout = dup(1);
@@ -1158,16 +1219,16 @@ static int bisect_run(struct bisect_terms *terms, const char **argv, int argc)
 			res = BISECT_OK;
 		} else if (res) {
 			error(_("bisect run failed: 'git bisect--helper --bisect-state"
-			" %s' exited with error code %d"), args.v[0], res);
+			" %s' exited with error code %d"), new_state, res);
 		} else {
 			continue;
 		}
-
-		strbuf_release(&command);
-		strvec_clear(&args);
-		strvec_clear(&run_args);
-		return res;
+		break;
 	}
+
+	strbuf_release(&command);
+	strvec_clear(&run_args);
+	return res;
 }
 
 int cmd_bisect__helper(int argc, const char **argv, const char *prefix)

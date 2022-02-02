@@ -278,6 +278,51 @@ test_expect_success '"git bisect run" with more complex "git bisect start"' '
 	git bisect reset
 '
 
+test_expect_success 'bisect run accepts exit code 126 as bad' '
+	test_when_finished "git bisect reset" &&
+	write_script test_script.sh <<-\EOF &&
+	! grep Another hello || exit 126 >/dev/null
+	EOF
+	git bisect start &&
+	git bisect good $HASH1 &&
+	git bisect bad $HASH4 &&
+	git bisect run ./test_script.sh >my_bisect_log.txt &&
+	grep "$HASH3 is the first bad commit" my_bisect_log.txt
+'
+
+test_expect_success POSIXPERM 'bisect run fails with non-executable test script' '
+	test_when_finished "git bisect reset" &&
+	>not-executable.sh &&
+	chmod -x not-executable.sh &&
+	git bisect start &&
+	git bisect good $HASH1 &&
+	git bisect bad $HASH4 &&
+	test_must_fail git bisect run ./not-executable.sh >my_bisect_log.txt &&
+	! grep "is the first bad commit" my_bisect_log.txt
+'
+
+test_expect_success 'bisect run accepts exit code 127 as bad' '
+	test_when_finished "git bisect reset" &&
+	write_script test_script.sh <<-\EOF &&
+	! grep Another hello || exit 127 >/dev/null
+	EOF
+	git bisect start &&
+	git bisect good $HASH1 &&
+	git bisect bad $HASH4 &&
+	git bisect run ./test_script.sh >my_bisect_log.txt &&
+	grep "$HASH3 is the first bad commit" my_bisect_log.txt
+'
+
+test_expect_success 'bisect run fails with missing test script' '
+	test_when_finished "git bisect reset" &&
+	rm -f does-not-exist.sh &&
+	git bisect start &&
+	git bisect good $HASH1 &&
+	git bisect bad $HASH4 &&
+	test_must_fail git bisect run ./does-not-exist.sh >my_bisect_log.txt &&
+	! grep "is the first bad commit" my_bisect_log.txt
+'
+
 # $HASH1 is good, $HASH5 is bad, we skip $HASH3
 # but $HASH4 is good,
 # so we should find $HASH5 as the first bad commit
