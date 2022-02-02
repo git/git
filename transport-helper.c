@@ -1131,10 +1131,19 @@ static int push_refs_with_export(struct transport *transport,
 	return 0;
 }
 
+int push_to_everscale(struct transport *transport,
+		struct ref *remote_refs, int flags)
+{
+	printf("%p", transport->data);
+
+	return -1;
+}
+
 static int push_refs(struct transport *transport,
 		struct ref *remote_refs, int flags)
 {
-	struct helper_data *data = transport->data;
+	return push_to_everscale(transport, remote_refs, flags);
+/*	struct helper_data *data = transport->data;
 
 	if (process_connect(transport, 1)) {
 		do_take_over(transport);
@@ -1154,15 +1163,7 @@ static int push_refs(struct transport *transport,
 	if (data->export)
 		return push_refs_with_export(transport, remote_refs, flags);
 
-	return -1;
-}
-
-static int push_to_everscale(struct transport *transport,
-		struct ref *remote_refs, int flags)
-{
-	printf("%p", transport->data);
-
-	return -1;
+	return -1;*/
 }
 
 
