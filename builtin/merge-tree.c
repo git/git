@@ -393,6 +393,7 @@ static int trivial_merge(const char *base,
 
 struct merge_tree_options {
 	int mode;
+	int allow_unrelated_histories;
 	int show_messages;
 	int exclude_modes_oids_stages;
 };
@@ -430,7 +431,7 @@ static int real_merge(struct merge_tree_options *o,
 	 * merge_incore_recursive in merge-ort.h
 	 */
 	common = get_merge_bases(parent1, parent2);
-	if (!common)
+	if (!common && !o->allow_unrelated_histories)
 		die(_("refusing to merge unrelated histories"));
 	for (j = common; j; j = j->next)
 		commit_list_insert(j->item, &merge_bases);
@@ -495,6 +496,10 @@ int cmd_merge_tree(int argc, const char **argv, const char *prefix)
 		OPT_BOOL_F('l', "exclude-modes-oids-stages",
 			   &o.exclude_modes_oids_stages,
 			   N_("list conflicted files without modes/oids/stages"),
+			   PARSE_OPT_NONEG),
+		OPT_BOOL_F(0, "allow-unrelated-histories",
+			   &o.allow_unrelated_histories,
+			   N_("allow merging unrelated histories"),
 			   PARSE_OPT_NONEG),
 		OPT_END()
 	};
