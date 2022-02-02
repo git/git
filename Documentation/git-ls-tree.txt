@@ -10,9 +10,9 @@ SYNOPSIS
 --------
 [verse]
 'git ls-tree' [-d] [-r] [-t] [-l] [-z]
-	    [--name-only] [--name-status] [--full-name] [--full-tree] [--abbrev[=<n>]]
-	    <tree-ish> [<path>...]
-
+	    [--name-only] [--name-status] [--object-only]
+	    [--full-name] [--full-tree] [--abbrev[=<n>]]
+	    [--format=<format>] <tree-ish> [<path>...]
 DESCRIPTION
 -----------
 Lists the contents of a given tree object, like what "/bin/ls -a" does
@@ -59,6 +59,11 @@ OPTIONS
 --name-only::
 --name-status::
 	List only filenames (instead of the "long" output), one per line.
+	Cannot be combined with `--object-only`.
+
+--object-only::
+	List only names of the objects, one per line. Cannot be combined
+	with `--name-only` or `--name-status`.
 
 --abbrev[=<n>]::
 	Instead of showing the full 40-byte hexadecimal object
@@ -74,6 +79,16 @@ OPTIONS
 	Do not limit the listing to the current working directory.
 	Implies --full-name.
 
+--format=<format>::
+	A string that interpolates `%(fieldname)` from the result
+	being shown. It also interpolates `%%` to `%`, and
+	`%xx` where `xx` are hex digits interpolates to character
+	with hex code `xx`; for example `%00` interpolates to
+	`\0` (NUL), `%09` to `\t` (TAB) and `%0a` to `\n` (LF).
+	When specified, `--format` cannot be combined with other
+	format-altering options, including `--long`, `--name-only`
+	and `--object-only`.
+
 [<path>...]::
 	When paths are given, show them (note that this isn't really raw
 	pathnames, but rather a list of patterns to match).  Otherwise
@@ -82,6 +97,9 @@ OPTIONS
 
 Output Format
 -------------
+
+Default format:
+
         <mode> SP <type> SP <object> TAB <file>
 
 This output format is compatible with what `--index-info --stdin` of
@@ -99,6 +117,38 @@ Without the `-z` option, pathnames with "unusual" characters are
 quoted as explained for the configuration variable `core.quotePath`
 (see linkgit:git-config[1]).  Using `-z` the filename is output
 verbatim and the line is terminated by a NUL byte.
+
+Customized format:
+
+It is possible to print in a custom format by using the `--format` option,
+which is able to interpolate different fields using a `%(fieldname)` notation.
+For example, if you want to only print the <object> and <file> fields with a
+JSON style, executing with a specific "--format" like
+
+	git ls-tree --format='{"object":"%(object)", "file":"%(file)"}' <tree-ish>
+
+The output format changes to:
+
+	{"object":"<object>", "file":"<file>"}
+
+FIELD NAMES
+-----------
+
+Various values from structured fields can be used to interpolate
+into the resulting output. For each outputing line, the following
+names can be used:
+
+mode::
+	The mode of the object.
+type::
+	The type of the object (`blob` or `tree`).
+object::
+	The name of the object.
+size[:padded]::
+	The size of the object ("-" if it's a tree).
+	It also supports a padded format of size with "%(size:padded)".
+file::
+	The filename of the object.
 
 GIT
 ---
