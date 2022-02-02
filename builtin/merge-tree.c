@@ -464,7 +464,7 @@ static int real_merge(struct merge_tree_options *o,
 		string_list_clear(&conflicted_files, 1);
 	}
 	if (o->show_messages) {
-		printf("\n");
+		putchar(line_termination);
 		merge_display_update_messages(&opt, &result, stdout);
 	}
 	merge_finalize(&opt, &result);
@@ -490,6 +490,8 @@ int cmd_merge_tree(int argc, const char **argv, const char *prefix)
 			    N_("do a trivial merge only"), 't'),
 		OPT_BOOL(0, "messages", &o.show_messages,
 			 N_("also show informational/conflict messages")),
+		OPT_SET_INT('z', NULL, &line_termination,
+			    N_("separate paths with the NUL character"), '\0'),
 		OPT_BOOL_F('l', "exclude-modes-oids-stages",
 			   &o.exclude_modes_oids_stages,
 			   N_("list conflicted files without modes/oids/stages"),
