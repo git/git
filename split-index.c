@@ -5,6 +5,9 @@
 struct split_index *init_split_index(struct index_state *istate)
 {
 	if (!istate->split_index) {
+		if (istate->sparse_index)
+			die(_("cannot use split index with a sparse index"));
+
 		CALLOC_ARRAY(istate->split_index, 1);
 		istate->split_index->refcount = 1;
 	}
