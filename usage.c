@@ -287,6 +287,20 @@ void warning(const char *warn, ...)
 	va_end(params);
 }
 
+void warning_fp(FILE *out, const char *warn, ...)
+{
+	va_list params;
+
+	va_start(params, warn);
+	if (out == stderr)
+		warn_routine(warn, params);
+	else {
+		vfprintf(out, warn, params);
+		fputc('\n', out);
+	}
+	va_end(params);
+}
+
 /* Only set this, ever, from t/helper/, when verifying that bugs are caught. */
 int BUG_exit_code;
 
