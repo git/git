@@ -29,8 +29,14 @@ void restore_term(void)
 		return;
 
 	tcsetattr(term_fd, TCSAFLUSH, &old_term);
+
 	close(term_fd);
 	term_fd = -1;
+}
+
+static int is_controlling_terminal(int fd)
+{
+	return (getpgid(0) == tcgetpgrp(fd));
 }
 
 int save_term(int full_duplex)
@@ -38,7 +44,16 @@ int save_term(int full_duplex)
 	if (term_fd < 0)
 		term_fd = open("/dev/tty", O_RDWR);
 
-	return (term_fd < 0) ? -1 : tcgetattr(term_fd, &old_term);
+	if (term_fd < 0)
+		return -1;
+
+	if (full_duplex && !is_controlling_terminal(term_fd)) {
+		close(term_fd);
+		term_fd = -1;
+		return -1;
+	}
+
+	return tcgetattr(term_fd, &old_term);
 }
 
 static int disable_bits(tcflag_t bits)

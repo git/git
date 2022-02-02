@@ -1,0 +1,8 @@
+editor.stty::
+	A boolean variable that tells git to save and restore its
+	terminal settings when the editor is invoked, to avoid
+	being affected by garbled input/output, if it misbehaves.
++
+It defaults to 'true' if your editor is "vi" (which is
+also the default if there is no `core.editor`), or to
+'false' otherwise.
