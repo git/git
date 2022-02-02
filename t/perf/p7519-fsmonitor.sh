@@ -73,7 +73,7 @@ then
 	fi
 fi
 
-trace_start() {
+trace_start () {
 	if test -n "$GIT_PERF_7519_TRACE"
 	then
 		name="$1"
@@ -92,14 +92,14 @@ trace_start() {
 	fi
 }
 
-trace_stop() {
+trace_stop () {
 	if test -n "$GIT_PERF_7519_TRACE"
 	then
 		unset GIT_TRACE2_PERF
 	fi
 }
 
-touch_files() {
+touch_files () {
 	n=$1
 	d="$n"_files
 
@@ -142,7 +142,7 @@ test_expect_success "one time repo setup" '
 	fi
 '
 
-setup_for_fsmonitor() {
+setup_for_fsmonitor () {
 	# set INTEGRATION_SCRIPT depending on the environment
 	if test -n "$USE_FSMONITOR_DAEMON"
 	then
@@ -188,7 +188,7 @@ test_perf_w_drop_caches () {
 	test_perf "$@"
 }
 
-test_fsmonitor_suite() {
+test_fsmonitor_suite () {
 	if test -n "$USE_FSMONITOR_DAEMON"
 	then
 		DESC="builtin fsmonitor--daemon"
