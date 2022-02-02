@@ -620,9 +620,9 @@ int send_pack(struct send_pack_args *args,
 	/*
 	 * Finally, tell the other end!
 	 */
-	if (!args->dry_run && push_cert_nonce) printf ("1\n");
-//		cmds_sent = generate_push_cert(&req_buf, remote_refs, args,
-//					       cap_buf.buf, push_cert_nonce);
+	if (!args->dry_run && push_cert_nonce)
+		cmds_sent = generate_push_cert(&req_buf, remote_refs, args,
+					       cap_buf.buf, push_cert_nonce);
 	else if (!args->dry_run)
 		for (ref = remote_refs; ref; ref = ref->next) {
 			char *old_hex, *new_hex;
@@ -705,8 +705,10 @@ int send_pack(struct send_pack_args *args,
 			/* Closed by pack_objects() via start_command() */
 			fd[1] = -1;
 	}
-	if (args->stateless_rpc && cmds_sent)
+	if (args->stateless_rpc && cmds_sent) {
 		packet_flush(out);
+    printf ("haha\n");
+  }
 
 	if (status_report && cmds_sent)
 		ret = receive_status(&reader, remote_refs);
