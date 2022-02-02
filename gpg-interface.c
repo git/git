@@ -433,7 +433,6 @@ static int verify_ssh_signed_buffer(struct signature_check *sigc,
 	struct tempfile *buffer_file;
 	int ret = -1;
 	const char *line;
-	size_t trust_size;
 	char *principal;
 	struct strbuf ssh_principals_out = STRBUF_INIT;
 	struct strbuf ssh_principals_err = STRBUF_INIT;
@@ -502,15 +501,30 @@ static int verify_ssh_signed_buffer(struct signature_check *sigc,
 		ret = -1;
 	} else {
 		/* Check every principal we found (one per line) */
-		for (line = ssh_principals_out.buf; *line;
-		     line = strchrnul(line + 1, '\n')) {
-			while (*line == '\n')
-				line++;
-			if (!*line)
-				break;
+		const char *next;
+		for (line = ssh_principals_out.buf;
+		     *line;
+		     line = next) {
+			const char *end_of_text;
 
-			trust_size = strcspn(line, "\n");
-			principal = xmemdupz(line, trust_size);
+			next = end_of_text = strchrnul(line, '\n');
+
+			 /* Did we find a LF, and did we have CR before it? */
+			if (*end_of_text &&
+			    line < end_of_text &&
+			    end_of_text[-1] == '\r')
+				end_of_text--;
+
+			/* Unless we hit NUL, skip over the LF we found */
+			if (*next)
+				next++;
+
+			/* Not all lines are data.  Skip empty ones */
+			if (line == end_of_text)
+				continue;
+
+			/* We now know we have an non-empty line. Process it */
+			principal = xmemdupz(line, end_of_text - line);
 
 			child_process_init(&ssh_keygen);
 			strbuf_release(&ssh_keygen_out);
