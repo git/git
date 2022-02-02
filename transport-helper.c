@@ -968,6 +968,7 @@ static void set_common_push_options(struct transport *transport,
 static int push_refs_with_push(struct transport *transport,
 			       struct ref *remote_refs, int flags)
 {
+  printf("here1\n");
 	int force_all = flags & TRANSPORT_PUSH_FORCE;
 	int mirror = flags & TRANSPORT_PUSH_MIRROR;
 	int atomic = flags & TRANSPORT_PUSH_ATOMIC;
@@ -1054,6 +1055,7 @@ static int push_refs_with_push(struct transport *transport,
 static int push_refs_with_export(struct transport *transport,
 		struct ref *remote_refs, int flags)
 {
+  printf("here2\n");
 	struct ref *ref;
 	struct child_process *helper, exporter;
 	struct helper_data *data = transport->data;
@@ -1134,7 +1136,8 @@ static int push_refs_with_export(struct transport *transport,
 static int push_refs(struct transport *transport,
 		struct ref *remote_refs, int flags)
 {
-  printf("Here\n");
+
+  printf("here3\n");
 	struct helper_data *data = transport->data;
 
 	if (process_connect(transport, 1)) {
