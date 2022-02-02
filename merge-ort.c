@@ -4318,7 +4318,7 @@ void merge_switch_to_result(struct merge_options *opt,
 
 		/* Also include needed rename limit adjustment now */
 		diff_warn_rename_limit("merge.renamelimit",
-				       opti->renames.needed_limit, 0);
+				       opti->renames.needed_limit, 0, stderr);
 
 		trace2_region_leave("merge", "display messages", opt->repo);
 	}
