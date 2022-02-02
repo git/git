@@ -126,7 +126,7 @@ static int pack_objects(int fd, struct ref *refs, struct oid_array *advertised,
 		close(po.out);
 		po.out = -1;
 	}
-
+  return -1;
 	rc = finish_command(&po);
 	if (rc) {
 		/*
@@ -700,7 +700,6 @@ int send_pack(struct send_pack_args *args,
 			fd[1] = -1;
 			return -1;
 		}
-    return -1;
 		if (!args->stateless_rpc)
 			/* Closed by pack_objects() via start_command() */
 			fd[1] = -1;
