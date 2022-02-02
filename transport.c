@@ -1390,12 +1390,12 @@ int transport_push(struct repository *r,
 //		if (flags & TRANSPORT_PUSH_SET_UPSTREAM)
 //			set_upstreams(transport, remote_refs, pretend);
 
-		if (!(flags & (TRANSPORT_PUSH_DRY_RUN |
-			       TRANSPORT_RECURSE_SUBMODULES_ONLY))) {
-			struct ref *ref;
-			for (ref = remote_refs; ref; ref = ref->next)
-				transport_update_tracking_ref(transport->remote, ref, verbose);
-		}
+//		if (!(flags & (TRANSPORT_PUSH_DRY_RUN |
+//			       TRANSPORT_RECURSE_SUBMODULES_ONLY))) {
+//			struct ref *ref;
+//			for (ref = remote_refs; ref; ref = ref->next)
+//				transport_update_tracking_ref(transport->remote, ref, verbose);
+//		}
 
 		if (porcelain && !push_ret)
 			puts("Done, data pushed to Everscale");
