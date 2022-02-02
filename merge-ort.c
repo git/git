@@ -1788,8 +1788,9 @@ static int merge_3way(struct merge_options *opt,
 				&src1, name1, &src2, name2,
 				&opt->priv->attr_index, &ll_opts);
 	if (merge_status == LL_MERGE_BINARY_CONFLICT)
-		warning("Cannot merge binary files: %s (%s vs. %s)",
-			path, name1, name2);
+		path_msg(opt, path, 0,
+			 "warning: Cannot merge binary files: %s (%s vs. %s)",
+			 path, name1, name2);
 
 	free(base);
 	free(name1);
