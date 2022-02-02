@@ -677,7 +677,7 @@ int send_pack(struct send_pack_args *args,
 	packet_reader_init(&reader, in, NULL, 0,
 			   PACKET_READ_CHOMP_NEWLINE |
 			   PACKET_READ_DIE_ON_ERR_PACKET);
-
+return -1;
 	if (need_pack_data && cmds_sent) {
 		if (pack_objects(out, remote_refs, extra_have, &commons, args) < 0) {
 			if (args->stateless_rpc)
@@ -705,10 +705,8 @@ int send_pack(struct send_pack_args *args,
 			/* Closed by pack_objects() via start_command() */
 			fd[1] = -1;
 	}
-	if (args->stateless_rpc && cmds_sent) {
+	if (args->stateless_rpc && cmds_sent)
 		packet_flush(out);
-    printf ("haha\n");
-  }
 
 	if (status_report && cmds_sent)
 		ret = receive_status(&reader, remote_refs);
