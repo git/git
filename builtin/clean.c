@@ -1009,6 +1009,9 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 		dir.flags |= DIR_KEEP_UNTRACKED_CONTENTS;
 	}
 
+	prepare_repo_settings(the_repository);
+	the_repository->settings.command_requires_full_index = 0;
+
 	if (read_cache() < 0)
 		die(_("index file corrupt"));
 
