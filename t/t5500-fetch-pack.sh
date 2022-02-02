@@ -968,7 +968,7 @@ test_expect_success 'use ref advertisement to prune "have" lines sent' '
 test_expect_success 'same as last but with config overrides' '
 	test_negotiation_algorithm_default \
 		-c feature.experimental=true \
-		-c fetch.negotiationAlgorithm=default
+		-c fetch.negotiationAlgorithm=consecutive
 '
 
 test_expect_success 'ensure bogus fetch.negotiationAlgorithm yields error' '
