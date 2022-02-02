@@ -697,4 +697,71 @@ test_expect_success 'caching renames only on upstream side, part 2' '
 	)
 '
 
+#
+# The following testcase just creates two simple renames (slightly modified
+# on both sides but without conflicting changes), and a directory full of
+# files that are otherwise uninteresting.  The setup is as follows:
+#
+#   base:     unrelated/<BUNCH OF FILES>
+#             numbers
+#             values
+#   upstream: modify: numbers
+#             modify: values
+#   topic:    add: unrelated/foo
+#             modify: numbers
+#             modify: values
+#             rename: numbers -> sequence
+#             rename: values -> progression
+#
+# This is a trivial rename case, but we're curious what happens with a very
+# low renameLimit interacting with the restart optimization trying to notice
+# that unrelated/ looks like a trivial merge candidate.
+#
+test_expect_success 'avoid assuming we detected renames' '
+	git init redo-weirdness &&
+	(
+		cd redo-weirdness &&
+
+		mkdir unrelated &&
+		for i in $(test_seq 1 10)
+		do
+			>unrelated/$i
+		done &&
+		test_seq  2 10 >numbers &&
+		test_seq 12 20 >values &&
+		git add numbers values unrelated/ &&
+		git commit -m orig &&
+
+		git branch upstream &&
+		git branch topic &&
+
+		git switch upstream &&
+		test_seq  1 10 >numbers &&
+		test_seq 11 20 >values &&
+		git add numbers &&
+		git commit -m "Some tweaks" &&
+
+		git switch topic &&
+
+		>unrelated/foo &&
+		test_seq  2 12 >numbers &&
+		test_seq 12 22 >values &&
+		git add numbers values unrelated/ &&
+		git mv numbers sequence &&
+		git mv values progression &&
+		git commit -m A &&
+
+		#
+		# Actual testing
+		#
+
+		git switch --detach topic^0 &&
+
+		test_must_fail git -c merge.renameLimit=1 rebase upstream &&
+
+		git ls-files -u >actual &&
+		! test_file_is_empty actual
+	)
+'
+
 test_done
