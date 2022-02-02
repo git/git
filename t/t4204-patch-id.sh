@@ -38,7 +38,7 @@ calc_patch_id () {
 	shift
 	git patch-id "$@" >patch-id.output &&
 	sed "s/ .*//" patch-id.output >patch-id_"$patch_name" &&
-	test_line_count -gt 0 patch-id_"$patch_name"
+	test_line_count -eq 1 patch-id_"$patch_name"
 }
 
 get_top_diff () {
@@ -199,5 +199,34 @@ test_expect_success 'patch-id handles no-nl-at-eof markers' '
 	calc_patch_id nonl <nonl &&
 	calc_patch_id withnl <withnl &&
 	test_cmp patch-id_nonl patch-id_withnl
+'
+
+test_expect_success 'patch-id handles diffs with one line of before/after' '
+	cat >diffu1 <<-\EOF &&
+	diff --git a/bar b/bar
+	index bdaf90f..31051f6 100644
+	--- a/bar
+	+++ b/bar
+	@@ -2 +2,2 @@
+	 b
+	+c
+	diff --git a/car b/car
+	index 00750ed..2ae5e34 100644
+	--- a/car
+	+++ b/car
+	@@ -1 +1,2 @@
+	 3
+	+d
+	diff --git a/foo b/foo
+	index e439850..7146eb8 100644
+	--- a/foo
+	+++ b/foo
+	@@ -2 +2,2 @@
+	 a
+	+e
+	EOF
+	calc_patch_id diffu1 <diffu1 &&
+	test_config patchid.stable true &&
+	calc_patch_id diffu1stable <diffu1
 '
 test_done
