@@ -800,16 +800,15 @@ void transport_print_push_status(const char *dest, struct ref *refs,
 int push_to_everscale(struct transport *transport,
 		struct ref *remote_refs, int flags)
 {
-	struct strbuf cap_buf = STRBUF_INIT;
   char *old_hex = oid_to_hex(&remote_refs->old_oid);
-	printf("%s %s%c%s", old_hex, remote_refs->name, 0, cap_buf.buf);
+	printf("Old hex %s\n", old_hex);
 	return 0;
 }
 
 static int git_transport_push(struct transport *transport, struct ref *remote_refs, int flags)
 {
-  return push_to_everscale(transport, remote_refs, flags);
-/*
+//  return push_to_everscale(transport, remote_refs, flags);
+
 	struct git_transport_data *data = transport->data;
 	struct send_pack_args args;
 	int ret = 0;
@@ -846,28 +845,23 @@ static int git_transport_push(struct transport *transport, struct ref *remote_re
 		break;
 	case protocol_v1:
 	case protocol_v0:
-		ret = send_pack(&args, data->fd, data->conn, remote_refs,
-				&data->extra_have);
+//		ret = send_pack(&args, data->fd, data->conn, remote_refs,
+//				&data->extra_have);
 		break;
 	case protocol_unknown_version:
 		BUG("unknown protocol version");
 	}
 
 	close(data->fd[1]);
-	close(data->fd[0]); */
-	/*
-	 * Atomic push may abort the connection early and close the pipe,
-	 * which may cause an error for `finish_connect()`. Ignore this error
-	 * for atomic git-push.
-	 */
-/*	if (ret || args.atomic)
+	close(data->fd[0]); 
+  if (ret || args.atomic)
 		finish_connect(data->conn);
 	else
 		ret = finish_connect(data->conn);
 	data->conn = NULL;
 	data->got_remote_heads = 0;
 
-	return ret; */
+	return ret;
 }
 
 static int connect_git(struct transport *transport, const char *name,
