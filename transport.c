@@ -1373,11 +1373,11 @@ int transport_push(struct repository *r,
 			trace2_region_leave("transport_push", "check_submodules", r);
 		}
 
-		if (!(flags & TRANSPORT_RECURSE_SUBMODULES_ONLY)) {
-			trace2_region_enter("transport_push", "push_refs", r);
-			push_ret = transport->vtable->push_refs(transport, remote_refs, flags);
-			trace2_region_leave("transport_push", "push_refs", r);
-		} else
+//		if (!(flags & TRANSPORT_RECURSE_SUBMODULES_ONLY)) {
+//			trace2_region_enter("transport_push", "push_refs", r);
+//			push_ret = transport->vtable->push_refs(transport, remote_refs, flags);
+//			trace2_region_leave("transport_push", "push_refs", r);
+//		} else
 			push_ret = 0;
 		err = push_had_errors(remote_refs);
 		ret = push_ret | err;
@@ -1387,15 +1387,15 @@ int transport_push(struct repository *r,
 					verbose | porcelain, porcelain,
 					reject_reasons);
 
-//		if (flags & TRANSPORT_PUSH_SET_UPSTREAM)
-//			set_upstreams(transport, remote_refs, pretend);
+		if (flags & TRANSPORT_PUSH_SET_UPSTREAM)
+			set_upstreams(transport, remote_refs, pretend);
 
-//		if (!(flags & (TRANSPORT_PUSH_DRY_RUN |
-//			       TRANSPORT_RECURSE_SUBMODULES_ONLY))) {
-//			struct ref *ref;
-//			for (ref = remote_refs; ref; ref = ref->next)
-//				transport_update_tracking_ref(transport->remote, ref, verbose);
-//		}
+		if (!(flags & (TRANSPORT_PUSH_DRY_RUN |
+			       TRANSPORT_RECURSE_SUBMODULES_ONLY))) {
+			struct ref *ref;
+			for (ref = remote_refs; ref; ref = ref->next)
+				transport_update_tracking_ref(transport->remote, ref, verbose);
+		}
 
 		if (porcelain && !push_ret)
 			puts("Done, data pushed to Everscale");
