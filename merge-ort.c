@@ -4249,7 +4249,8 @@ static int record_conflicted_index_entries(struct merge_options *opt)
 }
 
 void merge_display_update_messages(struct merge_options *opt,
-				   struct merge_result *result)
+				   struct merge_result *result,
+				   FILE *stream)
 {
 	struct merge_options_internal *opti = result->priv;
 	struct hashmap_iter iter;
@@ -4276,13 +4277,13 @@ void merge_display_update_messages(struct merge_options *opt,
 	for (i = 0; i < olist.nr; ++i) {
 		struct strbuf *sb = olist.items[i].util;
 
-		printf("%s", sb->buf);
+		strbuf_write(sb, stream);
 	}
 	string_list_clear(&olist, 0);
 
 	/* Also include needed rename limit adjustment now */
 	diff_warn_rename_limit("merge.renamelimit",
-			       opti->renames.needed_limit, 0, stderr);
+			       opti->renames.needed_limit, 0, stream);
 
 	trace2_region_leave("merge", "display messages", opt->repo);
 }
@@ -4326,7 +4327,7 @@ void merge_switch_to_result(struct merge_options *opt,
 	}
 
 	if (display_update_msgs)
-		merge_display_update_messages(opt, result);
+		merge_display_update_messages(opt, result, stdout);
 
 	merge_finalize(opt, result);
 }
