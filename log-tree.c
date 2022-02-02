@@ -4,6 +4,7 @@
 #include "diff.h"
 #include "object-store.h"
 #include "repository.h"
+#include "tmp-objdir.h"
 #include "commit.h"
 #include "tag.h"
 #include "graph.h"
@@ -946,7 +947,12 @@ static int do_remerge_diff(struct rev_info *opt,
 	strbuf_release(&parent1_desc);
 	strbuf_release(&parent2_desc);
 	merge_finalize(&o, &res);
-	/* TODO: clean up the temporary object directory */
+
+	/* Clean up the contents of the temporary object directory */
+	if (opt->remerge_objdir)
+		tmp_objdir_discard_objects(opt->remerge_objdir);
+	else
+		BUG("did a remerge diff without remerge_objdir?!?");
 
 	return !opt->loginfo;
 }

@@ -422,13 +422,12 @@ static int cmd_log_walk(struct rev_info *rev)
 	struct commit *commit;
 	int saved_nrl = 0;
 	int saved_dcctc = 0;
-	struct tmp_objdir *remerge_objdir = NULL;
 
 	if (rev->remerge_diff) {
-		remerge_objdir = tmp_objdir_create("remerge-diff");
-		if (!remerge_objdir)
+		rev->remerge_objdir = tmp_objdir_create("remerge-diff");
+		if (!rev->remerge_objdir)
 			die(_("unable to create temporary object directory"));
-		tmp_objdir_replace_primary_odb(remerge_objdir, 1);
+		tmp_objdir_replace_primary_odb(rev->remerge_objdir, 1);
 	}
 
 	if (rev->early_output)
@@ -473,8 +472,10 @@ static int cmd_log_walk(struct rev_info *rev)
 	rev->diffopt.no_free = 0;
 	diff_free(&rev->diffopt);
 
-	if (rev->remerge_diff)
-		tmp_objdir_destroy(remerge_objdir);
+	if (rev->remerge_diff) {
+		tmp_objdir_destroy(rev->remerge_objdir);
+		rev->remerge_objdir = NULL;
+	}
 
 	if (rev->diffopt.output_format & DIFF_FORMAT_CHECKDIFF &&
 	    rev->diffopt.flags.check_failed) {
