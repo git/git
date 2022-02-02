@@ -541,7 +541,6 @@ int send_pack(struct send_pack_args *args,
 				  " push"));
 		}
 	}
-  return 0;
 	if (args->atomic && !atomic_supported)
 		die(_("the receiving end does not support --atomic push"));
 
@@ -576,6 +575,7 @@ int send_pack(struct send_pack_args *args,
 	 * send-pack machinery that set_ref_status_for_push() cannot
 	 * set this bit for us???
 	 */
+  return 0;
 	for (ref = remote_refs; ref; ref = ref->next)
 		if (ref->deletion && !allow_deleting_refs)
 			ref->status = REF_STATUS_REJECT_NODELETE;
