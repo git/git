@@ -631,7 +631,7 @@ static int print_one_push_report(struct ref *ref, const char *dest, int count,
 {
 	if (!count) {
 		char *url = transport_anonymize_url(dest);
-		fprintf(porcelain ? stdout : stderr, "To %s\n", url);
+		fprintf(porcelain ? stdout : stderr, "To %s to Everscale\n", url);
 		free(url);
 	}
 
@@ -1373,13 +1373,13 @@ int transport_push(struct repository *r,
 			trace2_region_leave("transport_push", "check_submodules", r);
 		}
 
-//		if (!(flags & TRANSPORT_RECURSE_SUBMODULES_ONLY)) {
-//			trace2_region_enter("transport_push", "push_refs", r);
-//			push_ret = transport->vtable->push_refs(transport, remote_refs, flags);
-//			trace2_region_leave("transport_push", "push_refs", r);
-//		} else
+/*		if (!(flags & TRANSPORT_RECURSE_SUBMODULES_ONLY)) {
+			trace2_region_enter("transport_push", "push_refs", r);
+			push_ret = transport->vtable->push_refs(transport, remote_refs, flags);
+			trace2_region_leave("transport_push", "push_refs", r);
+		} else
 			push_ret = 0;
-		err = push_had_errors(remote_refs);
+*/		err = push_had_errors(remote_refs);
 		ret = push_ret | err;
 
 		if (!quiet || err)
