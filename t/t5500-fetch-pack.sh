@@ -971,6 +971,13 @@ test_expect_success 'same as last but with config overrides' '
 		-c fetch.negotiationAlgorithm=default
 '
 
+test_expect_success 'ensure bogus fetch.negotiationAlgorithm yields error' '
+	test_when_finished rm -rf clientv0 &&
+	cp -r client clientv0 &&
+	test_must_fail git -C clientv0 --fetch.negotiationAlgorithm=bogus \
+		       fetch origin server_has both_have_2
+'
+
 test_expect_success 'filtering by size' '
 	rm -rf server client &&
 	test_create_repo server &&
