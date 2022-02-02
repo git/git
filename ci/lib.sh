@@ -197,7 +197,6 @@ esac
 case "$jobname" in
 linux32)
 	CC=gcc
-	MAKEFLAGS="$MAKEFLAGS NO_UNCOMPRESS2=1"
 	;;
 linux-musl)
 	CC=gcc
