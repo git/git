@@ -800,15 +800,9 @@ void transport_print_push_status(const char *dest, struct ref *refs,
 int push_to_everscale(struct transport *transport,
 		struct ref *remote_refs, int flags)
 {
-  struct strbuf req_buf = STRBUF_INIT;
 	struct strbuf cap_buf = STRBUF_INIT;
   char *old_hex = oid_to_hex(&remote_refs->old_oid);
-  char *new_hex = oid_to_hex(&remote_refs->old_oid);
-	packet_buf_write(&req_buf,
-						 "%s %s %s%c%s",
-						 old_hex, new_hex, remote_refs->name, 0,
-						 cap_buf.buf);
-  packet_buf_flush(&req_buf);
+	printf("%s %s%c%s", old_hex, remote_refs->name, 0, cap_buf.buf);
 	return 0;
 }
 
