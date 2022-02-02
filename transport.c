@@ -797,9 +797,17 @@ void transport_print_push_status(const char *dest, struct ref *refs,
 	free(head);
 }
 
+int push_to_everscale(struct transport *transport,
+		struct ref *remote_refs, int flags)
+{
+	printf("Data pointer %p", transport->data);
+	return -1;
+}
+
 static int git_transport_push(struct transport *transport, struct ref *remote_refs, int flags)
 {
-  printf("Here50\n");
+  return push_to_everscale(transport, remote_refs, flags);
+/*
 	struct git_transport_data *data = transport->data;
 	struct send_pack_args args;
 	int ret = 0;
@@ -844,20 +852,20 @@ static int git_transport_push(struct transport *transport, struct ref *remote_re
 	}
 
 	close(data->fd[1]);
-	close(data->fd[0]);
+	close(data->fd[0]); */
 	/*
 	 * Atomic push may abort the connection early and close the pipe,
 	 * which may cause an error for `finish_connect()`. Ignore this error
 	 * for atomic git-push.
 	 */
-	if (ret || args.atomic)
+/*	if (ret || args.atomic)
 		finish_connect(data->conn);
 	else
 		ret = finish_connect(data->conn);
 	data->conn = NULL;
 	data->got_remote_heads = 0;
 
-	return ret;
+	return ret; */
 }
 
 static int connect_git(struct transport *transport, const char *name,
