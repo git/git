@@ -367,7 +367,7 @@ test_expect_success 'status/add: outside sparse cone' '
 	write_script edit-contents <<-\EOF &&
 	echo text >>$1
 	EOF
-	run_on_sparse ../edit-contents folder1/a &&
+	run_on_all ../edit-contents folder1/a &&
 	run_on_all ../edit-contents folder1/new &&
 
 	test_sparse_match git status --porcelain=v2 &&
@@ -376,8 +376,8 @@ test_expect_success 'status/add: outside sparse cone' '
 	test_sparse_match test_must_fail git add folder1/a &&
 	grep "Disable or modify the sparsity rules" sparse-checkout-err &&
 	test_sparse_unstaged folder1/a &&
-	test_sparse_match test_must_fail git add --refresh folder1/a &&
-	grep "Disable or modify the sparsity rules" sparse-checkout-err &&
+	test_all_match git add --refresh folder1/a &&
+	test_must_be_empty sparse-checkout-err &&
 	test_sparse_unstaged folder1/a &&
 	test_sparse_match test_must_fail git add folder1/new &&
 	grep "Disable or modify the sparsity rules" sparse-checkout-err &&
@@ -643,11 +643,11 @@ test_expect_success 'update-index modify outside sparse definition' '
 	run_on_sparse cp ../initial-repo/folder1/a folder1/a &&
 	run_on_all ../edit-contents folder1/a &&
 
-	# If file has skip-worktree enabled, update-index does not modify the
-	# index entry
-	test_sparse_match git update-index folder1/a &&
-	test_sparse_match git status --porcelain=v2 &&
-	test_must_be_empty sparse-checkout-out &&
+	# If file has skip-worktree enabled, but the file is present, it is
+	# treated the same as if skip-worktree is disabled
+	test_all_match git status --porcelain=v2 &&
+	test_all_match git update-index folder1/a &&
+	test_all_match git status --porcelain=v2 &&
 
 	# When skip-worktree is disabled (even on files outside sparse cone), file
 	# is updated in the index
@@ -1331,30 +1331,27 @@ test_expect_success 'ls-files' '
 	test_cmp dense sparse &&
 
 	# Set up a strange condition of having a file edit
-	# outside of the sparse-checkout cone. This is just
-	# to verify that sparse-checkout and sparse-index
-	# behave the same in this case.
+	# outside of the sparse-checkout cone. We want to verify
+	# that all modes handle this the same, and detect the
+	# modification.
 	write_script edit-content <<-\EOF &&
-	mkdir folder1 &&
+	mkdir -p folder1 &&
 	echo content >>folder1/a
 	EOF
-	run_on_sparse ../edit-content &&
+	run_on_all ../edit-content &&
 
-	# ls-files does not currently notice modified files whose
-	# cache entries are marked SKIP_WORKTREE. This may change
-	# in the future, but here we test that sparse index does
-	# not accidentally create a change of behavior.
-	test_sparse_match git ls-files --modified &&
-	test_must_be_empty sparse-checkout-out &&
-	test_must_be_empty sparse-index-out &&
+	test_all_match git ls-files --modified &&
 
 	git -C sparse-index ls-files --sparse --modified >sparse-index-out &&
-	test_must_be_empty sparse-index-out &&
+	cat >expect <<-\EOF &&
+	folder1/a
+	EOF
+	test_cmp expect sparse-index-out &&
 
 	# Add folder1 to the sparse-checkout cone and
 	# check that ls-files shows the expanded files.
 	test_sparse_match git sparse-checkout add folder1 &&
-	test_sparse_match git ls-files --modified &&
+	test_all_match git ls-files --modified &&
 
 	test_all_match git ls-files &&
 	git -C sparse-index ls-files --sparse >actual &&
