@@ -800,8 +800,15 @@ void transport_print_push_status(const char *dest, struct ref *refs,
 int push_to_everscale(struct transport *transport,
 		struct ref *remote_refs, int flags)
 {
-	printf("Data pointer %p", transport->data);
-	return -1;
+  struct strbuf req_buf = STRBUF_INIT;
+	struct strbuf cap_buf = STRBUF_INIT;
+  char *old_hex = oid_to_hex(&remote_refs->old_oid);
+  char *new_hex = oid_to_hex(&remote_refs->old_oid);
+	packet_buf_write(&req_buf,
+						 "%s %s %s%c%s",
+						 old_hex, new_hex, remote_refs->name, 0,
+						 cap_buf.buf);
+	return 0;
 }
 
 static int git_transport_push(struct transport *transport, struct ref *remote_refs, int flags)
@@ -1384,9 +1391,7 @@ int transport_push(struct repository *r,
 
 		if (!(flags & TRANSPORT_RECURSE_SUBMODULES_ONLY)) {
 			trace2_region_enter("transport_push", "push_refs", r);
-      printf("Here0\n");
 			push_ret = transport->vtable->push_refs(transport, remote_refs, flags);
-      printf("Here100\n");
       trace2_region_leave("transport_push", "push_refs", r);
 		} else
 			push_ret = 0;
