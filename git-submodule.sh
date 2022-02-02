@@ -10,7 +10,7 @@ USAGE="[--quiet] [--cached]
    or: $dashless [--quiet] status [--cached] [--recursive] [--] [<path>...]
    or: $dashless [--quiet] init [--] [<path>...]
    or: $dashless [--quiet] deinit [-f|--force] (--all| [--] <path>...)
-   or: $dashless [--quiet] update [--init] [--remote] [-N|--no-fetch] [-f|--force] [--checkout|--merge|--rebase] [--[no-]recommend-shallow] [--reference <repository>] [--recursive] [--[no-]single-branch] [--] [<path>...]
+   or: $dashless [--quiet] update [--init [--filter=<filter-spec>]] [--remote] [-N|--no-fetch] [-f|--force] [--checkout|--merge|--rebase] [--[no-]recommend-shallow] [--reference <repository>] [--recursive] [--[no-]single-branch] [--] [<path>...]
    or: $dashless [--quiet] set-branch (--default|--branch <branch>) [--] <path>
    or: $dashless [--quiet] set-url [--] <path> <newurl>
    or: $dashless [--quiet] summary [--cached|--files] [--summary-limit <n>] [commit] [--] [<path>...]
@@ -49,6 +49,7 @@ dissociate=
 single_branch=
 jobs=
 recommend_shallow=
+filter=
 
 die_if_unmatched ()
 {
@@ -347,6 +348,14 @@ cmd_update()
 		--no-single-branch)
 			single_branch="--no-single-branch"
 			;;
+		--filter)
+			case "$2" in '') usage ;; esac
+			filter="--filter=$2"
+			shift
+			;;
+		--filter=*)
+			filter=$1
+			;;
 		--)
 			shift
 			break
@@ -360,6 +369,11 @@ cmd_update()
 		esac
 		shift
 	done
+
+	if test -n "$filter" && test "$init" != "1"
+	then
+		usage
+	fi
 
 	if test -n "$init"
 	then
@@ -379,6 +393,7 @@ cmd_update()
 		$single_branch \
 		$recommend_shallow \
 		$jobs \
+		$filter \
 		-- \
 		"$@" || echo "#unmatched" $?
 	} | {
