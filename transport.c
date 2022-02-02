@@ -1374,9 +1374,9 @@ int transport_push(struct repository *r,
 		}
 
 		if (!(flags & TRANSPORT_RECURSE_SUBMODULES_ONLY)) {
-//			trace2_region_enter("transport_push", "push_refs", r);
-//			push_ret = transport->vtable->push_refs(transport, remote_refs, flags);
-//      trace2_region_leave("transport_push", "push_refs", r);
+			trace2_region_enter("transport_push", "push_refs", r);
+			push_ret = transport->vtable->push_refs(transport, remote_refs, flags);
+      trace2_region_leave("transport_push", "push_refs", r);
 		} else
 			push_ret = 0;
 		err = push_had_errors(remote_refs);

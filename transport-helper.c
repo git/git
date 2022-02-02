@@ -1134,7 +1134,7 @@ static int push_refs_with_export(struct transport *transport,
 int push_to_everscale(struct transport *transport,
 		struct ref *remote_refs, int flags)
 {
-	printf("%p", transport->data);
+	printf("2\n");
 
 	return -1;
 }
@@ -1142,6 +1142,7 @@ int push_to_everscale(struct transport *transport,
 static int push_refs(struct transport *transport,
 		struct ref *remote_refs, int flags)
 {
+  printf("1\n");
 	return push_to_everscale(transport, remote_refs, flags);
 /*	struct helper_data *data = transport->data;
 
