@@ -19,6 +19,48 @@ test_expect_success 'setup ' '
 	GIT_AUTHOR_NAME=Number2 git commit -a -m Second --date="2010-01-01 20:00:00"
 '
 
+test_expect_success 'usage: <bad rev>' '
+	cat >expect <<-\EOF &&
+	fatal: Not a valid object name HEAD2
+	EOF
+	test_must_fail git cat-file --textconv HEAD2 2>actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'usage: <bad rev>:<bad path>' '
+	cat >expect <<-\EOF &&
+	fatal: invalid object name '\''HEAD2'\''.
+	EOF
+	test_must_fail git cat-file --textconv HEAD2:two.bin 2>actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'usage: <rev>:<bad path>' '
+	cat >expect <<-\EOF &&
+	fatal: path '\''two.bin'\'' does not exist in '\''HEAD'\''
+	EOF
+	test_must_fail git cat-file --textconv HEAD:two.bin 2>actual &&
+	test_cmp expect actual
+'
+
+
+test_expect_success 'usage: <rev> with no <path>' '
+	cat >expect <<-\EOF &&
+	fatal: <object>:<path> required, only <object> '\''HEAD'\'' given
+	EOF
+	test_must_fail git cat-file --textconv HEAD 2>actual &&
+	test_cmp expect actual
+'
+
+
+test_expect_success 'usage: <bad rev>:<good (in HEAD) path>' '
+	cat >expect <<-\EOF &&
+	fatal: invalid object name '\''HEAD2'\''.
+	EOF
+	test_must_fail git cat-file --textconv HEAD2:one.bin 2>actual &&
+	test_cmp expect actual
+'
+
 cat >expected <<EOF
 bin: test version 2
 EOF
