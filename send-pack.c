@@ -777,12 +777,9 @@ int pack_data_to_everscale(struct send_pack_args *args,
 	po.out = args->stateless_rpc ? -1 : fd[1];
 	po.git_cmd = 1;
 	po.clean_on_exit = 1;
-	if (start_command(&po))
-		die_errno("git pack-objects failed");
-
-	po_in = fopen("packed_file_to_sent", "w");
-  fputs("Everscale_pack\n", po_in);
-/*	for (i = 0; i < extra_have->nr; i++)
+  remove("packed_file_to_sent");
+	po_in = fopen("packed_file_to_sent", "w+");
+	for (i = 0; i < extra_have->nr; i++)
 		feed_object(&extra_have->oid[i], po_in, 1);
 	for (i = 0; i < commons.nr; i++)
 		feed_object(&commons.oid[i], po_in, 1);
@@ -793,7 +790,7 @@ int pack_data_to_everscale(struct send_pack_args *args,
 		if (!is_null_oid(&remote_refs->new_oid))
 			feed_object(&remote_refs->new_oid, po_in, 0);
 		remote_refs = remote_refs->next;
-	}*/
+	}
 
 	fflush(po_in);
 	if (ferror(po_in))
