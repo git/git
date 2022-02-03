@@ -109,7 +109,6 @@ static int pack_objects(int fd, struct ref *refs, struct oid_array *advertised,
 		refs = refs->next;
 	}
 	fflush(po_in);
-  exit(0);
   
 	if (ferror(po_in))
 		die_errno("error writing to pack-objects");
@@ -128,6 +127,8 @@ static int pack_objects(int fd, struct ref *refs, struct oid_array *advertised,
 		po.out = -1;
 	} 
 	rc = finish_command(&po);
+
+  exit(0);
 	if (rc) {
 		/*
 		 * For a normal non-zero exit, we assume pack-objects wrote
