@@ -311,8 +311,7 @@ struct progress *start_delayed_sparse_progress(const char *title,
 
 static void finish_if_sparse(struct progress *progress)
 {
-	if (progress &&
-	    progress->sparse &&
+	if (progress->sparse &&
 	    progress->last_value != progress->total)
 		display_progress(progress, progress->total);
 }
@@ -347,22 +346,6 @@ static void log_trace2(struct progress *progress)
 	trace2_region_leave("progress", progress->title, the_repository);
 }
 
-void stop_progress(struct progress **p_progress)
-{
-	struct progress *progress;
-
-	if (!p_progress)
-		BUG("don't provide NULL to stop_progress");
-	progress = *p_progress;
-
-	finish_if_sparse(progress);
-
-	if (progress)
-		log_trace2(*p_progress);
-
-	stop_progress_msg(p_progress, _("done"));
-}
-
 void stop_progress_msg(struct progress **p_progress, const char *msg)
 {
 	struct progress *progress;
@@ -375,8 +358,10 @@ void stop_progress_msg(struct progress **p_progress, const char *msg)
 		return;
 	*p_progress = NULL;
 
+	finish_if_sparse(progress);
 	if (progress->last_value != -1)
 		force_last_update(progress, msg);
+	log_trace2(progress);
 
 	clear_progress_signal();
 	strbuf_release(&progress->counters_sb);
