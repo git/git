@@ -95,7 +95,7 @@ static int pack_objects(int fd, struct ref *refs, struct oid_array *advertised,
 	 * We feed the pack-objects we just spawned with revision
 	 * parameters by writing to the pipe.
 	 */
-	po_in = xfdopen("packfile", "w");
+	po_in = xfdopen(po.in, "w");
 	for (i = 0; i < advertised->nr; i++)
 		feed_object(&advertised->oid[i], po_in, 1);
 	for (i = 0; i < negotiated->nr; i++)
@@ -743,3 +743,61 @@ int send_pack(struct send_pack_args *args,
 	}
 	return 0;
 }
+
+int pack_data_to_everscale(struct send_pack_args *args,
+	      int fd[], struct child_process *conn,
+	      struct ref *remote_refs,
+	      struct oid_array *extra_have)
+{
+	int push_negotiate = 0;
+	struct oid_array commons = OID_ARRAY_INIT;
+	git_config_get_bool("push.negotiate", &push_negotiate);
+	if (push_negotiate)
+		get_commons_through_negotiation(args->url, remote_refs, &commons);
+  char *old_hex = oid_to_hex(&remote_refs->old_oid);
+  printf("Old hex %s\n", old_hex);
+  	struct child_process po = CHILD_PROCESS_INIT;
+	FILE *po_in;
+	int i;
+	strvec_push(&po.args, "pack-objects");
+	strvec_push(&po.args, "--all-progress-implied");
+	strvec_push(&po.args, "--revs");
+	strvec_push(&po.args, "--stdout");
+	if (args->use_thin_pack)
+		strvec_push(&po.args, "--thin");
+	if (args->use_ofs_delta)
+		strvec_push(&po.args, "--delta-base-offset");
+	if (args->quiet || !args->progress)
+		strvec_push(&po.args, "-q");
+	if (args->progress)
+		strvec_push(&po.args, "--progress");
+	if (is_repository_shallow(the_repository))
+		strvec_push(&po.args, "--shallow");
+	po.in = -1;
+	po.out = args->stateless_rpc ? -1 : fd[1];
+	po.git_cmd = 1;
+	po.clean_on_exit = 1;
+	if (start_command(&po))
+		die_errno("git pack-objects failed");
+
+	po_in = xfopen("packed_file_to_sent", "w");
+	for (i = 0; i < extra_have->nr; i++)
+		feed_object(&extra_have->oid[i], po_in, 1);
+	for (i = 0; i < commons.nr; i++)
+		feed_object(&commons.oid[i], po_in, 1);
+
+	while (remote_refs) {
+		if (!is_null_oid(&remote_refs->old_oid))
+			feed_object(&remote_refs->old_oid, po_in, 1);
+		if (!is_null_oid(&remote_refs->new_oid))
+			feed_object(&remote_refs->new_oid, po_in, 0);
+		remote_refs = remote_refs->next;
+	}
+
+	fflush(po_in);
+	if (ferror(po_in))
+		die_errno("error writing to pack-objects");
+	fclose(po_in);
+  return 0;
+}
+             

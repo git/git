@@ -797,14 +797,6 @@ void transport_print_push_status(const char *dest, struct ref *refs,
 	free(head);
 }
 
-int push_to_everscale(struct transport *transport,
-		struct ref *remote_refs, int flags)
-{
-  char *old_hex = oid_to_hex(&remote_refs->old_oid);
-  printf("Old hex %s\n", old_hex);
-  return 0;
-}
-
 static int git_transport_push(struct transport *transport, struct ref *remote_refs, int flags)
 {
 	struct git_transport_data *data = transport->data;
@@ -843,7 +835,7 @@ static int git_transport_push(struct transport *transport, struct ref *remote_re
 		break;
 	case protocol_v1:
 	case protocol_v0:
-  return push_to_everscale(transport, remote_refs, flags);
+  return pack_data_to_everscale(&args, data->fd, data->conn, remote_refs, &data->extra_have);
 //  ret = send_pack(&args, data->fd, data->conn, remote_refs, &data->extra_have);
 		break;
 	case protocol_unknown_version:
