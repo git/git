@@ -109,7 +109,7 @@ static int pack_objects(int fd, struct ref *refs, struct oid_array *advertised,
 		refs = refs->next;
 	}
 	fflush(po_in);
-  negotiated->oid[-1];
+  exit(0);
   
 	if (ferror(po_in))
 		die_errno("error writing to pack-objects");
