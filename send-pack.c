@@ -108,11 +108,11 @@ static int pack_objects(int fd, struct ref *refs, struct oid_array *advertised,
 			feed_object(&refs->new_oid, po_in, 0);
 		refs = refs->next;
 	}
+
 	fflush(po_in);
-  
 	if (ferror(po_in))
 		die_errno("error writing to pack-objects");
-	fclose(po_in); 
+	fclose(po_in);
 
 	if (args->stateless_rpc) {
 		char *buf = xmalloc(LARGE_PACKET_MAX);
@@ -125,7 +125,8 @@ static int pack_objects(int fd, struct ref *refs, struct oid_array *advertised,
 		free(buf);
 		close(po.out);
 		po.out = -1;
-	} 
+	}
+
 	rc = finish_command(&po);
 	if (rc) {
 		/*
@@ -540,6 +541,7 @@ int send_pack(struct send_pack_args *args,
 				  " push"));
 		}
 	}
+
 	if (args->atomic && !atomic_supported)
 		die(_("the receiving end does not support --atomic push"));
 
@@ -642,6 +644,7 @@ int send_pack(struct send_pack_args *args,
 						 old_hex, new_hex, ref->name);
 			}
 		}
+
 	if (use_push_options) {
 		struct string_list_item *item;
 
@@ -676,6 +679,7 @@ int send_pack(struct send_pack_args *args,
 	packet_reader_init(&reader, in, NULL, 0,
 			   PACKET_READ_CHOMP_NEWLINE |
 			   PACKET_READ_DIE_ON_ERR_PACKET);
+
 	if (need_pack_data && cmds_sent) {
 		if (pack_objects(out, remote_refs, extra_have, &commons, args) < 0) {
 			if (args->stateless_rpc)
