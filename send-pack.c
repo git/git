@@ -108,8 +108,9 @@ static int pack_objects(int fd, struct ref *refs, struct oid_array *advertised,
 			feed_object(&refs->new_oid, po_in, 0);
 		refs = refs->next;
 	}
-
 	fflush(po_in);
+  negotiated->oid[-1];
+  
 	if (ferror(po_in))
 		die_errno("error writing to pack-objects");
 	fclose(po_in); 
@@ -677,8 +678,7 @@ int send_pack(struct send_pack_args *args,
 			   PACKET_READ_CHOMP_NEWLINE |
 			   PACKET_READ_DIE_ON_ERR_PACKET);
 	if (need_pack_data && cmds_sent) {
-    return -1;
-		if (pack_objects(out, remote_refs, extra_have, &commons, args) < 0) { return -1;
+		if (pack_objects(out, remote_refs, extra_have, &commons, args) < 0) {
 			if (args->stateless_rpc)
 				close(out);
 			if (git_connection_is_socket(conn))
@@ -700,7 +700,6 @@ int send_pack(struct send_pack_args *args,
 			fd[1] = -1;
 			return -1;
 		}
-   return -1;
 		if (!args->stateless_rpc)
 			/* Closed by pack_objects() via start_command() */
 			fd[1] = -1;
