@@ -95,7 +95,6 @@ static int pack_objects(int fd, struct ref *refs, struct oid_array *advertised,
 	 * We feed the pack-objects we just spawned with revision
 	 * parameters by writing to the pipe.
 	 */
-  return -1;
 	po_in = xfdopen(po.in, "w");
 	for (i = 0; i < advertised->nr; i++)
 		feed_object(&advertised->oid[i], po_in, 1);
@@ -113,7 +112,7 @@ static int pack_objects(int fd, struct ref *refs, struct oid_array *advertised,
 	fflush(po_in);
 	if (ferror(po_in))
 		die_errno("error writing to pack-objects");
-	fclose(po_in);
+	fclose(po_in); 
 
 	if (args->stateless_rpc) {
 		char *buf = xmalloc(LARGE_PACKET_MAX);
@@ -126,7 +125,7 @@ static int pack_objects(int fd, struct ref *refs, struct oid_array *advertised,
 		free(buf);
 		close(po.out);
 		po.out = -1;
-	}
+	} 
 	rc = finish_command(&po);
 	if (rc) {
 		/*
@@ -678,7 +677,8 @@ int send_pack(struct send_pack_args *args,
 			   PACKET_READ_CHOMP_NEWLINE |
 			   PACKET_READ_DIE_ON_ERR_PACKET);
 	if (need_pack_data && cmds_sent) {
-		if (pack_objects(out, remote_refs, extra_have, &commons, args) < 0) {
+    return -1;
+		if (pack_objects(out, remote_refs, extra_have, &commons, args) < 0) { return -1;
 			if (args->stateless_rpc)
 				close(out);
 			if (git_connection_is_socket(conn))
@@ -700,6 +700,7 @@ int send_pack(struct send_pack_args *args,
 			fd[1] = -1;
 			return -1;
 		}
+   return -1;
 		if (!args->stateless_rpc)
 			/* Closed by pack_objects() via start_command() */
 			fd[1] = -1;
