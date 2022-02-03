@@ -365,7 +365,7 @@ static void add_ref_to_island(const char *island_name, const struct object_id *o
 }
 
 static int find_island_for_ref(const char *refname, const struct object_id *oid,
-			       int flags, void *data)
+			       unsigned int flags, void *data)
 {
 	/*
 	 * We should advertise 'ARRAY_SIZE(matches) - 2' as the max,

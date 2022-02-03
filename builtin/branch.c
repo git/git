@@ -246,7 +246,7 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 
 	for (i = 0; i < argc; i++, strbuf_reset(&bname)) {
 		char *target = NULL;
-		int flags = 0;
+		unsigned int flags = 0;
 
 		strbuf_branchname(&bname, argv[i], allowed_interpret);
 		free(name);
@@ -481,7 +481,7 @@ static void print_ref_list(struct ref_filter *filter, struct ref_sorting *sortin
 
 static void print_current_branch_name(void)
 {
-	int flags;
+	unsigned int flags;
 	const char *refname = resolve_ref_unsafe("HEAD", 0, NULL, &flags);
 	const char *shortname;
 	if (!refname)

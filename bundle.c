@@ -371,7 +371,7 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 		struct object_id oid;
 		char *ref;
 		const char *display_ref;
-		int flag;
+		unsigned int flag;
 
 		if (e->item->flags & UNINTERESTING)
 			continue;

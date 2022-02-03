@@ -293,7 +293,7 @@ done:
 
 static int include_by_branch(const char *cond, size_t cond_len)
 {
-	int flags;
+	unsigned int flags;
 	int ret;
 	struct strbuf pattern = STRBUF_INIT;
 	const char *refname = !the_repository->gitdir ?

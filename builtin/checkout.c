@@ -974,7 +974,7 @@ static void update_refs_for_switch(const struct checkout_opts *opts,
 
 static int add_pending_uninteresting_ref(const char *refname,
 					 const struct object_id *oid,
-					 int flags, void *cb_data)
+					 unsigned int flags, void *cb_data)
 {
 	add_pending_oid(cb_data, refname, oid, UNINTERESTING);
 	return 0;
@@ -1083,7 +1083,8 @@ static int switch_branches(const struct checkout_opts *opts,
 	int ret = 0;
 	struct branch_info old_branch_info = { 0 };
 	struct object_id rev;
-	int flag, writeout_error = 0;
+	int writeout_error = 0;
+	unsigned int flag;
 	int do_merge = 1;
 
 	trace2_cmd_mode("branch");
@@ -1509,7 +1510,7 @@ static int checkout_branch(struct checkout_opts *opts,
 
 	if (new_branch_info->path && !opts->force_detach && !opts->new_branch &&
 	    !opts->ignore_other_worktrees) {
-		int flag;
+		unsigned int flag;
 		char *head_ref = resolve_refdup("HEAD", 0, NULL, &flag);
 		if (head_ref &&
 		    (!(flag & REF_ISSYMREF) || strcmp(head_ref, new_branch_info->path)))
@@ -1519,7 +1520,7 @@ static int checkout_branch(struct checkout_opts *opts,
 
 	if (!new_branch_info->commit && opts->new_branch) {
 		struct object_id rev;
-		int flag;
+		unsigned int flag;
 
 		if (!read_ref_full("HEAD", 0, &rev, &flag) &&
 		    (flag & REF_ISSYMREF) && is_null_oid(&rev))

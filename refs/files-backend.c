@@ -261,7 +261,7 @@ static void loose_fill_ref_dir(struct ref_store *ref_store,
 	while ((de = readdir(d)) != NULL) {
 		struct object_id oid;
 		struct stat st;
-		int flag;
+		unsigned int flag;
 
 		if (de->d_name[0] == '.')
 			continue;
@@ -1399,7 +1399,8 @@ static int files_copy_or_rename_ref(struct ref_store *ref_store,
 	struct files_ref_store *refs =
 		files_downcast(ref_store, REF_STORE_WRITE, "rename_ref");
 	struct object_id orig_oid;
-	int flag = 0, logmoved = 0;
+	int logmoved = 0;
+	unsigned int flag = 0;
 	struct ref_lock *lock;
 	struct stat loginfo;
 	struct strbuf sb_oldref = STRBUF_INIT;
@@ -1833,7 +1834,7 @@ static int commit_ref_update(struct files_ref_store *refs,
 		 * check with HEAD only which should cover 99% of all usage
 		 * scenarios (even 100% of the default ones).
 		 */
-		int head_flag;
+		unsigned int head_flag;
 		const char *head_ref;
 
 		head_ref = refs_resolve_ref_unsafe(&refs->base, "HEAD",
@@ -2161,7 +2162,7 @@ static int files_reflog_iterator_advance(struct ref_iterator *ref_iterator)
 	int ok;
 
 	while ((ok = dir_iterator_advance(diter)) == ITER_OK) {
-		int flags;
+		unsigned int flags;
 
 		if (!S_ISREG(diter->st.st_mode))
 			continue;
@@ -2668,7 +2669,7 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 	int ret = 0;
 	struct string_list affected_refnames = STRING_LIST_INIT_NODUP;
 	char *head_ref = NULL;
-	int head_type;
+	unsigned int head_type;
 	struct files_transaction_backend_data *backend_data;
 	struct ref_transaction *packed_transaction = NULL;
 
@@ -2982,8 +2983,8 @@ static int files_transaction_abort(struct ref_store *ref_store,
 	return 0;
 }
 
-static int ref_present(const char *refname,
-		       const struct object_id *oid, int flags, void *cb_data)
+static int ref_present(const char *refname, const struct object_id *oid,
+		       unsigned int flags, void *cb_data)
 {
 	struct string_list *affected_refnames = cb_data;
 
@@ -3209,7 +3210,7 @@ static int files_reflog_expire(struct ref_store *ref_store,
 
 		if ((expire_flags & EXPIRE_REFLOGS_UPDATE_REF) &&
 		    !is_null_oid(&cb.last_kept_oid)) {
-			int type;
+			unsigned int type;
 			const char *ref;
 
 			ref = refs_resolve_ref_unsafe(&refs->base, refname,

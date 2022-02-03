@@ -938,9 +938,8 @@ static void prepare_midx_packing_data(struct packing_data *pdata,
 	}
 }
 
-static int add_ref_to_pending(const char *refname,
-			      const struct object_id *oid,
-			      int flag, void *cb_data)
+static int add_ref_to_pending(const char *refname, const struct object_id *oid,
+			      unsigned int flag, void *cb_data)
 {
 	struct rev_info *revs = (struct rev_info*)cb_data;
 	struct object *object;

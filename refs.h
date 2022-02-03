@@ -63,23 +63,21 @@ struct worktree;
 #define RESOLVE_REF_NO_RECURSE 0x02
 #define RESOLVE_REF_ALLOW_BAD_NAME 0x04
 
-const char *refs_resolve_ref_unsafe(struct ref_store *refs,
-				    const char *refname,
-				    int resolve_flags,
-				    struct object_id *oid,
-				    int *flags);
+const char *refs_resolve_ref_unsafe(struct ref_store *refs, const char *refname,
+				    unsigned int resolve_flags,
+				    struct object_id *oid, unsigned int *flags);
 
-const char *resolve_ref_unsafe(const char *refname, int resolve_flags,
-			       struct object_id *oid, int *flags);
+const char *resolve_ref_unsafe(const char *refname, unsigned int resolve_flags,
+			       struct object_id *oid, unsigned int *flags);
 
-char *refs_resolve_refdup(struct ref_store *refs,
-			  const char *refname, int resolve_flags,
-			  struct object_id *oid, int *flags);
-char *resolve_refdup(const char *refname, int resolve_flags,
-		     struct object_id *oid, int *flags);
+char *refs_resolve_refdup(struct ref_store *refs, const char *refname,
+			  unsigned int resolve_flags, struct object_id *oid,
+			  unsigned int *flags);
+char *resolve_refdup(const char *refname, unsigned int resolve_flags,
+		     struct object_id *oid, unsigned int *flags);
 
-int read_ref_full(const char *refname, int resolve_flags,
-		  struct object_id *oid, int *flags);
+int read_ref_full(const char *refname, unsigned int resolve_flags,
+		  struct object_id *oid, unsigned int *flags);
 int read_ref(const char *refname, struct object_id *oid);
 
 /*
@@ -293,17 +291,15 @@ struct ref_transaction;
  * arguments is only guaranteed to be valid for the duration of a
  * single callback invocation.
  */
-typedef int each_ref_fn(const char *refname,
-			const struct object_id *oid, int flags, void *cb_data);
+typedef int each_ref_fn(const char *refname, const struct object_id *oid,
+			unsigned int flags, void *cb_data);
 
 /*
  * The same as each_ref_fn, but also with a repository argument that
  * contains the repository associated with the callback.
  */
-typedef int each_repo_ref_fn(struct repository *r,
-			     const char *refname,
-			     const struct object_id *oid,
-			     int flags,
+typedef int each_repo_ref_fn(struct repository *r, const char *refname,
+			     const struct object_id *oid, unsigned int flags,
 			     void *cb_data);
 
 /*
@@ -527,7 +523,7 @@ int for_each_reflog(each_ref_fn fn, void *cb_data);
  * allow a single "*" wildcard character in the refspec. No leading or
  * repeated slashes are accepted.
  */
-int check_refname_format(const char *refname, int flags);
+int check_refname_format(const char *refname, unsigned int flags);
 
 /*
  * Apply the rules from check_refname_format, but mutate the result until it
@@ -897,7 +893,7 @@ struct ref_store *get_main_ref_store(struct repository *r);
  *
  * ----
  * static int handle_remote_ref(const char *refname,
- * 		const unsigned char *sha1, int flags, void *cb_data)
+ * 		const unsigned char *sha1, unsigned int flags, void *cb_data)
  * {
  * 	struct strbuf *output = cb_data;
  * 	strbuf_addf(output, "%s\n", refname);

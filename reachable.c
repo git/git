@@ -27,7 +27,7 @@ static void update_progress(struct connectivity_progress *cp)
 }
 
 static int add_one_ref(const char *path, const struct object_id *oid,
-		       int flag, void *cb_data)
+		       unsigned int flag, void *cb_data)
 {
 	struct rev_info *revs = (struct rev_info *)cb_data;
 	struct object *object;

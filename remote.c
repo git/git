@@ -500,7 +500,7 @@ static void alias_all_urls(struct remote_state *remote_state)
 
 static void read_config(struct repository *repo)
 {
-	int flag;
+	unsigned int flag;
 
 	if (repo->remote_state->initialized)
 		return;
@@ -1271,7 +1271,7 @@ static int match_explicit(struct ref *src, struct ref *dst,
 		return -1;
 
 	if (!dst_value) {
-		int flag;
+		unsigned int flag;
 
 		dst_value = resolve_ref_unsafe(matched_src->name,
 					       RESOLVE_REF_READING,
@@ -1947,7 +1947,7 @@ const char *branch_get_push(struct branch *branch, struct strbuf *err)
 
 static int ignore_symref_update(const char *refname)
 {
-	int flag;
+	unsigned int flag;
 
 	if (!resolve_ref_unsafe(refname, 0, NULL, &flag))
 		return 0; /* non-existing refs are OK */
@@ -2287,7 +2287,7 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb,
 }
 
 static int one_local_ref(const char *refname, const struct object_id *oid,
-			 int flag, void *cb_data)
+			 unsigned int flag, void *cb_data)
 {
 	struct ref ***local_tail = cb_data;
 	struct ref *ref;
@@ -2368,7 +2368,7 @@ struct stale_heads_info {
 };
 
 static int get_stale_heads_cb(const char *refname, const struct object_id *oid,
-			      int flags, void *cb_data)
+			      unsigned int flags, void *cb_data)
 {
 	struct stale_heads_info *info = cb_data;
 	struct string_list matches = STRING_LIST_INIT_DUP;

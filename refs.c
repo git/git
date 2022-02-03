@@ -74,7 +74,7 @@ static unsigned char refname_disposition[256] = {
  * as an error, try to come up with a usable replacement for the input
  * refname in it.
  */
-static int check_refname_component(const char *refname, int *flags,
+static int check_refname_component(const char *refname, unsigned int *flags,
 				   struct strbuf *sanitized)
 {
 	const char *cp;
@@ -158,7 +158,7 @@ out:
 	return cp - refname;
 }
 
-static int check_or_sanitize_refname(const char *refname, int flags,
+static int check_or_sanitize_refname(const char *refname, unsigned int flags,
 				     struct strbuf *sanitized)
 {
 	int component_len, component_count = 0;
@@ -202,7 +202,7 @@ static int check_or_sanitize_refname(const char *refname, int flags,
 	return 0;
 }
 
-int check_refname_format(const char *refname, int flags)
+int check_refname_format(const char *refname, unsigned int flags)
 {
 	return check_or_sanitize_refname(refname, flags, NULL);
 }
@@ -264,9 +264,9 @@ int ref_resolves_to_object(const char *refname,
 	return 1;
 }
 
-char *refs_resolve_refdup(struct ref_store *refs,
-			  const char *refname, int resolve_flags,
-			  struct object_id *oid, int *flags)
+char *refs_resolve_refdup(struct ref_store *refs, const char *refname,
+			  unsigned int resolve_flags, struct object_id *oid,
+			  unsigned int *flags)
 {
 	const char *result;
 
@@ -275,8 +275,8 @@ char *refs_resolve_refdup(struct ref_store *refs,
 	return xstrdup_or_null(result);
 }
 
-char *resolve_refdup(const char *refname, int resolve_flags,
-		     struct object_id *oid, int *flags)
+char *resolve_refdup(const char *refname, unsigned int resolve_flags,
+		     struct object_id *oid, unsigned int *flags)
 {
 	return refs_resolve_refdup(get_main_ref_store(the_repository),
 				   refname, resolve_flags,
@@ -291,7 +291,8 @@ struct ref_filter {
 	void *cb_data;
 };
 
-int read_ref_full(const char *refname, int resolve_flags, struct object_id *oid, int *flags)
+int read_ref_full(const char *refname, unsigned int resolve_flags,
+		  struct object_id *oid, unsigned int *flags)
 {
 	struct ref_store *refs = get_main_ref_store(the_repository);
 
@@ -318,7 +319,7 @@ int ref_exists(const char *refname)
 }
 
 static int filter_refs(const char *refname, const struct object_id *oid,
-			   int flags, void *data)
+		       unsigned int flags, void *data)
 {
 	struct ref_filter *filter = (struct ref_filter *)data;
 
@@ -357,8 +358,9 @@ struct warn_if_dangling_data {
 	const char *msg_fmt;
 };
 
-static int warn_if_dangling_symref(const char *refname, const struct object_id *oid,
-				   int flags, void *cb_data)
+static int warn_if_dangling_symref(const char *refname,
+				   const struct object_id *oid,
+				   unsigned int flags, void *cb_data)
 {
 	struct warn_if_dangling_data *d = cb_data;
 	const char *resolves_to;
@@ -436,7 +438,7 @@ int head_ref_namespaced(each_ref_fn fn, void *cb_data)
 	struct strbuf buf = STRBUF_INIT;
 	int ret = 0;
 	struct object_id oid;
-	int flag;
+	unsigned int flag;
 
 	strbuf_addf(&buf, "%sHEAD", get_git_namespace());
 	if (!read_ref_full(buf.buf, RESOLVE_REF_READING, &oid, &flag))
@@ -651,7 +653,7 @@ int expand_ref(struct repository *repo, const char *str, int len,
 	for (p = ref_rev_parse_rules; *p; p++) {
 		struct object_id oid_from_ref;
 		struct object_id *this_result;
-		int flag;
+		unsigned int flag;
 		struct ref_store *refs = get_main_ref_store(repo);
 
 		this_result = refs_found ? &oid_from_ref : oid;
@@ -1384,7 +1386,7 @@ const char *find_descendant_ref(const char *dirname,
 int refs_head_ref(struct ref_store *refs, each_ref_fn fn, void *cb_data)
 {
 	struct object_id oid;
-	int flag;
+	unsigned int flag;
 
 	if (refs_resolve_ref_unsafe(refs, "HEAD", RESOLVE_REF_READING,
 				    &oid, &flag))
@@ -1461,11 +1463,9 @@ struct do_for_each_ref_help {
 	void *cb_data;
 };
 
-static int do_for_each_ref_helper(struct repository *r,
-				  const char *refname,
+static int do_for_each_ref_helper(struct repository *r, const char *refname,
 				  const struct object_id *oid,
-				  int flags,
-				  void *cb_data)
+				  unsigned int flags, void *cb_data)
 {
 	struct do_for_each_ref_help *hp = cb_data;
 
@@ -1672,15 +1672,13 @@ int refs_read_raw_ref(struct ref_store *ref_store, const char *refname,
 					   type, failure_errno);
 }
 
-const char *refs_resolve_ref_unsafe(struct ref_store *refs,
-				    const char *refname,
-				    int resolve_flags,
-				    struct object_id *oid,
-				    int *flags)
+const char *refs_resolve_ref_unsafe(struct ref_store *refs, const char *refname,
+				    unsigned int resolve_flags,
+				    struct object_id *oid, unsigned int *flags)
 {
 	static struct strbuf sb_refname = STRBUF_INIT;
 	struct object_id unused_oid;
-	int unused_flags;
+	unsigned int unused_flags;
 	int symref_count;
 
 	if (!oid)
@@ -1769,8 +1767,8 @@ int refs_init_db(struct strbuf *err)
 	return refs->be->init_db(refs, err);
 }
 
-const char *resolve_ref_unsafe(const char *refname, int resolve_flags,
-			       struct object_id *oid, int *flags)
+const char *resolve_ref_unsafe(const char *refname, unsigned int resolve_flags,
+			       struct object_id *oid, unsigned int *flags)
 {
 	return refs_resolve_ref_unsafe(get_main_ref_store(the_repository), refname,
 				       resolve_flags, oid, flags);
@@ -1780,7 +1778,7 @@ int resolve_gitlink_ref(const char *submodule, const char *refname,
 			struct object_id *oid)
 {
 	struct ref_store *refs;
-	int flags;
+	unsigned int flags;
 
 	refs = get_submodule_ref_store(submodule);
 

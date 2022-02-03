@@ -135,7 +135,7 @@ static int ref_filter_match(const char *refname,
 }
 
 static int add_ref_decoration(const char *refname, const struct object_id *oid,
-			      int flags, void *cb_data)
+			      unsigned int flags, void *cb_data)
 {
 	struct object *obj;
 	enum object_type objtype;
@@ -245,7 +245,7 @@ static const struct name_decoration *current_pointed_by_HEAD(const struct name_d
 {
 	const struct name_decoration *list, *head = NULL;
 	const char *branch_name = NULL;
-	int rru_flags;
+	unsigned int rru_flags;
 
 	/* First find HEAD */
 	for (list = decoration; list; list = list->next)

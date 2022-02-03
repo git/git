@@ -1291,7 +1291,7 @@ static int do_create_stash(const struct pathspec *ps, struct strbuf *stash_msg_b
 			   int quiet)
 {
 	int ret = 0;
-	int flags = 0;
+	unsigned int flags = 0;
 	int untracked_commit_option = 0;
 	const char *head_short_sha1 = NULL;
 	const char *branch_ref = NULL;

@@ -403,7 +403,7 @@ static int append_ref(const char *refname, const struct object_id *oid,
 }
 
 static int append_head_ref(const char *refname, const struct object_id *oid,
-			   int flag, void *cb_data)
+			   unsigned int flag, void *cb_data)
 {
 	struct object_id tmp;
 	int ofs = 11;
@@ -418,7 +418,7 @@ static int append_head_ref(const char *refname, const struct object_id *oid,
 }
 
 static int append_remote_ref(const char *refname, const struct object_id *oid,
-			     int flag, void *cb_data)
+			     unsigned int flag, void *cb_data)
 {
 	struct object_id tmp;
 	int ofs = 13;
@@ -444,7 +444,7 @@ static const char *match_ref_pattern = NULL;
 static int match_ref_slash = 0;
 
 static int append_matching_ref(const char *refname, const struct object_id *oid,
-			       int flag, void *cb_data)
+			       unsigned int flag, void *cb_data)
 {
 	/* we want to allow pattern hold/<asterisk> to show all
 	 * branches under refs/heads/hold/, and v0.99.9? to show

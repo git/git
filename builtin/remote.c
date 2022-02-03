@@ -533,7 +533,8 @@ struct branches_for_remote {
 };
 
 static int add_branch_for_removal(const char *refname,
-	const struct object_id *oid, int flags, void *cb_data)
+				  const struct object_id *oid,
+				  unsigned int flags, void *cb_data)
 {
 	struct branches_for_remote *branches = cb_data;
 	struct refspec_item refspec;
@@ -574,12 +575,13 @@ struct rename_info {
 };
 
 static int read_remote_branches(const char *refname,
-	const struct object_id *oid, int flags, void *cb_data)
+				const struct object_id *oid, unsigned int flags,
+				void *cb_data)
 {
 	struct rename_info *rename = cb_data;
 	struct strbuf buf = STRBUF_INIT;
 	struct string_list_item *item;
-	int flag;
+	unsigned int flag;
 	const char *symref;
 
 	strbuf_addf(&buf, "refs/remotes/%s/", rename->old_name);
@@ -766,7 +768,7 @@ static int mv(int argc, const char **argv)
 	for_each_ref(read_remote_branches, &rename);
 	for (i = 0; i < remote_branches.nr; i++) {
 		struct string_list_item *item = remote_branches.items + i;
-		int flag = 0;
+		unsigned int flag = 0;
 
 		read_ref_full(item->string, RESOLVE_REF_READING, NULL, &flag);
 		if (!(flag & REF_ISSYMREF))
@@ -923,7 +925,8 @@ static void free_remote_ref_states(struct ref_states *states)
 }
 
 static int append_ref_to_tracked_list(const char *refname,
-	const struct object_id *oid, int flags, void *cb_data)
+				      const struct object_id *oid,
+				      unsigned int flags, void *cb_data)
 {
 	struct ref_states *states = cb_data;
 	struct refspec_item refspec;

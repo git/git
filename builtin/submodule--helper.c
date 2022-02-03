@@ -740,8 +740,8 @@ static void print_status(unsigned int flags, char state, const char *path,
 }
 
 static int handle_submodule_head_ref(const char *refname,
-				     const struct object_id *oid, int flags,
-				     void *cb_data)
+				     const struct object_id *oid,
+				     unsigned int flags, void *cb_data)
 {
 	struct object_id *output = cb_data;
 	if (oid)

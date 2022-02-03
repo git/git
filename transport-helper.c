@@ -1090,7 +1090,7 @@ static int push_refs_with_export(struct transport *transport,
 			if (strcmp(ref->name, ref->peer_ref->name)) {
 				if (!ref->deletion) {
 					const char *name;
-					int flag;
+					unsigned int flag;
 
 					/* Follow symbolic refs (mainly for HEAD). */
 					name = resolve_ref_unsafe(ref->peer_ref->name,
