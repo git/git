@@ -135,7 +135,7 @@ static int ref_filter_match(const char *refname,
 }
 
 static int add_ref_decoration(const char *refname, const struct object_id *oid,
-			      unsigned int flags, void *cb_data)
+			      unsigned int unused_flags, void *cb_data)
 {
 	struct object *obj;
 	enum object_type objtype;

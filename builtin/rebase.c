@@ -1025,7 +1025,6 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	struct rebase_options options = REBASE_OPTIONS_INIT;
 	const char *branch_name;
 	int ret, total_argc, in_progress = 0;
-	unsigned int flags;
 	int keep_base = 0;
 	int ok_to_skip_pre_rebase = 0;
 	struct strbuf msg = STRBUF_INIT;
@@ -1639,6 +1638,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		}
 	} else if (argc == 0) {
 		/* Do not need to switch branches, we are already on it. */
+		unsigned int flags;
 		options.head_name =
 			xstrdup_or_null(resolve_ref_unsafe("HEAD", 0, NULL,
 					 &flags));
@@ -1696,7 +1696,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	if (can_fast_forward(options.onto, options.upstream, options.restrict_revision,
 		    &options.orig_head, &merge_base) &&
 	    allow_preemptive_ff) {
-		unsigned int flag;
+		unsigned int unused_flags;
 
 		if (!(options.flags & REBASE_FORCE)) {
 			/* Lazily switch to the target branch if needed... */
@@ -1709,7 +1709,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			if (!(options.flags & REBASE_NO_QUIET))
 				; /* be quiet */
 			else if (!strcmp(branch_name, "HEAD") &&
-				 resolve_ref_unsafe("HEAD", 0, NULL, &flag))
+				 resolve_ref_unsafe("HEAD", 0, NULL,
+						    &unused_flags))
 				puts(_("HEAD is up to date."));
 			else
 				printf(_("Current branch %s is up to date.\n"),
@@ -1719,7 +1720,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		} else if (!(options.flags & REBASE_NO_QUIET))
 			; /* be quiet */
 		else if (!strcmp(branch_name, "HEAD") &&
-			 resolve_ref_unsafe("HEAD", 0, NULL, &flag))
+			 resolve_ref_unsafe("HEAD", 0, NULL, &unused_flags))
 			puts(_("HEAD is up to date, rebase forced."));
 		else
 			printf(_("Current branch %s is up to date, rebase "

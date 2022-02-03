@@ -759,7 +759,7 @@ static enum write_one_status write_one(struct hashfile *f,
 }
 
 static int mark_tagged(const char *path, const struct object_id *oid,
-		       unsigned int flag, void *cb_data)
+		       unsigned int unused_flags, void *cb_data)
 {
 	struct object_id peeled;
 	struct object_entry *entry = packlist_find(&to_pack, oid);
@@ -3013,7 +3013,7 @@ static void add_tag_chain(const struct object_id *oid)
 }
 
 static int add_ref_tag(const char *tag, const struct object_id *oid,
-		       unsigned int flag, void *cb_data)
+		       unsigned int unused_flags, void *cb_data)
 {
 	struct object_id peeled;
 

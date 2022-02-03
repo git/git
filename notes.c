@@ -926,7 +926,7 @@ out:
 
 static int string_list_add_one_ref(const char *refname,
 				   const struct object_id *oid,
-				   unsigned int flag, void *cb)
+				   unsigned int unused_flags, void *cb)
 {
 	struct string_list *refs = cb;
 	if (!unsorted_string_list_has_string(refs, refname))

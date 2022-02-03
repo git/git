@@ -291,7 +291,7 @@ static void show_ref(const char *path, const struct object_id *oid)
 }
 
 static int show_ref_cb(const char *path_full, const struct object_id *oid,
-		       unsigned int flag, void *data)
+		       unsigned int unused_flags, void *data)
 {
 	struct oidset *seen = data;
 	const char *path = strip_namespace(path_full);
@@ -1645,12 +1645,13 @@ static void run_update_post_hook(struct command *commands)
 
 static void check_aliased_update_internal(struct command *cmd,
 					  struct string_list *list,
-					  const char *dst_name, int flag)
+					  const char *dst_name,
+					  unsigned int flags)
 {
 	struct string_list_item *item;
 	struct command *dst_cmd;
 
-	if (!(flag & REF_ISSYMREF))
+	if (!(flags & REF_ISSYMREF))
 		return;
 
 	if (!dst_name) {
@@ -1691,11 +1692,11 @@ static void check_aliased_update(struct command *cmd, struct string_list *list)
 {
 	struct strbuf buf = STRBUF_INIT;
 	const char *dst_name;
-	unsigned int flag;
+	unsigned int flags;
 
 	strbuf_addf(&buf, "%s%s", get_git_namespace(), cmd->ref_name);
-	dst_name = resolve_ref_unsafe(buf.buf, 0, NULL, &flag);
-	check_aliased_update_internal(cmd, list, dst_name, flag);
+	dst_name = resolve_ref_unsafe(buf.buf, 0, NULL, &flags);
+	check_aliased_update_internal(cmd, list, dst_name, flags);
 	strbuf_release(&buf);
 }
 

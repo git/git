@@ -80,7 +80,7 @@ static void set_upstreams(struct transport *transport, struct ref *refs,
 		const char *localname;
 		const char *tmp;
 		const char *remotename;
-		unsigned int flag = 0;
+		unsigned int ref_flags = 0;
 		/*
 		 * Check suitability for tracking. Must be successful /
 		 * already up-to-date ref create/modify (not delete).
@@ -96,10 +96,10 @@ static void set_upstreams(struct transport *transport, struct ref *refs,
 		/* Follow symbolic refs (mainly for HEAD). */
 		localname = ref->peer_ref->name;
 		remotename = ref->name;
-		tmp = resolve_ref_unsafe(localname, RESOLVE_REF_READING,
-					 NULL, &flag);
-		if (tmp && flag & REF_ISSYMREF &&
-			starts_with(tmp, "refs/heads/"))
+		tmp = resolve_ref_unsafe(localname, RESOLVE_REF_READING, NULL,
+					 &ref_flags);
+		if (tmp && ref_flags & REF_ISSYMREF &&
+		    starts_with(tmp, "refs/heads/"))
 			localname = tmp;
 
 		/* Both source and destination must be local branches. */

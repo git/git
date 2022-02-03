@@ -86,7 +86,7 @@ match:
 }
 
 static int add_existing(const char *refname, const struct object_id *oid,
-			unsigned int flag, void *cbdata)
+			unsigned int unused_flags, void *cbdata)
 {
 	struct string_list *list = (struct string_list *)cbdata;
 	string_list_insert(list, refname);

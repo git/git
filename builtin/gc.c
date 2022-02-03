@@ -770,7 +770,7 @@ struct cg_auto_data {
 };
 
 static int dfs_on_ref(const char *refname, const struct object_id *oid,
-		      unsigned int flags, void *cb_data)
+		      unsigned int unused_flags, void *cb_data)
 {
 	struct cg_auto_data *data = (struct cg_auto_data *)cb_data;
 	int result = 0;

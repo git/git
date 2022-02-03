@@ -417,7 +417,7 @@ static void reflog_expiry_cleanup(void *cb_data)
 }
 
 static int collect_reflog(const char *ref, const struct object_id *oid,
-			  unsigned int unused, void *cb_data)
+			  unsigned int unused_flags, void *cb_data)
 {
 	struct worktree_reflogs *cb = cb_data;
 	struct worktree *worktree = cb->worktree;

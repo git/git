@@ -559,7 +559,7 @@ int other_head_refs(each_ref_fn fn, void *cb_data)
 	for (p = worktrees; *p; p++) {
 		struct worktree *wt = *p;
 		struct object_id oid;
-		unsigned int flag;
+		unsigned int flags;
 
 		if (wt->is_current)
 			continue;
@@ -567,10 +567,9 @@ int other_head_refs(each_ref_fn fn, void *cb_data)
 		strbuf_reset(&refname);
 		strbuf_worktree_ref(wt, &refname, "HEAD");
 		if (refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
-					    refname.buf,
-					    RESOLVE_REF_READING,
-					    &oid, &flag))
-			ret = fn(refname.buf, &oid, flag, cb_data);
+					    refname.buf, RESOLVE_REF_READING,
+					    &oid, &flags))
+			ret = fn(refname.buf, &oid, flags, cb_data);
 		if (ret)
 			break;
 	}

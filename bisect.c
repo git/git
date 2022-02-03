@@ -441,7 +441,7 @@ void find_bisection(struct commit_list **commit_list, int *reaches,
 }
 
 static int register_ref(const char *refname, const struct object_id *oid,
-			unsigned int flags, void *cb_data)
+			unsigned int unused_flags, void *cb_data)
 {
 	struct strbuf good_prefix = STRBUF_INIT;
 	strbuf_addstr(&good_prefix, term_good);
@@ -1147,7 +1147,7 @@ int estimate_bisect_steps(int all)
 }
 
 static int mark_for_removal(const char *refname, const struct object_id *oid,
-			    unsigned int flag, void *cb_data)
+			    unsigned int unused_flags, void *cb_data)
 {
 	struct string_list *refs = cb_data;
 	char *ref = xstrfmt("refs/bisect%s", refname);

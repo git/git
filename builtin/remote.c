@@ -534,7 +534,7 @@ struct branches_for_remote {
 
 static int add_branch_for_removal(const char *refname,
 				  const struct object_id *oid,
-				  unsigned int flags, void *cb_data)
+				  unsigned int unused_flags, void *cb_data)
 {
 	struct branches_for_remote *branches = cb_data;
 	struct refspec_item refspec;
@@ -575,21 +575,21 @@ struct rename_info {
 };
 
 static int read_remote_branches(const char *refname,
-				const struct object_id *oid, unsigned int flags,
-				void *cb_data)
+				const struct object_id *oid,
+				unsigned int unused_flags, void *cb_data)
 {
 	struct rename_info *rename = cb_data;
 	struct strbuf buf = STRBUF_INIT;
 	struct string_list_item *item;
-	unsigned int flag;
 	const char *symref;
 
 	strbuf_addf(&buf, "refs/remotes/%s/", rename->old_name);
 	if (starts_with(refname, buf.buf)) {
+		unsigned int flags;
 		item = string_list_append(rename->remote_branches, refname);
-		symref = resolve_ref_unsafe(refname, RESOLVE_REF_READING,
-					    NULL, &flag);
-		if (symref && (flag & REF_ISSYMREF))
+		symref = resolve_ref_unsafe(refname, RESOLVE_REF_READING, NULL,
+					    &flags);
+		if (symref && (flags & REF_ISSYMREF))
 			item->util = xstrdup(symref);
 		else
 			item->util = NULL;
@@ -768,10 +768,10 @@ static int mv(int argc, const char **argv)
 	for_each_ref(read_remote_branches, &rename);
 	for (i = 0; i < remote_branches.nr; i++) {
 		struct string_list_item *item = remote_branches.items + i;
-		unsigned int flag = 0;
+		unsigned int flags = 0;
 
-		read_ref_full(item->string, RESOLVE_REF_READING, NULL, &flag);
-		if (!(flag & REF_ISSYMREF))
+		read_ref_full(item->string, RESOLVE_REF_READING, NULL, &flags);
+		if (!(flags & REF_ISSYMREF))
 			continue;
 		if (delete_ref(NULL, item->string, NULL, REF_NO_DEREF))
 			die(_("deleting '%s' failed"), item->string);

@@ -916,7 +916,7 @@ static void free_submodules_oids(struct string_list *submodules)
 }
 
 static int has_remote(const char *refname, const struct object_id *oid,
-		      unsigned int flags, void *cb_data)
+		      unsigned int unused_flags, void *cb_data)
 {
 	return 1;
 }
@@ -1223,7 +1223,7 @@ int push_unpushed_submodules(struct repository *r,
 }
 
 static int append_oid_to_array(const char *ref, const struct object_id *oid,
-			       unsigned int flags, void *data)
+			       unsigned int unused_flags, void *data)
 {
 	struct oid_array *array = data;
 	oid_array_append(array, oid);

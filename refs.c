@@ -438,11 +438,11 @@ int head_ref_namespaced(each_ref_fn fn, void *cb_data)
 	struct strbuf buf = STRBUF_INIT;
 	int ret = 0;
 	struct object_id oid;
-	unsigned int flag;
+	unsigned int flags;
 
 	strbuf_addf(&buf, "%sHEAD", get_git_namespace());
-	if (!read_ref_full(buf.buf, RESOLVE_REF_READING, &oid, &flag))
-		ret = fn(buf.buf, &oid, flag, cb_data);
+	if (!read_ref_full(buf.buf, RESOLVE_REF_READING, &oid, &flags))
+		ret = fn(buf.buf, &oid, flags, cb_data);
 	strbuf_release(&buf);
 
 	return ret;
@@ -653,23 +653,24 @@ int expand_ref(struct repository *repo, const char *str, int len,
 	for (p = ref_rev_parse_rules; *p; p++) {
 		struct object_id oid_from_ref;
 		struct object_id *this_result;
-		unsigned int flag;
+		unsigned int flags;
 		struct ref_store *refs = get_main_ref_store(repo);
 
 		this_result = refs_found ? &oid_from_ref : oid;
 		strbuf_reset(&fullref);
 		strbuf_addf(&fullref, *p, len, str);
 		r = refs_resolve_ref_unsafe(refs, fullref.buf,
-					    RESOLVE_REF_READING,
-					    this_result, &flag);
+					    RESOLVE_REF_READING, this_result,
+					    &flags);
 		if (r) {
 			if (!refs_found++)
 				*ref = xstrdup(r);
 			if (!warn_ambiguous_refs)
 				break;
-		} else if ((flag & REF_ISSYMREF) && strcmp(fullref.buf, "HEAD")) {
+		} else if ((flags & REF_ISSYMREF) &&
+			   strcmp(fullref.buf, "HEAD")) {
 			warning(_("ignoring dangling symref %s"), fullref.buf);
-		} else if ((flag & REF_ISBROKEN) && strchr(fullref.buf, '/')) {
+		} else if ((flags & REF_ISBROKEN) && strchr(fullref.buf, '/')) {
 			warning(_("ignoring broken ref %s"), fullref.buf);
 		}
 	}
@@ -1386,11 +1387,11 @@ const char *find_descendant_ref(const char *dirname,
 int refs_head_ref(struct ref_store *refs, each_ref_fn fn, void *cb_data)
 {
 	struct object_id oid;
-	unsigned int flag;
+	unsigned int flags;
 
-	if (refs_resolve_ref_unsafe(refs, "HEAD", RESOLVE_REF_READING,
-				    &oid, &flag))
-		return fn("HEAD", &oid, flag, cb_data);
+	if (refs_resolve_ref_unsafe(refs, "HEAD", RESOLVE_REF_READING, &oid,
+				    &flags))
+		return fn("HEAD", &oid, flags, cb_data);
 
 	return 0;
 }
@@ -1778,14 +1779,14 @@ int resolve_gitlink_ref(const char *submodule, const char *refname,
 			struct object_id *oid)
 {
 	struct ref_store *refs;
-	unsigned int flags;
+	unsigned int unused_flags;
 
 	refs = get_submodule_ref_store(submodule);
 
 	if (!refs)
 		return -1;
 
-	if (!refs_resolve_ref_unsafe(refs, refname, 0, oid, &flags) ||
+	if (!refs_resolve_ref_unsafe(refs, refname, 0, oid, &unused_flags) ||
 	    is_null_oid(oid))
 		return -1;
 	return 0;

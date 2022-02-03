@@ -371,15 +371,15 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 		struct object_id oid;
 		char *ref;
 		const char *display_ref;
-		unsigned int flag;
+		unsigned int flags;
 
 		if (e->item->flags & UNINTERESTING)
 			continue;
 		if (dwim_ref(e->name, strlen(e->name), &oid, &ref, 0) != 1)
 			goto skip_write_ref;
-		if (read_ref_full(e->name, RESOLVE_REF_READING, &oid, &flag))
-			flag = 0;
-		display_ref = (flag & REF_ISSYMREF) ? e->name : ref;
+		if (read_ref_full(e->name, RESOLVE_REF_READING, &oid, &flags))
+			flags = 0;
+		display_ref = (flags & REF_ISSYMREF) ? e->name : ref;
 
 		if (e->item->type == OBJ_TAG &&
 				!is_tag_in_date_range(e->item, revs)) {

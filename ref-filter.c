@@ -2234,7 +2234,7 @@ struct ref_filter_cbdata {
  * later object processing.
  */
 static int ref_filter_handler(const char *refname, const struct object_id *oid,
-			      unsigned int flag, void *cb_data)
+			      unsigned int flags, void *cb_data)
 {
 	struct ref_filter_cbdata *ref_cbdata = cb_data;
 	struct ref_filter *filter = ref_cbdata->filter;
@@ -2242,12 +2242,12 @@ static int ref_filter_handler(const char *refname, const struct object_id *oid,
 	struct commit *commit = NULL;
 	unsigned int kind;
 
-	if (flag & REF_BAD_NAME) {
+	if (flags & REF_BAD_NAME) {
 		warning(_("ignoring ref with broken name %s"), refname);
 		return 0;
 	}
 
-	if (flag & REF_ISBROKEN) {
+	if (flags & REF_ISBROKEN) {
 		warning(_("ignoring broken ref %s"), refname);
 		return 0;
 	}
@@ -2290,7 +2290,7 @@ static int ref_filter_handler(const char *refname, const struct object_id *oid,
 	 */
 	ref = ref_array_push(ref_cbdata->array, refname, oid);
 	ref->commit = commit;
-	ref->flag = flag;
+	ref->flag = flags;
 	ref->kind = kind;
 
 	return 0;

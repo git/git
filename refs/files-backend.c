@@ -261,7 +261,6 @@ static void loose_fill_ref_dir(struct ref_store *ref_store,
 	while ((de = readdir(d)) != NULL) {
 		struct object_id oid;
 		struct stat st;
-		unsigned int flag;
 
 		if (de->d_name[0] == '.')
 			continue;
@@ -277,12 +276,12 @@ static void loose_fill_ref_dir(struct ref_store *ref_store,
 					 create_dir_entry(dir->cache, refname.buf,
 							  refname.len));
 		} else {
-			if (!refs_resolve_ref_unsafe(&refs->base,
-						     refname.buf,
-						     RESOLVE_REF_READING,
-						     &oid, &flag)) {
+			unsigned int flags;
+			if (!refs_resolve_ref_unsafe(&refs->base, refname.buf,
+						     RESOLVE_REF_READING, &oid,
+						     &flags)) {
 				oidclr(&oid);
-				flag |= REF_ISBROKEN;
+				flags |= REF_ISBROKEN;
 			} else if (is_null_oid(&oid)) {
 				/*
 				 * It is so astronomically unlikely
@@ -292,7 +291,7 @@ static void loose_fill_ref_dir(struct ref_store *ref_store,
 				 * file to be repo corruption
 				 * (probably due to a software bug).
 				 */
-				flag |= REF_ISBROKEN;
+				flags |= REF_ISBROKEN;
 			}
 
 			if (check_refname_format(refname.buf,
@@ -300,10 +299,10 @@ static void loose_fill_ref_dir(struct ref_store *ref_store,
 				if (!refname_is_safe(refname.buf))
 					die("loose refname is dangerous: %s", refname.buf);
 				oidclr(&oid);
-				flag |= REF_BAD_NAME | REF_ISBROKEN;
+				flags |= REF_BAD_NAME | REF_ISBROKEN;
 			}
-			add_entry_to_dir(dir,
-					 create_ref_entry(refname.buf, &oid, flag));
+			add_entry_to_dir(dir, create_ref_entry(refname.buf,
+							       &oid, flags));
 		}
 		strbuf_setlen(&refname, dirnamelen);
 		strbuf_setlen(&path, path_baselen);
@@ -1400,7 +1399,7 @@ static int files_copy_or_rename_ref(struct ref_store *ref_store,
 		files_downcast(ref_store, REF_STORE_WRITE, "rename_ref");
 	struct object_id orig_oid;
 	int logmoved = 0;
-	unsigned int flag = 0;
+	unsigned int flags = 0;
 	struct ref_lock *lock;
 	struct stat loginfo;
 	struct strbuf sb_oldref = STRBUF_INIT;
@@ -1420,13 +1419,14 @@ static int files_copy_or_rename_ref(struct ref_store *ref_store,
 	}
 
 	if (!refs_resolve_ref_unsafe(&refs->base, oldrefname,
-				     RESOLVE_REF_READING | RESOLVE_REF_NO_RECURSE,
-				     &orig_oid, &flag)) {
+				     RESOLVE_REF_READING |
+					     RESOLVE_REF_NO_RECURSE,
+				     &orig_oid, &flags)) {
 		ret = error("refname %s not found", oldrefname);
 		goto out;
 	}
 
-	if (flag & REF_ISSYMREF) {
+	if (flags & REF_ISSYMREF) {
 		if (copy)
 			ret = error("refname %s is a symbolic ref, copying it is not supported",
 				    oldrefname);
@@ -1522,14 +1522,14 @@ static int files_copy_or_rename_ref(struct ref_store *ref_store,
 		goto rollbacklog;
 	}
 
-	flag = log_all_ref_updates;
+	flags = log_all_ref_updates;
 	log_all_ref_updates = LOG_REFS_NONE;
 	if (write_ref_to_lockfile(lock, &orig_oid, 0, &err) ||
 	    commit_ref_update(refs, lock, &orig_oid, NULL, &err)) {
 		error("unable to write current sha1 into %s: %s", oldrefname, err.buf);
 		strbuf_release(&err);
 	}
-	log_all_ref_updates = flag;
+	log_all_ref_updates = flags;
 
  rollbacklog:
 	if (logmoved && rename(sb_newref.buf, sb_oldref.buf))
@@ -1710,9 +1710,10 @@ static int log_ref_write_fd(int fd, const struct object_id *old_oid,
 }
 
 static int files_log_ref_write(struct files_ref_store *refs,
-			       const char *refname, const struct object_id *old_oid,
+			       const char *refname,
+			       const struct object_id *old_oid,
 			       const struct object_id *new_oid, const char *msg,
-			       int flags, struct strbuf *err)
+			       unsigned int flags, struct strbuf *err)
 {
 	int logfd, result;
 
@@ -1834,13 +1835,13 @@ static int commit_ref_update(struct files_ref_store *refs,
 		 * check with HEAD only which should cover 99% of all usage
 		 * scenarios (even 100% of the default ones).
 		 */
-		unsigned int head_flag;
+		unsigned int head_flags;
 		const char *head_ref;
 
 		head_ref = refs_resolve_ref_unsafe(&refs->base, "HEAD",
-						   RESOLVE_REF_READING,
-						   NULL, &head_flag);
-		if (head_ref && (head_flag & REF_ISSYMREF) &&
+						   RESOLVE_REF_READING, NULL,
+						   &head_flags);
+		if (head_ref && (head_flags & REF_ISSYMREF) &&
 		    !strcmp(head_ref, lock->ref_name)) {
 			struct strbuf log_err = STRBUF_INIT;
 			if (files_log_ref_write(refs, "HEAD",
@@ -2984,7 +2985,7 @@ static int files_transaction_abort(struct ref_store *ref_store,
 }
 
 static int ref_present(const char *refname, const struct object_id *oid,
-		       unsigned int flags, void *cb_data)
+		       unsigned int unused_flags, void *cb_data)
 {
 	struct string_list *affected_refnames = cb_data;
 

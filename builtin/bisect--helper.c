@@ -330,7 +330,7 @@ static int check_and_set_terms(struct bisect_terms *terms, const char *cmd)
 }
 
 static int mark_good(const char *refname, const struct object_id *oid,
-		     unsigned int flag, void *cb_data)
+		     unsigned int unused_flags, void *cb_data)
 {
 	int *m_good = (int *)cb_data;
 	*m_good = 0;
@@ -477,7 +477,7 @@ finish:
 }
 
 static int add_bisect_ref(const char *refname, const struct object_id *oid,
-			  unsigned int flags, void *cb)
+			  unsigned int unused_flags, void *cb)
 {
 	struct add_bisect_ref_data *data = cb;
 
@@ -618,7 +618,7 @@ static enum bisect_error bisect_start(struct bisect_terms *terms, const char **a
 	int first_parent_only = 0;
 	int i, has_double_dash = 0, must_write_terms = 0, bad_seen = 0;
 	int pathspec_pos;
-	unsigned int flags;
+	unsigned int unused_flags;
 	enum bisect_error res = BISECT_OK;
 	struct string_list revs = STRING_LIST_INIT_DUP;
 	struct string_list states = STRING_LIST_INIT_DUP;
@@ -708,7 +708,7 @@ static enum bisect_error bisect_start(struct bisect_terms *terms, const char **a
 	/*
 	 * Verify HEAD
 	 */
-	head = resolve_ref_unsafe("HEAD", 0, &head_oid, &flags);
+	head = resolve_ref_unsafe("HEAD", 0, &head_oid, &unused_flags);
 	if (!head)
 		if (get_oid("HEAD", &head_oid))
 			return error(_("bad HEAD - I need a HEAD"));
@@ -1091,7 +1091,7 @@ static int bisect_visualize(struct bisect_terms *terms, const char **argv, int a
 }
 
 static int get_first_good(const char *refname, const struct object_id *oid,
-			  int flag, void *cb_data)
+			  unsigned int flag, void *cb_data)
 {
 	oidcpy(cb_data, oid);
 	return 1;

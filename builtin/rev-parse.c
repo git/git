@@ -196,7 +196,7 @@ static int show_default(void)
 }
 
 static int show_reference(const char *refname, const struct object_id *oid,
-			  unsigned int flag, void *cb_data)
+			  unsigned int unused_flags, void *cb_data)
 {
 	if (ref_excluded(ref_excludes, refname))
 		return 0;
@@ -205,7 +205,7 @@ static int show_reference(const char *refname, const struct object_id *oid,
 }
 
 static int anti_reference(const char *refname, const struct object_id *oid,
-			  unsigned int flag, void *cb_data)
+			  unsigned int unused_flags, void *cb_data)
 {
 	show_rev(REVERSED, oid, refname);
 	return 0;

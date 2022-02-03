@@ -559,11 +559,11 @@ static void get_info_refs(struct strbuf *hdr, char *arg)
 }
 
 static int show_head_ref(const char *refname, const struct object_id *oid,
-			 unsigned int flag, void *cb_data)
+			 unsigned int flags, void *cb_data)
 {
 	struct strbuf *buf = cb_data;
 
-	if (flag & REF_ISSYMREF) {
+	if (flags & REF_ISSYMREF) {
 		const char *target = resolve_ref_unsafe(refname,
 							RESOLVE_REF_READING,
 							NULL, NULL);

@@ -1169,7 +1169,7 @@ static int mark_our_ref(const char *refname, const char *refname_full,
 }
 
 static int check_ref(const char *refname_full, const struct object_id *oid,
-		     unsigned int flag, void *cb_data)
+		     unsigned int unused_flags, void *cb_data)
 {
 	const char *refname = strip_namespace(refname_full);
 
@@ -1193,7 +1193,7 @@ static void format_session_id(struct strbuf *buf, struct upload_pack_data *d) {
 }
 
 static int send_ref(const char *refname, const struct object_id *oid,
-		    unsigned int flag, void *cb_data)
+		    unsigned int unused_flags, void *cb_data)
 {
 	static const char *capabilities = "multi_ack thin-pack side-band"
 		" side-band-64k ofs-delta shallow deepen-since deepen-not"
@@ -1236,15 +1236,15 @@ static int send_ref(const char *refname, const struct object_id *oid,
 }
 
 static int find_symref(const char *refname, const struct object_id *oid,
-		       unsigned int flag, void *cb_data)
+		       unsigned int flags, void *cb_data)
 {
 	const char *symref_target;
 	struct string_list_item *item;
 
-	if ((flag & REF_ISSYMREF) == 0)
+	if ((flags & REF_ISSYMREF) == 0)
 		return 0;
-	symref_target = resolve_ref_unsafe(refname, 0, NULL, &flag);
-	if (!symref_target || (flag & REF_ISSYMREF) == 0)
+	symref_target = resolve_ref_unsafe(refname, 0, NULL, &flags);
+	if (!symref_target || (flags & REF_ISSYMREF) == 0)
 		die("'%s' is a symref but it is not?", refname);
 	item = string_list_append(cb_data, strip_namespace(refname));
 	item->util = xstrdup(strip_namespace(symref_target));

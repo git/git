@@ -141,7 +141,7 @@ static void add_to_known_names(const char *path,
 }
 
 static int get_name(const char *path, const struct object_id *oid,
-		    unsigned int flag, void *cb_data)
+		    unsigned int unused_flags, void *cb_data)
 {
 	int is_tag = 0;
 	struct object_id peeled;

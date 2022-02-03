@@ -36,7 +36,7 @@ static void rev_list_push(struct negotiation_state *ns,
 }
 
 static int clear_marks(const char *refname, const struct object_id *oid,
-		       unsigned int flag, void *cb_data)
+		       unsigned int unused_flags, void *cb_data)
 {
 	struct object *o = deref_tag(the_repository, parse_object(the_repository, oid), refname, 0);
 

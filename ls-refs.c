@@ -77,7 +77,7 @@ struct ls_refs_data {
 };
 
 static int send_ref(const char *refname, const struct object_id *oid,
-		    unsigned int flag, void *cb_data)
+		    unsigned int flags, void *cb_data)
 {
 	struct ls_refs_data *data = cb_data;
 	const char *refname_nons = strip_namespace(refname);
@@ -94,11 +94,10 @@ static int send_ref(const char *refname, const struct object_id *oid,
 		strbuf_addf(&data->buf, "%s %s", oid_to_hex(oid), refname_nons);
 	else
 		strbuf_addf(&data->buf, "unborn %s", refname_nons);
-	if (data->symrefs && flag & REF_ISSYMREF) {
+	if (data->symrefs && flags & REF_ISSYMREF) {
 		struct object_id unused;
-		const char *symref_target = resolve_ref_unsafe(refname, 0,
-							       &unused,
-							       &flag);
+		const char *symref_target =
+			resolve_ref_unsafe(refname, 0, &unused, &flags);
 
 		if (!symref_target)
 			die("'%s' is a symref but it is not?", refname);
@@ -123,16 +122,17 @@ static void send_possibly_unborn_head(struct ls_refs_data *data)
 {
 	struct strbuf namespaced = STRBUF_INIT;
 	struct object_id oid;
-	unsigned int flag;
+	unsigned int flags;
 	int oid_is_null;
 
 	strbuf_addf(&namespaced, "%sHEAD", get_git_namespace());
-	if (!resolve_ref_unsafe(namespaced.buf, 0, &oid, &flag))
+	if (!resolve_ref_unsafe(namespaced.buf, 0, &oid, &flags))
 		return; /* bad ref */
 	oid_is_null = is_null_oid(&oid);
 	if (!oid_is_null ||
-	    (data->unborn && data->symrefs && (flag & REF_ISSYMREF)))
-		send_ref(namespaced.buf, oid_is_null ? NULL : &oid, flag, data);
+	    (data->unborn && data->symrefs && (flags & REF_ISSYMREF)))
+		send_ref(namespaced.buf, oid_is_null ? NULL : &oid, flags,
+			 data);
 	strbuf_release(&namespaced);
 }
 
