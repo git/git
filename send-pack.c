@@ -757,7 +757,7 @@ int pack_data_to_everscale(struct send_pack_args *args,
   char *old_hex = oid_to_hex(&remote_refs->old_oid);
   printf("Old hex %s\n", old_hex);
   	struct child_process po = CHILD_PROCESS_INIT;
-	FILE *po_in;
+	FILE * po_in;
 	int i;
 	strvec_push(&po.args, "pack-objects");
 	strvec_push(&po.args, "--all-progress-implied");
@@ -780,8 +780,9 @@ int pack_data_to_everscale(struct send_pack_args *args,
 	if (start_command(&po))
 		die_errno("git pack-objects failed");
 
-	po_in = xfopen("packed_file_to_sent", "w");
-	for (i = 0; i < extra_have->nr; i++)
+	po_in = fopen("packed_file_to_sent", "w");
+  fputs("Everscale_pack\n", po_in);
+/*	for (i = 0; i < extra_have->nr; i++)
 		feed_object(&extra_have->oid[i], po_in, 1);
 	for (i = 0; i < commons.nr; i++)
 		feed_object(&commons.oid[i], po_in, 1);
@@ -792,7 +793,7 @@ int pack_data_to_everscale(struct send_pack_args *args,
 		if (!is_null_oid(&remote_refs->new_oid))
 			feed_object(&remote_refs->new_oid, po_in, 0);
 		remote_refs = remote_refs->next;
-	}
+	}*/
 
 	fflush(po_in);
 	if (ferror(po_in))
