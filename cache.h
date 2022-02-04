@@ -1319,6 +1319,15 @@ enum unpack_loose_header_result unpack_loose_header(git_zstream *stream,
 struct object_info;
 int parse_loose_header(const char *hdr, struct object_info *oi);
 
+/**
+ * With in-core object data in "buf", rehash it to make sure the
+ * object name actually matches "oid" to detect object corruption.
+ * With "buf" == NULL, try reading the object named with "oid" using
+ * the streaming interface and rehash it to do the same.
+ *
+ * Treat the return value like oideq() (which is like memcmp()),
+ * except that negative values might also indicate a generic error.
+ */
 int check_object_signature(struct repository *r, const struct object_id *oid,
 			   void *buf, unsigned long size, const char *type,
 			   struct object_id *real_oidp);

@@ -1066,12 +1066,6 @@ int format_object_header(char *str, size_t size, enum object_type type,
 	return format_object_header_literally(str, size, name, objsize);
 }
 
-/*
- * With in-core object data in "buf", rehash it to make sure the
- * object name actually matches "oid" to detect object corruption.
- * With "buf" == NULL, try reading the object named with "oid" using
- * the streaming interface and rehash it to do the same.
- */
 int check_object_signature(struct repository *r, const struct object_id *oid,
 			   void *buf, unsigned long size, const char *type,
 			   struct object_id *real_oidp)
@@ -1086,7 +1080,7 @@ int check_object_signature(struct repository *r, const struct object_id *oid,
 
 	if (buf) {
 		hash_object_file(r->hash_algo, buf, size, type, real_oid);
-		return !oideq(oid, real_oid) ? -1 : 0;
+		return oideq(oid, real_oid);
 	}
 
 	st = open_istream(r, oid, &obj_type, &size, NULL);
@@ -1113,7 +1107,7 @@ int check_object_signature(struct repository *r, const struct object_id *oid,
 	}
 	r->hash_algo->final_oid_fn(real_oid, &c);
 	close_istream(st);
-	return !oideq(oid, real_oid) ? -1 : 0;
+	return oideq(oid, real_oid);
 }
 
 int git_open_cloexec(const char *name, int flags)
@@ -2617,9 +2611,9 @@ int read_loose_object(const char *path,
 			git_inflate_end(&stream);
 			goto out;
 		}
-		if (check_object_signature(the_repository, expected_oid,
-					   *contents, *size,
-					   oi->type_name->buf, real_oid))
+		if (!check_object_signature(the_repository, expected_oid,
+					    *contents, *size,
+					    oi->type_name->buf, real_oid))
 			goto out;
 	}
 
