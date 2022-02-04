@@ -1413,7 +1413,7 @@ static void fix_unresolved_deltas(struct hashfile *f)
 			continue;
 
 		if (check_object_signature(the_repository, &d->oid, data, size,
-					   type_name(type), NULL) < 0)
+					   type_name(type)) < 0)
 			die(_("local object %s is corrupt"), oid_to_hex(&d->oid));
 
 		/*

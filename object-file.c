@@ -1067,21 +1067,24 @@ int format_object_header(char *str, size_t size, enum object_type type,
 }
 
 int check_object_signature(struct repository *r, const struct object_id *oid,
-			   void *buf, unsigned long size, const char *type,
-			   struct object_id *real_oidp)
+			   void *buf, unsigned long size, const char *type)
 {
-	struct object_id tmp;
-	struct object_id *real_oid = real_oidp ? real_oidp : &tmp;
+	struct object_id real_oid;
+
+	hash_object_file(r->hash_algo, buf, size, type, &real_oid);
+
+	return !oideq(oid, &real_oid) ? -1 : 0;
+}
+
+int stream_object_signature(struct repository *r, const struct object_id *oid)
+{
+	struct object_id real_oid;
+	unsigned long size;
 	enum object_type obj_type;
 	struct git_istream *st;
 	git_hash_ctx c;
 	char hdr[MAX_HEADER_LEN];
 	int hdrlen;
-
-	if (buf) {
-		hash_object_file(r->hash_algo, buf, size, type, real_oid);
-		return !oideq(oid, real_oid) ? -1 : 0;
-	}
 
 	st = open_istream(r, oid, &obj_type, &size, NULL);
 	if (!st)
@@ -1105,9 +1108,9 @@ int check_object_signature(struct repository *r, const struct object_id *oid,
 			break;
 		r->hash_algo->update_fn(&c, buf, readlen);
 	}
-	r->hash_algo->final_oid_fn(real_oid, &c);
+	r->hash_algo->final_oid_fn(&real_oid, &c);
 	close_istream(st);
-	return !oideq(oid, real_oid) ? -1 : 0;
+	return !oideq(oid, &real_oid) ? -1 : 0;
 }
 
 int git_open_cloexec(const char *name, int flags)
@@ -2611,9 +2614,10 @@ int read_loose_object(const char *path,
 			git_inflate_end(&stream);
 			goto out;
 		}
-		if (check_object_signature(the_repository, expected_oid,
-					   *contents, *size,
-					   oi->type_name->buf, real_oid) < 0)
+		hash_object_file(the_repository->hash_algo,
+				 *contents, *size, oi->type_name->buf,
+				 real_oid);
+		if (!oideq(expected_oid, real_oid))
 			goto out;
 	}
 

@@ -1322,15 +1322,19 @@ int parse_loose_header(const char *hdr, struct object_info *oi);
 /**
  * With in-core object data in "buf", rehash it to make sure the
  * object name actually matches "oid" to detect object corruption.
- * With "buf" == NULL, try reading the object named with "oid" using
- * the streaming interface and rehash it to do the same.
  *
  * A negative value indicates an error, usually that the OID is not
  * what we expected, but it might also indicate another error.
  */
 int check_object_signature(struct repository *r, const struct object_id *oid,
-			   void *buf, unsigned long size, const char *type,
-			   struct object_id *real_oidp);
+			   void *buf, unsigned long size, const char *type);
+
+/**
+ * A streaming version of check_object_signature().
+ * Try reading the object named with "oid" using
+ * the streaming interface and rehash it to do the same.
+ */
+int stream_object_signature(struct repository *r, const struct object_id *oid);
 
 int finalize_object_file(const char *tmpfile, const char *filename);
 
