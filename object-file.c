@@ -1066,12 +1066,6 @@ int format_object_header(char *str, size_t size, enum object_type type,
 	return format_object_header_literally(str, size, name, objsize);
 }
 
-/*
- * With in-core object data in "buf", rehash it to make sure the
- * object name actually matches "oid" to detect object corruption.
- * With "buf" == NULL, try reading the object named with "oid" using
- * the streaming interface and rehash it to do the same.
- */
 int check_object_signature(struct repository *r, const struct object_id *oid,
 			   void *buf, unsigned long size, const char *type,
 			   struct object_id *real_oidp)
