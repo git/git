@@ -1327,7 +1327,8 @@ int parse_loose_header(const char *hdr, struct object_info *oi);
  * what we expected, but it might also indicate another error.
  */
 int check_object_signature(struct repository *r, const struct object_id *oid,
-			   void *buf, unsigned long size, const char *type);
+			   void *map, unsigned long size,
+			   enum object_type type);
 
 /**
  * A streaming version of check_object_signature().

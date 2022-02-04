@@ -62,7 +62,7 @@ static int verify_object_in_tag(struct object_id *tagged_oid, int *tagged_type)
 
 	repl = lookup_replace_object(the_repository, tagged_oid);
 	ret = check_object_signature(the_repository, repl, buffer, size,
-				     type_name(*tagged_type));
+				     *tagged_type);
 	free(buffer);
 
 	return ret;
