@@ -100,7 +100,7 @@ int cmd_mktag(int argc, const char **argv, const char *prefix)
 	if (verify_object_in_tag(&tagged_oid, &tagged_type))
 		die(_("tag on stdin did not refer to a valid object"));
 
-	if (write_object_file(buf.buf, buf.len, tag_type, &result) < 0)
+	if (write_object_file(buf.buf, buf.len, OBJ_TAG, &result) < 0)
 		die(_("unable to write tag file"));
 
 	strbuf_release(&buf);
