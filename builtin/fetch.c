@@ -2052,7 +2052,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	}
 
 	if (negotiate_only && !negotiation_tip.nr)
-		die(_("--negotiate-only needs one or more --negotiate-tip=*"));
+		die(_("--negotiate-only needs one or more --negotiation-tip=*"));
 
 	if (deepen_relative) {
 		if (deepen_relative < 0)
