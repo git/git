@@ -26,6 +26,13 @@ code.  For Git in general, a few rough rules are:
    go and fix it up."
    Cf. http://lkml.iu.edu/hypermail/linux/kernel/1001.3/01069.html
 
+ - Log messages to explain your changes are as important as the
+   changes themselves.  Clearly written code and in-code comments
+   explain how the code works and what is assumed from the surrounding
+   context.  The log messages explain what the changes wanted to
+   achieve and why the changes were necessary (more on this in the
+   accompanying SubmittingPatches document).
+
 Make your code readable and sensible, and don't try to be clever.
 
 As for more concrete guidelines, just imitate the existing code
