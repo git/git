@@ -1067,13 +1067,13 @@ int format_object_header(char *str, size_t size, enum object_type type,
 }
 
 /*
- * With an in-core object data in "map", rehash it to make sure the
+ * With in-core object data in "buf", rehash it to make sure the
  * object name actually matches "oid" to detect object corruption.
- * With "map" == NULL, try reading the object named with "oid" using
+ * With "buf" == NULL, try reading the object named with "oid" using
  * the streaming interface and rehash it to do the same.
  */
 int check_object_signature(struct repository *r, const struct object_id *oid,
-			   void *map, unsigned long size, const char *type,
+			   void *buf, unsigned long size, const char *type,
 			   struct object_id *real_oidp)
 {
 	struct object_id tmp;
@@ -1084,8 +1084,8 @@ int check_object_signature(struct repository *r, const struct object_id *oid,
 	char hdr[MAX_HEADER_LEN];
 	int hdrlen;
 
-	if (map) {
-		hash_object_file(r->hash_algo, map, size, type, real_oid);
+	if (buf) {
+		hash_object_file(r->hash_algo, buf, size, type, real_oid);
 		return !oideq(oid, real_oid) ? -1 : 0;
 	}
 
