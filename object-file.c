@@ -2027,9 +2027,9 @@ int write_object_file_flags(const void *buf, unsigned long len,
 	return write_loose_object(oid, hdr, hdrlen, buf, len, 0, flags);
 }
 
-int hash_object_file_literally(const void *buf, unsigned long len,
-			       const char *type, struct object_id *oid,
-			       unsigned flags)
+int write_object_file_literally(const void *buf, unsigned long len,
+				const char *type, struct object_id *oid,
+				unsigned flags)
 {
 	char *header;
 	int hdrlen, status = 0;
