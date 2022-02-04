@@ -2483,7 +2483,7 @@ static void note_change_n(const char *p, struct branch *b, unsigned char *old_fa
 		unsigned long size;
 		char *buf = read_object_with_reference(the_repository,
 						       &commit_oid,
-						       commit_type, &size,
+						       OBJ_COMMIT, &size,
 						       &commit_oid);
 		if (!buf || size < the_hash_algo->hexsz + 6)
 			die("Not a valid commit: %s", p);
@@ -2555,7 +2555,7 @@ static void parse_from_existing(struct branch *b)
 		char *buf;
 
 		buf = read_object_with_reference(the_repository,
-						 &b->oid, commit_type, &size,
+						 &b->oid, OBJ_COMMIT, &size,
 						 &b->oid);
 		parse_from_commit(b, buf, size);
 		free(buf);
@@ -2651,7 +2651,7 @@ static struct hash_list *parse_merge(unsigned int *count)
 			unsigned long size;
 			char *buf = read_object_with_reference(the_repository,
 							       &n->oid,
-							       commit_type,
+							       OBJ_COMMIT,
 							       &size, &n->oid);
 			if (!buf || size < the_hash_algo->hexsz + 6)
 				die("Not a valid commit: %s", from);
