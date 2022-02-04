@@ -97,7 +97,7 @@ int cmd_mktag(int argc, const char **argv, const char *prefix)
 				&tagged_oid, &tagged_type))
 		die(_("tag on stdin did not pass our strict fsck check"));
 
-	if (verify_object_in_tag(&tagged_oid, &tagged_type))
+	if (verify_object_in_tag(&tagged_oid, &tagged_type) < 0)
 		die(_("tag on stdin did not refer to a valid object"));
 
 	if (write_object_file(buf.buf, buf.len, OBJ_TAG, &result) < 0)

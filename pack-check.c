@@ -143,7 +143,7 @@ static int verify_packfile(struct repository *r,
 				    oid_to_hex(&oid), p->pack_name,
 				    (uintmax_t)entries[i].offset);
 		else if (check_object_signature(r, &oid, data, size,
-						type_name(type), NULL))
+						type_name(type), NULL) < 0)
 			err = error("packed %s from %s is corrupt",
 				    oid_to_hex(&oid), p->pack_name);
 		else if (fn) {
