@@ -1044,7 +1044,7 @@ static int merge_3way(struct merge_options *opt,
 	mmfile_t orig, src1, src2;
 	struct ll_merge_options ll_opts = {0};
 	char *base, *name1, *name2;
-	int merge_status;
+	enum ll_merge_result merge_status;
 
 	ll_opts.renormalize = opt->renormalize;
 	ll_opts.extra_marker_size = extra_marker_size;
@@ -1090,6 +1090,9 @@ static int merge_3way(struct merge_options *opt,
 	merge_status = ll_merge(result_buf, a->path, &orig, base,
 				&src1, name1, &src2, name2,
 				opt->repo->index, &ll_opts);
+	if (merge_status == LL_MERGE_BINARY_CONFLICT)
+		warning("Cannot merge binary files: %s (%s vs. %s)",
+			a->path, name1, name2);
 
 	free(base);
 	free(name1);
@@ -3710,6 +3713,10 @@ static int merge_start(struct merge_options *opt, struct tree *head)
 	assert(opt->obuf.len == 0);
 
 	assert(opt->priv == NULL);
+
+	/* Not supported; option specific to merge-ort */
+	assert(!opt->record_conflict_msgs_as_headers);
+	assert(!opt->msg_header_prefix);
 
 	/* Sanity check on repo state; index must match head */
 	if (repo_index_has_changes(opt->repo, head, &sb)) {
