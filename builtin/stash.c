@@ -788,7 +788,6 @@ static int list_stash(int argc, const char **argv, const char *prefix)
 static int show_stat = 1;
 static int show_patch;
 static int show_include_untracked;
-static int use_legacy_stash;
 
 static int git_stash_config(const char *var, const char *value, void *cb)
 {
@@ -802,10 +801,6 @@ static int git_stash_config(const char *var, const char *value, void *cb)
 	}
 	if (!strcmp(var, "stash.showincludeuntracked")) {
 		show_include_untracked = git_config_bool(var, value);
-		return 0;
-	}
-	if (!strcmp(var, "stash.usebuiltin")) {
-		use_legacy_stash = !git_config_bool(var, value);
 		return 0;
 	}
 	return git_diff_basic_config(var, value, cb);
@@ -1781,11 +1776,6 @@ int cmd_stash(int argc, const char **argv, const char *prefix)
 	};
 
 	git_config(git_stash_config, NULL);
-
-	if (use_legacy_stash ||
-	    !git_env_bool("GIT_TEST_STASH_USE_BUILTIN", -1))
-		warning(_("the stash.useBuiltin support has been removed!\n"
-			  "See its entry in 'git help config' for details."));
 
 	argc = parse_options(argc, argv, prefix, options, git_stash_usage,
 			     PARSE_OPT_KEEP_UNKNOWN | PARSE_OPT_KEEP_DASHDASH);
