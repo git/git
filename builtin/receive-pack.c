@@ -581,32 +581,19 @@ static char *prepare_push_cert_nonce(const char *path, timestamp_t stamp)
 	return strbuf_detach(&buf, NULL);
 }
 
-/*
- * NEEDSWORK: reuse find_commit_header() from jk/commit-author-parsing
- * after dropping "_commit" from its name and possibly moving it out
- * of commit.c
- */
 static char *find_header(const char *msg, size_t len, const char *key,
 			 const char **next_line)
 {
-	int key_len = strlen(key);
-	const char *line = msg;
+	size_t out_len;
+	const char *val = find_header_mem(msg, len, key, &out_len);
 
-	while (line && line < msg + len) {
-		const char *eol = strchrnul(line, '\n');
+	if (!val)
+		return NULL;
 
-		if ((msg + len <= eol) || line == eol)
-			return NULL;
-		if (line + key_len < eol &&
-		    !memcmp(line, key, key_len) && line[key_len] == ' ') {
-			int offset = key_len + 1;
-			if (next_line)
-				*next_line = *eol ? eol + 1 : eol;
-			return xmemdupz(line + offset, (eol - line) - offset);
-		}
-		line = *eol ? eol + 1 : NULL;
-	}
-	return NULL;
+	if (next_line)
+		*next_line = val + out_len + 1;
+
+	return xmemdupz(val, out_len);
 }
 
 /*
