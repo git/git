@@ -298,8 +298,28 @@ int load_midx_revindex(struct multi_pack_index *m)
 {
 	struct strbuf revindex_name = STRBUF_INIT;
 	int ret;
+
 	if (m->revindex_data)
 		return 0;
+
+	if (m->chunk_revindex) {
+		/*
+		 * If the MIDX `m` has a `RIDX` chunk, then use its contents for
+		 * the reverse index instead of trying to load a separate `.rev`
+		 * file.
+		 *
+		 * Note that we do *not* set `m->revindex_map` here, since we do
+		 * not want to accidentally call munmap() in the middle of the
+		 * MIDX.
+		 */
+		trace2_data_string("load_midx_revindex", the_repository,
+				   "source", "midx");
+		m->revindex_data = (const uint32_t *)m->chunk_revindex;
+		return 0;
+	}
+
+	trace2_data_string("load_midx_revindex", the_repository,
+			   "source", "rev");
 
 	get_midx_rev_filename(&revindex_name, m);
 
