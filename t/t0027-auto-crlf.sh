@@ -597,6 +597,12 @@ do
 	# auto: core.autocrlf=false and core.eol unset(or native) uses native eol
 	checkout_files     auto  "$id" ""     false   ""       $NL   CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
 	checkout_files     auto  "$id" ""     false   native   $NL   CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
+	# core.autocrlf false, .gitattributes sets eol
+	checkout_files     ""    "$id" "lf"   false   ""       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
+	checkout_files     ""    "$id" "crlf" false   ""       CRLF  CRLF  CRLF         CRLF_mix_CR  CRLF_nul
+	# core.autocrlf true, .gitattributes sets eol
+	checkout_files     ""    "$id" "lf"   true    ""       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
+	checkout_files     ""    "$id" "crlf" true    ""       CRLF  CRLF  CRLF         CRLF_mix_CR  CRLF_nul
 done
 
 # The rest of the tests are unique; do the usual linting.
