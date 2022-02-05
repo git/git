@@ -1840,3 +1840,36 @@ test_region () {
 test_readlink () {
 	perl -le 'print readlink($_) for @ARGV' "$@"
 }
+
+# Set mtime to a fixed "magic" timestamp in mid February 2009, before we
+# run an operation that may or may not touch the file.  If the file was
+# touched, its timestamp will not accidentally have such an old timestamp,
+# as long as your filesystem clock is reasonably correct.  To verify the
+# timestamp, follow up with test_is_magic_mtime.
+#
+# An optional increment to the magic timestamp may be specified as second
+# argument.
+test_set_magic_mtime () {
+	local inc=${2:-0} &&
+	local mtime=$((1234567890 + $inc)) &&
+	test-tool chmtime =$mtime "$1" &&
+	test_is_magic_mtime "$1" $inc
+}
+
+# Test whether the given file has the "magic" mtime set.  This is meant to
+# be used in combination with test_set_magic_mtime.
+#
+# An optional increment to the magic timestamp may be specified as second
+# argument.  Usually, this should be the same increment which was used for
+# the associated test_set_magic_mtime.
+test_is_magic_mtime () {
+	local inc=${2:-0} &&
+	local mtime=$((1234567890 + $inc)) &&
+	echo $mtime >.git/test-mtime-expect &&
+	test-tool chmtime --get "$1" >.git/test-mtime-actual &&
+	test_cmp .git/test-mtime-expect .git/test-mtime-actual
+	local ret=$?
+	rm -f .git/test-mtime-expect
+	rm -f .git/test-mtime-actual
+	return $ret
+}
