@@ -1140,7 +1140,7 @@ static int run_proc_receive_hook(struct command *commands,
 
 	sigchain_push(SIGPIPE, SIG_IGN);
 
-	/* Version negotiaton */
+	/* Version negotiation */
 	packet_reader_init(&reader, proc.out, NULL, 0,
 			   PACKET_READ_CHOMP_NEWLINE |
 			   PACKET_READ_GENTLE_ON_EOF);
@@ -1333,7 +1333,7 @@ static int update_shallow_ref(struct command *cmd, struct shallow_info *si)
 }
 
 /*
- * NEEDSWORK: we should consolidate various implementions of "are we
+ * NEEDSWORK: we should consolidate various implementations of "are we
  * on an unborn branch?" test into one, and make the unified one more
  * robust. !get_sha1() based check used here and elsewhere would not
  * allow us to tell an unborn branch from corrupt ref, for example.
