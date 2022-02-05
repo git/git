@@ -1686,6 +1686,16 @@ sub _setup_git_cmd_env {
 # by searching for it at proper places.
 sub _execv_git_cmd { exec('git', @_); }
 
+sub _is_sig {
+	my ($v, $n) = @_;
+
+	# We are avoiding a "use POSIX qw(SIGPIPE SIGABRT)" in the hot
+	# Git.pm codepath.
+	require POSIX;
+	no strict 'refs';
+	$v == *{"POSIX::$n"}->();
+}
+
 # Close pipe to a subprocess.
 sub _cmd_close {
 	my $ctx = shift @_;
@@ -1698,9 +1708,16 @@ sub _cmd_close {
 		} elsif ($? >> 8) {
 			# The caller should pepper this.
 			throw Git::Error::Command($ctx, $? >> 8);
+		} elsif ($? & 127 && _is_sig($? & 127, "SIGPIPE")) {
+			# we might e.g. closed a live stream; the command
+			# dying of SIGPIPE would drive us here.
+		} elsif ($? & 127 && _is_sig($? & 127, "SIGABRT")) {
+			die sprintf('BUG?: got SIGABRT ($? = %d, $? & 127 = %d) when closing pipe',
+				    $?, $? & 127);
+		} elsif ($? & 127) {
+			die sprintf('got signal ($? = %d, $? & 127 = %d) when closing pipe',
+				    $?, $? & 127);
 		}
-		# else we might e.g. closed a live stream; the command
-		# dying of SIGPIPE would drive us here.
 	}
 }
 

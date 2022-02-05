@@ -5,7 +5,6 @@
 
 test_description='git svn respects rewriteRoot during rebuild'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./lib-git-svn.sh
 
 mkdir import
