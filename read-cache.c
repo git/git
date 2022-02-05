@@ -3010,6 +3010,9 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 	    !is_null_oid(&istate->split_index->base_oid)) {
 		struct strbuf sb = STRBUF_INIT;
 
+		if (istate->sparse_index)
+			die(_("cannot write split index for a sparse index"));
+
 		err = write_link_extension(&sb, istate) < 0 ||
 			write_index_ext_header(f, eoie_c, CACHE_EXT_LINK,
 					       sb.len) < 0;
