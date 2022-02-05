@@ -1444,6 +1444,123 @@ test_expect_success 'git checkout - with --detach, complete only references' '
 	EOF
 '
 
+test_expect_success 'setup sparse-checkout tests' '
+	# set up sparse-checkout repo
+	git init sparse-checkout &&
+	(
+		cd sparse-checkout &&
+		mkdir -p folder1/0/1 folder2/0 folder3 &&
+		touch folder1/0/1/t.txt &&
+		touch folder2/0/t.txt &&
+		touch folder3/t.txt &&
+		git add . &&
+		git commit -am "Initial commit"
+	)
+'
+
+test_expect_success 'sparse-checkout completes subcommands' '
+	test_completion "git sparse-checkout " <<-\EOF
+	list Z
+	init Z
+	set Z
+	add Z
+	reapply Z
+	disable Z
+	EOF
+'
+
+test_expect_success 'cone mode sparse-checkout completes directory names' '
+	# initialize sparse-checkout definitions
+	git -C sparse-checkout sparse-checkout set --cone folder1/0 folder3 &&
+
+	# test tab completion
+	(
+		cd sparse-checkout &&
+		test_completion "git sparse-checkout set f" <<-\EOF
+		folder1/
+		folder2/
+		folder3/
+		EOF
+	) &&
+
+	(
+		cd sparse-checkout &&
+		test_completion "git sparse-checkout set folder1/" <<-\EOF
+		folder1/0/
+		EOF
+	) &&
+
+	(
+		cd sparse-checkout &&
+		test_completion "git sparse-checkout set folder1/0/" <<-\EOF
+		folder1/0/1/
+		EOF
+	) &&
+
+	(
+		cd sparse-checkout/folder1 &&
+		test_completion "git sparse-checkout add 0" <<-\EOF
+		0/
+		EOF
+	)
+'
+
+# use FUNNYNAMES to avoid running on Windows, which doesn't permit backslashes in paths
+test_expect_success FUNNYNAMES 'cone mode sparse-checkout completes directory names with special characters' '
+	# reset sparse-checkout
+	git -C sparse-checkout sparse-checkout disable &&
+	(
+		cd sparse-checkout &&
+		mkdir "directory with spaces" &&
+		mkdir "$(printf "directory\twith\ttabs")" &&
+		mkdir "directory\with\backslashes" &&
+		mkdir "directory-with-áccent" &&
+		>"directory with spaces/randomfile" &&
+		>"$(printf "directory\twith\ttabs")/randomfile" &&
+		>"directory\with\backslashes/randomfile" &&
+		>"directory-with-áccent/randomfile" &&
+		git add . &&
+		git commit -m "Add directories containing unusual characters" &&
+		git sparse-checkout set --cone "directory with spaces" \
+			"$(printf "directory\twith\ttabs")" "directory\with\backslashes" \
+			"directory-with-áccent" &&
+		test_completion "git sparse-checkout add dir" <<-\EOF
+		directory with spaces/
+		directory	with	tabs/
+		directory\with\backslashes/
+		directory-with-áccent/
+		EOF
+	)
+'
+
+test_expect_success 'non-cone mode sparse-checkout uses bash completion' '
+	# reset sparse-checkout repo to non-cone mode
+	git -C sparse-checkout sparse-checkout disable &&
+	git -C sparse-checkout sparse-checkout set --no-cone &&
+
+	(
+		cd sparse-checkout &&
+		# expected to be empty since we have not configured
+		# custom completion for non-cone mode
+		test_completion "git sparse-checkout set f" <<-\EOF
+
+		EOF
+	)
+'
+
+test_expect_success 'git sparse-checkout set --cone completes directory names' '
+	git -C sparse-checkout sparse-checkout disable &&
+
+	(
+		cd sparse-checkout &&
+		test_completion "git sparse-checkout set --cone f" <<-\EOF
+		folder1/
+		folder2/
+		folder3/
+		EOF
+	)
+'
+
 test_expect_success 'git switch - with -d, complete all references' '
 	test_completion "git switch -d " <<-\EOF
 	HEAD Z
