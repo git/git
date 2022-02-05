@@ -32,7 +32,7 @@ static int filtering_ref_iterator_next(void *iter_arg,
 				       struct reftable_record *rec)
 {
 	struct filtering_ref_iterator *fri = iter_arg;
-	struct reftable_ref_record *ref = rec->data;
+	struct reftable_ref_record *ref = &rec->u.ref;
 	int err = 0;
 	while (1) {
 		err = reftable_iterator_next_ref(&fri->it, ref);
@@ -127,7 +127,7 @@ static int indexed_table_ref_iter_next_block(struct indexed_table_ref_iter *it)
 static int indexed_table_ref_iter_next(void *p, struct reftable_record *rec)
 {
 	struct indexed_table_ref_iter *it = p;
-	struct reftable_ref_record *ref = rec->data;
+	struct reftable_ref_record *ref = &rec->u.ref;
 
 	while (1) {
 		int err = block_iter_next(&it->cur, rec);

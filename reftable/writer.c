@@ -150,6 +150,8 @@ void reftable_writer_set_limits(struct reftable_writer *w, uint64_t min,
 
 void reftable_writer_free(struct reftable_writer *w)
 {
+	if (!w)
+		return;
 	reftable_free(w->block);
 	reftable_free(w);
 }
@@ -254,8 +256,10 @@ done:
 int reftable_writer_add_ref(struct reftable_writer *w,
 			    struct reftable_ref_record *ref)
 {
-	struct reftable_record rec = { NULL };
-	struct reftable_ref_record copy = *ref;
+	struct reftable_record rec = {
+		.type = BLOCK_TYPE_REF,
+		.u.ref = *ref,
+	};
 	int err = 0;
 
 	if (ref->refname == NULL)
@@ -264,8 +268,7 @@ int reftable_writer_add_ref(struct reftable_writer *w,
 	    ref->update_index > w->max_update_index)
 		return REFTABLE_API_ERROR;
 
-	reftable_record_from_ref(&rec, &copy);
-	copy.update_index -= w->min_update_index;
+	rec.u.ref.update_index -= w->min_update_index;
 
 	err = writer_add_record(w, &rec);
 	if (err < 0)
@@ -304,7 +307,10 @@ int reftable_writer_add_refs(struct reftable_writer *w,
 static int reftable_writer_add_log_verbatim(struct reftable_writer *w,
 					    struct reftable_log_record *log)
 {
-	struct reftable_record rec = { NULL };
+	struct reftable_record rec = {
+		.type = BLOCK_TYPE_LOG,
+		.u.log = *log,
+	};
 	if (w->block_writer &&
 	    block_writer_type(w->block_writer) == BLOCK_TYPE_REF) {
 		int err = writer_finish_public_section(w);
@@ -314,8 +320,6 @@ static int reftable_writer_add_log_verbatim(struct reftable_writer *w,
 
 	w->next -= w->pending_padding;
 	w->pending_padding = 0;
-
-	reftable_record_from_log(&rec, log);
 	return writer_add_record(w, &rec);
 }
 
@@ -396,8 +400,10 @@ static int writer_finish_section(struct reftable_writer *w)
 		w->index_len = 0;
 		w->index_cap = 0;
 		for (i = 0; i < idx_len; i++) {
-			struct reftable_record rec = { NULL };
-			reftable_record_from_index(&rec, idx + i);
+			struct reftable_record rec = {
+				.type = BLOCK_TYPE_INDEX,
+				.u.idx = idx[i],
+			};
 			if (block_writer_add(w->block_writer, &rec) == 0) {
 				continue;
 			}
@@ -465,17 +471,17 @@ static void write_object_record(void *void_arg, void *key)
 {
 	struct write_record_arg *arg = void_arg;
 	struct obj_index_tree_node *entry = key;
-	struct reftable_obj_record obj_rec = {
-		.hash_prefix = (uint8_t *)entry->hash.buf,
-		.hash_prefix_len = arg->w->stats.object_id_len,
-		.offsets = entry->offsets,
-		.offset_len = entry->offset_len,
-	};
-	struct reftable_record rec = { NULL };
+	struct reftable_record
+		rec = { .type = BLOCK_TYPE_OBJ,
+			.u.obj = {
+				.hash_prefix = (uint8_t *)entry->hash.buf,
+				.hash_prefix_len = arg->w->stats.object_id_len,
+				.offsets = entry->offsets,
+				.offset_len = entry->offset_len,
+			} };
 	if (arg->err < 0)
 		goto done;
 
-	reftable_record_from_obj(&rec, &obj_rec);
 	arg->err = block_writer_add(arg->w->block_writer, &rec);
 	if (arg->err == 0)
 		goto done;
@@ -488,7 +494,8 @@ static void write_object_record(void *void_arg, void *key)
 	arg->err = block_writer_add(arg->w->block_writer, &rec);
 	if (arg->err == 0)
 		goto done;
-	obj_rec.offset_len = 0;
+
+	rec.u.obj.offset_len = 0;
 	arg->err = block_writer_add(arg->w->block_writer, &rec);
 
 	/* Should be able to write into a fresh block. */
