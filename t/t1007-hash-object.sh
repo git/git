@@ -2,6 +2,7 @@
 
 test_description="git hash-object"
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 echo_without_newline() {
