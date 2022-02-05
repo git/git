@@ -1821,4 +1821,12 @@ test_expect_success 'refuse fetch to current branch of bare repository worktree'
 	git -C bare.git fetch -u .. HEAD:wt
 '
 
+test_expect_success 'refuse to push a hidden ref, and make sure do not pollute the repository' '
+	mk_empty testrepo &&
+	git -C testrepo config receive.hiderefs refs/hidden &&
+	git -C testrepo config receive.unpackLimit 1 &&
+	test_must_fail git push testrepo HEAD:refs/hidden/foo &&
+	test_dir_is_empty testrepo/.git/objects/pack
+'
+
 test_done
