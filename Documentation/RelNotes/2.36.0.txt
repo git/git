@@ -16,12 +16,20 @@ Note to those who build from the source
 
 UI, Workflows & Features
 
- *
+ * Assorted updates to "git cat-file", especially "-h".
 
 
 Performance, Internal Implementation, Development Support etc.
 
- *
+ * "git apply" (ab)used the util pointer of the string-list to keep
+   track of how each symbolic link needs to be handled, which has been
+   simplified by using strset.
+
+ * Fix a hand-rolled alloca() imitation that may have violated
+   alignment requirement of data being sorted in compatibility
+   implementation of qsort_s() and stable qsort().
+
+ * Use the parse-options API in "git reflog" command.
 
 
 Fixes since v2.35
@@ -29,6 +37,18 @@ Fixes since v2.35
 
  * "rebase" and "stash" in secondary worktrees are broken in
    Git 2.35.0, which has been corrected.
-   (merge ff5b7913f0 en/keep-cwd later to maint).
+
+ * "git pull --rebase" ignored the rebase.autostash configuration
+   variable when the remote history is a descendant of our history,
+   which has been corrected.
+   (merge 3013d98d7a pb/pull-rebase-autostash-fix later to maint).
+
+ * "git update-index --refresh" has been taught to deal better with
+   racy timestamps (just like "git status" already does).
+   (merge 2ede073fd2 ms/update-index-racy later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
+   (merge cfc5cf428b jc/find-header later to maint).
+   (merge 40e7cfdd46 jh/p4-fix-use-of-process-error-exception later to maint).
+   (merge 727e6ea350 jh/p4-spawning-external-commands-cleanup later to maint).
+   (merge 0a6adc26e2 rs/grep-expr-cleanup later to maint).
