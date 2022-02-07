@@ -2986,6 +2986,36 @@ _git_show_branch ()
 	__git_complete_revlist
 }
 
+__gitcomp_directories ()
+{
+	local _tmp_dir _tmp_completions
+
+	# Get the directory of the current token; this differs from dirname
+	# in that it keeps up to the final trailing slash.  If no slash found
+	# that's fine too.
+	[[ "$cur" =~ .*/ ]]
+	_tmp_dir=$BASH_REMATCH
+
+	# Find possible directory completions, adding trailing '/' characters
+	_tmp_completions="$(git ls-tree -d --name-only HEAD $_tmp_dir |
+		sed -e s%$%/%)"
+
+	if [[ -n "$_tmp_completions" ]]; then
+		# There were some directory completions, so find ones that
+		# start with "$cur", the current token, and put those in COMPREPLY
+		local i=0 c IFS=$' \t\n'
+		for c in $_tmp_completions; do
+		if [[ $c == "$cur"* ]]; then
+			COMPREPLY+=("$c")
+		fi
+		done
+	elif [[ "$cur" =~ /$ ]]; then
+		# No possible further completions any deeper, so assume we're at
+		# a leaf directory and just consider it complete
+		__gitcomp_direct_append "$cur "
+	fi
+}
+
 _git_sparse_checkout ()
 {
 	local subcommands="list init set disable add reapply"
@@ -3002,7 +3032,7 @@ _git_sparse_checkout ()
 	set,*|add,*)
 		if [ "$(__git config core.sparseCheckoutCone)" == "true" ] ||
 		[ -n "$(__git_find_on_cmdline --cone)" ]; then
-			__gitcomp "$(git ls-tree -d -r HEAD --name-only)"
+			__gitcomp_directories
 		fi
 	esac
 }
