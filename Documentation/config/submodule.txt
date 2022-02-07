@@ -106,3 +106,12 @@ submodule.alternateErrorStrategy::
 	`ignore`, `info`, `die`. Default is `die`. Note that if set to `ignore`
 	or `info`, and if there is an error with the computed alternate, the
 	clone proceeds as if no alternate was specified.
+
+submodule.superprojectGitDir::
+	If this repository is a submodule, the relative path from this repo's
+	gitdir to its superproject's gitdir. Git commands may rely on this
+	reference to determine whether the current repo is a submodule to
+	another repo; if this reference is absent, Git will treat the current
+	repo as though it is not a submodule (this does not make a difference to
+	most Git commands). It is set automatically during submodule creation,
+	update, and 'git submodule absorbgitdir'.
