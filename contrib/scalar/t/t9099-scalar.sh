@@ -90,6 +90,14 @@ test_expect_success '`scalar [...] <dir>` errors out when dir is missing' '
 	grep "cloned. does not exist" err
 '
 
+test_expect_success 'scalar supports -c/-C' '
+	test_when_finished "scalar delete sub" &&
+	git init sub &&
+	scalar -C sub -c status.aheadBehind=bogus register &&
+	test -z "$(git -C sub config --local status.aheadBehind)" &&
+	test true = "$(git -C sub config core.preloadIndex)"
+'
+
 SQ="'"
 test_expect_success UNZIP 'scalar diagnose' '
 	scalar clone "file://$(pwd)" cloned --single-branch &&
