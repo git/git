@@ -171,50 +171,20 @@ test_expect_success 'stash restore in sparse checkout' '
 
 		# Put a file in the working directory in the way
 		echo in the way >modified &&
-		git stash apply &&
+		test_must_fail git stash apply 2>error&&
 
-		# Ensure stash vivifies modifies paths...
-		cat >expect <<-EOF &&
-		H addme
-		H modified
-		H removeme
-		H subdir/A
-		S untouched
-		EOF
-		git ls-files -t >actual &&
-		test_cmp expect actual &&
+		grep "changes.*would be overwritten by merge" error &&
 
-		# ...and that the paths show up in status as changed...
-		cat >expect <<-EOF &&
-		A  addme
-		 M modified
-		 D removeme
-		 M subdir/A
-		?? actual
-		?? expect
-		?? modified.stash.XXXXXX
-		EOF
-		git status --porcelain | \
-			sed -e s/stash......./stash.XXXXXX/ >actual &&
-		test_cmp expect actual &&
+		echo in the way >expect &&
+		test_cmp expect modified &&
+		git diff --quiet HEAD ":!modified" &&
 
 		# ...and that working directory reflects the files correctly
-		test_path_is_file    addme &&
+		test_path_is_missing addme &&
 		test_path_is_file    modified &&
 		test_path_is_missing removeme &&
 		test_path_is_file    subdir/A &&
-		test_path_is_missing untouched &&
-
-		# ...including that we have the expected "modified" file...
-		cat >expect <<-EOF &&
-		modified
-		tweaked
-		EOF
-		test_cmp expect modified &&
-
-		# ...and that the other "modified" file is still present...
-		echo in the way >expect &&
-		test_cmp expect modified.stash.*
+		test_path_is_missing untouched
 	)
 '
 
