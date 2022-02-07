@@ -1505,6 +1505,55 @@ test_expect_success 'cone mode sparse-checkout completes directory names' '
 	)
 '
 
+test_expect_success 'cone mode sparse-checkout completes directory names with spaces and accents' '
+	# reset sparse-checkout
+	git -C sparse-checkout sparse-checkout disable &&
+	(
+		cd sparse-checkout &&
+		mkdir "directory with spaces" &&
+		mkdir "directory-with-áccent" &&
+		>"directory with spaces/randomfile" &&
+		>"directory-with-áccent/randomfile" &&
+		git add . &&
+		git commit -m "Add directory with spaces and directory with accent" &&
+		git sparse-checkout set --cone "directory with spaces" \
+			"directory-with-áccent" &&
+		test_completion "git sparse-checkout add dir" <<-\EOF &&
+		directory with spaces/
+		directory-with-áccent/
+		EOF
+		rm -rf "directory with spaces" &&
+		rm -rf "directory-with-áccent" &&
+		git add . &&
+		git commit -m "Remove directory with spaces and directory with accent"
+	)
+'
+
+# use FUNNYNAMES to avoid running on Windows, which doesn't permit backslashes or tabs in paths
+test_expect_success FUNNYNAMES 'cone mode sparse-checkout completes directory names with backslashes and tabs' '
+	# reset sparse-checkout
+	git -C sparse-checkout sparse-checkout disable &&
+	(
+		cd sparse-checkout &&
+		mkdir "directory\with\backslashes" &&
+		mkdir "$(printf "directory\twith\ttabs")" &&
+		>"directory\with\backslashes/randomfile" &&
+		>"$(printf "directory\twith\ttabs")/randomfile" &&
+		git add . &&
+		git commit -m "Add directory with backslashes and directory with tabs" &&
+		git sparse-checkout set --cone "directory\with\backslashes" \
+			"$(printf "directory\twith\ttabs")" &&
+		test_completion "git sparse-checkout add dir" <<-\EOF &&
+		directory\with\backslashes/
+		directory	with	tabs/
+		EOF
+		rm -rf "directory\with\backslashes" &&
+		rm -rf "$(printf "directory\twith\ttabs")" &&
+		git add . &&
+		git commit -m "Remove directory with backslashes and directory with tabs"
+	)
+'
+
 test_expect_success 'non-cone mode sparse-checkout uses bash completion' '
 	# reset sparse-checkout repo to non-cone mode
 	git -C sparse-checkout sparse-checkout disable &&

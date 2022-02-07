@@ -2988,7 +2988,7 @@ _git_show_branch ()
 
 __gitcomp_directories ()
 {
-	local _tmp_dir _tmp_completions
+	local _tmp_dir _tmp_completions _found=0
 
 	# Get the directory of the current token; this differs from dirname
 	# in that it keeps up to the final trailing slash.  If no slash found
@@ -2996,20 +2996,18 @@ __gitcomp_directories ()
 	[[ "$cur" =~ .*/ ]]
 	_tmp_dir=$BASH_REMATCH
 
-	# Find possible directory completions, adding trailing '/' characters
-	_tmp_completions="$(git ls-tree -d --name-only HEAD $_tmp_dir |
-		sed -e s%$%/%)"
-
-	if [[ -n "$_tmp_completions" ]]; then
-		# There were some directory completions, so find ones that
-		# start with "$cur", the current token, and put those in COMPREPLY
-		local i=0 c IFS=$' \t\n'
-		for c in $_tmp_completions; do
+	# Find possible directory completions, adding trailing '/' characters,
+	# de-quoting, and handling unusual characters.
+	while IFS= read -r -d $'\0' c ; do
+		# If there are directory completions, find ones that start
+		# with "$cur", the current token, and put those in COMPREPLY
 		if [[ $c == "$cur"* ]]; then
-			COMPREPLY+=("$c")
+			COMPREPLY+=("$c/")
+			_found=1
 		fi
-		done
-	elif [[ "$cur" =~ /$ ]]; then
+	done < <(git ls-tree -z -d --name-only HEAD $_tmp_dir)
+
+	if [[ $_found == 0 ]] && [[ "$cur" =~ /$ ]]; then
 		# No possible further completions any deeper, so assume we're at
 		# a leaf directory and just consider it complete
 		__gitcomp_direct_append "$cur "
