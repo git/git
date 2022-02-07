@@ -544,4 +544,40 @@ test_expect_failure 'grep saves textconv cache in the appropriate repository' '
 	test_path_is_file "$sub_textconv_cache"
 '
 
+test_expect_success 'grep partially-cloned submodule' '
+	# Set up clean superproject and submodule for partial cloning.
+	git init super &&
+	git init super/sub &&
+	(
+		cd super &&
+		test_commit --no-tag "Add file in superproject" super-file "Some content for super-file" &&
+		test_commit -C sub --no-tag "Add file in submodule" sub-file "Some content for sub-file" &&
+		git submodule add ./sub &&
+		git commit -m "Add other as submodule sub" &&
+		test_tick &&
+		test_commit -C sub --no-tag --append "Update file in submodule" sub-file "Some more content for sub-file" &&
+		git add sub &&
+		git commit -m "Update submodule" &&
+		test_tick &&
+		git config --local uploadpack.allowfilter 1 &&
+		git config --local uploadpack.allowanysha1inwant 1 &&
+		git -C sub config --local uploadpack.allowfilter 1 &&
+		git -C sub config --local uploadpack.allowanysha1inwant 1
+	) &&
+	# Clone the superproject & submodule, then make sure we can lazy-fetch submodule objects.
+	git clone --filter=blob:none --recurse-submodules "file://$(pwd)/super" partial &&
+	(
+		cd partial &&
+		cat >expect <<-\EOF &&
+		HEAD^:sub/sub-file:Some content for sub-file
+		HEAD^:super-file:Some content for super-file
+		EOF
+
+		GIT_TRACE2_EVENT="$(pwd)/trace2.log" git grep -e content --recurse-submodules HEAD^ >actual &&
+		test_cmp expect actual &&
+		# Verify that we actually fetched data from the promisor remote:
+		grep \"category\":\"promisor\",\"key\":\"fetch_count\",\"value\":\"1\" trace2.log >/dev/null
+	)
+'
+
 test_done
