@@ -2179,8 +2179,8 @@ int git_configset_get_string(struct config_set *cs, const char *key, char **dest
 		return 1;
 }
 
-int git_configset_get_string_tmp(struct config_set *cs, const char *key,
-				 const char **dest)
+static int git_configset_get_string_tmp(struct config_set *cs, const char *key,
+					const char **dest)
 {
 	const char *value;
 	if (!git_configset_get_value(cs, key, &value)) {

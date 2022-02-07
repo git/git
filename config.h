@@ -494,7 +494,6 @@ void git_configset_clear(struct config_set *cs);
 int git_configset_get_value(struct config_set *cs, const char *key, const char **dest);
 
 int git_configset_get_string(struct config_set *cs, const char *key, char **dest);
-int git_configset_get_string_tmp(struct config_set *cs, const char *key, const char **dest);
 int git_configset_get_int(struct config_set *cs, const char *key, int *dest);
 int git_configset_get_ulong(struct config_set *cs, const char *key, unsigned long *dest);
 int git_configset_get_bool(struct config_set *cs, const char *key, int *dest);
