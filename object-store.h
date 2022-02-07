@@ -245,22 +245,22 @@ static inline void *repo_read_object_file(struct repository *r,
 /* Read and unpack an object file into memory, write memory to an object file */
 int oid_object_info(struct repository *r, const struct object_id *, unsigned long *);
 
-int hash_object_file(const struct git_hash_algo *algo, const void *buf,
-		     unsigned long len, const char *type,
-		     struct object_id *oid);
+void hash_object_file(const struct git_hash_algo *algo, const void *buf,
+		      unsigned long len, enum object_type type,
+		      struct object_id *oid);
 
 int write_object_file_flags(const void *buf, unsigned long len,
-			    const char *type, struct object_id *oid,
+			    enum object_type type, struct object_id *oid,
 			    unsigned flags);
 static inline int write_object_file(const void *buf, unsigned long len,
-				    const char *type, struct object_id *oid)
+				    enum object_type type, struct object_id *oid)
 {
 	return write_object_file_flags(buf, len, type, oid, 0);
 }
 
-int hash_object_file_literally(const void *buf, unsigned long len,
-			       const char *type, struct object_id *oid,
-			       unsigned flags);
+int write_object_file_literally(const void *buf, unsigned long len,
+				const char *type, struct object_id *oid,
+				unsigned flags);
 
 /*
  * Add an object file to the in-memory object store, without writing it
@@ -330,6 +330,14 @@ int repo_has_object_file_with_flags(struct repository *r,
  * references.
  */
 int has_loose_object_nonlocal(const struct object_id *);
+
+/**
+ * format_object_header() is a thin wrapper around s xsnprintf() that
+ * writes the initial "<type> <obj-len>" part of the loose object
+ * header. It returns the size that snprintf() returns + 1.
+ */
+int format_object_header(char *str, size_t size, enum object_type type,
+			 size_t objsize);
 
 void assert_oid_type(const struct object_id *oid, enum object_type expect);
 
