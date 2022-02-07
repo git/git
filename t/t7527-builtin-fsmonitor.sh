@@ -213,43 +213,43 @@ test_expect_success 'status implicitly starts daemon' '
 	test_subcommand git fsmonitor--daemon start <.git/trace_implicit_2
 '
 
-edit_files() {
+edit_files () {
 	echo 1 >modified
 	echo 2 >dir1/modified
 	echo 3 >dir2/modified
 	>dir1/untracked
 }
 
-delete_files() {
+delete_files () {
 	rm -f delete
 	rm -f dir1/delete
 	rm -f dir2/delete
 }
 
-create_files() {
+create_files () {
 	echo 1 >new
 	echo 2 >dir1/new
 	echo 3 >dir2/new
 }
 
-rename_files() {
+rename_files () {
 	mv rename renamed
 	mv dir1/rename dir1/renamed
 	mv dir2/rename dir2/renamed
 }
 
-file_to_directory() {
+file_to_directory () {
 	rm -f delete
 	mkdir delete
 	echo 1 >delete/new
 }
 
-directory_to_file() {
+directory_to_file () {
 	rm -rf dir1
 	echo 1 >dir1
 }
 
-verify_status() {
+verify_status () {
 	git status >actual &&
 	GIT_INDEX_FILE=.git/fresh-index git read-tree master &&
 	GIT_INDEX_FILE=.git/fresh-index git -c core.useBuiltinFSMonitor= status >expect &&
