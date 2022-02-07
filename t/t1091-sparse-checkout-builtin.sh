@@ -117,7 +117,7 @@ test_expect_success 'switching to cone mode with non-cone mode patterns' '
 		cd bad-patterns &&
 		git sparse-checkout init &&
 		git sparse-checkout add dir &&
-		git config core.sparseCheckoutCone true &&
+		git config --worktree core.sparseCheckoutCone true &&
 		test_must_fail git sparse-checkout add dir 2>err &&
 		grep "existing sparse-checkout patterns do not use cone mode" err
 	)
@@ -256,7 +256,7 @@ test_expect_success 'sparse-index enabled and disabled' '
 		test_cmp expect actual &&
 
 		git -C repo config --list >config &&
-		! grep index.sparse config
+		test_cmp_config -C repo false index.sparse
 	)
 '
 
