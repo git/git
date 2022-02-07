@@ -5,6 +5,7 @@
 #include "config.h"
 #include "../../mem-pool.h"
 #include "ntifs.h"
+#include "../../dir.h"
 
 static volatile long initialized;
 static DWORD dwTlsIndex;
@@ -101,7 +102,7 @@ static int fsentry_cmp(void *unused_cmp_data,
 	/* if list parts are equal, compare len and name */
 	if (fse1->len != fse2->len)
 		return fse1->len - fse2->len;
-	return strnicmp(fse1->dirent.d_name, fse2->dirent.d_name, fse1->len);
+	return fspathncmp(fse1->dirent.d_name, fse2->dirent.d_name, fse1->len);
 }
 
 /*
