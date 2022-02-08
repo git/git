@@ -358,7 +358,9 @@ static int open_midx_bitmap_1(struct bitmap_index *bitmap_git,
 cleanup:
 	munmap(bitmap_git->map, bitmap_git->map_size);
 	bitmap_git->map_size = 0;
+	bitmap_git->map_pos = 0;
 	bitmap_git->map = NULL;
+	bitmap_git->midx = NULL;
 	return -1;
 }
 
@@ -405,6 +407,8 @@ static int open_pack_bitmap_1(struct bitmap_index *bitmap_git, struct packed_git
 		munmap(bitmap_git->map, bitmap_git->map_size);
 		bitmap_git->map = NULL;
 		bitmap_git->map_size = 0;
+		bitmap_git->map_pos = 0;
+		bitmap_git->pack = NULL;
 		return -1;
 	}
 
