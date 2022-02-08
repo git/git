@@ -1855,7 +1855,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 				     &oid, flags);
 	}
 
-	apply_autostash(git_path_merge_autostash(the_repository));
+	apply_autostash(MERGE_AUTOSTASH);
 
 	UNLEAK(err);
 	UNLEAK(sb);

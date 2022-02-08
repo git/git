@@ -414,6 +414,17 @@ static const char *state_dir_path(const char *filename, struct rebase_options *o
 	return path.buf;
 }
 
+static const char *state_pseudoref(const char *suffix,
+				   struct rebase_options *opts)
+{
+	static struct strbuf pseudo_ref = STRBUF_INIT;
+	strbuf_reset(&pseudo_ref);
+	strbuf_addstr(&pseudo_ref, strrchr(opts->state_dir, '/') + 1);
+	strbuf_addstr(&pseudo_ref, "/");
+	strbuf_addstr(&pseudo_ref, suffix);
+	return pseudo_ref.buf;
+}
+
 /* Initialize the rebase options from the state directory. */
 static int read_basic_state(struct rebase_options *opts)
 {
@@ -544,10 +555,11 @@ static int finish_rebase(struct rebase_options *opts)
 {
 	struct strbuf dir = STRBUF_INIT;
 	int ret = 0;
+	const char *autostash_ref = state_pseudoref("autostash", opts);
 
 	delete_ref(NULL, "REBASE_HEAD", NULL, REF_NO_DEREF);
 	unlink(git_path_auto_merge(the_repository));
-	apply_autostash(state_dir_path("autostash", opts));
+	apply_autostash(autostash_ref);
 	/*
 	 * We ignore errors in 'git maintenance run --auto', since the
 	 * user should see them.
@@ -559,6 +571,9 @@ static int finish_rebase(struct rebase_options *opts)
 		replay.action = REPLAY_INTERACTIVE_REBASE;
 		ret = sequencer_remove_state(&replay);
 	} else {
+		if (delete_ref("cleanup autostash", autostash_ref, NULL,
+			       REF_SKIP_REFNAME_VERIFICATION))
+			die("failed cleaning up autostash ref");
 		strbuf_addstr(&dir, opts->state_dir);
 		if (remove_dir_recursively(&dir, 0))
 			ret = error(_("could not remove '%s'"),
@@ -760,8 +775,11 @@ static int run_specific_rebase(struct rebase_options *opts, enum action action)
 			finish_rebase(opts);
 	} else if (status == 2) {
 		struct strbuf dir = STRBUF_INIT;
-
-		apply_autostash(state_dir_path("autostash", opts));
+		const char *autostash_ref = state_pseudoref("autostash", opts);
+		apply_autostash(autostash_ref);
+		if (delete_ref("cleanup autostash", autostash_ref, NULL,
+			       REF_SKIP_REFNAME_VERIFICATION))
+			die("failed cleaning up autostash ref");
 		strbuf_addstr(&dir, opts->state_dir);
 		remove_dir_recursively(&dir, 0);
 		strbuf_release(&dir);
@@ -1310,13 +1328,18 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		goto cleanup;
 	}
 	case ACTION_QUIT: {
-		save_autostash(state_dir_path("autostash", &options));
+		const char *autostash_ref =
+			state_pseudoref("autostash", &options);
+		save_autostash(autostash_ref);
 		if (options.type == REBASE_MERGE) {
 			struct replay_opts replay = REPLAY_OPTS_INIT;
 
 			replay.action = REPLAY_INTERACTIVE_REBASE;
 			ret = sequencer_remove_state(&replay);
 		} else {
+			if (delete_ref("deleted autostash_ref", autostash_ref,
+				       NULL, REF_SKIP_REFNAME_VERIFICATION))
+				die("failed to cleanup autostash ref");
 			strbuf_reset(&buf);
 			strbuf_addstr(&buf, options.state_dir);
 			ret = remove_dir_recursively(&buf, 0);
@@ -1670,8 +1693,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 	if (options.autostash)
 		create_autostash(the_repository,
-				 state_dir_path("autostash", &options));
-
+				 state_pseudoref("autostash", &options));
 
 	if (require_clean_work_tree(the_repository, "rebase",
 				    _("Please commit or stash them."), 1, 1)) {

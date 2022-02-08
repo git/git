@@ -160,7 +160,6 @@ static GIT_PATH_FUNC(rebase_path_quiet, "rebase-merge/quiet")
 static GIT_PATH_FUNC(rebase_path_signoff, "rebase-merge/signoff")
 static GIT_PATH_FUNC(rebase_path_head_name, "rebase-merge/head-name")
 static GIT_PATH_FUNC(rebase_path_onto, "rebase-merge/onto")
-static GIT_PATH_FUNC(rebase_path_autostash, "rebase-merge/autostash")
 static GIT_PATH_FUNC(rebase_path_strategy, "rebase-merge/strategy")
 static GIT_PATH_FUNC(rebase_path_strategy_opts, "rebase-merge/strategy_opts")
 static GIT_PATH_FUNC(rebase_path_allow_rerere_autoupdate, "rebase-merge/allow_rerere_autoupdate")
@@ -4085,7 +4084,7 @@ static enum todo_command peek_command(struct todo_list *todo_list, int offset)
 	return -1;
 }
 
-void create_autostash(struct repository *r, const char *path)
+void create_autostash(struct repository *r, const char *pseudoref)
 {
 	struct strbuf buf = STRBUF_INIT;
 	struct lock_file lock_file = LOCK_INIT;
@@ -4117,10 +4116,10 @@ void create_autostash(struct repository *r, const char *path)
 		strbuf_reset(&buf);
 		strbuf_add_unique_abbrev(&buf, &oid, DEFAULT_ABBREV);
 
-		if (safe_create_leading_directories_const(path))
-			die(_("Could not create directory for '%s'"),
-			    path);
-		write_file(path, "%s", oid_to_hex(&oid));
+		refs_update_ref(get_main_ref_store(r), "create_autostash",
+				pseudoref, &oid, null_oid(), 0,
+				UPDATE_REFS_DIE_ON_ERR);
+
 		printf(_("Created autostash: %s\n"), buf.buf);
 		if (reset_head(r, &ropts) < 0)
 			die(_("could not reset --hard"));
@@ -4174,33 +4173,30 @@ static int apply_save_autostash_oid(const char *stash_oid, int attempt_apply)
 	return ret;
 }
 
-static int apply_save_autostash(const char *path, int attempt_apply)
+static int apply_save_autostash(const char *pseudoref, int attempt_apply)
 {
-	struct strbuf stash_oid = STRBUF_INIT;
+	struct object_id oid;
+	char hex[GIT_MAX_HEXSZ + 1] = { 0 };
 	int ret = 0;
 
-	if (!read_oneliner(&stash_oid, path,
-			   READ_ONELINER_SKIP_IF_EMPTY)) {
-		strbuf_release(&stash_oid);
+	if (read_ref(pseudoref, &oid))
 		return 0;
-	}
-	strbuf_trim(&stash_oid);
 
-	ret = apply_save_autostash_oid(stash_oid.buf, attempt_apply);
+	ret = apply_save_autostash_oid(oid_to_hex_r(hex, &oid), attempt_apply);
 
-	unlink(path);
-	strbuf_release(&stash_oid);
+	delete_ref("save autostash", pseudoref, NULL,
+		   REF_SKIP_REFNAME_VERIFICATION);
 	return ret;
 }
 
-int save_autostash(const char *path)
+int save_autostash(const char *pseudoref)
 {
-	return apply_save_autostash(path, 0);
+	return apply_save_autostash(pseudoref, 0);
 }
 
-int apply_autostash(const char *path)
+int apply_autostash(const char *pseudoref)
 {
-	return apply_save_autostash(path, 1);
+	return apply_save_autostash(pseudoref, 1);
 }
 
 int apply_autostash_oid(const char *stash_oid)
@@ -4222,7 +4218,7 @@ static int checkout_onto(struct repository *r, struct replay_opts *opts,
 		.default_reflog_action = "rebase"
 	};
 	if (reset_head(r, &ropts)) {
-		apply_autostash(rebase_path_autostash());
+		apply_autostash("rebase-merge/autostash");
 		sequencer_remove_state(opts);
 		return error(_("could not detach HEAD"));
 	}
@@ -4556,7 +4552,7 @@ cleanup_head_ref:
 				run_command(&hook);
 			}
 		}
-		apply_autostash(rebase_path_autostash());
+		apply_autostash("rebase-merge/autostash");
 
 		if (!opts->quiet) {
 			if (!opts->verbose)
@@ -5635,7 +5631,7 @@ int complete_action(struct repository *r, struct replay_opts *opts, unsigned fla
 		todo_list_add_exec_commands(todo_list, commands);
 
 	if (count_commands(todo_list) == 0) {
-		apply_autostash(rebase_path_autostash());
+		apply_autostash("rebase-merge/autostash");
 		sequencer_remove_state(opts);
 
 		return error(_("nothing to do"));
@@ -5646,12 +5642,12 @@ int complete_action(struct repository *r, struct replay_opts *opts, unsigned fla
 	if (res == -1)
 		return -1;
 	else if (res == -2) {
-		apply_autostash(rebase_path_autostash());
+		apply_autostash("rebase-merge/autostash");
 		sequencer_remove_state(opts);
 
 		return -1;
 	} else if (res == -3) {
-		apply_autostash(rebase_path_autostash());
+		apply_autostash("rebase-merge/autostash");
 		sequencer_remove_state(opts);
 		todo_list_release(&new_todo);
 
