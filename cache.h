@@ -18,7 +18,6 @@
 #include "repository.h"
 #include "mem-pool.h"
 
-#include <zlib.h>
 typedef struct git_zstream {
 	z_stream z;
 	unsigned long avail_in;
