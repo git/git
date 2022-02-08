@@ -31,7 +31,7 @@ static void test_pq(void)
 	int N = ARRAY_SIZE(names) - 1;
 
 	struct merged_iter_pqueue pq = { NULL };
-	const char *last = NULL;
+	char *last = NULL;
 
 	int i = 0;
 	for (i = 0; i < N; i++) {
@@ -42,12 +42,10 @@ static void test_pq(void)
 
 	i = 1;
 	do {
-		struct reftable_record rec =
-			reftable_new_record(BLOCK_TYPE_REF);
-		struct pq_entry e = { 0 };
-
-		reftable_record_as_ref(&rec)->refname = names[i];
-		e.rec = rec;
+		struct pq_entry e = { .rec = { .type = BLOCK_TYPE_REF,
+					       .u.ref = {
+						       .refname = names[i],
+					       } } };
 		merged_iter_pqueue_add(&pq, e);
 		merged_iter_pqueue_check(pq);
 		i = (i * 7) % N;
@@ -55,19 +53,18 @@ static void test_pq(void)
 
 	while (!merged_iter_pqueue_is_empty(pq)) {
 		struct pq_entry e = merged_iter_pqueue_remove(&pq);
-		struct reftable_ref_record *ref =
-			reftable_record_as_ref(&e.rec);
-
+		struct reftable_record *rec = &e.rec;
 		merged_iter_pqueue_check(pq);
 
+		EXPECT(reftable_record_type(rec) == BLOCK_TYPE_REF);
 		if (last) {
-			EXPECT(strcmp(last, ref->refname) < 0);
+			EXPECT(strcmp(last, rec->u.ref.refname) < 0);
 		}
-		last = ref->refname;
-		ref->refname = NULL;
-		reftable_free(ref);
+		// this is names[i], so don't dealloc.
+		last = rec->u.ref.refname;
+		rec->u.ref.refname = NULL;
+		reftable_record_release(rec);
 	}
-
 	for (i = 0; i < N; i++) {
 		reftable_free(names[i]);
 	}
