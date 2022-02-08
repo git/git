@@ -418,7 +418,8 @@ test_expect_success 'expire with multiple worktrees' '
 		test_commit -C link-wt foobar &&
 		test_tick &&
 		git reflog expire --verbose --all --expire=$test_tick &&
-		test_must_be_empty .git/worktrees/link-wt/logs/HEAD
+		test-tool ref-store worktree:link-wt for-each-reflog-ent HEAD >actual &&
+		test_must_be_empty actual
 	)
 '
 
