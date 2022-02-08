@@ -20,7 +20,7 @@ enum untracked_cache_setting {
 };
 
 enum fetch_negotiation_setting {
-	FETCH_NEGOTIATION_DEFAULT,
+	FETCH_NEGOTIATION_CONSECUTIVE,
 	FETCH_NEGOTIATION_SKIPPING,
 	FETCH_NEGOTIATION_NOOP,
 };
