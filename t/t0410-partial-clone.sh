@@ -30,6 +30,31 @@ promise_and_delete () {
 	delete_object repo "$HASH"
 }
 
+upload_blob() {
+	SERVER_REPO="$1"
+	HASH="$2"
+
+	test -n "$HASH" || die "Invalid argument '$HASH'"
+	HASH_SIZE=$(git -C "$SERVER_REPO" cat-file -s "$HASH") || {
+		echo >&2 "Cannot get blob size of '$HASH'"
+		return 1
+	}
+
+	UPLOAD_URL="http://127.0.0.1:$LIB_HTTPD_PORT/upload/?sha1=$HASH&size=$HASH_SIZE&type=blob"
+
+	git -C "$SERVER_REPO" cat-file blob "$HASH" >object &&
+	curl --data-binary @object --include "$UPLOAD_URL"
+}
+
+upload_blobs_from_stdin() {
+	SERVER_REPO="$1"
+	while read -r blob
+	do
+		echo "uploading $blob"
+		upload_blob "$SERVER_REPO" "$blob" || return
+	done
+}
+
 test_expect_success 'extensions.partialclone without filter' '
 	test_create_repo server &&
 	git clone --filter="blob:none" "file://$(pwd)/server" client &&
@@ -685,6 +710,62 @@ test_expect_success 'fetching of missing objects from an HTTP server' '
 	IDX=$(sed "s/promisor$/idx/" promisorlist) &&
 	git verify-pack --verbose "$IDX" >out &&
 	grep "$HASH" out
+'
+
+PATH="$TEST_DIRECTORY/t0410:$PATH"
+
+test_expect_success 'fetch of missing objects through remote helper' '
+	rm -rf origin server &&
+	test_create_repo origin &&
+	dd if=/dev/zero of=origin/file1 bs=801k count=1 &&
+	git -C origin add file1 &&
+	git -C origin commit -m "large blob" &&
+	sha="$(git -C origin rev-parse :file1)" &&
+	expected="?$(git -C origin rev-parse :file1)" &&
+	git clone --bare --no-local origin server &&
+	git -C server remote add httpremote "testhttpgit::${PWD}/server" &&
+	git -C server config remote.httpremote.promisor true &&
+	git -C server config --remove-section remote.origin &&
+	git -C server rev-list --all --objects --filter-print-omitted \
+		--filter=blob:limit=800k | perl -ne "print if s/^[~]//" \
+		>large_blobs.txt &&
+	upload_blobs_from_stdin server <large_blobs.txt &&
+	git -C server -c repack.writebitmaps=false repack -a -d \
+		--filter=blob:limit=800k &&
+	git -C server rev-list --objects --all --missing=print >objects &&
+	grep "$expected" objects &&
+	HTTPD_URL=$HTTPD_URL git -C server show $sha &&
+	git -C server rev-list --objects --all --missing=print >objects &&
+	grep "$sha" objects
+'
+
+test_expect_success 'fetch does not cause server to fetch missing objects' '
+	rm -rf origin server client &&
+	test_create_repo origin &&
+	dd if=/dev/zero of=origin/file1 bs=801k count=1 &&
+	git -C origin add file1 &&
+	git -C origin commit -m "large blob" &&
+	sha="$(git -C origin rev-parse :file1)" &&
+	expected="?$(git -C origin rev-parse :file1)" &&
+	git clone --bare --no-local origin server &&
+	git -C server remote add httpremote "testhttpgit::${PWD}/server" &&
+	git -C server config remote.httpremote.promisor true &&
+	git -C server config --remove-section remote.origin &&
+	git -C server rev-list --all --objects --filter-print-omitted \
+		--filter=blob:limit=800k | perl -ne "print if s/^[~]//" \
+		>large_blobs.txt &&
+	upload_blobs_from_stdin server <large_blobs.txt &&
+	git -C server -c repack.writebitmaps=false repack -a -d \
+		--filter=blob:limit=800k &&
+	git -C server config uploadpack.allowmissingpromisor true &&
+	git clone -c remote.httpremote.url="testhttpgit::${PWD}/server" \
+	-c remote.httpremote.fetch='+refs/heads/*:refs/remotes/httpremote/*' \
+	-c remote.httpremote.promisor=true --bare --no-local \
+	--filter=blob:limit=800k server client &&
+	git -C client rev-list --objects --all --missing=print >client_objects &&
+	grep "$expected" client_objects &&
+	git -C server rev-list --objects --all --missing=print >server_objects &&
+	grep "$expected" server_objects
 '
 
 # DO NOT add non-httpd-specific tests here, because the last part of this
