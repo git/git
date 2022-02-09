@@ -1273,7 +1273,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	int best_cnt = -1, merge_was_ok = 0, automerge_was_ok = 0;
 	struct commit_list *common = NULL;
 	const char *best_strategy = NULL, *wt_strategy = NULL;
-	struct commit_list *remoteheads, *p;
+	struct commit_list *remoteheads = NULL, *p;
 	void *branch_to_free;
 	int orig_argc = argc;
 
@@ -1752,6 +1752,10 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		ret = suggest_conflicts();
 
 done:
+	if (!automerge_was_ok) {
+		free_commit_list(common);
+		free_commit_list(remoteheads);
+	}
 	strbuf_release(&buf);
 	free(branch_to_free);
 	return ret;
