@@ -8,6 +8,26 @@
 #define BLOCK_GROWTH_SIZE (1024 * 1024 - sizeof(struct mp_block))
 
 /*
+ * The inner union is an approximation for C11's max_align_t, and the
+ * struct + offsetof computes _Alignof. This can all just be replaced
+ * with _Alignof(max_align_t) if/when C11 is part of the baseline.
+ * Note that _Alignof(X) need not be the same as sizeof(X); it's only
+ * required to be a (possibly trivial) factor. They are the same for
+ * most architectures, but m68k for example has only 2-byte alignment
+ * for its 4-byte and 8-byte types, so using sizeof would waste space.
+ *
+ * Add more types to the union if the current set is insufficient.
+ */
+struct git_max_alignment {
+	char unalign;
+	union {
+		uintmax_t max_align_uintmax;
+		void *max_align_pointer;
+	} aligned;
+};
+#define GIT_MAX_ALIGNMENT offsetof(struct git_max_alignment, aligned)
+
+/*
  * Allocate a new mp_block and insert it after the block specified in
  * `insert_after`. If `insert_after` is NULL, then insert block at the
  * head of the linked list.
@@ -69,9 +89,9 @@ void *mem_pool_alloc(struct mem_pool *pool, size_t len)
 	struct mp_block *p = NULL;
 	void *r;
 
-	/* round up to a 'uintmax_t' alignment */
-	if (len & (sizeof(uintmax_t) - 1))
-		len += sizeof(uintmax_t) - (len & (sizeof(uintmax_t) - 1));
+	/* round up to a 'GIT_MAX_ALIGNMENT' alignment */
+	if (len & (GIT_MAX_ALIGNMENT - 1))
+		len += GIT_MAX_ALIGNMENT - (len & (GIT_MAX_ALIGNMENT - 1));
 
 	if (pool->mp_block &&
 	    pool->mp_block->end - pool->mp_block->next_free >= len)
