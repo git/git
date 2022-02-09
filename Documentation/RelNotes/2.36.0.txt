@@ -6,7 +6,8 @@ Updates since Git 2.35
 
 Backward compatibility warts
 
- *
+ * "git name-rev --stdin" has been deprecated and issues a warning
+   when used; use "git name-rev --annotate-stdin" instead.
 
 
 Note to those who build from the source
@@ -31,6 +32,15 @@ Performance, Internal Implementation, Development Support etc.
 
  * Use the parse-options API in "git reflog" command.
 
+ * The conditional inclusion mechanism of configuration files using
+   "[includeIf <condition>]" learns to base its decision on the
+   URL of the remote repository the repository interacts with.
+   (merge 399b198489 jt/conditional-config-on-remote-url later to maint).
+
+ * "git name-rev --stdin" does not behave like usual "--stdin" at
+   all.  Start the process of renaming it to "--annotate-stdin".
+   (merge a2585719b3 jc/name-rev-stdin later to maint).
+
 
 Fixes since v2.35
 -----------------
@@ -47,8 +57,56 @@ Fixes since v2.35
    racy timestamps (just like "git status" already does).
    (merge 2ede073fd2 ms/update-index-racy later to maint).
 
+ * Avoid tests that are run under GIT_TRACE2 set from failing
+   unnecessarily.
+   (merge 944d808e42 js/test-unset-trace2-parents later to maint).
+
+ * The merge-ort misbehaved when merge.renameLimit configuration is
+   set too low and failed to find all renames.
+   (merge 9ae39fef7f en/merge-ort-restart-optim-fix later to maint).
+
+ * We explain that revs come first before the pathspec among command
+   line arguments, but did not spell out that dashed options come
+   before other args, which has been corrected.
+   (merge c11f95010c tl/doc-cli-options-first later to maint).
+
+ * "git add -p" rewritten in C regressed hunk splitting in some cases,
+   which has been corrected.
+   (merge 7008ddc645 pw/add-p-hunk-split-fix later to maint).
+
+ * "git fetch --negotiate-only" is an internal command used by "git
+   push" to figure out which part of our history is missing from the
+   other side.  It should never recurse into submodules even when
+   fetch.recursesubmodules configuration variable is set, nor it
+   should trigger "gc".  The code has been tightened up to ensure it
+   only does common ancestry discovery and nothing else.
+   (merge de4eaae63a gc/fetch-negotiate-only-early-return later to maint).
+
+ * The code path that verifies signatures made with ssh were made to
+   work better on a system with CRLF line endings.
+   (merge caeef01ea7 fs/ssh-signing-crlf later to maint).
+
+ * "git sparse-checkout init" failed to write into $GIT_DIR/info
+   directory when the repository was created without one, which has
+   been corrected to auto-create it.
+   (merge 7f44842ac1 jt/sparse-checkout-leading-dir-fix later to maint).
+
+ * Cloning from a repository that does not yet have any branches or
+   tags but has other refs resulted in a "remote transport reported
+   error", which has been corrected.
+   (merge dccea605b6 jt/clone-not-quite-empty later to maint).
+
+ * Mark in various places in the code that the sparse index and the
+   split index features are mutually incompatible.
+   (merge 451b66c533 js/sparse-vs-split-index later to maint).
+
+ * Update the logic to compute alignment requirement for our mem-pool.
+   (merge e38bcc66d8 jc/mem-pool-alignment later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge cfc5cf428b jc/find-header later to maint).
    (merge 40e7cfdd46 jh/p4-fix-use-of-process-error-exception later to maint).
    (merge 727e6ea350 jh/p4-spawning-external-commands-cleanup later to maint).
    (merge 0a6adc26e2 rs/grep-expr-cleanup later to maint).
+   (merge 4ed7dfa713 po/readme-mention-contributor-hints later to maint).
+   (merge 6046f7a91c en/plug-leaks-in-merge later to maint).
