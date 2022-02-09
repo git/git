@@ -79,6 +79,12 @@ test_expect_success 'git sparse-checkout init' '
 	check_files repo a
 '
 
+test_expect_success 'git sparse-checkout init in empty repo' '
+	test_when_finished rm -rf empty-repo blank-template &&
+	git init --template= empty-repo &&
+	git -C empty-repo sparse-checkout init
+'
+
 test_expect_success 'git sparse-checkout list after init' '
 	git -C repo sparse-checkout list >actual &&
 	cat >expect <<-\EOF &&
