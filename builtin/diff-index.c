@@ -26,6 +26,7 @@ int cmd_diff_index(int argc, const char **argv, const char *prefix)
 	git_config(git_diff_basic_config, NULL); /* no "diff" UI options */
 	repo_init_revisions(the_repository, &rev, prefix);
 	rev.abbrev = 0;
+	rev.diffopt.stat_width = -1; /* use full terminal width */
 	prefix = precompose_argv_prefix(argc, argv, prefix);
 
 	/*
