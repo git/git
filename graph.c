@@ -401,6 +401,18 @@ struct git_graph *graph_init(struct rev_info *opt)
 	return graph;
 }
 
+void graph_clear(struct git_graph *graph)
+{
+	if (!graph)
+		return;
+
+	free(graph->columns);
+	free(graph->new_columns);
+	free(graph->mapping);
+	free(graph->old_mapping);
+	free(graph);
+}
+
 static void graph_update_state(struct git_graph *graph, enum graph_state s)
 {
 	graph->prev_state = graph->state;
