@@ -164,6 +164,17 @@ test_expect_success 'fetch --prune --tags with refspec prunes based on refspec' 
 	git rev-parse sometag
 '
 
+test_expect_success REFFILES 'fetch --prune fails to delete branches' '
+	cd "$D" &&
+	git clone . prune-fail &&
+	cd prune-fail &&
+	git update-ref refs/remotes/origin/extrabranch main &&
+	: this will prevent --prune from locking packed-refs for deleting refs, but adding loose refs still succeeds  &&
+	>.git/packed-refs.new &&
+
+	test_must_fail git fetch --prune origin
+'
+
 test_expect_success 'fetch --atomic works with a single branch' '
 	test_when_finished "rm -rf \"$D\"/atomic" &&
 
