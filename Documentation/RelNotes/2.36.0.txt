@@ -103,6 +103,18 @@ Fixes since v2.35
  * Update the logic to compute alignment requirement for our mem-pool.
    (merge e38bcc66d8 jc/mem-pool-alignment later to maint).
 
+ * Pick a better random number generator and use it when we prepare
+   temporary filenames.
+   (merge 47efda967c bc/csprng-mktemps later to maint).
+
+ * Update the contributor-facing documents on proposed log messages.
+   (merge cdba0295b0 jc/doc-log-messages later to maint).
+
+ * When "git fetch --prune" failed to prune the refs it wanted to
+   prune, the command issued error messages but exited with exit
+   status 0, which has been corrected.
+   (merge c9e04d905e tg/fetch-prune-exit-code-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge cfc5cf428b jc/find-header later to maint).
    (merge 40e7cfdd46 jh/p4-fix-use-of-process-error-exception later to maint).
@@ -110,3 +122,10 @@ Fixes since v2.35
    (merge 0a6adc26e2 rs/grep-expr-cleanup later to maint).
    (merge 4ed7dfa713 po/readme-mention-contributor-hints later to maint).
    (merge 6046f7a91c en/plug-leaks-in-merge later to maint).
+   (merge 8c591dbfce bc/clarify-eol-attr later to maint).
+   (merge 518e15db74 rs/parse-options-lithelp-help later to maint).
+   (merge cbac0076ef gh/doc-typos later to maint).
+   (merge ce14de03db ab/no-errno-from-resolve-ref-unsafe later to maint).
+   (merge 2826ffad8c rc/negotiate-only-typofix later to maint).
+   (merge 0f03f04c5c en/sparse-checkout-leakfix later to maint).
+   (merge 74f3390dde sy/diff-usage-typofix later to maint).
