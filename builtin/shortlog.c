@@ -388,6 +388,7 @@ int cmd_shortlog(int argc, const char **argv, const char *prefix)
 		parse_revision_opt(&rev, &ctx, options, shortlog_usage);
 	}
 parse_done:
+	revision_opts_finish(&rev);
 	argc = parse_options_end(&ctx);
 
 	if (nongit && argc > 1) {

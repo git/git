@@ -377,6 +377,7 @@ void parse_revision_opt(struct rev_info *revs, struct parse_opt_ctx_t *ctx,
 #define REVARG_COMMITTISH 02
 int handle_revision_arg(const char *arg, struct rev_info *revs,
 			int flags, unsigned revarg_opt);
+void revision_opts_finish(struct rev_info *revs);
 
 /**
  * Reset the flags used by the revision walking api. You can use this to do

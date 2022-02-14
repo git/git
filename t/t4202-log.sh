@@ -1684,6 +1684,75 @@ test_expect_success 'log --graph with --name-only' '
 	test_cmp_graph --name-only tangle..reach
 '
 
+test_expect_success '--no-graph countermands --graph' '
+	git log >expect &&
+	git log --graph --no-graph >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--graph countermands --no-graph' '
+	git log --graph >expect &&
+	git log --no-graph --graph >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--no-graph does not unset --topo-order' '
+	git log --topo-order >expect &&
+	git log --topo-order --no-graph >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--no-graph does not unset --parents' '
+	git log --parents >expect &&
+	git log --parents --no-graph >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--reverse and --graph conflict' '
+	test_must_fail git log --reverse --graph 2>stderr &&
+	test_i18ngrep "cannot be used together" stderr
+'
+
+test_expect_success '--reverse --graph --no-graph works' '
+	git log --reverse >expect &&
+	git log --reverse --graph --no-graph >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--show-linear-break and --graph conflict' '
+	test_must_fail git log --show-linear-break --graph 2>stderr &&
+	test_i18ngrep "cannot be used together" stderr
+'
+
+test_expect_success '--show-linear-break --graph --no-graph works' '
+	git log --show-linear-break >expect &&
+	git log --show-linear-break --graph --no-graph >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--no-walk and --graph conflict' '
+	test_must_fail git log --no-walk --graph 2>stderr &&
+	test_i18ngrep "cannot be used together" stderr
+'
+
+test_expect_success '--no-walk --graph --no-graph works' '
+	git log --no-walk >expect &&
+	git log --no-walk --graph --no-graph >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--walk-reflogs and --graph conflict' '
+	test_must_fail git log --walk-reflogs --graph 2>stderr &&
+	(test_i18ngrep "cannot combine" stderr ||
+		test_i18ngrep "cannot be used together" stderr)
+'
+
+test_expect_success '--walk-reflogs --graph --no-graph works' '
+	git log --walk-reflogs >expect &&
+	git log --walk-reflogs --graph --no-graph >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'dotdot is a parent directory' '
 	mkdir -p a/b &&
 	( echo sixth && echo fifth ) >expect &&
