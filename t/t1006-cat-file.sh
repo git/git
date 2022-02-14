@@ -104,12 +104,18 @@ strlen () {
     echo_without_newline "$1" | wc -c | sed -e 's/^ *//'
 }
 
+remove_timestamp () {
+	sed -e 's/ [0-9][0-9]* [-+][0-9][0-9][0-9][0-9]$//'
+}
+
 maybe_remove_timestamp () {
-    if test -z "$2"; then
-        echo_without_newline "$1"
-    else
-	echo_without_newline "$(printf '%s\n' "$1" | sed -e 's/ [0-9][0-9]* [-+][0-9][0-9][0-9][0-9]$//')"
-    fi
+	if test -n "$2"
+	then
+		echo "$1" | remove_timestamp
+		return 0
+	fi
+
+	echo "$1"
 }
 
 run_tests () {
