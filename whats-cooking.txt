@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Feb 2022, #03; Sat, 12)
+Subject: What's cooking in git.git (Feb 2022, #04; Tue, 15)
 X-master-at: b80121027d1247a0754b3cc46897fee75c050b44
-X-next-at: 83b2b277ed60276e529455a66ea1f50a6e513b26
+X-next-at: 7e23e61f3f2abdae506f09b247827f12a86031cf
 
-What's cooking in git.git (Feb 2022, #03; Sat, 12)
+What's cooking in git.git (Feb 2022, #04; Tue, 15)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,8 +17,6 @@ another topic already in flight" or "this may turn out to be
 useful").  Do not read too much into a topic being in (or not in)
 'seen'.  The ones marked with '.' do not appear in any of the
 integration branches, but I am still holding onto them.
-
-The third batch of topics have been merged.
 
 Many new topics have sketchy or even empty topic description in the
 list below; help to fill them in is very much appreciated ;-)
@@ -52,199 +50,37 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* ab/no-errno-from-resolve-ref-unsafe (2022-01-26) 2 commits
-  (merged to 'next' on 2022-02-04 at d98254efe0)
- + refs API: remove "failure_errno" from refs_resolve_ref_unsafe()
- + sequencer: don't use die_errno() on refs_resolve_ref_unsafe() failure
-
- Remaining code-clean-up.
- source: <cover-v4-0.2-00000000000-20220126T143427Z-avarab@gmail.com>
-
-
-* bc/clarify-eol-attr (2022-01-12) 2 commits
-  (merged to 'next' on 2022-02-04 at dc1db4bd21)
- + docs: correct documentation about eol attribute
- + t0027: add tests for eol without text in .gitattributes
-
- Doc and test update around the eol attribute.
- source: <20220111021507.531736-1-sandals@crustytoothpaste.net>
-
-
-* bc/csprng-mktemps (2022-01-17) 2 commits
-  (merged to 'next' on 2022-02-04 at 2e32375c73)
- + wrapper: use a CSPRNG to generate random file names
- + wrapper: add a helper to generate numbers from a CSPRNG
-
- Pick a better random number generator and use it when we prepare
- temporary filenames.
- source: <20220117215617.843190-1-sandals@crustytoothpaste.net>
-
-
-* en/sparse-checkout-leakfix (2022-01-28) 1 commit
-  (merged to 'next' on 2022-02-04 at 10ca176008)
- + sparse-checkout: fix a couple minor memory leaks
-
- Leakfix.
- source: <pull.1189.git.git.1643335098710.gitgitgadget@gmail.com>
-
-
-* gh/doc-typos (2022-01-26) 2 commits
-  (merged to 'next' on 2022-02-04 at b71e1bc746)
- + Documentation/config/pgp.txt: add missing apostrophe
- + Documentation/config/pgp.txt: replace stray <TAB> character with <SPC>
-
- Typofix.
- source: <20220126121426.53799-1-greg@hurrell.net>
-
-
-* jc/doc-log-messages (2022-01-27) 3 commits
-  (merged to 'next' on 2022-02-04 at cf136572ce)
- + SubmittingPatches: explain why we care about log messages
- + CodingGuidelines: hint why we value clearly written log messages
- + SubmittingPatches: write problem statement in the log in the present tense
-
- Update the contributor-facing documents on proposed log messages.
- source: <20220126234205.2923388-1-gitster@pobox.com>
-
-
-* rc/negotiate-only-typofix (2022-01-28) 1 commit
-  (merged to 'next' on 2022-02-04 at 62b947ddbf)
- + fetch: fix negotiate-only error message
-
- Typofix.
- source: <20220128143602.31842-1-robert@coup.net.nz>
-
-
-* rs/parse-options-lithelp-help (2022-01-20) 1 commit
-  (merged to 'next' on 2022-02-04 at 74bc57e8fa)
- + parse-options: document bracketing of argh
-
- Comment update.
- source: <c6ab4408-1091-4d14-849e-afe5f3053e8b@web.de>
-
-
-* sy/diff-usage-typofix (2022-02-02) 1 commit
-  (merged to 'next' on 2022-02-04 at 28a4186a44)
- + builtin/diff.c: fix "git-diff" usage string typo
-
- Typofix.
- source: <20220202072844.35545-1-shaoxuan.yuan02@gmail.com>
-
-
-* tg/fetch-prune-exit-code-fix (2022-01-31) 1 commit
-  (merged to 'next' on 2022-02-04 at 8af6ab286d)
- + fetch --prune: exit with error if pruning fails
-
- When "git fetch --prune" failed to prune the refs it wanted to
- prune, the command issued error messages but exited with exit
- status 0, which has been corrected.
- source: <20220131133047.1885074-1-t.gummerer@gmail.com>
-
---------------------------------------------------
 [New Topics]
 
-* jc/glossary-worktree (2022-02-09) 1 commit
-  (merged to 'next' on 2022-02-10 at d05e2b6ea3)
- + glossary: describe "worktree"
+* ds/mailmap (2022-02-14) 1 commit
+  (merged to 'next' on 2022-02-14 at 1e50634951)
+ + mailmap: change primary address for Derrick Stolee
 
- "working tree" and "per-worktree ref" were in glossary, but
- "worktree" itself wasn't, which has been corrected.
-
- Will merge to 'master'.
- source: <xmqqczjvxy3o.fsf@gitster.g>
-
-
-* jd/t0015-modernize (2022-02-09) 1 commit
-  (merged to 'next' on 2022-02-10 at a3733234c0)
- + t/t0015-hash.sh: remove unnecessary '\' at line end
-
- Test modernization.
+ Update mailmap entries.
 
  Will merge to 'master'.
- source: <20220208092339.651761-2-jaydeepjd.8914@gmail.com>
+ source: <pull.1142.git.1644857153590.gitgitgadget@gmail.com>
 
 
-* hw/t1410-adjust-test-for-reftable (2022-02-09) 2 commits
- - t1410: mark bufsize boundary test as REFFILES
- - t1410: use test-tool ref-store to inspect reflogs
+* bc/clarify-eol-attr (2022-02-14) 1 commit
+  (merged to 'next' on 2022-02-14 at 7e23e61f3f)
+ + doc: clarify interaction between 'eol' and text=auto
 
- Fix tests that are unnecessarily specific to ref-files backend.
+ Documentation update
 
- Will merge to 'next'.
- source: <pull.1213.git.git.1644406180.gitgitgadget@gmail.com>
-
-
-* ps/fetch-optim-with-commit-graph (2022-02-10) 2 commits
- - fetch: skip computing output width when not printing anything
- - fetch-pack: use commit-graph when computing cutoff
-
- A couple of optimization to "git fetch".
-
- Will merge to 'next'.
- source: <cover.1644495978.git.ps@pks.im>
+ Will merge to 'master'.
+ source: <xmqqilth2u28.fsf@gitster.g>
 
 
-* pw/xdiff-alloc-fail (2022-02-09) 3 commits
- - xdiff: handle allocation failure when merging
- - xdiff: refactor a function
- - xdiff: handle allocation failure in patience diff
+* ab/date-mode-release (2022-02-14) 5 commits
+ - date API: add and use a date_mode_release()
+ - date API: add basic API docs
+ - date API: provide and use a DATE_MODE_INIT
+ - date API: create a date.h, split from cache.h
+ - cache.h: remove always unused show_date_human() declaration
 
- Expecting a reroll.
- cf. <9c5b3acb-aabc-3a0d-f4e7-e10cec410dbe@gmail.com>
- source: <pull.1140.git.1644404356.gitgitgadget@gmail.com>
-
-
-* sy/t0001-use-path-is-helper (2022-02-11) 1 commit
- - t0001: replace "test [-d|-f]" with test_path_is_* functions
-
- Test modernization.
-
- Will merge to 'next'.
- source: <20220121102109.433457-2-shaoxuan.yuan02@gmail.com>
-
-
-* gc/recursive-fetch-with-unused-submodules (2022-02-10) 8 commits
- - submodule: fix bug and remove add_submodule_odb()
- - fetch: fetch unpopulated, changed submodules
- - submodule: extract get_fetch_task()
- - t5526: use grep to assert on fetches
- - t5526: introduce test helper to assert on fetches
- - submodule: make static functions read submodules from commits
- - submodule: store new submodule commits oid_array in a struct
- - submodule: inline submodule_commits() into caller
-
- When "git fetch --recurse-submodules" grabbed submodule commits
- that would be needed to recursively check out newly fetched commits
- in the superproject, it only paid attention to submodules that are
- in the current checkout of the superproject.  We now do so for all
- submodules that have been run "git submodule init" on.
-
- Will merge to 'next'?
- source: <20220210044152.78352-1-chooglen@google.com>
-
-
-* ah/log-no-graph (2022-02-11) 2 commits
- - log: add a --no-graph option
- - log: fix memory leak if --graph is passed multiple times
-
- "git log --graph --graph" used to leak a graph structure, and there
- was no way to countermand "--graph" that appear earlier on the
- command line.  A "--no-graph" option has been added and resource
- leakage lhas been plugged.
-
- Will merge to 'next'.
- source: <20220211163627.598166-2-alexhenrie24@gmail.com>
-
-
-* cg/t3903-modernize (2022-02-11) 1 commit
- - t/t3903-stash.sh: replace test [-d|-f] with test_path_is_*
-
- Test modernization.
-
- Will merge to 'next'?
- source: <20220211134655.1149320-1-cogoni.guillaume@gmail.com>
+ Plug (some) memory leaks around parse_date_format().
+ source: <cover-v2-0.5-00000000000-20220204T235143Z-avarab@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -280,6 +116,112 @@ Release tarballs are available at:
 
 --------------------------------------------------
 [Cooking]
+
+* jc/glossary-worktree (2022-02-09) 1 commit
+  (merged to 'next' on 2022-02-10 at d05e2b6ea3)
+ + glossary: describe "worktree"
+
+ "working tree" and "per-worktree ref" were in glossary, but
+ "worktree" itself wasn't, which has been corrected.
+
+ Will merge to 'master'.
+ source: <xmqqczjvxy3o.fsf@gitster.g>
+
+
+* jd/t0015-modernize (2022-02-09) 1 commit
+  (merged to 'next' on 2022-02-10 at a3733234c0)
+ + t/t0015-hash.sh: remove unnecessary '\' at line end
+
+ Test modernization.
+
+ Will merge to 'master'.
+ source: <20220208092339.651761-2-jaydeepjd.8914@gmail.com>
+
+
+* hw/t1410-adjust-test-for-reftable (2022-02-09) 2 commits
+  (merged to 'next' on 2022-02-14 at 6b96b4faa4)
+ + t1410: mark bufsize boundary test as REFFILES
+ + t1410: use test-tool ref-store to inspect reflogs
+
+ Fix tests that are unnecessarily specific to ref-files backend.
+
+ Will merge to 'master'.
+ source: <pull.1213.git.git.1644406180.gitgitgadget@gmail.com>
+
+
+* ps/fetch-optim-with-commit-graph (2022-02-10) 2 commits
+  (merged to 'next' on 2022-02-14 at 2b331293fb)
+ + fetch: skip computing output width when not printing anything
+ + fetch-pack: use commit-graph when computing cutoff
+
+ A couple of optimization to "git fetch".
+
+ Will merge to 'master'.
+ source: <cover.1644495978.git.ps@pks.im>
+
+
+* pw/xdiff-alloc-fail (2022-02-09) 3 commits
+ - xdiff: handle allocation failure when merging
+ - xdiff: refactor a function
+ - xdiff: handle allocation failure in patience diff
+
+ Expecting a reroll.
+ cf. <9c5b3acb-aabc-3a0d-f4e7-e10cec410dbe@gmail.com>
+ source: <pull.1140.git.1644404356.gitgitgadget@gmail.com>
+
+
+* sy/t0001-use-path-is-helper (2022-02-11) 1 commit
+  (merged to 'next' on 2022-02-14 at 2f1bdb0803)
+ + t0001: replace "test [-d|-f]" with test_path_is_* functions
+
+ Test modernization.
+
+ Will merge to 'master'.
+ source: <20220121102109.433457-2-shaoxuan.yuan02@gmail.com>
+
+
+* gc/recursive-fetch-with-unused-submodules (2022-02-10) 8 commits
+ - submodule: fix bug and remove add_submodule_odb()
+ - fetch: fetch unpopulated, changed submodules
+ - submodule: extract get_fetch_task()
+ - t5526: use grep to assert on fetches
+ - t5526: introduce test helper to assert on fetches
+ - submodule: make static functions read submodules from commits
+ - submodule: store new submodule commits oid_array in a struct
+ - submodule: inline submodule_commits() into caller
+
+ When "git fetch --recurse-submodules" grabbed submodule commits
+ that would be needed to recursively check out newly fetched commits
+ in the superproject, it only paid attention to submodules that are
+ in the current checkout of the superproject.  We now do so for all
+ submodules that have been run "git submodule init" on.
+
+ Will merge to 'next'?
+ source: <20220210044152.78352-1-chooglen@google.com>
+
+
+* ah/log-no-graph (2022-02-11) 2 commits
+  (merged to 'next' on 2022-02-14 at 6c8fd1f37f)
+ + log: add a --no-graph option
+ + log: fix memory leak if --graph is passed multiple times
+
+ "git log --graph --graph" used to leak a graph structure, and there
+ was no way to countermand "--graph" that appear earlier on the
+ command line.  A "--no-graph" option has been added and resource
+ leakage has been plugged.
+
+ Will merge to 'master'.
+ source: <20220211163627.598166-2-alexhenrie24@gmail.com>
+
+
+* cg/t3903-modernize (2022-02-11) 1 commit
+ - t/t3903-stash.sh: replace test [-d|-f] with test_path_is_*
+
+ Test modernization.
+
+ Will merge to 'next'?
+ source: <20220211134655.1149320-1-cogoni.guillaume@gmail.com>
+
 
 * ab/t0051-skip-on-non-windows (2022-02-04) 1 commit
   (merged to 'next' on 2022-02-10 at 3e587df1d6)
@@ -361,15 +303,16 @@ Release tarballs are available at:
  source: <abc67d757cb6b244cf54b7b030985180ce134724.1644434802.git.me@ttaylorr.com>
 
 
-* jc/cat-file-batch-commands (2022-02-11) 3 commits
+* jc/cat-file-batch-commands (2022-02-14) 4 commits
  - cat-file: add --batch-command mode
+ - cat-file: add remove_timestamp helper
  - cat-file: introduce batch_mode enum to replace print_contents
  - cat-file: rename cmdmode to transform_mode
 
  "git cat-file" learns "--batch-command" mode, which is a more
  flexible interface than the existing "--batch" or "--batch-check"
  modes, to allow different kinds of inquiries made.
- source: <pull.1212.v5.git.git.1644609683.gitgitgadget@gmail.com>
+ source: <pull.1212.v6.git.git.1644862988.gitgitgadget@gmail.com>
 
 
 * ar/submodule-update (2022-02-10) 20 commits
@@ -591,7 +534,7 @@ Release tarballs are available at:
  source: <cover-v2-0.2-00000000000-20220202T111228Z-avarab@gmail.com>
 
 
-* en/merge-tree (2022-02-02) 16 commits
+* en/merge-tree (2022-02-14) 13 commits
  - git-merge-tree.txt: add a section on potentional usage mistakes
  - merge-tree: add a --allow-unrelated-histories flag
  - merge-tree: allow `ls-files -u` style info to be NUL terminated
@@ -599,10 +542,7 @@ Release tarballs are available at:
  - merge-tree: provide a list of which files have conflicts
  - merge-ort: provide a merge_get_conflicted_files() helper function
  - merge-tree: support including merge messages in output
- - merge-ort: allow update messages to be written to different file stream
  - merge-ort: split out a separate display_update_messages() function
- - diff: allow diff_warn_rename_limit to write somewhere besides stderr
- - Introduce a variant of the `warning()` function that takes a `FILE *`
  - merge-tree: implement real merges
  - merge-tree: add option parsing and initial shell for real merge function
  - merge-tree: move logic for existing merge into new function
@@ -614,7 +554,7 @@ Release tarballs are available at:
  tree that would be contained in the resulting merge commit, if the
  histories leading to these two commits were to be merged, and is
  added as a new mode of "git merge-tree" subcommand.
- source: <pull.1122.v3.git.1643787281.gitgitgadget@gmail.com>
+ source: <pull.1122.v4.git.1644698093.gitgitgadget@gmail.com>
 
 
 * ll/doc-mktree-typofix (2022-02-02) 1 commit
@@ -836,11 +776,12 @@ Release tarballs are available at:
 
 
 * bs/forbid-i18n-of-protocol-token-in-fetch-pack (2022-02-11) 1 commit
- - fetch-pack: parameterize message containing 'ready' keyword
+  (merged to 'next' on 2022-02-14 at 9abd0dce80)
+ + fetch-pack: parameterize message containing 'ready' keyword
 
  L10n support for a few error messages.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20211222075805.19027-1-bagasdotme@gmail.com>
 
 
