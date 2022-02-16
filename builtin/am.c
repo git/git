@@ -34,6 +34,7 @@
 #include "string-list.h"
 #include "packfile.h"
 #include "repository.h"
+#include "pretty.h"
 
 /**
  * Returns the length of the first line of msg.

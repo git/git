@@ -19,6 +19,7 @@
 #include "strvec.h"
 #include "repository.h"
 #include "sigchain.h"
+#include "date.h"
 
 /*
  * List of all available backends

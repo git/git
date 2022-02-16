@@ -20,6 +20,7 @@
 #include "oid-array.h"
 #include "column.h"
 #include "ref-filter.h"
+#include "date.h"
 
 static const char * const git_tag_usage[] = {
 	N_("git tag [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <file>]\n"

@@ -9,6 +9,7 @@
 #include "object-store.h"
 #include "userdiff.h"
 #include "xdiff-interface.h"
+#include "date.h"
 
 static int zip_date;
 static int zip_time;
