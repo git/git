@@ -461,6 +461,58 @@ do
 		-c grep.extendedRegexp=true \
 		-c grep.patternType=basic
 
+	# grep.extendedRegexp is last-one-wins
+	test_pattern_type "$H" "$HC" "$L" BRE \
+		-c grep.extendedRegexp=true \
+		-c grep.extendedRegexp=false
+
+	# grep.patternType=basic pays no attention to grep.extendedRegexp
+	test_pattern_type "$H" "$HC" "$L" BRE \
+		-c grep.extendedRegexp=true \
+		-c grep.patternType=basic \
+		-c grep.extendedRegexp=false
+
+	# grep.patternType=extended pays no attention to grep.extendedRegexp
+	test_pattern_type "$H" "$HC" "$L" ERE \
+		-c grep.extendedRegexp=true \
+		-c grep.patternType=extended \
+		-c grep.extendedRegexp=false
+
+	# grep.extendedRegexp is used with a last-one-wins grep.patternType=default
+	test_pattern_type "$H" "$HC" "$L" ERE \
+		-c grep.patternType=fixed \
+		-c grep.extendedRegexp=true \
+		-c grep.patternType=default
+
+	# grep.extendedRegexp is used with earlier grep.patternType=default
+	test_pattern_type "$H" "$HC" "$L" ERE \
+		-c grep.extendedRegexp=false \
+		-c grep.patternType=default \
+		-c grep.extendedRegexp=true
+
+	# grep.extendedRegexp is used with a last-one-loses grep.patternType=default
+	test_pattern_type "$H" "$HC" "$L" ERE \
+		-c grep.extendedRegexp=false \
+		-c grep.extendedRegexp=true \
+		-c grep.patternType=default
+
+	# grep.extendedRegexp and grep.patternType are both last-one-wins independently
+	test_pattern_type "$H" "$HC" "$L" BRE \
+		-c grep.patternType=default \
+		-c grep.extendedRegexp=true \
+		-c grep.patternType=basic
+
+	# grep.patternType=extended and grep.patternType=default
+	test_pattern_type "$H" "$HC" "$L" BRE \
+		-c grep.patternType=extended \
+		-c grep.patternType=default
+
+	# grep.patternType=[extended -> default -> fixed] (BRE)" '
+	test_pattern_type "$H" "$HC" "$L" FIX \
+		-c grep.patternType=extended \
+		-c grep.patternType=default \
+		-c grep.patternType=fixed
+
 	test_expect_success "grep --count $L" '
 		echo ${HC}ab:3 >expected &&
 		git grep --count -e b $H -- ab >actual &&
