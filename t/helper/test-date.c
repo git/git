@@ -54,6 +54,8 @@ static void show_dates(const char **argv, const char *format)
 
 		printf("%s -> %s\n", *argv, show_date(t, tz, &mode));
 	}
+
+	date_mode_release(&mode);
 }
 
 static void parse_dates(const char **argv)

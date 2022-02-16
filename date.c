@@ -993,6 +993,11 @@ void parse_date_format(const char *format, struct date_mode *mode)
 		die("unknown date format %s", format);
 }
 
+void date_mode_release(struct date_mode *mode)
+{
+	free((char *)mode->strftime_fmt);
+}
+
 void datestamp(struct strbuf *out)
 {
 	time_t now;

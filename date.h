@@ -50,9 +50,16 @@ const char *show_date(timestamp_t time, int timezone, const struct date_mode *mo
  *
  * When the "date_mode_type" is DATE_STRFTIME the "strftime_fmt"
  * member of "struct date_mode" will be a malloc()'d format string to
- * be used with strbuf_addftime().
+ * be used with strbuf_addftime(), in which case you'll need to call
+ * date_mode_release() later.
  */
 void parse_date_format(const char *format, struct date_mode *mode);
+
+/**
+ * Release a "struct date_mode", currently only required if
+ * parse_date_format() has parsed a "DATE_STRFTIME" format.
+ */
+void date_mode_release(struct date_mode *mode);
 
 void show_date_relative(timestamp_t time, struct strbuf *timebuf);
 int parse_date(const char *date, struct strbuf *out);
