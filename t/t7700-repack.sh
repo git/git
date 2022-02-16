@@ -312,16 +312,13 @@ test_expect_success 'cleans up MIDX when appropriate' '
 		checksum=$(midx_checksum $objdir) &&
 		test_path_is_file $midx &&
 		test_path_is_file $midx-$checksum.bitmap &&
-		test_path_is_file $midx-$checksum.rev &&
 
 		test_commit repack-3 &&
 		GIT_TEST_MULTI_PACK_INDEX=0 git repack -Adb --write-midx &&
 
 		test_path_is_file $midx &&
 		test_path_is_missing $midx-$checksum.bitmap &&
-		test_path_is_missing $midx-$checksum.rev &&
 		test_path_is_file $midx-$(midx_checksum $objdir).bitmap &&
-		test_path_is_file $midx-$(midx_checksum $objdir).rev &&
 
 		test_commit repack-4 &&
 		GIT_TEST_MULTI_PACK_INDEX=0 git repack -Adb &&
@@ -354,7 +351,6 @@ test_expect_success '--write-midx with preferred bitmap tips' '
 		test_line_count = 1 before &&
 
 		rm -fr $midx-$(midx_checksum $objdir).bitmap &&
-		rm -fr $midx-$(midx_checksum $objdir).rev &&
 		rm -fr $midx &&
 
 		# instead of constructing the snapshot ourselves (c.f., the test
