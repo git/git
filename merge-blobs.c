@@ -36,7 +36,7 @@ static void *three_way_filemerge(struct index_state *istate,
 				 mmfile_t *their,
 				 unsigned long *size)
 {
-	int merge_status;
+	enum ll_merge_result merge_status;
 	mmbuffer_t res;
 
 	/*
@@ -50,6 +50,9 @@ static void *three_way_filemerge(struct index_state *istate,
 				istate, NULL);
 	if (merge_status < 0)
 		return NULL;
+	if (merge_status == LL_MERGE_BINARY_CONFLICT)
+		warning("Cannot merge binary files: %s (%s vs. %s)",
+			path, ".our", ".their");
 
 	*size = res.size;
 	return res.ptr;
