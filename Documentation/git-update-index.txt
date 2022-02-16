@@ -351,6 +351,10 @@ unchanged".  Note that "assume unchanged" bit is *not* set if
 the index (use `git update-index --really-refresh` if you want
 to mark them as "assume unchanged").
 
+Sometimes users confuse the assume-unchanged bit with the
+skip-worktree bit.  See the final paragraph in the "Skip-worktree bit"
+section below for an explanation of the differences.
+
 
 EXAMPLES
 --------
@@ -392,22 +396,47 @@ M foo.c
 SKIP-WORKTREE BIT
 -----------------
 
-Skip-worktree bit can be defined in one (long) sentence: When reading
-an entry, if it is marked as skip-worktree, then Git pretends its
-working directory version is up to date and read the index version
-instead.
+Skip-worktree bit can be defined in one (long) sentence: Tell git to
+avoid writing the file to the working directory when reasonably
+possible, and treat the file as unchanged when it is not
+present in the working directory.
 
-To elaborate, "reading" means checking for file existence, reading
-file attributes or file content. The working directory version may be
-present or absent. If present, its content may match against the index
-version or not. Writing is not affected by this bit, content safety
-is still first priority. Note that Git _can_ update working directory
-file, that is marked skip-worktree, if it is safe to do so (i.e.
-working directory version matches index version)
+Note that not all git commands will pay attention to this bit, and
+some only partially support it.
+
+The update-index flags and the read-tree capabilities relating to the
+skip-worktree bit predated the introduction of the
+linkgit:git-sparse-checkout[1] command, which provides a much easier
+way to configure and handle the skip-worktree bits.  If you want to
+reduce your working tree to only deal with a subset of the files in
+the repository, we strongly encourage the use of
+linkgit:git-sparse-checkout[1] in preference to the low-level
+update-index and read-tree primitives.
+
+The primary purpose of the skip-worktree bit is to enable sparse
+checkouts, i.e. to have working directories with only a subset of
+paths present.  When the skip-worktree bit is set, Git commands (such
+as `switch`, `pull`, `merge`) will avoid writing these files.
+However, these commands will sometimes write these files anyway in
+important cases such as conflicts during a merge or rebase.  Git
+commands will also avoid treating the lack of such files as an
+intentional deletion; for example `git add -u` will not not stage a
+deletion for these files and `git commit -a` will not make a commit
+deleting them either.
 
 Although this bit looks similar to assume-unchanged bit, its goal is
-different from assume-unchanged bit's. Skip-worktree also takes
-precedence over assume-unchanged bit when both are set.
+different.  The assume-unchanged bit is for leaving the file in the
+working tree but having Git omit checking it for changes and presuming
+that the file has not been changed (though if it can determine without
+stat'ing the file that it has changed, it is free to record the
+changes).  skip-worktree tells Git to ignore the absence of the file,
+avoid updating it when possible with commands that normally update
+much of the working directory (e.g. `checkout`, `switch`, `pull`,
+etc.), and not have its absence be recorded in commits.  Note that in
+sparse checkouts (setup by `git sparse-checkout` or by configuring
+core.sparseCheckout to true), if a file is marked as skip-worktree in
+the index but is found in the working tree, Git will clear the
+skip-worktree bit for that file.
 
 SPLIT INDEX
 -----------

@@ -83,10 +83,13 @@ test_expect_success 'setup' '
 
 # The test below covers a special case: the sparsity patterns exclude '/b' and
 # sparse checkout is enabled, but the path exists in the working tree (e.g.
-# manually created after `git sparse-checkout init`). git grep should skip it.
+# manually created after `git sparse-checkout init`).  Although b is marked
+# as SKIP_WORKTREE, git grep should notice it IS present in the worktree and
+# report it.
 test_expect_success 'working tree grep honors sparse checkout' '
 	cat >expect <<-EOF &&
 	a:text
+	b:new-text
 	EOF
 	test_when_finished "rm -f b" &&
 	echo "new-text" >b &&
@@ -126,12 +129,16 @@ test_expect_success 'grep --cached searches entries with the SKIP_WORKTREE bit' 
 '
 
 # Note that sub2/ is present in the worktree but it is excluded by the sparsity
-# patterns, so grep should not recurse into it.
+# patterns.  We also explicitly mark it as SKIP_WORKTREE in case it got cleared
+# by previous git commands.  Thus sub2 starts as SKIP_WORKTREE but since it is
+# present in the working tree, grep should recurse into it.
 test_expect_success 'grep --recurse-submodules honors sparse checkout in submodule' '
 	cat >expect <<-EOF &&
 	a:text
 	sub/B/b:text
+	sub2/a:text
 	EOF
+	git update-index --skip-worktree sub2 &&
 	git grep --recurse-submodules "text" >actual &&
 	test_cmp expect actual
 '
