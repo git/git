@@ -71,6 +71,14 @@ test_expect_success 'git branch -d d/e/f should delete a branch and a log' '
 	test_must_fail git reflog exists refs/heads/d/e/f
 '
 
+test_expect_success 'git branch -D - should delete branch @{-1}' '
+	git switch -c j &&
+	git switch - &&
+	git branch -D - &&
+	test_path_is_missing .git/refs/heads/j &&
+	test_must_fail git reflog exists refs/heads/j
+'
+
 test_expect_success 'git branch j/k should work after branch j has been deleted' '
 	git branch j &&
 	git branch -d j &&
