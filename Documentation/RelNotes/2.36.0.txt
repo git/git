@@ -19,6 +19,12 @@ UI, Workflows & Features
 
  * Assorted updates to "git cat-file", especially "-h".
 
+ * The command line completion (in contrib/) learns to complete
+   arguments to give to "git sparse-checkout" command.
+
+ * "git log --remerge-diff" shows the difference from mechanical merge
+   result and the result that is actually recorded in a merge commit.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -115,6 +121,25 @@ Fixes since v2.35
    status 0, which has been corrected.
    (merge c9e04d905e tg/fetch-prune-exit-code-fix later to maint).
 
+ * Problems identified by Coverity in the reftable code have been
+   corrected.
+   (merge 01033de49f hn/reftable-coverity-fixes later to maint).
+
+ * A bug that made multi-pack bitmap and the object order out-of-sync,
+   making the .midx data corrupt, has been fixed.
+   (merge f8b60cf99b tb/midx-bitmap-corruption-fix later to maint).
+
+ * The build procedure has been taught to notice older version of zlib
+   and enable our replacement uncompress2() automatically.
+   (merge 07564773c2 ab/auto-detect-zlib-compress2 later to maint).
+
+ * Interaction between fetch.negotiationAlgorithm and
+   feature.experimental configuration variables has been corrected.
+   (merge 714edc620c en/fetch-negotiation-default-fix later to maint).
+
+ * "git diff --diff-filter=aR" is now parsed correctly.
+   (merge 75408ca949 js/diff-filter-negation-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge cfc5cf428b jc/find-header later to maint).
    (merge 40e7cfdd46 jh/p4-fix-use-of-process-error-exception later to maint).
@@ -129,3 +154,6 @@ Fixes since v2.35
    (merge 2826ffad8c rc/negotiate-only-typofix later to maint).
    (merge 0f03f04c5c en/sparse-checkout-leakfix later to maint).
    (merge 74f3390dde sy/diff-usage-typofix later to maint).
+   (merge 45d0212a71 ll/doc-mktree-typofix later to maint).
+   (merge e9b272e4c1 js/no-more-legacy-stash later to maint).
+   (merge 6798b08e84 ab/do-not-hide-failures-in-git-dot-pm later to maint).
