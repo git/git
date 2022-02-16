@@ -16,24 +16,20 @@
 
 static void test_copy(struct reftable_record *rec)
 {
-	struct reftable_record copy =
-		reftable_new_record(reftable_record_type(rec));
+	struct reftable_record copy = { 0 };
+	uint8_t typ;
+
+	typ = reftable_record_type(rec);
+	copy = reftable_new_record(typ);
 	reftable_record_copy_from(&copy, rec, GIT_SHA1_RAWSZ);
 	/* do it twice to catch memory leaks */
 	reftable_record_copy_from(&copy, rec, GIT_SHA1_RAWSZ);
-	switch (reftable_record_type(&copy)) {
-	case BLOCK_TYPE_REF:
-		EXPECT(reftable_ref_record_equal(reftable_record_as_ref(&copy),
-						 reftable_record_as_ref(rec),
-						 GIT_SHA1_RAWSZ));
-		break;
-	case BLOCK_TYPE_LOG:
-		EXPECT(reftable_log_record_equal(reftable_record_as_log(&copy),
-						 reftable_record_as_log(rec),
-						 GIT_SHA1_RAWSZ));
-		break;
-	}
-	reftable_record_destroy(&copy);
+	EXPECT(reftable_record_equal(rec, &copy, GIT_SHA1_RAWSZ));
+
+	puts("testing print coverage:\n");
+	reftable_record_print(&copy, GIT_SHA1_RAWSZ);
+
+	reftable_record_release(&copy);
 }
 
 static void test_varint_roundtrip(void)
@@ -106,61 +102,58 @@ static void test_reftable_ref_record_roundtrip(void)
 	int i = 0;
 
 	for (i = REFTABLE_REF_DELETION; i < REFTABLE_NR_REF_VALUETYPES; i++) {
-		struct reftable_ref_record in = { NULL };
-		struct reftable_ref_record out = { NULL };
-		struct reftable_record rec_out = { NULL };
+		struct reftable_record in = {
+			.type = BLOCK_TYPE_REF,
+		};
+		struct reftable_record out = { .type = BLOCK_TYPE_REF };
 		struct strbuf key = STRBUF_INIT;
-		struct reftable_record rec = { NULL };
 		uint8_t buffer[1024] = { 0 };
 		struct string_view dest = {
 			.buf = buffer,
 			.len = sizeof(buffer),
 		};
-
 		int n, m;
 
-		in.value_type = i;
+		in.u.ref.value_type = i;
 		switch (i) {
 		case REFTABLE_REF_DELETION:
 			break;
 		case REFTABLE_REF_VAL1:
-			in.value.val1 = reftable_malloc(GIT_SHA1_RAWSZ);
-			set_hash(in.value.val1, 1);
+			in.u.ref.value.val1 = reftable_malloc(GIT_SHA1_RAWSZ);
+			set_hash(in.u.ref.value.val1, 1);
 			break;
 		case REFTABLE_REF_VAL2:
-			in.value.val2.value = reftable_malloc(GIT_SHA1_RAWSZ);
-			set_hash(in.value.val2.value, 1);
-			in.value.val2.target_value =
+			in.u.ref.value.val2.value =
 				reftable_malloc(GIT_SHA1_RAWSZ);
-			set_hash(in.value.val2.target_value, 2);
+			set_hash(in.u.ref.value.val2.value, 1);
+			in.u.ref.value.val2.target_value =
+				reftable_malloc(GIT_SHA1_RAWSZ);
+			set_hash(in.u.ref.value.val2.target_value, 2);
 			break;
 		case REFTABLE_REF_SYMREF:
-			in.value.symref = xstrdup("target");
+			in.u.ref.value.symref = xstrdup("target");
 			break;
 		}
-		in.refname = xstrdup("refs/heads/master");
+		in.u.ref.refname = xstrdup("refs/heads/master");
 
-		reftable_record_from_ref(&rec, &in);
-		test_copy(&rec);
+		test_copy(&in);
 
-		EXPECT(reftable_record_val_type(&rec) == i);
+		EXPECT(reftable_record_val_type(&in) == i);
 
-		reftable_record_key(&rec, &key);
-		n = reftable_record_encode(&rec, dest, GIT_SHA1_RAWSZ);
+		reftable_record_key(&in, &key);
+		n = reftable_record_encode(&in, dest, GIT_SHA1_RAWSZ);
 		EXPECT(n > 0);
 
 		/* decode into a non-zero reftable_record to test for leaks. */
-
-		reftable_record_from_ref(&rec_out, &out);
-		m = reftable_record_decode(&rec_out, key, i, dest,
-					   GIT_SHA1_RAWSZ);
+		m = reftable_record_decode(&out, key, i, dest, GIT_SHA1_RAWSZ);
 		EXPECT(n == m);
 
-		EXPECT(reftable_ref_record_equal(&in, &out, GIT_SHA1_RAWSZ));
-		reftable_record_release(&rec_out);
+		EXPECT(reftable_ref_record_equal(&in.u.ref, &out.u.ref,
+						 GIT_SHA1_RAWSZ));
+		reftable_record_release(&in);
 
 		strbuf_release(&key);
-		reftable_ref_record_release(&in);
+		reftable_record_release(&out);
 	}
 }
 
@@ -187,7 +180,8 @@ static void test_reftable_log_record_equal(void)
 static void test_reftable_log_record_roundtrip(void)
 {
 	int i;
-	struct reftable_log_record in[2] = {
+
+	struct reftable_log_record in[] = {
 		{
 			.refname = xstrdup("refs/heads/master"),
 			.update_index = 42,
@@ -208,12 +202,26 @@ static void test_reftable_log_record_roundtrip(void)
 			.refname = xstrdup("refs/heads/master"),
 			.update_index = 22,
 			.value_type = REFTABLE_LOG_DELETION,
+		},
+		{
+			.refname = xstrdup("branch"),
+			.update_index = 33,
+			.value_type = REFTABLE_LOG_UPDATE,
+			.value = {
+				.update = {
+					.old_hash = reftable_malloc(GIT_SHA1_RAWSZ),
+					.new_hash = reftable_malloc(GIT_SHA1_RAWSZ),
+					/* rest of fields left empty. */
+				},
+			},
 		}
 	};
 	set_test_hash(in[0].value.update.new_hash, 1);
 	set_test_hash(in[0].value.update.old_hash, 2);
+	set_test_hash(in[2].value.update.new_hash, 3);
+	set_test_hash(in[2].value.update.old_hash, 4);
 	for (i = 0; i < ARRAY_SIZE(in); i++) {
-		struct reftable_record rec = { NULL };
+		struct reftable_record rec = { .type = BLOCK_TYPE_LOG };
 		struct strbuf key = STRBUF_INIT;
 		uint8_t buffer[1024] = { 0 };
 		struct string_view dest = {
@@ -221,23 +229,25 @@ static void test_reftable_log_record_roundtrip(void)
 			.len = sizeof(buffer),
 		};
 		/* populate out, to check for leaks. */
-		struct reftable_log_record out = {
-			.refname = xstrdup("old name"),
-			.value_type = REFTABLE_LOG_UPDATE,
-			.value = {
-				.update = {
-					.new_hash = reftable_calloc(GIT_SHA1_RAWSZ),
-					.old_hash = reftable_calloc(GIT_SHA1_RAWSZ),
-					.name = xstrdup("old name"),
-					.email = xstrdup("old@email"),
-					.message = xstrdup("old message"),
+		struct reftable_record out = {
+			.type = BLOCK_TYPE_LOG,
+			.u.log = {
+				.refname = xstrdup("old name"),
+				.value_type = REFTABLE_LOG_UPDATE,
+				.value = {
+					.update = {
+						.new_hash = reftable_calloc(GIT_SHA1_RAWSZ),
+						.old_hash = reftable_calloc(GIT_SHA1_RAWSZ),
+						.name = xstrdup("old name"),
+						.email = xstrdup("old@email"),
+						.message = xstrdup("old message"),
+					},
 				},
 			},
 		};
-		struct reftable_record rec_out = { NULL };
 		int n, m, valtype;
 
-		reftable_record_from_log(&rec, &in[i]);
+		rec.u.log = in[i];
 
 		test_copy(&rec);
 
@@ -245,16 +255,16 @@ static void test_reftable_log_record_roundtrip(void)
 
 		n = reftable_record_encode(&rec, dest, GIT_SHA1_RAWSZ);
 		EXPECT(n >= 0);
-		reftable_record_from_log(&rec_out, &out);
 		valtype = reftable_record_val_type(&rec);
-		m = reftable_record_decode(&rec_out, key, valtype, dest,
+		m = reftable_record_decode(&out, key, valtype, dest,
 					   GIT_SHA1_RAWSZ);
 		EXPECT(n == m);
 
-		EXPECT(reftable_log_record_equal(&in[i], &out, GIT_SHA1_RAWSZ));
+		EXPECT(reftable_log_record_equal(&in[i], &out.u.log,
+						 GIT_SHA1_RAWSZ));
 		reftable_log_record_release(&in[i]);
 		strbuf_release(&key);
-		reftable_record_release(&rec_out);
+		reftable_record_release(&out);
 	}
 }
 
@@ -322,47 +332,43 @@ static void test_reftable_obj_record_roundtrip(void)
 					       } };
 	int i = 0;
 	for (i = 0; i < ARRAY_SIZE(recs); i++) {
-		struct reftable_obj_record in = recs[i];
 		uint8_t buffer[1024] = { 0 };
 		struct string_view dest = {
 			.buf = buffer,
 			.len = sizeof(buffer),
 		};
-		struct reftable_record rec = { NULL };
+		struct reftable_record in = {
+			.type = BLOCK_TYPE_OBJ,
+			.u.obj = recs[i],
+		};
 		struct strbuf key = STRBUF_INIT;
-		struct reftable_obj_record out = { NULL };
-		struct reftable_record rec_out = { NULL };
+		struct reftable_record out = { .type = BLOCK_TYPE_OBJ };
 		int n, m;
 		uint8_t extra;
 
-		reftable_record_from_obj(&rec, &in);
-		test_copy(&rec);
-		reftable_record_key(&rec, &key);
-		n = reftable_record_encode(&rec, dest, GIT_SHA1_RAWSZ);
+		test_copy(&in);
+		reftable_record_key(&in, &key);
+		n = reftable_record_encode(&in, dest, GIT_SHA1_RAWSZ);
 		EXPECT(n > 0);
-		extra = reftable_record_val_type(&rec);
-		reftable_record_from_obj(&rec_out, &out);
-		m = reftable_record_decode(&rec_out, key, extra, dest,
+		extra = reftable_record_val_type(&in);
+		m = reftable_record_decode(&out, key, extra, dest,
 					   GIT_SHA1_RAWSZ);
 		EXPECT(n == m);
 
-		EXPECT(in.hash_prefix_len == out.hash_prefix_len);
-		EXPECT(in.offset_len == out.offset_len);
-
-		EXPECT(!memcmp(in.hash_prefix, out.hash_prefix,
-			       in.hash_prefix_len));
-		EXPECT(0 == memcmp(in.offsets, out.offsets,
-				   sizeof(uint64_t) * in.offset_len));
+		EXPECT(reftable_record_equal(&in, &out, GIT_SHA1_RAWSZ));
 		strbuf_release(&key);
-		reftable_record_release(&rec_out);
+		reftable_record_release(&out);
 	}
 }
 
 static void test_reftable_index_record_roundtrip(void)
 {
-	struct reftable_index_record in = {
-		.offset = 42,
-		.last_key = STRBUF_INIT,
+	struct reftable_record in = {
+		.type = BLOCK_TYPE_INDEX,
+		.u.idx = {
+			.offset = 42,
+			.last_key = STRBUF_INIT,
+		},
 	};
 	uint8_t buffer[1024] = { 0 };
 	struct string_view dest = {
@@ -370,31 +376,30 @@ static void test_reftable_index_record_roundtrip(void)
 		.len = sizeof(buffer),
 	};
 	struct strbuf key = STRBUF_INIT;
-	struct reftable_record rec = { NULL };
-	struct reftable_index_record out = { .last_key = STRBUF_INIT };
-	struct reftable_record out_rec = { NULL };
+	struct reftable_record out = {
+		.type = BLOCK_TYPE_INDEX,
+		.u.idx = { .last_key = STRBUF_INIT },
+	};
 	int n, m;
 	uint8_t extra;
 
-	strbuf_addstr(&in.last_key, "refs/heads/master");
-	reftable_record_from_index(&rec, &in);
-	reftable_record_key(&rec, &key);
-	test_copy(&rec);
+	strbuf_addstr(&in.u.idx.last_key, "refs/heads/master");
+	reftable_record_key(&in, &key);
+	test_copy(&in);
 
-	EXPECT(0 == strbuf_cmp(&key, &in.last_key));
-	n = reftable_record_encode(&rec, dest, GIT_SHA1_RAWSZ);
+	EXPECT(0 == strbuf_cmp(&key, &in.u.idx.last_key));
+	n = reftable_record_encode(&in, dest, GIT_SHA1_RAWSZ);
 	EXPECT(n > 0);
 
-	extra = reftable_record_val_type(&rec);
-	reftable_record_from_index(&out_rec, &out);
-	m = reftable_record_decode(&out_rec, key, extra, dest, GIT_SHA1_RAWSZ);
+	extra = reftable_record_val_type(&in);
+	m = reftable_record_decode(&out, key, extra, dest, GIT_SHA1_RAWSZ);
 	EXPECT(m == n);
 
-	EXPECT(in.offset == out.offset);
+	EXPECT(reftable_record_equal(&in, &out, GIT_SHA1_RAWSZ));
 
-	reftable_record_release(&out_rec);
+	reftable_record_release(&out);
 	strbuf_release(&key);
-	strbuf_release(&in.last_key);
+	strbuf_release(&in.u.idx.last_key);
 }
 
 int record_test_main(int argc, const char *argv[])
