@@ -1169,7 +1169,7 @@ test_expect_success 'invalid when passing the --empty option alone' '
 	test_when_finished "git am --abort || :" &&
 	git checkout empty-commit^ &&
 	test_must_fail git am --empty empty-commit.patch 2>err &&
-	echo "error: Invalid value for --empty: empty-commit.patch" >expected &&
+	echo "error: invalid value for '\''--empty'\'': '\''empty-commit.patch'\''" >expected &&
 	test_cmp expected err
 '
 

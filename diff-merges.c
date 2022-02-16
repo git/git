@@ -78,7 +78,7 @@ static void set_diff_merges(struct rev_info *revs, const char *optarg)
 	diff_merges_setup_func_t func = func_by_opt(optarg);
 
 	if (!func)
-		die(_("unknown value for --diff-merges: %s"), optarg);
+		die(_("invalid value for '%s': '%s'"), "--diff-merges", optarg);
 
 	func(revs);
 
