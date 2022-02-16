@@ -35,7 +35,7 @@ static void show_human_dates(const char **argv)
 
 static void show_dates(const char **argv, const char *format)
 {
-	struct date_mode mode;
+	struct date_mode mode = DATE_MODE_INIT;
 
 	parse_date_format(format, &mode);
 	for (; *argv; argv++) {

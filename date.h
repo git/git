@@ -20,6 +20,10 @@ struct date_mode {
 	int local;
 };
 
+#define DATE_MODE_INIT { \
+	.type = DATE_NORMAL, \
+}
+
 /*
  * Convenience helper for passing a constant type, like:
  *
