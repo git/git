@@ -123,6 +123,7 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 	opt->abbrev = 0;
 	opt->diff = 1;
 	opt->diffopt.stat_width = -1; /* use full terminal width */
+	opt->diffopt.stat_graph_width = -1; /* respect statGraphWidth config */
 	opt->disable_stdin = 1;
 	memset(&s_r_opt, 0, sizeof(s_r_opt));
 	s_r_opt.tweak = diff_tree_tweak_rev;

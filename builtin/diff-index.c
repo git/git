@@ -27,6 +27,7 @@ int cmd_diff_index(int argc, const char **argv, const char *prefix)
 	repo_init_revisions(the_repository, &rev, prefix);
 	rev.abbrev = 0;
 	rev.diffopt.stat_width = -1; /* use full terminal width */
+	rev.diffopt.stat_graph_width = -1; /* respect statGraphWidth config */
 	prefix = precompose_argv_prefix(argc, argv, prefix);
 
 	/*

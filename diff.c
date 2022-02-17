@@ -394,10 +394,6 @@ int git_diff_ui_config(const char *var, const char *value, void *cb)
 		diff_relative = git_config_bool(var, value);
 		return 0;
 	}
-	if (!strcmp(var, "diff.statgraphwidth")) {
-		diff_stat_graph_width = git_config_int(var, value);
-		return 0;
-	}
 	if (!strcmp(var, "diff.external"))
 		return git_config_string(&external_diff_cmd_cfg, var, value);
 	if (!strcmp(var, "diff.wordregex"))
@@ -474,6 +470,11 @@ int git_diff_basic_config(const char *var, const char *value, void *cb)
 				errmsg.buf);
 		strbuf_release(&errmsg);
 		diff_dirstat_permille_default = default_diff_options.dirstat_permille;
+		return 0;
+	}
+
+	if (!strcmp(var, "diff.statgraphwidth")) {
+		diff_stat_graph_width = git_config_int(var, value);
 		return 0;
 	}
 

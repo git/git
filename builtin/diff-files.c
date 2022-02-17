@@ -30,6 +30,7 @@ int cmd_diff_files(int argc, const char **argv, const char *prefix)
 	repo_init_revisions(the_repository, &rev, prefix);
 	rev.abbrev = 0;
 	rev.diffopt.stat_width = -1; /* use full terminal width */
+	rev.diffopt.stat_graph_width = -1; /* respect statGraphWidth config */
 
 	/*
 	 * Consider "intent-to-add" files as new by default, unless
