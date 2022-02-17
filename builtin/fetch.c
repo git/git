@@ -1084,9 +1084,8 @@ N_("it took %.2f seconds to check forced updates; you can use\n"
 
 static int store_updated_refs(const char *raw_url, const char *remote_name,
 			      int connectivity_checked, struct ref *ref_map,
-			      struct worktree **worktrees)
+			      struct fetch_head *fetch_head, struct worktree **worktrees)
 {
-	struct fetch_head fetch_head;
 	int url_len, i, rc = 0;
 	struct strbuf note = STRBUF_INIT, err = STRBUF_INIT;
 	struct ref_transaction *transaction = NULL;
@@ -1095,10 +1094,6 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 	char *url;
 	int want_status;
 	int summary_width = transport_summary_width(ref_map);
-
-	rc = open_fetch_head(&fetch_head);
-	if (rc)
-		return -1;
 
 	if (raw_url)
 		url = transport_anonymize_url(raw_url);
@@ -1206,7 +1201,7 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 				strbuf_addf(&note, "'%s' of ", what);
 			}
 
-			append_fetch_head(&fetch_head, &rm->old_oid,
+			append_fetch_head(fetch_head, &rm->old_oid,
 					  rm->fetch_head_status,
 					  note.buf, url, url_len);
 
@@ -1246,9 +1241,6 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 		}
 	}
 
-	if (!rc)
-		commit_fetch_head(&fetch_head);
-
 	if (rc & STORE_REF_ERROR_DF_CONFLICT)
 		error(_("some local refs could not be updated; try running\n"
 		      " 'git remote prune %s' to remove any old, conflicting "
@@ -1268,7 +1260,6 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 	strbuf_release(&err);
 	ref_transaction_free(transaction);
 	free(url);
-	close_fetch_head(&fetch_head);
 	return rc;
 }
 
@@ -1309,6 +1300,7 @@ static int check_exist_and_connected(struct ref *ref_map)
 
 static int fetch_and_consume_refs(struct transport *transport,
 				  struct ref *ref_map,
+				  struct fetch_head *fetch_head,
 				  struct worktree **worktrees)
 {
 	int connectivity_checked = 1;
@@ -1331,7 +1323,7 @@ static int fetch_and_consume_refs(struct transport *transport,
 
 	trace2_region_enter("fetch", "consume_refs", the_repository);
 	ret = store_updated_refs(transport->url, transport->remote->name,
-				 connectivity_checked, ref_map, worktrees);
+				 connectivity_checked, ref_map, fetch_head, worktrees);
 	trace2_region_leave("fetch", "consume_refs", the_repository);
 
 out:
@@ -1503,7 +1495,9 @@ static struct transport *prepare_transport(struct remote *remote, int deepen)
 	return transport;
 }
 
-static void backfill_tags(struct transport *transport, struct ref *ref_map,
+static void backfill_tags(struct transport *transport,
+			  struct ref *ref_map,
+			  struct fetch_head *fetch_head,
 			  struct worktree **worktrees)
 {
 	int cannot_reuse;
@@ -1525,7 +1519,7 @@ static void backfill_tags(struct transport *transport, struct ref *ref_map,
 	transport_set_option(transport, TRANS_OPT_FOLLOWTAGS, NULL);
 	transport_set_option(transport, TRANS_OPT_DEPTH, "0");
 	transport_set_option(transport, TRANS_OPT_DEEPEN_RELATIVE, NULL);
-	fetch_and_consume_refs(transport, ref_map, worktrees);
+	fetch_and_consume_refs(transport, ref_map, fetch_head, worktrees);
 
 	if (gsecondary) {
 		transport_disconnect(gsecondary);
@@ -1544,6 +1538,7 @@ static int do_fetch(struct transport *transport,
 		TRANSPORT_LS_REFS_OPTIONS_INIT;
 	int must_list_refs = 1;
 	struct worktree **worktrees = get_worktrees();
+	struct fetch_head fetch_head = { 0 };
 
 	if (tags == TAGS_DEFAULT) {
 		if (transport->remote->fetch_tags == 2)
@@ -1601,6 +1596,10 @@ static int do_fetch(struct transport *transport,
 	if (!update_head_ok)
 		check_not_current_branch(ref_map, worktrees);
 
+	retcode = open_fetch_head(&fetch_head);
+	if (retcode)
+		goto cleanup;
+
 	if (tags == TAGS_DEFAULT && autotags)
 		transport_set_option(transport, TRANS_OPT_FOLLOWTAGS, "1");
 	if (prune) {
@@ -1619,7 +1618,8 @@ static int do_fetch(struct transport *transport,
 		if (retcode != 0)
 			retcode = 1;
 	}
-	if (fetch_and_consume_refs(transport, ref_map, worktrees)) {
+
+	if (fetch_and_consume_refs(transport, ref_map, &fetch_head, worktrees)) {
 		retcode = 1;
 		goto cleanup;
 	}
@@ -1633,10 +1633,12 @@ static int do_fetch(struct transport *transport,
 
 		find_non_local_tags(remote_refs, &tags_ref_map, &tail);
 		if (tags_ref_map)
-			backfill_tags(transport, tags_ref_map, worktrees);
+			backfill_tags(transport, tags_ref_map, &fetch_head, worktrees);
 
 		free_refs(tags_ref_map);
 	}
+
+	commit_fetch_head(&fetch_head);
 
 	if (set_upstream) {
 		struct branch *branch = branch_get("HEAD");
@@ -1693,6 +1695,7 @@ static int do_fetch(struct transport *transport,
 	}
 
 cleanup:
+	close_fetch_head(&fetch_head);
 	free_refs(ref_map);
 	free_worktrees(worktrees);
 	return retcode;
