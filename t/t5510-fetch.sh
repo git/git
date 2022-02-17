@@ -354,17 +354,13 @@ test_expect_success 'fetch --atomic --prune executes a single reference transact
 	head_oid=$(git rev-parse HEAD) &&
 
 	# Fetching with the `--atomic` flag should update all references in a
-	# single transaction. It is currently missing coverage of pruned
-	# references though, and as a result those may be committed to disk
-	# even if updating references fails later.
+	# single transaction.
 	cat >expected <<-EOF &&
 		prepared
 		$ZERO_OID $ZERO_OID refs/remotes/origin/scheduled-for-deletion
-		committed
-		$ZERO_OID $ZERO_OID refs/remotes/origin/scheduled-for-deletion
-		prepared
 		$ZERO_OID $head_oid refs/remotes/origin/new-branch
 		committed
+		$ZERO_OID $ZERO_OID refs/remotes/origin/scheduled-for-deletion
 		$ZERO_OID $head_oid refs/remotes/origin/new-branch
 	EOF
 

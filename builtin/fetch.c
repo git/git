@@ -1338,11 +1338,14 @@ out:
 	return ret;
 }
 
-static int prune_refs(struct refspec *rs, struct ref *ref_map,
+static int prune_refs(struct refspec *rs,
+		      struct ref_transaction *transaction,
+		      struct ref *ref_map,
 		      const char *raw_url)
 {
 	int url_len, i, result = 0;
 	struct ref *ref, *stale_refs = get_stale_heads(rs, ref_map);
+	struct strbuf err = STRBUF_INIT;
 	char *url;
 	int summary_width = transport_summary_width(stale_refs);
 	const char *dangling_msg = dry_run
@@ -1363,13 +1366,22 @@ static int prune_refs(struct refspec *rs, struct ref *ref_map,
 		url_len = i - 3;
 
 	if (!dry_run) {
-		struct string_list refnames = STRING_LIST_INIT_NODUP;
+		if (transaction) {
+			for (ref = stale_refs; ref; ref = ref->next) {
+				result = ref_transaction_delete(transaction, ref->name, NULL, 0,
+								"fetch: prune", &err);
+				if (result)
+					goto cleanup;
+			}
+		} else {
+			struct string_list refnames = STRING_LIST_INIT_NODUP;
 
-		for (ref = stale_refs; ref; ref = ref->next)
-			string_list_append(&refnames, ref->name);
+			for (ref = stale_refs; ref; ref = ref->next)
+				string_list_append(&refnames, ref->name);
 
-		result = delete_refs("fetch: prune", &refnames, 0);
-		string_list_clear(&refnames, 0);
+			result = delete_refs("fetch: prune", &refnames, 0);
+			string_list_clear(&refnames, 0);
+		}
 	}
 
 	if (verbosity >= 0) {
@@ -1388,6 +1400,8 @@ static int prune_refs(struct refspec *rs, struct ref *ref_map,
 		}
 	}
 
+cleanup:
+	strbuf_release(&err);
 	free(url);
 	free_refs(stale_refs);
 	return result;
@@ -1629,10 +1643,10 @@ static int do_fetch(struct transport *transport,
 		 * don't care whether --tags was specified.
 		 */
 		if (rs->nr) {
-			retcode = prune_refs(rs, ref_map, transport->url);
+			retcode = prune_refs(rs, transaction, ref_map, transport->url);
 		} else {
 			retcode = prune_refs(&transport->remote->fetch,
-					     ref_map,
+					     transaction, ref_map,
 					     transport->url);
 		}
 		if (retcode != 0)
