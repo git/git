@@ -349,7 +349,19 @@ static void clear_item(struct refname_hash_entry *item)
 	item->ignore = 1;
 }
 
+
+static void add_already_queued_tags(const char *refname,
+				    const struct object_id *old_oid,
+				    const struct object_id *new_oid,
+				    void *cb_data)
+{
+	struct hashmap *queued_tags = cb_data;
+	if (starts_with(refname, "refs/tags/") && new_oid)
+		(void) refname_hash_add(queued_tags, refname, new_oid);
+}
+
 static void find_non_local_tags(const struct ref *refs,
+				struct ref_transaction *transaction,
 				struct ref **head,
 				struct ref ***tail)
 {
@@ -367,6 +379,16 @@ static void find_non_local_tags(const struct ref *refs,
 	create_fetch_oidset(head, &fetch_oids);
 
 	for_each_ref(add_one_refname, &existing_refs);
+
+	/*
+	 * If we already have a transaction, then we need to filter out all
+	 * tags which have already been queued up.
+	 */
+	if (transaction)
+		ref_transaction_for_each_queued_update(transaction,
+						       add_already_queued_tags,
+						       &existing_refs);
+
 	for (ref = refs; ref; ref = ref->next) {
 		if (!starts_with(ref->name, "refs/tags/"))
 			continue;
@@ -600,7 +622,7 @@ static struct ref *get_ref_map(struct remote *remote,
 		/* also fetch all tags */
 		get_fetch_map(remote_refs, tag_refspec, &tail, 0);
 	else if (tags == TAGS_DEFAULT && *autotags)
-		find_non_local_tags(remote_refs, &ref_map, &tail);
+		find_non_local_tags(remote_refs, NULL, &ref_map, &tail);
 
 	/* Now append any refs to be updated opportunistically: */
 	*tail = orefs;
@@ -1083,12 +1105,12 @@ N_("it took %.2f seconds to check forced updates; you can use\n"
    "to avoid this check\n");
 
 static int store_updated_refs(const char *raw_url, const char *remote_name,
-			      int connectivity_checked, struct ref *ref_map,
+			      int connectivity_checked,
+			      struct ref_transaction *transaction, struct ref *ref_map,
 			      struct fetch_head *fetch_head, struct worktree **worktrees)
 {
 	int url_len, i, rc = 0;
 	struct strbuf note = STRBUF_INIT, err = STRBUF_INIT;
-	struct ref_transaction *transaction = NULL;
 	const char *what, *kind;
 	struct ref *rm;
 	char *url;
@@ -1106,14 +1128,6 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 		rm = ref_map;
 		if (check_connected(iterate_ref_map, &rm, &opt)) {
 			rc = error(_("%s did not send all necessary objects\n"), url);
-			goto abort;
-		}
-	}
-
-	if (atomic_fetch) {
-		transaction = ref_transaction_begin(&err);
-		if (!transaction) {
-			error("%s", err.buf);
 			goto abort;
 		}
 	}
@@ -1233,14 +1247,6 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 		}
 	}
 
-	if (!rc && transaction) {
-		rc = ref_transaction_commit(transaction, &err);
-		if (rc) {
-			error("%s", err.buf);
-			goto abort;
-		}
-	}
-
 	if (rc & STORE_REF_ERROR_DF_CONFLICT)
 		error(_("some local refs could not be updated; try running\n"
 		      " 'git remote prune %s' to remove any old, conflicting "
@@ -1258,7 +1264,6 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
  abort:
 	strbuf_release(&note);
 	strbuf_release(&err);
-	ref_transaction_free(transaction);
 	free(url);
 	return rc;
 }
@@ -1299,6 +1304,7 @@ static int check_exist_and_connected(struct ref *ref_map)
 }
 
 static int fetch_and_consume_refs(struct transport *transport,
+				  struct ref_transaction *transaction,
 				  struct ref *ref_map,
 				  struct fetch_head *fetch_head,
 				  struct worktree **worktrees)
@@ -1323,7 +1329,8 @@ static int fetch_and_consume_refs(struct transport *transport,
 
 	trace2_region_enter("fetch", "consume_refs", the_repository);
 	ret = store_updated_refs(transport->url, transport->remote->name,
-				 connectivity_checked, ref_map, fetch_head, worktrees);
+				 connectivity_checked, transaction, ref_map,
+				 fetch_head, worktrees);
 	trace2_region_leave("fetch", "consume_refs", the_repository);
 
 out:
@@ -1496,6 +1503,7 @@ static struct transport *prepare_transport(struct remote *remote, int deepen)
 }
 
 static int backfill_tags(struct transport *transport,
+			 struct ref_transaction *transaction,
 			 struct ref *ref_map,
 			 struct fetch_head *fetch_head,
 			 struct worktree **worktrees)
@@ -1519,7 +1527,7 @@ static int backfill_tags(struct transport *transport,
 	transport_set_option(transport, TRANS_OPT_FOLLOWTAGS, NULL);
 	transport_set_option(transport, TRANS_OPT_DEPTH, "0");
 	transport_set_option(transport, TRANS_OPT_DEEPEN_RELATIVE, NULL);
-	retcode = fetch_and_consume_refs(transport, ref_map, fetch_head, worktrees);
+	retcode = fetch_and_consume_refs(transport, transaction, ref_map, fetch_head, worktrees);
 
 	if (gsecondary) {
 		transport_disconnect(gsecondary);
@@ -1532,6 +1540,7 @@ static int backfill_tags(struct transport *transport,
 static int do_fetch(struct transport *transport,
 		    struct refspec *rs)
 {
+	struct ref_transaction *transaction = NULL;
 	struct ref *ref_map = NULL;
 	int autotags = (transport->remote->fetch_tags == 1);
 	int retcode = 0;
@@ -1541,6 +1550,7 @@ static int do_fetch(struct transport *transport,
 	int must_list_refs = 1;
 	struct worktree **worktrees = get_worktrees();
 	struct fetch_head fetch_head = { 0 };
+	struct strbuf err = STRBUF_INIT;
 
 	if (tags == TAGS_DEFAULT) {
 		if (transport->remote->fetch_tags == 2)
@@ -1602,6 +1612,14 @@ static int do_fetch(struct transport *transport,
 	if (retcode)
 		goto cleanup;
 
+	if (atomic_fetch) {
+		transaction = ref_transaction_begin(&err);
+		if (!transaction) {
+			retcode = error("%s", err.buf);
+			goto cleanup;
+		}
+	}
+
 	if (tags == TAGS_DEFAULT && autotags)
 		transport_set_option(transport, TRANS_OPT_FOLLOWTAGS, "1");
 	if (prune) {
@@ -1621,7 +1639,7 @@ static int do_fetch(struct transport *transport,
 			retcode = 1;
 	}
 
-	if (fetch_and_consume_refs(transport, ref_map, &fetch_head, worktrees)) {
+	if (fetch_and_consume_refs(transport, transaction, ref_map, &fetch_head, worktrees)) {
 		retcode = 1;
 		goto cleanup;
 	}
@@ -1633,19 +1651,35 @@ static int do_fetch(struct transport *transport,
 	if (tags == TAGS_DEFAULT && autotags) {
 		struct ref *tags_ref_map = NULL, **tail = &tags_ref_map;
 
-		find_non_local_tags(remote_refs, &tags_ref_map, &tail);
+		find_non_local_tags(remote_refs, transaction, &tags_ref_map, &tail);
 		if (tags_ref_map) {
 			/*
 			 * If backfilling of tags fails then we want to tell
 			 * the user so, but we have to continue regardless to
 			 * populate upstream information of the references we
-			 * have already fetched above.
+			 * have already fetched above. The exception though is
+			 * when `--atomic` is passed: in that case we'll abort
+			 * the transaction and don't commit anything.
 			 */
-			if (backfill_tags(transport, tags_ref_map, &fetch_head, worktrees))
+			if (backfill_tags(transport, transaction, tags_ref_map,
+					  &fetch_head, worktrees))
 				retcode = 1;
 		}
 
 		free_refs(tags_ref_map);
+	}
+
+	if (transaction) {
+		if (retcode)
+			goto cleanup;
+
+		retcode = ref_transaction_commit(transaction, &err);
+		if (retcode) {
+			error("%s", err.buf);
+			ref_transaction_free(transaction);
+			transaction = NULL;
+			goto cleanup;
+		}
 	}
 
 	commit_fetch_head(&fetch_head);
@@ -1705,7 +1739,13 @@ static int do_fetch(struct transport *transport,
 	}
 
 cleanup:
+	if (retcode && transaction) {
+		ref_transaction_abort(transaction, &err);
+		error("%s", err.buf);
+	}
+
 	close_fetch_head(&fetch_head);
+	strbuf_release(&err);
 	free_refs(ref_map);
 	free_worktrees(worktrees);
 	return retcode;

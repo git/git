@@ -180,11 +180,8 @@ test_expect_success 'atomic fetch with failing backfill' '
 	EOF
 
 	test_must_fail git -C clone3 fetch --atomic .. $B:refs/heads/something &&
-
-	# Creation of the tag has failed, so ideally refs/heads/something
-	# should not exist. The fact that it does demonstrates that there is
-	# a bug in the `--atomic` flag.
-	test $B = "$(git -C clone3 rev-parse --verify refs/heads/something)"
+	test_must_fail git -C clone3 rev-parse --verify refs/heads/something &&
+	test_must_fail git -C clone3 rev-parse --verify refs/tags/tag2
 '
 
 test_expect_success 'atomic fetch with backfill should use single transaction' '
@@ -197,12 +194,10 @@ test_expect_success 'atomic fetch with backfill should use single transaction' '
 		prepared
 		$ZERO_OID $B refs/heads/something
 		$ZERO_OID $S refs/tags/tag2
+		$ZERO_OID $T refs/tags/tag1
 		committed
 		$ZERO_OID $B refs/heads/something
 		$ZERO_OID $S refs/tags/tag2
-		prepared
-		$ZERO_OID $T refs/tags/tag1
-		committed
 		$ZERO_OID $T refs/tags/tag1
 	EOF
 
