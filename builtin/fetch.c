@@ -1536,7 +1536,7 @@ static void backfill_tags(struct transport *transport, struct ref *ref_map,
 static int do_fetch(struct transport *transport,
 		    struct refspec *rs)
 {
-	struct ref *ref_map;
+	struct ref *ref_map = NULL;
 	int autotags = (transport->remote->fetch_tags == 1);
 	int retcode = 0;
 	const struct ref *remote_refs;
@@ -1620,9 +1620,22 @@ static int do_fetch(struct transport *transport,
 			retcode = 1;
 	}
 	if (fetch_and_consume_refs(transport, ref_map, worktrees)) {
-		free_refs(ref_map);
 		retcode = 1;
 		goto cleanup;
+	}
+
+	/*
+	 * If neither --no-tags nor --tags was specified, do automated tag
+	 * following.
+	 */
+	if (tags == TAGS_DEFAULT && autotags) {
+		struct ref *tags_ref_map = NULL, **tail = &tags_ref_map;
+
+		find_non_local_tags(remote_refs, &tags_ref_map, &tail);
+		if (tags_ref_map)
+			backfill_tags(transport, tags_ref_map, worktrees);
+
+		free_refs(tags_ref_map);
 	}
 
 	if (set_upstream) {
@@ -1644,7 +1657,7 @@ static int do_fetch(struct transport *transport,
 			if (!rm->peer_ref) {
 				if (source_ref) {
 					warning(_("multiple branches detected, incompatible with --set-upstream"));
-					goto skip;
+					goto cleanup;
 				} else {
 					source_ref = rm;
 				}
@@ -1658,7 +1671,7 @@ static int do_fetch(struct transport *transport,
 				warning(_("could not set upstream of HEAD to '%s' from '%s' when "
 					  "it does not point to any branch."),
 					shortname, transport->remote->name);
-				goto skip;
+				goto cleanup;
 			}
 
 			if (!strcmp(source_ref->name, "HEAD") ||
@@ -1678,21 +1691,9 @@ static int do_fetch(struct transport *transport,
 				  "you need to specify exactly one branch with the --set-upstream option"));
 		}
 	}
-skip:
-	free_refs(ref_map);
-
-	/* if neither --no-tags nor --tags was specified, do automated tag
-	 * following ... */
-	if (tags == TAGS_DEFAULT && autotags) {
-		struct ref **tail = &ref_map;
-		ref_map = NULL;
-		find_non_local_tags(remote_refs, &ref_map, &tail);
-		if (ref_map)
-			backfill_tags(transport, ref_map, worktrees);
-		free_refs(ref_map);
-	}
 
 cleanup:
+	free_refs(ref_map);
 	free_worktrees(worktrees);
 	return retcode;
 }
