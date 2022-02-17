@@ -233,9 +233,7 @@ test_expect_success 'backfill failure causes command to fail' '
 		done
 	EOF
 
-	# Even though we fail to create refs/tags/tag1 the below command
-	# unexpectedly succeeds.
-	git -C clone5 fetch .. $B:refs/heads/something &&
+	test_must_fail git -C clone5 fetch .. $B:refs/heads/something &&
 	test $B = $(git -C clone5 rev-parse --verify refs/heads/something) &&
 	test $S = $(git -C clone5 rev-parse --verify tag2) &&
 	test_must_fail git -C clone5 rev-parse --verify tag1

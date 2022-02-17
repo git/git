@@ -1495,12 +1495,12 @@ static struct transport *prepare_transport(struct remote *remote, int deepen)
 	return transport;
 }
 
-static void backfill_tags(struct transport *transport,
-			  struct ref *ref_map,
-			  struct fetch_head *fetch_head,
-			  struct worktree **worktrees)
+static int backfill_tags(struct transport *transport,
+			 struct ref *ref_map,
+			 struct fetch_head *fetch_head,
+			 struct worktree **worktrees)
 {
-	int cannot_reuse;
+	int retcode, cannot_reuse;
 
 	/*
 	 * Once we have set TRANS_OPT_DEEPEN_SINCE, we can't unset it
@@ -1519,12 +1519,14 @@ static void backfill_tags(struct transport *transport,
 	transport_set_option(transport, TRANS_OPT_FOLLOWTAGS, NULL);
 	transport_set_option(transport, TRANS_OPT_DEPTH, "0");
 	transport_set_option(transport, TRANS_OPT_DEEPEN_RELATIVE, NULL);
-	fetch_and_consume_refs(transport, ref_map, fetch_head, worktrees);
+	retcode = fetch_and_consume_refs(transport, ref_map, fetch_head, worktrees);
 
 	if (gsecondary) {
 		transport_disconnect(gsecondary);
 		gsecondary = NULL;
 	}
+
+	return retcode;
 }
 
 static int do_fetch(struct transport *transport,
@@ -1632,8 +1634,16 @@ static int do_fetch(struct transport *transport,
 		struct ref *tags_ref_map = NULL, **tail = &tags_ref_map;
 
 		find_non_local_tags(remote_refs, &tags_ref_map, &tail);
-		if (tags_ref_map)
-			backfill_tags(transport, tags_ref_map, &fetch_head, worktrees);
+		if (tags_ref_map) {
+			/*
+			 * If backfilling of tags fails then we want to tell
+			 * the user so, but we have to continue regardless to
+			 * populate upstream information of the references we
+			 * have already fetched above.
+			 */
+			if (backfill_tags(transport, tags_ref_map, &fetch_head, worktrees))
+				retcode = 1;
+		}
 
 		free_refs(tags_ref_map);
 	}
