@@ -386,7 +386,7 @@ static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt
 	    !(!opt->ignore_case && (p->fixed || p->is_fixed)))
 		options |= (PCRE2_UTF | PCRE2_MATCH_INVALID_UTF);
 
-#ifdef GIT_PCRE2_VERSION_10_36_OR_HIGHER
+#ifndef GIT_PCRE2_VERSION_10_36_OR_HIGHER
 	/* Work around https://bugs.exim.org/show_bug.cgi?id=2642 fixed in 10.36 */
 	if (PCRE2_MATCH_INVALID_UTF && options & (PCRE2_UTF | PCRE2_CASELESS))
 		options |= PCRE2_NO_START_OPTIMIZE;
