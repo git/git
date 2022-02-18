@@ -1235,7 +1235,8 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	}
 	else {
 		const char *branch;
-		char *ref;
+		const char *ref;
+		char *ref_free = NULL;
 
 		if (option_branch)
 			die(_("Remote branch %s not found in upstream %s"),
@@ -1251,17 +1252,16 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		    skip_prefix(transport_ls_refs_options.unborn_head_target,
 				"refs/heads/", &branch)) {
 			ref = transport_ls_refs_options.unborn_head_target;
-			transport_ls_refs_options.unborn_head_target = NULL;
 			create_symref("HEAD", ref, reflog_msg.buf);
 		} else {
 			branch = git_default_branch_name(0);
-			ref = xstrfmt("refs/heads/%s", branch);
+			ref_free = xstrfmt("refs/heads/%s", branch);
+			ref = ref_free;
 		}
 
 		if (!option_bare)
 			install_branch_config(0, branch, remote_name, ref);
-
-		free(ref);
+		free(ref_free);
 	}
 
 	write_refspec_config(src_ref_prefix, our_head_points_at,
@@ -1313,7 +1313,6 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	UNLEAK(repo);
 	junk_mode = JUNK_LEAVE_ALL;
 
-	strvec_clear(&transport_ls_refs_options.ref_prefixes);
-	free(transport_ls_refs_options.unborn_head_target);
+	transport_ls_refs_options_release(&transport_ls_refs_options);
 	return err;
 }

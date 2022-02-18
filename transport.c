@@ -1292,7 +1292,7 @@ int transport_push(struct repository *r,
 							       &transport_options);
 		trace2_region_leave("transport_push", "get_refs_list", r);
 
-		strvec_clear(&transport_options.ref_prefixes);
+		transport_ls_refs_options_release(&transport_options);
 
 		if (flags & TRANSPORT_PUSH_ALL)
 			match_flags |= MATCH_REFS_ALL;
@@ -1418,6 +1418,12 @@ const struct ref *transport_get_remote_refs(struct transport *transport,
 	}
 
 	return transport->remote_refs;
+}
+
+void transport_ls_refs_options_release(struct transport_ls_refs_options *opts)
+{
+	strvec_clear(&opts->ref_prefixes);
+	free((char *)opts->unborn_head_target);
 }
 
 int transport_fetch_refs(struct transport *transport, struct ref *refs)

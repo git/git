@@ -1594,7 +1594,7 @@ static int do_fetch(struct transport *transport,
 	} else
 		remote_refs = NULL;
 
-	strvec_clear(&transport_ls_refs_options.ref_prefixes);
+	transport_ls_refs_options_release(&transport_ls_refs_options);
 
 	ref_map = get_ref_map(transport->remote, remote_refs, rs,
 			      tags, &autotags);

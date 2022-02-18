@@ -257,14 +257,18 @@ struct transport_ls_refs_options {
 	/*
 	 * If unborn_head_target is not NULL, and the remote reports HEAD as
 	 * pointing to an unborn branch, transport_get_remote_refs() stores the
-	 * unborn branch in unborn_head_target. It should be freed by the
-	 * caller.
+	 * unborn branch in unborn_head_target.
 	 */
-	char *unborn_head_target;
+	const char *unborn_head_target;
 };
 #define TRANSPORT_LS_REFS_OPTIONS_INIT { \
 	.ref_prefixes = STRVEC_INIT, \
 }
+
+/**
+ * Release the "struct transport_ls_refs_options".
+ */
+void transport_ls_refs_options_release(struct transport_ls_refs_options *opts);
 
 /*
  * Retrieve refs from a remote.
