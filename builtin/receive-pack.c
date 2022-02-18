@@ -1962,6 +1962,15 @@ static void execute_commands(struct command *commands,
 	}
 
 	/*
+	 * If there is no command ready to run, should return directly to destroy
+	 * temporary data in the quarantine area.
+	 */
+	for (cmd = commands; cmd && cmd->error_string; cmd = cmd->next)
+		; /* nothing */
+	if (!cmd)
+		return;
+
+	/*
 	 * Now we'll start writing out refs, which means the objects need
 	 * to be in their final positions so that other processes can see them.
 	 */
