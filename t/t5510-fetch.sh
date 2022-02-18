@@ -343,6 +343,35 @@ test_expect_success 'fetch --atomic --append appends to FETCH_HEAD' '
 	test_cmp expected atomic/.git/FETCH_HEAD
 '
 
+test_expect_success 'fetch --atomic --prune executes a single reference transaction only' '
+	test_when_finished "rm -rf \"$D\"/atomic" &&
+
+	cd "$D" &&
+	git branch scheduled-for-deletion &&
+	git clone . atomic &&
+	git branch -D scheduled-for-deletion &&
+	git branch new-branch &&
+	head_oid=$(git rev-parse HEAD) &&
+
+	# Fetching with the `--atomic` flag should update all references in a
+	# single transaction.
+	cat >expected <<-EOF &&
+		prepared
+		$ZERO_OID $ZERO_OID refs/remotes/origin/scheduled-for-deletion
+		$ZERO_OID $head_oid refs/remotes/origin/new-branch
+		committed
+		$ZERO_OID $ZERO_OID refs/remotes/origin/scheduled-for-deletion
+		$ZERO_OID $head_oid refs/remotes/origin/new-branch
+	EOF
+
+	write_script atomic/.git/hooks/reference-transaction <<-\EOF &&
+		( echo "$*" && cat ) >>actual
+	EOF
+
+	git -C atomic fetch --atomic --prune origin &&
+	test_cmp expected atomic/actual
+'
+
 test_expect_success '--refmap="" ignores configured refspec' '
 	cd "$TRASH_DIRECTORY" &&
 	git clone "$D" remote-refs &&
