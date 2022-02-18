@@ -25,6 +25,15 @@ UI, Workflows & Features
  * "git log --remerge-diff" shows the difference from mechanical merge
    result and the result that is actually recorded in a merge commit.
 
+ * "git log" and friends learned an option --exclude-first-parent-only
+   to propagate UNINTERESTING bit down only along the first-parent
+   chain, just like --first-parent option shows commits that lack the
+   UNINTERESTING bit only along the first-parent chain.
+
+ * The command line completion script (in contrib/) learned to
+   complete all Git subcommands, including the ones that are normally
+   hidden, when GIT_COMPLETION_SHOW_ALL_COMMANDS is used.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -46,6 +55,9 @@ Performance, Internal Implementation, Development Support etc.
  * "git name-rev --stdin" does not behave like usual "--stdin" at
    all.  Start the process of renaming it to "--annotate-stdin".
    (merge a2585719b3 jc/name-rev-stdin later to maint).
+
+ * "git update-index", "git checkout-index", and "git clean" are
+   taught to work better with the sparse checkout feature.
 
 
 Fixes since v2.35
@@ -140,6 +152,16 @@ Fixes since v2.35
  * "git diff --diff-filter=aR" is now parsed correctly.
    (merge 75408ca949 js/diff-filter-negation-fix later to maint).
 
+ * When "git subtree" wants to create a merge, it used "git merge" and
+   let it be affected by end-user's "merge.ff" configuration, which
+   has been corrected.
+   (merge 9158a3564a tk/subtree-merge-not-ff-only later to maint).
+
+ * Unlike "git apply", "git patch-id" did not handle patches with
+   hunks that has only 1 line in either preimage or postimage, which
+   has been corrected.
+   (merge 757e75c81e jz/patch-id-hunk-header-parsing-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge cfc5cf428b jc/find-header later to maint).
    (merge 40e7cfdd46 jh/p4-fix-use-of-process-error-exception later to maint).
@@ -157,3 +179,5 @@ Fixes since v2.35
    (merge 45d0212a71 ll/doc-mktree-typofix later to maint).
    (merge e9b272e4c1 js/no-more-legacy-stash later to maint).
    (merge 6798b08e84 ab/do-not-hide-failures-in-git-dot-pm later to maint).
+   (merge 9325285df4 po/doc-check-ignore-markup-fix later to maint).
+   (merge cd26cd6c7c sy/modernize-t-lib-read-tree-m-3way later to maint).
