@@ -1,5 +1,6 @@
 #include "test-tool.h"
 #include "cache.h"
+#include "date.h"
 
 static const char *usage_msg = "\n"
 "  test-tool date relative [time_t]...\n"
@@ -34,7 +35,7 @@ static void show_human_dates(const char **argv)
 
 static void show_dates(const char **argv, const char *format)
 {
-	struct date_mode mode;
+	struct date_mode mode = DATE_MODE_INIT;
 
 	parse_date_format(format, &mode);
 	for (; *argv; argv++) {
@@ -53,6 +54,8 @@ static void show_dates(const char **argv, const char *format)
 
 		printf("%s -> %s\n", *argv, show_date(t, tz, &mode));
 	}
+
+	date_mode_release(&mode);
 }
 
 static void parse_dates(const char **argv)
