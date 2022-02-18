@@ -34,6 +34,8 @@ UI, Workflows & Features
    complete all Git subcommands, including the ones that are normally
    hidden, when GIT_COMPLETION_SHOW_ALL_COMMANDS is used.
 
+ * "git branch" learned the "--recurse-submodules" option.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -58,6 +60,10 @@ Performance, Internal Implementation, Development Support etc.
 
  * "git update-index", "git checkout-index", and "git clean" are
    taught to work better with the sparse checkout feature.
+
+ * Use an internal call to reset_head() helper function instead of
+   spawning "git checkout" in "rebase", and update code paths that are
+   involved in the change.
 
 
 Fixes since v2.35
@@ -162,6 +168,32 @@ Fixes since v2.35
    has been corrected.
    (merge 757e75c81e jz/patch-id-hunk-header-parsing-fix later to maint).
 
+ * "receive-pack" checks if it will do any ref updates (various
+   conditions could reject a push) before received objects are taken
+   out of the temporary directory used for quarantine purposes, so
+   that a push that is known-to-fail will not leave crufts that a
+   future "gc" needs to clean up.
+   (merge 5407764069 cb/clear-quarantine-early-on-all-ref-update-errors later to maint).
+
+ * Because a deletion of ref would need to remove it from both the
+   loose ref store and the packed ref store, a delete-ref operation
+   that logically removes one ref may end up invoking ref-transaction
+   hook twice, which has been corrected.
+   (merge 2ed1b64ebd ps/avoid-unnecessary-hook-invocation-with-packed-refs later to maint).
+
+ * When there is no object to write .bitmap file for, "git
+   multi-pack-index" triggered an error, instead of just skipping,
+   which has been corrected.
+   (merge eb57277ba3 tb/midx-no-bitmap-for-no-objects later to maint).
+
+ * "git cmd -h" outside a repository should error out cleanly for many
+   commands, but instead it hit a BUG(), which has been corrected.
+   (merge 87ad07d735 js/short-help-outside-repo-fix later to maint).
+
+ * "working tree" and "per-worktree ref" were in glossary, but
+   "worktree" itself wasn't, which has been corrected.
+   (merge 2df5387ed0 jc/glossary-worktree later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge cfc5cf428b jc/find-header later to maint).
    (merge 40e7cfdd46 jh/p4-fix-use-of-process-error-exception later to maint).
@@ -181,3 +213,5 @@ Fixes since v2.35
    (merge 6798b08e84 ab/do-not-hide-failures-in-git-dot-pm later to maint).
    (merge 9325285df4 po/doc-check-ignore-markup-fix later to maint).
    (merge cd26cd6c7c sy/modernize-t-lib-read-tree-m-3way later to maint).
+   (merge d17294a05e ab/hash-object-leakfix later to maint).
+   (merge b8403129d3 jd/t0015-modernize later to maint).
