@@ -61,15 +61,15 @@ echo "$2" >>actual
 cat >>actual
 EOF
 
-cat >expected <<EOF
-parent1
-repo1
-refs/heads/main $COMMIT2 refs/heads/foreign $COMMIT1
-EOF
-
 test_expect_success 'push with hook' '
+	cat >expect <<-EOF &&
+	parent1
+	repo1
+	refs/heads/main $COMMIT2 refs/heads/foreign $COMMIT1
+	EOF
+
 	git push parent1 main:foreign &&
-	diff expected actual
+	test_cmp expect actual
 '
 
 test_expect_success 'add a branch' '
@@ -80,49 +80,48 @@ test_expect_success 'add a branch' '
 COMMIT3="$(git rev-parse HEAD)"
 export COMMIT3
 
-cat >expected <<EOF
-parent1
-repo1
-refs/heads/other $COMMIT3 refs/heads/foreign $COMMIT2
-EOF
-
 test_expect_success 'push to default' '
+	cat >expect <<-EOF &&
+	parent1
+	repo1
+	refs/heads/other $COMMIT3 refs/heads/foreign $COMMIT2
+	EOF
 	git push &&
-	diff expected actual
+	test_cmp expect actual
 '
-
-cat >expected <<EOF
-parent1
-repo1
-refs/tags/one $COMMIT1 refs/tags/tag1 $ZERO_OID
-HEAD~ $COMMIT2 refs/heads/prev $ZERO_OID
-EOF
 
 test_expect_success 'push non-branches' '
-	git push parent1 one:tag1 HEAD~:refs/heads/prev &&
-	diff expected actual
-'
+	cat >expect <<-EOF &&
+	parent1
+	repo1
+	refs/tags/one $COMMIT1 refs/tags/tag1 $ZERO_OID
+	HEAD~ $COMMIT2 refs/heads/prev $ZERO_OID
+	EOF
 
-cat >expected <<EOF
-parent1
-repo1
-(delete) $ZERO_OID refs/heads/prev $COMMIT2
-EOF
+	git push parent1 one:tag1 HEAD~:refs/heads/prev &&
+	test_cmp expect actual
+'
 
 test_expect_success 'push delete' '
+	cat >expect <<-EOF &&
+	parent1
+	repo1
+	(delete) $ZERO_OID refs/heads/prev $COMMIT2
+	EOF
+
 	git push parent1 :prev &&
-	diff expected actual
+	test_cmp expect actual
 '
 
-cat >expected <<EOF
-repo1
-repo1
-HEAD $COMMIT3 refs/heads/other $ZERO_OID
-EOF
-
 test_expect_success 'push to URL' '
+	cat >expect <<-EOF &&
+	repo1
+	repo1
+	HEAD $COMMIT3 refs/heads/other $ZERO_OID
+	EOF
+
 	git push repo1 HEAD &&
-	diff expected actual
+	test_cmp expect actual
 '
 
 test_expect_success 'set up many-ref tests' '
