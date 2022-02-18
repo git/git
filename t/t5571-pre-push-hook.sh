@@ -11,7 +11,7 @@ HOOKDIR="$(git rev-parse --git-dir)/hooks"
 HOOK="$HOOKDIR/pre-push"
 mkdir -p "$HOOKDIR"
 write_script "$HOOK" <<EOF
-cat >/dev/null
+cat >actual
 exit 0
 EOF
 
@@ -20,10 +20,16 @@ test_expect_success 'setup' '
 	git init --bare repo1 &&
 	git remote add parent1 repo1 &&
 	test_commit one &&
-	git push parent1 HEAD:foreign
+	cat >expect <<-EOF &&
+	HEAD $(git rev-parse HEAD) refs/heads/foreign $(test_oid zero)
+	EOF
+
+	test_when_finished "rm actual" &&
+	git push parent1 HEAD:foreign &&
+	test_cmp expect actual
 '
 write_script "$HOOK" <<EOF
-cat >/dev/null
+cat >actual
 exit 1
 EOF
 
@@ -32,11 +38,18 @@ export COMMIT1
 
 test_expect_success 'push with failing hook' '
 	test_commit two &&
-	test_must_fail git push parent1 HEAD
+	cat >expect <<-EOF &&
+	HEAD $(git rev-parse HEAD) refs/heads/main $(test_oid zero)
+	EOF
+
+	test_when_finished "rm actual" &&
+	test_must_fail git push parent1 HEAD &&
+	test_cmp expect actual
 '
 
 test_expect_success '--no-verify bypasses hook' '
-	git push --no-verify parent1 HEAD
+	git push --no-verify parent1 HEAD &&
+	test_path_is_missing actual
 '
 
 COMMIT2="$(git rev-parse HEAD)"
