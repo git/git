@@ -20,6 +20,7 @@
 #include "diff.h"
 #include "object-store.h"
 #include "advice.h"
+#include "branch.h"
 
 #define OPT_QUIET (1 << 0)
 #define OPT_CACHED (1 << 1)
@@ -2984,6 +2985,42 @@ static int module_set_branch(int argc, const char **argv, const char *prefix)
 	return !!ret;
 }
 
+static int module_create_branch(int argc, const char **argv, const char *prefix)
+{
+	enum branch_track track;
+	int quiet = 0, force = 0, reflog = 0, dry_run = 0;
+
+	struct option options[] = {
+		OPT__QUIET(&quiet, N_("print only error messages")),
+		OPT__FORCE(&force, N_("force creation"), 0),
+		OPT_BOOL(0, "create-reflog", &reflog,
+			 N_("create the branch's reflog")),
+		OPT_SET_INT('t', "track", &track,
+			    N_("set up tracking mode (see git-pull(1))"),
+			    BRANCH_TRACK_EXPLICIT),
+		OPT__DRY_RUN(&dry_run,
+			     N_("show whether the branch would be created")),
+		OPT_END()
+	};
+	const char *const usage[] = {
+		N_("git submodule--helper create-branch [-f|--force] [--create-reflog] [-q|--quiet] [-t|--track] [-n|--dry-run] <name> <start_oid> <start_name>"),
+		NULL
+	};
+
+	git_config(git_default_config, NULL);
+	track = git_branch_track;
+	argc = parse_options(argc, argv, prefix, options, usage, 0);
+
+	if (argc != 3)
+		usage_with_options(usage, options);
+
+	if (!quiet && !dry_run)
+		printf_ln(_("creating branch '%s'"), argv[0]);
+
+	create_branches_recursively(the_repository, argv[0], argv[1], argv[2],
+				    force, reflog, quiet, track, dry_run);
+	return 0;
+}
 struct add_data {
 	const char *prefix;
 	const char *branch;
@@ -3390,6 +3427,7 @@ static struct cmd_struct commands[] = {
 	{"config", module_config, 0},
 	{"set-url", module_set_url, 0},
 	{"set-branch", module_set_branch, 0},
+	{"create-branch", module_create_branch, 0},
 };
 
 int cmd_submodule__helper(int argc, const char **argv, const char *prefix)
