@@ -710,6 +710,17 @@ static void sanitize_paths(int argc, const char **argv,
 	if (prefix && *prefix && !core_sparse_checkout_cone)
 		die(_("please run from the toplevel directory in non-cone mode"));
 
+	if (core_sparse_checkout_cone) {
+		for (i = 0; i < argc; i++) {
+			if (argv[i][0] == '/')
+				die(_("specify directories rather than patterns (no leading slash)"));
+			if (argv[i][0] == '!')
+				die(_("specify directories rather than patterns.  If your directory starts with a '!', pass --skip-checks"));
+			if (strpbrk(argv[i], "*?[]"))
+				die(_("specify directories rather than patterns.  If your directory really has any of '*?[]\\' in it, pass --skip-checks"));
+		}
+	}
+
 	for (i = 0; i < argc; i++) {
 		struct cache_entry *ce;
 		struct index_state *index = the_repository->index;
