@@ -2991,6 +2991,8 @@ proc resizeclistpanes {win w} {
         } else {
             $win sash place 0 $sash0 [lindex $s0 1]
             $win sash place 1 $sash1 [lindex $s1 1]
+            set sash0 [list $sash0 [lindex $s0 1]]
+            set sash1 [list $sash1 [lindex $s1 1]]
         }
         set oldsash($win) [list $sash0 $sash1]
     }
@@ -3023,6 +3025,7 @@ proc resizecdetpanes {win w} {
             $win sashpos 0 $sash0
         } else {
             $win sash place 0 $sash0 [lindex $s0 1]
+            set sash0 [list $sash0 [lindex $s0 1]]
         }
         set oldsash($win) $sash0
     }
