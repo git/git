@@ -3086,12 +3086,11 @@ static int detect_and_process_renames(struct merge_options *opt,
 				      struct tree *side1,
 				      struct tree *side2)
 {
-	struct diff_queue_struct combined;
+	struct diff_queue_struct combined = { 0 };
 	struct rename_info *renames = &opt->priv->renames;
-	int need_dir_renames, s, clean = 1;
+	int need_dir_renames, s, i, clean = 1;
 	unsigned detection_run = 0;
 
-	memset(&combined, 0, sizeof(combined));
 	if (!possible_renames(renames))
 		goto cleanup;
 
@@ -3175,13 +3174,9 @@ simple_cleanup:
 		free(renames->pairs[s].queue);
 		DIFF_QUEUE_CLEAR(&renames->pairs[s]);
 	}
-	if (combined.nr) {
-		int i;
-		for (i = 0; i < combined.nr; i++)
-			pool_diff_free_filepair(&opt->priv->pool,
-						combined.queue[i]);
-		free(combined.queue);
-	}
+	for (i = 0; i < combined.nr; i++)
+		pool_diff_free_filepair(&opt->priv->pool, combined.queue[i]);
+	free(combined.queue);
 
 	return clean;
 }
