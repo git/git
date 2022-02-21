@@ -515,7 +515,9 @@ static void object_record_free(void *void_arg, void *key)
 static int writer_dump_object_index(struct reftable_writer *w)
 {
 	struct write_record_arg closure = { .w = w };
-	struct common_prefix_arg common = { NULL };
+	struct common_prefix_arg common = {
+		.max = 1,		/* obj_id_len should be >= 2. */
+	};
 	if (w->obj_index_tree) {
 		infix_walk(w->obj_index_tree, &update_common, &common);
 	}
