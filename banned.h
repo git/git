@@ -21,13 +21,8 @@
 
 #undef sprintf
 #undef vsprintf
-#ifdef HAVE_VARIADIC_MACROS
 #define sprintf(...) BANNED(sprintf)
 #define vsprintf(...) BANNED(vsprintf)
-#else
-#define sprintf(buf,fmt,arg) BANNED(sprintf)
-#define vsprintf(buf,fmt,arg) BANNED(vsprintf)
-#endif
 
 #undef gmtime
 #define gmtime(t) BANNED(gmtime)

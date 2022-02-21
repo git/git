@@ -217,6 +217,9 @@ For C programs:
    . since mid 2017 with 512f41cf, we have been using designated
      initializers for array (e.g. "int array[10] = { [5] = 2 }").
 
+   . since early 2021 with 765dc168882, we have been using variadic
+     macros, mostly for printf-like trace and debug macros.
+
    These used to be forbidden, but we have not heard any breakage
    report, and they are assumed to be safe.
 
