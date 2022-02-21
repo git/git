@@ -1183,7 +1183,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		strbuf_reset(&buf);
 		strbuf_addf(&buf, "%s/rewritten", merge_dir());
 		if (is_directory(buf.buf)) {
-			die("`rebase -p` is no longer supported");
+			die("`rebase --preserve-merges` (-p) is no longer supported.\n"
+			"You still have a `.git/rebase-merge/rewritten` directory, \n"
+			"indicating a `rebase preserve-merge` is still in progress.\n");
 		} else {
 			strbuf_reset(&buf);
 			strbuf_addf(&buf, "%s/interactive", merge_dir());
