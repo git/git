@@ -155,6 +155,11 @@ static int parse_footer(struct reftable_reader *r, uint8_t *footer,
 	r->log_offsets.is_present = (first_block_typ == BLOCK_TYPE_LOG ||
 				     r->log_offsets.offset > 0);
 	r->obj_offsets.is_present = r->obj_offsets.offset > 0;
+	if (r->obj_offsets.is_present && !r->object_id_len) {
+		err = REFTABLE_FORMAT_ERROR;
+		goto done;
+	}
+
 	err = 0;
 done:
 	return err;
