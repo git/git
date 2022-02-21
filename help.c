@@ -433,15 +433,10 @@ static int get_alias(const char *var, const char *value, void *data)
 	return 0;
 }
 
-void list_all_cmds_help(void)
+static void list_all_cmds_help_external_commands(void)
 {
 	struct string_list others = STRING_LIST_INIT_DUP;
-	struct string_list alias_list = STRING_LIST_INIT_DUP;
-	struct cmdname_help *aliases;
-	int i, longest;
-
-	puts(_("See 'git help <command>' to read about a specific subcommand"));
-	print_cmd_by_category(main_categories, &longest);
+	int i;
 
 	list_all_other_cmds(&others);
 	if (others.nr)
@@ -449,6 +444,13 @@ void list_all_cmds_help(void)
 	for (i = 0; i < others.nr; i++)
 		printf("   %s\n", others.items[i].string);
 	string_list_clear(&others, 0);
+}
+
+static void list_all_cmds_help_aliases(int longest)
+{
+	struct string_list alias_list = STRING_LIST_INIT_DUP;
+	struct cmdname_help *aliases;
+	int i;
 
 	git_config(get_alias, &alias_list);
 	string_list_sort(&alias_list);
@@ -472,6 +474,17 @@ void list_all_cmds_help(void)
 		free(aliases);
 	}
 	string_list_clear(&alias_list, 1);
+}
+
+void list_all_cmds_help(void)
+{
+	int longest;
+
+	puts(_("See 'git help <command>' to read about a specific subcommand"));
+	print_cmd_by_category(main_categories, &longest);
+
+	list_all_cmds_help_external_commands();
+	list_all_cmds_help_aliases(longest);
 }
 
 int is_in_cmdlist(struct cmdnames *c, const char *s)
