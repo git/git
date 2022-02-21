@@ -138,6 +138,51 @@ test_expect_success 'git help --config-sections-for-completion' '
 	test_cmp human.munged sections
 '
 
+test_section_spacing () {
+	cat >expect &&
+	"$@" >out &&
+	grep -E "(^[^ ]|^$)" out >actual
+}
+
+test_section_spacing_trailer () {
+	test_section_spacing "$@" &&
+	test_expect_code 1 git >out &&
+	sed -n '/list available subcommands/,$p' <out >>expect
+}
+
+
+for cmd in git "git help"
+do
+	test_expect_success "'$cmd' section spacing" '
+		test_section_spacing_trailer git help <<-\EOF &&
+		usage: git [--version] [--help] [-C <path>] [-c <name>=<value>]
+
+		These are common Git commands used in various situations:
+
+		start a working area (see also: git help tutorial)
+
+		work on the current change (see also: git help everyday)
+
+		examine the history and state (see also: git help revisions)
+
+		grow, mark and tweak your common history
+
+		collaborate (see also: git help workflows)
+
+		EOF
+		test_cmp expect actual
+	'
+done
+
+test_expect_success "'git help -g' section spacing" '
+	test_section_spacing_trailer git help -g <<-\EOF &&
+
+	The Git concept guides are:
+
+	EOF
+	test_cmp expect actual
+'
+
 test_expect_success 'generate builtin list' '
 	mkdir -p sub &&
 	git --list-cmds=builtins >builtins
