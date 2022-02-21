@@ -667,6 +667,29 @@ static void test_write_empty_table(void)
 	strbuf_release(&buf);
 }
 
+static void test_write_empty_key(void)
+{
+	struct reftable_write_options opts = { 0 };
+	struct strbuf buf = STRBUF_INIT;
+	struct reftable_writer *w =
+		reftable_new_writer(&strbuf_add_void, &buf, &opts);
+	struct reftable_ref_record ref = {
+		.refname = "",
+		.update_index = 1,
+		.value_type = REFTABLE_REF_DELETION,
+	};
+	int err;
+
+	reftable_writer_set_limits(w, 1, 1);
+	err = reftable_writer_add_ref(w, &ref);
+	EXPECT(err == REFTABLE_API_ERROR);
+
+	err = reftable_writer_close(w);
+	EXPECT(err == REFTABLE_EMPTY_TABLE_ERROR);
+	reftable_writer_free(w);
+	strbuf_release(&buf);
+}
+
 static void test_write_key_order(void)
 {
 	struct reftable_write_options opts = { 0 };
@@ -746,6 +769,7 @@ int readwrite_test_main(int argc, const char *argv[])
 	RUN_TEST(test_table_read_write_seek_index);
 	RUN_TEST(test_table_refs_for_no_index);
 	RUN_TEST(test_table_refs_for_obj_index);
+	RUN_TEST(test_write_empty_key);
 	RUN_TEST(test_write_empty_table);
 	RUN_TEST(test_log_overflow);
 	return 0;
