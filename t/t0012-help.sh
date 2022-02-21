@@ -49,6 +49,16 @@ test_expect_success 'invalid usage' '
 	test_expect_code 129 git help --config-sections-for-completion add
 '
 
+for opt in '-a' '-g' '-c' '--config-for-completion' '--config-sections-for-completion'
+do
+	test_expect_success "invalid usage of '$opt' with [-i|-m|-w]" '
+		git help $opt &&
+		test_expect_code 129 git help $opt -i &&
+		test_expect_code 129 git help $opt -m &&
+		test_expect_code 129 git help $opt -w
+	'
+done
+
 test_expect_success "works for commands and guides by default" '
 	configure_help &&
 	git help status &&

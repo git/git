@@ -574,12 +574,40 @@ static const char *check_git_cmd(const char* cmd)
 	return cmd;
 }
 
-static void opt_mode_usage(int argc, const char *opt_mode)
+static void no_help_format(const char *opt_mode, enum help_format fmt)
+{
+	const char *opt_fmt;
+
+	switch (fmt) {
+	case HELP_FORMAT_NONE:
+		return;
+	case HELP_FORMAT_MAN:
+		opt_fmt = "--man";
+		break;
+	case HELP_FORMAT_INFO:
+		opt_fmt = "--info";
+		break;
+	case HELP_FORMAT_WEB:
+		opt_fmt = "--web";
+		break;
+	default:
+		BUG("unreachable");
+	}
+
+	usage_msg_optf(_("options '%s' and '%s' cannot be used together"),
+		       builtin_help_usage, builtin_help_options, opt_mode,
+		       opt_fmt);
+}
+
+static void opt_mode_usage(int argc, const char *opt_mode,
+			   enum help_format fmt)
 {
 	if (argc)
 		usage_msg_optf(_("the '%s' option doesn't take any non-option arguments"),
 			       builtin_help_usage, builtin_help_options,
 			       opt_mode);
+
+	no_help_format(opt_mode, fmt);
 }
 
 int cmd_help(int argc, const char **argv, const char *prefix)
@@ -594,7 +622,7 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 
 	switch (cmd_mode) {
 	case HELP_ACTION_ALL:
-		opt_mode_usage(argc, "--all");
+		opt_mode_usage(argc, "--all", help_format);
 		if (verbose) {
 			setup_pager();
 			list_all_cmds_help();
@@ -606,20 +634,21 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 		printf("%s\n", _(git_more_info_string));
 		break;
 	case HELP_ACTION_GUIDES:
-		opt_mode_usage(argc, "--guides");
+		opt_mode_usage(argc, "--guides", help_format);
 		list_guides_help();
 		printf("%s\n", _(git_more_info_string));
 		return 0;
 	case HELP_ACTION_CONFIG_FOR_COMPLETION:
-		opt_mode_usage(argc, "--config-for-completion");
+		opt_mode_usage(argc, "--config-for-completion", help_format);
 		list_config_help(SHOW_CONFIG_VARS);
 		return 0;
 	case HELP_ACTION_CONFIG_SECTIONS_FOR_COMPLETION:
-		opt_mode_usage(argc, "--config-sections-for-completion");
+		opt_mode_usage(argc, "--config-sections-for-completion",
+			       help_format);
 		list_config_help(SHOW_CONFIG_SECTIONS);
 		return 0;
 	case HELP_ACTION_CONFIG:
-		opt_mode_usage(argc, "--config");
+		opt_mode_usage(argc, "--config", help_format);
 		setup_pager();
 		list_config_help(SHOW_CONFIG_HUMAN);
 		printf("\n%s\n", _("'git help config' for more information"));
