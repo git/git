@@ -124,7 +124,8 @@ static void print_cmd_by_category(const struct category_description *catdesc,
 		uint32_t mask = catdesc[i].category;
 		const char *desc = catdesc[i].desc;
 
-		putchar('\n');
+		if (i)
+			putchar('\n');
 		puts(_(desc));
 		print_command_list(cmds, mask, longest);
 	}
@@ -328,6 +329,7 @@ void list_commands(struct cmdnames *main_cmds, struct cmdnames *other_cmds)
 void list_common_cmds_help(void)
 {
 	puts(_("These are common Git commands used in various situations:"));
+	putchar('\n');
 	print_cmd_by_category(common_categories, NULL);
 }
 
@@ -481,6 +483,7 @@ void list_all_cmds_help(int show_external_commands, int show_aliases)
 	int longest;
 
 	puts(_("See 'git help <command>' to read about a specific subcommand"));
+	putchar('\n');
 	print_cmd_by_category(main_categories, &longest);
 
 	if (show_external_commands)

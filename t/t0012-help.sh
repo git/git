@@ -226,7 +226,6 @@ test_expect_success "'git help -a' section spacing" '
 
 test_expect_success "'git help -g' section spacing" '
 	test_section_spacing_trailer git help -g <<-\EOF &&
-
 	The Git concept guides are:
 
 	EOF
