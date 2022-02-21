@@ -476,15 +476,17 @@ static void list_all_cmds_help_aliases(int longest)
 	string_list_clear(&alias_list, 1);
 }
 
-void list_all_cmds_help(void)
+void list_all_cmds_help(int show_external_commands, int show_aliases)
 {
 	int longest;
 
 	puts(_("See 'git help <command>' to read about a specific subcommand"));
 	print_cmd_by_category(main_categories, &longest);
 
-	list_all_cmds_help_external_commands();
-	list_all_cmds_help_aliases(longest);
+	if (show_external_commands)
+		list_all_cmds_help_external_commands();
+	if (show_aliases)
+		list_all_cmds_help_aliases(longest);
 }
 
 int is_in_cmdlist(struct cmdnames *c, const char *s)

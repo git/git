@@ -57,6 +57,19 @@ do
 		test_expect_code 129 git help $opt -m &&
 		test_expect_code 129 git help $opt -w
 	'
+
+	if test "$opt" = "-a"
+	then
+		continue
+	fi
+
+	test_expect_success "invalid usage of '$opt' with --no-external-commands" '
+		test_expect_code 129 git help $opt --no-external-commands
+	'
+
+	test_expect_success "invalid usage of '$opt' with --no-aliases" '
+		test_expect_code 129 git help $opt --no-external-commands
+	'
 done
 
 test_expect_success "works for commands and guides by default" '
@@ -186,6 +199,30 @@ do
 		test_cmp expect actual
 	'
 done
+
+test_expect_success "'git help -a' section spacing" '
+	test_section_spacing \
+		git help -a --no-external-commands --no-aliases <<-\EOF &&
+	See '\''git help <command>'\'' to read about a specific subcommand
+
+	Main Porcelain Commands
+
+	Ancillary Commands / Manipulators
+
+	Ancillary Commands / Interrogators
+
+	Interacting with Others
+
+	Low-level Commands / Manipulators
+
+	Low-level Commands / Interrogators
+
+	Low-level Commands / Syncing Repositories
+
+	Low-level Commands / Internal Helpers
+	EOF
+	test_cmp expect actual
+'
 
 test_expect_success "'git help -g' section spacing" '
 	test_section_spacing_trailer git help -g <<-\EOF &&
