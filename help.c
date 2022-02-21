@@ -124,7 +124,8 @@ static void print_cmd_by_category(const struct category_description *catdesc,
 		uint32_t mask = catdesc[i].category;
 		const char *desc = catdesc[i].desc;
 
-		printf("\n%s\n", _(desc));
+		putchar('\n');
+		puts(_(desc));
 		print_command_list(cmds, mask, longest);
 	}
 	free(cmds);
@@ -317,7 +318,7 @@ void list_commands(struct cmdnames *main_cmds, struct cmdnames *other_cmds)
 	}
 
 	if (other_cmds->cnt) {
-		printf_ln(_("git commands available from elsewhere on your $PATH"));
+		puts(_("git commands available from elsewhere on your $PATH"));
 		putchar('\n');
 		pretty_print_cmdnames(other_cmds, colopts);
 		putchar('\n');
@@ -439,7 +440,7 @@ void list_all_cmds_help(void)
 	struct cmdname_help *aliases;
 	int i, longest;
 
-	printf_ln(_("See 'git help <command>' to read about a specific subcommand"));
+	puts(_("See 'git help <command>' to read about a specific subcommand"));
 	print_cmd_by_category(main_categories, &longest);
 
 	list_all_other_cmds(&others);
