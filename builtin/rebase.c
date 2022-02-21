@@ -1207,7 +1207,10 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			     builtin_rebase_usage, 0);
 
 	if (preserve_merges_selected)
-		die(_("--preserve-merges was replaced by --rebase-merges"));
+		die(_("--preserve-merges was replaced by --rebase-merges\n"
+			"Also, check your `pull` configuration settings\n"
+			"`git config --show-scope --show-origin --get-regexp 'pull.*'`\n"
+			"which may also invoke this option."));
 
 	if (action != ACTION_NONE && total_argc != 2) {
 		usage_with_options(builtin_rebase_usage,
