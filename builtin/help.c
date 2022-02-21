@@ -75,8 +75,8 @@ static struct option builtin_help_options[] = {
 };
 
 static const char * const builtin_help_usage[] = {
-	N_("git help [-a|--all] [--[no-]verbose]]\n"
-	   "         [[-i|--info] [-m|--man] [-w|--web]] [<command>]"),
+	N_("git help [-a|--all] [--[no-]verbose]]"),
+	N_("git help [[-i|--info] [-m|--man] [-w|--web]] [<command>]"),
 	N_("git help [-g|--guides]"),
 	N_("git help [-c|--config]"),
 	NULL
@@ -594,6 +594,7 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 
 	switch (cmd_mode) {
 	case HELP_ACTION_ALL:
+		opt_mode_usage(argc, "--all");
 		if (verbose) {
 			setup_pager();
 			list_all_cmds_help();

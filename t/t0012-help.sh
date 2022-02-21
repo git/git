@@ -35,6 +35,9 @@ test_expect_success 'basic help commands' '
 '
 
 test_expect_success 'invalid usage' '
+	test_expect_code 129 git help -a add &&
+	test_expect_code 129 git help --all add &&
+
 	test_expect_code 129 git help -g add &&
 	test_expect_code 129 git help -a -c &&
 
