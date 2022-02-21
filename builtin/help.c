@@ -574,11 +574,12 @@ static const char *check_git_cmd(const char* cmd)
 	return cmd;
 }
 
-static void no_extra_argc(int argc)
+static void opt_mode_usage(int argc, const char *opt_mode)
 {
 	if (argc)
-		usage_msg_opt(_("this option doesn't take any other arguments"),
-			      builtin_help_usage, builtin_help_options);
+		usage_msg_optf(_("the '%s' option doesn't take any non-option arguments"),
+			       builtin_help_usage, builtin_help_options,
+			       opt_mode);
 }
 
 int cmd_help(int argc, const char **argv, const char *prefix)
@@ -604,20 +605,20 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 		printf("%s\n", _(git_more_info_string));
 		break;
 	case HELP_ACTION_GUIDES:
-		no_extra_argc(argc);
+		opt_mode_usage(argc, "--guides");
 		list_guides_help();
 		printf("%s\n", _(git_more_info_string));
 		return 0;
 	case HELP_ACTION_CONFIG_FOR_COMPLETION:
-		no_extra_argc(argc);
+		opt_mode_usage(argc, "--config-for-completion");
 		list_config_help(SHOW_CONFIG_VARS);
 		return 0;
 	case HELP_ACTION_CONFIG_SECTIONS_FOR_COMPLETION:
-		no_extra_argc(argc);
+		opt_mode_usage(argc, "--config-sections-for-completion");
 		list_config_help(SHOW_CONFIG_SECTIONS);
 		return 0;
 	case HELP_ACTION_CONFIG:
-		no_extra_argc(argc);
+		opt_mode_usage(argc, "--config");
 		setup_pager();
 		list_config_help(SHOW_CONFIG_HUMAN);
 		printf("\n%s\n", _("'git help config' for more information"));
