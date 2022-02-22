@@ -57,6 +57,10 @@ static int disable_bits(tcflag_t bits)
 	t = old_term;
 
 	t.c_lflag &= ~bits;
+	if (bits & ICANON) {
+		t.c_cc[VMIN] = 1;
+		t.c_cc[VTIME] = 0;
+	}
 	if (!tcsetattr(term_fd, TCSAFLUSH, &t))
 		return 0;
 
@@ -159,7 +163,11 @@ static int disable_bits(DWORD bits)
 
 		if (bits & ENABLE_LINE_INPUT) {
 			string_list_append(&stty_restore, "icanon");
-			strvec_push(&cp.args, "-icanon");
+			/*
+			 * POSIX allows VMIN and VTIME to overlap with VEOF and
+			 * VEOL - let's hope that is not the case on windows.
+			 */
+			strvec_pushl(&cp.args, "-icanon", "min", "1", "time", "0", NULL);
 		}
 
 		if (bits & ENABLE_ECHO_INPUT) {
