@@ -11,7 +11,7 @@
 static void restore_term_on_signal(int sig)
 {
 	restore_term();
-	sigchain_pop(sig);
+	/* restore_term calls sigchain_pop_common */
 	raise(sig);
 }
 
@@ -31,14 +31,20 @@ void restore_term(void)
 	tcsetattr(term_fd, TCSAFLUSH, &old_term);
 	close(term_fd);
 	term_fd = -1;
+	sigchain_pop_common();
 }
 
 int save_term(int full_duplex)
 {
 	if (term_fd < 0)
 		term_fd = open("/dev/tty", O_RDWR);
+	if (term_fd < 0)
+		return -1;
+	if (tcgetattr(term_fd, &old_term) < 0)
+		return -1;
+	sigchain_push_common(restore_term_on_signal);
 
-	return (term_fd < 0) ? -1 : tcgetattr(term_fd, &old_term);
+	return 0;
 }
 
 static int disable_bits(tcflag_t bits)
@@ -49,12 +55,12 @@ static int disable_bits(tcflag_t bits)
 		goto error;
 
 	t = old_term;
-	sigchain_push_common(restore_term_on_signal);
 
 	t.c_lflag &= ~bits;
 	if (!tcsetattr(term_fd, TCSAFLUSH, &t))
 		return 0;
 
+	sigchain_pop_common();
 error:
 	close(term_fd);
 	term_fd = -1;
@@ -100,6 +106,8 @@ void restore_term(void)
 		return;
 	}
 
+	sigchain_pop_common();
+
 	if (hconin == INVALID_HANDLE_VALUE)
 		return;
 
@@ -134,6 +142,7 @@ int save_term(int full_duplex)
 
 	GetConsoleMode(hconin, &cmode_in);
 	use_stty = 0;
+	sigchain_push_common(restore_term_on_signal);
 	return 0;
 error:
 	CloseHandle(hconin);
@@ -177,10 +186,10 @@ static int disable_bits(DWORD bits)
 	if (save_term(0) < 0)
 		return -1;
 
-	sigchain_push_common(restore_term_on_signal);
 	if (!SetConsoleMode(hconin, cmode_in & ~bits)) {
 		CloseHandle(hconin);
 		hconin = INVALID_HANDLE_VALUE;
+		sigchain_pop_common();
 		return -1;
 	}
 
