@@ -487,7 +487,7 @@ test_expect_failure 'stash directory to file' '
 	rm -fr dir &&
 	echo bar >dir &&
 	git stash save "directory to file" &&
-	test -d dir &&
+	test_path_is_dir dir &&
 	test foo = "$(cat dir/file)" &&
 	test_must_fail git stash apply &&
 	test bar = "$(cat dir)" &&
@@ -500,10 +500,10 @@ test_expect_failure 'stash file to directory' '
 	mkdir file &&
 	echo foo >file/file &&
 	git stash save "file to directory" &&
-	test -f file &&
+	test_path_is_file file &&
 	test bar = "$(cat file)" &&
 	git stash apply &&
-	test -f file/file &&
+	test_path_is_file file/file &&
 	test foo = "$(cat file/file)"
 '
 
