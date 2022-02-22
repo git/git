@@ -1183,7 +1183,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		strbuf_reset(&buf);
 		strbuf_addf(&buf, "%s/rewritten", merge_dir());
 		if (is_directory(buf.buf)) {
-			die("`rebase -p` is no longer supported");
+			die("`rebase --preserve-merges` (-p) is no longer supported.\n"
+			"You still have a `.git/rebase-merge/rewritten` directory, \n"
+			"indicating a `rebase preserve-merge` is still in progress.\n");
 		} else {
 			strbuf_reset(&buf);
 			strbuf_addf(&buf, "%s/interactive", merge_dir());
@@ -1205,7 +1207,10 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			     builtin_rebase_usage, 0);
 
 	if (preserve_merges_selected)
-		die(_("--preserve-merges was replaced by --rebase-merges"));
+		die(_("--preserve-merges was replaced by --rebase-merges\n"
+			"Also, check your `pull` configuration settings\n"
+			"`git config --show-scope --show-origin --get-regexp 'pull.*'`\n"
+			"which may also invoke this option."));
 
 	if (action != ACTION_NONE && total_argc != 2) {
 		usage_with_options(builtin_rebase_usage,
