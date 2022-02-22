@@ -385,7 +385,7 @@ int read_key_without_echo(struct strbuf *buf)
 
 			ch = getchar();
 			if (ch == EOF)
-				return 0;
+				break;
 			strbuf_addch(buf, ch);
 		}
 	}
