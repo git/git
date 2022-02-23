@@ -160,25 +160,25 @@ OPTIONS
 
 -f::
 --force::
-	By default, `add` refuses to create a new working tree when
+	By default, `add` refuses to create a new worktree when
 	`<commit-ish>` is a branch name and is already checked out by
-	another working tree, or if `<path>` is already assigned to some
-	working tree but is missing (for instance, if `<path>` was deleted
+	another worktree, or if `<path>` is already assigned to some
+	worktree but is missing (for instance, if `<path>` was deleted
 	manually). This option overrides these safeguards. To add a missing but
-	locked working tree path, specify `--force` twice.
+	locked worktree path, specify `--force` twice.
 +
-`move` refuses to move a locked working tree unless `--force` is specified
-twice. If the destination is already assigned to some other working tree but is
+`move` refuses to move a locked worktree unless `--force` is specified
+twice. If the destination is already assigned to some other worktree but is
 missing (for instance, if `<new-path>` was deleted manually), then `--force`
 allows the move to proceed; use `--force` twice if the destination is locked.
 +
-`remove` refuses to remove an unclean working tree unless `--force` is used.
-To remove a locked working tree, specify `--force` twice.
+`remove` refuses to remove an unclean worktree unless `--force` is used.
+To remove a locked worktree, specify `--force` twice.
 
 -b <new-branch>::
 -B <new-branch>::
 	With `add`, create a new branch named `<new-branch>` starting at
-	`<commit-ish>`, and check out `<new-branch>` into the new working tree.
+	`<commit-ish>`, and check out `<new-branch>` into the new worktree.
 	If `<commit-ish>` is omitted, it defaults to `HEAD`.
 	By default, `-b` refuses to create a new branch if it already
 	exists. `-B` overrides this safeguard, resetting `<new-branch>` to
@@ -186,7 +186,7 @@ To remove a locked working tree, specify `--force` twice.
 
 -d::
 --detach::
-	With `add`, detach `HEAD` in the new working tree. See "DETACHED HEAD"
+	With `add`, detach `HEAD` in the new worktree. See "DETACHED HEAD"
 	in linkgit:git-checkout[1].
 
 --[no-]checkout::
@@ -212,7 +212,7 @@ This can also be set up as the default behaviour by using the
 	`--track` in linkgit:git-branch[1] for details.
 
 --lock::
-	Keep the working tree locked after creation. This is the
+	Keep the worktree locked after creation. This is the
 	equivalent of `git worktree lock` after `git worktree add`,
 	but without a race condition.
 
@@ -237,22 +237,22 @@ This can also be set up as the default behaviour by using the
 With `list`, output additional information about worktrees (see below).
 
 --expire <time>::
-	With `prune`, only expire unused working trees older than `<time>`.
+	With `prune`, only expire unused worktrees older than `<time>`.
 +
-With `list`, annotate missing working trees as prunable if they are
-older than `<time>`.
+With `list`, annotate missing worktrees as prunable if they are older than
+`<time>`.
 
 --reason <string>::
-	With `lock` or with `add --lock`, an explanation why the working tree is locked.
+	With `lock` or with `add --lock`, an explanation why the worktree
+	is locked.
 
 <worktree>::
-	Working trees can be identified by path, either relative or
-	absolute.
+	Worktrees can be identified by path, either relative or absolute.
 +
-If the last path components in the working tree's path is unique among
-working trees, it can be used to identify a working tree. For example if
-you only have two working trees, at `/abc/def/ghi` and `/abc/def/ggg`,
-then `ghi` or `def/ghi` is enough to point to the former working tree.
+If the last path components in the worktree's path is unique among
+worktrees, it can be used to identify a worktree. For example if you only
+have two worktrees, at `/abc/def/ghi` and `/abc/def/ggg`, then `ghi` or
+`def/ghi` is enough to point to the former worktree.
 
 REFS
 ----
