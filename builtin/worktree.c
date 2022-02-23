@@ -384,11 +384,13 @@ static int add_worktree(const char *path, const char *refname,
 			    bare &&
 			    git_config_set_multivar_in_file_gently(
 					to_file, "core.bare", NULL, "true", 0))
-				error(_("failed to unset 'core.bare' in '%s'"), to_file);
+				error(_("failed to unset '%s' in '%s'"),
+				      "core.bare", to_file);
 			if (!git_configset_get_value(&cs, "core.worktree", &core_worktree) &&
 			    git_config_set_in_file_gently(to_file,
 							  "core.worktree", NULL))
-				error(_("failed to unset 'core.worktree' in '%s'"), to_file);
+				error(_("failed to unset '%s' in '%s'"),
+				      "core.worktree", to_file);
 
 			git_configset_clear(&cs);
 		}
