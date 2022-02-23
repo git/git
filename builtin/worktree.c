@@ -236,6 +236,22 @@ static void check_candidate_path(const char *path,
 		die(_("'%s' is a missing but already registered worktree;\nuse '%s -f' to override, or 'prune' or 'remove' to clear"), path, cmd);
 }
 
+static void copy_sparse_checkout(const char *worktree_git_dir)
+{
+	char *from_file = git_pathdup("info/sparse-checkout");
+	char *to_file = xstrfmt("%s/info/sparse-checkout", worktree_git_dir);
+
+	if (file_exists(from_file)) {
+		if (safe_create_leading_directories(to_file) ||
+			copy_file(to_file, from_file, 0666))
+			error(_("failed to copy '%s' to '%s'; sparse-checkout may not work correctly"),
+				from_file, to_file);
+	}
+
+	free(from_file);
+	free(to_file);
+}
+
 static void copy_filtered_worktree_config(const char *worktree_git_dir)
 {
 	char *from_file = git_pathdup("config.worktree");
@@ -379,21 +395,8 @@ static int add_worktree(const char *path, const char *refname,
 	 * If the current worktree has sparse-checkout enabled, then copy
 	 * the sparse-checkout patterns from the current worktree.
 	 */
-	if (core_apply_sparse_checkout) {
-		char *from_file = git_pathdup("info/sparse-checkout");
-		char *to_file = xstrfmt("%s/info/sparse-checkout",
-					sb_repo.buf);
-
-		if (file_exists(from_file)) {
-			if (safe_create_leading_directories(to_file) ||
-			    copy_file(to_file, from_file, 0666))
-				error(_("failed to copy '%s' to '%s'; sparse-checkout may not work correctly"),
-				      from_file, to_file);
-		}
-
-		free(from_file);
-		free(to_file);
-	}
+	if (core_apply_sparse_checkout)
+		copy_sparse_checkout(sb_repo.buf);
 
 	/*
 	 * If we are using worktree config, then copy all current config
