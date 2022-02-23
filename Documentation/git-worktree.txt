@@ -256,24 +256,23 @@ have two worktrees, at `/abc/def/ghi` and `/abc/def/ggg`, then `ghi` or
 
 REFS
 ----
-In multiple working trees, some refs may be shared between all working
-trees and some refs are local. One example is `HEAD` which is different for each
-working tree. This section is about the sharing rules and how to access
-refs of one working tree from another.
+When using multiple worktrees, some refs are shared between all worktrees,
+but others are specific to an individual worktree. One example is `HEAD`,
+which is different for each worktree. This section is about the sharing
+rules and how to access refs of one worktree from another.
 
-In general, all pseudo refs are per working tree and all refs starting
-with `refs/` are shared. Pseudo refs are ones like `HEAD` which are
-directly under `$GIT_DIR` instead of inside `$GIT_DIR/refs`. There are
-exceptions, however: refs inside `refs/bisect` and `refs/worktree` are not
-shared.
+In general, all pseudo refs are per-worktree and all refs starting with
+`refs/` are shared. Pseudo refs are ones like `HEAD` which are directly
+under `$GIT_DIR` instead of inside `$GIT_DIR/refs`. There are exceptions,
+however: refs inside `refs/bisect` and `refs/worktree` are not shared.
 
-Refs that are per working tree can still be accessed from another
-working tree via two special paths, `main-worktree` and `worktrees`. The
-former gives access to per-working tree refs of the main working tree,
-while the latter to all linked working trees.
+Refs that are per-worktree can still be accessed from another worktree via
+two special paths, `main-worktree` and `worktrees`. The former gives
+access to per-worktree refs of the main worktree, while the latter to all
+linked worktrees.
 
 For example, `main-worktree/HEAD` or `main-worktree/refs/bisect/good`
-resolve to the same value as the main working tree's `HEAD` and
+resolve to the same value as the main worktree's `HEAD` and
 `refs/bisect/good` respectively. Similarly, `worktrees/foo/HEAD` or
 `worktrees/bar/refs/bisect/bad` are the same as
 `$GIT_COMMON_DIR/worktrees/foo/HEAD` and
