@@ -383,11 +383,11 @@ $ git worktree list
 /path/to/other-linked-worktree  1234abc  (detached HEAD)
 ------------
 
-The command also shows annotations for each working tree, according to its state.
+The command also shows annotations for each worktree, according to its state.
 These annotations are:
 
- * `locked`, if the working tree is locked.
- * `prunable`, if the working tree can be pruned via `git worktree prune`.
+ * `locked`, if the worktree is locked.
+ * `prunable`, if the worktree can be pruned via `git worktree prune`.
 
 ------------
 $ git worktree list
@@ -405,14 +405,14 @@ $ git worktree list --verbose
 /path/to/linked-worktree              abcd1234 [master]
 /path/to/locked-worktree-no-reason    abcd5678 (detached HEAD) locked
 /path/to/locked-worktree-with-reason  1234abcd (brancha)
-	locked: working tree path is mounted on a portable device
+	locked: worktree path is mounted on a portable device
 /path/to/prunable-worktree            5678abc1 (detached HEAD)
 	prunable: gitdir file points to non-existent location
 ------------
 
 Note that the annotation is moved to the next line if the additional
 information is available, otherwise it stays on the same line as the
-working tree itself.
+worktree itself.
 
 Porcelain Format
 ~~~~~~~~~~~~~~~~
@@ -421,7 +421,7 @@ label and value separated by a single space.  Boolean attributes (like `bare`
 and `detached`) are listed as a label only, and are present only
 if the value is true.  Some attributes (like `locked`) can be listed as a label
 only or with a value depending upon whether a reason is available.  The first
-attribute of a working tree is always `worktree`, an empty line indicates the
+attribute of a worktree is always `worktree`, an empty line indicates the
 end of the record.  For example:
 
 ------------
@@ -473,7 +473,7 @@ demands that you fix something immediately. You might typically use
 linkgit:git-stash[1] to store your changes away temporarily, however, your
 working tree is in such a state of disarray (with new, moved, and removed
 files, and other bits and pieces strewn around) that you don't want to risk
-disturbing any of it. Instead, you create a temporary linked working tree to
+disturbing any of it. Instead, you create a temporary linked worktree to
 make the emergency fix, remove it when done, and then resume your earlier
 refactoring session.
 
