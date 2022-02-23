@@ -292,6 +292,18 @@ worktree_copy_cleanup:
 	free(to_file);
 }
 
+static int checkout_worktree(const struct add_opts *opts,
+			     struct strvec *child_env)
+{
+	struct child_process cp = CHILD_PROCESS_INIT;
+	cp.git_cmd = 1;
+	strvec_pushl(&cp.args, "reset", "--hard", "--no-recurse-submodules", NULL);
+	if (opts->quiet)
+		strvec_push(&cp.args, "--quiet");
+	strvec_pushv(&cp.env_array, child_env->v);
+	return run_command(&cp);
+}
+
 static int add_worktree(const char *path, const char *refname,
 			const struct add_opts *opts)
 {
@@ -425,17 +437,9 @@ static int add_worktree(const char *path, const char *refname,
 	if (ret)
 		goto done;
 
-	if (opts->checkout) {
-		struct child_process cp = CHILD_PROCESS_INIT;
-		cp.git_cmd = 1;
-		strvec_pushl(&cp.args, "reset", "--hard", "--no-recurse-submodules", NULL);
-		if (opts->quiet)
-			strvec_push(&cp.args, "--quiet");
-		strvec_pushv(&cp.env_array, child_env.v);
-		ret = run_command(&cp);
-		if (ret)
-			goto done;
-	}
+	if (opts->checkout &&
+	    (ret = checkout_worktree(opts, &child_env)))
+		goto done;
 
 	is_junk = 0;
 	FREE_AND_NULL(junk_work_tree);
