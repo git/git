@@ -161,11 +161,12 @@ unspecified.
 
 This attribute sets a specific line-ending style to be used in the
 working directory.  This attribute has effect only if the `text`
-attribute is set or unspecified, or if it is set to `auto` and the file
-is detected as text.  Note that setting this attribute on paths which
-are in the index with CRLF line endings may make the paths to be
-considered dirty. Adding the path to the index again will normalize the
-line endings in the index.
+attribute is set or unspecified, or if it is set to `auto`, the file is
+detected as text, and it is stored with LF endings in the index.  Note
+that setting this attribute on paths which are in the index with CRLF
+line endings may make the paths to be considered dirty unless
+`text=auto` is set. Adding the path to the index again will normalize
+the line endings in the index.
 
 Set to string value "crlf"::
 
