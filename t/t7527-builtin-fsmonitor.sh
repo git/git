@@ -721,4 +721,97 @@ do
 	'
 done
 
+# Test fsmonitor interaction with submodules.
+#
+# If we start the daemon in the super, it will see FS events for
+# everything in the working directory cone and this includes any
+# files/directories contained *within* the submodules.
+#
+# A `git status` at top level will get events for items within the
+# submodule and ignore them, since they aren't named in the index
+# of the super repo.  This makes the fsmonitor response a little
+# noisy, but it doesn't alter the correctness of the state of the
+# super-proper.
+#
+# When we have submodules, `git status` normally does a recursive
+# status on each of the submodules and adds a summary row for any
+# dirty submodules.  (See the "S..." bits in porcelain V2 output.)
+#
+# It is therefore important that the top level status not be tricked
+# by the FSMonitor response to skip those recursive calls.
+
+my_match_and_clean () {
+	git -C super --no-optional-locks status --porcelain=v2 >actual.with &&
+	git -C super --no-optional-locks -c core.fsmonitor=false \
+		status --porcelain=v2 >actual.without &&
+	test_cmp actual.with actual.without &&
+
+	git -C super/dir_1/dir_2/sub reset --hard &&
+	git -C super/dir_1/dir_2/sub clean -d -f
+}
+
+test_expect_success "Submodule" '
+	test_when_finished "git -C super fsmonitor--daemon stop" &&
+
+	git init "super" &&
+	echo x >super/file_1 &&
+	echo y >super/file_2 &&
+	echo z >super/file_3 &&
+	mkdir super/dir_1 &&
+	echo a >super/dir_1/file_11 &&
+	echo b >super/dir_1/file_12 &&
+	mkdir super/dir_1/dir_2 &&
+	echo a >super/dir_1/dir_2/file_21 &&
+	echo b >super/dir_1/dir_2/file_22 &&
+	git -C super add . &&
+	git -C super commit -m "initial super commit" &&
+
+	git init "sub" &&
+	echo x >sub/file_x &&
+	echo y >sub/file_y &&
+	echo z >sub/file_z &&
+	mkdir sub/dir_x &&
+	echo a >sub/dir_x/file_a &&
+	echo b >sub/dir_x/file_b &&
+	mkdir sub/dir_x/dir_y &&
+	echo a >sub/dir_x/dir_y/file_a &&
+	echo b >sub/dir_x/dir_y/file_b &&
+	git -C sub add . &&
+	git -C sub commit -m "initial sub commit" &&
+
+	git -C super submodule add ../sub ./dir_1/dir_2/sub &&
+	git -C super commit -m "add sub" &&
+
+	start_daemon -C super &&
+	git -C super config core.fsmonitor true &&
+	git -C super update-index --fsmonitor &&
+	git -C super status &&
+
+	# Now run pairs of commands w/ and w/o FSMonitor while we make
+	# some dirt in the submodule and confirm matching output.
+
+	# Completely clean status.
+	my_match_and_clean &&
+
+	# .M S..U
+	echo z >super/dir_1/dir_2/sub/dir_x/dir_y/foobar_u &&
+	my_match_and_clean &&
+
+	# .M S.M.
+	echo z >super/dir_1/dir_2/sub/dir_x/dir_y/foobar_m &&
+	git -C super/dir_1/dir_2/sub add . &&
+	my_match_and_clean &&
+
+	# .M S.M.
+	echo z >>super/dir_1/dir_2/sub/dir_x/dir_y/file_a &&
+	git -C super/dir_1/dir_2/sub add . &&
+	my_match_and_clean &&
+
+	# .M SC..
+	echo z >>super/dir_1/dir_2/sub/dir_x/dir_y/file_a &&
+	git -C super/dir_1/dir_2/sub add . &&
+	git -C super/dir_1/dir_2/sub commit -m "SC.." &&
+	my_match_and_clean
+'
+
 test_done
