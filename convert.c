@@ -1574,12 +1574,12 @@ static void null_free_fn(struct stream_filter *filter)
 }
 
 static struct stream_filter_vtbl null_vtbl = {
-	null_filter_fn,
-	null_free_fn,
+	.filter = null_filter_fn,
+	.free = null_free_fn,
 };
 
 static struct stream_filter null_filter_singleton = {
-	&null_vtbl,
+	.vtbl = &null_vtbl,
 };
 
 int is_null_stream_filter(struct stream_filter *filter)
@@ -1683,8 +1683,8 @@ static void lf_to_crlf_free_fn(struct stream_filter *filter)
 }
 
 static struct stream_filter_vtbl lf_to_crlf_vtbl = {
-	lf_to_crlf_filter_fn,
-	lf_to_crlf_free_fn,
+	.filter = lf_to_crlf_filter_fn,
+	.free = lf_to_crlf_free_fn,
 };
 
 static struct stream_filter *lf_to_crlf_filter(void)
@@ -1779,8 +1779,8 @@ static void cascade_free_fn(struct stream_filter *filter)
 }
 
 static struct stream_filter_vtbl cascade_vtbl = {
-	cascade_filter_fn,
-	cascade_free_fn,
+	.filter = cascade_filter_fn,
+	.free = cascade_free_fn,
 };
 
 static struct stream_filter *cascade_filter(struct stream_filter *one,
@@ -1931,8 +1931,8 @@ static void ident_free_fn(struct stream_filter *filter)
 }
 
 static struct stream_filter_vtbl ident_vtbl = {
-	ident_filter_fn,
-	ident_free_fn,
+	.filter = ident_filter_fn,
+	.free = ident_free_fn,
 };
 
 static struct stream_filter *ident_filter(const struct object_id *oid)
