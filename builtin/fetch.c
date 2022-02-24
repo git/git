@@ -1094,11 +1094,14 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 	struct ref *rm;
 	char *url;
 	int want_status;
-	int summary_width = transport_summary_width(ref_map);
+	int summary_width = 0;
 
 	rc = open_fetch_head(&fetch_head);
 	if (rc)
 		return -1;
+
+	if (verbosity >= 0)
+		summary_width = transport_summary_width(ref_map);
 
 	if (raw_url)
 		url = transport_anonymize_url(raw_url);
@@ -1345,7 +1348,6 @@ static int prune_refs(struct refspec *rs, struct ref *ref_map,
 	int url_len, i, result = 0;
 	struct ref *ref, *stale_refs = get_stale_heads(rs, ref_map);
 	char *url;
-	int summary_width = transport_summary_width(stale_refs);
 	const char *dangling_msg = dry_run
 		? _("   (%s will become dangling)")
 		: _("   (%s has become dangling)");
@@ -1374,6 +1376,8 @@ static int prune_refs(struct refspec *rs, struct ref *ref_map,
 	}
 
 	if (verbosity >= 0) {
+		int summary_width = transport_summary_width(stale_refs);
+
 		for (ref = stale_refs; ref; ref = ref->next) {
 			struct strbuf sb = STRBUF_INIT;
 			if (!shown_url) {
