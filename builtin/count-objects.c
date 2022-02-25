@@ -87,7 +87,7 @@ static int print_alternate(struct object_directory *odb, void *data)
 }
 
 static char const * const count_objects_usage[] = {
-	N_("git count-objects [-v] [-H | --human-readable]"),
+	"git count-objects [-v] [-H | --human-readable]",
 	NULL
 };
 

@@ -2802,7 +2802,7 @@ static int populate_opts_cb(const char *key, const char *value, void *data)
 		return error(_("invalid key: %s"), key);
 
 	if (!error_flag)
-		return error(_("invalid value for %s: %s"), key, value);
+		return error(_("invalid value for '%s': '%s'"), key, value);
 
 	return 0;
 }

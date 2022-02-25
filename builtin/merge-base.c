@@ -159,12 +159,14 @@ int cmd_merge_base(int argc, const char **argv, const char *prefix)
 		if (argc < 2)
 			usage_with_options(merge_base_usage, options);
 		if (show_all)
-			die("--is-ancestor cannot be used with --all");
+			die(_("options '%s' and '%s' cannot be used together"),
+			    "--is-ancestor", "--all");
 		return handle_is_ancestor(argc, argv);
 	}
 
 	if (cmdmode == 'r' && show_all)
-		die("--independent cannot be used with --all");
+		die(_("options '%s' and '%s' cannot be used together"),
+		    "--independent", "--all");
 
 	if (cmdmode == 'o')
 		return handle_octopus(argc, argv, show_all);

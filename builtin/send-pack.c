@@ -145,7 +145,7 @@ static int send_pack_config(const char *k, const char *v, void *cb)
 				if (value && !strcasecmp(value, "if-asked"))
 					args.push_cert = SEND_PACK_PUSH_CERT_IF_ASKED;
 				else
-					return error("Invalid value for '%s'", k);
+					return error(_("invalid value for '%s'"), k);
 			}
 		}
 	}
