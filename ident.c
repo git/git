@@ -7,6 +7,7 @@
  */
 #include "cache.h"
 #include "config.h"
+#include "date.h"
 
 static struct strbuf git_default_name = STRBUF_INIT;
 static struct strbuf git_default_email = STRBUF_INIT;
