@@ -5,6 +5,7 @@
 #include "worktree.h"
 #include "dir.h"
 #include "wt-status.h"
+#include "config.h"
 
 void free_worktrees(struct worktree **worktrees)
 {
@@ -820,4 +821,76 @@ int should_prune_worktree(const char *id, struct strbuf *reason, char **wtpath, 
 	}
 	*wtpath = path;
 	return 0;
+}
+
+static int move_config_setting(const char *key, const char *value,
+			       const char *from_file, const char *to_file)
+{
+	if (git_config_set_in_file_gently(to_file, key, value))
+		return error(_("unable to set %s in '%s'"), key, to_file);
+	if (git_config_set_in_file_gently(from_file, key, NULL))
+		return error(_("unable to unset %s in '%s'"), key, from_file);
+	return 0;
+}
+
+int init_worktree_config(struct repository *r)
+{
+	int res = 0;
+	int bare = 0;
+	struct config_set cs = { { 0 } };
+	const char *core_worktree;
+	char *common_config_file;
+	char *main_worktree_file;
+
+	/*
+	 * If the extension is already enabled, then we can skip the
+	 * upgrade process.
+	 */
+	if (repository_format_worktree_config)
+		return 0;
+	if ((res = git_config_set_gently("extensions.worktreeConfig", "true")))
+		return error(_("failed to set extensions.worktreeConfig setting"));
+
+	common_config_file = xstrfmt("%s/config", r->commondir);
+	main_worktree_file = xstrfmt("%s/config.worktree", r->commondir);
+
+	git_configset_init(&cs);
+	git_configset_add_file(&cs, common_config_file);
+
+	/*
+	 * If core.bare is true in the common config file, then we need to
+	 * move it to the main worktree's config file or it will break all
+	 * worktrees. If it is false, then leave it in place because it
+	 * _could_ be negating a global core.bare=true.
+	 */
+	if (!git_configset_get_bool(&cs, "core.bare", &bare) && bare) {
+		if ((res = move_config_setting("core.bare", "true",
+					       common_config_file,
+					       main_worktree_file)))
+			goto cleanup;
+	}
+	/*
+	 * If core.worktree is set, then the main worktree is located
+	 * somewhere different than the parent of the common Git dir.
+	 * Relocate that value to avoid breaking all worktrees with this
+	 * upgrade to worktree config.
+	 */
+	if (!git_configset_get_value(&cs, "core.worktree", &core_worktree)) {
+		if ((res = move_config_setting("core.worktree", core_worktree,
+					       common_config_file,
+					       main_worktree_file)))
+			goto cleanup;
+	}
+
+	/*
+	 * Ensure that we use worktree config for the remaining lifetime
+	 * of the current process.
+	 */
+	repository_format_worktree_config = 1;
+
+cleanup:
+	git_configset_clear(&cs);
+	free(common_config_file);
+	free(main_worktree_file);
+	return res;
 }
