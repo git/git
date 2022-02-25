@@ -98,6 +98,37 @@ test_expect_success 'grep should not segfault with a bad input' '
 
 test_invalid_grep_expression --and -e A
 
+test_pattern_type () {
+	H=$1 &&
+	HC=$2 &&
+	L=$3 &&
+	type=$4 &&
+	shift 4 &&
+
+	expected_str= &&
+	case "$type" in
+	BRE)
+		expected_str="${HC}ab:a+bc"
+		;;
+	ERE)
+		expected_str="${HC}ab:abc"
+		;;
+	FIX)
+		expected_str="${HC}ab:a+b*c"
+		;;
+	*)
+		BUG "unknown pattern type '$type'"
+		;;
+	esac &&
+	config_str="$@" &&
+
+	test_expect_success "grep $L with '$config_str' interpreted as $type" '
+		echo $expected_str >expected &&
+		git $config_str grep "a+b*c" $H ab >actual &&
+		test_cmp expected actual
+	'
+}
+
 for H in HEAD ''
 do
 	case "$H" in
@@ -393,35 +424,13 @@ do
 		git grep --no-recursive -n -e vvv $H -- t . >actual &&
 		test_cmp expected actual
 	'
-	test_expect_success "grep $L with grep.extendedRegexp=false" '
-		echo "${HC}ab:a+bc" >expected &&
-		git -c grep.extendedRegexp=false grep "a+b*c" $H ab >actual &&
-		test_cmp expected actual
-	'
 
-	test_expect_success "grep $L with grep.extendedRegexp=true" '
-		echo "${HC}ab:abc" >expected &&
-		git -c grep.extendedRegexp=true grep "a+b*c" $H ab >actual &&
-		test_cmp expected actual
-	'
 
-	test_expect_success "grep $L with grep.patterntype=basic" '
-		echo "${HC}ab:a+bc" >expected &&
-		git -c grep.patterntype=basic grep "a+b*c" $H ab >actual &&
-		test_cmp expected actual
-	'
-
-	test_expect_success "grep $L with grep.patterntype=extended" '
-		echo "${HC}ab:abc" >expected &&
-		git -c grep.patterntype=extended grep "a+b*c" $H ab >actual &&
-		test_cmp expected actual
-	'
-
-	test_expect_success "grep $L with grep.patterntype=fixed" '
-		echo "${HC}ab:a+b*c" >expected &&
-		git -c grep.patterntype=fixed grep "a+b*c" $H ab >actual &&
-		test_cmp expected actual
-	'
+	test_pattern_type "$H" "$HC" "$L" BRE -c grep.extendedRegexp=false
+	test_pattern_type "$H" "$HC" "$L" ERE -c grep.extendedRegexp=true
+	test_pattern_type "$H" "$HC" "$L" BRE -c grep.patternType=basic
+	test_pattern_type "$H" "$HC" "$L" ERE -c grep.patternType=extended
+	test_pattern_type "$H" "$HC" "$L" FIX -c grep.patternType=fixed
 
 	test_expect_success PCRE "grep $L with grep.patterntype=perl" '
 		echo "${HC}ab:a+b*c" >expected &&
@@ -433,59 +442,76 @@ do
 		test_must_fail git -c grep.patterntype=perl grep "foo.*bar"
 	'
 
-	test_expect_success "grep $L with grep.patternType=default and grep.extendedRegexp=true" '
-		echo "${HC}ab:abc" >expected &&
-		git \
-			-c grep.patternType=default \
-			-c grep.extendedRegexp=true \
-			grep "a+b*c" $H ab >actual &&
-		test_cmp expected actual
-	'
+	test_pattern_type "$H" "$HC" "$L" ERE \
+		-c grep.patternType=default \
+		-c grep.extendedRegexp=true
+	test_pattern_type "$H" "$HC" "$L" ERE \
+		-c grep.extendedRegexp=true \
+		-c grep.patternType=default
+	test_pattern_type "$H" "$HC" "$L" ERE \
+		-c grep.patternType=extended \
+		-c grep.extendedRegexp=false
+	test_pattern_type "$H" "$HC" "$L" BRE \
+		-c grep.patternType=basic \
+		-c grep.extendedRegexp=true
+	test_pattern_type "$H" "$HC" "$L" ERE \
+		-c grep.extendedRegexp=false \
+		-c grep.patternType=extended
+	test_pattern_type "$H" "$HC" "$L" BRE \
+		-c grep.extendedRegexp=true \
+		-c grep.patternType=basic
 
-	test_expect_success "grep $L with grep.extendedRegexp=true and grep.patternType=default" '
-		echo "${HC}ab:abc" >expected &&
-		git \
-			-c grep.extendedRegexp=true \
-			-c grep.patternType=default \
-			grep "a+b*c" $H ab >actual &&
-		test_cmp expected actual
-	'
+	# grep.extendedRegexp is last-one-wins
+	test_pattern_type "$H" "$HC" "$L" BRE \
+		-c grep.extendedRegexp=true \
+		-c grep.extendedRegexp=false
 
-	test_expect_success "grep $L with grep.patternType=extended and grep.extendedRegexp=false" '
-		echo "${HC}ab:abc" >expected &&
-		git \
-			-c grep.patternType=extended \
-			-c grep.extendedRegexp=false \
-			grep "a+b*c" $H ab >actual &&
-		test_cmp expected actual
-	'
+	# grep.patternType=basic pays no attention to grep.extendedRegexp
+	test_pattern_type "$H" "$HC" "$L" BRE \
+		-c grep.extendedRegexp=true \
+		-c grep.patternType=basic \
+		-c grep.extendedRegexp=false
 
-	test_expect_success "grep $L with grep.patternType=basic and grep.extendedRegexp=true" '
-		echo "${HC}ab:a+bc" >expected &&
-		git \
-			-c grep.patternType=basic \
-			-c grep.extendedRegexp=true \
-			grep "a+b*c" $H ab >actual &&
-		test_cmp expected actual
-	'
+	# grep.patternType=extended pays no attention to grep.extendedRegexp
+	test_pattern_type "$H" "$HC" "$L" ERE \
+		-c grep.extendedRegexp=true \
+		-c grep.patternType=extended \
+		-c grep.extendedRegexp=false
 
-	test_expect_success "grep $L with grep.extendedRegexp=false and grep.patternType=extended" '
-		echo "${HC}ab:abc" >expected &&
-		git \
-			-c grep.extendedRegexp=false \
-			-c grep.patternType=extended \
-			grep "a+b*c" $H ab >actual &&
-		test_cmp expected actual
-	'
+	# grep.extendedRegexp is used with a last-one-wins grep.patternType=default
+	test_pattern_type "$H" "$HC" "$L" ERE \
+		-c grep.patternType=fixed \
+		-c grep.extendedRegexp=true \
+		-c grep.patternType=default
 
-	test_expect_success "grep $L with grep.extendedRegexp=true and grep.patternType=basic" '
-		echo "${HC}ab:a+bc" >expected &&
-		git \
-			-c grep.extendedRegexp=true \
-			-c grep.patternType=basic \
-			grep "a+b*c" $H ab >actual &&
-		test_cmp expected actual
-	'
+	# grep.extendedRegexp is used with earlier grep.patternType=default
+	test_pattern_type "$H" "$HC" "$L" ERE \
+		-c grep.extendedRegexp=false \
+		-c grep.patternType=default \
+		-c grep.extendedRegexp=true
+
+	# grep.extendedRegexp is used with a last-one-loses grep.patternType=default
+	test_pattern_type "$H" "$HC" "$L" ERE \
+		-c grep.extendedRegexp=false \
+		-c grep.extendedRegexp=true \
+		-c grep.patternType=default
+
+	# grep.extendedRegexp and grep.patternType are both last-one-wins independently
+	test_pattern_type "$H" "$HC" "$L" BRE \
+		-c grep.patternType=default \
+		-c grep.extendedRegexp=true \
+		-c grep.patternType=basic
+
+	# grep.patternType=extended and grep.patternType=default
+	test_pattern_type "$H" "$HC" "$L" BRE \
+		-c grep.patternType=extended \
+		-c grep.patternType=default
+
+	# grep.patternType=[extended -> default -> fixed] (BRE)" '
+	test_pattern_type "$H" "$HC" "$L" FIX \
+		-c grep.patternType=extended \
+		-c grep.patternType=default \
+		-c grep.patternType=fixed
 
 	test_expect_success "grep --count $L" '
 		echo ${HC}ab:3 >expected &&
