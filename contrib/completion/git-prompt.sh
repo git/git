@@ -109,7 +109,7 @@
 __git_printf_supports_v=
 printf -v __git_printf_supports_v -- '%s' yes >/dev/null 2>&1
 
-# stores the divergence from upstream in $p (for short status) or $upstream (for verbose status)
+# stores the divergence from upstream in $p
 # used by GIT_PS1_SHOWUPSTREAM
 __git_ps1_show_upstream ()
 {
@@ -219,13 +219,13 @@ __git_ps1_show_upstream ()
 		"") # no upstream
 			upstream="" ;;
 		"0	0") # equal to upstream
-			upstream=" u=" ;;
+			upstream="|u=" ;;
 		"0	"*) # ahead of upstream
-			upstream=" u+${count#0	}" ;;
+			upstream="|u+${count#0	}" ;;
 		*"	0") # behind upstream
-			upstream=" u-${count%	0}" ;;
+			upstream="|u-${count%	0}" ;;
 		*)	    # diverged from upstream
-			upstream=" u+${count#*	}-${count%	*}" ;;
+			upstream="|u+${count#*	}-${count%	*}" ;;
 		esac
 		if [[ -n "$count" && -n "$name" ]]; then
 			__git_ps1_upstream_name=$(git rev-parse \
