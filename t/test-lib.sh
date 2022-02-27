@@ -36,17 +36,33 @@ then
 fi
 GIT_BUILD_DIR="$TEST_DIRECTORY"/..
 
+# Prepend a string to a VAR using an arbitrary ":" delimiter, not
+# adding the delimiter if VAR or VALUE is empty. I.e. a generalized:
+#
+#	VAR=$1${VAR:+${1:+$2}$VAR}
+#
+# Usage (using ":" as the $2 delimiter):
+#
+#	prepend_var VAR : VALUE
+prepend_var () {
+	eval "$1=$3\${$1:+${3:+$2}\$$1}"
+}
+
+# If [AL]SAN is in effect we want to abort so that we notice
+# problems. The GIT_SAN_OPTIONS variable can be used to set common
+# defaults shared between [AL]SAN_OPTIONS.
+prepend_var GIT_SAN_OPTIONS : abort_on_error=1
+
 # If we were built with ASAN, it may complain about leaks
 # of program-lifetime variables. Disable it by default to lower
 # the noise level. This needs to happen at the start of the script,
 # before we even do our "did we build git yet" check (since we don't
 # want that one to complain to stderr).
-: ${ASAN_OPTIONS=detect_leaks=0:abort_on_error=1}
+prepend_var ASAN_OPTIONS : $GIT_SAN_OPTIONS
+prepend_var ASAN_OPTIONS : detect_leaks=0
 export ASAN_OPTIONS
 
-# If LSAN is in effect we _do_ want leak checking, but we still
-# want to abort so that we notice the problems.
-: ${LSAN_OPTIONS=abort_on_error=1}
+prepend_var LSAN_OPTIONS : $GIT_SAN_OPTIONS
 export LSAN_OPTIONS
 
 if test ! -f "$GIT_BUILD_DIR"/GIT-BUILD-OPTIONS
