@@ -1045,6 +1045,17 @@ test_expect_success 'create stores correct message' '
 	test_cmp expect actual
 '
 
+test_expect_success 'create when branch name has /' '
+	test_when_finished "git checkout main" &&
+	git checkout -b some/topic &&
+	>foo &&
+	git add foo &&
+	STASH_ID=$(git stash create "create test message") &&
+	echo "On some/topic: create test message" >expect &&
+	git show --pretty=%s -s ${STASH_ID} >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'create with multiple arguments for the message' '
 	>foo &&
 	git add foo &&
