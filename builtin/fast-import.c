@@ -177,8 +177,9 @@ static int global_argc;
 static const char **global_argv;
 
 /* Memory pools */
-static struct mem_pool fi_mem_pool =  {NULL, 2*1024*1024 -
-				       sizeof(struct mp_block), 0 };
+static struct mem_pool fi_mem_pool = {
+	.block_alloc = 2*1024*1024 - sizeof(struct mp_block),
+};
 
 /* Atom management */
 static unsigned int atom_table_sz = 4451;
@@ -206,7 +207,9 @@ static int import_marks_file_done;
 static int relative_marks_paths;
 
 /* Our last blob */
-static struct last_object last_blob = { STRBUF_INIT, 0, 0, 0 };
+static struct last_object last_blob = {
+	.data = STRBUF_INIT,
+ };
 
 /* Tree management */
 static unsigned int tree_entry_alloc = 1000;
@@ -232,7 +235,10 @@ static struct tag *last_tag;
 static whenspec_type whenspec = WHENSPEC_RAW;
 static struct strbuf command_buf = STRBUF_INIT;
 static int unread_command_buf;
-static struct recent_command cmd_hist = {&cmd_hist, &cmd_hist, NULL};
+static struct recent_command cmd_hist = {
+	.prev = &cmd_hist,
+	.next = &cmd_hist,
+};
 static struct recent_command *cmd_tail = &cmd_hist;
 static struct recent_command *rc_free;
 static unsigned int cmd_save = 100;

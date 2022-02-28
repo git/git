@@ -11,7 +11,9 @@
 #include "trace2/tr2_tgt.h"
 #include "trace2/tr2_tls.h"
 
-static struct tr2_dst tr2dst_perf = { TR2_SYSENV_PERF, 0, 0, 0, 0 };
+static struct tr2_dst tr2dst_perf = {
+	.sysenv_var = TR2_SYSENV_PERF,
+};
 
 /*
  * Use TR2_SYSENV_PERF_BRIEF to omit the "<time> <file>:<line>"
@@ -549,34 +551,34 @@ static void fn_printf_va_fl(const char *file, int line,
 }
 
 struct tr2_tgt tr2_tgt_perf = {
-	&tr2dst_perf,
+	.pdst = &tr2dst_perf,
 
-	fn_init,
-	fn_term,
+	.pfn_init = fn_init,
+	.pfn_term = fn_term,
 
-	fn_version_fl,
-	fn_start_fl,
-	fn_exit_fl,
-	fn_signal,
-	fn_atexit,
-	fn_error_va_fl,
-	fn_command_path_fl,
-	fn_command_ancestry_fl,
-	fn_command_name_fl,
-	fn_command_mode_fl,
-	fn_alias_fl,
-	fn_child_start_fl,
-	fn_child_exit_fl,
-	fn_child_ready_fl,
-	fn_thread_start_fl,
-	fn_thread_exit_fl,
-	fn_exec_fl,
-	fn_exec_result_fl,
-	fn_param_fl,
-	fn_repo_fl,
-	fn_region_enter_printf_va_fl,
-	fn_region_leave_printf_va_fl,
-	fn_data_fl,
-	fn_data_json_fl,
-	fn_printf_va_fl,
+	.pfn_version_fl = fn_version_fl,
+	.pfn_start_fl = fn_start_fl,
+	.pfn_exit_fl = fn_exit_fl,
+	.pfn_signal = fn_signal,
+	.pfn_atexit = fn_atexit,
+	.pfn_error_va_fl = fn_error_va_fl,
+	.pfn_command_path_fl = fn_command_path_fl,
+	.pfn_command_ancestry_fl = fn_command_ancestry_fl,
+	.pfn_command_name_fl = fn_command_name_fl,
+	.pfn_command_mode_fl = fn_command_mode_fl,
+	.pfn_alias_fl = fn_alias_fl,
+	.pfn_child_start_fl = fn_child_start_fl,
+	.pfn_child_exit_fl = fn_child_exit_fl,
+	.pfn_child_ready_fl = fn_child_ready_fl,
+	.pfn_thread_start_fl = fn_thread_start_fl,
+	.pfn_thread_exit_fl = fn_thread_exit_fl,
+	.pfn_exec_fl = fn_exec_fl,
+	.pfn_exec_result_fl = fn_exec_result_fl,
+	.pfn_param_fl = fn_param_fl,
+	.pfn_repo_fl = fn_repo_fl,
+	.pfn_region_enter_printf_va_fl = fn_region_enter_printf_va_fl,
+	.pfn_region_leave_printf_va_fl = fn_region_leave_printf_va_fl,
+	.pfn_data_fl = fn_data_fl,
+	.pfn_data_json_fl = fn_data_json_fl,
+	.pfn_printf_va_fl = fn_printf_va_fl,
 };
