@@ -1397,23 +1397,31 @@ static void die_expecting_a_branch(const struct branch_info *branch_info)
 {
 	struct object_id oid;
 	char *to_free;
+	int code;
 
 	if (dwim_ref(branch_info->name, strlen(branch_info->name), &oid, &to_free, 0) == 1) {
 		const char *ref = to_free;
 
 		if (skip_prefix(ref, "refs/tags/", &ref))
-			die(_("a branch is expected, got tag '%s'"), ref);
-		if (skip_prefix(ref, "refs/remotes/", &ref))
-			die(_("a branch is expected, got remote branch '%s'"), ref);
-		die(_("a branch is expected, got '%s'"), ref);
+			code = die_message(_("a branch is expected, got tag '%s'"), ref);
+		else if (skip_prefix(ref, "refs/remotes/", &ref))
+			code = die_message(_("a branch is expected, got remote branch '%s'"), ref);
+		else
+			code = die_message(_("a branch is expected, got '%s'"), ref);
 	}
-	if (branch_info->commit)
-		die(_("a branch is expected, got commit '%s'"), branch_info->name);
-	/*
-	 * This case should never happen because we already die() on
-	 * non-commit, but just in case.
-	 */
-	die(_("a branch is expected, got '%s'"), branch_info->name);
+	else if (branch_info->commit)
+		code = die_message(_("a branch is expected, got commit '%s'"), branch_info->name);
+	else
+		/*
+		 * This case should never happen because we already die() on
+		 * non-commit, but just in case.
+		 */
+		code = die_message(_("a branch is expected, got '%s'"), branch_info->name);
+
+	if (advice_enabled(ADVICE_SUGGEST_DETACHING_HEAD))
+		advise(_("If you want to detach HEAD at the commit, try again with the --detach option."));
+
+	exit(code);
 }
 
 static void die_if_some_operation_in_progress(void)
