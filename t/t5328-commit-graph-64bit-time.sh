@@ -36,4 +36,31 @@ test_expect_success 'lower layers have overflow chunk' '
 
 graph_git_behavior 'overflow' '' HEAD~2 HEAD
 
+test_expect_success 'set up and verify repo with generation data overflow chunk' '
+	mkdir repo &&
+	cd repo &&
+	git init &&
+	test_commit --date "$UNIX_EPOCH_ZERO" 1 &&
+	test_commit 2 &&
+	test_commit --date "$UNIX_EPOCH_ZERO" 3 &&
+	git commit-graph write --reachable &&
+	graph_read_expect 3 generation_data &&
+	test_commit --date "$FUTURE_DATE" 4 &&
+	test_commit 5 &&
+	test_commit --date "$UNIX_EPOCH_ZERO" 6 &&
+	git branch left &&
+	git reset --hard 3 &&
+	test_commit 7 &&
+	test_commit --date "$FUTURE_DATE" 8 &&
+	test_commit 9 &&
+	git branch right &&
+	git reset --hard 3 &&
+	test_merge M left right &&
+	git commit-graph write --reachable &&
+	graph_read_expect 10 "generation_data generation_data_overflow" &&
+	git commit-graph verify
+'
+
+graph_git_behavior 'overflow 2' repo left right
+
 test_done
