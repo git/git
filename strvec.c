@@ -85,6 +85,29 @@ void strvec_split(struct strvec *array, const char *to_split)
 	}
 }
 
+size_t strvec_split_delim(struct strvec *array, const char *string,
+			  int delim, int maxsplit)
+{
+	size_t count = 0;
+	const char *p = string, *end;
+
+	for (;;) {
+		count++;
+		if (maxsplit >= 0 && count > maxsplit) {
+			strvec_push(array, p);
+			return count;
+		}
+		end = strchr(p, delim);
+		if (end) {
+			strvec_push_nodup(array, xmemdupz(p, end - p));
+			p = end + 1;
+		} else {
+			strvec_push(array, p);
+			return count;
+		}
+	}
+}
+
 void strvec_clear(struct strvec *array)
 {
 	if (array->v != empty_strvec) {
