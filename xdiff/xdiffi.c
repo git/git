@@ -315,16 +315,19 @@ int xdl_do_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 	long *kvd, *kvdf, *kvdb;
 	xdalgoenv_t xenv;
 	diffdata_t dd1, dd2;
+	int res;
 
-	if (XDF_DIFF_ALG(xpp->flags) == XDF_PATIENCE_DIFF)
-		return xdl_do_patience_diff(mf1, mf2, xpp, xe);
-
-	if (XDF_DIFF_ALG(xpp->flags) == XDF_HISTOGRAM_DIFF)
-		return xdl_do_histogram_diff(mf1, mf2, xpp, xe);
-
-	if (xdl_prepare_env(mf1, mf2, xpp, xe) < 0) {
-
+	if (xdl_prepare_env(mf1, mf2, xpp, xe) < 0)
 		return -1;
+
+	if (XDF_DIFF_ALG(xpp->flags) == XDF_PATIENCE_DIFF) {
+		res = xdl_do_patience_diff(mf1, mf2, xpp, xe);
+		goto out;
+	}
+
+	if (XDF_DIFF_ALG(xpp->flags) == XDF_HISTOGRAM_DIFF) {
+		res = xdl_do_histogram_diff(mf1, mf2, xpp, xe);
+		goto out;
 	}
 
 	/*
@@ -359,17 +362,15 @@ int xdl_do_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 	dd2.rchg = xe->xdf2.rchg;
 	dd2.rindex = xe->xdf2.rindex;
 
-	if (xdl_recs_cmp(&dd1, 0, dd1.nrec, &dd2, 0, dd2.nrec,
-			 kvdf, kvdb, (xpp->flags & XDF_NEED_MINIMAL) != 0, &xenv) < 0) {
-
-		xdl_free(kvd);
-		xdl_free_env(xe);
-		return -1;
-	}
-
+	res = xdl_recs_cmp(&dd1, 0, dd1.nrec, &dd2, 0, dd2.nrec,
+			   kvdf, kvdb, (xpp->flags & XDF_NEED_MINIMAL) != 0,
+			   &xenv);
 	xdl_free(kvd);
+ out:
+	if (res < 0)
+		xdl_free_env(xe);
 
-	return 0;
+	return res;
 }
 
 
