@@ -234,11 +234,6 @@ int cmd_read_tree(int argc, const char **argv, const char *cmd_prefix)
 			break;
 		case 3:
 		default:
-			/*
-			 * TODO: update threeway_merge to handle edit/edit conflicts in
-			 * sparse directories.
-			 */
-			ensure_full_index(&the_index);
 			opts.fn = threeway_merge;
 			break;
 		}

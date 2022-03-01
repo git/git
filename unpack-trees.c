@@ -2643,16 +2643,24 @@ int threeway_merge(const struct cache_entry * const *stages,
 	 */
 	/* #14, #14ALT, #2ALT */
 	if (remote && !df_conflict_head && head_match && !remote_match) {
-		if (index && !same(index, remote) && !same(index, head))
-			return reject_merge(index, o);
+		if (index && !same(index, remote) && !same(index, head)) {
+			if (S_ISSPARSEDIR(index->ce_mode))
+				return merged_sparse_dir(stages, 4, o);
+			else
+				return reject_merge(index, o);
+		}
 		return merged_entry(remote, index, o);
 	}
 	/*
 	 * If we have an entry in the index cache, then we want to
 	 * make sure that it matches head.
 	 */
-	if (index && !same(index, head))
-		return reject_merge(index, o);
+	if (index && !same(index, head)) {
+		if (S_ISSPARSEDIR(index->ce_mode))
+			return merged_sparse_dir(stages, 4, o);
+		else
+			return reject_merge(index, o);
+	}
 
 	if (head) {
 		/* #5ALT, #15 */
@@ -2714,11 +2722,21 @@ int threeway_merge(const struct cache_entry * const *stages,
 
 	}
 
-	/* Below are "no merge" cases, which require that the index be
-	 * up-to-date to avoid the files getting overwritten with
-	 * conflict resolution files.
-	 */
+	/* Handle "no merge" cases (see t/t1000-read-tree-m-3way.sh) */
 	if (index) {
+		/*
+		 * If we've reached the "no merge" cases and we're merging
+		 * a sparse directory, we may have an "edit/edit" conflict that
+		 * can be resolved by individually merging directory contents.
+		 */
+		if (S_ISSPARSEDIR(index->ce_mode))
+			return merged_sparse_dir(stages, 4, o);
+
+		/*
+		 * If we're not merging a sparse directory, ensure the index is
+		 * up-to-date to avoid files getting overwritten with conflict
+		 * resolution files
+		 */
 		if (verify_uptodate(index, o))
 			return -1;
 	}
