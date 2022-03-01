@@ -160,8 +160,6 @@ int cmd_read_tree(int argc, const char **argv, const char *cmd_prefix)
 	argc = parse_options(argc, argv, cmd_prefix, read_tree_options,
 			     read_tree_usage, 0);
 
-	hold_locked_index(&lock_file, LOCK_DIE_ON_ERROR);
-
 	prefix_set = opts.prefix ? 1 : 0;
 	if (1 < opts.merge + opts.reset + prefix_set)
 		die("Which one? -m, --reset, or --prefix?");
@@ -172,6 +170,11 @@ int cmd_read_tree(int argc, const char **argv, const char *cmd_prefix)
 
 	if (opts.reset)
 		opts.reset = UNPACK_RESET_OVERWRITE_UNTRACKED;
+
+	prepare_repo_settings(the_repository);
+	the_repository->settings.command_requires_full_index = 0;
+
+	hold_locked_index(&lock_file, LOCK_DIE_ON_ERROR);
 
 	/*
 	 * NEEDSWORK
@@ -214,6 +217,10 @@ int cmd_read_tree(int argc, const char **argv, const char *cmd_prefix)
 	if (opts.merge && !opts.index_only)
 		setup_work_tree();
 
+	/* TODO: audit sparse index behavior in unpack_trees */
+	if (opts.skip_sparse_checkout || opts.prefix)
+		ensure_full_index(&the_index);
+
 	if (opts.merge) {
 		switch (stage - 1) {
 		case 0:
@@ -223,11 +230,21 @@ int cmd_read_tree(int argc, const char **argv, const char *cmd_prefix)
 			opts.fn = opts.prefix ? bind_merge : oneway_merge;
 			break;
 		case 2:
+			/*
+			 * TODO: update twoway_merge to handle edit/edit conflicts in
+			 * sparse directories.
+			 */
+			ensure_full_index(&the_index);
 			opts.fn = twoway_merge;
 			opts.initial_checkout = is_cache_unborn();
 			break;
 		case 3:
 		default:
+			/*
+			 * TODO: update threeway_merge to handle edit/edit conflicts in
+			 * sparse directories.
+			 */
+			ensure_full_index(&the_index);
 			opts.fn = threeway_merge;
 			break;
 		}
