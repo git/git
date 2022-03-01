@@ -244,6 +244,24 @@ test_expect_success 'expanded in-memory index matches full index' '
 	test_sparse_match git ls-files --stage
 '
 
+test_expect_success 'root directory cannot be sparse' '
+	init_repos &&
+
+	# Remove all in-cone files and directories from the index, collapse index
+	# with `git sparse-checkout reapply`
+	git -C sparse-index rm -r . &&
+	git -C sparse-index sparse-checkout reapply &&
+
+	# Verify sparse directories still present, root directory is not sparse
+	cat >expect <<-EOF &&
+	folder1/
+	folder2/
+	x/
+	EOF
+	git -C sparse-index ls-files --sparse >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'status with options' '
 	init_repos &&
 	test_sparse_match ls &&
