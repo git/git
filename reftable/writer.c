@@ -240,14 +240,13 @@ static int writer_add_record(struct reftable_writer *w,
 
 	writer_reinit_block_writer(w, reftable_record_type(rec));
 	err = block_writer_add(w->block_writer, rec);
-	if (err < 0) {
+	if (err == -1) {
 		/* we are writing into memory, so an error can only mean it
 		 * doesn't fit. */
 		err = REFTABLE_ENTRY_TOO_BIG_ERROR;
 		goto done;
 	}
 
-	err = 0;
 done:
 	strbuf_release(&key);
 	return err;
@@ -516,7 +515,9 @@ static void object_record_free(void *void_arg, void *key)
 static int writer_dump_object_index(struct reftable_writer *w)
 {
 	struct write_record_arg closure = { .w = w };
-	struct common_prefix_arg common = { NULL };
+	struct common_prefix_arg common = {
+		.max = 1,		/* obj_id_len should be >= 2. */
+	};
 	if (w->obj_index_tree) {
 		infix_walk(w->obj_index_tree, &update_common, &common);
 	}
@@ -694,7 +695,7 @@ static int writer_flush_block(struct reftable_writer *w)
 	return writer_flush_nonempty_block(w);
 }
 
-const struct reftable_stats *writer_stats(struct reftable_writer *w)
+const struct reftable_stats *reftable_writer_stats(struct reftable_writer *w)
 {
 	return &w->stats;
 }
