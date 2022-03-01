@@ -278,6 +278,13 @@ test_expect_success 'status with options' '
 	test_all_match git status --porcelain=v2 -uno
 '
 
+test_expect_success 'status with diff in unexpanded sparse directory' '
+	init_repos &&
+	test_all_match git checkout rename-base &&
+	test_all_match git reset --soft rename-out-to-out &&
+	test_all_match git status --porcelain=v2
+'
+
 test_expect_success 'status reports sparse-checkout' '
 	init_repos &&
 	git -C sparse-checkout status >full &&
