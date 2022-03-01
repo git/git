@@ -166,6 +166,10 @@ int cmd_read_tree(int argc, const char **argv, const char *cmd_prefix)
 	if (1 < opts.merge + opts.reset + prefix_set)
 		die("Which one? -m, --reset, or --prefix?");
 
+	/* Prefix should not start with a directory separator */
+	if (opts.prefix && opts.prefix[0] == '/')
+		die("Invalid prefix, prefix cannot start with '/'");
+
 	if (opts.reset)
 		opts.reset = UNPACK_RESET_OVERWRITE_UNTRACKED;
 
