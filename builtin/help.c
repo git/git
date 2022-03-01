@@ -51,9 +51,14 @@ static const char *html_path;
 static int verbose = 1;
 static enum help_format help_format = HELP_FORMAT_NONE;
 static int exclude_guides;
+static int show_external_commands = -1;
+static int show_aliases = -1;
 static struct option builtin_help_options[] = {
 	OPT_CMDMODE('a', "all", &cmd_mode, N_("print all available commands"),
 		    HELP_ACTION_ALL),
+	OPT_BOOL(0, "external-commands", &show_external_commands,
+		 N_("show external commands in --all")),
+	OPT_BOOL(0, "aliases", &show_aliases, N_("show aliases in --all")),
 	OPT_HIDDEN_BOOL(0, "exclude-guides", &exclude_guides, N_("exclude guides")),
 	OPT_SET_INT('m', "man", &help_format, N_("show man page"), HELP_FORMAT_MAN),
 	OPT_SET_INT('w', "web", &help_format, N_("show manual in web browser"),
@@ -75,8 +80,8 @@ static struct option builtin_help_options[] = {
 };
 
 static const char * const builtin_help_usage[] = {
-	N_("git help [-a|--all] [--[no-]verbose]]\n"
-	   "         [[-i|--info] [-m|--man] [-w|--web]] [<command>]"),
+	"git help [-a|--all] [--[no-]verbose]] [--[no-]external-commands] [--[no-]aliases]",
+	N_("git help [[-i|--info] [-m|--man] [-w|--web]] [<command>]"),
 	"git help [-g|--guides]",
 	"git help [-c|--config]",
 	NULL
@@ -574,11 +579,40 @@ static const char *check_git_cmd(const char* cmd)
 	return cmd;
 }
 
-static void no_extra_argc(int argc)
+static void no_help_format(const char *opt_mode, enum help_format fmt)
+{
+	const char *opt_fmt;
+
+	switch (fmt) {
+	case HELP_FORMAT_NONE:
+		return;
+	case HELP_FORMAT_MAN:
+		opt_fmt = "--man";
+		break;
+	case HELP_FORMAT_INFO:
+		opt_fmt = "--info";
+		break;
+	case HELP_FORMAT_WEB:
+		opt_fmt = "--web";
+		break;
+	default:
+		BUG("unreachable");
+	}
+
+	usage_msg_optf(_("options '%s' and '%s' cannot be used together"),
+		       builtin_help_usage, builtin_help_options, opt_mode,
+		       opt_fmt);
+}
+
+static void opt_mode_usage(int argc, const char *opt_mode,
+			   enum help_format fmt)
 {
 	if (argc)
-		usage_msg_opt(_("this option doesn't take any other arguments"),
-			      builtin_help_usage, builtin_help_options);
+		usage_msg_optf(_("the '%s' option doesn't take any non-option arguments"),
+			       builtin_help_usage, builtin_help_options,
+			       opt_mode);
+
+	no_help_format(opt_mode, fmt);
 }
 
 int cmd_help(int argc, const char **argv, const char *prefix)
@@ -591,11 +625,19 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 			builtin_help_usage, 0);
 	parsed_help_format = help_format;
 
+	if (cmd_mode != HELP_ACTION_ALL &&
+	    (show_external_commands >= 0 ||
+	     show_aliases >= 0))
+		usage_msg_opt(_("the '--no-[external-commands|aliases]' options can only be used with '--all'"),
+			      builtin_help_usage, builtin_help_options);
+
 	switch (cmd_mode) {
 	case HELP_ACTION_ALL:
+		opt_mode_usage(argc, "--all", help_format);
 		if (verbose) {
 			setup_pager();
-			list_all_cmds_help();
+			list_all_cmds_help(show_external_commands,
+					   show_aliases);
 			return 0;
 		}
 		printf(_("usage: %s%s"), _(git_usage_string), "\n\n");
@@ -604,20 +646,21 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 		printf("%s\n", _(git_more_info_string));
 		break;
 	case HELP_ACTION_GUIDES:
-		no_extra_argc(argc);
+		opt_mode_usage(argc, "--guides", help_format);
 		list_guides_help();
 		printf("%s\n", _(git_more_info_string));
 		return 0;
 	case HELP_ACTION_CONFIG_FOR_COMPLETION:
-		no_extra_argc(argc);
+		opt_mode_usage(argc, "--config-for-completion", help_format);
 		list_config_help(SHOW_CONFIG_VARS);
 		return 0;
 	case HELP_ACTION_CONFIG_SECTIONS_FOR_COMPLETION:
-		no_extra_argc(argc);
+		opt_mode_usage(argc, "--config-sections-for-completion",
+			       help_format);
 		list_config_help(SHOW_CONFIG_SECTIONS);
 		return 0;
 	case HELP_ACTION_CONFIG:
-		no_extra_argc(argc);
+		opt_mode_usage(argc, "--config", help_format);
 		setup_pager();
 		list_config_help(SHOW_CONFIG_HUMAN);
 		printf("\n%s\n", _("'git help config' for more information"));
