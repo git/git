@@ -217,8 +217,7 @@ int cmd_read_tree(int argc, const char **argv, const char *cmd_prefix)
 	if (opts.merge && !opts.index_only)
 		setup_work_tree();
 
-	/* TODO: audit sparse index behavior in unpack_trees */
-	if (opts.skip_sparse_checkout || opts.prefix)
+	if (opts.skip_sparse_checkout)
 		ensure_full_index(&the_index);
 
 	if (opts.merge) {

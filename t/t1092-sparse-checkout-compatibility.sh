@@ -1417,7 +1417,13 @@ test_expect_success 'sparse index is not expanded: read-tree' '
 	do
 		ensure_not_expanded read-tree -mu $MERGE_TREES &&
 		ensure_not_expanded reset --hard || return 1
-	done
+	done &&
+
+	rm -rf sparse-index/deep/deeper2 &&
+	ensure_not_expanded add . &&
+	ensure_not_expanded commit -m "test" &&
+
+	ensure_not_expanded read-tree --prefix=deep/deeper2 -u deepest
 '
 
 test_expect_success 'ls-files' '

@@ -1693,6 +1693,41 @@ static void populate_from_existing_patterns(struct unpack_trees_options *o,
 		o->pl = pl;
 }
 
+static void update_sparsity_for_prefix(const char *prefix,
+				       struct index_state *istate)
+{
+	int prefix_len = strlen(prefix);
+	struct strbuf ce_prefix = STRBUF_INIT;
+
+	if (!istate->sparse_index)
+		return;
+
+	while (prefix_len > 0 && prefix[prefix_len - 1] == '/')
+		prefix_len--;
+
+	if (prefix_len <= 0)
+		BUG("Invalid prefix passed to update_sparsity_for_prefix");
+
+	strbuf_grow(&ce_prefix, prefix_len + 1);
+	strbuf_add(&ce_prefix, prefix, prefix_len);
+	strbuf_addch(&ce_prefix, '/');
+
+	/*
+	 * If the prefix points to a sparse directory or a path inside a sparse
+	 * directory, the index should be expanded. This is accomplished in one
+	 * of two ways:
+	 * - if the prefix is inside a sparse directory, it will be expanded by
+	 *   the 'ensure_full_index(...)' call in 'index_name_pos(...)'.
+	 * - if the prefix matches an existing sparse directory entry,
+	 *   'index_name_pos(...)' will return its index position, triggering
+	 *   the 'ensure_full_index(...)' below.
+	 */
+	if (!path_in_cone_mode_sparse_checkout(ce_prefix.buf, istate) &&
+	    index_name_pos(istate, ce_prefix.buf, ce_prefix.len) >= 0)
+		ensure_full_index(istate);
+
+	strbuf_release(&ce_prefix);
+}
 
 static int verify_absent(const struct cache_entry *,
 			 enum unpack_trees_error_types,
@@ -1738,6 +1773,9 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		o->dir->flags |= DIR_SHOW_IGNORED;
 		setup_standard_excludes(o->dir);
 	}
+
+	if (o->prefix)
+		update_sparsity_for_prefix(o->prefix, o->src_index);
 
 	if (!core_apply_sparse_checkout || !o->update)
 		o->skip_sparse_checkout = 1;
