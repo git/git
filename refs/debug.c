@@ -435,6 +435,7 @@ struct ref_storage_be refs_be_debug = {
 
 	debug_ref_iterator_begin,
 	debug_read_raw_ref,
+	NULL,
 
 	debug_reflog_iterator_begin,
 	debug_for_each_reflog_ent,

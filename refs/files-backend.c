@@ -3286,6 +3286,7 @@ struct ref_storage_be refs_be_files = {
 
 	files_ref_iterator_begin,
 	files_read_raw_ref,
+	NULL,
 
 	files_reflog_iterator_begin,
 	files_for_each_reflog_ent,

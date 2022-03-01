@@ -1684,6 +1684,7 @@ struct ref_storage_be refs_be_packed = {
 
 	packed_ref_iterator_begin,
 	packed_read_raw_ref,
+	NULL,
 
 	packed_reflog_iterator_begin,
 	packed_for_each_reflog_ent,
