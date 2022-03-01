@@ -34,6 +34,7 @@ graph_read_expect() {
 	header: 43475048 1 $(test_oid oid_version) 4 $NUM_BASE
 	num_commits: $1
 	chunks: oid_fanout oid_lookup commit_metadata generation_data
+	options:
 	EOF
 	test-tool read-graph >output &&
 	test_cmp expect output
@@ -508,6 +509,7 @@ test_expect_success 'setup repo for mixed generation commit-graph-chain' '
 		header: 43475048 1 $(test_oid oid_version) 4 1
 		num_commits: $NUM_SECOND_LAYER_COMMITS
 		chunks: oid_fanout oid_lookup commit_metadata
+		options:
 		EOF
 		test_cmp expect output &&
 		git commit-graph verify &&
@@ -540,6 +542,7 @@ test_expect_success 'do not write generation data chunk if not present on existi
 		header: 43475048 1 $(test_oid oid_version) 4 2
 		num_commits: $NUM_THIRD_LAYER_COMMITS
 		chunks: oid_fanout oid_lookup commit_metadata
+		options:
 		EOF
 		test_cmp expect output &&
 		git commit-graph verify
@@ -581,6 +584,7 @@ test_expect_success 'do not write generation data chunk if the topmost remaining
 		header: 43475048 1 $(test_oid oid_version) 4 2
 		num_commits: $(($NUM_THIRD_LAYER_COMMITS + $NUM_FOURTH_LAYER_COMMITS))
 		chunks: oid_fanout oid_lookup commit_metadata
+		options:
 		EOF
 		test_cmp expect output &&
 		git commit-graph verify
@@ -620,6 +624,7 @@ test_expect_success 'write generation data chunk if topmost remaining layer has 
 		header: 43475048 1 $(test_oid oid_version) 5 1
 		num_commits: $(($NUM_SECOND_LAYER_COMMITS + $NUM_THIRD_LAYER_COMMITS + $NUM_FOURTH_LAYER_COMMITS + $NUM_FIFTH_LAYER_COMMITS))
 		chunks: oid_fanout oid_lookup commit_metadata generation_data
+		options:
 		EOF
 		test_cmp expect output
 	)

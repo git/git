@@ -104,6 +104,7 @@ graph_read_expect() {
 	header: 43475048 1 $(test_oid oid_version) $NUM_CHUNKS 0
 	num_commits: $1
 	chunks: oid_fanout oid_lookup commit_metadata$OPTIONAL
+	options:
 	EOF
 	test-tool read-graph >output &&
 	test_cmp expect output
