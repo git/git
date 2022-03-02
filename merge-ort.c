@@ -639,8 +639,9 @@ static void path_msg(struct merge_options *opt,
 
 	if (opt->record_conflict_msgs_as_headers && omittable_hint)
 		return; /* Do not record mere hints in headers */
-	if (opt->record_conflict_msgs_as_headers && opt->priv->call_depth)
-		return; /* Do not record inner merge issues in headers */
+	if (opt->priv->call_depth && opt->verbosity < 5)
+		return; /* Ignore messages from inner merges */
+
 	sb = strmap_get(&opt->priv->output, path);
 	if (!sb) {
 		sb = xmalloc(sizeof(*sb));
