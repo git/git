@@ -90,6 +90,9 @@ test_expect_success 'setup' '
 	cd worktree &&
 	mkdir done dtwo dthree &&
 	touch one two three done/one dtwo/two dthree/three &&
+	test-tool chmtime =-300 one two three done/one dtwo/two dthree/three &&
+	test-tool chmtime =-300 done dtwo dthree &&
+	test-tool chmtime =-300 . &&
 	git add one two done/one &&
 	: >.git/info/exclude &&
 	git update-index --untracked-cache &&
@@ -142,7 +145,6 @@ two
 EOF
 
 test_expect_success 'status first time (empty cache)' '
-	avoid_racy &&
 	: >../trace.output &&
 	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
 	git status --porcelain >../actual &&
@@ -166,7 +168,6 @@ test_expect_success 'untracked cache after first status' '
 '
 
 test_expect_success 'status second time (fully populated cache)' '
-	avoid_racy &&
 	: >../trace.output &&
 	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
 	git status --porcelain >../actual &&
@@ -190,8 +191,8 @@ test_expect_success 'untracked cache after second status' '
 '
 
 test_expect_success 'modify in root directory, one dir invalidation' '
-	avoid_racy &&
 	: >four &&
+	test-tool chmtime =-240 four &&
 	: >../trace.output &&
 	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
 	git status --porcelain >../actual &&
@@ -241,7 +242,6 @@ EOF
 '
 
 test_expect_success 'new .gitignore invalidates recursively' '
-	avoid_racy &&
 	echo four >.gitignore &&
 	: >../trace.output &&
 	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
@@ -292,7 +292,6 @@ EOF
 '
 
 test_expect_success 'new info/exclude invalidates everything' '
-	avoid_racy &&
 	echo three >>.git/info/exclude &&
 	: >../trace.output &&
 	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
@@ -520,14 +519,14 @@ test_expect_success 'create/modify files, some of which are gitignored' '
 	echo three >done/three && # three is gitignored
 	echo four >done/four && # four is gitignored at a higher level
 	echo five >done/five && # five is not gitignored
-	echo test >base && #we need to ensure that the root dir is touched
-	rm base &&
+	test-tool chmtime =-180 done/two done/three done/four done/five done &&
+	# we need to ensure that the root dir is touched (in the past);
+	test-tool chmtime =-180 . &&
 	sync_mtime
 '
 
 test_expect_success 'test sparse status with untracked cache' '
 	: >../trace.output &&
-	avoid_racy &&
 	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
 	git status --porcelain >../status.actual &&
 	iuc status --porcelain >../status.iuc &&
@@ -570,7 +569,6 @@ EOF
 '
 
 test_expect_success 'test sparse status again with untracked cache' '
-	avoid_racy &&
 	: >../trace.output &&
 	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
 	git status --porcelain >../status.actual &&
@@ -597,11 +595,11 @@ EOF
 test_expect_success 'set up for test of subdir and sparse checkouts' '
 	mkdir done/sub &&
 	mkdir done/sub/sub &&
-	echo "sub" > done/sub/sub/file
+	echo "sub" > done/sub/sub/file &&
+	test-tool chmtime =-120 done/sub/sub/file done/sub/sub done/sub done
 '
 
 test_expect_success 'test sparse status with untracked cache and subdir' '
-	avoid_racy &&
 	: >../trace.output &&
 	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
 	git status --porcelain >../status.actual &&
@@ -651,7 +649,6 @@ EOF
 '
 
 test_expect_success 'test sparse status again with untracked cache and subdir' '
-	avoid_racy &&
 	: >../trace.output &&
 	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
 	git status --porcelain >../status.actual &&
