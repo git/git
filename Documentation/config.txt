@@ -438,6 +438,8 @@ include::config/rerere.txt[]
 
 include::config/reset.txt[]
 
+include::config/safe.txt[]
+
 include::config/sendemail.txt[]
 
 include::config/sequencer.txt[]
