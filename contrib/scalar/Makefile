@@ -1,3 +1,10 @@
+# The default target of this Makefile is...
+all::
+
+include ../../config.mak.uname
+-include ../../config.mak.autogen
+-include ../../config.mak
+
 QUIET_SUBDIR0  = +$(MAKE) -C # space to separate -C and subdir
 QUIET_SUBDIR1  =
 
@@ -11,12 +18,6 @@ else
 	export V
 endif
 endif
-
-all:
-
-include ../../config.mak.uname
--include ../../config.mak.autogen
--include ../../config.mak
 
 TARGETS = scalar$(X) scalar.o
 GITLIBS = ../../common-main.o ../../libgit.a ../../xdiff/lib.a
