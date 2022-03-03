@@ -223,6 +223,9 @@ static int split_mbox(const char *file, const char *dir, int allow_bare,
 	FILE *f = !strcmp(file, "-") ? stdin : fopen(file, "r");
 	int file_done = 0;
 
+	if (isatty(fileno(f)))
+		warning(_("reading patches from stdin/tty..."));
+
 	if (!f) {
 		error_errno("cannot open mbox %s", file);
 		goto out;
