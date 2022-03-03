@@ -1,6 +1,9 @@
 # The default target of this Makefile is...
 all::
 
+# Import tree-wide shared Makefile behavior and libraries
+include ../../shared.mak
+
 include ../../config.mak.uname
 -include ../../config.mak.autogen
 -include ../../config.mak

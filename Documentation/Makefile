@@ -1,3 +1,6 @@
+# Import tree-wide shared Makefile behavior and libraries
+include ../shared.mak
+
 # Guard against environment variables
 MAN1_TXT =
 MAN5_TXT =
@@ -523,8 +526,5 @@ ifeq ($(wildcard po/Makefile),po/Makefile)
 doc-l10n install-l10n::
 	$(MAKE) -C po $@
 endif
-
-# Delete the target file on error
-.DELETE_ON_ERROR:
 
 .PHONY: FORCE
