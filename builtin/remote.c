@@ -684,11 +684,14 @@ static int mv(int argc, const char **argv)
 	struct rename_info rename;
 	int i, refspec_updated = 0;
 
-	if (argc != 3)
+	argc = parse_options(argc, argv, NULL, options,
+			     builtin_remote_rename_usage, 0);
+
+	if (argc != 2)
 		usage_with_options(builtin_remote_rename_usage, options);
 
-	rename.old_name = argv[1];
-	rename.new_name = argv[2];
+	rename.old_name = argv[0];
+	rename.new_name = argv[1];
 	rename.remote_branches = &remote_branches;
 
 	oldremote = remote_get(rename.old_name);
