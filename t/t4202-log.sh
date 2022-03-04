@@ -471,7 +471,6 @@ do
 		)
 	'
 done
-test_done
 
 test_expect_success 'log --author' '
 	cat >expect <<-\EOF &&
