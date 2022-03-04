@@ -72,12 +72,10 @@ test_lazy_prereq GPGSM '
 		--passphrase-fd 0 --pinentry-mode loopback \
 		--import "$TEST_DIRECTORY"/lib-gpg/gpgsm_cert.p12 &&
 
-	gpgsm --homedir "${GNUPGHOME}" -K |
-	grep fingerprint: |
-	cut -d" " -f4 |
-	tr -d "\\n" >"${GNUPGHOME}/trustlist.txt" &&
+	gpgsm --homedir "${GNUPGHOME}" -K --with-colons |
+	awk -F ":" "/^fpr:/ {printf \"%s S relax\\n\", \$10}" \
+		>"${GNUPGHOME}/trustlist.txt" &&
 
-	echo " S relax" >>"${GNUPGHOME}/trustlist.txt" &&
 	echo hello | gpgsm --homedir "${GNUPGHOME}" >/dev/null \
 	       -u committer@example.com -o /dev/null --sign -
 '
