@@ -142,7 +142,7 @@ int write_commit_graph_reachable(struct object_directory *odb,
 				 enum commit_graph_write_flags flags,
 				 const struct commit_graph_opts *opts);
 int write_commit_graph(struct object_directory *odb,
-		       struct string_list *pack_indexes,
+		       const struct string_list *pack_indexes,
 		       struct oidset *commits,
 		       enum commit_graph_write_flags flags,
 		       const struct commit_graph_opts *opts);
