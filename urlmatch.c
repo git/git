@@ -611,3 +611,8 @@ int urlmatch_config_entry(const char *var, const char *value, void *cb)
 	strbuf_release(&synthkey);
 	return retval;
 }
+
+void urlmatch_config_release(struct urlmatch_config *config)
+{
+	string_list_clear(&config->vars, 1);
+}
