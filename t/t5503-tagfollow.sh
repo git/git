@@ -212,21 +212,11 @@ test_expect_success 'atomic fetch with backfill should use single transaction' '
 test_expect_success 'backfill failure causes command to fail' '
 	git init clone5 &&
 
-	write_script clone5/.git/hooks/reference-transaction <<-EOF &&
-		while read oldrev newrev reference
-		do
-			if test "\$reference" = refs/tags/tag1
-			then
-				# Create a nested tag below the actual tag we
-				# wanted to write, which causes a D/F conflict
-				# later when we want to commit refs/tags/tag1.
-				# We cannot just `exit 1` here given that this
-				# would cause us to die immediately.
-				git update-ref refs/tags/tag1/nested $B
-				exit \$!
-			fi
-		done
-	EOF
+	# Create a tag that is nested below the tag we are about to fetch via
+	# the backfill mechanism. This causes a D/F conflict when backfilling
+	# and should thus cause the command to fail.
+	empty_blob=$(git -C clone5 hash-object -w --stdin </dev/null) &&
+	git -C clone5 update-ref refs/tags/tag1/nested $empty_blob &&
 
 	test_must_fail git -C clone5 fetch .. $B:refs/heads/something &&
 	test $B = $(git -C clone5 rev-parse --verify refs/heads/something) &&
