@@ -125,6 +125,21 @@ struct bundle_transport_data {
 	unsigned get_refs_from_bundle_called : 1;
 };
 
+static void get_refs_from_bundle_inner(struct transport *transport)
+{
+	struct bundle_transport_data *data = transport->data;
+
+	data->get_refs_from_bundle_called = 1;
+
+	if (data->fd > 0)
+		close(data->fd);
+	data->fd = read_bundle_header(transport->url, &data->header);
+	if (data->fd < 0)
+		die(_("could not read bundle '%s'"), transport->url);
+
+	transport->hash_algo = data->header.hash_algo;
+}
+
 static struct ref *get_refs_from_bundle(struct transport *transport,
 					int for_push,
 					struct transport_ls_refs_options *transport_options)
@@ -136,15 +151,7 @@ static struct ref *get_refs_from_bundle(struct transport *transport,
 	if (for_push)
 		return NULL;
 
-	data->get_refs_from_bundle_called = 1;
-
-	if (data->fd > 0)
-		close(data->fd);
-	data->fd = read_bundle_header(transport->url, &data->header);
-	if (data->fd < 0)
-		die(_("could not read bundle '%s'"), transport->url);
-
-	transport->hash_algo = data->header.hash_algo;
+	get_refs_from_bundle_inner(transport);
 
 	for (i = 0; i < data->header.references.nr; i++) {
 		struct string_list_item *e = data->header.references.items + i;
@@ -169,7 +176,7 @@ static int fetch_refs_from_bundle(struct transport *transport,
 		strvec_push(&extra_index_pack_args, "-v");
 
 	if (!data->get_refs_from_bundle_called)
-		get_refs_from_bundle(transport, 0, NULL);
+		get_refs_from_bundle_inner(transport);
 	ret = unbundle(the_repository, &data->header, data->fd,
 		       &extra_index_pack_args);
 	transport->hash_algo = data->header.hash_algo;

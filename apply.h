@@ -173,6 +173,8 @@ int parse_git_diff_header(struct strbuf *root,
 			  unsigned int size,
 			  struct patch *patch);
 
+void release_patch(struct patch *patch);
+
 /*
  * Some aspects of the apply behavior are controlled by the following
  * bits in the "options" parameter passed to apply_all_patches().

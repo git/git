@@ -2150,6 +2150,7 @@ static void diff_words_flush(struct emit_callback *ecbdata)
 
 		for (i = 0; i < wol->nr; i++)
 			free((void *)wol->buf[i].line);
+		free(wol->buf);
 
 		wol->nr = 0;
 	}

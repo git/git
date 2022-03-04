@@ -612,7 +612,7 @@ static int get_urlmatch(const char *var, const char *url)
 
 		strbuf_release(&matched->value);
 	}
-	string_list_clear(&config.vars, 1);
+	urlmatch_config_release(&config);
 	string_list_clear(&values, 1);
 	free(config.url.url);
 
