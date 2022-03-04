@@ -93,6 +93,7 @@ static int cmd_bundle_create(int argc, const char **argv, const char *prefix) {
 	if (!startup_info->have_repository)
 		die(_("Need a repository to create a bundle."));
 	ret = !!create_bundle(the_repository, bundle_file, argc, argv, &pack_opts, version);
+	strvec_clear(&pack_opts);
 	free(bundle_file);
 	return ret;
 }
