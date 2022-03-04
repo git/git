@@ -240,6 +240,20 @@ out:
 	return ret;
 }
 
+static void repo_clear_path_cache(struct repo_path_cache *cache)
+{
+	FREE_AND_NULL(cache->squash_msg);
+	FREE_AND_NULL(cache->squash_msg);
+	FREE_AND_NULL(cache->merge_msg);
+	FREE_AND_NULL(cache->merge_rr);
+	FREE_AND_NULL(cache->merge_mode);
+	FREE_AND_NULL(cache->merge_head);
+	FREE_AND_NULL(cache->merge_autostash);
+	FREE_AND_NULL(cache->auto_merge);
+	FREE_AND_NULL(cache->fetch_head);
+	FREE_AND_NULL(cache->shallow);
+}
+
 void repo_clear(struct repository *repo)
 {
 	FREE_AND_NULL(repo->gitdir);
@@ -280,6 +294,8 @@ void repo_clear(struct repository *repo)
 		remote_state_clear(repo->remote_state);
 		FREE_AND_NULL(repo->remote_state);
 	}
+
+	repo_clear_path_cache(&repo->cached_paths);
 }
 
 int repo_read_index(struct repository *repo)

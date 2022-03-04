@@ -44,6 +44,18 @@ struct repo_settings {
 	int core_multi_pack_index;
 };
 
+struct repo_path_cache {
+	char *squash_msg;
+	char *merge_msg;
+	char *merge_rr;
+	char *merge_mode;
+	char *merge_head;
+	char *merge_autostash;
+	char *auto_merge;
+	char *fetch_head;
+	char *shallow;
+};
+
 struct repository {
 	/* Environment */
 	/*
@@ -82,7 +94,7 @@ struct repository {
 	/*
 	 * Contains path to often used file names.
 	 */
-	struct path_cache cached_paths;
+	struct repo_path_cache cached_paths;
 
 	/*
 	 * Path to the repository's graft file.
