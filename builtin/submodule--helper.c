@@ -3309,6 +3309,7 @@ static int module_add(int argc, const char **argv, const char *prefix)
 {
 	int force = 0, quiet = 0, progress = 0, dissociate = 0;
 	struct add_data add_data = ADD_DATA_INIT;
+	char *to_free = NULL;
 
 	struct option options[] = {
 		OPT_STRING('b', "branch", &add_data.branch, N_("branch"),
@@ -3360,7 +3361,8 @@ static int module_add(int argc, const char **argv, const char *prefix)
 			      "of the working tree"));
 
 		/* dereference source url relative to parent's url */
-		add_data.realrepo = resolve_relative_url(add_data.repo, NULL, 1);
+		to_free = resolve_relative_url(add_data.repo, NULL, 1);
+		add_data.realrepo = to_free;
 	} else if (is_dir_sep(add_data.repo[0]) || strchr(add_data.repo, ':')) {
 		add_data.realrepo = add_data.repo;
 	} else {
@@ -3413,6 +3415,7 @@ static int module_add(int argc, const char **argv, const char *prefix)
 	}
 	configure_added_submodule(&add_data);
 	free(add_data.sm_path);
+	free(to_free);
 
 	return 0;
 }
