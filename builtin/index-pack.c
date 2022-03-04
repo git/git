@@ -1109,6 +1109,7 @@ static void *threaded_second_pass(void *data)
 			list_add(&child->list, &work_head);
 			base_cache_used += child->size;
 			prune_base_data(NULL);
+			free_base_data(child);
 		} else {
 			/*
 			 * This child does not have its own children. It may be
@@ -1131,6 +1132,7 @@ static void *threaded_second_pass(void *data)
 
 				p = next_p;
 			}
+			FREE_AND_NULL(child);
 		}
 		work_unlock();
 	}
@@ -1424,6 +1426,7 @@ static void fix_unresolved_deltas(struct hashfile *f)
 		 * object).
 		 */
 		append_obj_to_pack(f, d->oid.hash, data, size, type);
+		free(data);
 		threaded_second_pass(NULL);
 
 		display_progress(progress, nr_resolved_deltas);
@@ -1703,6 +1706,7 @@ static void show_pack_info(int stat_only)
 			  i + 1,
 			  chain_histogram[i]);
 	}
+	free(chain_histogram);
 }
 
 int cmd_index_pack(int argc, const char **argv, const char *prefix)
@@ -1932,6 +1936,7 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 	if (do_fsck_object && fsck_finish(&fsck_options))
 		die(_("fsck error in pack objects"));
 
+	free(opts.anomaly);
 	free(objects);
 	strbuf_release(&index_name_buf);
 	strbuf_release(&rev_index_name_buf);
