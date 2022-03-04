@@ -1685,6 +1685,7 @@ static int fill_oids_from_packs(struct write_commit_graph_context *ctx,
 	struct strbuf progress_title = STRBUF_INIT;
 	struct strbuf packname = STRBUF_INIT;
 	int dirlen;
+	int ret = 0;
 
 	strbuf_addf(&packname, "%s/pack/", ctx->odb->path);
 	dirlen = packname.len;
@@ -1703,12 +1704,12 @@ static int fill_oids_from_packs(struct write_commit_graph_context *ctx,
 		strbuf_addstr(&packname, pack_indexes->items[i].string);
 		p = add_packed_git(packname.buf, packname.len, 1);
 		if (!p) {
-			error(_("error adding pack %s"), packname.buf);
-			return -1;
+			ret = error(_("error adding pack %s"), packname.buf);
+			goto cleanup;
 		}
 		if (open_pack_index(p)) {
-			error(_("error opening index for %s"), packname.buf);
-			return -1;
+			ret = error(_("error opening index for %s"), packname.buf);
+			goto cleanup;
 		}
 		for_each_object_in_pack(p, add_packed_commits, ctx,
 					FOR_EACH_OBJECT_PACK_ORDER);
@@ -1716,11 +1717,12 @@ static int fill_oids_from_packs(struct write_commit_graph_context *ctx,
 		free(p);
 	}
 
+cleanup:
 	stop_progress(&ctx->progress);
 	strbuf_release(&progress_title);
 	strbuf_release(&packname);
 
-	return 0;
+	return ret;
 }
 
 static int fill_oids_from_commits(struct write_commit_graph_context *ctx,
