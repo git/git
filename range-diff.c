@@ -165,6 +165,7 @@ static int read_patches(const char *range, struct string_list *list,
 					    patch.old_mode, patch.new_mode);
 
 			strbuf_addstr(&buf, " ##");
+			release_patch(&patch);
 		} else if (in_header) {
 			if (starts_with(line, "Author: ")) {
 				strbuf_addstr(&buf, " ## Metadata ##\n");

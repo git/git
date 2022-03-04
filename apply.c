@@ -219,13 +219,18 @@ static void free_fragment_list(struct fragment *list)
 	}
 }
 
-static void free_patch(struct patch *patch)
+void release_patch(struct patch *patch)
 {
 	free_fragment_list(patch->fragments);
 	free(patch->def_name);
 	free(patch->old_name);
 	free(patch->new_name);
 	free(patch->result);
+}
+
+static void free_patch(struct patch *patch)
+{
+	release_patch(patch);
 	free(patch);
 }
 
