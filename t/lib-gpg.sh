@@ -75,6 +75,7 @@ test_lazy_prereq GPGSM '
 	gpgsm --homedir "${GNUPGHOME}" -K --with-colons |
 	awk -F ":" "/^fpr:/ {printf \"%s S relax\\n\", \$10}" \
 		>"${GNUPGHOME}/trustlist.txt" &&
+	(gpgconf --reload all || : ) &&
 
 	echo hello | gpgsm --homedir "${GNUPGHOME}" >/dev/null \
 	       -u committer@example.com -o /dev/null --sign -
