@@ -2023,10 +2023,10 @@ struct update_data {
 	struct object_id suboid;
 	struct submodule_update_strategy update_strategy;
 	int depth;
-	unsigned int force: 1;
-	unsigned int quiet: 1;
-	unsigned int nofetch: 1;
-	unsigned int just_cloned: 1;
+	unsigned int force;
+	unsigned int quiet;
+	unsigned int nofetch;
+	unsigned int just_cloned;
 };
 #define UPDATE_DATA_INIT { .update_strategy = SUBMODULE_UPDATE_STRATEGY_INIT }
 
@@ -2578,16 +2578,17 @@ static int update_clone(int argc, const char **argv, const char *prefix)
 
 static int run_update_procedure(int argc, const char **argv, const char *prefix)
 {
-	int force = 0, quiet = 0, nofetch = 0, just_cloned = 0;
 	char *prefixed_path, *update = NULL;
 	struct update_data update_data = UPDATE_DATA_INIT;
 
 	struct option options[] = {
-		OPT__QUIET(&quiet, N_("suppress output for update by rebase or merge")),
-		OPT__FORCE(&force, N_("force checkout updates"), 0),
-		OPT_BOOL('N', "no-fetch", &nofetch,
+		OPT__QUIET(&update_data.quiet,
+			   N_("suppress output for update by rebase or merge")),
+		OPT__FORCE(&update_data.force, N_("force checkout updates"),
+			   0),
+		OPT_BOOL('N', "no-fetch", &update_data.nofetch,
 			 N_("don't fetch new objects from the remote site")),
-		OPT_BOOL(0, "just-cloned", &just_cloned,
+		OPT_BOOL(0, "just-cloned", &update_data.just_cloned,
 			 N_("overrides update mode in case the repository is a fresh clone")),
 		OPT_INTEGER(0, "depth", &update_data.depth, N_("depth for shallow fetch")),
 		OPT_STRING(0, "prefix", &prefix,
@@ -2615,10 +2616,6 @@ static int run_update_procedure(int argc, const char **argv, const char *prefix)
 	if (argc != 1)
 		usage_with_options(usage, options);
 
-	update_data.force = !!force;
-	update_data.quiet = !!quiet;
-	update_data.nofetch = !!nofetch;
-	update_data.just_cloned = !!just_cloned;
 	update_data.sm_path = argv[0];
 
 	if (update_data.recursive_prefix)
