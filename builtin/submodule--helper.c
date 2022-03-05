@@ -2545,7 +2545,12 @@ static int update_clone(int argc, const char **argv, const char *prefix)
 	};
 
 	const char *const git_submodule_helper_usage[] = {
-		N_("git submodule--helper update-clone [--prefix=<path>] [<path>...]"),
+		N_("git submodule [--quiet] update"
+		" [--init [--filter=<filter-spec>]] [--remote]"
+		" [-N|--no-fetch] [-f|--force]"
+		" [--checkout|--merge|--rebase]"
+		" [--[no-]recommend-shallow] [--reference <repository>]"
+		" [--recursive] [--[no-]single-branch] [--] [<path>...]"),
 		NULL
 	};
 	suc.prefix = prefix;
@@ -2556,6 +2561,19 @@ static int update_clone(int argc, const char **argv, const char *prefix)
 	memset(&filter_options, 0, sizeof(filter_options));
 	argc = parse_options(argc, argv, prefix, module_update_clone_options,
 			     git_submodule_helper_usage, 0);
+
+	if (filter_options.choice && !suc.init) {
+		/*
+		 * NEEDSWORK: Don't use usage_with_options() because the
+		 * usage string is for "git submodule update", but the
+		 * options are for "git submodule--helper update-clone".
+		 *
+		 * This will no longer be an issue when "update-clone"
+		 * is replaced by "git submodule--helper update".
+		 */
+		usage(git_submodule_helper_usage[0]);
+	}
+
 	suc.filter_options = &filter_options;
 
 	if (update)

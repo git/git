@@ -356,11 +356,6 @@ cmd_update()
 		shift
 	done
 
-	if test -n "$filter" && test "$init" != "1"
-	then
-		usage
-	fi
-
 	{
 	git ${wt_prefix:+-C "$wt_prefix"} submodule--helper update-clone \
 		${GIT_QUIET:+--quiet} \
