@@ -594,18 +594,22 @@ static int module_foreach(int argc, const char **argv, const char *prefix)
 
 struct init_cb {
 	const char *prefix;
+	const char *superprefix;
 	unsigned int flags;
 };
 #define INIT_CB_INIT { 0 }
 
 static void init_submodule(const char *path, const char *prefix,
-			   unsigned int flags)
+			   const char *superprefix, unsigned int flags)
 {
 	const struct submodule *sub;
 	struct strbuf sb = STRBUF_INIT;
 	char *upd = NULL, *url = NULL, *displaypath;
 
-	displaypath = get_submodule_displaypath(path, prefix);
+	/* try superprefix from the environment, if it is not passed explicitly */
+	if (!superprefix)
+		superprefix = get_super_prefix();
+	displaypath = do_get_submodule_displaypath(path, prefix, superprefix);
 
 	sub = submodule_from_path(the_repository, null_oid(), path);
 
@@ -679,7 +683,7 @@ static void init_submodule(const char *path, const char *prefix,
 static void init_submodule_cb(const struct cache_entry *list_item, void *cb_data)
 {
 	struct init_cb *info = cb_data;
-	init_submodule(list_item->name, info->prefix, info->flags);
+	init_submodule(list_item->name, info->prefix, info->superprefix, info->flags);
 }
 
 static int module_init(int argc, const char **argv, const char *prefix)
