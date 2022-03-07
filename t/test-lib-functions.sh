@@ -856,6 +856,16 @@ test_path_is_file () {
 	fi
 }
 
+test_path_is_file_not_symlink () {
+	test "$#" -ne 1 && BUG "1 param"
+	test_path_is_file "$1" &&
+	if test -h "$1"
+	then
+		echo "$1 shouldn't be a symbolic link"
+		false
+	fi
+}
+
 test_path_is_dir () {
 	test "$#" -ne 1 && BUG "1 param"
 	if ! test -d "$1"
@@ -865,11 +875,30 @@ test_path_is_dir () {
 	fi
 }
 
+test_path_is_dir_not_symlink () {
+	test "$#" -ne 1 && BUG "1 param"
+	test_path_is_dir "$1" &&
+	if test -h "$1"
+	then
+		echo "$1 shouldn't be a symbolic link"
+		false
+	fi
+}
+
 test_path_exists () {
 	test "$#" -ne 1 && BUG "1 param"
 	if ! test -e "$1"
 	then
 		echo "Path $1 doesn't exist"
+		false
+	fi
+}
+
+test_path_is_symlink () {
+	test "$#" -ne 1 && BUG "1 param"
+	if ! test -h "$1"
+	then
+		echo "Symbolic link $1 doesn't exist"
 		false
 	fi
 }
