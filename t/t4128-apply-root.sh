@@ -2,8 +2,6 @@
 
 test_description='apply same filename'
 
-
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -26,10 +24,11 @@ diff a/bla/blub/dir/file b/bla/blub/dir/file
 EOF
 
 test_expect_success 'apply --directory -p (1)' '
-
 	git apply --directory=some/sub -p3 --index patch &&
-	test Bello = $(git show :some/sub/dir/file) &&
-	test Bello = $(cat some/sub/dir/file)
+	echo Bello >expect &&
+	git show :some/sub/dir/file >actual &&
+	test_cmp expect actual &&
+	test_cmp expect some/sub/dir/file
 
 '
 
@@ -37,8 +36,10 @@ test_expect_success 'apply --directory -p (2) ' '
 
 	git reset --hard initial &&
 	git apply --directory=some/sub/ -p3 --index patch &&
-	test Bello = $(git show :some/sub/dir/file) &&
-	test Bello = $(cat some/sub/dir/file)
+	echo Bello >expect &&
+	git show :some/sub/dir/file >actual &&
+	test_cmp expect actual &&
+	test_cmp expect some/sub/dir/file
 
 '
 
@@ -55,8 +56,10 @@ EOF
 test_expect_success 'apply --directory (new file)' '
 	git reset --hard initial &&
 	git apply --directory=some/sub/dir/ --index patch &&
-	test content = $(git show :some/sub/dir/newfile) &&
-	test content = $(cat some/sub/dir/newfile)
+	echo content >expect &&
+	git show :some/sub/dir/newfile >actual &&
+	test_cmp expect actual &&
+	test_cmp expect some/sub/dir/newfile
 '
 
 cat > patch << EOF
@@ -72,8 +75,10 @@ EOF
 test_expect_success 'apply --directory -p (new file)' '
 	git reset --hard initial &&
 	git apply -p2 --directory=some/sub/dir/ --index patch &&
-	test content = $(git show :some/sub/dir/newfile2) &&
-	test content = $(cat some/sub/dir/newfile2)
+	echo content >expect &&
+	git show :some/sub/dir/newfile2 >actual &&
+	test_cmp expect actual &&
+	test_cmp expect some/sub/dir/newfile2
 '
 
 cat > patch << EOF
@@ -107,8 +112,10 @@ EOF
 test_expect_success 'apply --directory (quoted filename)' '
 	git reset --hard initial &&
 	git apply --directory=some/sub/dir/ --index patch &&
-	test content = $(git show :some/sub/dir/quotefile) &&
-	test content = $(cat some/sub/dir/quotefile)
+	echo content >expect &&
+	git show :some/sub/dir/quotefile >actual &&
+	test_cmp expect actual &&
+	test_cmp expect some/sub/dir/quotefile
 '
 
 test_done
