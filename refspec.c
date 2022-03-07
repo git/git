@@ -4,13 +4,13 @@
 #include "refspec.h"
 
 static struct refspec_item s_tag_refspec = {
-	0,
-	1,
-	0,
-	0,
-	0,
-	"refs/tags/*",
-	"refs/tags/*"
+	.force = 0,
+	.pattern = 1,
+	.matching = 0,
+	.exact_sha1 = 0,
+	.negative = 0,
+	.src = "refs/tags/*",
+	.dst = "refs/tags/*",
 };
 
 /* See TAG_REFSPEC for the string version */

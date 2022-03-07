@@ -7,12 +7,24 @@ static struct userdiff_driver *drivers;
 static int ndrivers;
 static int drivers_alloc;
 
-#define PATTERNS(name, pattern, word_regex)			\
-	{ name, NULL, -1, { pattern, REG_EXTENDED },		\
-	  word_regex "|[^[:space:]]|[\xc0-\xff][\x80-\xbf]+" }
-#define IPATTERN(name, pattern, word_regex)			\
-	{ name, NULL, -1, { pattern, REG_EXTENDED | REG_ICASE }, \
-	  word_regex "|[^[:space:]]|[\xc0-\xff][\x80-\xbf]+" }
+#define PATTERNS(lang, rx, wrx) { \
+	.name = lang, \
+	.binary = -1, \
+	.funcname = { \
+		.pattern = rx, \
+		.cflags = REG_EXTENDED, \
+	}, \
+	.word_regex = wrx "|[^[:space:]]|[\xc0-\xff][\x80-\xbf]+", \
+}
+#define IPATTERN(lang, rx, wrx) { \
+	.name = lang, \
+	.binary = -1, \
+	.funcname = { \
+		.pattern = rx, \
+		.cflags = REG_EXTENDED | REG_ICASE, \
+	}, \
+	.word_regex = wrx "|[^[:space:]]|[\xc0-\xff][\x80-\xbf]+", \
+}
 
 /*
  * Built-in drivers for various languages, sorted by their names
@@ -275,17 +287,13 @@ PATTERNS("tex", "^(\\\\((sub)*section|chapter|part)\\*{0,1}\\{.*)$",
 #undef IPATTERN
 
 static struct userdiff_driver driver_true = {
-	"diff=true",
-	NULL,
-	0,
-	{ NULL, 0 }
+	.name = "diff=true",
+	.binary = 0,
 };
 
 static struct userdiff_driver driver_false = {
-	"!diff",
-	NULL,
-	1,
-	{ NULL, 0 }
+	.name = "!diff",
+	.binary = 1,
 };
 
 struct find_by_namelen_data {
