@@ -40,6 +40,18 @@ UI, Workflows & Features
 
  * "git branch" learned the "--recurse-submodules" option.
 
+ * A not-so-common mistake is to write a script to feed "git bisect
+   run" without making it executable, in which case all tests will
+   exit with 126 or 127 error codes, even on revisions that are marked
+   as good.  Try to recognize this situation and stop iteration early.
+
+ * When "index-pack" dies due to incoming data exceeding the maximum
+   allowed input size, include the value of the limit in the error
+   message.
+
+ * The error message given by "git switch HEAD~4" has been clarified
+   to suggest the "--detach" option that is required.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -72,6 +84,11 @@ Performance, Internal Implementation, Development Support etc.
  * Messages "ort" merge backend prepares while dealing with conflicted
    paths were unnecessarily confusing since it did not differentiate
    inner merges and outer merges.
+
+ * Small modernization of the rerere-train script (in contrib/).
+
+ * Use designated initializers we started using in mid 2017 in more
+   parts of the codebase that are relatively quiescent.
 
 
 Fixes since v2.35
@@ -231,6 +248,10 @@ Fixes since v2.35
 
  * Document Taylor as a new member of Git PLC at SFC.  Welcome.
    (merge e8d56ca863 tb/coc-plc-update later to maint).
+
+ * "git checkout -b branch/with/multi/level/name && git stash" only
+   recorded the last level component of the branch name, which has
+   been corrected.
 
  * Other code cleanup, docfix, build fix, etc.
    (merge cfc5cf428b jc/find-header later to maint).
