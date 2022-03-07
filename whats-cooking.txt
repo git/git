@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2022, #01; Thu, 3)
-X-master-at: 715d08a9e51251ad8290b181b6ac3b9e1f9719d7
-X-next-at: 4982287a3110faff562d8f552d63eb9647ce28a7
+Subject: What's cooking in git.git (Mar 2022, #02; Mon, 7)
+X-master-at: c2162907e9aa884bdb70208389cb99b181620d51
+X-next-at: 4b3deeb25d03f55d1d605c96f19e40bb89b562d1
 
-What's cooking in git.git (Mar 2022, #01; Thu, 3)
+What's cooking in git.git (Mar 2022, #02; Mon, 7)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -47,227 +47,211 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* ab/c99-designated-initializers (2022-02-24) 9 commits
+  (merged to 'next' on 2022-02-28 at 5ff6d5b26f)
+ + fast-import.c: use designated initializers for "partial" struct assignments
+ + refspec.c: use designated initializers for "struct refspec_item"
+ + convert.c: use designated initializers for "struct stream_filter*"
+ + userdiff.c: use designated initializers for "struct userdiff_driver"
+ + archive-*.c: use designated initializers for "struct archiver"
+ + object-file: use designated initializers for "struct git_hash_algo"
+ + trace2: use designated initializers for "struct tr2_dst"
+ + trace2: use designated initializers for "struct tr2_tgt"
+ + imap-send.c: use designated initializers for "struct imap_server_conf"
+
+ Use designated initializers we started using in mid 2017 in more
+ parts of the codebase that are relatively quiescent.
+ source: <cover-00.12-00000000000-20220224T092805Z-avarab@gmail.com>
+
+
+* ab/hook-tests (2022-02-19) 2 commits
+  (merged to 'next' on 2022-02-28 at bb6b7d1c24)
+ + hook tests: use a modern style for "pre-push" tests
+ + hook tests: test for exact "pre-push" hook input
+
+ Test modernization.
+ source: <cover-0.2-00000000000-20220218T204719Z-avarab@gmail.com>
+
+
+* ab/test-leak-diag (2022-02-28) 4 commits
+  (merged to 'next' on 2022-02-28 at 3019aad7fe)
+ + test-lib: add "fast_unwind_on_malloc=0" to LSAN_OPTIONS
+ + test-lib: make $GIT_BUILD_DIR an absolute path
+ + test-lib: correct and assert TEST_DIRECTORY overriding
+ + test-lib: add GIT_SAN_OPTIONS, inherit [AL]SAN_OPTIONS
+
+ Random test-framework clean-up.
+ source: <cover-v4-0.4-00000000000-20220227T102256Z-avarab@gmail.com>
+
+
+* ac/usage-string-fixups (2022-02-23) 1 commit
+  (merged to 'next' on 2022-02-28 at 5e8fa3f846)
+ + amend remaining usage strings according to style guide
+
+ Usage-string normalization.
+ source: <f425e36b7ea4a310a8ad93d47ead4c1713117388.1645626455.git.gitgitgadget@gmail.com>
+
+
+* ah/advice-switch-requires-detach-to-detach (2022-02-25) 1 commit
+  (merged to 'next' on 2022-02-28 at 941ee621cf)
+ + switch: mention the --detach option when dying due to lack of a branch
+
+ The error message given by "git switch HEAD~4" has been clarified
+ to suggest the "--detach" option that is required.
+ source: <20220226061213.1590341-1-alexhenrie24@gmail.com>
+
+
+* cg/t3903-modernize (2022-02-23) 3 commits
+  (merged to 'next' on 2022-02-23 at 0d5a844b40)
+ + tests: make the code more readable
+ + tests: allow testing if a path is truly a file or a directory
+ + t/t3903-stash.sh: replace test [-d|-f] with test_path_is_*
+
+ Test modernization.
+ source: <20220222215430.605254-1-cogoni.guillaume@gmail.com>
+
+
+* ds/worktree-docs (2022-02-23) 11 commits
+  (merged to 'next' on 2022-02-28 at b7d23cb1a5)
+ + worktree: use 'worktree' over 'working tree'
+ + worktree: use 'worktree' over 'working tree'
+ + worktree: use 'worktree' over 'working tree'
+ + worktree: use 'worktree' over 'working tree'
+ + worktree: use 'worktree' over 'working tree'
+ + worktree: use 'worktree' over 'working tree'
+ + worktree: use 'worktree' over 'working tree'
+ + worktree: extract checkout_worktree()
+ + worktree: extract copy_sparse_checkout()
+ + worktree: extract copy_filtered_worktree_config()
+ + worktree: combine two translatable messages
+
+ Tighten the language around "working tree" and "worktree" in the
+ docs.
+ source: <pull.1154.v3.git.1645626559.gitgitgadget@gmail.com>
+
+
+* en/merge-ort-plug-leaks (2022-02-20) 2 commits
+  (merged to 'next' on 2022-02-28 at d7afb6b624)
+ + merge-ort: fix small memory leak in unique_path()
+ + merge-ort: fix small memory leak in detect_and_process_renames()
+
+ Leakfix.
+ source: <pull.1152.v2.git.1645320591.gitgitgadget@gmail.com>
+
+
+* en/sparse-checkout-fixes (2022-02-20) 5 commits
+  (merged to 'next' on 2022-02-28 at 7307431c62)
+ + sparse-checkout: reject arguments in cone-mode that look like patterns
+ + sparse-checkout: error or warn when given individual files
+ + sparse-checkout: pay attention to prefix for {set, add}
+ + sparse-checkout: correctly set non-cone mode when expected
+ + sparse-checkout: correct reapply's handling of options
+
+ Further polishing of "git sparse-checkout".
+ source: <pull.1118.v5.git.1645289086.gitgitgadget@gmail.com>
+
+
+* gc/stash-on-branch-with-multi-level-name (2022-02-24) 1 commit
+  (merged to 'next' on 2022-02-28 at 1a94306611)
+ + stash: strip "refs/heads/" with skip_prefix
+
+ "git checkout -b branch/with/multi/level/name && git stash" only
+ recorded the last level component of the branch name, which has
+ been corrected.
+ source: <20220124205342.41450-1-chooglen@google.com>
+
+
+* jc/rerere-train-modernise (2022-02-27) 1 commit
+  (merged to 'next' on 2022-02-28 at d86d29733d)
+ + rerere-train: two fixes to the use of "git show -s"
+
+ Small modernization of the rerere-train script (in contrib/).
+ source: <20220227220924.2144325-1-gitster@pobox.com>
+
+
+* jt/ls-files-stage-recurse (2022-02-23) 1 commit
+  (merged to 'next' on 2022-02-28 at 4ad82bfdf6)
+ + ls-files: support --recurse-submodules --stage
+
+ Many output modes of "ls-files" do not work with its
+ "--recurse-submodules" option, but the "-s" mode has been taught to
+ work with it.
+ source: <20220224002303.2363189-1-jonathantanmy@google.com>
+
+
+* mc/index-pack-report-max-size (2022-02-23) 1 commit
+  (merged to 'next' on 2022-02-28 at 31b907844b)
+ + index-pack: clarify the breached limit
+
+ When "index-pack" dies due to incoming data exceeding the maximum
+ allowed input size, include the value of the limit in the error
+ message.
+ source: <pull.1158.v2.git.1645661240356.gitgitgadget@gmail.com>
+
+
+* rs/bisect-executable-not-found (2022-01-19) 4 commits
+  (merged to 'next' on 2022-02-28 at c74bff7954)
+ + bisect--helper: double-check run command on exit code 126 and 127
+ + bisect: document run behavior with exit codes 126 and 127
+ + bisect--helper: release strbuf and strvec on run error
+ + bisect--helper: report actual bisect_state() argument on error
+
+ A not-so-common mistake is to write a script to feed "git bisect
+ run" without making it executable, in which case all tests will
+ exit with 126 or 127 error codes, even on revisions that are marked
+ as good.  Try to recognize this situation and stop iteration early.
+ source: <fead25d6-6f5f-487a-ad4c-0657fe9785fd@www.fastmail.com>
+
+--------------------------------------------------
 [New Topics]
 
-* jd/userdiff-kotlin (2022-03-03) 1 commit
- - userdiff: add builtin diff driver for Kotlin language.
+* ab/grep-patterntype (2022-03-04) 1 commit
+ - log tests: fix "abort tests early" regression in ff37a60c369
 
- A new built-in userdiff driver for kotlin.
+ Test fix-up for a topic already in master.
 
- source: <20220303181517.70682-1-jaydeepjd.8914@gmail.com>
+ Will merge to 'next' and then to 'master'.
+ source: <patch-1.1-3b41c1a26d4-20220304T093323Z-avarab@gmail.com>
 
 
-* ps/fetch-mirror-optim (2022-03-01) 6 commits
- - refs/files-backend: optimize reading of symbolic refs
- - remote: read symbolic refs via `refs_read_symbolic_ref()`
- - refs: add ability for backends to special-case reading of symbolic refs
- - fetch: avoid lookup of commits when not appending to FETCH_HEAD
- - upload-pack: look up "want" lines via commit-graph
- - Merge branch 'ps/fetch-atomic' into ps/fetch-mirror-optim
- (this branch uses ps/fetch-atomic.)
+* mf/fix-type-in-config-h (2022-03-03) 1 commit
+ - config: correct "--type" option in "git config -h" output
 
- Various optimization for "git fetch".
+ "git config -h" did not describe the "--type" option correctly.
 
  Will merge to 'next'.
- source: <cover.1646127015.git.ps@pks.im>
+ source: <pull.1220.v2.git.git.1646368313714.gitgitgadget@gmail.com>
 
 
-* tk/t7063-chmtime-dirs-too (2022-03-01) 2 commits
- - t7063: mtime-mangling instead of delays in untracked cache testing
- - t/helper/test-chmtime: update mingw to support chmtime on directories
+* ab/racy-hooks (2022-03-07) 2 commits
+ - hooks: fix an obscure TOCTOU "did we just run a hook?" race
+ - merge: don't run post-hook logic on --no-verify
 
- Teach "test-chmtime" to work on a directory and use it to avoid
- having to wait for a second in a few places in tests.
-
- Expecting a reroll.
- cf. <37f66fae-911a-62f1-4711-c9f6c7794911@jeffhostetler.com>
- source: <pull.1166.v2.git.1646127910.gitgitgadget@gmail.com>
-
-
-* ab/hook-tests-updates (2022-03-02) 10 commits
- - tests: change "cat && chmod +x" to use "test_hook"
- - tests: change "mkdir -p && write_script" to use "test_hook"
- - test-lib-functions: add and use a "test_hook" wrapper
- - fetch+push tests: have tests clean up their own mess
- - hook tests: get rid of unnecessary sub-shells
- - tests: indent and add hook setup to "test_expect_success"
- - bugreport tests: tighten up "git bugreport -s hooks" test
- - tests: assume the hooks are disabled by default
- - t5540: don't rely on "hook/post-update.sample"
- - hook tests: turn exit code assertions into a loop
-
- Update tests around the use of hook scripts.
-
- Expecting a reroll.
- cf. <xmqqzgm8hwwc.fsf@gitster.g>
- cf. <xmqq1qzkhv87.fsf@gitster.g>
- source: <cover-00.10-00000000000-20220302T131859Z-avarab@gmail.com>
-
-
-* ab/keep-git-exit-codes-in-tests (2022-03-02) 15 commits
- - rev-list simplify tests: don't ignore "git" exit code
- - checkout tests: don't ignore "git <cmd>" exit code
- - apply tests: don't ignore "git ls-files" exit code, drop sub-shell
- - gettext tests: don't ignore "test-tool regex" exit code
- - rev-list tests: don't hide abort() in "test_expect_failure"
- - diff tests: don't ignore "git rev-list" exit code
- - notes tests: don't ignore "git" exit code
- - rev-parse tests: don't ignore "git reflog" exit code
- - merge tests: use "test_must_fail" instead of ad-hoc pattern
- - apply tests: use "test_must_fail" instead of ad-hoc pattern
- - diff tests: don't ignore "git diff" exit code in "read" loop
- - diff tests: don't ignore "git diff" exit code
- - read-tree tests: check "diff-files" exit code on failure
- - tests: use "test_stdout_line_count", not "test $(git [...] | wc -l)"
- - tests: change some 'test $(git) = "x"' to test_cmp
-
- Updates tests around the use of "test $(git cmd) = constant".
-
- Expecting a reroll.
- cf. <xmqqsfryah42.fsf@gitster.g>
- source: <cover-00.15-00000000000-20220302T171755Z-avarab@gmail.com>
-
-
-* ab/plug-random-leaks (2022-03-02) 14 commits
- - repository.c: free the "path cache" in repo_clear()
- - range-diff: plug memory leak in read_patches()
- - range-diff: plug memory leak in common invocation
- - lockfile API users: simplify and don't leak "path"
- - commit-graph: stop fill_oids_from_packs() progress on error and free()
- - commit-graph: fix memory leak in misused string_list API
- - submodule--helper: fix trivial leak in module_add()
- - transport: stop needlessly copying bundle header references
- - bundle: call strvec_clear() on allocated strvec
- - remote-curl.c: free memory in cmd_main()
- - urlmatch.c: add and use a *_release() function
- - diff.c: free "buf" in diff_words_flush()
- - merge-base: free() allocated "struct commit **" list
- - index-pack: fix memory leaks
-
- Plug random memory leaks.
+ Code clean-up to allow callers of run_commit_hook() to learn if it
+ got "success" because the hook succeeded or because there wasn't
+ any hook.
 
  Will merge to 'next'.
- source: <cover-00.14-00000000000-20220302T170718Z-avarab@gmail.com>
+ source: <cover-v2-0.2-00000000000-20220307T123244Z-avarab@gmail.com>
 
 
-* en/merge-ort-align-verbosity-with-recursive (2022-03-01) 1 commit
- - merge-ort: exclude messages from inner merges by default
+* ab/string-list-count-in-size-t (2022-03-07) 2 commits
+ - string-list API: change "nr" and "alloc" to "size_t"
+ - gettext API users: don't explicitly cast ngettext()'s "n"
 
- Align the level of verbose output from the ort backend during inner
- merge to that of the recursive backend.
-
- Will merge to 'next'.
- source: <pull.1167.git.1646194761463.gitgitgadget@gmail.com>
-
-
-* ep/test-malloc-check-with-glibc-2.34 (2022-03-03) 1 commit
- - test-lib.sh: Use GLIBC_TUNABLES instead of MALLOC_CHECK_ on glibc >= 2.34
-
- The method to trigger malloc check used in our tests no longer work
- with newer versions of glibc.
-
- Expecting a reroll.
- cf. <xmqq8rtq8z41.fsf@gitster.g>
- source: <20220303090640.190307-1-gitter.spiros@gmail.com>
-
-
-* gc/parse-tree-indirect-errors (2022-03-01) 1 commit
- - checkout, clone: die if tree cannot be parsed
-
- Check the return value from parse_tree_indirect() to turn segfaults
- into calls to die().
-
- Will merge to 'next'.
- source: <20220302003613.15567-1-chooglen@google.com>
-
-
-* jc/mailsplit-warn-on-tty (2022-03-03) 1 commit
- - am/apply: warn if we end up reading patches from terminal
-
- "git am" can read from the standard input when no mailbox is given
- on the command line, but the end-user gets no indication when it
- happens, making Git appear stuck.
-
- source: <xmqqlexq8zqo.fsf@gitster.g>
-
-
-* jc/stash-drop (2022-03-02) 3 commits
- - stash: call reflog_delete() in reflog.c
- - reflog: libify delete reflog function and helpers
- - stash: add tests to ensure reflog --rewrite --updatref behavior
-
- "git stash drop" is reimplemented as an internal call to
- reflog_delete() function, instead of invoking "git reflog delete"
- via run_command() API.
+ Count string_list items in size_t, not "unsigned int".
 
  Will merge to 'next'?
- source: <pull.1218.v4.git.git.1646260044.gitgitgadget@gmail.com>
-
-
-* nj/read-tree-doc-reffix (2022-03-03) 1 commit
- - Documentation: git-read-tree: separate links using commas
-
- Documentation mark-up fix.
-
- Will merge to 'next'.
- source: <20220303161542.11616-1-nihal@nihaljere.xyz>
-
-
-* ps/fetch-atomic-fixup (2022-03-03) 1 commit
- - t5503: simplify setup of test which exercises failure of backfill
- (this branch uses ps/fetch-atomic.)
-
- Test simplification.
-
- Will merge to 'next'.
- source: <cover.1645102965.git.ps@pks.im>
-
-
-* tb/cruft-packs (2022-03-02) 17 commits
- - sha1-file.c: don't freshen cruft packs
- - builtin/gc.c: conditionally avoid pruning objects via loose
- - builtin/repack.c: add cruft packs to MIDX during geometric repack
- - builtin/repack.c: use named flags for existing_packs
- - builtin/repack.c: allow configuring cruft pack generation
- - builtin/repack.c: support generating a cruft pack
- - builtin/pack-objects.c: --cruft with expiration
- - reachable: report precise timestamps from objects in cruft packs
- - reachable: add options to add_unseen_recent_objects_to_traversal
- - builtin/pack-objects.c: --cruft without expiration
- - builtin/pack-objects.c: return from create_object_entry()
- - t/helper: add 'pack-mtimes' test-tool
- - pack-mtimes: support writing pack .mtimes files
- - chunk-format.h: extract oid_version()
- - pack-write: pass 'struct packing_data' to 'stage_tmp_packfiles'
- - pack-mtimes: support reading .mtimes files
- - Documentation/technical: add cruft-packs.txt
-
- A mechanism to pack unreachable objects into a "cruft pack",
- instead of ejecting them into loose form to be reclaimed later, has
- been introduced.
-
- Will merge to 'next'?
- source: <cover.1646266835.git.me@ttaylorr.com>
-
-
-* tb/rename-remote-progress (2022-03-03) 2 commits
- - builtin/remote.c: show progress when renaming remote references
- - builtin/remote.c: parse options in 'rename'
-
- "git remote rename A B", depending on the number of remote-tracking
- refs involved, takes long time renaming them.  The command has been
- taught to show progress bar while making the user wait.
-
- Will merge to 'next'?
- source: <d5b0a4b71027619123b7284611692d3a9c128518.1646346287.git.me@ttaylorr.com>
+ source: <cover-v2-0.2-00000000000-20220307T152316Z-avarab@gmail.com>
 
 --------------------------------------------------
 [Stalled]
 
-* tl/ls-tree-oid-only (2022-02-08) 13 commits
- - ls-tree.c: support --object-only option for "git-ls-tree"
- - ls-tree: introduce function "fast_path()"
- - ls-tree.c: introduce "--format" option
+* tl/ls-tree-oid-only (2022-03-04) 12 commits
+ - ls-tree: support --object-only option for "git-ls-tree"
+ - ls-tree: introduce "--format" option
  - cocci: allow padding with `strbuf_addf()`
  - ls-tree: introduce struct "show_tree_data"
  - ls-tree: slightly refactor `show_tree()`
@@ -281,7 +265,7 @@ Release tarballs are available at:
 
  "git ls-tree" learns "--oid-only" option, similar to "--name-only",
  and more generalized "--format" option.
- source: <cover.1644319434.git.dyroneteng@gmail.com>
+ source: <cover.1646390152.git.dyroneteng@gmail.com>
 
 
 * je/http-better-error-output (2021-12-03) 1 commit
@@ -316,6 +300,217 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* jd/userdiff-kotlin (2022-03-06) 1 commit
+ - userdiff: add builtin diff driver for kotlin language.
+
+ A new built-in userdiff driver for kotlin.
+ source: <20220306111031.335489-2-jaydeepjd.8914@gmail.com>
+
+
+* ps/fetch-mirror-optim (2022-03-01) 6 commits
+ - refs/files-backend: optimize reading of symbolic refs
+ - remote: read symbolic refs via `refs_read_symbolic_ref()`
+ - refs: add ability for backends to special-case reading of symbolic refs
+ - fetch: avoid lookup of commits when not appending to FETCH_HEAD
+ - upload-pack: look up "want" lines via commit-graph
+ - Merge branch 'ps/fetch-atomic' into ps/fetch-mirror-optim
+ (this branch uses ps/fetch-atomic.)
+
+ Various optimization for "git fetch".
+
+ Will merge to 'next'.
+ source: <cover.1646127015.git.ps@pks.im>
+
+
+* tk/t7063-chmtime-dirs-too (2022-03-01) 2 commits
+ - t7063: mtime-mangling instead of delays in untracked cache testing
+ - t/helper/test-chmtime: update mingw to support chmtime on directories
+
+ Teach "test-chmtime" to work on a directory and use it to avoid
+ having to wait for a second in a few places in tests.
+
+ Will merge to 'next'.
+ source: <pull.1166.v3.git.1646201124.gitgitgadget@gmail.com>
+
+
+* ab/hook-tests-updates (2022-03-07) 10 commits
+ - tests: change "cat && chmod +x" to use "test_hook"
+ - tests: change "mkdir -p && write_script" to use "test_hook"
+ - test-lib-functions: add and use a "test_hook" wrapper
+ - fetch+push tests: have tests clean up their own mess
+ - hook tests: get rid of unnecessary sub-shells
+ - tests: indent and add hook setup to "test_expect_success"
+ - bugreport tests: tighten up "git bugreport -s hooks" test
+ - tests: assume the hooks are disabled by default
+ - t5540: don't rely on "hook/post-update.sample"
+ - hook tests: turn exit code assertions into a loop
+
+ Update tests around the use of hook scripts.
+
+ Will merge to 'next'?
+ source: <cover-v2-00.10-00000000000-20220307T123909Z-avarab@gmail.com>
+
+
+* ab/keep-git-exit-codes-in-tests (2022-03-07) 15 commits
+ - rev-list simplify tests: don't ignore "git" exit code
+ - checkout tests: don't ignore "git <cmd>" exit code
+ - apply tests: don't ignore "git ls-files" exit code, drop sub-shell
+ - gettext tests: don't ignore "test-tool regex" exit code
+ - rev-list tests: don't hide abort() in "test_expect_failure"
+ - diff tests: don't ignore "git rev-list" exit code
+ - notes tests: don't ignore "git" exit code
+ - rev-parse tests: don't ignore "git reflog" exit code
+ - merge tests: use "test_must_fail" instead of ad-hoc pattern
+ - apply tests: use "test_must_fail" instead of ad-hoc pattern
+ - diff tests: don't ignore "git diff" exit code in "read" loop
+ - diff tests: don't ignore "git diff" exit code
+ - read-tree tests: check "diff-files" exit code on failure
+ - tests: use "test_stdout_line_count", not "test $(git [...] | wc -l)"
+ - tests: change some 'test $(git) = "x"' to test_cmp
+
+ Updates tests around the use of "test $(git cmd) = constant".
+
+ Will merge to 'next'?
+ source: <cover-v2-00.15-00000000000-20220307T124817Z-avarab@gmail.com>
+
+
+* ab/plug-random-leaks (2022-03-04) 14 commits
+  (merged to 'next' on 2022-03-04 at f461b7a6b5)
+ + repository.c: free the "path cache" in repo_clear()
+ + range-diff: plug memory leak in read_patches()
+ + range-diff: plug memory leak in common invocation
+ + lockfile API users: simplify and don't leak "path"
+ + commit-graph: stop fill_oids_from_packs() progress on error and free()
+ + commit-graph: fix memory leak in misused string_list API
+ + submodule--helper: fix trivial leak in module_add()
+ + transport: stop needlessly copying bundle header references
+ + bundle: call strvec_clear() on allocated strvec
+ + remote-curl.c: free memory in cmd_main()
+ + urlmatch.c: add and use a *_release() function
+ + diff.c: free "buf" in diff_words_flush()
+ + merge-base: free() allocated "struct commit **" list
+ + index-pack: fix memory leaks
+
+ Plug random memory leaks.
+
+ Will merge to 'master'.
+ source: <cover-v2-00.14-00000000000-20220304T182902Z-avarab@gmail.com>
+
+
+* en/merge-ort-align-verbosity-with-recursive (2022-03-01) 1 commit
+  (merged to 'next' on 2022-03-04 at e2c7eabab6)
+ + merge-ort: exclude messages from inner merges by default
+
+ Align the level of verbose output from the ort backend during inner
+ merge to that of the recursive backend.
+
+ Will merge to 'master'.
+ source: <pull.1167.git.1646194761463.gitgitgadget@gmail.com>
+
+
+* ep/test-malloc-check-with-glibc-2.34 (2022-03-04) 1 commit
+ - test-lib.sh: Use GLIBC_TUNABLES instead of MALLOC_CHECK_ on glibc >= 2.34
+
+ The method to trigger malloc check used in our tests no longer work
+ with newer versions of glibc.
+
+ Will merge to 'next'.
+ source: <20220304133702.26706-1-gitter.spiros@gmail.com>
+
+
+* gc/parse-tree-indirect-errors (2022-03-01) 1 commit
+  (merged to 'next' on 2022-03-04 at f8d60e5253)
+ + checkout, clone: die if tree cannot be parsed
+
+ Check the return value from parse_tree_indirect() to turn segfaults
+ into calls to die().
+
+ Will merge to 'master'.
+ source: <20220302003613.15567-1-chooglen@google.com>
+
+
+* jc/mailsplit-warn-on-tty (2022-03-03) 1 commit
+ - am/apply: warn if we end up reading patches from terminal
+
+ "git am" can read from the standard input when no mailbox is given
+ on the command line, but the end-user gets no indication when it
+ happens, making Git appear stuck.
+ source: <xmqqlexq8zqo.fsf@gitster.g>
+
+
+* jc/stash-drop (2022-03-02) 3 commits
+ - stash: call reflog_delete() in reflog.c
+ - reflog: libify delete reflog function and helpers
+ - stash: add tests to ensure reflog --rewrite --updatref behavior
+
+ "git stash drop" is reimplemented as an internal call to
+ reflog_delete() function, instead of invoking "git reflog delete"
+ via run_command() API.
+
+ Will merge to 'next'.
+ source: <pull.1218.v4.git.git.1646260044.gitgitgadget@gmail.com>
+
+
+* nj/read-tree-doc-reffix (2022-03-03) 1 commit
+  (merged to 'next' on 2022-03-04 at 9b183b3e3e)
+ + Documentation: git-read-tree: separate links using commas
+
+ Documentation mark-up fix.
+
+ Will merge to 'master'.
+ source: <20220303161542.11616-1-nihal@nihaljere.xyz>
+
+
+* ps/fetch-atomic-fixup (2022-03-03) 1 commit
+  (merged to 'next' on 2022-03-04 at cb279e84df)
+ + t5503: simplify setup of test which exercises failure of backfill
+ (this branch uses ps/fetch-atomic.)
+
+ Test simplification.
+
+ Will merge to 'master' together with ps/fetch-atomic.
+ source: <cover.1645102965.git.ps@pks.im>
+
+
+* tb/cruft-packs (2022-03-02) 17 commits
+ - sha1-file.c: don't freshen cruft packs
+ - builtin/gc.c: conditionally avoid pruning objects via loose
+ - builtin/repack.c: add cruft packs to MIDX during geometric repack
+ - builtin/repack.c: use named flags for existing_packs
+ - builtin/repack.c: allow configuring cruft pack generation
+ - builtin/repack.c: support generating a cruft pack
+ - builtin/pack-objects.c: --cruft with expiration
+ - reachable: report precise timestamps from objects in cruft packs
+ - reachable: add options to add_unseen_recent_objects_to_traversal
+ - builtin/pack-objects.c: --cruft without expiration
+ - builtin/pack-objects.c: return from create_object_entry()
+ - t/helper: add 'pack-mtimes' test-tool
+ - pack-mtimes: support writing pack .mtimes files
+ - chunk-format.h: extract oid_version()
+ - pack-write: pass 'struct packing_data' to 'stage_tmp_packfiles'
+ - pack-mtimes: support reading .mtimes files
+ - Documentation/technical: add cruft-packs.txt
+
+ A mechanism to pack unreachable objects into a "cruft pack",
+ instead of ejecting them into loose form to be reclaimed later, has
+ been introduced.
+
+ Will merge to 'next'.
+ source: <cover.1646266835.git.me@ttaylorr.com>
+
+
+* tb/rename-remote-progress (2022-03-03) 2 commits
+ - builtin/remote.c: show progress when renaming remote references
+ - builtin/remote.c: parse options in 'rename'
+
+ "git remote rename A B", depending on the number of remote-tracking
+ refs involved, takes long time renaming them.  The command has been
+ taught to show progress bar while making the user wait.
+
+ Will merge to 'next'?
+ source: <d5b0a4b71027619123b7284611692d3a9c128518.1646346287.git.me@ttaylorr.com>
+
+
 * js/ci-github-workflow-markup (2022-03-01) 9 commits
  - ci: call `finalize_test_case_output` a little later
  - ci: use `--github-workflow-markup` in the GitHub workflow
@@ -343,7 +538,8 @@ Release tarballs are available at:
  the lower bound of searching commits used to explain the revision,
  when available, instead of committer time.
 
- Will merge to 'next'?
+ Breaks linux-TEST-vars job at CI?
+ cf. <xmqqilsvet82.fsf@gitster.g>
  source: <20220228215025.325904-2-jacob.e.keller@intel.com>
 
 
@@ -358,18 +554,6 @@ Release tarballs are available at:
  source: <20220217225408.GB7@edef91d97c94>
 
 
-* jt/ls-files-stage-recurse (2022-02-23) 1 commit
-  (merged to 'next' on 2022-02-28 at 4ad82bfdf6)
- + ls-files: support --recurse-submodules --stage
-
- Many output modes of "ls-files" does not work with its
- "--recurse-submodules" option, but the "-s" mode has taught to work
- with it.
-
- Will merge to 'master'.
- source: <20220224002303.2363189-1-jonathantanmy@google.com>
-
-
 * ab/c99-variadic-macros (2022-02-21) 2 commits
   (merged to 'next' on 2022-03-01 at 0419a86e23)
  + C99: remove hardcoded-out !HAVE_VARIADIC_MACROS code
@@ -381,72 +565,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <cover-v4-0.2-00000000000-20220221T160440Z-avarab@gmail.com>
-
-
-* ab/hook-tests (2022-02-19) 2 commits
-  (merged to 'next' on 2022-02-28 at bb6b7d1c24)
- + hook tests: use a modern style for "pre-push" tests
- + hook tests: test for exact "pre-push" hook input
-
- Test modernization.
-
- Will merge to 'master'.
- source: <cover-0.2-00000000000-20220218T204719Z-avarab@gmail.com>
-
-
-* ab/test-leak-diag (2022-02-28) 4 commits
-  (merged to 'next' on 2022-02-28 at 3019aad7fe)
- + test-lib: add "fast_unwind_on_malloc=0" to LSAN_OPTIONS
- + test-lib: make $GIT_BUILD_DIR an absolute path
- + test-lib: correct and assert TEST_DIRECTORY overriding
- + test-lib: add GIT_SAN_OPTIONS, inherit [AL]SAN_OPTIONS
-
- Random test-framework clean-up.
-
- Will merge to 'master'.
- source: <cover-v4-0.4-00000000000-20220227T102256Z-avarab@gmail.com>
-
-
-* ds/worktree-docs (2022-02-23) 11 commits
-  (merged to 'next' on 2022-02-28 at b7d23cb1a5)
- + worktree: use 'worktree' over 'working tree'
- + worktree: use 'worktree' over 'working tree'
- + worktree: use 'worktree' over 'working tree'
- + worktree: use 'worktree' over 'working tree'
- + worktree: use 'worktree' over 'working tree'
- + worktree: use 'worktree' over 'working tree'
- + worktree: use 'worktree' over 'working tree'
- + worktree: extract checkout_worktree()
- + worktree: extract copy_sparse_checkout()
- + worktree: extract copy_filtered_worktree_config()
- + worktree: combine two translatable messages
-
- Tighten the language around "working tree" and "worktree" in the
- docs.
-
- Will merge to 'master'.
- source: <pull.1154.v3.git.1645626559.gitgitgadget@gmail.com>
-
-
-* en/merge-ort-plug-leaks (2022-02-20) 2 commits
-  (merged to 'next' on 2022-02-28 at d7afb6b624)
- + merge-ort: fix small memory leak in unique_path()
- + merge-ort: fix small memory leak in detect_and_process_renames()
-
- Leakfix.
-
- Will merge to 'master'.
- source: <pull.1152.v2.git.1645320591.gitgitgadget@gmail.com>
-
-
-* jc/rerere-train-modernise (2022-02-27) 1 commit
-  (merged to 'next' on 2022-02-28 at d86d29733d)
- + rerere-train: two fixes to the use of "git show -s"
-
- Small modernization of the rerere-train script (in contrib/).
-
- Will merge to 'master'.
- source: <20220227220924.2144325-1-gitster@pobox.com>
 
 
 * ab/help-fixes (2022-02-23) 9 commits
@@ -467,28 +585,6 @@ Release tarballs are available at:
  source: <cover-v2-0.9-00000000000-20220221T193708Z-avarab@gmail.com>
 
 
-* ac/usage-string-fixups (2022-02-23) 1 commit
-  (merged to 'next' on 2022-02-28 at 5e8fa3f846)
- + amend remaining usage strings according to style guide
-
- Usage-string normalization.
-
- Will merge to 'master'.
- source: <f425e36b7ea4a310a8ad93d47ead4c1713117388.1645626455.git.gitgitgadget@gmail.com>
-
-
-* mc/index-pack-report-max-size (2022-02-23) 1 commit
-  (merged to 'next' on 2022-02-28 at 31b907844b)
- + index-pack: clarify the breached limit
-
- When "index-pack" dies due to incoming data exceeding the maximum
- allowed input size, include the value of the limit in the error
- message.
-
- Will merge to 'master'.
- source: <pull.1158.v2.git.1645661240356.gitgitgadget@gmail.com>
-
-
 * sm/no-git-in-upstream-of-pipe-in-tests (2022-02-23) 1 commit
  - t0003: avoid pipes with Git on LHS
 
@@ -496,25 +592,6 @@ Release tarballs are available at:
 
  Will merge to 'next'.
  source: <20220223115347.3083-3-shivam828787@gmail.com>
-
-
-* ab/c99-designated-initializers (2022-02-24) 9 commits
-  (merged to 'next' on 2022-02-28 at 5ff6d5b26f)
- + fast-import.c: use designated initializers for "partial" struct assignments
- + refspec.c: use designated initializers for "struct refspec_item"
- + convert.c: use designated initializers for "struct stream_filter*"
- + userdiff.c: use designated initializers for "struct userdiff_driver"
- + archive-*.c: use designated initializers for "struct archiver"
- + object-file: use designated initializers for "struct git_hash_algo"
- + trace2: use designated initializers for "struct tr2_dst"
- + trace2: use designated initializers for "struct tr2_tgt"
- + imap-send.c: use designated initializers for "struct imap_server_conf"
-
- Use designated initializers we started using in mid 2017 in more
- parts of the codebase that are relatively quiescent.
-
- Will merge to 'master'.
- source: <cover-00.12-00000000000-20220224T092805Z-avarab@gmail.com>
 
 
 * ab/http-gcc-12-workaround (2022-02-25) 1 commit
@@ -525,34 +602,25 @@ Release tarballs are available at:
 
 
 * ab/make-optim-noop (2022-03-03) 8 commits
- - Makefiles: add and use wildcard "mkdir -p" template
- - Makefile: add "$(QUIET)" boilerplate to shared.mak
- - Makefile: move $(comma), $(empty) and $(space) to shared.mak
- - Makefile: move ".SUFFIXES" rule to shared.mak
- - Makefile: define $(LIB_H) in terms of $(FIND_SOURCE_FILES)
- - Makefile: disable GNU make built-in wildcard rules
- - Makefiles: add "shared.mak", move ".DELETE_ON_ERROR" to it
- - scalar Makefile: use "The default target of..." pattern
+  (merged to 'next' on 2022-03-04 at 0419394f3d)
+ + Makefiles: add and use wildcard "mkdir -p" template
+ + Makefile: add "$(QUIET)" boilerplate to shared.mak
+ + Makefile: move $(comma), $(empty) and $(space) to shared.mak
+ + Makefile: move ".SUFFIXES" rule to shared.mak
+ + Makefile: define $(LIB_H) in terms of $(FIND_SOURCE_FILES)
+ + Makefile: disable GNU make built-in wildcard rules
+ + Makefiles: add "shared.mak", move ".DELETE_ON_ERROR" to it
+ + scalar Makefile: use "The default target of..." pattern
 
  Makefile refactoring with a bit of suffixes rule stripping to
  optimize the runtime overhead.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover-v5-0.8-00000000000-20220303T160155Z-avarab@gmail.com>
 
 
-* ah/advice-switch-requires-detach-to-detach (2022-02-25) 1 commit
-  (merged to 'next' on 2022-02-28 at 941ee621cf)
- + switch: mention the --detach option when dying due to lack of a branch
-
- The error message given by "git switch HEAD~4" has been clarified
- to suggest the "--detach" option that is required.
-
- Will merge to 'master'.
- source: <20220226061213.1590341-1-alexhenrie24@gmail.com>
-
-
-* ds/commit-graph-gen-v2-fixes (2022-03-01) 5 commits
+* ds/commit-graph-gen-v2-fixes (2022-03-07) 6 commits
+ - commit-graph: declare bankruptcy on GDAT chunks
  - commit-graph: fix generation number v2 overflow values
  - commit-graph: start parsing generation v2 (again)
  - commit-graph: fix ordering bug in generation numbers
@@ -561,10 +629,13 @@ Release tarballs are available at:
 
  Fixes to the way generation number v2 in the commit-graph files are
  (not) handled.
+
+ Will merge to 'next'.
  source: <pull.1163.v3.git.1646164112.gitgitgadget@gmail.com>
 
 
-* ds/partial-bundles (2022-02-24) 11 commits
+* ds/partial-bundles (2022-03-07) 12 commits
+ - clone: fail gracefully when cloning filtered bundle
  - bundle: unbundle promisor packs
  - bundle: create filtered bundles
  - rev-list: move --filter parsing into revision.c
@@ -576,41 +647,31 @@ Release tarballs are available at:
  - pack-objects: use rev.filter when possible
  - revision: put object filter into struct rev_info
  - index-pack: document and test the --promisor option
- (this branch is used by ds/bundle-uri.)
 
  Bundle file format gets extended to allow a partial bundle,
  filtered by similar criteria you would give when making a
  partial/lazy clone.
- source: <pull.1159.git.1645638911.gitgitgadget@gmail.com>
+
+ Will merge to 'next'?
+ source: <pull.1159.v2.git.1646689840.gitgitgadget@gmail.com>
 
 
-* fs/gpgsm-update (2022-03-02) 3 commits
- - t/lib-gpg: kill all gpg components, not just gpg-agent
- - t/lib-gpg: reload gpg components after updating trustlist
- - gpg-interface/gpgsm: fix for v2.3
+* fs/gpgsm-update (2022-03-04) 3 commits
+  (merged to 'next' on 2022-03-04 at 9c72508077)
+ + t/lib-gpg: kill all gpg components, not just gpg-agent
+ + t/lib-gpg: reload gpg components after updating trustlist
+ + gpg-interface/gpgsm: fix for v2.3
 
  Newer version of GPGSM changed its output in a backward
  incompatible way to break our code that parses its output.  It also
  added more processes our tests need to kill when cleaning up.
- Adjustments have been made to accomodate these changes.
-
- Will merge to 'next'.
- source: <20220224100628.612789-1-fs@gigacodes.de>
-
-
-* gc/stash-on-branch-with-multi-level-name (2022-02-24) 1 commit
-  (merged to 'next' on 2022-02-28 at 1a94306611)
- + stash: strip "refs/heads/" with skip_prefix
-
- "git checkout -b branch/with/multi/level/name && git stash" only
- recorded the last level component of the branch name, which has
- been corrected.
+ Adjustments have been made to accommodate these changes.
 
  Will merge to 'master'.
- source: <20220124205342.41450-1-chooglen@google.com>
+ source: <20220302090250.590450-1-fs@gigacodes.de>
 
 
-* jd/prompt-upstream-mark (2022-02-25) 4 commits
+* jd/prompt-upstream-mark (2022-03-03) 4 commits
  - git-prompt: put upstream comments together
  - git-prompt: make long upstream state indicator consistent
  - git-prompt: make upstream state indicator location consistent
@@ -619,8 +680,8 @@ Release tarballs are available at:
  Tweaks in the command line prompt (in contrib/) code around its
  GIT_PS1_SHOWUPSTREAM feature.
 
- Needs reviews.
- source: <pull.1162.git.1645789446.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <pull.1162.v2.git.1645991832.gitgitgadget@gmail.com>
 
 
 * pw/worktree-list-with-z (2022-02-25) 1 commit
@@ -635,20 +696,21 @@ Release tarballs are available at:
  source: <pull.1164.git.1645801727732.gitgitgadget@gmail.com>
 
 
-* rc/fetch-repair (2022-02-24) 8 commits
- - doc/partial-clone: mention --repair fetch option
- - fetch: after repair, encourage auto gc repacking
- - maintenance: add ability to pass config options
- - t5615-partial-clone: add test for fetch --repair
- - fetch: add --repair option
- - builtin/fetch-pack: add --repair option
- - fetch-pack: add repairing
- - fetch-negotiator: add specific noop initializor
+* rc/fetch-refetch (2022-03-04) 7 commits
+ - doc/partial-clone: mention --refetch fetch option
+ - fetch: after refetch, encourage auto gc repacking
+ - t5615-partial-clone: add test for fetch --refetch
+ - fetch: add --refetch option
+ - builtin/fetch-pack: add --refetch option
+ - fetch-pack: add refetch
+ - fetch-negotiator: add specific noop initializer
 
- "git fetch --repair" learned to fetch everything without telling
+ "git fetch --refetch" learned to fetch everything without telling
  the other side what we already have, which is useful when you
  cannot trust what you have in the local object store.
- source: <pull.1138.v2.git.1645719218.gitgitgadget@gmail.com>
+
+ Will merge to 'next'?
+ source: <pull.1138.v3.git.1646406274.gitgitgadget@gmail.com>
 
 
 * tk/empty-untracked-cache (2022-02-28) 3 commits
@@ -703,20 +765,6 @@ Release tarballs are available at:
 
  Will merge to 'next'.
  source: <pull.1157.v3.git.1646166271.gitgitgadget@gmail.com>
-
-
-* en/sparse-checkout-fixes (2022-02-20) 5 commits
-  (merged to 'next' on 2022-02-28 at 7307431c62)
- + sparse-checkout: reject arguments in cone-mode that look like patterns
- + sparse-checkout: error or warn when given individual files
- + sparse-checkout: pay attention to prefix for {set, add}
- + sparse-checkout: correctly set non-cone mode when expected
- + sparse-checkout: correct reapply's handling of options
-
- Further polishing of "git sparse-checkout".
-
- Will merge to 'master'.
- source: <pull.1118.v5.git.1645289086.gitgitgadget@gmail.com>
 
 
 * ab/commit-plug-leaks (2022-02-16) 2 commits
@@ -808,6 +856,7 @@ Release tarballs are available at:
  from them were in two separate ref transactions under "--atomic",
  which has been corrected.
 
+ Will merge to 'master' together with ps/fetch-atomic-fixup.
  source: <cover.1645102965.git.ps@pks.im>
 
 
@@ -825,9 +874,7 @@ Release tarballs are available at:
  source: <pull.1140.v2.git.1645006510.gitgitgadget@gmail.com>
 
 
-* gc/recursive-fetch-with-unused-submodules (2022-02-28) 12 commits
- - SQUASH???
- - SQUASH???
+* gc/recursive-fetch-with-unused-submodules (2022-03-03) 10 commits
  - submodule: fix latent check_has_commit() bug
  - fetch: fetch unpopulated, changed submodules
  - submodule: move logic into fetch_task_create()
@@ -845,20 +892,8 @@ Release tarballs are available at:
  in the current checkout of the superproject.  We now do so for all
  submodules that have been run "git submodule init" on.
 
- Expecting a reroll.
- source: <20220224100842.95827-1-chooglen@google.com>
-
-
-* cg/t3903-modernize (2022-02-23) 3 commits
-  (merged to 'next' on 2022-02-23 at 0d5a844b40)
- + tests: make the code more readable
- + tests: allow testing if a path is truly a file or a directory
- + t/t3903-stash.sh: replace test [-d|-f] with test_path_is_*
-
- Test modernization.
-
- Will merge to 'master'.
- source: <20220222215430.605254-1-cogoni.guillaume@gmail.com>
+ Will merge to 'next'?
+ source: <20220304005757.70107-1-chooglen@google.com>
 
 
 * js/bisect-in-c (2022-02-23) 14 commits
@@ -879,7 +914,8 @@ Release tarballs are available at:
 
  Final bits of "git bisect.sh" have been rewritten in C.
 
- Will merge to 'next'?
+ Expecting a reroll.
+ cf. <220225.86ilt27uln.gmgdl@evledraar.gmail.com>
  source: <pull.1132.v2.git.1645547423.gitgitgadget@gmail.com>
 
 
@@ -913,16 +949,16 @@ Release tarballs are available at:
  source: <pull.1212.v10.git.git.1645208594.gitgitgadget@gmail.com>
 
 
-* ar/submodule-update (2022-03-02) 13 commits
+* ar/submodule-update (2022-03-04) 13 commits
  - submodule--helper update-clone: check for --filter and --init
  - submodule update: add tests for --filter
+ - submodule--helper: remove ensure-core-worktree
  - submodule--helper update-clone: learn --init
  - submodule--helper: allow setting superprefix for init_submodule()
  - submodule--helper: refactor get_submodule_displaypath()
  - submodule--helper run-update-procedure: learn --remote
  - submodule--helper: don't use bitfield indirection for parse_options()
  - submodule--helper: get remote names from any repository
- - submodule--helper: remove ensure-core-worktree
  - submodule--helper run-update-procedure: remove --suboid
  - submodule--helper: reorganize code for sh to C conversion
  - submodule--helper: remove update-module-mode
@@ -930,8 +966,8 @@ Release tarballs are available at:
 
  Rewrite of "git submodule update" in C (early part).
 
- cf. <xmqqzgm690iu.fsf@gitster.g>
- source: <20220303005727.69270-1-chooglen@google.com>
+ Will merge to 'next'?
+ source: <20220305001401.20888-1-chooglen@google.com>
 
 
 * rj/receive-pack-abort-upon-disconnect (2022-01-28) 1 commit
@@ -1018,22 +1054,6 @@ Release tarballs are available at:
 
  Various cleanups to "git p4".
  source: <20220210164627.279520-1-jholdsworth@nvidia.com>
-
-
-* rs/bisect-executable-not-found (2022-01-19) 4 commits
-  (merged to 'next' on 2022-02-28 at c74bff7954)
- + bisect--helper: double-check run command on exit code 126 and 127
- + bisect: document run behavior with exit codes 126 and 127
- + bisect--helper: release strbuf and strvec on run error
- + bisect--helper: report actual bisect_state() argument on error
-
- A not-so-common mistake is to write a script to feed "git bisect
- run" without making it executable, in which case all tests will
- exit with 126 or 127 error codes, even on revisions that are marked
- as good.  Try to recognize this situation and stop iteration early.
-
- Will merge to 'master'.
- source: <fead25d6-6f5f-487a-ad4c-0657fe9785fd@www.fastmail.com>
 
 
 * en/present-despite-skipped (2022-03-01) 7 commits
@@ -1124,7 +1144,7 @@ Release tarballs are available at:
  cf. <xmqqbkyqupg6.fsf@gitster.g>
  source: <20220301002613.1459916-1-emilyshaffer@google.com>
 
-------------------------------------------------------------
+--------------------------------------------------
 [Discarded]
 
 * jc/parse-options-check (2022-03-01) 1 commit
