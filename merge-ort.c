@@ -727,13 +727,15 @@ static void add_flattened_path(struct strbuf *out, const char *s)
 			out->buf[i] = '_';
 }
 
-static char *unique_path(struct strmap *existing_paths,
+static char *unique_path(struct merge_options *opt,
 			 const char *path,
 			 const char *branch)
 {
+	char *ret = NULL;
 	struct strbuf newpath = STRBUF_INIT;
 	int suffix = 0;
 	size_t base_len;
+	struct strmap *existing_paths = &opt->priv->paths;
 
 	strbuf_addf(&newpath, "%s~", path);
 	add_flattened_path(&newpath, branch);
@@ -744,7 +746,11 @@ static char *unique_path(struct strmap *existing_paths,
 		strbuf_addf(&newpath, "_%d", suffix++);
 	}
 
-	return strbuf_detach(&newpath, NULL);
+	/* Track the new path in our memory pool */
+	ret = mem_pool_alloc(&opt->priv->pool, newpath.len + 1);
+	memcpy(ret, newpath.buf, newpath.len + 1);
+	strbuf_release(&newpath);
+	return ret;
 }
 
 /*** Function Grouping: functions related to collect_merge_info() ***/
@@ -3091,12 +3097,11 @@ static int detect_and_process_renames(struct merge_options *opt,
 				      struct tree *side1,
 				      struct tree *side2)
 {
-	struct diff_queue_struct combined;
+	struct diff_queue_struct combined = { 0 };
 	struct rename_info *renames = &opt->priv->renames;
-	int need_dir_renames, s, clean = 1;
+	int need_dir_renames, s, i, clean = 1;
 	unsigned detection_run = 0;
 
-	memset(&combined, 0, sizeof(combined));
 	if (!possible_renames(renames))
 		goto cleanup;
 
@@ -3180,13 +3185,9 @@ simple_cleanup:
 		free(renames->pairs[s].queue);
 		DIFF_QUEUE_CLEAR(&renames->pairs[s]);
 	}
-	if (combined.nr) {
-		int i;
-		for (i = 0; i < combined.nr; i++)
-			pool_diff_free_filepair(&opt->priv->pool,
-						combined.queue[i]);
-		free(combined.queue);
-	}
+	for (i = 0; i < combined.nr; i++)
+		pool_diff_free_filepair(&opt->priv->pool, combined.queue[i]);
+	free(combined.queue);
 
 	return clean;
 }
@@ -3684,7 +3685,7 @@ static void process_entry(struct merge_options *opt,
 		 */
 		df_file_index = (ci->dirmask & (1 << 1)) ? 2 : 1;
 		branch = (df_file_index == 1) ? opt->branch1 : opt->branch2;
-		path = unique_path(&opt->priv->paths, path, branch);
+		path = unique_path(opt, path, branch);
 		strmap_put(&opt->priv->paths, path, new_ci);
 
 		path_msg(opt, path, 0,
@@ -3809,14 +3810,12 @@ static void process_entry(struct merge_options *opt,
 			/* Insert entries into opt->priv_paths */
 			assert(rename_a || rename_b);
 			if (rename_a) {
-				a_path = unique_path(&opt->priv->paths,
-						     path, opt->branch1);
+				a_path = unique_path(opt, path, opt->branch1);
 				strmap_put(&opt->priv->paths, a_path, ci);
 			}
 
 			if (rename_b)
-				b_path = unique_path(&opt->priv->paths,
-						     path, opt->branch2);
+				b_path = unique_path(opt, path, opt->branch2);
 			else
 				b_path = path;
 			strmap_put(&opt->priv->paths, b_path, new_ci);
@@ -4204,7 +4203,7 @@ static int record_conflicted_index_entries(struct merge_options *opt)
 				struct stat st;
 
 				if (!lstat(path, &st)) {
-					char *new_name = unique_path(&opt->priv->paths,
+					char *new_name = unique_path(opt,
 								     path,
 								     "cruft");
 
@@ -4212,7 +4211,6 @@ static int record_conflicted_index_entries(struct merge_options *opt)
 						 _("Note: %s not up to date and in way of checking out conflicted version; old copy renamed to %s"),
 						 path, new_name);
 					errs |= rename(path, new_name);
-					free(new_name);
 				}
 				errs |= checkout_entry(ce, &state, NULL, NULL);
 			}
