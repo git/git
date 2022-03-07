@@ -600,7 +600,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 		OPT_BIT(0, "updateref", &flags,
 			N_("update the reference to the value of the top reflog entry"),
 			EXPIRE_REFLOGS_UPDATE_REF),
-		OPT_BOOL(0, "verbose", &verbose, N_("print extra information on screen.")),
+		OPT_BOOL(0, "verbose", &verbose, N_("print extra information on screen")),
 		OPT_CALLBACK_F(0, "expire", &cmd, N_("timestamp"),
 			       N_("prune entries older than the specified time"),
 			       PARSE_OPT_NONEG,
@@ -613,7 +613,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 			 N_("prune any reflog entries that point to broken commits")),
 		OPT_BOOL(0, "all", &do_all, N_("process the reflogs of all references")),
 		OPT_BOOL(1, "single-worktree", &all_worktrees,
-			 N_("limits processing to reflogs from the current worktree only.")),
+			 N_("limits processing to reflogs from the current worktree only")),
 		OPT_END()
 	};
 
@@ -736,7 +736,7 @@ static int cmd_reflog_delete(int argc, const char **argv, const char *prefix)
 		OPT_BIT(0, "updateref", &flags,
 			N_("update the reference to the value of the top reflog entry"),
 			EXPIRE_REFLOGS_UPDATE_REF),
-		OPT_BOOL(0, "verbose", &verbose, N_("print extra information on screen.")),
+		OPT_BOOL(0, "verbose", &verbose, N_("print extra information on screen")),
 		OPT_END()
 	};
 
