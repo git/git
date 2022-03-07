@@ -32,6 +32,17 @@ test_expect_success 'switch and detach' '
 	test_must_fail git symbolic-ref HEAD
 '
 
+test_expect_success 'suggestion to detach' '
+	test_must_fail git switch main^{commit} 2>stderr &&
+	grep "try again with the --detach option" stderr
+'
+
+test_expect_success 'suggestion to detach is suppressed with advice.suggestDetachingHead=false' '
+	test_config advice.suggestDetachingHead false &&
+	test_must_fail git switch main^{commit} 2>stderr &&
+	! grep "try again with the --detach option" stderr
+'
+
 test_expect_success 'switch and detach current branch' '
 	test_when_finished git switch main &&
 	git switch main &&
