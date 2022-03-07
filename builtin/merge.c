@@ -846,7 +846,9 @@ static void prepare_to_commit(struct commit_list *remoteheads)
 	const char *index_file = get_index_file();
 
 	if (!no_verify) {
-		if (run_commit_hook(0 < option_edit, index_file,
+		int invoked_hook;
+
+		if (run_commit_hook(0 < option_edit, index_file, &invoked_hook,
 				    "pre-merge-commit", NULL))
 			abort_commit(remoteheads, NULL);
 		/*
@@ -854,7 +856,7 @@ static void prepare_to_commit(struct commit_list *remoteheads)
 		 * and write it out as a tree.  We must do this before we invoke
 		 * the editor and after we invoke run_status above.
 		 */
-		if (hook_exists("pre-merge-commit"))
+		if (invoked_hook)
 			discard_cache();
 	}
 	read_cache_from(index_file);
@@ -878,7 +880,8 @@ static void prepare_to_commit(struct commit_list *remoteheads)
 		append_signoff(&msg, ignore_non_trailer(msg.buf, msg.len), 0);
 	write_merge_heads(remoteheads);
 	write_file_buf(git_path_merge_msg(the_repository), msg.buf, msg.len);
-	if (run_commit_hook(0 < option_edit, get_index_file(), "prepare-commit-msg",
+	if (run_commit_hook(0 < option_edit, get_index_file(), NULL,
+			    "prepare-commit-msg",
 			    git_path_merge_msg(the_repository), "merge", NULL))
 		abort_commit(remoteheads, NULL);
 	if (0 < option_edit) {
@@ -887,7 +890,7 @@ static void prepare_to_commit(struct commit_list *remoteheads)
 	}
 
 	if (!no_verify && run_commit_hook(0 < option_edit, get_index_file(),
-					  "commit-msg",
+					  NULL, "commit-msg",
 					  git_path_merge_msg(the_repository), NULL))
 		abort_commit(remoteheads, NULL);
 
