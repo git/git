@@ -1327,7 +1327,7 @@ static int do_create_stash(const struct pathspec *ps, struct strbuf *stash_msg_b
 
 	branch_ref = resolve_ref_unsafe("HEAD", 0, NULL, &flags);
 	if (flags & REF_ISSYMREF)
-		branch_name = strrchr(branch_ref, '/') + 1;
+		skip_prefix(branch_ref, "refs/heads/", &branch_name);
 	head_short_sha1 = find_unique_abbrev(&head_commit->object.oid,
 					     DEFAULT_ABBREV);
 	strbuf_addf(&msg, "%s: %s ", branch_name, head_short_sha1);
