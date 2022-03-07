@@ -86,7 +86,7 @@ do
 	fi
 	if test -s "$GIT_DIR/MERGE_RR"
 	then
-		git show -s --pretty=format:"Learning from %h %s" "$commit"
+		git --no-pager show -s --format="Learning from %h %s" "$commit"
 		git rerere
 		git checkout -q $commit -- .
 		git rerere
