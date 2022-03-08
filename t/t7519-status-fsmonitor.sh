@@ -324,17 +324,24 @@ test_expect_success UNTRACKED_CACHE 'ignore .git changes when invalidating UNTR'
 		cd dot-git &&
 		mkdir -p .git/hooks &&
 		: >tracked &&
+		test-tool chmtime =-60 tracked &&
 		: >modified &&
+		test-tool chmtime =-60 modified &&
 		mkdir dir1 &&
 		: >dir1/tracked &&
+		test-tool chmtime =-60 dir1/tracked &&
 		: >dir1/modified &&
+		test-tool chmtime =-60 dir1/modified &&
 		mkdir dir2 &&
 		: >dir2/tracked &&
+		test-tool chmtime =-60 dir2/tracked &&
 		: >dir2/modified &&
+		test-tool chmtime =-60 dir2/modified &&
 		write_integration_script &&
 		git config core.fsmonitor .git/hooks/fsmonitor-test &&
 		git update-index --untracked-cache &&
 		git update-index --fsmonitor &&
+		git status &&
 		GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace-before" \
 		git status &&
 		test-tool dump-untracked-cache >../before
