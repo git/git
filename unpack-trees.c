@@ -1360,6 +1360,42 @@ static int is_sparse_directory_entry(struct cache_entry *ce,
 	return sparse_dir_matches_path(ce, info, name);
 }
 
+static int unpack_sparse_callback(int n, unsigned long mask, unsigned long dirmask, struct name_entry *names, struct traverse_info *info)
+{
+	struct cache_entry *src[MAX_UNPACK_TREES + 1] = { NULL, };
+	struct unpack_trees_options *o = info->data;
+	int ret;
+
+	assert(o->merge);
+
+	/*
+	 * Unlike in 'unpack_callback', where src[0] is derived from the index when
+	 * merging, src[0] is a transient cache entry derived from the first tree
+	 * provided. Create the temporary entry as if it came from a non-sparse index.
+	 */
+	if (!is_null_oid(&names[0].oid)) {
+		src[0] = create_ce_entry(info, &names[0], 0,
+					&o->result, 1,
+					dirmask & (1ul << 0));
+		src[0]->ce_flags |= (CE_SKIP_WORKTREE | CE_NEW_SKIP_WORKTREE);
+	}
+
+	/*
+	 * 'unpack_single_entry' assumes that src[0] is derived directly from
+	 * the index, rather than from an entry in 'names'. This is *not* true when
+	 * merging a sparse directory, in which case names[0] is the "index" source
+	 * entry. To match the expectations of 'unpack_single_entry', shift past the
+	 * "index" tree (i.e., names[0]) and adjust 'names', 'n', 'mask', and
+	 * 'dirmask' accordingly.
+	 */
+	ret = unpack_single_entry(n - 1, mask >> 1, dirmask >> 1, src, names + 1, info);
+
+	if (src[0])
+		discard_cache_entry(src[0]);
+
+	return ret >= 0 ? mask : -1;
+}
+
 /*
  * Note that traverse_by_cache_tree() duplicates some logic in this function
  * without actually calling it. If you change the logic here you may need to
@@ -1693,6 +1729,41 @@ static void populate_from_existing_patterns(struct unpack_trees_options *o,
 		o->pl = pl;
 }
 
+static void update_sparsity_for_prefix(const char *prefix,
+				       struct index_state *istate)
+{
+	int prefix_len = strlen(prefix);
+	struct strbuf ce_prefix = STRBUF_INIT;
+
+	if (!istate->sparse_index)
+		return;
+
+	while (prefix_len > 0 && prefix[prefix_len - 1] == '/')
+		prefix_len--;
+
+	if (prefix_len <= 0)
+		BUG("Invalid prefix passed to update_sparsity_for_prefix");
+
+	strbuf_grow(&ce_prefix, prefix_len + 1);
+	strbuf_add(&ce_prefix, prefix, prefix_len);
+	strbuf_addch(&ce_prefix, '/');
+
+	/*
+	 * If the prefix points to a sparse directory or a path inside a sparse
+	 * directory, the index should be expanded. This is accomplished in one
+	 * of two ways:
+	 * - if the prefix is inside a sparse directory, it will be expanded by
+	 *   the 'ensure_full_index(...)' call in 'index_name_pos(...)'.
+	 * - if the prefix matches an existing sparse directory entry,
+	 *   'index_name_pos(...)' will return its index position, triggering
+	 *   the 'ensure_full_index(...)' below.
+	 */
+	if (!path_in_cone_mode_sparse_checkout(ce_prefix.buf, istate) &&
+	    index_name_pos(istate, ce_prefix.buf, ce_prefix.len) >= 0)
+		ensure_full_index(istate);
+
+	strbuf_release(&ce_prefix);
+}
 
 static int verify_absent(const struct cache_entry *,
 			 enum unpack_trees_error_types,
@@ -1738,6 +1809,9 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		o->dir->flags |= DIR_SHOW_IGNORED;
 		setup_standard_excludes(o->dir);
 	}
+
+	if (o->prefix)
+		update_sparsity_for_prefix(o->prefix, o->src_index);
 
 	if (!core_apply_sparse_checkout || !o->update)
 		o->skip_sparse_checkout = 1;
@@ -2436,6 +2510,37 @@ static int merged_entry(const struct cache_entry *ce,
 	return 1;
 }
 
+static int merged_sparse_dir(const struct cache_entry * const *src, int n,
+			     struct unpack_trees_options *o)
+{
+	struct tree_desc t[MAX_UNPACK_TREES + 1];
+	void * tree_bufs[MAX_UNPACK_TREES + 1];
+	struct traverse_info info;
+	int i, ret;
+
+	/*
+	 * Create the tree traversal information for traversing into *only* the
+	 * sparse directory.
+	 */
+	setup_traverse_info(&info, src[0]->name);
+	info.fn = unpack_sparse_callback;
+	info.data = o;
+	info.show_all_errors = o->show_all_errors;
+	info.pathspec = o->pathspec;
+
+	/* Get the tree descriptors of the sparse directory in each of the merging trees */
+	for (i = 0; i < n; i++)
+		tree_bufs[i] = fill_tree_descriptor(o->src_index->repo, &t[i],
+						    src[i] && !is_null_oid(&src[i]->oid) ? &src[i]->oid : NULL);
+
+	ret = traverse_trees(o->src_index, n, t, &info);
+
+	for (i = 0; i < n; i++)
+		free(tree_bufs[i]);
+
+	return ret;
+}
+
 static int deleted_entry(const struct cache_entry *ce,
 			 const struct cache_entry *old,
 			 struct unpack_trees_options *o)
@@ -2540,16 +2645,24 @@ int threeway_merge(const struct cache_entry * const *stages,
 	 */
 	/* #14, #14ALT, #2ALT */
 	if (remote && !df_conflict_head && head_match && !remote_match) {
-		if (index && !same(index, remote) && !same(index, head))
-			return reject_merge(index, o);
+		if (index && !same(index, remote) && !same(index, head)) {
+			if (S_ISSPARSEDIR(index->ce_mode))
+				return merged_sparse_dir(stages, 4, o);
+			else
+				return reject_merge(index, o);
+		}
 		return merged_entry(remote, index, o);
 	}
 	/*
 	 * If we have an entry in the index cache, then we want to
 	 * make sure that it matches head.
 	 */
-	if (index && !same(index, head))
-		return reject_merge(index, o);
+	if (index && !same(index, head)) {
+		if (S_ISSPARSEDIR(index->ce_mode))
+			return merged_sparse_dir(stages, 4, o);
+		else
+			return reject_merge(index, o);
+	}
 
 	if (head) {
 		/* #5ALT, #15 */
@@ -2611,11 +2724,21 @@ int threeway_merge(const struct cache_entry * const *stages,
 
 	}
 
-	/* Below are "no merge" cases, which require that the index be
-	 * up-to-date to avoid the files getting overwritten with
-	 * conflict resolution files.
-	 */
+	/* Handle "no merge" cases (see t/t1000-read-tree-m-3way.sh) */
 	if (index) {
+		/*
+		 * If we've reached the "no merge" cases and we're merging
+		 * a sparse directory, we may have an "edit/edit" conflict that
+		 * can be resolved by individually merging directory contents.
+		 */
+		if (S_ISSPARSEDIR(index->ce_mode))
+			return merged_sparse_dir(stages, 4, o);
+
+		/*
+		 * If we're not merging a sparse directory, ensure the index is
+		 * up-to-date to avoid files getting overwritten with conflict
+		 * resolution files
+		 */
 		if (verify_uptodate(index, o))
 			return -1;
 	}
@@ -2706,6 +2829,14 @@ int twoway_merge(const struct cache_entry * const *src,
 			 * reject the merge instead.
 			 */
 			return merged_entry(newtree, current, o);
+		} else if (S_ISSPARSEDIR(current->ce_mode)) {
+			/*
+			 * The sparse directories differ, but we don't know whether that's
+			 * because of two different files in the directory being modified
+			 * (can be trivially merged) or if there is a real file conflict.
+			 * Merge the sparse directory by OID to compare file-by-file.
+			 */
+			return merged_sparse_dir(src, 3, o);
 		} else
 			return reject_merge(current, o);
 	}
