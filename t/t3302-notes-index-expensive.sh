@@ -8,7 +8,6 @@ test_description='Test commit notes index (expensive!)'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 create_repo () {
@@ -65,7 +64,8 @@ create_repo () {
 test_notes () {
 	count=$1 &&
 	git config core.notesRef refs/notes/commits &&
-	git log | grep "^    " >output &&
+	git log >tmp &&
+	grep "^    " tmp >output &&
 	i=$count &&
 	while test $i -gt 0
 	do
@@ -90,7 +90,7 @@ write_script time_notes <<\EOF
 			unset GIT_NOTES_REF
 			;;
 		esac
-		git log
+		git log || exit $?
 		i=$(($i+1))
 	done >/dev/null
 EOF

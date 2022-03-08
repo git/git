@@ -21,14 +21,20 @@ test_expect_success 'first branch switch' '
 	git checkout other
 '
 
+test_cmp_symbolic_HEAD_ref () {
+	echo refs/heads/"$1" >expect &&
+	git symbolic-ref HEAD >actual &&
+	test_cmp expect actual
+}
+
 test_expect_success '"checkout -" switches back' '
 	git checkout - &&
-	test "z$(git symbolic-ref HEAD)" = "zrefs/heads/main"
+	test_cmp_symbolic_HEAD_ref main
 '
 
 test_expect_success '"checkout -" switches forth' '
 	git checkout - &&
-	test "z$(git symbolic-ref HEAD)" = "zrefs/heads/other"
+	test_cmp_symbolic_HEAD_ref other
 '
 
 test_expect_success 'detach HEAD' '
@@ -37,12 +43,16 @@ test_expect_success 'detach HEAD' '
 
 test_expect_success '"checkout -" attaches again' '
 	git checkout - &&
-	test "z$(git symbolic-ref HEAD)" = "zrefs/heads/other"
+	test_cmp_symbolic_HEAD_ref other
 '
 
 test_expect_success '"checkout -" detaches again' '
 	git checkout - &&
-	test "z$(git rev-parse HEAD)" = "z$(git rev-parse other)" &&
+
+	git rev-parse other >expect &&
+	git rev-parse HEAD >actual &&
+	test_cmp expect actual &&
+
 	test_must_fail git symbolic-ref HEAD
 '
 
@@ -63,31 +73,31 @@ more_switches () {
 test_expect_success 'switch to the last' '
 	more_switches &&
 	git checkout @{-1} &&
-	test "z$(git symbolic-ref HEAD)" = "zrefs/heads/branch2"
+	test_cmp_symbolic_HEAD_ref branch2
 '
 
 test_expect_success 'switch to second from the last' '
 	more_switches &&
 	git checkout @{-2} &&
-	test "z$(git symbolic-ref HEAD)" = "zrefs/heads/branch3"
+	test_cmp_symbolic_HEAD_ref branch3
 '
 
 test_expect_success 'switch to third from the last' '
 	more_switches &&
 	git checkout @{-3} &&
-	test "z$(git symbolic-ref HEAD)" = "zrefs/heads/branch4"
+	test_cmp_symbolic_HEAD_ref branch4
 '
 
 test_expect_success 'switch to fourth from the last' '
 	more_switches &&
 	git checkout @{-4} &&
-	test "z$(git symbolic-ref HEAD)" = "zrefs/heads/branch5"
+	test_cmp_symbolic_HEAD_ref branch5
 '
 
 test_expect_success 'switch to twelfth from the last' '
 	more_switches &&
 	git checkout @{-12} &&
-	test "z$(git symbolic-ref HEAD)" = "zrefs/heads/branch13"
+	test_cmp_symbolic_HEAD_ref branch13
 '
 
 test_expect_success 'merge base test setup' '
@@ -98,19 +108,28 @@ test_expect_success 'merge base test setup' '
 test_expect_success 'another...main' '
 	git checkout another &&
 	git checkout another...main &&
-	test "z$(git rev-parse --verify HEAD)" = "z$(git rev-parse --verify main^)"
+
+	git rev-parse --verify main^ >expect &&
+	git rev-parse --verify HEAD >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success '...main' '
 	git checkout another &&
 	git checkout ...main &&
-	test "z$(git rev-parse --verify HEAD)" = "z$(git rev-parse --verify main^)"
+
+	git rev-parse --verify main^ >expect &&
+	git rev-parse --verify HEAD >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'main...' '
 	git checkout another &&
 	git checkout main... &&
-	test "z$(git rev-parse --verify HEAD)" = "z$(git rev-parse --verify main^)"
+
+	git rev-parse --verify main^ >expect &&
+	git rev-parse --verify HEAD >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success '"checkout -" works after a rebase A' '
@@ -118,7 +137,7 @@ test_expect_success '"checkout -" works after a rebase A' '
 	git checkout other &&
 	git rebase main &&
 	git checkout - &&
-	test "z$(git symbolic-ref HEAD)" = "zrefs/heads/main"
+	test_cmp_symbolic_HEAD_ref main
 '
 
 test_expect_success '"checkout -" works after a rebase A B' '
@@ -127,7 +146,7 @@ test_expect_success '"checkout -" works after a rebase A B' '
 	git checkout other &&
 	git rebase main moodle &&
 	git checkout - &&
-	test "z$(git symbolic-ref HEAD)" = "zrefs/heads/main"
+	test_cmp_symbolic_HEAD_ref main
 '
 
 test_expect_success '"checkout -" works after a rebase -i A' '
@@ -135,7 +154,7 @@ test_expect_success '"checkout -" works after a rebase -i A' '
 	git checkout other &&
 	git rebase -i main &&
 	git checkout - &&
-	test "z$(git symbolic-ref HEAD)" = "zrefs/heads/main"
+	test_cmp_symbolic_HEAD_ref main
 '
 
 test_expect_success '"checkout -" works after a rebase -i A B' '
@@ -144,7 +163,7 @@ test_expect_success '"checkout -" works after a rebase -i A B' '
 	git checkout other &&
 	git rebase main foodle &&
 	git checkout - &&
-	test "z$(git symbolic-ref HEAD)" = "zrefs/heads/main"
+	test_cmp_symbolic_HEAD_ref main
 '
 
 test_done

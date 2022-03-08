@@ -12,7 +12,9 @@ note () {
 }
 
 unnote () {
-	git name-rev --tags --annotate-stdin | sed -e "s|$OID_REGEX (tags/\([^)]*\)) |\1 |g"
+	test_when_finished "rm -f tmp" &&
+	git name-rev --tags --annotate-stdin >tmp &&
+	sed -e "s|$OID_REGEX (tags/\([^)]*\)) |\1 |g" <tmp
 }
 
 #
@@ -111,8 +113,8 @@ check_outcome () {
 	shift &&
 	param="$*" &&
 	test_expect_$outcome "log $param" '
-		git log --pretty="$FMT" --parents $param |
-		unnote >actual &&
+		git log --pretty="$FMT" --parents $param >out &&
+		unnote >actual <out &&
 		sed -e "s/^.*	\([^ ]*\) .*/\1/" >check <actual &&
 		test_cmp expect check
 	'
@@ -151,8 +153,8 @@ check_result 'L K I H G B' --exclude-first-parent-only --first-parent L ^F
 check_result 'E C B A' --full-history E -- lost
 test_expect_success 'full history simplification without parent' '
 	printf "%s\n" E C B A >expect &&
-	git log --pretty="$FMT" --full-history E -- lost |
-	unnote >actual &&
+	git log --pretty="$FMT" --full-history E -- lost >out &&
+	unnote >actual <out &&
 	sed -e "s/^.*	\([^ ]*\) .*/\1/" >check <actual &&
 	test_cmp expect check
 '
