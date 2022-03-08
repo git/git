@@ -18,6 +18,18 @@ struct run_hooks_opt
 	 * translates to "struct child_process"'s "dir" member.
 	 */
 	const char *dir;
+
+	/**
+	 * A pointer which if provided will be set to 1 or 0 depending
+	 * on if a hook was started, regardless of whether or not that
+	 * was successful. I.e. if the underlying start_command() was
+	 * successful this will be set to 1.
+	 *
+	 * Used for avoiding TOCTOU races in code that would otherwise
+	 * call hook_exist() after a "maybe hook run" to see if a hook
+	 * was invoked.
+	 */
+	int *invoked_hook;
 };
 
 #define RUN_HOOKS_OPT_INIT { \
