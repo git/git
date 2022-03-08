@@ -194,6 +194,11 @@ int fsm_settings__error_if_incompatible(struct repository *r)
 		error(_("virtual repository '%s' is incompatible with fsmonitor"),
 		      r->worktree);
 		return 1;
+
+	case FSMONITOR_REASON_NOSOCKETS:
+		error(_("repository '%s' is incompatible with fsmonitor due to lack of Unix sockets"),
+		      r->worktree);
+		return 1;
 	}
 
 	BUG("Unhandled case in fsm_settings__error_if_incompatible: '%d'",
