@@ -34,7 +34,7 @@ EOF
 #
 # This will check that gitweb HTTP header contains proposed filename
 # as <basename> with '.tar' suffix added, and that generated tarfile
-# (gitweb message body) has <prefix> as prefix for al files in tarfile
+# (gitweb message body) has <prefix> as prefix for all files in tarfile
 #
 # <prefix> default to <basename>
 check_snapshot () {
