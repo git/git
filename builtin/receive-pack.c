@@ -813,13 +813,14 @@ static int run_and_feed_hook(const char *hook_name, feed_fn feed,
 	proc.trace2_hook_name = hook_name;
 
 	if (feed_state->push_options) {
-		int i;
+		size_t i;
 		for (i = 0; i < feed_state->push_options->nr; i++)
 			strvec_pushf(&proc.env_array,
-				     "GIT_PUSH_OPTION_%d=%s", i,
+				     "GIT_PUSH_OPTION_%"PRIuMAX"=%s",
+				     (uintmax_t)i,
 				     feed_state->push_options->items[i].string);
-		strvec_pushf(&proc.env_array, "GIT_PUSH_OPTION_COUNT=%d",
-			     feed_state->push_options->nr);
+		strvec_pushf(&proc.env_array, "GIT_PUSH_OPTION_COUNT=%"PRIuMAX"",
+			     (uintmax_t)feed_state->push_options->nr);
 	} else
 		strvec_pushf(&proc.env_array, "GIT_PUSH_OPTION_COUNT");
 

@@ -4064,8 +4064,8 @@ static void process_entries(struct merge_options *opt,
 	trace2_region_enter("merge", "process_entries cleanup", opt->repo);
 	if (dir_metadata.offsets.nr != 1 ||
 	    (uintptr_t)dir_metadata.offsets.items[0].util != 0) {
-		printf("dir_metadata.offsets.nr = %d (should be 1)\n",
-		       dir_metadata.offsets.nr);
+		printf("dir_metadata.offsets.nr = %"PRIuMAX" (should be 1)\n",
+		       (uintmax_t)dir_metadata.offsets.nr);
 		printf("dir_metadata.offsets.items[0].util = %u (should be 0)\n",
 		       (unsigned)(uintptr_t)dir_metadata.offsets.items[0].util);
 		fflush(stdout);
