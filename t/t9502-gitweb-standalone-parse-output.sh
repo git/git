@@ -207,4 +207,17 @@ test_expect_success 'xss checks' '
 	xss "" "$TAG+"
 '
 
+no_http_equiv_content_type() {
+	gitweb_run "$@" &&
+	! grep -E "http-equiv=['\"]?content-type" gitweb.body
+}
+
+# See: <https://html.spec.whatwg.org/dev/semantics.html#attr-meta-http-equiv-content-type>
+test_expect_success 'no http-equiv="content-type" in XHTML' '
+	no_http_equiv_content_type &&
+	no_http_equiv_content_type "p=.git" &&
+	no_http_equiv_content_type "p=.git;a=log" &&
+	no_http_equiv_content_type "p=.git;a=tree"
+'
+
 test_done
