@@ -1673,6 +1673,23 @@ int refs_read_raw_ref(struct ref_store *ref_store, const char *refname,
 					   type, failure_errno);
 }
 
+int refs_read_symbolic_ref(struct ref_store *ref_store, const char *refname,
+			   struct strbuf *referent)
+{
+	struct object_id oid;
+	int ret, failure_errno = 0;
+	unsigned int type = 0;
+
+	if (ref_store->be->read_symbolic_ref)
+		return ref_store->be->read_symbolic_ref(ref_store, refname, referent);
+
+	ret = refs_read_raw_ref(ref_store, refname, &oid, referent, &type, &failure_errno);
+	if (ret || !(type & REF_ISSYMREF))
+		return -1;
+
+	return 0;
+}
+
 const char *refs_resolve_ref_unsafe(struct ref_store *refs,
 				    const char *refname,
 				    int resolve_flags,

@@ -82,6 +82,9 @@ int read_ref_full(const char *refname, int resolve_flags,
 		  struct object_id *oid, int *flags);
 int read_ref(const char *refname, struct object_id *oid);
 
+int refs_read_symbolic_ref(struct ref_store *ref_store, const char *refname,
+			   struct strbuf *referent);
+
 /*
  * Return 0 if a reference named refname could be created without
  * conflicting with the name of an existing reference. Otherwise,
