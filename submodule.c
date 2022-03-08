@@ -1415,32 +1415,6 @@ static const struct submodule *get_non_gitmodules_submodule(const char *path)
 	return (const struct submodule *) ret;
 }
 
-static struct fetch_task *fetch_task_create(struct repository *r,
-					    const char *path,
-					    const struct object_id *treeish_name)
-{
-	struct fetch_task *task = xmalloc(sizeof(*task));
-	memset(task, 0, sizeof(*task));
-
-	task->sub = submodule_from_path(r, treeish_name, path);
-	if (!task->sub) {
-		/*
-		 * No entry in .gitmodules? Technically not a submodule,
-		 * but historically we supported repositories that happen to be
-		 * in-place where a gitlink is. Keep supporting them.
-		 */
-		task->sub = get_non_gitmodules_submodule(path);
-		if (!task->sub) {
-			free(task);
-			return NULL;
-		}
-
-		task->free_sub = 1;
-	}
-
-	return task;
-}
-
 static void fetch_task_release(struct fetch_task *p)
 {
 	if (p->free_sub)
@@ -1467,6 +1441,57 @@ static struct repository *get_submodule_repo_for(struct repository *r,
 	return ret;
 }
 
+static struct fetch_task *fetch_task_create(struct submodule_parallel_fetch *spf,
+					    const char *path,
+					    const struct object_id *treeish_name)
+{
+	struct fetch_task *task = xmalloc(sizeof(*task));
+	memset(task, 0, sizeof(*task));
+
+	task->sub = submodule_from_path(spf->r, treeish_name, path);
+
+	if (!task->sub) {
+		/*
+		 * No entry in .gitmodules? Technically not a submodule,
+		 * but historically we supported repositories that happen to be
+		 * in-place where a gitlink is. Keep supporting them.
+		 */
+		task->sub = get_non_gitmodules_submodule(path);
+		if (!task->sub)
+			goto cleanup;
+
+		task->free_sub = 1;
+	}
+
+	switch (get_fetch_recurse_config(task->sub, spf))
+	{
+	default:
+	case RECURSE_SUBMODULES_DEFAULT:
+	case RECURSE_SUBMODULES_ON_DEMAND:
+		if (!task->sub ||
+			!string_list_lookup(
+				&spf->changed_submodule_names,
+				task->sub->name))
+			goto cleanup;
+		task->default_argv = "on-demand";
+		break;
+	case RECURSE_SUBMODULES_ON:
+		task->default_argv = "yes";
+		break;
+	case RECURSE_SUBMODULES_OFF:
+		goto cleanup;
+	}
+
+	task->repo = get_submodule_repo_for(spf->r, path, treeish_name);
+
+	return task;
+
+ cleanup:
+	fetch_task_release(task);
+	free(task);
+	return NULL;
+}
+
 static struct fetch_task *
 get_fetch_task(struct submodule_parallel_fetch *spf, struct strbuf *err)
 {
@@ -1477,30 +1502,10 @@ get_fetch_task(struct submodule_parallel_fetch *spf, struct strbuf *err)
 		if (!S_ISGITLINK(ce->ce_mode))
 			continue;
 
-		task = fetch_task_create(spf->r, ce->name, null_oid());
+		task = fetch_task_create(spf, ce->name, null_oid());
 		if (!task)
 			continue;
 
-		switch (get_fetch_recurse_config(task->sub, spf))
-		{
-		default:
-		case RECURSE_SUBMODULES_DEFAULT:
-		case RECURSE_SUBMODULES_ON_DEMAND:
-			if (!task->sub ||
-			    !string_list_lookup(
-					&spf->changed_submodule_names,
-					task->sub->name))
-				continue;
-			task->default_argv = "on-demand";
-			break;
-		case RECURSE_SUBMODULES_ON:
-			task->default_argv = "yes";
-			break;
-		case RECURSE_SUBMODULES_OFF:
-			continue;
-		}
-
-		task->repo = get_submodule_repo_for(spf->r, task->sub->path, null_oid());
 		if (task->repo) {
 			if (!spf->quiet)
 				strbuf_addf(err, _("Fetching submodule %s%s\n"),
