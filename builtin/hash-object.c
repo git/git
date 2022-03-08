@@ -25,7 +25,7 @@ static int hash_literally(struct object_id *oid, int fd, const char *type, unsig
 	if (strbuf_read(&buf, fd, 4096) < 0)
 		ret = -1;
 	else
-		ret = hash_object_file_literally(buf.buf, buf.len, type, oid,
+		ret = write_object_file_literally(buf.buf, buf.len, type, oid,
 						 flags);
 	strbuf_release(&buf);
 	return ret;
