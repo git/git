@@ -205,15 +205,18 @@ test_expect_success 'attribute test: read paths from stdin' '
 test_expect_success 'attribute test: --all option' '
 	grep -v unspecified <expect-all | sort >specified-all &&
 	sed -e "s/:.*//" <expect-all | uniq >stdin-all &&
-	git check-attr --stdin --all <stdin-all | sort >actual &&
+	git check-attr --stdin --all <stdin-all >tmp &&
+	sort tmp >actual &&
 	test_cmp specified-all actual
 '
 
 test_expect_success 'attribute test: --cached option' '
-	git check-attr --cached --stdin --all <stdin-all | sort >actual &&
+	git check-attr --cached --stdin --all <stdin-all >tmp &&
+	sort tmp >actual &&
 	test_must_be_empty actual &&
 	git add .gitattributes a/.gitattributes a/b/.gitattributes &&
-	git check-attr --cached --stdin --all <stdin-all | sort >actual &&
+	git check-attr --cached --stdin --all <stdin-all >tmp &&
+	sort tmp >actual &&
 	test_cmp specified-all actual
 '
 
