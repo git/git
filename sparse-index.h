@@ -5,6 +5,7 @@ struct index_state;
 #define SPARSE_INDEX_MEMORY_ONLY (1 << 0)
 int convert_to_sparse(struct index_state *istate, int flags);
 void ensure_correct_sparsity(struct index_state *istate);
+void clear_skip_worktree_from_present_files(struct index_state *istate);
 
 /*
  * Some places in the codebase expect to search for a specific path.

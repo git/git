@@ -375,9 +375,14 @@ have finished your work-in-progress), attempt the merge again.
 SPARSE CHECKOUT
 ---------------
 
+Note: The `update-index` and `read-tree` primitives for supporting the
+skip-worktree bit predated the introduction of
+linkgit:git-sparse-checkout[1].  Users are encouraged to use
+`sparse-checkout` in preference to these low-level primitives.
+
 "Sparse checkout" allows populating the working directory sparsely.
-It uses the skip-worktree bit (see linkgit:git-update-index[1]) to tell
-Git whether a file in the working directory is worth looking at.
+It uses the skip-worktree bit (see linkgit:git-update-index[1]) to
+tell Git whether a file in the working directory is worth looking at.
 
 'git read-tree' and other merge-based commands ('git merge', 'git
 checkout'...) can help maintaining the skip-worktree bitmap and working
@@ -385,7 +390,8 @@ directory update. `$GIT_DIR/info/sparse-checkout` is used to
 define the skip-worktree reference bitmap. When 'git read-tree' needs
 to update the working directory, it resets the skip-worktree bit in the index
 based on this file, which uses the same syntax as .gitignore files.
-If an entry matches a pattern in this file, skip-worktree will not be
+If an entry matches a pattern in this file, or the entry corresponds to
+a file present in the working tree, then skip-worktree will not be
 set on that entry. Otherwise, skip-worktree will be set.
 
 Then it compares the new skip-worktree value with the previous one. If

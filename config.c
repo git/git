@@ -1654,6 +1654,17 @@ static int git_default_core_config(const char *var, const char *value, void *cb)
 	return platform_core_config(var, value, cb);
 }
 
+static int git_default_sparse_config(const char *var, const char *value)
+{
+	if (!strcmp(var, "sparse.expectfilesoutsideofpatterns")) {
+		sparse_expect_files_outside_of_patterns = git_config_bool(var, value);
+		return 0;
+	}
+
+	/* Add other config variables here and to Documentation/config/sparse.txt. */
+	return 0;
+}
+
 static int git_default_i18n_config(const char *var, const char *value)
 {
 	if (!strcmp(var, "i18n.commitencoding"))
@@ -1784,6 +1795,9 @@ int git_default_config(const char *var, const char *value, void *cb)
 		pack_compression_seen = 1;
 		return 0;
 	}
+
+	if (starts_with(var, "sparse."))
+		return git_default_sparse_config(var, value);
 
 	/* Add other config variables here and to Documentation/config.txt. */
 	return 0;

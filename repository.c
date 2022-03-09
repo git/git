@@ -301,6 +301,13 @@ int repo_read_index(struct repository *repo)
 	if (repo->settings.command_requires_full_index)
 		ensure_full_index(repo->index);
 
+	/*
+	 * If sparse checkouts are in use, check whether paths with the
+	 * SKIP_WORKTREE attribute are missing from the worktree; if not,
+	 * clear that attribute for that path.
+	 */
+	clear_skip_worktree_from_present_files(repo->index);
+
 	return res;
 }
 
