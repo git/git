@@ -397,18 +397,9 @@ void trace2_region_enter_printf_fl(const char *file, int line,
 				   const struct repository *repo,
 				   const char *fmt, ...);
 
-#ifdef HAVE_VARIADIC_MACROS
 #define trace2_region_enter_printf(category, label, repo, ...)                 \
 	trace2_region_enter_printf_fl(__FILE__, __LINE__, (category), (label), \
 				      (repo), __VA_ARGS__)
-#else
-/* clang-format off */
-__attribute__((format (region_enter_printf, 4, 5)))
-void trace2_region_enter_printf(const char *category, const char *label,
-				const struct repository *repo, const char *fmt,
-				...);
-/* clang-format on */
-#endif
 
 /**
  * Emit a 'region_leave' event for <category>.<label> with optional
@@ -442,18 +433,9 @@ void trace2_region_leave_printf_fl(const char *file, int line,
 				   const struct repository *repo,
 				   const char *fmt, ...);
 
-#ifdef HAVE_VARIADIC_MACROS
 #define trace2_region_leave_printf(category, label, repo, ...)                 \
 	trace2_region_leave_printf_fl(__FILE__, __LINE__, (category), (label), \
 				      (repo), __VA_ARGS__)
-#else
-/* clang-format off */
-__attribute__((format (region_leave_printf, 4, 5)))
-void trace2_region_leave_printf(const char *category, const char *label,
-				const struct repository *repo, const char *fmt,
-				...);
-/* clang-format on */
-#endif
 
 /**
  * Emit a key-value pair 'data' event of the form <category>.<key> = <value>.
@@ -506,14 +488,7 @@ void trace2_printf_va_fl(const char *file, int line, const char *fmt,
 
 void trace2_printf_fl(const char *file, int line, const char *fmt, ...);
 
-#ifdef HAVE_VARIADIC_MACROS
 #define trace2_printf(...) trace2_printf_fl(__FILE__, __LINE__, __VA_ARGS__)
-#else
-/* clang-format off */
-__attribute__((format (printf, 1, 2)))
-void trace2_printf(const char *fmt, ...);
-/* clang-format on */
-#endif
 
 /*
  * Optional platform-specific code to dump information about the
