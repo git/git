@@ -11,7 +11,7 @@
 #include "run-command.h"
 #include "refs.h"
 #include "strvec.h"
-
+#include "list-objects-filter-options.h"
 
 static const char v2_bundle_signature[] = "# v2 git bundle\n";
 static const char v3_bundle_signature[] = "# v3 git bundle\n";
@@ -33,6 +33,7 @@ void bundle_header_release(struct bundle_header *header)
 {
 	string_list_clear(&header->prerequisites, 1);
 	string_list_clear(&header->references, 1);
+	list_objects_filter_release(&header->filter);
 }
 
 static int parse_capability(struct bundle_header *header, const char *capability)
@@ -43,6 +44,10 @@ static int parse_capability(struct bundle_header *header, const char *capability
 		if (algo == GIT_HASH_UNKNOWN)
 			return error(_("unrecognized bundle hash algorithm: %s"), arg);
 		header->hash_algo = &hash_algos[algo];
+		return 0;
+	}
+	if (skip_prefix(capability, "filter=", &arg)) {
+		parse_list_objects_filter(&header->filter, arg);
 		return 0;
 	}
 	return error(_("unknown capability '%s'"), capability);
@@ -220,6 +225,8 @@ int verify_bundle(struct repository *r,
 	req_nr = revs.pending.nr;
 	setup_revisions(2, argv, &revs, NULL);
 
+	list_objects_filter_copy(&revs.filter, &header->filter);
+
 	if (prepare_revision_walk(&revs))
 		die(_("revision walk setup failed"));
 
@@ -259,6 +266,12 @@ int verify_bundle(struct repository *r,
 			     r->nr),
 			  r->nr);
 		list_refs(r, 0, NULL);
+
+		if (header->filter.choice) {
+			printf_ln("The bundle uses this filter: %s",
+				  list_objects_filter_spec(&header->filter));
+		}
+
 		r = &header->prerequisites;
 		if (!r->nr) {
 			printf_ln(_("The bundle records a complete history."));
