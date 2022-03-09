@@ -516,6 +516,8 @@ then
 	}
 else
 	setup_malloc_check () {
+		local g
+		local t
 		MALLOC_CHECK_=3	MALLOC_PERTURB_=165
 		export MALLOC_CHECK_ MALLOC_PERTURB_
 		if _GLIBC_VERSION=$(getconf GNU_LIBC_VERSION 2>/dev/null) &&
