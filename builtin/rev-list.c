@@ -591,17 +591,6 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 			show_progress = arg;
 			continue;
 		}
-
-		if (skip_prefix(arg, ("--" CL_ARG__FILTER "="), &arg)) {
-			parse_list_objects_filter(&revs.filter, arg);
-			if (revs.filter.choice && !revs.blob_objects)
-				die(_("object filtering requires --objects"));
-			continue;
-		}
-		if (!strcmp(arg, ("--no-" CL_ARG__FILTER))) {
-			list_objects_filter_set_no_filter(&revs.filter);
-			continue;
-		}
 		if (!strcmp(arg, "--filter-provided-objects")) {
 			filter_provided_objects = 1;
 			continue;
