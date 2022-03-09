@@ -132,4 +132,8 @@ void partial_clone_get_default_filter_spec(
 	struct list_objects_filter_options *filter_options,
 	const char *remote);
 
+void list_objects_filter_copy(
+	struct list_objects_filter_options *dest,
+	const struct list_objects_filter_options *src);
+
 #endif /* LIST_OBJECTS_FILTER_OPTIONS_H */

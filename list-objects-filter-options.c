@@ -415,3 +415,22 @@ void partial_clone_get_default_filter_spec(
 					 &errbuf);
 	strbuf_release(&errbuf);
 }
+
+void list_objects_filter_copy(
+	struct list_objects_filter_options *dest,
+	const struct list_objects_filter_options *src)
+{
+	int i;
+	struct string_list_item *item;
+
+	/* Copy everything. We will overwrite the pointers shortly. */
+	memcpy(dest, src, sizeof(struct list_objects_filter_options));
+
+	string_list_init_dup(&dest->filter_spec);
+	for_each_string_list_item(item, &src->filter_spec)
+		string_list_append(&dest->filter_spec, item->string);
+
+	ALLOC_ARRAY(dest->sub, dest->sub_alloc);
+	for (i = 0; i < src->sub_nr; i++)
+		list_objects_filter_copy(&dest->sub[i], &src->sub[i]);
+}
