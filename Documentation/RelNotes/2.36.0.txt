@@ -16,7 +16,13 @@ Backward compatibility warts
 
 Note to those who build from the source
 
- *
+ * Since Git 2.31, our source assumed that the compiler you use to
+   build Git supports variadic macros, with an easy-to-use escape
+   hatch to allow compilation without variadic macros with an request
+   to report that you had to use the escape hatch to the list.
+   Because we haven't heard from anybody who actually needed to use
+   the escape hatch, it has been removed, making support of variadic
+   macros a hard requirement.
 
 
 UI, Workflows & Features
@@ -51,6 +57,15 @@ UI, Workflows & Features
 
  * The error message given by "git switch HEAD~4" has been clarified
    to suggest the "--detach" option that is required.
+
+ * In sparse-checkouts, files mis-marked as missing from the working tree
+   could lead to later problems.  Such files were hard to discover, and
+   harder to correct.  Automatically detecting and correcting the marking
+   of such files has been added to avoid these problems.
+
+ * "git cat-file" learns "--batch-command" mode, which is a more
+   flexible interface than the existing "--batch" or "--batch-check"
+   modes, to allow different kinds of inquiries made.
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -89,6 +104,17 @@ Performance, Internal Implementation, Development Support etc.
 
  * Use designated initializers we started using in mid 2017 in more
    parts of the codebase that are relatively quiescent.
+
+ * Improve failure case behaviour of xdiff library when memory
+   allocation fails.
+
+ * General clean-up in reftable implementation, including
+   clarification of the API documentation, tightening the code to
+   honor documented length limit, etc.
+
+ * Remove the escape hatch we added when we introduced the weather
+   balloon to use variadic macros unconditionally, to make it official
+   that we now have a hard dependency on the feature.
 
 
 Fixes since v2.35
