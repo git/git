@@ -537,4 +537,16 @@ do
 	'
 done
 
+# NEEDSWORK: 'git clone --bare' should be able to clone from a filtered
+# bundle, but that requires a change to promisor/filter config options.
+# For now, we fail gracefully with a helpful error. This behavior can be
+# changed in the future to succeed as much as possible.
+test_expect_success 'cloning from filtered bundle has useful error' '
+	git bundle create partial.bdl \
+		--all \
+		--filter=blob:none &&
+	test_must_fail git clone --bare partial.bdl partial 2>err &&
+	grep "cannot clone from filtered bundle" err
+'
+
 test_done
