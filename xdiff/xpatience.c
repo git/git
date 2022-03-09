@@ -198,7 +198,7 @@ static int binary_search(struct entry **sequence, int longest,
  * item per sequence length: the sequence with the smallest last
  * element (in terms of line2).
  */
-static struct entry *find_longest_common_sequence(struct hashmap *map)
+static int find_longest_common_sequence(struct hashmap *map, struct entry **res)
 {
 	struct entry **sequence = xdl_malloc(map->nr * sizeof(struct entry *));
 	int longest = 0, i;
@@ -210,6 +210,9 @@ static struct entry *find_longest_common_sequence(struct hashmap *map)
 	 * do not do that either.
 	 */
 	int anchor_i = -1;
+
+	if (!sequence)
+		return -1;
 
 	for (entry = map->first; entry; entry = entry->next) {
 		if (!entry->line2 || entry->line2 == NON_UNIQUE)
@@ -230,8 +233,9 @@ static struct entry *find_longest_common_sequence(struct hashmap *map)
 
 	/* No common unique lines were found */
 	if (!longest) {
+		*res = NULL;
 		xdl_free(sequence);
-		return NULL;
+		return 0;
 	}
 
 	/* Iterate starting at the last element, adjusting the "next" members */
@@ -241,8 +245,9 @@ static struct entry *find_longest_common_sequence(struct hashmap *map)
 		entry->previous->next = entry;
 		entry = entry->previous;
 	}
+	*res = entry;
 	xdl_free(sequence);
-	return entry;
+	return 0;
 }
 
 static int match(struct hashmap *map, int line1, int line2)
@@ -358,14 +363,16 @@ static int patience_diff(mmfile_t *file1, mmfile_t *file2,
 		return 0;
 	}
 
-	first = find_longest_common_sequence(&map);
+	result = find_longest_common_sequence(&map, &first);
+	if (result)
+		goto out;
 	if (first)
 		result = walk_common_sequence(&map, first,
 			line1, count1, line2, count2);
 	else
 		result = fall_back_to_classic_diff(&map,
 			line1, count1, line2, count2);
-
+ out:
 	xdl_free(map.entries);
 	return result;
 }
@@ -373,10 +380,6 @@ static int patience_diff(mmfile_t *file1, mmfile_t *file2,
 int xdl_do_patience_diff(mmfile_t *file1, mmfile_t *file2,
 		xpparam_t const *xpp, xdfenv_t *env)
 {
-	if (xdl_prepare_env(file1, file2, xpp, env) < 0)
-		return -1;
-
-	/* environment is cleaned up in xdl_diff() */
 	return patience_diff(file1, file2, xpp, env,
 			1, env->xdf1.nrec, 1, env->xdf2.nrec);
 }
