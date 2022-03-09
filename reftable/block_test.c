@@ -42,6 +42,11 @@ static void test_block_read_write(void)
 	block_writer_init(&bw, BLOCK_TYPE_REF, block.data, block_size,
 			  header_off, hash_size(GIT_SHA1_FORMAT_ID));
 
+	rec.u.ref.refname = "";
+	rec.u.ref.value_type = REFTABLE_REF_DELETION;
+	n = block_writer_add(&bw, &rec);
+	EXPECT(n == REFTABLE_API_ERROR);
+
 	for (i = 0; i < N; i++) {
 		char name[100];
 		uint8_t hash[GIT_SHA1_RAWSZ];
