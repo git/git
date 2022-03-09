@@ -620,6 +620,10 @@ int unbundle(struct repository *r, struct bundle_header *header,
 	struct child_process ip = CHILD_PROCESS_INIT;
 	strvec_pushl(&ip.args, "index-pack", "--fix-thin", "--stdin", NULL);
 
+	/* If there is a filter, then we need to create the promisor pack. */
+	if (header->filter.choice)
+		strvec_push(&ip.args, "--promisor=from-bundle");
+
 	if (extra_index_pack_args) {
 		strvec_pushv(&ip.args, extra_index_pack_args->v);
 		strvec_clear(extra_index_pack_args);

@@ -521,6 +521,8 @@ do
 
 		git init unbundled &&
 		git -C unbundled bundle unbundle ../partial.bdl >ref-list.txt &&
+		ls unbundled/.git/objects/pack/pack-*.promisor >promisor &&
+		test_line_count = 1 promisor &&
 
 		# Count the same number of reachable objects.
 		reflist=$(git for-each-ref --format="%(objectname)") &&
