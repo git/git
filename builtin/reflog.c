@@ -382,6 +382,8 @@ static void reflog_expiry_prepare(const char *refname,
 		cb->unreachable_expire_kind = UE_HEAD;
 	} else {
 		commit = lookup_commit(the_repository, oid);
+		if (commit && is_null_oid(&commit->object.oid))
+			commit = NULL;
 		cb->unreachable_expire_kind = commit ? UE_NORMAL : UE_ALWAYS;
 	}
 
