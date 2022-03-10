@@ -197,12 +197,6 @@
 #endif
 #include <windows.h>
 #define GIT_WINDOWS_NATIVE
-#ifdef HAVE_RTLGENRANDOM
-/* This is required to get access to RtlGenRandom. */
-#define SystemFunction036 NTAPI SystemFunction036
-#include <NTSecAPI.h>
-#undef SystemFunction036
-#endif
 #endif
 
 #include <unistd.h>

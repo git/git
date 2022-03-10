@@ -4,6 +4,13 @@
 #include "cache.h"
 #include "config.h"
 
+#ifdef HAVE_RTLGENRANDOM
+/* This is required to get access to RtlGenRandom. */
+#define SystemFunction036 NTAPI SystemFunction036
+#include <NTSecAPI.h>
+#undef SystemFunction036
+#endif
+
 static int memory_limit_check(size_t size, int gentle)
 {
 	static size_t limit = 0;
