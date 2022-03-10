@@ -558,11 +558,12 @@ core.fsyncMethod::
 
 core.fsyncObjectFiles::
 	This boolean will enable 'fsync()' when writing object files.
+	This setting is deprecated. Use core.fsync instead.
 +
-This is a total waste of time and effort on a filesystem that orders
-data writes properly, but can be useful for filesystems that do not use
-journalling (traditional UNIX filesystems) or that only journal metadata
-and not file contents (OS X's HFS+, or Linux ext3 with "data=writeback").
+This setting affects data added to the Git repository in loose-object
+form. When set to true, Git will issue an fsync or similar system call
+to flush caches so that loose-objects remain consistent in the face
+of a unclean system shutdown.
 
 core.preloadIndex::
 	Enable parallel index preload for operations like 'git diff'
