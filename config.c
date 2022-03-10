@@ -1331,6 +1331,7 @@ static const struct fsync_component_name {
 	{ "pack", FSYNC_COMPONENT_PACK },
 	{ "pack-metadata", FSYNC_COMPONENT_PACK_METADATA },
 	{ "commit-graph", FSYNC_COMPONENT_COMMIT_GRAPH },
+	{ "index", FSYNC_COMPONENT_INDEX },
 };
 
 static enum fsync_component parse_fsync_components(const char *var, const char *string)
