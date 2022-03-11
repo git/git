@@ -1262,7 +1262,8 @@ static int write_with_updates(struct packed_ref_store *refs,
 		goto error;
 	}
 
-	if (close_tempfile_gently(refs->tempfile)) {
+	if (fsync_component(FSYNC_COMPONENT_REFERENCE, get_tempfile_fd(refs->tempfile)) ||
+	    close_tempfile_gently(refs->tempfile)) {
 		strbuf_addf(err, "error closing file %s: %s",
 			    get_tempfile_path(refs->tempfile),
 			    strerror(errno));
