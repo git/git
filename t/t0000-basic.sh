@@ -1089,7 +1089,8 @@ test_expect_success 'update-index D/F conflict' '
 	mv path2 path0 &&
 	mv tmp path2 &&
 	git update-index --add --replace path2 path0/file2 &&
-	numpath0=$(git ls-files path0 | wc -l) &&
+	git ls-files path0 >tmp &&
+	numpath0=$(wc -l <tmp) &&
 	test $numpath0 = 1
 '
 
@@ -1103,13 +1104,14 @@ test_expect_success 'very long name in the index handled sanely' '
 
 	>path4 &&
 	git update-index --add path4 &&
+	git ls-files -s path4 >tmp &&
 	(
-		git ls-files -s path4 |
-		sed -e "s/	.*/	/" |
+		sed -e "s/	.*/	/" tmp |
 		tr -d "\012" &&
 		echo "$a"
 	) | git update-index --index-info &&
-	len=$(git ls-files "a*" | wc -c) &&
+	git ls-files "a*" >tmp &&
+	len=$(wc -c <tmp) &&
 	test $len = 4098
 '
 
