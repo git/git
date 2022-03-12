@@ -67,9 +67,8 @@ stripped (like the above example to point at one of the most important
 message in the Git list).
 
 Some members of the development community can sometimes be found on
-the #git and #git-devel IRC channels on FreeNode (historically, but
-the IRC situation is in flux at the moment).  Their logs are available
-at:
+the #git and #git-devel IRC channels on Libera Chat.  Their logs are
+available at:
 
         http://colabti.org/irclogger/irclogger_log/git
         http://colabti.org/irclogger/irclogger_log/git-devel
