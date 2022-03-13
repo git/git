@@ -329,11 +329,11 @@ static int write_patterns_and_update(struct pattern_list *pl)
 
 	fd = hold_lock_file_for_update(&lk, sparse_filename,
 				      LOCK_DIE_ON_ERROR);
+	free(sparse_filename);
 
 	result = update_working_directory(pl);
 	if (result) {
 		rollback_lock_file(&lk);
-		free(sparse_filename);
 		clear_pattern_list(pl);
 		update_working_directory(NULL);
 		return result;
@@ -349,7 +349,6 @@ static int write_patterns_and_update(struct pattern_list *pl)
 	fflush(fp);
 	commit_lock_file(&lk);
 
-	free(sparse_filename);
 	clear_pattern_list(pl);
 
 	return 0;

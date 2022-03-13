@@ -1472,11 +1472,12 @@ int cmd_main(int argc, const char **argv)
 {
 	struct strbuf buf = STRBUF_INIT;
 	int nongit;
+	int ret = 1;
 
 	setup_git_directory_gently(&nongit);
 	if (argc < 2) {
 		error(_("remote-curl: usage: git remote-curl <remote> [<url>]"));
-		return 1;
+		goto cleanup;
 	}
 
 	options.verbosity = 1;
@@ -1508,7 +1509,7 @@ int cmd_main(int argc, const char **argv)
 		if (strbuf_getline_lf(&buf, stdin) == EOF) {
 			if (ferror(stdin))
 				error(_("remote-curl: error reading command stream from git"));
-			return 1;
+			goto cleanup;
 		}
 		if (buf.len == 0)
 			break;
@@ -1556,12 +1557,15 @@ int cmd_main(int argc, const char **argv)
 				break;
 		} else {
 			error(_("remote-curl: unknown command '%s' from git"), buf.buf);
-			return 1;
+			goto cleanup;
 		}
 		strbuf_reset(&buf);
 	} while (1);
 
 	http_cleanup();
+	ret = 0;
+cleanup:
+	strbuf_release(&buf);
 
-	return 0;
+	return ret;
 }
