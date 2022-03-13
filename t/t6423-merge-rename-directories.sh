@@ -4421,14 +4421,14 @@ test_setup_12c1 () {
 
 		git checkout A &&
 		git mv node2/ node1/ &&
-		for i in `git ls-files`; do echo side A >>$i; done &&
+		for i in $(git ls-files); do echo side A >>$i; done &&
 		git add -u &&
 		test_tick &&
 		git commit -m "A" &&
 
 		git checkout B &&
 		git mv node1/ node2/ &&
-		for i in `git ls-files`; do echo side B >>$i; done &&
+		for i in $(git ls-files); do echo side B >>$i; done &&
 		git add -u &&
 		test_tick &&
 		git commit -m "B"
@@ -4511,7 +4511,7 @@ test_setup_12c2 () {
 
 		git checkout A &&
 		git mv node2/ node1/ &&
-		for i in `git ls-files`; do echo side A >>$i; done &&
+		for i in $(git ls-files); do echo side A >>$i; done &&
 		git add -u &&
 		echo leaf5 >node1/leaf5 &&
 		git add node1/leaf5 &&
@@ -4520,7 +4520,7 @@ test_setup_12c2 () {
 
 		git checkout B &&
 		git mv node1/ node2/ &&
-		for i in `git ls-files`; do echo side B >>$i; done &&
+		for i in $(git ls-files); do echo side B >>$i; done &&
 		git add -u &&
 		echo leaf6 >node2/leaf6 &&
 		git add node2/leaf6 &&
@@ -4759,7 +4759,7 @@ test_setup_12f () {
 		echo g >dir/subdir/tweaked/g &&
 		echo h >dir/subdir/tweaked/h &&
 		test_seq 20 30 >dir/subdir/tweaked/Makefile &&
-		for i in `test_seq 1 88`; do
+		for i in $(test_seq 1 88); do
 			echo content $i >dir/unchanged/file_$i
 		done &&
 		git add . &&
