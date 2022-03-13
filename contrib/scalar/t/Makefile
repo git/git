@@ -1,3 +1,6 @@
+# Import tree-wide shared Makefile behavior and libraries
+include ../../../shared.mak
+
 # Run scalar tests
 #
 # Copyright (c) 2005,2021 Junio C Hamano, Johannes Schindelin
