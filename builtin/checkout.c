@@ -738,6 +738,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 		struct tree_desc trees[2];
 		struct tree *tree;
 		struct unpack_trees_options topts;
+		const struct object_id *old_commit_oid;
 
 		memset(&topts, 0, sizeof(topts));
 		topts.head_idx = -1;
@@ -765,9 +766,15 @@ static int merge_working_tree(const struct checkout_opts *opts,
 				       &new_branch_info->commit->object.oid :
 				       &new_branch_info->oid, NULL);
 		topts.preserve_ignored = !opts->overwrite_ignore;
-		tree = parse_tree_indirect(old_branch_info->commit ?
-					   &old_branch_info->commit->object.oid :
-					   the_hash_algo->empty_tree);
+
+		old_commit_oid = old_branch_info->commit ?
+			&old_branch_info->commit->object.oid :
+			the_hash_algo->empty_tree;
+		tree = parse_tree_indirect(old_commit_oid);
+		if (!tree)
+			die(_("unable to parse commit %s"),
+				oid_to_hex(old_commit_oid));
+
 		init_tree_desc(&trees[0], tree->buffer, tree->size);
 		parse_tree(new_tree);
 		tree = new_tree;
