@@ -71,6 +71,11 @@ and the Git bundle v2 format cannot represent a shallow clone repository.
 == Capabilities
 
 Because there is no opportunity for negotiation, unknown capabilities cause 'git
-bundle' to abort.  The only known capability is `object-format`, which specifies
-the hash algorithm in use, and can take the same values as the
-`extensions.objectFormat` configuration value.
+bundle' to abort.
+
+* `object-format` specifies the hash algorithm in use, and can take the same
+  values as the `extensions.objectFormat` configuration value.
+
+* `filter` specifies an object filter as in the `--filter` option in
+  linkgit:git-rev-list[1]. The resulting pack-file must be marked as a
+  `.promisor` pack-file after it is unbundled.

@@ -32,6 +32,7 @@
 #include "utf8.h"
 #include "bloom.h"
 #include "json-writer.h"
+#include "list-objects-filter-options.h"
 
 volatile show_early_output_fn_t show_early_output;
 
@@ -2690,6 +2691,10 @@ static int handle_revision_pseudo_opt(struct rev_info *revs,
 		revs->no_walk = 0;
 	} else if (!strcmp(arg, "--single-worktree")) {
 		revs->single_worktree = 1;
+	} else if (skip_prefix(arg, ("--" CL_ARG__FILTER "="), &arg)) {
+		parse_list_objects_filter(&revs->filter, arg);
+	} else if (!strcmp(arg, ("--no-" CL_ARG__FILTER))) {
+		list_objects_filter_set_no_filter(&revs->filter);
 	} else {
 		return 0;
 	}
@@ -2892,6 +2897,8 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 		die("cannot combine --walk-reflogs with history-limiting options");
 	if (revs->rewrite_parents && revs->children.name)
 		die(_("options '%s' and '%s' cannot be used together"), "--parents", "--children");
+	if (revs->filter.choice && !revs->blob_objects)
+		die(_("object filtering requires --objects"));
 
 	/*
 	 * Limitations on the graph functionality

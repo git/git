@@ -3651,7 +3651,7 @@ static int pack_options_allow_reuse(void)
 
 static int get_object_list_from_bitmap(struct rev_info *revs)
 {
-	if (!(bitmap_git = prepare_bitmap_walk(revs, &filter_options, 0)))
+	if (!(bitmap_git = prepare_bitmap_walk(revs, 0)))
 		return -1;
 
 	if (pack_options_allow_reuse() &&
@@ -3727,6 +3727,7 @@ static void get_object_list(int ac, const char **av)
 	repo_init_revisions(the_repository, &revs, NULL);
 	save_commit_buffer = 0;
 	setup_revisions(ac, av, &revs, &s_r_opt);
+	list_objects_filter_copy(&revs.filter, &filter_options);
 
 	/* make sure shallows are read */
 	is_repository_shallow(the_repository);
@@ -3777,9 +3778,9 @@ static void get_object_list(int ac, const char **av)
 
 	if (!fn_show_object)
 		fn_show_object = show_object;
-	traverse_commit_list_filtered(&filter_options, &revs,
-				      show_commit, fn_show_object, NULL,
-				      NULL);
+	traverse_commit_list(&revs,
+			     show_commit, fn_show_object,
+			     NULL);
 
 	if (unpack_unreachable_expiration) {
 		revs.ignore_missing_links = 1;

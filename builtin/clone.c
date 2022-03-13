@@ -33,6 +33,7 @@
 #include "packfile.h"
 #include "list-objects-filter-options.h"
 #include "hook.h"
+#include "bundle.h"
 
 /*
  * Overall FIXMEs:
@@ -1171,6 +1172,18 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	if (option_local > 0 && !is_local)
 		warning(_("--local is ignored"));
 	transport->cloning = 1;
+
+	if (is_bundle) {
+		struct bundle_header header = BUNDLE_HEADER_INIT;
+		int fd = read_bundle_header(path, &header);
+		int has_filter = header.filter.choice != LOFC_DISABLED;
+
+		if (fd > 0)
+			close(fd);
+		bundle_header_release(&header);
+		if (has_filter)
+			die(_("cannot clone from filtered bundle"));
+	}
 
 	transport_set_option(transport, TRANS_OPT_KEEP, "yes");
 

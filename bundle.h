@@ -4,12 +4,14 @@
 #include "strvec.h"
 #include "cache.h"
 #include "string-list.h"
+#include "list-objects-filter-options.h"
 
 struct bundle_header {
 	unsigned version;
 	struct string_list prerequisites;
 	struct string_list references;
 	const struct git_hash_algo *hash_algo;
+	struct list_objects_filter_options filter;
 };
 
 #define BUNDLE_HEADER_INIT \

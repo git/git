@@ -475,4 +475,78 @@ test_expect_success 'clone from bundle' '
 	test_cmp expect actual
 '
 
+test_expect_success 'unfiltered bundle with --objects' '
+	git bundle create all-objects.bdl \
+		--all --objects &&
+	git bundle create all.bdl \
+		--all &&
+
+	# Compare the headers of these files.
+	sed -n -e "/^$/q" -e "p" all.bdl >expect &&
+	sed -n -e "/^$/q" -e "p" all-objects.bdl >actual &&
+	test_cmp expect actual
+'
+
+for filter in "blob:none" "tree:0" "tree:1" "blob:limit=100"
+do
+	test_expect_success "filtered bundle: $filter" '
+		test_when_finished rm -rf .git/objects/pack cloned unbundled &&
+		git bundle create partial.bdl \
+			--all \
+			--filter=$filter &&
+
+		git bundle verify partial.bdl >unfiltered &&
+		make_user_friendly_and_stable_output <unfiltered >actual &&
+
+		cat >expect <<-EOF &&
+		The bundle contains these 10 refs:
+		<COMMIT-P> refs/heads/main
+		<COMMIT-N> refs/heads/release
+		<COMMIT-D> refs/heads/topic/1
+		<COMMIT-H> refs/heads/topic/2
+		<COMMIT-D> refs/pull/1/head
+		<COMMIT-G> refs/pull/2/head
+		<TAG-1> refs/tags/v1
+		<TAG-2> refs/tags/v2
+		<TAG-3> refs/tags/v3
+		<COMMIT-P> HEAD
+		The bundle uses this filter: $filter
+		The bundle records a complete history.
+		EOF
+		test_cmp expect actual &&
+
+		test_config uploadpack.allowfilter 1 &&
+		test_config uploadpack.allowanysha1inwant 1 &&
+		git clone --no-local --filter=$filter --bare "file://$(pwd)" cloned &&
+
+		git init unbundled &&
+		git -C unbundled bundle unbundle ../partial.bdl >ref-list.txt &&
+		ls unbundled/.git/objects/pack/pack-*.promisor >promisor &&
+		test_line_count = 1 promisor &&
+
+		# Count the same number of reachable objects.
+		reflist=$(git for-each-ref --format="%(objectname)") &&
+		git rev-list --objects --filter=$filter --missing=allow-any \
+			$reflist >expect &&
+		for repo in cloned unbundled
+		do
+			git -C $repo rev-list --objects --missing=allow-any \
+				$reflist >actual &&
+			test_cmp expect actual || return 1
+		done
+	'
+done
+
+# NEEDSWORK: 'git clone --bare' should be able to clone from a filtered
+# bundle, but that requires a change to promisor/filter config options.
+# For now, we fail gracefully with a helpful error. This behavior can be
+# changed in the future to succeed as much as possible.
+test_expect_success 'cloning from filtered bundle has useful error' '
+	git bundle create partial.bdl \
+		--all \
+		--filter=blob:none &&
+	test_must_fail git clone --bare partial.bdl partial 2>err &&
+	grep "cannot clone from filtered bundle" err
+'
+
 test_done
