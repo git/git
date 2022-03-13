@@ -160,4 +160,78 @@ test_expect_success 'new clone fetch main and tags' '
 	test_cmp expect actual
 '
 
+test_expect_success 'atomic fetch with failing backfill' '
+	git init clone3 &&
+
+	# We want to test whether a failure when backfilling tags correctly
+	# aborts the complete transaction when `--atomic` is passed: we should
+	# neither create the branch nor should we create the tag when either
+	# one of both fails to update correctly.
+	#
+	# To trigger failure we simply abort when backfilling a tag.
+	write_script clone3/.git/hooks/reference-transaction <<-\EOF &&
+		while read oldrev newrev reference
+		do
+			if test "$reference" = refs/tags/tag1
+			then
+				exit 1
+			fi
+		done
+	EOF
+
+	test_must_fail git -C clone3 fetch --atomic .. $B:refs/heads/something &&
+	test_must_fail git -C clone3 rev-parse --verify refs/heads/something &&
+	test_must_fail git -C clone3 rev-parse --verify refs/tags/tag2
+'
+
+test_expect_success 'atomic fetch with backfill should use single transaction' '
+	git init clone4 &&
+
+	# Fetching with the `--atomic` flag should update all references in a
+	# single transaction, including backfilled tags. We thus expect to see
+	# a single reference transaction for the created branch and tags.
+	cat >expected <<-EOF &&
+		prepared
+		$ZERO_OID $B refs/heads/something
+		$ZERO_OID $S refs/tags/tag2
+		$ZERO_OID $T refs/tags/tag1
+		committed
+		$ZERO_OID $B refs/heads/something
+		$ZERO_OID $S refs/tags/tag2
+		$ZERO_OID $T refs/tags/tag1
+	EOF
+
+	write_script clone4/.git/hooks/reference-transaction <<-\EOF &&
+		( echo "$*" && cat ) >>actual
+	EOF
+
+	git -C clone4 fetch --atomic .. $B:refs/heads/something &&
+	test_cmp expected clone4/actual
+'
+
+test_expect_success 'backfill failure causes command to fail' '
+	git init clone5 &&
+
+	write_script clone5/.git/hooks/reference-transaction <<-EOF &&
+		while read oldrev newrev reference
+		do
+			if test "\$reference" = refs/tags/tag1
+			then
+				# Create a nested tag below the actual tag we
+				# wanted to write, which causes a D/F conflict
+				# later when we want to commit refs/tags/tag1.
+				# We cannot just `exit 1` here given that this
+				# would cause us to die immediately.
+				git update-ref refs/tags/tag1/nested $B
+				exit \$!
+			fi
+		done
+	EOF
+
+	test_must_fail git -C clone5 fetch .. $B:refs/heads/something &&
+	test $B = $(git -C clone5 rev-parse --verify refs/heads/something) &&
+	test $S = $(git -C clone5 rev-parse --verify tag2) &&
+	test_must_fail git -C clone5 rev-parse --verify tag1
+'
+
 test_done
