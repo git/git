@@ -417,4 +417,22 @@ test_expect_success '-n skips updating server info' '
 	test_server_info_missing
 '
 
+test_expect_success 'repack.updateServerInfo=true updates server info' '
+	test_server_info_cleanup &&
+	git -C update-server-info -c repack.updateServerInfo=true repack &&
+	test_server_info_present
+'
+
+test_expect_success 'repack.updateServerInfo=false skips updating server info' '
+	test_server_info_cleanup &&
+	git -C update-server-info -c repack.updateServerInfo=false repack &&
+	test_server_info_missing
+'
+
+test_expect_success '-n overrides repack.updateServerInfo=true' '
+	test_server_info_cleanup &&
+	git -C update-server-info -c repack.updateServerInfo=true repack -n &&
+	test_server_info_missing
+'
+
 test_done

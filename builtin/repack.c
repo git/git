@@ -22,6 +22,7 @@ static int delta_base_offset = 1;
 static int pack_kept_objects = -1;
 static int write_bitmaps = -1;
 static int use_delta_islands;
+static int run_update_server_info = 1;
 static char *packdir, *packtmp_name, *packtmp;
 
 static const char *const git_repack_usage[] = {
@@ -52,6 +53,10 @@ static int repack_config(const char *var, const char *value, void *cb)
 	}
 	if (!strcmp(var, "repack.usedeltaislands")) {
 		use_delta_islands = git_config_bool(var, value);
+		return 0;
+	}
+	if (strcmp(var, "repack.updateserverinfo") == 0) {
+		run_update_server_info = git_config_bool(var, value);
 		return 0;
 	}
 	return git_default_config(var, value, cb);
@@ -620,7 +625,6 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	const char *unpack_unreachable = NULL;
 	int keep_unreachable = 0;
 	struct string_list keep_pack_list = STRING_LIST_INIT_NODUP;
-	int run_update_server_info = 1;
 	struct pack_objects_args po_args = {NULL};
 	int geometric_factor = 0;
 	int write_midx = 0;
