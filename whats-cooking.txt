@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2022, #02; Mon, 7)
-X-master-at: c2162907e9aa884bdb70208389cb99b181620d51
-X-next-at: 4b3deeb25d03f55d1d605c96f19e40bb89b562d1
+Subject: What's cooking in git.git (Mar 2022, #03; Mon, 14)
+X-master-at: b896f729e240d250cf56899e6a0073f6aa469f5d
+X-next-at: 00dc842c0f4f38d42e23fc4916f48b0869e9054f
 
-What's cooking in git.git (Mar 2022, #02; Mon, 7)
+What's cooking in git.git (Mar 2022, #03; Mon, 14)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -49,224 +49,362 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ab/c99-designated-initializers (2022-02-24) 9 commits
-  (merged to 'next' on 2022-02-28 at 5ff6d5b26f)
- + fast-import.c: use designated initializers for "partial" struct assignments
- + refspec.c: use designated initializers for "struct refspec_item"
- + convert.c: use designated initializers for "struct stream_filter*"
- + userdiff.c: use designated initializers for "struct userdiff_driver"
- + archive-*.c: use designated initializers for "struct archiver"
- + object-file: use designated initializers for "struct git_hash_algo"
- + trace2: use designated initializers for "struct tr2_dst"
- + trace2: use designated initializers for "struct tr2_tgt"
- + imap-send.c: use designated initializers for "struct imap_server_conf"
+* ab/c99-variadic-macros (2022-02-21) 2 commits
+  (merged to 'next' on 2022-03-01 at 0419a86e23)
+ + C99: remove hardcoded-out !HAVE_VARIADIC_MACROS code
+ + git-compat-util.h: clarify GCC v.s. C99-specific in comment
 
- Use designated initializers we started using in mid 2017 in more
- parts of the codebase that are relatively quiescent.
- source: <cover-00.12-00000000000-20220224T092805Z-avarab@gmail.com>
+ Remove the escape hatch we added when we introduced the weather
+ balloon to use variadic macros unconditionally, to make it official
+ that we now have a hard dependency on the feature.
+ source: <cover-v4-0.2-00000000000-20220221T160440Z-avarab@gmail.com>
 
 
-* ab/hook-tests (2022-02-19) 2 commits
-  (merged to 'next' on 2022-02-28 at bb6b7d1c24)
- + hook tests: use a modern style for "pre-push" tests
- + hook tests: test for exact "pre-push" hook input
+* ab/help-fixes (2022-02-23) 9 commits
+  (merged to 'next' on 2022-03-01 at 215f5dbbfb)
+ + help: don't print "\n" before single-section output
+ + help: add --no-[external-commands|aliases] for use with --all
+ + help: error if [-a|-g|-c] and [-i|-m|-w] are combined
+ + help: correct usage & behavior of "git help --all"
+ + help: note the option name on option incompatibility
+ + help.c: split up list_all_cmds_help() function
+ + help tests: test "git" and "git help [-a|-g] spacing
+ + help.c: use puts() instead of printf{,_ln}() for consistency
+ + help doc: add missing "]" to "[-a|--all]"
 
- Test modernization.
- source: <cover-0.2-00000000000-20220218T204719Z-avarab@gmail.com>
-
-
-* ab/test-leak-diag (2022-02-28) 4 commits
-  (merged to 'next' on 2022-02-28 at 3019aad7fe)
- + test-lib: add "fast_unwind_on_malloc=0" to LSAN_OPTIONS
- + test-lib: make $GIT_BUILD_DIR an absolute path
- + test-lib: correct and assert TEST_DIRECTORY overriding
- + test-lib: add GIT_SAN_OPTIONS, inherit [AL]SAN_OPTIONS
-
- Random test-framework clean-up.
- source: <cover-v4-0.4-00000000000-20220227T102256Z-avarab@gmail.com>
+ Updates to how command line options to "git help" are handled.
+ source: <cover-v2-0.9-00000000000-20220221T193708Z-avarab@gmail.com>
 
 
-* ac/usage-string-fixups (2022-02-23) 1 commit
-  (merged to 'next' on 2022-02-28 at 5e8fa3f846)
- + amend remaining usage strings according to style guide
+* ab/make-optim-noop (2022-03-03) 8 commits
+  (merged to 'next' on 2022-03-04 at 0419394f3d)
+ + Makefiles: add and use wildcard "mkdir -p" template
+ + Makefile: add "$(QUIET)" boilerplate to shared.mak
+ + Makefile: move $(comma), $(empty) and $(space) to shared.mak
+ + Makefile: move ".SUFFIXES" rule to shared.mak
+ + Makefile: define $(LIB_H) in terms of $(FIND_SOURCE_FILES)
+ + Makefile: disable GNU make built-in wildcard rules
+ + Makefiles: add "shared.mak", move ".DELETE_ON_ERROR" to it
+ + scalar Makefile: use "The default target of..." pattern
 
- Usage-string normalization.
- source: <f425e36b7ea4a310a8ad93d47ead4c1713117388.1645626455.git.gitgitgadget@gmail.com>
-
-
-* ah/advice-switch-requires-detach-to-detach (2022-02-25) 1 commit
-  (merged to 'next' on 2022-02-28 at 941ee621cf)
- + switch: mention the --detach option when dying due to lack of a branch
-
- The error message given by "git switch HEAD~4" has been clarified
- to suggest the "--detach" option that is required.
- source: <20220226061213.1590341-1-alexhenrie24@gmail.com>
-
-
-* cg/t3903-modernize (2022-02-23) 3 commits
-  (merged to 'next' on 2022-02-23 at 0d5a844b40)
- + tests: make the code more readable
- + tests: allow testing if a path is truly a file or a directory
- + t/t3903-stash.sh: replace test [-d|-f] with test_path_is_*
-
- Test modernization.
- source: <20220222215430.605254-1-cogoni.guillaume@gmail.com>
+ Makefile refactoring with a bit of suffixes rule stripping to
+ optimize the runtime overhead.
+ source: <cover-v5-0.8-00000000000-20220303T160155Z-avarab@gmail.com>
 
 
-* ds/worktree-docs (2022-02-23) 11 commits
-  (merged to 'next' on 2022-02-28 at b7d23cb1a5)
- + worktree: use 'worktree' over 'working tree'
- + worktree: use 'worktree' over 'working tree'
- + worktree: use 'worktree' over 'working tree'
- + worktree: use 'worktree' over 'working tree'
- + worktree: use 'worktree' over 'working tree'
- + worktree: use 'worktree' over 'working tree'
- + worktree: use 'worktree' over 'working tree'
- + worktree: extract checkout_worktree()
- + worktree: extract copy_sparse_checkout()
- + worktree: extract copy_filtered_worktree_config()
- + worktree: combine two translatable messages
+* ab/plug-random-leaks (2022-03-04) 14 commits
+  (merged to 'next' on 2022-03-04 at f461b7a6b5)
+ + repository.c: free the "path cache" in repo_clear()
+ + range-diff: plug memory leak in read_patches()
+ + range-diff: plug memory leak in common invocation
+ + lockfile API users: simplify and don't leak "path"
+ + commit-graph: stop fill_oids_from_packs() progress on error and free()
+ + commit-graph: fix memory leak in misused string_list API
+ + submodule--helper: fix trivial leak in module_add()
+ + transport: stop needlessly copying bundle header references
+ + bundle: call strvec_clear() on allocated strvec
+ + remote-curl.c: free memory in cmd_main()
+ + urlmatch.c: add and use a *_release() function
+ + diff.c: free "buf" in diff_words_flush()
+ + merge-base: free() allocated "struct commit **" list
+ + index-pack: fix memory leaks
 
- Tighten the language around "working tree" and "worktree" in the
- docs.
- source: <pull.1154.v3.git.1645626559.gitgitgadget@gmail.com>
-
-
-* en/merge-ort-plug-leaks (2022-02-20) 2 commits
-  (merged to 'next' on 2022-02-28 at d7afb6b624)
- + merge-ort: fix small memory leak in unique_path()
- + merge-ort: fix small memory leak in detect_and_process_renames()
-
- Leakfix.
- source: <pull.1152.v2.git.1645320591.gitgitgadget@gmail.com>
+ Plug random memory leaks.
+ source: <cover-v2-00.14-00000000000-20220304T182902Z-avarab@gmail.com>
 
 
-* en/sparse-checkout-fixes (2022-02-20) 5 commits
-  (merged to 'next' on 2022-02-28 at 7307431c62)
- + sparse-checkout: reject arguments in cone-mode that look like patterns
- + sparse-checkout: error or warn when given individual files
- + sparse-checkout: pay attention to prefix for {set, add}
- + sparse-checkout: correctly set non-cone mode when expected
- + sparse-checkout: correct reapply's handling of options
+* en/merge-ort-align-verbosity-with-recursive (2022-03-01) 1 commit
+  (merged to 'next' on 2022-03-04 at e2c7eabab6)
+ + merge-ort: exclude messages from inner merges by default
 
- Further polishing of "git sparse-checkout".
- source: <pull.1118.v5.git.1645289086.gitgitgadget@gmail.com>
+ Align the level of verbose output from the ort backend during inner
+ merge to that of the recursive backend.
+ source: <pull.1167.git.1646194761463.gitgitgadget@gmail.com>
 
 
-* gc/stash-on-branch-with-multi-level-name (2022-02-24) 1 commit
-  (merged to 'next' on 2022-02-28 at 1a94306611)
- + stash: strip "refs/heads/" with skip_prefix
+* en/present-despite-skipped (2022-03-01) 7 commits
+  (merged to 'next' on 2022-03-01 at 4982287a31)
+ + repo_read_index: add config to expect files outside sparse patterns
+  (merged to 'next' on 2022-02-15 at 960873fdad)
+ + Accelerate clear_skip_worktree_from_present_files() by caching
+ + Update documentation related to sparsity and the skip-worktree bit
+ + repo_read_index: clear SKIP_WORKTREE bit from files present in worktree
+ + unpack-trees: fix accidental loss of user changes
+ + t1011: add testcase demonstrating accidental loss of user modifications
+ + Merge branch 'vd/sparse-clean-etc' into en/present-despite-skipped
 
- "git checkout -b branch/with/multi/level/name && git stash" only
- recorded the last level component of the branch name, which has
- been corrected.
- source: <20220124205342.41450-1-chooglen@google.com>
-
-
-* jc/rerere-train-modernise (2022-02-27) 1 commit
-  (merged to 'next' on 2022-02-28 at d86d29733d)
- + rerere-train: two fixes to the use of "git show -s"
-
- Small modernization of the rerere-train script (in contrib/).
- source: <20220227220924.2144325-1-gitster@pobox.com>
-
-
-* jt/ls-files-stage-recurse (2022-02-23) 1 commit
-  (merged to 'next' on 2022-02-28 at 4ad82bfdf6)
- + ls-files: support --recurse-submodules --stage
-
- Many output modes of "ls-files" do not work with its
- "--recurse-submodules" option, but the "-s" mode has been taught to
- work with it.
- source: <20220224002303.2363189-1-jonathantanmy@google.com>
+ In sparse-checkouts, files mis-marked as missing from the working tree
+ could lead to later problems.  Such files were hard to discover, and
+ harder to correct.  Automatically detecting and correcting the marking
+ of such files has been added to avoid these problems.
+ source: <pull.1114.v2.git.1642175983.gitgitgadget@gmail.com>
 
 
-* mc/index-pack-report-max-size (2022-02-23) 1 commit
-  (merged to 'next' on 2022-02-28 at 31b907844b)
- + index-pack: clarify the breached limit
+* fs/gpgsm-update (2022-03-04) 3 commits
+  (merged to 'next' on 2022-03-04 at 9c72508077)
+ + t/lib-gpg: kill all gpg components, not just gpg-agent
+ + t/lib-gpg: reload gpg components after updating trustlist
+ + gpg-interface/gpgsm: fix for v2.3
 
- When "index-pack" dies due to incoming data exceeding the maximum
- allowed input size, include the value of the limit in the error
- message.
- source: <pull.1158.v2.git.1645661240356.gitgitgadget@gmail.com>
+ Newer version of GPGSM changed its output in a backward
+ incompatible way to break our code that parses its output.  It also
+ added more processes our tests need to kill when cleaning up.
+ Adjustments have been made to accommodate these changes.
+ source: <20220302090250.590450-1-fs@gigacodes.de>
 
 
-* rs/bisect-executable-not-found (2022-01-19) 4 commits
-  (merged to 'next' on 2022-02-28 at c74bff7954)
- + bisect--helper: double-check run command on exit code 126 and 127
- + bisect: document run behavior with exit codes 126 and 127
- + bisect--helper: release strbuf and strvec on run error
- + bisect--helper: report actual bisect_state() argument on error
+* gc/parse-tree-indirect-errors (2022-03-01) 1 commit
+  (merged to 'next' on 2022-03-04 at f8d60e5253)
+ + checkout, clone: die if tree cannot be parsed
 
- A not-so-common mistake is to write a script to feed "git bisect
- run" without making it executable, in which case all tests will
- exit with 126 or 127 error codes, even on revisions that are marked
- as good.  Try to recognize this situation and stop iteration early.
- source: <fead25d6-6f5f-487a-ad4c-0657fe9785fd@www.fastmail.com>
+ Check the return value from parse_tree_indirect() to turn segfaults
+ into calls to die().
+ source: <20220302003613.15567-1-chooglen@google.com>
+
+
+* hn/reftable-no-empty-keys (2022-02-23) 7 commits
+  (merged to 'next' on 2022-03-01 at dc4aa7e796)
+ + reftable: rename writer_stats to reftable_writer_stats
+ + reftable: add test for length of disambiguating prefix
+ + reftable: ensure that obj_id_len is >= 2 on writing
+ + reftable: avoid writing empty keys at the block layer
+ + reftable: add a test that verifies that writing empty keys fails
+ + reftable: reject 0 object_id_len
+ + Documentation: object_id_len goes up to 31
+
+ General clean-up in reftable implementation, including
+ clarification of the API documentation, tightening the code to
+ honor documented length limit, etc.
+ source: <pull.1185.v3.git.git.1645469170.gitgitgadget@gmail.com>
+
+
+* jc/cat-file-batch-commands (2022-02-18) 4 commits
+  (merged to 'next' on 2022-03-01 at 8764b7963c)
+ + cat-file: add --batch-command mode
+ + cat-file: add remove_timestamp helper
+ + cat-file: introduce batch_mode enum to replace print_contents
+ + cat-file: rename cmdmode to transform_mode
+
+ "git cat-file" learns "--batch-command" mode, which is a more
+ flexible interface than the existing "--batch" or "--batch-check"
+ modes, to allow different kinds of inquiries made.
+ source: <pull.1212.v10.git.git.1645208594.gitgitgadget@gmail.com>
+
+
+* nj/read-tree-doc-reffix (2022-03-03) 1 commit
+  (merged to 'next' on 2022-03-04 at 9b183b3e3e)
+ + Documentation: git-read-tree: separate links using commas
+
+ Documentation mark-up fix.
+ source: <20220303161542.11616-1-nihal@nihaljere.xyz>
+
+
+* ps/fetch-atomic (2022-02-17) 7 commits
+  (merged to 'next' on 2022-02-18 at 3824153b23)
+ + fetch: make `--atomic` flag cover pruning of refs
+ + fetch: make `--atomic` flag cover backfilling of tags
+ + refs: add interface to iterate over queued transactional updates
+ + fetch: report errors when backfilling tags fails
+ + fetch: control lifecycle of FETCH_HEAD in a single place
+ + fetch: backfill tags before setting upstream
+ + fetch: increase test coverage of fetches
+ (this branch is used by ps/fetch-atomic-fixup and ps/fetch-mirror-optim.)
+
+ "git fetch" can make two separate fetches, but ref updates coming
+ from them were in two separate ref transactions under "--atomic",
+ which has been corrected.
+ source: <cover.1645102965.git.ps@pks.im>
+
+
+* ps/fetch-atomic-fixup (2022-03-03) 1 commit
+  (merged to 'next' on 2022-03-04 at cb279e84df)
+ + t5503: simplify setup of test which exercises failure of backfill
+ (this branch uses ps/fetch-atomic.)
+
+ Test simplification.
+ source: <cover.1645102965.git.ps@pks.im>
+
+
+* pw/xdiff-alloc-fail (2022-02-16) 4 commits
+  (merged to 'next' on 2022-03-01 at 8a10912059)
+ + xdiff: handle allocation failure when merging
+ + xdiff: refactor a function
+ + xdiff: handle allocation failure in patience diff
+ + xdiff: fix a memory leak
+
+ Improve failure case behaviour of xdiff library when memory
+ allocation fails.
+ source: <pull.1140.v2.git.1645006510.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [New Topics]
 
-* ab/grep-patterntype (2022-03-04) 1 commit
- - log tests: fix "abort tests early" regression in ff37a60c369
+* bc/block-sha1-without-gcc-asm-extension (2022-03-10) 1 commit
+ - block-sha1: remove use of obsolete x86 assembly
 
- Test fix-up for a topic already in master.
-
- Will merge to 'next' and then to 'master'.
- source: <patch-1.1-3b41c1a26d4-20220304T093323Z-avarab@gmail.com>
-
-
-* mf/fix-type-in-config-h (2022-03-03) 1 commit
- - config: correct "--type" option in "git config -h" output
-
- "git config -h" did not describe the "--type" option correctly.
+ Get rid of one use of __asm__() GCC extension that does not help us
+ much these days, which has an added advantage of not having to
+ worry about -pedantic complaining.
 
  Will merge to 'next'.
- source: <pull.1220.v2.git.git.1646368313714.gitgitgadget@gmail.com>
+ source: <20220310174750.4166514-1-sandals@crustytoothpaste.net>
 
 
-* ab/racy-hooks (2022-03-07) 2 commits
- - hooks: fix an obscure TOCTOU "did we just run a hook?" race
- - merge: don't run post-hook logic on --no-verify
+* jy/gitweb-no-need-for-meta (2022-03-08) 2 commits
+  (merged to 'next' on 2022-03-13 at 1e8d643130)
+ + gitweb: remove invalid http-equiv="content-type"
+ + comment: fix typo
 
- Code clean-up to allow callers of run_commit_hook() to learn if it
- got "success" because the hook succeeded or because there wasn't
- any hook.
+ Remove unneeded <meta http-equiv=content-type...> from gitweb
+ output.
 
- Will merge to 'next'.
- source: <cover-v2-0.2-00000000000-20220307T123244Z-avarab@gmail.com>
+ Will merge to 'master'.
+ source: <20220308155612.105957-3-jason@jasonyundt.email>
 
 
-* ab/string-list-count-in-size-t (2022-03-07) 2 commits
- - string-list API: change "nr" and "alloc" to "size_t"
- - gettext API users: don't explicitly cast ngettext()'s "n"
+* ns/core-fsyncmethod (2022-03-10) 6 commits
+ - core.fsync: documentation and user-friendly aggregate options
+ - core.fsync: new option to harden the index
+ - core.fsync: add configuration parsing
+ - core.fsync: introduce granular fsync control infrastructure
+ - core.fsyncmethod: add writeout-only mode
+ - wrapper: make inclusion of Windows csprng header tightly scoped
+ (this branch is used by ps/fsync-refs.)
 
- Count string_list items in size_t, not "unsigned int".
+ Replace core.fsyncObjectFiles with two new configuration variables,
+ core.fsync and core.fsyncMethod.
 
  Will merge to 'next'?
- source: <cover-v2-0.2-00000000000-20220307T152316Z-avarab@gmail.com>
+ source: <pull.1093.v6.git.1646952204.gitgitgadget@gmail.com>
+
+
+* pw/add-p-single-key (2022-03-09) 5 commits
+ - terminal: restore settings on SIGTSTP
+ - terminal: work around macos poll() bug
+ - terminal: don't assume stdin is /dev/tty
+ - terminal: use flags for save_term()
+ - Merge branch 'pw/single-key-interactive' into pw/add-p-single-key
+ (this branch uses pw/single-key-interactive.)
+
+ Finishing touches to C rewrite of "git add -i" in single-key
+ interactive mode.
+
+ Expecting a reroll.
+ cf. <a1e51433-71b1-b32d-0475-192b83bac43a@gmail.com>
+ source: <20220309110325.36917-1-phillip.wood123@gmail.com>
+
+
+* ab/reflog-prep-fix (2022-03-13) 1 commit
+ - reflog: don't be noisy on empty reflogs
+
+ Regression fix.
+
+ Will merge to 'next'.
+ source: <de5e2b0e290791d0a4f58a893d8571b5fc8c4f1a.1646952843.git.avarab@gmail.com>
+
+
+* en/sparse-cone-becomes-default (2022-03-13) 9 commits
+ - Documentation: some sparsity wording clarifications
+ - git-sparse-checkout.txt: mark non-cone mode as deprecated
+ - git-sparse-checkout.txt: flesh out non-cone mode pattern discussion a bit
+ - git-sparse-checkout.txt: add a new EXAMPLES section
+ - git-sparse-checkout.txt: shuffle some sections and mark as internal
+ - git-sparse-checkout.txt: update docs for deprecation of 'init'
+ - git-sparse-checkout.txt: wording updates for the cone mode default
+ - sparse-checkout: make --cone the default
+ - tests: stop assuming --no-cone is the default mode for sparse-checkout
+
+ source: <pull.1148.v2.git.1647054681.gitgitgadget@gmail.com>
+
+
+* ep/remove-duplicated-includes (2022-03-14) 6 commits
+ - attr.h: remove duplicate struct definition
+ - t/helper/test-run-command.c: delete duplicate include
+ - builtin/stash.c: delete duplicate include
+ - builtin/sparse-checkout.c: delete duplicate include
+ - builtin/gc.c: delete duplicate include
+ - attr.c: delete duplicate include
+
+ Code clean-up.
+
+ Will merge to 'next'.
+ source: <20220313195536.224075-1-gitter.spiros@gmail.com>
+
+
+* ep/t6423-modernize (2022-03-13) 1 commit
+ - t6423-merge-rename-directories.sh: use the $(...) construct
+
+ Code clean-up.
+
+ Will merge to 'next'.
+ source: <20220313172829.215517-1-gitter.spiros@gmail.com>
+
+
+* jc/rebase-detach-fix (2022-03-13) 2 commits
+ - rebase: set REF_HEAD_DETACH in checkout_up_to_date()
+ - rebase: use test_commit helper in setup
+
+ "git rebase $base $non_branch_commit", when $base is an ancestor or
+ the $non_branch_commit, modified the current branch, which has been
+ corrected.
+
+ Will merge to 'next'?
+ source: <pull.1226.v2.git.git.1647019492.gitgitgadget@gmail.com>
+
+
+* jh/builtin-fsmonitor-part-2plus (2022-03-13) 16 commits
+ - fsmonitor-settings: simplify initialization of settings data
+ - fsmonitor--daemon: add _() to calls to error()
+ - fsmonitor--daemon: add _() to calls to die()
+ - compat/fsmonitor/fsm-listen-win32: add _() to calls to error()
+ - compat/fsmonitor/fsm-listen-darwin: add _() to calls to error()
+ - fsmonitor-ipc: add _() to calls to die()
+ - t7527: delete unused verify_status() function
+ - t7527: fix && chaining in matrix_try()
+ - t7527: add parameters to start_daemon to handle args and subshell
+ - t/perf/p7519: cleanup coding style
+ - t/perf/p7519: use grep rather than egrep in test
+ - fsmonitor--daemon: refactor cookie handling for readability
+ - t/helper/fsmonitor-client: cleanup call to parse_options()
+ - compat/fsmonitor/fsm-listen-darwin: split out GCC-specific declarations
+ - update-index: convert advise() messages back to warning()
+ - t/test-lib: avoid using git on LHS of pipe
+ (this branch uses jh/builtin-fsmonitor-part2.)
+
+ Various small fixes and cleanups on part-2 of the same topic.
+
+ Needs review.
+ source: <pull.1174.git.1647033303.gitgitgadget@gmail.com>
+
+
+* ps/fsync-refs (2022-03-12) 2 commits
+ - core.fsync: new option to harden references
+ - Merge branch 'ns/core-fsyncmethod' into ps/fsync-refs
+ (this branch uses ns/core-fsyncmethod.)
+
+ Updates to refs traditionally weren't fsync'ed, but we can
+ configure using core.fsync variable to do so.
+
+ Will merge to 'next'?
+ source: <47dd79106b93bb81750320d50ccaa74c24aacd28.1646992380.git.ps@pks.im>
+
+
+* vd/stash-silence-reset (2022-03-13) 5 commits
+ - stash: make internal resets quiet and refresh index
+ - reset: suppress '--no-refresh' advice if logging is silenced
+ - reset: replace '--quiet' with '--no-refresh' in performance advice
+ - reset: introduce --[no-]refresh option to --mixed
+ - reset: revise index refresh advice
+
+ "git stash" does not allow subcommands it internally runs as its
+ implementation detail, except for "git reset", to emit messages;
+ now "git reset" part has also been squelched.
+
+ Will merge to 'next'.
+ source: <pull.1170.git.1647043729.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Stalled]
-
-* tl/ls-tree-oid-only (2022-03-04) 12 commits
- - ls-tree: support --object-only option for "git-ls-tree"
- - ls-tree: introduce "--format" option
- - cocci: allow padding with `strbuf_addf()`
- - ls-tree: introduce struct "show_tree_data"
- - ls-tree: slightly refactor `show_tree()`
- - ls-tree: fix "--name-only" and "--long" combined use bug
- - ls-tree: simplify nesting if/else logic in "show_tree()"
- - ls-tree: rename "retval" to "recurse" in "show_tree()"
- - ls-tree: use "size_t", not "int" for "struct strbuf"'s "len"
- - ls-tree: use "enum object_type", not {blob,tree,commit}_type
- - ls-tree: add missing braces to "else" arms
- - ls-tree: remove commented-out code
-
- "git ls-tree" learns "--oid-only" option, similar to "--name-only",
- and more generalized "--format" option.
- source: <cover.1646390152.git.dyroneteng@gmail.com>
-
 
 * je/http-better-error-output (2021-12-03) 1 commit
  . http-backend: give a hint that web browser access is not supported
@@ -300,36 +438,102 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
-* jd/userdiff-kotlin (2022-03-06) 1 commit
+* tl/ls-tree-oid-only (2022-03-04) 12 commits
+ - ls-tree: support --object-only option for "git-ls-tree"
+ - ls-tree: introduce "--format" option
+ - cocci: allow padding with `strbuf_addf()`
+ - ls-tree: introduce struct "show_tree_data"
+ - ls-tree: slightly refactor `show_tree()`
+ - ls-tree: fix "--name-only" and "--long" combined use bug
+ - ls-tree: simplify nesting if/else logic in "show_tree()"
+ - ls-tree: rename "retval" to "recurse" in "show_tree()"
+ - ls-tree: use "size_t", not "int" for "struct strbuf"'s "len"
+ - ls-tree: use "enum object_type", not {blob,tree,commit}_type
+ - ls-tree: add missing braces to "else" arms
+ - ls-tree: remove commented-out code
+
+ "git ls-tree" learns "--oid-only" option, similar to "--name-only",
+ and more generalized "--format" option.
+ source: <cover.1646390152.git.dyroneteng@gmail.com>
+
+
+* ab/grep-patterntype (2022-03-04) 1 commit
+  (merged to 'next' on 2022-03-08 at 407dcd1f5d)
+ + log tests: fix "abort tests early" regression in ff37a60c369
+
+ Test fix-up for a topic already in master.
+
+ Will merge to 'master'.
+ source: <patch-1.1-3b41c1a26d4-20220304T093323Z-avarab@gmail.com>
+
+
+* mf/fix-type-in-config-h (2022-03-03) 1 commit
+  (merged to 'next' on 2022-03-08 at a914e267f2)
+ + config: correct "--type" option in "git config -h" output
+
+ "git config -h" did not describe the "--type" option correctly.
+
+ Will merge to 'master'.
+ source: <pull.1220.v2.git.git.1646368313714.gitgitgadget@gmail.com>
+
+
+* ab/racy-hooks (2022-03-07) 2 commits
+  (merged to 'next' on 2022-03-08 at 07188be733)
+ + hooks: fix an obscure TOCTOU "did we just run a hook?" race
+ + merge: don't run post-hook logic on --no-verify
+
+ Code clean-up to allow callers of run_commit_hook() to learn if it
+ got "success" because the hook succeeded or because there wasn't
+ any hook.
+
+ Will merge to 'master'.
+ source: <cover-v2-0.2-00000000000-20220307T123244Z-avarab@gmail.com>
+
+
+* ab/string-list-count-in-size-t (2022-03-07) 2 commits
+  (merged to 'next' on 2022-03-08 at 3458b5c278)
+ + string-list API: change "nr" and "alloc" to "size_t"
+ + gettext API users: don't explicitly cast ngettext()'s "n"
+
+ Count string_list items in size_t, not "unsigned int".
+
+ Will merge to 'master'.
+ source: <cover-v2-0.2-00000000000-20220307T152316Z-avarab@gmail.com>
+
+
+* jd/userdiff-kotlin (2022-03-12) 1 commit
  - userdiff: add builtin diff driver for kotlin language.
 
  A new built-in userdiff driver for kotlin.
- source: <20220306111031.335489-2-jaydeepjd.8914@gmail.com>
+
+ Will merge to 'next'.
+ source: <20220312044832.718356-1-jaydeepjd.8914@gmail.com>
 
 
 * ps/fetch-mirror-optim (2022-03-01) 6 commits
- - refs/files-backend: optimize reading of symbolic refs
- - remote: read symbolic refs via `refs_read_symbolic_ref()`
- - refs: add ability for backends to special-case reading of symbolic refs
- - fetch: avoid lookup of commits when not appending to FETCH_HEAD
- - upload-pack: look up "want" lines via commit-graph
- - Merge branch 'ps/fetch-atomic' into ps/fetch-mirror-optim
- (this branch uses ps/fetch-atomic.)
+  (merged to 'next' on 2022-03-08 at 60aae8731c)
+ + refs/files-backend: optimize reading of symbolic refs
+ + remote: read symbolic refs via `refs_read_symbolic_ref()`
+ + refs: add ability for backends to special-case reading of symbolic refs
+ + fetch: avoid lookup of commits when not appending to FETCH_HEAD
+ + upload-pack: look up "want" lines via commit-graph
+ + Merge branch 'ps/fetch-atomic' into ps/fetch-mirror-optim
 
  Various optimization for "git fetch".
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover.1646127015.git.ps@pks.im>
 
 
 * tk/t7063-chmtime-dirs-too (2022-03-01) 2 commits
- - t7063: mtime-mangling instead of delays in untracked cache testing
- - t/helper/test-chmtime: update mingw to support chmtime on directories
+  (merged to 'next' on 2022-03-08 at 99c954903d)
+ + t7063: mtime-mangling instead of delays in untracked cache testing
+ + t/helper/test-chmtime: update mingw to support chmtime on directories
 
  Teach "test-chmtime" to work on a directory and use it to avoid
  having to wait for a second in a few places in tests.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1166.v3.git.1646201124.gitgitgadget@gmail.com>
 
 
@@ -347,86 +551,45 @@ Release tarballs are available at:
 
  Update tests around the use of hook scripts.
 
- Will merge to 'next'?
+ Needs a (hopefully) final eyeballing.
  source: <cover-v2-00.10-00000000000-20220307T123909Z-avarab@gmail.com>
 
 
 * ab/keep-git-exit-codes-in-tests (2022-03-07) 15 commits
- - rev-list simplify tests: don't ignore "git" exit code
- - checkout tests: don't ignore "git <cmd>" exit code
- - apply tests: don't ignore "git ls-files" exit code, drop sub-shell
- - gettext tests: don't ignore "test-tool regex" exit code
- - rev-list tests: don't hide abort() in "test_expect_failure"
- - diff tests: don't ignore "git rev-list" exit code
- - notes tests: don't ignore "git" exit code
- - rev-parse tests: don't ignore "git reflog" exit code
- - merge tests: use "test_must_fail" instead of ad-hoc pattern
- - apply tests: use "test_must_fail" instead of ad-hoc pattern
- - diff tests: don't ignore "git diff" exit code in "read" loop
- - diff tests: don't ignore "git diff" exit code
- - read-tree tests: check "diff-files" exit code on failure
- - tests: use "test_stdout_line_count", not "test $(git [...] | wc -l)"
- - tests: change some 'test $(git) = "x"' to test_cmp
+  (merged to 'next' on 2022-03-08 at bf89509f4c)
+ + rev-list simplify tests: don't ignore "git" exit code
+ + checkout tests: don't ignore "git <cmd>" exit code
+ + apply tests: don't ignore "git ls-files" exit code, drop sub-shell
+ + gettext tests: don't ignore "test-tool regex" exit code
+ + rev-list tests: don't hide abort() in "test_expect_failure"
+ + diff tests: don't ignore "git rev-list" exit code
+ + notes tests: don't ignore "git" exit code
+ + rev-parse tests: don't ignore "git reflog" exit code
+ + merge tests: use "test_must_fail" instead of ad-hoc pattern
+ + apply tests: use "test_must_fail" instead of ad-hoc pattern
+ + diff tests: don't ignore "git diff" exit code in "read" loop
+ + diff tests: don't ignore "git diff" exit code
+ + read-tree tests: check "diff-files" exit code on failure
+ + tests: use "test_stdout_line_count", not "test $(git [...] | wc -l)"
+ + tests: change some 'test $(git) = "x"' to test_cmp
 
  Updates tests around the use of "test $(git cmd) = constant".
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <cover-v2-00.15-00000000000-20220307T124817Z-avarab@gmail.com>
 
 
-* ab/plug-random-leaks (2022-03-04) 14 commits
-  (merged to 'next' on 2022-03-04 at f461b7a6b5)
- + repository.c: free the "path cache" in repo_clear()
- + range-diff: plug memory leak in read_patches()
- + range-diff: plug memory leak in common invocation
- + lockfile API users: simplify and don't leak "path"
- + commit-graph: stop fill_oids_from_packs() progress on error and free()
- + commit-graph: fix memory leak in misused string_list API
- + submodule--helper: fix trivial leak in module_add()
- + transport: stop needlessly copying bundle header references
- + bundle: call strvec_clear() on allocated strvec
- + remote-curl.c: free memory in cmd_main()
- + urlmatch.c: add and use a *_release() function
- + diff.c: free "buf" in diff_words_flush()
- + merge-base: free() allocated "struct commit **" list
- + index-pack: fix memory leaks
-
- Plug random memory leaks.
-
- Will merge to 'master'.
- source: <cover-v2-00.14-00000000000-20220304T182902Z-avarab@gmail.com>
-
-
-* en/merge-ort-align-verbosity-with-recursive (2022-03-01) 1 commit
-  (merged to 'next' on 2022-03-04 at e2c7eabab6)
- + merge-ort: exclude messages from inner merges by default
-
- Align the level of verbose output from the ort backend during inner
- merge to that of the recursive backend.
-
- Will merge to 'master'.
- source: <pull.1167.git.1646194761463.gitgitgadget@gmail.com>
-
-
-* ep/test-malloc-check-with-glibc-2.34 (2022-03-04) 1 commit
- - test-lib.sh: Use GLIBC_TUNABLES instead of MALLOC_CHECK_ on glibc >= 2.34
+* ep/test-malloc-check-with-glibc-2.34 (2022-03-09) 2 commits
+  (merged to 'next' on 2022-03-12 at 13ed9014e6)
+ + test-lib: declare local variables as local
+  (merged to 'next' on 2022-03-08 at 810ac5a1d3)
+ + test-lib.sh: Use GLIBC_TUNABLES instead of MALLOC_CHECK_ on glibc >= 2.34
 
  The method to trigger malloc check used in our tests no longer work
  with newer versions of glibc.
 
- Will merge to 'next'.
- source: <20220304133702.26706-1-gitter.spiros@gmail.com>
-
-
-* gc/parse-tree-indirect-errors (2022-03-01) 1 commit
-  (merged to 'next' on 2022-03-04 at f8d60e5253)
- + checkout, clone: die if tree cannot be parsed
-
- Check the return value from parse_tree_indirect() to turn segfaults
- into calls to die().
-
  Will merge to 'master'.
- source: <20220302003613.15567-1-chooglen@google.com>
+ source: <81f43fbefde84ab7af9ee2ac760845b728a48ab5.1646861976.git.git@grubix.eu>
 
 
 * jc/mailsplit-warn-on-tty (2022-03-03) 1 commit
@@ -439,37 +602,17 @@ Release tarballs are available at:
 
 
 * jc/stash-drop (2022-03-02) 3 commits
- - stash: call reflog_delete() in reflog.c
- - reflog: libify delete reflog function and helpers
- - stash: add tests to ensure reflog --rewrite --updatref behavior
+  (merged to 'next' on 2022-03-08 at 4073dcf05c)
+ + stash: call reflog_delete() in reflog.c
+ + reflog: libify delete reflog function and helpers
+ + stash: add tests to ensure reflog --rewrite --updatref behavior
 
  "git stash drop" is reimplemented as an internal call to
  reflog_delete() function, instead of invoking "git reflog delete"
  via run_command() API.
 
- Will merge to 'next'.
- source: <pull.1218.v4.git.git.1646260044.gitgitgadget@gmail.com>
-
-
-* nj/read-tree-doc-reffix (2022-03-03) 1 commit
-  (merged to 'next' on 2022-03-04 at 9b183b3e3e)
- + Documentation: git-read-tree: separate links using commas
-
- Documentation mark-up fix.
-
  Will merge to 'master'.
- source: <20220303161542.11616-1-nihal@nihaljere.xyz>
-
-
-* ps/fetch-atomic-fixup (2022-03-03) 1 commit
-  (merged to 'next' on 2022-03-04 at cb279e84df)
- + t5503: simplify setup of test which exercises failure of backfill
- (this branch uses ps/fetch-atomic.)
-
- Test simplification.
-
- Will merge to 'master' together with ps/fetch-atomic.
- source: <cover.1645102965.git.ps@pks.im>
+ source: <pull.1218.v4.git.git.1646260044.gitgitgadget@gmail.com>
 
 
 * tb/cruft-packs (2022-03-02) 17 commits
@@ -495,20 +638,22 @@ Release tarballs are available at:
  instead of ejecting them into loose form to be reclaimed later, has
  been introduced.
 
- Will merge to 'next'.
+ Waiting for discussion to settle.
+ cf. <YiZI99yeijQe5Jaq@google.com>
  source: <cover.1646266835.git.me@ttaylorr.com>
 
 
 * tb/rename-remote-progress (2022-03-03) 2 commits
- - builtin/remote.c: show progress when renaming remote references
- - builtin/remote.c: parse options in 'rename'
+  (merged to 'next' on 2022-03-08 at adff4dbd86)
+ + builtin/remote.c: show progress when renaming remote references
+ + builtin/remote.c: parse options in 'rename'
 
  "git remote rename A B", depending on the number of remote-tracking
  refs involved, takes long time renaming them.  The command has been
  taught to show progress bar while making the user wait.
 
- Will merge to 'next'?
- source: <d5b0a4b71027619123b7284611692d3a9c128518.1646346287.git.me@ttaylorr.com>
+ Will merge to 'master'.
+ source: <cover.1646346286.git.me@ttaylorr.com>
 
 
 * js/ci-github-workflow-markup (2022-03-01) 9 commits
@@ -525,22 +670,22 @@ Release tarballs are available at:
  Update the GitHub workflow support to make it quicker to get to the
  failing test.
 
- Will merge to 'next'?
+ Waiting for discussion to settle.
+ cf. <220309.86tuc6lwpj.gmgdl@evledraar.gmail.com>
  cf. <220302.86mti87cj2.gmgdl@evledraar.gmail.com>
  cf. <30dbc8fb-a1db-05bc-3dcb-070e11cf4715@gmail.com>
  source: <pull.1117.v2.git.1646130289.gitgitgadget@gmail.com>
 
 
-* jk/name-rev-w-genno (2022-02-28) 1 commit
+* jk/name-rev-w-genno (2022-03-13) 1 commit
  - name-rev: use generation numbers if available
 
  "git name-rev" learned to use the generation numbers when setting
  the lower bound of searching commits used to explain the revision,
  when available, instead of committer time.
 
- Breaks linux-TEST-vars job at CI?
- cf. <xmqqilsvet82.fsf@gitster.g>
- source: <20220228215025.325904-2-jacob.e.keller@intel.com>
+ Will merge to 'next'.
+ source: <20220312000015.3643427-1-jacob.e.keller@intel.com>
 
 
 * et/xdiff-indirection (2022-02-17) 1 commit
@@ -554,44 +699,17 @@ Release tarballs are available at:
  source: <20220217225408.GB7@edef91d97c94>
 
 
-* ab/c99-variadic-macros (2022-02-21) 2 commits
-  (merged to 'next' on 2022-03-01 at 0419a86e23)
- + C99: remove hardcoded-out !HAVE_VARIADIC_MACROS code
- + git-compat-util.h: clarify GCC v.s. C99-specific in comment
-
- Remove the escape hatch we added when we introduced the weather
- balloon to use variadic macros unconditionally, to make it official
- that we now have a hard dependency on the feature.
-
- Will merge to 'master'.
- source: <cover-v4-0.2-00000000000-20220221T160440Z-avarab@gmail.com>
-
-
-* ab/help-fixes (2022-02-23) 9 commits
-  (merged to 'next' on 2022-03-01 at 215f5dbbfb)
- + help: don't print "\n" before single-section output
- + help: add --no-[external-commands|aliases] for use with --all
- + help: error if [-a|-g|-c] and [-i|-m|-w] are combined
- + help: correct usage & behavior of "git help --all"
- + help: note the option name on option incompatibility
- + help.c: split up list_all_cmds_help() function
- + help tests: test "git" and "git help [-a|-g] spacing
- + help.c: use puts() instead of printf{,_ln}() for consistency
- + help doc: add missing "]" to "[-a|--all]"
-
- Updates to how command line options to "git help" are handled.
-
- Will merge to 'master'.
- source: <cover-v2-0.9-00000000000-20220221T193708Z-avarab@gmail.com>
-
-
-* sm/no-git-in-upstream-of-pipe-in-tests (2022-02-23) 1 commit
- - t0003: avoid pipes with Git on LHS
+* sm/no-git-in-upstream-of-pipe-in-tests (2022-03-12) 3 commits
+  (merged to 'next' on 2022-03-12 at 9e6f538b36)
+ + t0030-t0050: avoid pipes with Git on LHS
+ + t0001-t0028: avoid pipes with Git on LHS
+  (merged to 'next' on 2022-03-08 at 3ff4e5c09c)
+ + t0003: avoid pipes with Git on LHS
 
  Test fixes.
 
- Will merge to 'next'.
- source: <20220223115347.3083-3-shivam828787@gmail.com>
+ Will merge to 'master'.
+ source: <20220223115347.3083-1-shivam828787@gmail.com>
 
 
 * ab/http-gcc-12-workaround (2022-02-25) 1 commit
@@ -601,74 +719,45 @@ Release tarballs are available at:
  source: <patch-v2-1.1-777838267a5-20220225T090816Z-avarab@gmail.com>
 
 
-* ab/make-optim-noop (2022-03-03) 8 commits
-  (merged to 'next' on 2022-03-04 at 0419394f3d)
- + Makefiles: add and use wildcard "mkdir -p" template
- + Makefile: add "$(QUIET)" boilerplate to shared.mak
- + Makefile: move $(comma), $(empty) and $(space) to shared.mak
- + Makefile: move ".SUFFIXES" rule to shared.mak
- + Makefile: define $(LIB_H) in terms of $(FIND_SOURCE_FILES)
- + Makefile: disable GNU make built-in wildcard rules
- + Makefiles: add "shared.mak", move ".DELETE_ON_ERROR" to it
- + scalar Makefile: use "The default target of..." pattern
-
- Makefile refactoring with a bit of suffixes rule stripping to
- optimize the runtime overhead.
-
- Will merge to 'master'.
- source: <cover-v5-0.8-00000000000-20220303T160155Z-avarab@gmail.com>
-
-
 * ds/commit-graph-gen-v2-fixes (2022-03-07) 6 commits
- - commit-graph: declare bankruptcy on GDAT chunks
- - commit-graph: fix generation number v2 overflow values
- - commit-graph: start parsing generation v2 (again)
- - commit-graph: fix ordering bug in generation numbers
- - t5318: extract helpers to lib-commit-graph.sh
- - test-read-graph: include extra post-parse info
+  (merged to 'next' on 2022-03-08 at 36dd214bc2)
+ + commit-graph: declare bankruptcy on GDAT chunks
+ + commit-graph: fix generation number v2 overflow values
+ + commit-graph: start parsing generation v2 (again)
+ + commit-graph: fix ordering bug in generation numbers
+ + t5318: extract helpers to lib-commit-graph.sh
+ + test-read-graph: include extra post-parse info
 
  Fixes to the way generation number v2 in the commit-graph files are
  (not) handled.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1163.v3.git.1646164112.gitgitgadget@gmail.com>
 
 
-* ds/partial-bundles (2022-03-07) 12 commits
- - clone: fail gracefully when cloning filtered bundle
- - bundle: unbundle promisor packs
- - bundle: create filtered bundles
- - rev-list: move --filter parsing into revision.c
- - bundle: parse filter capability
- - bundle: safely handle --objects option
- - MyFirstObjectWalk: update recommended usage
- - list-objects: consolidate traverse_commit_list[_filtered]
- - pack-bitmap: drop filter in prepare_bitmap_walk()
- - pack-objects: use rev.filter when possible
- - revision: put object filter into struct rev_info
- - index-pack: document and test the --promisor option
+* ds/partial-bundles (2022-03-09) 13 commits
+  (merged to 'next' on 2022-03-13 at 03529eaa59)
+ + clone: fail gracefully when cloning filtered bundle
+ + bundle: unbundle promisor packs
+ + bundle: create filtered bundles
+ + rev-list: move --filter parsing into revision.c
+ + bundle: parse filter capability
+ + list-objects: handle NULL function pointers
+ + MyFirstObjectWalk: update recommended usage
+ + list-objects: consolidate traverse_commit_list[_filtered]
+ + pack-bitmap: drop filter in prepare_bitmap_walk()
+ + pack-objects: use rev.filter when possible
+ + revision: put object filter into struct rev_info
+ + list-objects-filter-options: create copy helper
+ + index-pack: document and test the --promisor option
+ (this branch is used by ds/bundle-uri.)
 
  Bundle file format gets extended to allow a partial bundle,
  filtered by similar criteria you would give when making a
  partial/lazy clone.
 
- Will merge to 'next'?
- source: <pull.1159.v2.git.1646689840.gitgitgadget@gmail.com>
-
-
-* fs/gpgsm-update (2022-03-04) 3 commits
-  (merged to 'next' on 2022-03-04 at 9c72508077)
- + t/lib-gpg: kill all gpg components, not just gpg-agent
- + t/lib-gpg: reload gpg components after updating trustlist
- + gpg-interface/gpgsm: fix for v2.3
-
- Newer version of GPGSM changed its output in a backward
- incompatible way to break our code that parses its output.  It also
- added more processes our tests need to kill when cleaning up.
- Adjustments have been made to accommodate these changes.
-
  Will merge to 'master'.
- source: <20220302090250.590450-1-fs@gigacodes.de>
+ source: <pull.1159.v4.git.1646841703.gitgitgadget@gmail.com>
 
 
 * jd/prompt-upstream-mark (2022-03-03) 4 commits
@@ -680,7 +769,7 @@ Release tarballs are available at:
  Tweaks in the command line prompt (in contrib/) code around its
  GIT_PS1_SHOWUPSTREAM feature.
 
- Will merge to 'next'?
+ What's the status of this one?
  source: <pull.1162.v2.git.1645991832.gitgitgadget@gmail.com>
 
 
@@ -709,20 +798,22 @@ Release tarballs are available at:
  the other side what we already have, which is useful when you
  cannot trust what you have in the local object store.
 
- Will merge to 'next'?
+ Waiting for discussion to settle.
+ cf. <20220309002729.3581315-1-calvinwan@google.com>
  source: <pull.1138.v3.git.1646406274.gitgitgadget@gmail.com>
 
 
 * tk/empty-untracked-cache (2022-02-28) 3 commits
- - untracked-cache: write index when populating empty untracked cache
- - t7519: populate untracked cache before test
- - t7519: avoid file to index mtime race for untracked cache
+  (merged to 'next' on 2022-03-08 at d3749d5850)
+ + untracked-cache: write index when populating empty untracked cache
+ + t7519: populate untracked cache before test
+ + t7519: avoid file to index mtime race for untracked cache
 
  The untracked cache newly computed weren't written back to the
  on-disk index file when there is no other change to the index,
  which has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.986.v3.git.1645999021.gitgitgadget@gmail.com>
 
 
@@ -751,19 +842,20 @@ Release tarballs are available at:
 
 
 * vd/sparse-read-tree (2022-03-01) 8 commits
- - read-tree: make three-way merge sparse-aware
- - read-tree: make two-way merge sparse-aware
- - read-tree: narrow scope of index expansion for '--prefix'
- - read-tree: integrate with sparse index
- - read-tree: expand sparse checkout test coverage
- - read-tree: explicitly disallow prefixes with a leading '/'
- - status: fix nested sparse directory diff in sparse index
- - sparse-index: prevent repo root from becoming sparse
+  (merged to 'next' on 2022-03-08 at 037c187db2)
+ + read-tree: make three-way merge sparse-aware
+ + read-tree: make two-way merge sparse-aware
+ + read-tree: narrow scope of index expansion for '--prefix'
+ + read-tree: integrate with sparse index
+ + read-tree: expand sparse checkout test coverage
+ + read-tree: explicitly disallow prefixes with a leading '/'
+ + status: fix nested sparse directory diff in sparse index
+ + sparse-index: prevent repo root from becoming sparse
 
  "git read-tree" has been made to be aware of the sparse-index
  feature.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1157.v3.git.1646166271.gitgitgadget@gmail.com>
 
 
@@ -779,102 +871,56 @@ Release tarballs are available at:
 
 
 * pw/single-key-interactive (2022-02-23) 4 commits
- - add -p: disable stdin buffering when interactive.singlekey is set
- - terminal: set VMIN and VTIME in non-canonical mode
- - terminal: pop signal handler when terminal is restored
- - terminal: always reset terminal when reading without echo
+  (merged to 'next' on 2022-03-13 at 02fd6aca2f)
+ + add -p: disable stdin buffering when interactive.singlekey is set
+ + terminal: set VMIN and VTIME in non-canonical mode
+ + terminal: pop signal handler when terminal is restored
+ + terminal: always reset terminal when reading without echo
+ (this branch is used by pw/add-p-single-key.)
 
  The single-key interactive operation used by "git add -p" has been
  made more robust.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <pull.1146.v2.git.1645556015.gitgitgadget@gmail.com>
 
 
-* jh/builtin-fsmonitor-part3 (2022-03-01) 23 commits
- - t/perf/p7527: add perf test for builtin FSMonitor
- - t7527: FSMonitor tests for directory moves
- - fsmonitor: optimize processing of directory events
- - fsm-listen-darwin: shutdown daemon if worktree root is moved/renamed
- - fsm-health-win32: force shutdown daemon if worktree root moves
- - fsm-health-win32: add framework to monitor daemon health
- - fsmonitor--daemon: stub in health thread
- - fsmonitor--daemon: rename listener thread related variables
- - fsmonitor--daemon: prepare for adding health thread
- - fsmonitor--daemon: cd out of worktree root
- - fsm-listen-darwin: ignore FSEvents caused by xattr changes on macOS
- - unpack-trees: initialize fsmonitor_has_run_once in o->result
- - fsmonitor-settings: remote repos on Windows are incompatible with FSMonitor
- - fsmonitor-settings: remote repos on macOS are incompatible with FSMonitor
- - fsmonitor-settings: stub in macOS-specific incompatibility checking
- - fsmonitor-settings: virtual repos are incompatible with FSMonitor
- - fsmonitor-settings: stub in platform-specific incompatibility checking
- - fsmonitor-settings: bare repos are incompatible with FSMonitor
- - t/helper/fsmonitor-client: create stress test
- - t7527: test builtin FSMonitor watching repos with unicode paths
- - t7527: test FS event reporing on macOS WRT case and Unicode
- - fsm-listen-win32: handle shortnames
- - Merge branch 'jh/builtin-fsmonitor-part2' into jh/builtin-fsmonitor-part3
+* jh/builtin-fsmonitor-part3 (2022-03-09) 28 commits
+ . fsmonitor-settings: NTFS and FAT32 on MacOS are incompatible
+ . t7527: test Unicode NFC/NFD handling on MacOS
+ . t/lib-unicode-nfc-nfd: helper prereqs for testing unicode nfc/nfd
+ . fsmonitor: on macOS also emit NFC spelling for NFD pathname
+ . t7527: test FSMonitor on case insensitive+preserving file system
+ . fsmonitor: never set CE_FSMONITOR_VALID on submodules
+ . t/perf/p7527: add perf test for builtin FSMonitor
+ . t7527: FSMonitor tests for directory moves
+ . fsmonitor: optimize processing of directory events
+ . fsm-listen-darwin: shutdown daemon if worktree root is moved/renamed
+ . fsm-health-win32: force shutdown daemon if worktree root moves
+ . fsm-health-win32: add polling framework to monitor daemon health
+ . fsmonitor--daemon: stub in health thread
+ . fsmonitor--daemon: rename listener thread related variables
+ . fsmonitor--daemon: prepare for adding health thread
+ . fsmonitor--daemon: cd out of worktree root
+ . fsm-listen-darwin: ignore FSEvents caused by xattr changes on macOS
+ . unpack-trees: initialize fsmonitor_has_run_once in o->result
+ . fsmonitor-settings: remote repos on Windows are incompatible
+ . fsmonitor-settings: remote repos on macOS are incompatible
+ . fsmonitor-settings: stub in macOS-specific incompatibility checking
+ . fsmonitor-settings: VFS for Git virtual repos are incompatible
+ . fsmonitor-settings: stub in platform-specific incompatibility checking
+ . fsmonitor-settings: bare repos are incompatible with FSMonitor
+ . t/helper/fsmonitor-client: create stress test
+ . t7527: test FSMonitor on repos with Unicode root paths
+ . fsm-listen-win32: handle shortnames
+ . Merge branch 'jh/builtin-fsmonitor-part2' into jh/builtin-fsmonitor-part3
  (this branch uses jh/builtin-fsmonitor-part2.)
 
  More fsmonitor--daemon.
-
- Expecting a reroll on the updated "part 2".
- source: <pull.1143.git.1644940773.gitgitgadget@gmail.com>
+ source: <pull.1143.v2.git.1646777727.gitgitgadget@gmail.com>
 
 
-* hn/reftable-no-empty-keys (2022-02-23) 7 commits
-  (merged to 'next' on 2022-03-01 at dc4aa7e796)
- + reftable: rename writer_stats to reftable_writer_stats
- + reftable: add test for length of disambiguating prefix
- + reftable: ensure that obj_id_len is >= 2 on writing
- + reftable: avoid writing empty keys at the block layer
- + reftable: add a test that verifies that writing empty keys fails
- + reftable: reject 0 object_id_len
- + Documentation: object_id_len goes up to 31
-
- General clean-up in reftable implementation, including
- clarification of the API documentation, tightening the code to
- honor documented length limit, etc.
-
- Will merge to 'master'.
- source: <pull.1185.v3.git.git.1645469170.gitgitgadget@gmail.com>
-
-
-* ps/fetch-atomic (2022-02-17) 7 commits
-  (merged to 'next' on 2022-02-18 at 3824153b23)
- + fetch: make `--atomic` flag cover pruning of refs
- + fetch: make `--atomic` flag cover backfilling of tags
- + refs: add interface to iterate over queued transactional updates
- + fetch: report errors when backfilling tags fails
- + fetch: control lifecycle of FETCH_HEAD in a single place
- + fetch: backfill tags before setting upstream
- + fetch: increase test coverage of fetches
- (this branch is used by ps/fetch-atomic-fixup and ps/fetch-mirror-optim.)
-
- "git fetch" can make two separate fetches, but ref updates coming
- from them were in two separate ref transactions under "--atomic",
- which has been corrected.
-
- Will merge to 'master' together with ps/fetch-atomic-fixup.
- source: <cover.1645102965.git.ps@pks.im>
-
-
-* pw/xdiff-alloc-fail (2022-02-16) 4 commits
-  (merged to 'next' on 2022-03-01 at 8a10912059)
- + xdiff: handle allocation failure when merging
- + xdiff: refactor a function
- + xdiff: handle allocation failure in patience diff
- + xdiff: fix a memory leak
-
- Improve failure case behaviour of xdiff library when memory
- allocation fails.
-
- Will merge to 'master'.
- source: <pull.1140.v2.git.1645006510.gitgitgadget@gmail.com>
-
-
-* gc/recursive-fetch-with-unused-submodules (2022-03-03) 10 commits
+* gc/recursive-fetch-with-unused-submodules (2022-03-07) 10 commits
  - submodule: fix latent check_has_commit() bug
  - fetch: fetch unpopulated, changed submodules
  - submodule: move logic into fetch_task_create()
@@ -892,8 +938,9 @@ Release tarballs are available at:
  in the current checkout of the superproject.  We now do so for all
  submodules that have been run "git submodule init" on.
 
- Will merge to 'next'?
- source: <20220304005757.70107-1-chooglen@google.com>
+ Expecting a reroll.
+ cf. <kl6ly21p2q00.fsf@chooglen-macbookpro.roam.corp.google.com>
+ source: <20220308001433.94995-1-chooglen@google.com>
 
 
 * js/bisect-in-c (2022-02-23) 14 commits
@@ -934,22 +981,7 @@ Release tarballs are available at:
  source: <pull.1128.v2.git.1644187146.gitgitgadget@gmail.com>
 
 
-* jc/cat-file-batch-commands (2022-02-18) 4 commits
-  (merged to 'next' on 2022-03-01 at 8764b7963c)
- + cat-file: add --batch-command mode
- + cat-file: add remove_timestamp helper
- + cat-file: introduce batch_mode enum to replace print_contents
- + cat-file: rename cmdmode to transform_mode
-
- "git cat-file" learns "--batch-command" mode, which is a more
- flexible interface than the existing "--batch" or "--batch-check"
- modes, to allow different kinds of inquiries made.
-
- Will merge to 'master'.
- source: <pull.1212.v10.git.git.1645208594.gitgitgadget@gmail.com>
-
-
-* ar/submodule-update (2022-03-04) 13 commits
+* gc/submodule-update-part1 (2022-03-04) 13 commits
  - submodule--helper update-clone: check for --filter and --init
  - submodule update: add tests for --filter
  - submodule--helper: remove ensure-core-worktree
@@ -966,7 +998,7 @@ Release tarballs are available at:
 
  Rewrite of "git submodule update" in C (early part).
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20220305001401.20888-1-chooglen@google.com>
 
 
@@ -984,22 +1016,23 @@ Release tarballs are available at:
 
 
 * ab/object-file-api-updates (2022-02-25) 12 commits
- - object-file API: pass an enum to read_object_with_reference()
- - object-file.c: add a literal version of write_object_file_prepare()
- - object-file API: have hash_object_file() take "enum object_type"
- - object API: rename hash_object_file_literally() to write_*()
- - object-file API: split up and simplify check_object_signature()
- - object API users + docs: check <0, not !0 with check_object_signature()
- - object API docs: move check_object_signature() docs to cache.h
- - object API: correct "buf" v.s. "map" mismatch in *.c and *.h
- - object-file API: have write_object_file() take "enum object_type"
- - object-file API: add a format_object_header() function
- - object-file API: return "void", not "int" from hash_object_file()
- - object-file.c: split up declaration of unrelated variables
+  (merged to 'next' on 2022-03-08 at 7fc151ce67)
+ + object-file API: pass an enum to read_object_with_reference()
+ + object-file.c: add a literal version of write_object_file_prepare()
+ + object-file API: have hash_object_file() take "enum object_type"
+ + object API: rename hash_object_file_literally() to write_*()
+ + object-file API: split up and simplify check_object_signature()
+ + object API users + docs: check <0, not !0 with check_object_signature()
+ + object API docs: move check_object_signature() docs to cache.h
+ + object API: correct "buf" v.s. "map" mismatch in *.c and *.h
+ + object-file API: have write_object_file() take "enum object_type"
+ + object-file API: add a format_object_header() function
+ + object-file API: return "void", not "int" from hash_object_file()
+ + object-file.c: split up declaration of unrelated variables
 
  Object-file API shuffling.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover-v3-00.12-00000000000-20220204T234435Z-avarab@gmail.com>
 
 
@@ -1056,26 +1089,6 @@ Release tarballs are available at:
  source: <20220210164627.279520-1-jholdsworth@nvidia.com>
 
 
-* en/present-despite-skipped (2022-03-01) 7 commits
-  (merged to 'next' on 2022-03-01 at 4982287a31)
- + repo_read_index: add config to expect files outside sparse patterns
-  (merged to 'next' on 2022-02-15 at 960873fdad)
- + Accelerate clear_skip_worktree_from_present_files() by caching
- + Update documentation related to sparsity and the skip-worktree bit
- + repo_read_index: clear SKIP_WORKTREE bit from files present in worktree
- + unpack-trees: fix accidental loss of user changes
- + t1011: add testcase demonstrating accidental loss of user modifications
- + Merge branch 'vd/sparse-clean-etc' into en/present-despite-skipped
-
- In sparse-checkouts, files mis-marked as missing from the working tree
- could lead to later problems.  Such files were hard to discover, and
- harder to correct.  Automatically detecting and correcting the marking
- of such files has been added to avoid these problems.
-
- Will merge to 'master'.
- source: <pull.1114.v2.git.1642175983.gitgitgadget@gmail.com>
-
-
 * js/use-builtin-add-i (2021-12-01) 2 commits
  - add -i: default to the built-in implementation
  - t2016: require the PERL prereq only when necessary
@@ -1094,55 +1107,56 @@ Release tarballs are available at:
 
 
 * jh/builtin-fsmonitor-part2 (2022-03-01) 30 commits
- - update-index: convert fsmonitor warnings to advise
- - t7527: test status with untracked-cache and fsmonitor--daemon
- - fsmonitor: force update index after large responses
- - fsmonitor--daemon: use a cookie file to sync with file system
- - fsmonitor--daemon: periodically truncate list of modified files
- - t/perf/p7519: add fsmonitor--daemon test cases
- - t/perf/p7519: speed up test on Windows
- - t/helper/test-chmtime: skip directories on Windows
- - t/perf: avoid copying builtin fsmonitor files into test repo
- - t7527: create test for fsmonitor--daemon
- - t/helper/fsmonitor-client: create IPC client to talk to FSMonitor Daemon
- - help: include fsmonitor--daemon feature flag in version info
- - fsmonitor--daemon: implement handle_client callback
- - compat/fsmonitor/fsm-listen-darwin: implement FSEvent listener on MacOS
- - compat/fsmonitor/fsm-listen-darwin: add MacOS header files for FSEvent
- - compat/fsmonitor/fsm-listen-win32: implement FSMonitor backend on Windows
- - fsmonitor--daemon: create token-based changed path cache
- - fsmonitor--daemon: define token-ids
- - fsmonitor--daemon: add pathname classification
- - fsmonitor--daemon: implement 'start' command
- - fsmonitor--daemon: implement 'run' command
- - compat/fsmonitor/fsm-listen-darwin: stub in backend for Darwin
- - compat/fsmonitor/fsm-listen-win32: stub in backend for Windows
- - fsmonitor--daemon: implement 'stop' and 'status' commands
- - fsmonitor--daemon: add a built-in fsmonitor daemon
- - fsmonitor: document builtin fsmonitor
- - fsmonitor: use IPC to query the builtin FSMonitor daemon
- - fsmonitor: config settings are repository-specific
- - fsmonitor-ipc: create client routines for git-fsmonitor--daemon
- - fsmonitor: enhance existing comments, clarify trivial response handling
- (this branch is used by jh/builtin-fsmonitor-part3.)
+  (merged to 'next' on 2022-03-08 at 5f9d385483)
+ + update-index: convert fsmonitor warnings to advise
+ + t7527: test status with untracked-cache and fsmonitor--daemon
+ + fsmonitor: force update index after large responses
+ + fsmonitor--daemon: use a cookie file to sync with file system
+ + fsmonitor--daemon: periodically truncate list of modified files
+ + t/perf/p7519: add fsmonitor--daemon test cases
+ + t/perf/p7519: speed up test on Windows
+ + t/helper/test-chmtime: skip directories on Windows
+ + t/perf: avoid copying builtin fsmonitor files into test repo
+ + t7527: create test for fsmonitor--daemon
+ + t/helper/fsmonitor-client: create IPC client to talk to FSMonitor Daemon
+ + help: include fsmonitor--daemon feature flag in version info
+ + fsmonitor--daemon: implement handle_client callback
+ + compat/fsmonitor/fsm-listen-darwin: implement FSEvent listener on MacOS
+ + compat/fsmonitor/fsm-listen-darwin: add MacOS header files for FSEvent
+ + compat/fsmonitor/fsm-listen-win32: implement FSMonitor backend on Windows
+ + fsmonitor--daemon: create token-based changed path cache
+ + fsmonitor--daemon: define token-ids
+ + fsmonitor--daemon: add pathname classification
+ + fsmonitor--daemon: implement 'start' command
+ + fsmonitor--daemon: implement 'run' command
+ + compat/fsmonitor/fsm-listen-darwin: stub in backend for Darwin
+ + compat/fsmonitor/fsm-listen-win32: stub in backend for Windows
+ + fsmonitor--daemon: implement 'stop' and 'status' commands
+ + fsmonitor--daemon: add a built-in fsmonitor daemon
+ + fsmonitor: document builtin fsmonitor
+ + fsmonitor: use IPC to query the builtin FSMonitor daemon
+ + fsmonitor: config settings are repository-specific
+ + fsmonitor-ipc: create client routines for git-fsmonitor--daemon
+ + fsmonitor: enhance existing comments, clarify trivial response handling
+ (this branch is used by jh/builtin-fsmonitor-part-2plus and jh/builtin-fsmonitor-part3.)
 
  Built-in fsmonitor (part 2).
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1041.v6.git.1646160212.gitgitgadget@gmail.com>
 
 
-* es/superproject-aware-submodules (2022-02-28) 3 commits
- - rev-parse: short-circuit superproject worktree when config unset
- - introduce submodule.hasSuperproject record
- - t7400-submodule-basic: modernize inspect() helper
+* es/superproject-aware-submodules (2022-03-09) 3 commits
+ . rev-parse: short-circuit superproject worktree when config unset
+ . introduce submodule.hasSuperproject record
+ . t7400-submodule-basic: modernize inspect() helper
 
  A configuration variable in a repository tells if it is (or is not)
  a submodule of a superproject.
 
  Expecting a reroll.
- cf. <xmqqbkyqupg6.fsf@gitster.g>
- source: <20220301002613.1459916-1-emilyshaffer@google.com>
+ cf. <kl6l4k45s7cb.fsf@chooglen-macbookpro.roam.corp.google.com>
+ source: <20220310004423.2627181-1-emilyshaffer@google.com>
 
 --------------------------------------------------
 [Discarded]
