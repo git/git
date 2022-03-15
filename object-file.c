@@ -1849,11 +1849,16 @@ int hash_object_file(const struct git_hash_algo *algo, const void *buf,
 /* Finalize a file on disk, and close it. */
 static void close_loose_object(int fd)
 {
-	if (!the_repository->objects->odb->will_destroy) {
-		if (fsync_object_files)
-			fsync_or_die(fd, "loose object file");
-	}
+	if (the_repository->objects->odb->will_destroy)
+		goto out;
 
+	if (fsync_object_files > 0)
+		fsync_or_die(fd, "loose object file");
+	else
+		fsync_component_or_die(FSYNC_COMPONENT_LOOSE_OBJECT, fd,
+				       "loose object file");
+
+out:
 	if (close(fd) != 0)
 		die_errno(_("error when closing loose object file"));
 }
