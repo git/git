@@ -535,10 +535,10 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 				refresh_index(&the_index, flags, NULL, NULL,
 					      _("Unstaged changes after reset:"));
 				t_delta_in_ms = (getnanotime() - t_begin) / 1000000;
-				if (advice_enabled(ADVICE_RESET_QUIET_WARNING) && t_delta_in_ms > REFRESH_INDEX_DELAY_WARNING_IN_MS) {
-					advise(_("It took %.2f seconds to refresh the index after reset.  You can\n"
-						"use '--quiet' to avoid this.  Set the config setting reset.quiet to true\n"
-						"to make this the default."), t_delta_in_ms / 1000.0);
+				if (advice_enabled(ADVICE_RESET_NO_REFRESH_WARNING) && t_delta_in_ms > REFRESH_INDEX_DELAY_WARNING_IN_MS) {
+					advise(_("It took %.2f seconds to refresh the index after reset.  You can use\n"
+						 "'--no-refresh' to avoid this.  Set the config setting reset.refresh to false\n"
+						 "to make this the default."), t_delta_in_ms / 1000.0);
 				}
 			}
 		} else {
