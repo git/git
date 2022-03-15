@@ -10,6 +10,8 @@ SYNOPSIS
 --------
 [verse]
 'git maintenance' run [<options>]
+'git maintenance' start [--scheduler=<scheduler>]
+'git maintenance' (stop|register|unregister)
 
 
 DESCRIPTION
@@ -28,6 +30,24 @@ Git repository.
 
 SUBCOMMANDS
 -----------
+
+run::
+	Run one or more maintenance tasks. If one or more `--task` options
+	are specified, then those tasks are run in that order. Otherwise,
+	the tasks are determined by which `maintenance.<task>.enabled`
+	config options are true. By default, only `maintenance.gc.enabled`
+	is true.
+
+start::
+	Start running maintenance on the current repository. This performs
+	the same config updates as the `register` subcommand, then updates
+	the background scheduler to run `git maintenance run --scheduled`
+	on an hourly basis.
+
+stop::
+	Halt the background maintenance schedule. The current repository
+	is not removed from the list of maintained repositories, in case
+	the background maintenance is restarted later.
 
 register::
 	Initialize Git config values so any scheduled maintenance will
@@ -54,24 +74,6 @@ task:
 `git maintenance register` will also disable foreground maintenance by
 setting `maintenance.auto = false` in the current repository. This config
 setting will remain after a `git maintenance unregister` command.
-
-run::
-	Run one or more maintenance tasks. If one or more `--task` options
-	are specified, then those tasks are run in that order. Otherwise,
-	the tasks are determined by which `maintenance.<task>.enabled`
-	config options are true. By default, only `maintenance.gc.enabled`
-	is true.
-
-start::
-	Start running maintenance on the current repository. This performs
-	the same config updates as the `register` subcommand, then updates
-	the background scheduler to run `git maintenance run --scheduled`
-	on an hourly basis.
-
-stop::
-	Halt the background maintenance schedule. The current repository
-	is not removed from the list of maintained repositories, in case
-	the background maintenance is restarted later.
 
 unregister::
 	Remove the current repository from background maintenance. This
