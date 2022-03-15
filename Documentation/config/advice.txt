@@ -69,8 +69,8 @@ advice.*::
 		merge to avoid overwriting local changes.
 	resetQuiet::
 		Advice to consider using the `--quiet` option to linkgit:git-reset[1]
-		when the command takes more than 2 seconds to enumerate unstaged
-		changes after reset.
+		when the command takes more than 2 seconds to refresh the index
+		after reset.
 	resolveConflict::
 		Advice shown by various commands when conflicts
 		prevent the operation from being performed.
