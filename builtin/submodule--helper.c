@@ -2452,7 +2452,202 @@ static int run_update_procedure(struct update_data *ud)
 	return run_update_command(ud, subforce);
 }
 
-static int update_submodule(struct update_data *update_data);
+static const char *remote_submodule_branch(const char *path)
+{
+	const struct submodule *sub;
+	const char *branch = NULL;
+	char *key;
+
+	sub = submodule_from_path(the_repository, null_oid(), path);
+	if (!sub)
+		return NULL;
+
+	key = xstrfmt("submodule.%s.branch", sub->name);
+	if (repo_config_get_string_tmp(the_repository, key, &branch))
+		branch = sub->branch;
+	free(key);
+
+	if (!branch)
+		return "HEAD";
+
+	if (!strcmp(branch, ".")) {
+		const char *refname = resolve_ref_unsafe("HEAD", 0, NULL, NULL);
+
+		if (!refname)
+			die(_("No such ref: %s"), "HEAD");
+
+		/* detached HEAD */
+		if (!strcmp(refname, "HEAD"))
+			die(_("Submodule (%s) branch configured to inherit "
+			      "branch from superproject, but the superproject "
+			      "is not on any branch"), sub->name);
+
+		if (!skip_prefix(refname, "refs/heads/", &refname))
+			die(_("Expecting a full ref name, got %s"), refname);
+		return refname;
+	}
+
+	return branch;
+}
+
+static void ensure_core_worktree(const char *path)
+{
+	const char *cw;
+	struct repository subrepo;
+
+	if (repo_submodule_init(&subrepo, the_repository, path, null_oid()))
+		die(_("could not get a repository handle for submodule '%s'"), path);
+
+	if (!repo_config_get_string_tmp(&subrepo, "core.worktree", &cw)) {
+		char *cfg_file, *abs_path;
+		const char *rel_path;
+		struct strbuf sb = STRBUF_INIT;
+
+		cfg_file = repo_git_path(&subrepo, "config");
+
+		abs_path = absolute_pathdup(path);
+		rel_path = relative_path(abs_path, subrepo.gitdir, &sb);
+
+		git_config_set_in_file(cfg_file, "core.worktree", rel_path);
+
+		free(cfg_file);
+		free(abs_path);
+		strbuf_release(&sb);
+	}
+}
+
+static void update_data_to_args(struct update_data *update_data, struct strvec *args)
+{
+	strvec_pushl(args, "submodule--helper", "update", "--recursive", NULL);
+	strvec_pushf(args, "--jobs=%d", update_data->max_jobs);
+	if (update_data->recursive_prefix)
+		strvec_pushl(args, "--recursive-prefix",
+			     update_data->recursive_prefix, NULL);
+	if (update_data->quiet)
+		strvec_push(args, "--quiet");
+	if (update_data->force)
+		strvec_push(args, "--force");
+	if (update_data->init)
+		strvec_push(args, "--init");
+	if (update_data->remote)
+		strvec_push(args, "--remote");
+	if (update_data->nofetch)
+		strvec_push(args, "--no-fetch");
+	if (update_data->dissociate)
+		strvec_push(args, "--dissociate");
+	if (update_data->progress)
+		strvec_push(args, "--progress");
+	if (update_data->require_init)
+		strvec_push(args, "--require-init");
+	if (update_data->depth)
+		strvec_pushf(args, "--depth=%d", update_data->depth);
+	if (update_data->update_default)
+		strvec_pushl(args, "--update", update_data->update_default, NULL);
+	if (update_data->references.nr) {
+		struct string_list_item *item;
+		for_each_string_list_item(item, &update_data->references)
+			strvec_pushl(args, "--reference", item->string, NULL);
+	}
+	if (update_data->filter_options && update_data->filter_options->choice)
+		strvec_pushf(args, "--filter=%s",
+				expand_list_objects_filter_spec(
+					update_data->filter_options));
+	if (update_data->recommend_shallow == 0)
+		strvec_push(args, "--no-recommend-shallow");
+	else if (update_data->recommend_shallow == 1)
+		strvec_push(args, "--recommend-shallow");
+	if (update_data->single_branch >= 0)
+		strvec_push(args, update_data->single_branch ?
+				    "--single-branch" :
+				    "--no-single-branch");
+}
+
+static int update_submodule(struct update_data *update_data)
+{
+	char *prefixed_path;
+
+	ensure_core_worktree(update_data->sm_path);
+
+	if (update_data->recursive_prefix)
+		prefixed_path = xstrfmt("%s%s", update_data->recursive_prefix,
+					update_data->sm_path);
+	else
+		prefixed_path = xstrdup(update_data->sm_path);
+
+	update_data->displaypath = get_submodule_displaypath(prefixed_path,
+							     update_data->prefix);
+	free(prefixed_path);
+
+	determine_submodule_update_strategy(the_repository, update_data->just_cloned,
+					    update_data->sm_path, update_data->update_default,
+					    &update_data->update_strategy);
+
+	if (update_data->just_cloned)
+		oidcpy(&update_data->suboid, null_oid());
+	else if (resolve_gitlink_ref(update_data->sm_path, "HEAD", &update_data->suboid))
+		die(_("Unable to find current revision in submodule path '%s'"),
+			update_data->displaypath);
+
+	if (update_data->remote) {
+		char *remote_name = get_default_remote_submodule(update_data->sm_path);
+		const char *branch = remote_submodule_branch(update_data->sm_path);
+		char *remote_ref = xstrfmt("refs/remotes/%s/%s", remote_name, branch);
+
+		if (!update_data->nofetch) {
+			if (fetch_in_submodule(update_data->sm_path, update_data->depth,
+					      0, NULL))
+				die(_("Unable to fetch in submodule path '%s'"),
+				    update_data->sm_path);
+		}
+
+		if (resolve_gitlink_ref(update_data->sm_path, remote_ref, &update_data->oid))
+			die(_("Unable to find %s revision in submodule path '%s'"),
+			    remote_ref, update_data->sm_path);
+
+		free(remote_ref);
+	}
+
+	if (!oideq(&update_data->oid, &update_data->suboid) || update_data->force)
+		if (run_update_procedure(update_data))
+			return 1;
+
+	if (update_data->recursive) {
+		struct child_process cp = CHILD_PROCESS_INIT;
+		struct update_data next = *update_data;
+		int res;
+
+		if (update_data->recursive_prefix)
+			prefixed_path = xstrfmt("%s%s/", update_data->recursive_prefix,
+						update_data->sm_path);
+		else
+			prefixed_path = xstrfmt("%s/", update_data->sm_path);
+
+		next.recursive_prefix = get_submodule_displaypath(prefixed_path,
+								  update_data->prefix);
+		next.prefix = NULL;
+		oidcpy(&next.oid, null_oid());
+		oidcpy(&next.suboid, null_oid());
+
+		cp.dir = update_data->sm_path;
+		cp.git_cmd = 1;
+		prepare_submodule_repo_env(&cp.env_array);
+		update_data_to_args(&next, &cp.args);
+
+		/* die() if child process die()'d */
+		res = run_command(&cp);
+		if (!res)
+			return 0;
+		die_message(_("Failed to recurse into submodule path '%s'"),
+			    update_data->displaypath);
+		if (res == 128)
+			exit(res);
+		else if (res)
+			return 1;
+	}
+
+	return 0;
+}
+
 static int update_submodules(struct update_data *update_data)
 {
 	int i, res = 0;
@@ -2607,44 +2802,6 @@ static int module_update(int argc, const char **argv, const char *prefix)
 	return ret;
 }
 
-static const char *remote_submodule_branch(const char *path)
-{
-	const struct submodule *sub;
-	const char *branch = NULL;
-	char *key;
-
-	sub = submodule_from_path(the_repository, null_oid(), path);
-	if (!sub)
-		return NULL;
-
-	key = xstrfmt("submodule.%s.branch", sub->name);
-	if (repo_config_get_string_tmp(the_repository, key, &branch))
-		branch = sub->branch;
-	free(key);
-
-	if (!branch)
-		return "HEAD";
-
-	if (!strcmp(branch, ".")) {
-		const char *refname = resolve_ref_unsafe("HEAD", 0, NULL, NULL);
-
-		if (!refname)
-			die(_("No such ref: %s"), "HEAD");
-
-		/* detached HEAD */
-		if (!strcmp(refname, "HEAD"))
-			die(_("Submodule (%s) branch configured to inherit "
-			      "branch from superproject, but the superproject "
-			      "is not on any branch"), sub->name);
-
-		if (!skip_prefix(refname, "refs/heads/", &refname))
-			die(_("Expecting a full ref name, got %s"), refname);
-		return refname;
-	}
-
-	return branch;
-}
-
 static int push_check(int argc, const char **argv, const char *prefix)
 {
 	struct remote *remote;
@@ -2720,32 +2877,6 @@ static int push_check(int argc, const char **argv, const char *prefix)
 	free(head);
 
 	return 0;
-}
-
-static void ensure_core_worktree(const char *path)
-{
-	const char *cw;
-	struct repository subrepo;
-
-	if (repo_submodule_init(&subrepo, the_repository, path, null_oid()))
-		die(_("could not get a repository handle for submodule '%s'"), path);
-
-	if (!repo_config_get_string_tmp(&subrepo, "core.worktree", &cw)) {
-		char *cfg_file, *abs_path;
-		const char *rel_path;
-		struct strbuf sb = STRBUF_INIT;
-
-		cfg_file = repo_git_path(&subrepo, "config");
-
-		abs_path = absolute_pathdup(path);
-		rel_path = relative_path(abs_path, subrepo.gitdir, &sb);
-
-		git_config_set_in_file(cfg_file, "core.worktree", rel_path);
-
-		free(cfg_file);
-		free(abs_path);
-		strbuf_release(&sb);
-	}
 }
 
 static int absorb_git_dirs(int argc, const char **argv, const char *prefix)
@@ -2966,138 +3097,6 @@ static int module_create_branch(int argc, const char **argv, const char *prefix)
 
 	create_branches_recursively(the_repository, argv[0], argv[1], argv[2],
 				    force, reflog, quiet, track, dry_run);
-	return 0;
-}
-
-static void update_data_to_args(struct update_data *update_data, struct strvec *args)
-{
-	strvec_pushl(args, "submodule--helper", "update", "--recursive", NULL);
-	strvec_pushf(args, "--jobs=%d", update_data->max_jobs);
-	if (update_data->recursive_prefix)
-		strvec_pushl(args, "--recursive-prefix",
-			     update_data->recursive_prefix, NULL);
-	if (update_data->quiet)
-		strvec_push(args, "--quiet");
-	if (update_data->force)
-		strvec_push(args, "--force");
-	if (update_data->init)
-		strvec_push(args, "--init");
-	if (update_data->remote)
-		strvec_push(args, "--remote");
-	if (update_data->nofetch)
-		strvec_push(args, "--no-fetch");
-	if (update_data->dissociate)
-		strvec_push(args, "--dissociate");
-	if (update_data->progress)
-		strvec_push(args, "--progress");
-	if (update_data->require_init)
-		strvec_push(args, "--require-init");
-	if (update_data->depth)
-		strvec_pushf(args, "--depth=%d", update_data->depth);
-	if (update_data->update_default)
-		strvec_pushl(args, "--update", update_data->update_default, NULL);
-	if (update_data->references.nr) {
-		struct string_list_item *item;
-		for_each_string_list_item(item, &update_data->references)
-			strvec_pushl(args, "--reference", item->string, NULL);
-	}
-	if (update_data->filter_options && update_data->filter_options->choice)
-		strvec_pushf(args, "--filter=%s",
-				expand_list_objects_filter_spec(
-					update_data->filter_options));
-	if (update_data->recommend_shallow == 0)
-		strvec_push(args, "--no-recommend-shallow");
-	else if (update_data->recommend_shallow == 1)
-		strvec_push(args, "--recommend-shallow");
-	if (update_data->single_branch >= 0)
-		strvec_push(args, update_data->single_branch ?
-				    "--single-branch" :
-				    "--no-single-branch");
-}
-
-static int update_submodule(struct update_data *update_data)
-{
-	char *prefixed_path;
-
-	ensure_core_worktree(update_data->sm_path);
-
-	if (update_data->recursive_prefix)
-		prefixed_path = xstrfmt("%s%s", update_data->recursive_prefix,
-					update_data->sm_path);
-	else
-		prefixed_path = xstrdup(update_data->sm_path);
-
-	update_data->displaypath = get_submodule_displaypath(prefixed_path,
-							     update_data->prefix);
-	free(prefixed_path);
-
-	determine_submodule_update_strategy(the_repository, update_data->just_cloned,
-					    update_data->sm_path, update_data->update_default,
-					    &update_data->update_strategy);
-
-	if (update_data->just_cloned)
-		oidcpy(&update_data->suboid, null_oid());
-	else if (resolve_gitlink_ref(update_data->sm_path, "HEAD", &update_data->suboid))
-		die(_("Unable to find current revision in submodule path '%s'"),
-			update_data->displaypath);
-
-	if (update_data->remote) {
-		char *remote_name = get_default_remote_submodule(update_data->sm_path);
-		const char *branch = remote_submodule_branch(update_data->sm_path);
-		char *remote_ref = xstrfmt("refs/remotes/%s/%s", remote_name, branch);
-
-		if (!update_data->nofetch) {
-			if (fetch_in_submodule(update_data->sm_path, update_data->depth,
-					      0, NULL))
-				die(_("Unable to fetch in submodule path '%s'"),
-				    update_data->sm_path);
-		}
-
-		if (resolve_gitlink_ref(update_data->sm_path, remote_ref, &update_data->oid))
-			die(_("Unable to find %s revision in submodule path '%s'"),
-			    remote_ref, update_data->sm_path);
-
-		free(remote_ref);
-	}
-
-	if (!oideq(&update_data->oid, &update_data->suboid) || update_data->force)
-		if (run_update_procedure(update_data))
-			return 1;
-
-	if (update_data->recursive) {
-		struct child_process cp = CHILD_PROCESS_INIT;
-		struct update_data next = *update_data;
-		int res;
-
-		if (update_data->recursive_prefix)
-			prefixed_path = xstrfmt("%s%s/", update_data->recursive_prefix,
-						update_data->sm_path);
-		else
-			prefixed_path = xstrfmt("%s/", update_data->sm_path);
-
-		next.recursive_prefix = get_submodule_displaypath(prefixed_path,
-								  update_data->prefix);
-		next.prefix = NULL;
-		oidcpy(&next.oid, null_oid());
-		oidcpy(&next.suboid, null_oid());
-
-		cp.dir = update_data->sm_path;
-		cp.git_cmd = 1;
-		prepare_submodule_repo_env(&cp.env_array);
-		update_data_to_args(&next, &cp.args);
-
-		/* die() if child process die()'d */
-		res = run_command(&cp);
-		if (!res)
-			return 0;
-		die_message(_("Failed to recurse into submodule path '%s'"),
-			    update_data->displaypath);
-		if (res == 128)
-			exit(res);
-		else if (res)
-			return 1;
-	}
-
 	return 0;
 }
 
