@@ -2611,7 +2611,6 @@ static int update_clone(int argc, const char **argv, const char *prefix)
 
 static int run_update_procedure(int argc, const char **argv, const char *prefix)
 {
-	char *prefixed_path;
 	struct update_data update_data = UPDATE_DATA_INIT;
 
 	struct option options[] = {
@@ -2653,18 +2652,6 @@ static int run_update_procedure(int argc, const char **argv, const char *prefix)
 
 	update_data.sm_path = argv[0];
 
-	if (update_data.recursive_prefix)
-		prefixed_path = xstrfmt("%s%s", update_data.recursive_prefix, update_data.sm_path);
-	else
-		prefixed_path = xstrdup(update_data.sm_path);
-
-	update_data.displaypath = get_submodule_displaypath(prefixed_path, prefix);
-
-	determine_submodule_update_strategy(the_repository, update_data.just_cloned,
-					    update_data.sm_path, update_data.update_default,
-					    &update_data.update_strategy);
-
-	free(prefixed_path);
 	return update_submodule2(&update_data);
 }
 
@@ -3044,7 +3031,24 @@ static int module_create_branch(int argc, const char **argv, const char *prefix)
 /* NEEDSWORK: this is a temporary name until we delete update_submodule() */
 static int update_submodule2(struct update_data *update_data)
 {
+	char *prefixed_path;
+
 	ensure_core_worktree(update_data->sm_path);
+
+	if (update_data->recursive_prefix)
+		prefixed_path = xstrfmt("%s%s", update_data->recursive_prefix,
+					update_data->sm_path);
+	else
+		prefixed_path = xstrdup(update_data->sm_path);
+
+	update_data->displaypath = get_submodule_displaypath(prefixed_path,
+							     update_data->prefix);
+	free(prefixed_path);
+
+	determine_submodule_update_strategy(the_repository, update_data->just_cloned,
+					    update_data->sm_path, update_data->update_default,
+					    &update_data->update_strategy);
+
 	if (update_data->just_cloned)
 		oidcpy(&update_data->suboid, null_oid());
 	else if (resolve_gitlink_ref(update_data->sm_path, "HEAD", &update_data->suboid))
