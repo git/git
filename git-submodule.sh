@@ -404,7 +404,7 @@ cmd_update()
 		# exit codes for run-update-procedure:
 		# 0: update was successful, say command output
 		# 1: update procedure failed, but should not die
-		# 2 or 128: subcommand died during execution
+		# 128: subcommand died during execution
 		# 3: no update procedure was run
 		res="$?"
 		case $res in
@@ -412,11 +412,12 @@ cmd_update()
 			say "$out"
 			;;
 		1)
-			err="${err};fatal: $out"
+			err="${err};$out"
 			continue
 			;;
-		2|128)
-			die_with_status $res "fatal: $out"
+		128)
+			printf >&2 "$out"
+			exit $res
 			;;
 		esac
 
