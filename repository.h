@@ -4,7 +4,6 @@
 #include "path.h"
 
 struct config_set;
-struct fsmonitor_settings;
 struct git_hash_algo;
 struct index_state;
 struct lock_file;
@@ -35,8 +34,6 @@ struct repo_settings {
 	int fetch_write_commit_graph;
 	int command_requires_full_index;
 	int sparse_index;
-
-	struct fsmonitor_settings *fsmonitor; /* lazily loaded */
 
 	int index_version;
 	enum untracked_cache_setting core_untracked_cache;
