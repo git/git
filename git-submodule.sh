@@ -366,7 +366,7 @@ cmd_update()
 		${update:+--update "$update"} \
 		${reference:+"$reference"} \
 		${dissociate:+"--dissociate"} \
-		${depth:+--depth "$depth"} \
+		${depth:+"$depth"} \
 		${require_init:+--require-init} \
 		$single_branch \
 		$recommend_shallow \
