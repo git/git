@@ -1,6 +1,11 @@
 #ifndef COMPAT_TERMINAL_H
 #define COMPAT_TERMINAL_H
 
+enum save_term_flags {
+	/* Save input and output settings */
+	SAVE_TERM_DUPLEX = 1 << 0,
+};
+
 /*
  * Save the terminal attributes so they can be restored later by a
  * call to restore_term(). Note that every successful call to
@@ -8,7 +13,7 @@
  * attributes have not been changed. Returns 0 on success, -1 on
  * failure.
  */
-int save_term(int full_duplex);
+int save_term(enum save_term_flags flags);
 /* Restore the terminal attributes that were saved with save_term() */
 void restore_term(void);
 

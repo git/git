@@ -34,7 +34,7 @@ void restore_term(void)
 	sigchain_pop_common();
 }
 
-int save_term(int full_duplex)
+int save_term(enum save_term_flags flags)
 {
 	if (term_fd < 0)
 		term_fd = open("/dev/tty", O_RDWR);
@@ -47,11 +47,11 @@ int save_term(int full_duplex)
 	return 0;
 }
 
-static int disable_bits(tcflag_t bits)
+static int disable_bits(enum save_term_flags flags, tcflag_t bits)
 {
 	struct termios t;
 
-	if (save_term(0) < 0)
+	if (save_term(flags) < 0)
 		goto error;
 
 	t = old_term;
@@ -71,14 +71,14 @@ error:
 	return -1;
 }
 
-static int disable_echo(void)
+static int disable_echo(enum save_term_flags flags)
 {
-	return disable_bits(ECHO);
+	return disable_bits(flags, ECHO);
 }
 
-static int enable_non_canonical(void)
+static int enable_non_canonical(enum save_term_flags flags)
 {
-	return disable_bits(ICANON | ECHO);
+	return disable_bits(flags, ICANON | ECHO);
 }
 
 #elif defined(GIT_WINDOWS_NATIVE)
@@ -126,7 +126,7 @@ void restore_term(void)
 	hconin = hconout = INVALID_HANDLE_VALUE;
 }
 
-int save_term(int full_duplex)
+int save_term(enum save_term_flags flags)
 {
 	hconin = CreateFileA("CONIN$", GENERIC_READ | GENERIC_WRITE,
 	    FILE_SHARE_READ, NULL, OPEN_EXISTING,
@@ -134,7 +134,7 @@ int save_term(int full_duplex)
 	if (hconin == INVALID_HANDLE_VALUE)
 		return -1;
 
-	if (full_duplex) {
+	if (flags & SAVE_TERM_DUPLEX) {
 		hconout = CreateFileA("CONOUT$", GENERIC_READ | GENERIC_WRITE,
 			FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
 			FILE_ATTRIBUTE_NORMAL, NULL);
@@ -154,7 +154,7 @@ error:
 	return -1;
 }
 
-static int disable_bits(DWORD bits)
+static int disable_bits(enum save_term_flags flags, DWORD bits)
 {
 	if (use_stty) {
 		struct child_process cp = CHILD_PROCESS_INIT;
@@ -191,7 +191,7 @@ static int disable_bits(DWORD bits)
 		use_stty = 0;
 	}
 
-	if (save_term(0) < 0)
+	if (save_term(flags) < 0)
 		return -1;
 
 	if (!SetConsoleMode(hconin, cmode_in & ~bits)) {
@@ -204,14 +204,15 @@ static int disable_bits(DWORD bits)
 	return 0;
 }
 
-static int disable_echo(void)
+static int disable_echo(enum save_term_flags flags)
 {
-	return disable_bits(ENABLE_ECHO_INPUT);
+	return disable_bits(flags, ENABLE_ECHO_INPUT);
 }
 
-static int enable_non_canonical(void)
+static int enable_non_canonical(enum save_term_flags flags)
 {
-	return disable_bits(ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT | ENABLE_PROCESSED_INPUT);
+	return disable_bits(flags,
+			    ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT | ENABLE_PROCESSED_INPUT);
 }
 
 /*
@@ -267,7 +268,7 @@ char *git_terminal_prompt(const char *prompt, int echo)
 		return NULL;
 	}
 
-	if (!echo && disable_echo()) {
+	if (!echo && disable_echo(0)) {
 		fclose(input_fh);
 		fclose(output_fh);
 		return NULL;
@@ -361,7 +362,7 @@ int read_key_without_echo(struct strbuf *buf)
 	static int warning_displayed;
 	int ch;
 
-	if (warning_displayed || enable_non_canonical() < 0) {
+	if (warning_displayed || enable_non_canonical(0) < 0) {
 		if (!warning_displayed) {
 			warning("reading single keystrokes not supported on "
 				"this platform; reading line instead");
@@ -413,10 +414,10 @@ int read_key_without_echo(struct strbuf *buf)
 
 #else
 
-int save_term(int full_duplex)
+int save_term(enum save_term_flags flags)
 {
-	/* full_duplex == 1, but no support available */
-	return -full_duplex;
+	/* no duplex support available */
+	return -!!(flags & SAVE_TERM_DUPLEX);
 }
 
 void restore_term(void)
