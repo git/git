@@ -20,8 +20,17 @@ static void restore_term_on_signal(int sig)
 #define INPUT_PATH "/dev/tty"
 #define OUTPUT_PATH "/dev/tty"
 
+static volatile sig_atomic_t term_fd_needs_closing;
 static int term_fd = -1;
 static struct termios old_term;
+
+static void close_term_fd(void)
+{
+	if (term_fd_needs_closing)
+		close(term_fd);
+	term_fd_needs_closing = 0;
+	term_fd = -1;
+}
 
 void restore_term(void)
 {
@@ -29,19 +38,23 @@ void restore_term(void)
 		return;
 
 	tcsetattr(term_fd, TCSAFLUSH, &old_term);
-	close(term_fd);
-	term_fd = -1;
+	close_term_fd();
 	sigchain_pop_common();
 }
 
 int save_term(enum save_term_flags flags)
 {
 	if (term_fd < 0)
-		term_fd = open("/dev/tty", O_RDWR);
+		term_fd = ((flags & SAVE_TERM_STDIN)
+			   ? 0
+			   : open("/dev/tty", O_RDWR));
 	if (term_fd < 0)
 		return -1;
-	if (tcgetattr(term_fd, &old_term) < 0)
+	term_fd_needs_closing = !(flags & SAVE_TERM_STDIN);
+	if (tcgetattr(term_fd, &old_term) < 0) {
+		close_term_fd();
 		return -1;
+	}
 	sigchain_push_common(restore_term_on_signal);
 
 	return 0;
@@ -52,7 +65,7 @@ static int disable_bits(enum save_term_flags flags, tcflag_t bits)
 	struct termios t;
 
 	if (save_term(flags) < 0)
-		goto error;
+		return -1;
 
 	t = old_term;
 
@@ -65,9 +78,7 @@ static int disable_bits(enum save_term_flags flags, tcflag_t bits)
 		return 0;
 
 	sigchain_pop_common();
-error:
-	close(term_fd);
-	term_fd = -1;
+	close_term_fd();
 	return -1;
 }
 
@@ -362,7 +373,7 @@ int read_key_without_echo(struct strbuf *buf)
 	static int warning_displayed;
 	int ch;
 
-	if (warning_displayed || enable_non_canonical(0) < 0) {
+	if (warning_displayed || enable_non_canonical(SAVE_TERM_STDIN) < 0) {
 		if (!warning_displayed) {
 			warning("reading single keystrokes not supported on "
 				"this platform; reading line instead");
