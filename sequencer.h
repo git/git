@@ -42,6 +42,7 @@ struct replay_opts {
 	int allow_rerere_auto;
 	int allow_empty;
 	int allow_empty_message;
+	int allow_inline_reword;
 	int drop_redundant_commits;
 	int keep_redundant_commits;
 	int verbose;
@@ -56,6 +57,11 @@ struct replay_opts {
 	char *gpg_sign;
 	enum commit_msg_cleanup_mode default_msg_cleanup;
 	int explicit_cleanup;
+
+	const char *content;
+	int content_len;
+	const char *subject;
+	int subject_len;
 
 	/* Merge strategy */
 	char *default_strategy;  /* from config options */

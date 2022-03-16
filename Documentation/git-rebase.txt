@@ -332,6 +332,13 @@ See also INCOMPATIBLE OPTIONS below.
 +
 See also INCOMPATIBLE OPTIONS below.
 
+--allow-inline-reword::
+	When performing an interactive rebase, this flag allows you to change
+	the subject of a specific commit directly in the todo list (only when
+	reword command is selected) without asking you to edit the commit
+	messages sequencially. If you select reword without changing the
+	commit's subject then you will get the default reword behaviour.
+
 --skip::
 	Restart the rebasing process by skipping the current patch.
 

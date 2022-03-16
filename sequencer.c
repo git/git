@@ -999,6 +999,7 @@ N_("you have staged changes in your working tree\n"
 #define VERIFY_MSG  (1<<4)
 #define CREATE_ROOT_COMMIT (1<<5)
 #define VERBATIM_MSG (1<<6)
+#define INLINE_MSG   (1<<7)
 
 static int run_command_silent_on_success(struct child_process *cmd)
 {
@@ -1076,6 +1077,24 @@ static int run_git_commit(const char *defmsg,
 		strvec_push(&cmd.args, "--cleanup=strip");
 	if ((flags & VERBATIM_MSG))
 		strvec_push(&cmd.args, "--cleanup=verbatim");
+	if ((flags & EDIT_MSG) && (flags & INLINE_MSG)) {
+		int ret;
+
+		strvec_push(&cmd.args, "-F");
+		strvec_push(&cmd.args, "-");
+		cmd.in = -1;
+		ret = start_command(&cmd);
+		if (ret)
+			return ret;
+		if (write(cmd.in, opts->subject, opts->subject_len) !=
+		    opts->subject_len)
+			return error(_("subject write error to child process"));
+		if (write(cmd.in, opts->content, opts->content_len) !=
+		    opts->content_len)
+			return error(_("content write error to child process"));
+		close(cmd.in);
+		return finish_command(&cmd);
+	}
 	if ((flags & EDIT_MSG))
 		strvec_push(&cmd.args, "-e");
 	else if (!(flags & CLEANUP_MSG) &&
@@ -2118,6 +2137,7 @@ static void refer_to_commit(struct replay_opts *opts,
 }
 
 static int do_pick_commit(struct repository *r,
+			  struct todo_list *todo_list,
 			  struct todo_item *item,
 			  struct replay_opts *opts,
 			  int final_fixup, int *check_todo)
@@ -2375,9 +2395,29 @@ static int do_pick_commit(struct repository *r,
 		*check_todo = !!(flags & EDIT_MSG);
 		if (!res && reword) {
 fast_forward_edit:
+			if (opts->allow_inline_reword && item->arg_len > 0 &&
+			    (strlen(msg.subject) != item->arg_len ||
+			     strncmp(msg.subject, todo_item_get_arg(todo_list,
+				     item),item->arg_len) != 0)) {
+				const char *commit_buf, *subject;
+				int subject_len;
+				unsigned long commit_buf_len;
+
+				flags |= INLINE_MSG;
+				opts->subject = todo_item_get_arg(todo_list,
+					item);
+				opts->subject_len = item->arg_len;
+				commit_buf = get_commit_buffer(commit,
+					&commit_buf_len);
+				subject_len = find_commit_subject(commit_buf,
+					&subject);
+				opts->content = subject + subject_len;
+				opts->content_len = commit_buf +
+					commit_buf_len - opts->content;
+			}
 			res = run_git_commit(NULL, opts, EDIT_MSG |
 					     VERIFY_MSG | AMEND_MSG |
-					     (flags & ALLOW_EMPTY));
+					     (flags & (ALLOW_EMPTY | INLINE_MSG)));
 			*check_todo = 1;
 		}
 	}
@@ -4621,7 +4661,7 @@ static int pick_commits(struct repository *r,
 				setenv(GIT_REFLOG_ACTION, reflog_message(opts,
 					command_to_string(item->command), NULL),
 					1);
-			res = do_pick_commit(r, item, opts,
+			res = do_pick_commit(r, todo_list, item, opts,
 					     is_final_fixup(todo_list),
 					     &check_todo);
 			if (is_rebase_i(opts))
@@ -5101,6 +5141,7 @@ release_todo_list:
 }
 
 static int single_pick(struct repository *r,
+		       struct todo_list *todo_list,
 		       struct commit *cmit,
 		       struct replay_opts *opts)
 {
@@ -5112,7 +5153,7 @@ static int single_pick(struct repository *r,
 	item.commit = cmit;
 
 	setenv(GIT_REFLOG_ACTION, action_name(opts), 0);
-	return do_pick_commit(r, &item, opts, 0, &check_todo);
+	return do_pick_commit(r, todo_list, &item, opts, 0, &check_todo);
 }
 
 int sequencer_pick_revisions(struct repository *r,
@@ -5165,7 +5206,7 @@ int sequencer_pick_revisions(struct repository *r,
 			return error(_("empty commit set passed"));
 		if (get_revision(opts->revs))
 			BUG("unexpected extra commit from walk");
-		return single_pick(r, cmit, opts);
+		return single_pick(r, &todo_list, cmit, opts);
 	}
 
 	/*

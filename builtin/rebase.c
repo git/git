@@ -103,6 +103,7 @@ struct rebase_options {
 	int reapply_cherry_picks;
 	int fork_point;
 	int update_refs;
+	int allow_inline_reword;
 };
 
 #define REBASE_OPTIONS_INIT {			  	\
@@ -130,6 +131,7 @@ static struct replay_opts get_replay_opts(const struct rebase_options *opts)
 		replay.allow_rerere_auto = opts->allow_rerere_autoupdate;
 	replay.allow_empty = 1;
 	replay.allow_empty_message = opts->allow_empty_message;
+	replay.allow_inline_reword = opts->allow_inline_reword;
 	replay.drop_redundant_commits = (opts->empty == EMPTY_DROP);
 	replay.keep_redundant_commits = (opts->empty == EMPTY_KEEP);
 	replay.quiet = !(opts->flags & REBASE_NO_QUIET);
@@ -821,6 +823,11 @@ static int rebase_config(const char *var, const char *value, void *data)
 		return git_config_string(&opts->default_backend, var, value);
 	}
 
+	if (!strcmp(var, "rebase.allowinlinereword")) {
+		opts->allow_inline_reword = git_config_bool(var, value);
+		return 0;
+	}
+
 	return git_default_config(var, value, data);
 }
 
@@ -1164,6 +1171,10 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			 N_("automatically re-schedule any `exec` that fails")),
 		OPT_BOOL(0, "reapply-cherry-picks", &options.reapply_cherry_picks,
 			 N_("apply all changes, even those already present upstream")),
+		OPT_BOOL_F(0, "allow-inline-reword",
+			   &options.allow_inline_reword,
+			   N_("allow changing commit's subject directly in the todo list"),
+			   PARSE_OPT_HIDDEN),
 		OPT_END(),
 	};
 	int i;

@@ -951,6 +951,17 @@ test_expect_success 'rebase -ix with --autosquash' '
 	test_cmp expected actual
 '
 
+test_expect_success 'rebase -i with --allow-inline-reword' '
+	git checkout -b reword-inline primary &&
+	(
+		set_inline_reword_editor &&
+		FAKE_LINES="reword_Bchanged 1 2 reword_Dchanged 3 4" \
+			git rebase --allow-inline-reword -i HEAD~4
+	) &&
+	test Bchanged = $(git show -s --format=%s HEAD~3) &&
+	test Dchanged = $(git show -s --format=%s HEAD~)
+'
+
 test_expect_success 'rebase --exec works without -i ' '
 	git reset --hard execute &&
 	rm -rf exec_output &&
