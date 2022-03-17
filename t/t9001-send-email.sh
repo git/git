@@ -2288,9 +2288,7 @@ test_expect_success $PREREQ 'cmdline in-reply-to used with --no-thread' '
 '
 
 test_expect_success $PREREQ 'invoke hook' '
-	mkdir -p .git/hooks &&
-
-	write_script .git/hooks/sendemail-validate <<-\EOF &&
+	test_hook sendemail-validate <<-\EOF &&
 	# test that we have the correct environment variable, pwd, and
 	# argument
 	case "$GIT_DIR" in

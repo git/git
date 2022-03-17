@@ -12,8 +12,7 @@ then
 fi
 
 test_expect_success 'setup' '
-	mkdir -p "$TRASH_DIRECTORY/.git/hooks" &&
-	write_script "$TRASH_DIRECTORY/.git/hooks/pre-commit" <<-\EOF
+	test_hook --setup pre-commit <<-\EOF
 	echo $HOBBES >&2
 	EOF
 '
