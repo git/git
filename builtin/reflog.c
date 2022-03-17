@@ -5,8 +5,31 @@
 #include "worktree.h"
 #include "reflog.h"
 
+#define BUILTIN_REFLOG_EXPIRE_USAGE \
+	N_("git reflog expire [--expire=<time>] " \
+	   "[--expire-unreachable=<time>] " \
+	   "[--rewrite] [--updateref] [--stale-fix] [--dry-run | -n] " \
+	   "[--verbose] [--all] <refs>...")
+
+#define BUILTIN_REFLOG_DELETE_USAGE \
+	N_("git reflog delete [--rewrite] [--updateref] " \
+	   "[--dry-run | -n] [--verbose] <refs>...")
+
+#define BUILTIN_REFLOG_EXISTS_USAGE \
+	N_("git reflog exists <ref>")
+
+static const char *const reflog_expire_usage[] = {
+	BUILTIN_REFLOG_EXPIRE_USAGE,
+	NULL
+};
+
+static const char *const reflog_delete_usage[] = {
+	BUILTIN_REFLOG_DELETE_USAGE,
+	NULL
+};
+
 static const char reflog_exists_usage[] =
-N_("git reflog exists <ref>");
+	BUILTIN_REFLOG_EXISTS_USAGE;
 
 static timestamp_t default_reflog_expire;
 static timestamp_t default_reflog_expire_unreachable;
@@ -146,14 +169,6 @@ static void set_reflog_expiry_param(struct cmd_reflog_expire_cb *cb, const char 
 	if (!(cb->explicit_expiry & EXPIRE_UNREACH))
 		cb->expire_unreachable = default_reflog_expire_unreachable;
 }
-
-static const char * reflog_expire_usage[] = {
-	N_("git reflog expire [--expire=<time>] "
-	   "[--expire-unreachable=<time>] "
-	   "[--rewrite] [--updateref] [--stale-fix] [--dry-run | -n] "
-	   "[--verbose] [--all] <refs>..."),
-	NULL
-};
 
 static int expire_unreachable_callback(const struct option *opt,
 				 const char *arg,
@@ -303,12 +318,6 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 	}
 	return status;
 }
-
-static const char * reflog_delete_usage[] = {
-	N_("git reflog delete [--rewrite] [--updateref] "
-	   "[--dry-run | -n] [--verbose] <refs>..."),
-	NULL
-};
 
 static int cmd_reflog_delete(int argc, const char **argv, const char *prefix)
 {
