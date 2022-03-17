@@ -96,8 +96,12 @@ static int notify_hook_finished(int result,
 				void *pp_task_cb)
 {
 	struct hook_cb_data *hook_cb = pp_cb;
+	struct run_hooks_opt *opt = hook_cb->options;
 
 	hook_cb->rc |= result;
+
+	if (opt->invoked_hook)
+		*opt->invoked_hook = 1;
 
 	return 0;
 }
@@ -122,6 +126,9 @@ int run_hooks_opt(const char *hook_name, struct run_hooks_opt *options)
 
 	if (!options)
 		BUG("a struct run_hooks_opt must be provided to run_hooks");
+
+	if (options->invoked_hook)
+		*options->invoked_hook = 0;
 
 	if (!hook_path && !options->error_if_missing)
 		goto cleanup;
