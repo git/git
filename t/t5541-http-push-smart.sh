@@ -96,18 +96,18 @@ test_expect_success 'create and delete remote branch' '
 	test_must_fail git show-ref --verify refs/remotes/origin/dev
 '
 
-cat >"$HTTPD_DOCUMENT_ROOT_PATH/test_repo.git/hooks/update" <<EOF
-#!/bin/sh
-exit 1
-EOF
-chmod a+x "$HTTPD_DOCUMENT_ROOT_PATH/test_repo.git/hooks/update"
+test_expect_success 'setup rejected update hook' '
+	test_hook --setup -C "$HTTPD_DOCUMENT_ROOT_PATH/test_repo.git" update <<-\EOF &&
+	exit 1
+	EOF
 
-cat >exp <<EOF
-remote: error: hook declined to update refs/heads/dev2
-To http://127.0.0.1:$LIB_HTTPD_PORT/smart/test_repo.git
- ! [remote rejected] dev2 -> dev2 (hook declined)
-error: failed to push some refs to 'http://127.0.0.1:$LIB_HTTPD_PORT/smart/test_repo.git'
-EOF
+	cat >exp <<-EOF
+	remote: error: hook declined to update refs/heads/dev2
+	To http://127.0.0.1:$LIB_HTTPD_PORT/smart/test_repo.git
+	 ! [remote rejected] dev2 -> dev2 (hook declined)
+	error: failed to push some refs to '\''http://127.0.0.1:$LIB_HTTPD_PORT/smart/test_repo.git'\''
+	EOF
+'
 
 test_expect_success 'rejected update prints status' '
 	cd "$ROOT_PATH"/test_repo_clone &&
