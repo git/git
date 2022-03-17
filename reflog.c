@@ -240,8 +240,8 @@ static int unreachable(struct expire_reflog_policy_cb *cb, struct commit *commit
  * Return true iff the specified reflog entry should be expired.
  */
 int should_expire_reflog_ent(struct object_id *ooid, struct object_id *noid,
-				    const char *email, timestamp_t timestamp, int tz,
-				    const char *message, void *cb_data)
+			     const char *email, timestamp_t timestamp, int tz,
+			     const char *message, void *cb_data)
 {
 	struct expire_reflog_policy_cb *cb = cb_data;
 	struct commit *old_commit, *new_commit;
@@ -273,10 +273,10 @@ int should_expire_reflog_ent(struct object_id *ooid, struct object_id *noid,
 }
 
 int should_expire_reflog_ent_verbose(struct object_id *ooid,
-					    struct object_id *noid,
-					    const char *email,
-					    timestamp_t timestamp, int tz,
-					    const char *message, void *cb_data)
+				     struct object_id *noid,
+				     const char *email,
+				     timestamp_t timestamp, int tz,
+				     const char *message, void *cb_data)
 {
 	struct expire_reflog_policy_cb *cb = cb_data;
 	int expire;
@@ -323,8 +323,8 @@ static int is_head(const char *refname)
 }
 
 void reflog_expiry_prepare(const char *refname,
-				  const struct object_id *oid,
-				  void *cb_data)
+			   const struct object_id *oid,
+			   void *cb_data)
 {
 	struct expire_reflog_policy_cb *cb = cb_data;
 	struct commit_list *elem;
@@ -377,8 +377,8 @@ void reflog_expiry_cleanup(void *cb_data)
 }
 
 int count_reflog_ent(struct object_id *ooid, struct object_id *noid,
-		const char *email, timestamp_t timestamp, int tz,
-		const char *message, void *cb_data)
+		     const char *email, timestamp_t timestamp, int tz,
+		     const char *message, void *cb_data)
 {
 	struct cmd_reflog_expire_cb *cb = cb_data;
 	if (!cb->expire_total || timestamp < cb->expire_total)
