@@ -56,7 +56,6 @@ test_lazy_prereq UNTRACKED_CACHE '
 '
 
 test_expect_success 'setup' '
-	mkdir -p .git/hooks &&
 	: >tracked &&
 	: >modified &&
 	mkdir dir1 &&
@@ -322,7 +321,6 @@ test_expect_success UNTRACKED_CACHE 'ignore .git changes when invalidating UNTR'
 	test_create_repo dot-git &&
 	(
 		cd dot-git &&
-		mkdir -p .git/hooks &&
 		: >tracked &&
 		test-tool chmtime =-60 tracked &&
 		: >modified &&

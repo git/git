@@ -28,8 +28,7 @@ mk_empty () {
 	(
 		cd "$repo_name" &&
 		git init &&
-		git config receive.denyCurrentBranch warn &&
-		mv .git/hooks .git/hooks-disabled
+		git config receive.denyCurrentBranch warn
 	)
 }
 
