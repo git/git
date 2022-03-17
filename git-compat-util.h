@@ -197,12 +197,6 @@
 #endif
 #include <windows.h>
 #define GIT_WINDOWS_NATIVE
-#ifdef HAVE_RTLGENRANDOM
-/* This is required to get access to RtlGenRandom. */
-#define SystemFunction036 NTAPI SystemFunction036
-#include <NTSecAPI.h>
-#undef SystemFunction036
-#endif
 #endif
 
 #include <unistd.h>
@@ -1262,6 +1256,30 @@ extern int BUG_exit_code;
 __attribute__((format (printf, 3, 4))) NORETURN
 void BUG_fl(const char *file, int line, const char *fmt, ...);
 #define BUG(...) BUG_fl(__FILE__, __LINE__, __VA_ARGS__)
+
+#ifdef __APPLE__
+#define FSYNC_METHOD_DEFAULT FSYNC_METHOD_WRITEOUT_ONLY
+#else
+#define FSYNC_METHOD_DEFAULT FSYNC_METHOD_FSYNC
+#endif
+
+enum fsync_action {
+	FSYNC_WRITEOUT_ONLY,
+	FSYNC_HARDWARE_FLUSH
+};
+
+/*
+ * Issues an fsync against the specified file according to the specified mode.
+ *
+ * FSYNC_WRITEOUT_ONLY attempts to use interfaces available on some operating
+ * systems to flush the OS cache without issuing a flush command to the storage
+ * controller. If those interfaces are unavailable, the function fails with
+ * ENOSYS.
+ *
+ * FSYNC_HARDWARE_FLUSH does an OS writeout and hardware flush to ensure that
+ * changes are durable. It is not expected to fail.
+ */
+int git_fsync(int fd, enum fsync_action action);
 
 /*
  * Preserves errno, prints a message, but gives no warning for ENOENT.
