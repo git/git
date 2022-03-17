@@ -1591,79 +1591,9 @@ static int packed_pack_refs(struct ref_store *ref_store, unsigned int flags)
 	return 0;
 }
 
-static int packed_create_symref(struct ref_store *ref_store,
-			       const char *refname, const char *target,
-			       const char *logmsg)
-{
-	BUG("packed reference store does not support symrefs");
-}
-
-static int packed_rename_ref(struct ref_store *ref_store,
-			    const char *oldrefname, const char *newrefname,
-			    const char *logmsg)
-{
-	BUG("packed reference store does not support renaming references");
-}
-
-static int packed_copy_ref(struct ref_store *ref_store,
-			   const char *oldrefname, const char *newrefname,
-			   const char *logmsg)
-{
-	BUG("packed reference store does not support copying references");
-}
-
 static struct ref_iterator *packed_reflog_iterator_begin(struct ref_store *ref_store)
 {
 	return empty_ref_iterator_begin();
-}
-
-static int packed_for_each_reflog_ent(struct ref_store *ref_store,
-				      const char *refname,
-				      each_reflog_ent_fn fn, void *cb_data)
-{
-	BUG("packed reference store does not support reflogs");
-	return 0;
-}
-
-static int packed_for_each_reflog_ent_reverse(struct ref_store *ref_store,
-					      const char *refname,
-					      each_reflog_ent_fn fn,
-					      void *cb_data)
-{
-	BUG("packed reference store does not support reflogs");
-	return 0;
-}
-
-static int packed_reflog_exists(struct ref_store *ref_store,
-			       const char *refname)
-{
-	BUG("packed reference store does not support reflogs");
-	return 0;
-}
-
-static int packed_create_reflog(struct ref_store *ref_store,
-				const char *refname, struct strbuf *err)
-{
-	BUG("packed reference store does not support reflogs");
-}
-
-static int packed_delete_reflog(struct ref_store *ref_store,
-			       const char *refname)
-{
-	BUG("packed reference store does not support reflogs");
-	return 0;
-}
-
-static int packed_reflog_expire(struct ref_store *ref_store,
-				const char *refname,
-				unsigned int flags,
-				reflog_expiry_prepare_fn prepare_fn,
-				reflog_expiry_should_prune_fn should_prune_fn,
-				reflog_expiry_cleanup_fn cleanup_fn,
-				void *policy_cb_data)
-{
-	BUG("packed reference store does not support reflogs");
-	return 0;
 }
 
 struct ref_storage_be refs_be_packed = {
@@ -1677,20 +1607,20 @@ struct ref_storage_be refs_be_packed = {
 	.initial_transaction_commit = packed_initial_transaction_commit,
 
 	.pack_refs = packed_pack_refs,
-	.create_symref = packed_create_symref,
+	.create_symref = NULL,
 	.delete_refs = packed_delete_refs,
-	.rename_ref = packed_rename_ref,
-	.copy_ref = packed_copy_ref,
+	.rename_ref = NULL,
+	.copy_ref = NULL,
 
 	.iterator_begin = packed_ref_iterator_begin,
 	.read_raw_ref = packed_read_raw_ref,
 	.read_symbolic_ref = NULL,
 
 	.reflog_iterator_begin = packed_reflog_iterator_begin,
-	.for_each_reflog_ent = packed_for_each_reflog_ent,
-	.for_each_reflog_ent_reverse = packed_for_each_reflog_ent_reverse,
-	.reflog_exists = packed_reflog_exists,
-	.create_reflog = packed_create_reflog,
-	.delete_reflog = packed_delete_reflog,
-	.reflog_expire = packed_reflog_expire
+	.for_each_reflog_ent = NULL,
+	.for_each_reflog_ent_reverse = NULL,
+	.reflog_exists = NULL,
+	.create_reflog = NULL,
+	.delete_reflog = NULL,
+	.reflog_expire = NULL,
 };
