@@ -340,7 +340,7 @@ test_expect_success 'deep changes during checkout' '
 	test_all_match git checkout base
 '
 
-test_expect_failure 'add outside sparse cone' '
+test_expect_success 'add outside sparse cone' '
 	init_repos &&
 
 	run_on_sparse mkdir folder1 &&
@@ -382,7 +382,7 @@ test_expect_success 'commit including unstaged changes' '
 	test_all_match git status --porcelain=v2
 '
 
-test_expect_failure 'status/add: outside sparse cone' '
+test_expect_success 'status/add: outside sparse cone' '
 	init_repos &&
 
 	# folder1 is at HEAD, but outside the sparse cone
@@ -593,7 +593,7 @@ test_expect_success 'checkout and reset (keep)' '
 	test_all_match test_must_fail git reset --keep deepest
 '
 
-test_expect_failure 'reset with pathspecs inside sparse definition' '
+test_expect_success 'reset with pathspecs inside sparse definition' '
 	init_repos &&
 
 	write_script edit-contents <<-\EOF &&
