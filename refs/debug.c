@@ -262,6 +262,24 @@ static int debug_read_raw_ref(struct ref_store *ref_store, const char *refname,
 	return res;
 }
 
+static int debug_read_symbolic_ref(struct ref_store *ref_store, const char *refname,
+				   struct strbuf *referent)
+{
+	struct debug_ref_store *drefs = (struct debug_ref_store *)ref_store;
+	struct ref_store *refs = drefs->refs;
+	int res;
+
+	res = refs->be->read_symbolic_ref(refs, refname, referent);
+	if (!res)
+		trace_printf_key(&trace_refs, "read_symbolic_ref: %s: (%s)\n",
+				 refname, referent->buf);
+	else
+		trace_printf_key(&trace_refs,
+				 "read_symbolic_ref: %s: %d\n", refname, res);
+	return res;
+
+}
+
 static struct ref_iterator *
 debug_reflog_iterator_begin(struct ref_store *ref_store)
 {
@@ -423,6 +441,13 @@ struct ref_storage_be refs_be_debug = {
 	.name = "debug",
 	.init = NULL,
 	.init_db = debug_init_db,
+
+	/*
+	 * None of these should be NULL. If the "files" backend (in
+	 * "struct ref_storage_be refs_be_files" in files-backend.c)
+	 * has a function we should also have a wrapper for it here.
+	 * Test the output with "GIT_TRACE_REFS=1".
+	 */
 	.transaction_prepare = debug_transaction_prepare,
 	.transaction_finish = debug_transaction_finish,
 	.transaction_abort = debug_transaction_abort,
@@ -436,7 +461,7 @@ struct ref_storage_be refs_be_debug = {
 
 	.iterator_begin = debug_ref_iterator_begin,
 	.read_raw_ref = debug_read_raw_ref,
-	.read_symbolic_ref = NULL,
+	.read_symbolic_ref = debug_read_symbolic_ref,
 
 	.reflog_iterator_begin = debug_reflog_iterator_begin,
 	.for_each_reflog_ent = debug_for_each_reflog_ent,
