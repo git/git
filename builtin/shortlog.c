@@ -435,7 +435,7 @@ static void add_wrapped_shortlog_msg(struct strbuf *sb, const char *s,
 
 void shortlog_output(struct shortlog *log)
 {
-	int i, j;
+	size_t i, j;
 	struct strbuf sb = STRBUF_INIT;
 
 	if (log->sort_by_number)
@@ -448,10 +448,10 @@ void shortlog_output(struct shortlog *log)
 				(int)UTIL_TO_INT(item), item->string);
 		} else {
 			struct string_list *onelines = item->util;
-			fprintf(log->file, "%s (%d):\n",
-				item->string, onelines->nr);
-			for (j = onelines->nr - 1; j >= 0; j--) {
-				const char *msg = onelines->items[j].string;
+			fprintf(log->file, "%s (%"PRIuMAX"):\n",
+				item->string, (uintmax_t)onelines->nr);
+			for (j = onelines->nr; j >= 1; j--) {
+				const char *msg = onelines->items[j - 1].string;
 
 				if (log->wrap_lines) {
 					strbuf_reset(&sb);

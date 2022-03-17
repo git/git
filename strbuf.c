@@ -875,9 +875,9 @@ static void strbuf_humanise(struct strbuf *buf, off_t bytes,
 		strbuf_addf(buf,
 				humanise_rate == 0 ?
 					/* TRANSLATORS: IEC 80000-13:2008 byte */
-					Q_("%u byte", "%u bytes", (unsigned)bytes) :
+					Q_("%u byte", "%u bytes", bytes) :
 					/* TRANSLATORS: IEC 80000-13:2008 byte/second */
-					Q_("%u byte/s", "%u bytes/s", (unsigned)bytes),
+					Q_("%u byte/s", "%u bytes/s", bytes),
 				(unsigned)bytes);
 	}
 }

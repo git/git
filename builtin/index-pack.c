@@ -582,7 +582,7 @@ static void *unpack_data(struct object_entry *obj,
 		if (!n)
 			die(Q_("premature end of pack file, %"PRIuMAX" byte missing",
 			       "premature end of pack file, %"PRIuMAX" bytes missing",
-			       (unsigned int)len),
+			       len),
 			    (uintmax_t)len);
 		from += n;
 		len -= n;

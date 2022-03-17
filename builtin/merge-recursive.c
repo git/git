@@ -58,7 +58,7 @@ int cmd_merge_recursive(int argc, const char **argv, const char *prefix)
 				   "Ignoring %s.",
 				   "cannot handle more than %d bases. "
 				   "Ignoring %s.",
-				    (int)ARRAY_SIZE(bases)-1),
+				    ARRAY_SIZE(bases)-1),
 				(int)ARRAY_SIZE(bases)-1, argv[i]);
 	}
 	if (argc - i != 3) /* "--" "<head>" "<remote>" */
