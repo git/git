@@ -575,6 +575,7 @@ but risks losing recent work in the event of an unclean system shutdown.
 * `index` hardens the index when it is modified.
 * `objects` is an aggregate option that is equivalent to
   `loose-object,pack`.
+* `reference` hardens references modified in the repo.
 * `derived-metadata` is an aggregate option that is equivalent to
   `pack-metadata,commit-graph`.
 * `committed` is an aggregate option that is currently equivalent to
