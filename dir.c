@@ -1113,7 +1113,7 @@ static int add_patterns(const char *fname, const char *base, int baselen,
 				       &istate->cache[pos]->oid);
 			else
 				hash_object_file(the_hash_algo, buf, size,
-						 "blob", &oid_stat->oid);
+						 OBJ_BLOB, &oid_stat->oid);
 			fill_stat_data(&oid_stat->stat, &st);
 			oid_stat->valid = 1;
 		}

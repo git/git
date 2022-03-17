@@ -1938,7 +1938,7 @@ static int handle_content_merge(struct merge_options *opt,
 
 		if (!ret &&
 		    write_object_file(result_buf.ptr, result_buf.size,
-				      blob_type, &result->oid))
+				      OBJ_BLOB, &result->oid))
 			ret = err(opt, _("Unable to add %s to database"),
 				  path);
 
@@ -3392,7 +3392,7 @@ static void write_tree(struct object_id *result_oid,
 	}
 
 	/* Write this object file out, and record in result_oid */
-	write_object_file(buf.buf, buf.len, tree_type, result_oid);
+	write_object_file(buf.buf, buf.len, OBJ_TREE, result_oid);
 	strbuf_release(&buf);
 }
 

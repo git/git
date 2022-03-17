@@ -235,7 +235,7 @@ static int splice_tree(const struct object_id *oid1, const char *prefix,
 		rewrite_with = oid2;
 	}
 	hashcpy(rewrite_here, rewrite_with->hash);
-	status = write_object_file(buf, sz, tree_type, result);
+	status = write_object_file(buf, sz, OBJ_TREE, result);
 	free(buf);
 	return status;
 }

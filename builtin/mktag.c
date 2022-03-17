@@ -61,9 +61,8 @@ static int verify_object_in_tag(struct object_id *tagged_oid, int *tagged_type)
 		    type_name(*tagged_type), type_name(type));
 
 	repl = lookup_replace_object(the_repository, tagged_oid);
-	ret = check_object_signature(the_repository, repl,
-				     buffer, size, type_name(*tagged_type),
-				     NULL);
+	ret = check_object_signature(the_repository, repl, buffer, size,
+				     *tagged_type);
 	free(buffer);
 
 	return ret;
@@ -97,10 +96,10 @@ int cmd_mktag(int argc, const char **argv, const char *prefix)
 				&tagged_oid, &tagged_type))
 		die(_("tag on stdin did not pass our strict fsck check"));
 
-	if (verify_object_in_tag(&tagged_oid, &tagged_type))
+	if (verify_object_in_tag(&tagged_oid, &tagged_type) < 0)
 		die(_("tag on stdin did not refer to a valid object"));
 
-	if (write_object_file(buf.buf, buf.len, tag_type, &result) < 0)
+	if (write_object_file(buf.buf, buf.len, OBJ_TAG, &result) < 0)
 		die(_("unable to write tag file"));
 
 	strbuf_release(&buf);

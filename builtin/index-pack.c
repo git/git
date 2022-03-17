@@ -453,8 +453,7 @@ static void *unpack_entry_data(off_t offset, unsigned long size,
 	int hdrlen;
 
 	if (!is_delta_type(type)) {
-		hdrlen = xsnprintf(hdr, sizeof(hdr), "%s %"PRIuMAX,
-				   type_name(type),(uintmax_t)size) + 1;
+		hdrlen = format_object_header(hdr, sizeof(hdr), type, size);
 		the_hash_algo->init_fn(&c);
 		the_hash_algo->update_fn(&c, hdr, hdrlen);
 	} else
@@ -975,7 +974,7 @@ static struct base_data *resolve_delta(struct object_entry *delta_obj,
 	if (!result_data)
 		bad_object(delta_obj->idx.offset, _("failed to apply delta"));
 	hash_object_file(the_hash_algo, result_data, result_size,
-			 type_name(delta_obj->real_type), &delta_obj->idx.oid);
+			 delta_obj->real_type, &delta_obj->idx.oid);
 	sha1_object(result_data, NULL, result_size, delta_obj->real_type,
 		    &delta_obj->idx.oid);
 
@@ -1419,9 +1418,8 @@ static void fix_unresolved_deltas(struct hashfile *f)
 		if (!data)
 			continue;
 
-		if (check_object_signature(the_repository, &d->oid,
-					   data, size,
-					   type_name(type), NULL))
+		if (check_object_signature(the_repository, &d->oid, data, size,
+					   type) < 0)
 			die(_("local object %s is corrupt"), oid_to_hex(&d->oid));
 
 		/*

@@ -156,7 +156,10 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 		break;
 
 	case 0:
-		if (type_from_string(exp_type) == OBJ_BLOB) {
+	{
+		enum object_type exp_type_id = type_from_string(exp_type);
+
+		if (exp_type_id == OBJ_BLOB) {
 			struct object_id blob_oid;
 			if (oid_object_info(the_repository, &oid, NULL) == OBJ_TAG) {
 				char *buffer = read_object_file(&oid, &type,
@@ -178,10 +181,10 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 			 * fall-back to the usual case.
 			 */
 		}
-		buf = read_object_with_reference(the_repository,
-						 &oid, exp_type, &size, NULL);
+		buf = read_object_with_reference(the_repository, &oid,
+						 exp_type_id, &size, NULL);
 		break;
-
+	}
 	default:
 		die("git cat-file: unknown option: %s", exp_type);
 	}
