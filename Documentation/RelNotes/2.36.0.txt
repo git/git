@@ -70,6 +70,10 @@ UI, Workflows & Features
  * The level of verbose output from the ort backend during inner merge
    has been aligned to that of the recursive backend.
 
+ * "git remote rename A B", depending on the number of remote-tracking
+   refs involved, takes long time renaming them.  The command has been
+   taught to show progress bar while making the user wait.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -121,6 +125,12 @@ Performance, Internal Implementation, Development Support etc.
 
  * Makefile refactoring with a bit of suffixes rule stripping to
    optimize the runtime overhead.
+
+ * "git stash drop" is reimplemented as an internal call to
+   reflog_delete() function, instead of invoking "git reflog delete"
+   via run_command() API.
+
+ * Count string_list items in size_t, not "unsigned int".
 
 
 Fixes since v2.35
@@ -298,6 +308,17 @@ Fixes since v2.35
    added more processes our tests need to kill when cleaning up.
    Adjustments have been made to accommodate these changes.
    (merge b0b70d54c4 fs/gpgsm-update later to maint).
+
+ * The untracked cache newly computed weren't written back to the
+   on-disk index file when there is no other change to the index,
+   which has been corrected.
+
+ * "git config -h" did not describe the "--type" option correctly.
+   (merge 5445124fad mf/fix-type-in-config-h later to maint).
+
+ * The way generation number v2 in the commit-graph files are
+   (not) handled has been corrected.
+   (merge 6dbf4b8172 ds/commit-graph-gen-v2-fixes later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge cfc5cf428b jc/find-header later to maint).
