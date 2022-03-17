@@ -27,8 +27,10 @@ static const char *const reflog_delete_usage[] = {
 	NULL
 };
 
-static const char reflog_exists_usage[] =
-	BUILTIN_REFLOG_EXISTS_USAGE;
+static const char *const reflog_exists_usage[] = {
+	BUILTIN_REFLOG_EXISTS_USAGE,
+	NULL,
+};
 
 static timestamp_t default_reflog_expire;
 static timestamp_t default_reflog_expire_unreachable;
@@ -350,28 +352,20 @@ static int cmd_reflog_delete(int argc, const char **argv, const char *prefix)
 
 static int cmd_reflog_exists(int argc, const char **argv, const char *prefix)
 {
-	int i, start = 0;
+	struct option options[] = {
+		OPT_END()
+	};
+	const char *refname;
 
-	for (i = 1; i < argc; i++) {
-		const char *arg = argv[i];
-		if (!strcmp(arg, "--")) {
-			i++;
-			break;
-		}
-		else if (arg[0] == '-')
-			usage(_(reflog_exists_usage));
-		else
-			break;
-	}
+	argc = parse_options(argc, argv, prefix, options, reflog_exists_usage,
+			     0);
+	if (!argc)
+		usage_with_options(reflog_exists_usage, options);
 
-	start = i;
-
-	if (argc - start != 1)
-		usage(_(reflog_exists_usage));
-
-	if (check_refname_format(argv[start], REFNAME_ALLOW_ONELEVEL))
-		die(_("invalid ref format: %s"), argv[start]);
-	return !reflog_exists(argv[start]);
+	refname = argv[0];
+	if (check_refname_format(refname, REFNAME_ALLOW_ONELEVEL))
+		die(_("invalid ref format: %s"), refname);
+	return !reflog_exists(refname);
 }
 
 /*

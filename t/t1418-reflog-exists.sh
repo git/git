@@ -29,4 +29,9 @@ test_expect_success 'reflog exists works with a "--" delimiter' '
 	test_must_fail git reflog exists -- refs/heads/nonexistent
 '
 
+test_expect_success 'reflog exists works with a "--end-of-options" delimiter' '
+	git reflog exists --end-of-options refs/heads/main &&
+	test_must_fail git reflog exists --end-of-options refs/heads/nonexistent
+'
+
 test_done
