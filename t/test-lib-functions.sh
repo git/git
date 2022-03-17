@@ -562,9 +562,15 @@ write_script () {
 #	Overwrite an existing <hook-name>, if it exists. Implies
 #	--setup (i.e. the "test_when_finished" is assumed to have been
 #	set up already).
+#    --disable
+#	Disable (chmod -x) an existing <hook-name>, which must exist.
+#    --remove
+#	Remove (rm -f) an existing <hook-name>, which must exist.
 test_hook () {
 	setup= &&
 	clobber= &&
+	disable= &&
+	remove= &&
 	indir= &&
 	while test $# != 0
 	do
@@ -579,6 +585,12 @@ test_hook () {
 		--clobber)
 			clobber=t
 			;;
+		--disable)
+			disable=t
+			;;
+		--remove)
+			remove=t
+			;;
 		-*)
 			BUG "invalid argument: $1"
 			;;
@@ -592,6 +604,18 @@ test_hook () {
 	git_dir=$(git -C "$indir" rev-parse --absolute-git-dir) &&
 	hook_dir="$git_dir/hooks" &&
 	hook_file="$hook_dir/$1" &&
+	if test -n "$disable$remove"
+	then
+		test_path_is_file "$hook_file" &&
+		if test -n "$disable"
+		then
+			chmod -x "$hook_file"
+		elif test -n "$remove"
+		then
+			rm -f "$hook_file"
+		fi &&
+		return 0
+	fi &&
 	if test -z "$clobber"
 	then
 		test_path_is_missing "$hook_file"
