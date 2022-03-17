@@ -111,6 +111,11 @@ test_expect_success 'correct usage on sub-command -h' '
 	grep "git reflog expire" err
 '
 
+test_expect_success 'correct usage on "git reflog show -h"' '
+	test_expect_code 129 git reflog show -h >err &&
+	grep -F "git reflog [show]" err
+'
+
 test_expect_success 'pass through -- to sub-command' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
