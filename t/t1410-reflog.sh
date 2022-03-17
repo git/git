@@ -106,6 +106,23 @@ test_expect_success setup '
 	test_line_count = 4 output
 '
 
+test_expect_success 'correct usage on sub-command -h' '
+	test_expect_code 129 git reflog expire -h >err &&
+	grep "git reflog expire" err
+'
+
+test_expect_success 'pass through -- to sub-command' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	test_commit -C repo message --a-file contents dash-tag &&
+
+	git -C repo reflog show -- --does-not-exist >out &&
+	test_must_be_empty out &&
+	git -C repo reflog show >expect &&
+	git -C repo reflog show -- --a-file >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success rewind '
 	test_tick && git reset --hard HEAD~2 &&
 	test -f C &&
