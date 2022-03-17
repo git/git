@@ -2,8 +2,6 @@
 
 test_description='apply a patch that is larger than the preimage'
 
-
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 cat >F  <<\EOF
@@ -41,20 +39,8 @@ test_expect_success setup '
 '
 
 test_expect_success 'apply should fail gracefully' '
-
-	if git apply --index patch
-	then
-		echo Oops, should not have succeeded
-		false
-	else
-		status=$? &&
-		echo "Status was $status" &&
-		if test -f .git/index.lock
-		then
-			echo Oops, should not have crashed
-			false
-		fi
-	fi
+	test_must_fail git apply --index patch &&
+	test_path_is_missing .git/index.lock
 '
 
 test_done
