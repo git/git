@@ -5,6 +5,7 @@
 #include "string-list.h"
 #include "chdir-notify.h"
 #include "promisor-remote.h"
+#include "quote.h"
 
 static int inside_git_dir = -1;
 static int inside_work_tree = -1;
@@ -1089,6 +1090,42 @@ static int canonicalize_ceiling_entry(struct string_list_item *item,
 	}
 }
 
+struct safe_directory_data {
+	const char *path;
+	int is_safe;
+};
+
+static int safe_directory_cb(const char *key, const char *value, void *d)
+{
+	struct safe_directory_data *data = d;
+
+	if (!value || !*value)
+		data->is_safe = 0;
+	else {
+		const char *interpolated = NULL;
+
+		if (!git_config_pathname(&interpolated, key, value) &&
+		    !fspathcmp(data->path, interpolated ? interpolated : value))
+			data->is_safe = 1;
+
+		free((char *)interpolated);
+	}
+
+	return 0;
+}
+
+static int ensure_valid_ownership(const char *path)
+{
+	struct safe_directory_data data = { .path = path };
+
+	if (is_path_owned_by_current_user(path))
+		return 1;
+
+	read_very_early_config(safe_directory_cb, &data);
+
+	return data.is_safe;
+}
+
 enum discovery_result {
 	GIT_DIR_NONE = 0,
 	GIT_DIR_EXPLICIT,
@@ -1097,7 +1134,8 @@ enum discovery_result {
 	/* these are errors */
 	GIT_DIR_HIT_CEILING = -1,
 	GIT_DIR_HIT_MOUNT_POINT = -2,
-	GIT_DIR_INVALID_GITFILE = -3
+	GIT_DIR_INVALID_GITFILE = -3,
+	GIT_DIR_INVALID_OWNERSHIP = -4
 };
 
 /*
@@ -1187,11 +1225,15 @@ static enum discovery_result setup_git_directory_gently_1(struct strbuf *dir,
 		}
 		strbuf_setlen(dir, offset);
 		if (gitdirenv) {
+			if (!ensure_valid_ownership(dir->buf))
+				return GIT_DIR_INVALID_OWNERSHIP;
 			strbuf_addstr(gitdir, gitdirenv);
 			return GIT_DIR_DISCOVERED;
 		}
 
 		if (is_git_directory(dir->buf)) {
+			if (!ensure_valid_ownership(dir->buf))
+				return GIT_DIR_INVALID_OWNERSHIP;
 			strbuf_addstr(gitdir, ".");
 			return GIT_DIR_BARE;
 		}
@@ -1321,6 +1363,19 @@ const char *setup_git_directory_gently(int *nongit_ok)
 			die(_("not a git repository (or any parent up to mount point %s)\n"
 			      "Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set)."),
 			    dir.buf);
+		*nongit_ok = 1;
+		break;
+	case GIT_DIR_INVALID_OWNERSHIP:
+		if (!nongit_ok) {
+			struct strbuf quoted = STRBUF_INIT;
+
+			sq_quote_buf_pretty(&quoted, dir.buf);
+			die(_("unsafe repository ('%s' is owned by someone else)\n"
+			      "To add an exception for this directory, call:\n"
+			      "\n"
+			      "\tgit config --global --add safe.directory %s"),
+			    dir.buf, quoted.buf);
+		}
 		*nongit_ok = 1;
 		break;
 	case GIT_DIR_NONE:
