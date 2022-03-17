@@ -12,11 +12,12 @@
 #include "object-store.h"
 #include "strvec.h"
 #include "commit-reach.h"
+#include "progress.h"
 
 static const char * const builtin_remote_usage[] = {
 	"git remote [-v | --verbose]",
 	N_("git remote add [-t <branch>] [-m <master>] [-f] [--tags | --no-tags] [--mirror=<fetch|push>] <name> <url>"),
-	N_("git remote rename <old> <new>"),
+	N_("git remote rename [--[no-]progress] <old> <new>"),
 	N_("git remote remove <name>"),
 	N_("git remote set-head <name> (-a | --auto | -d | --delete | <branch>)"),
 	N_("git remote [-v | --verbose] show [-n] <name>"),
@@ -36,7 +37,7 @@ static const char * const builtin_remote_add_usage[] = {
 };
 
 static const char * const builtin_remote_rename_usage[] = {
-	N_("git remote rename <old> <new>"),
+	N_("git remote rename [--[no-]progress] <old> <new>"),
 	NULL
 };
 
@@ -571,6 +572,7 @@ struct rename_info {
 	const char *old_name;
 	const char *new_name;
 	struct string_list *remote_branches;
+	uint32_t symrefs_nr;
 };
 
 static int read_remote_branches(const char *refname,
@@ -587,10 +589,12 @@ static int read_remote_branches(const char *refname,
 		item = string_list_append(rename->remote_branches, refname);
 		symref = resolve_ref_unsafe(refname, RESOLVE_REF_READING,
 					    NULL, &flag);
-		if (symref && (flag & REF_ISSYMREF))
+		if (symref && (flag & REF_ISSYMREF)) {
 			item->util = xstrdup(symref);
-		else
+			rename->symrefs_nr++;
+		} else {
 			item->util = NULL;
+		}
 	}
 	strbuf_release(&buf);
 
@@ -674,7 +678,9 @@ static void handle_push_default(const char* old_name, const char* new_name)
 
 static int mv(int argc, const char **argv)
 {
+	int show_progress = isatty(2);
 	struct option options[] = {
+		OPT_BOOL(0, "progress", &show_progress, N_("force progress reporting")),
 		OPT_END()
 	};
 	struct remote *oldremote, *newremote;
@@ -682,14 +688,19 @@ static int mv(int argc, const char **argv)
 		old_remote_context = STRBUF_INIT;
 	struct string_list remote_branches = STRING_LIST_INIT_DUP;
 	struct rename_info rename;
-	int i, refspec_updated = 0;
+	int i, refs_renamed_nr = 0, refspec_updated = 0;
+	struct progress *progress = NULL;
 
-	if (argc != 3)
+	argc = parse_options(argc, argv, NULL, options,
+			     builtin_remote_rename_usage, 0);
+
+	if (argc != 2)
 		usage_with_options(builtin_remote_rename_usage, options);
 
-	rename.old_name = argv[1];
-	rename.new_name = argv[2];
+	rename.old_name = argv[0];
+	rename.new_name = argv[1];
 	rename.remote_branches = &remote_branches;
+	rename.symrefs_nr = 0;
 
 	oldremote = remote_get(rename.old_name);
 	if (!remote_is_configured(oldremote, 1)) {
@@ -764,6 +775,14 @@ static int mv(int argc, const char **argv)
 	 * the new symrefs.
 	 */
 	for_each_ref(read_remote_branches, &rename);
+	if (show_progress) {
+		/*
+		 * Count symrefs twice, since "renaming" them is done by
+		 * deleting and recreating them in two separate passes.
+		 */
+		progress = start_progress(_("Renaming remote references"),
+					  rename.remote_branches->nr + rename.symrefs_nr);
+	}
 	for (i = 0; i < remote_branches.nr; i++) {
 		struct string_list_item *item = remote_branches.items + i;
 		struct strbuf referent = STRBUF_INIT;
@@ -775,6 +794,7 @@ static int mv(int argc, const char **argv)
 			die(_("deleting '%s' failed"), item->string);
 
 		strbuf_release(&referent);
+		display_progress(progress, ++refs_renamed_nr);
 	}
 	for (i = 0; i < remote_branches.nr; i++) {
 		struct string_list_item *item = remote_branches.items + i;
@@ -790,6 +810,7 @@ static int mv(int argc, const char **argv)
 				item->string, buf.buf);
 		if (rename_ref(item->string, buf.buf, buf2.buf))
 			die(_("renaming '%s' failed"), item->string);
+		display_progress(progress, ++refs_renamed_nr);
 	}
 	for (i = 0; i < remote_branches.nr; i++) {
 		struct string_list_item *item = remote_branches.items + i;
@@ -809,7 +830,9 @@ static int mv(int argc, const char **argv)
 				item->string, buf.buf);
 		if (create_symref(buf.buf, buf2.buf, buf3.buf))
 			die(_("creating '%s' failed"), buf.buf);
+		display_progress(progress, ++refs_renamed_nr);
 	}
+	stop_progress(&progress);
 	string_list_clear(&remote_branches, 1);
 
 	handle_push_default(rename.old_name, rename.new_name);
