@@ -419,10 +419,7 @@ test_expect_success CMDLINE_LIMIT 'push 2000 tags over http' '
 '
 
 test_expect_success GPG 'push with post-receive to inspect certificate' '
-	(
-		cd "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git &&
-		mkdir -p hooks &&
-		write_script hooks/post-receive <<-\EOF &&
+	test_hook -C "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git post-receive <<-\EOF &&
 		# discard the update list
 		cat >/dev/null
 		# record the push certificate
@@ -437,8 +434,9 @@ test_expect_success GPG 'push with post-receive to inspect certificate' '
 		NONCE_STATUS=${GIT_PUSH_CERT_NONCE_STATUS-nononcestatus}
 		NONCE=${GIT_PUSH_CERT_NONCE-nononce}
 		E_O_F
-		EOF
-
+	EOF
+	(
+		cd "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git &&
 		git config receive.certnonceseed sekrit &&
 		git config receive.certnonceslop 30
 	) &&
