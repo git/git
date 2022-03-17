@@ -338,9 +338,9 @@ static struct ref_cache *get_loose_ref_cache(struct files_ref_store *refs)
 	return refs->loose;
 }
 
-static int files_read_raw_ref(struct ref_store *ref_store, const char *refname,
-			      struct object_id *oid, struct strbuf *referent,
-			      unsigned int *type, int *failure_errno)
+static int read_ref_internal(struct ref_store *ref_store, const char *refname,
+			     struct object_id *oid, struct strbuf *referent,
+			     unsigned int *type, int *failure_errno, int skip_packed_refs)
 {
 	struct files_ref_store *refs =
 		files_downcast(ref_store, REF_STORE_READ, "read_raw_ref");
@@ -381,7 +381,7 @@ stat_ref:
 	if (lstat(path, &st) < 0) {
 		int ignore_errno;
 		myerr = errno;
-		if (myerr != ENOENT)
+		if (myerr != ENOENT || skip_packed_refs)
 			goto out;
 		if (refs_read_raw_ref(refs->packed_ref_store, refname, oid,
 				      referent, type, &ignore_errno)) {
@@ -425,7 +425,8 @@ stat_ref:
 		 * ref is supposed to be, there could still be a
 		 * packed ref:
 		 */
-		if (refs_read_raw_ref(refs->packed_ref_store, refname, oid,
+		if (skip_packed_refs ||
+		    refs_read_raw_ref(refs->packed_ref_store, refname, oid,
 				      referent, type, &ignore_errno)) {
 			myerr = EISDIR;
 			goto out;
@@ -468,6 +469,27 @@ out:
 	strbuf_release(&sb_contents);
 	errno = 0;
 	return ret;
+}
+
+static int files_read_raw_ref(struct ref_store *ref_store, const char *refname,
+			      struct object_id *oid, struct strbuf *referent,
+			      unsigned int *type, int *failure_errno)
+{
+	return read_ref_internal(ref_store, refname, oid, referent, type, failure_errno, 0);
+}
+
+static int files_read_symbolic_ref(struct ref_store *ref_store, const char *refname,
+				   struct strbuf *referent)
+{
+	struct object_id oid;
+	int failure_errno, ret;
+	unsigned int type;
+
+	ret = read_ref_internal(ref_store, refname, &oid, referent, &type, &failure_errno, 1);
+	if (ret)
+		return ret;
+
+	return !(type & REF_ISSYMREF);
 }
 
 int parse_loose_ref_contents(const char *buf, struct object_id *oid,
@@ -3286,6 +3308,7 @@ struct ref_storage_be refs_be_files = {
 
 	files_ref_iterator_begin,
 	files_read_raw_ref,
+	files_read_symbolic_ref,
 
 	files_reflog_iterator_begin,
 	files_for_each_reflog_ent,

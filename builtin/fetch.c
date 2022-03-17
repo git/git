@@ -1146,7 +1146,6 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 	     want_status <= FETCH_HEAD_IGNORE;
 	     want_status++) {
 		for (rm = ref_map; rm; rm = rm->next) {
-			struct commit *commit = NULL;
 			struct ref *ref = NULL;
 
 			if (rm->status == REF_STATUS_REJECT_SHALLOW) {
@@ -1157,21 +1156,34 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 			}
 
 			/*
-			 * References in "refs/tags/" are often going to point
-			 * to annotated tags, which are not part of the
-			 * commit-graph. We thus only try to look up refs in
-			 * the graph which are not in that namespace to not
-			 * regress performance in repositories with many
-			 * annotated tags.
+			 * When writing FETCH_HEAD we need to determine whether
+			 * we already have the commit or not. If not, then the
+			 * reference is not for merge and needs to be written
+			 * to the reflog after other commits which we already
+			 * have. We're not interested in this property though
+			 * in case FETCH_HEAD is not to be updated, so we can
+			 * skip the classification in that case.
 			 */
-			if (!starts_with(rm->name, "refs/tags/"))
-				commit = lookup_commit_in_graph(the_repository, &rm->old_oid);
-			if (!commit) {
-				commit = lookup_commit_reference_gently(the_repository,
-									&rm->old_oid,
-									1);
-				if (!commit)
-					rm->fetch_head_status = FETCH_HEAD_NOT_FOR_MERGE;
+			if (fetch_head->fp) {
+				struct commit *commit = NULL;
+
+				/*
+				 * References in "refs/tags/" are often going to point
+				 * to annotated tags, which are not part of the
+				 * commit-graph. We thus only try to look up refs in
+				 * the graph which are not in that namespace to not
+				 * regress performance in repositories with many
+				 * annotated tags.
+				 */
+				if (!starts_with(rm->name, "refs/tags/"))
+					commit = lookup_commit_in_graph(the_repository, &rm->old_oid);
+				if (!commit) {
+					commit = lookup_commit_reference_gently(the_repository,
+										&rm->old_oid,
+										1);
+					if (!commit)
+						rm->fetch_head_status = FETCH_HEAD_NOT_FOR_MERGE;
+				}
 			}
 
 			if (rm->fetch_head_status != want_status)

@@ -649,6 +649,21 @@ typedef int read_raw_ref_fn(struct ref_store *ref_store, const char *refname,
 			    struct object_id *oid, struct strbuf *referent,
 			    unsigned int *type, int *failure_errno);
 
+/*
+ * Read a symbolic reference from the specified reference store. This function
+ * is optional: if not implemented by a backend, then `read_raw_ref_fn` is used
+ * to read the symbolcic reference instead. It is intended to be implemented
+ * only in case the backend can optimize the reading of symbolic references.
+ *
+ * Return 0 on success, or -1 on failure. `referent` will be set to the target
+ * of the symbolic reference on success. This function explicitly does not
+ * distinguish between error cases and the reference not being a symbolic
+ * reference to allow backends to optimize this operation in case symbolic and
+ * non-symbolic references are treated differently.
+ */
+typedef int read_symbolic_ref_fn(struct ref_store *ref_store, const char *refname,
+				 struct strbuf *referent);
+
 struct ref_storage_be {
 	struct ref_storage_be *next;
 	const char *name;
@@ -668,6 +683,7 @@ struct ref_storage_be {
 
 	ref_iterator_begin_fn *iterator_begin;
 	read_raw_ref_fn *read_raw_ref;
+	read_symbolic_ref_fn *read_symbolic_ref;
 
 	reflog_iterator_begin_fn *reflog_iterator_begin;
 	for_each_reflog_ent_fn *for_each_reflog_ent;
