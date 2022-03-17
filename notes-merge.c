@@ -113,6 +113,7 @@ static struct notes_merge_pair *find_notes_merge_pair_pos(
 }
 
 static struct object_id uninitialized = {
+	.hash =
 	"\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" \
 	"\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
 };

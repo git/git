@@ -80,7 +80,7 @@ static int attr_hash_entry_cmp(const void *unused_cmp_data,
  * Access to this dictionary must be surrounded with a mutex.
  */
 static struct attr_hashmap g_attr_hashmap = {
-	HASHMAP_INIT(attr_hash_entry_cmp, NULL)
+	.map = HASHMAP_INIT(attr_hash_entry_cmp, NULL),
 };
 
 /*
