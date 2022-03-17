@@ -1622,7 +1622,7 @@ test_expect_success 'cmd option assumes configured colored-moved' '
 	test_cmp expected actual
 '
 
-test_expect_success 'no effect from --color-moved with --word-diff' '
+test_expect_success 'no effect on diff from --color-moved with --word-diff' '
 	cat <<-\EOF >text.txt &&
 	Lorem Ipsum is simply dummy text of the printing and typesetting industry.
 	EOF
@@ -1633,6 +1633,12 @@ test_expect_success 'no effect from --color-moved with --word-diff' '
 	EOF
 	git diff --color-moved --word-diff >actual &&
 	git diff --word-diff >expect &&
+	test_cmp expect actual
+'
+
+test_expect_failure 'no effect on show from --color-moved with --word-diff' '
+	git show --color-moved --word-diff >actual &&
+	git show --word-diff >expect &&
 	test_cmp expect actual
 '
 
