@@ -110,6 +110,15 @@ OPTIONS
 	`reset.quiet` config option. `--quiet` and `--no-quiet` will
 	override the default behavior.
 
+--refresh::
+--no-refresh::
+	Proactively refresh the index after a mixed reset. If unspecified, the
+	behavior falls back on the `reset.refresh` config option. If neither
+	`--[no-]refresh` nor `reset.refresh` are set, the default behavior is
+	decided by the `--[no-]quiet` option and/or `reset.quiet` config.
+	If `--quiet` is specified or `reset.quiet` is set with no command-line
+	"quiet" setting, refresh is disabled. Otherwise, refresh is enabled.
+
 --pathspec-from-file=<file>::
 	Pathspec is passed in `<file>` instead of commandline args. If
 	`<file>` is exactly `-` then standard input is used. Pathspec
