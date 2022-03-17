@@ -101,12 +101,12 @@ test_expect_success 'pre-auto-gc hook can stop auto gc' '
 	EOF
 
 	git init pre-auto-gc-hook &&
+	test_hook -C pre-auto-gc-hook pre-auto-gc <<-\EOF &&
+	echo >&2 no gc for you &&
+	exit 1
+	EOF
 	(
 		cd pre-auto-gc-hook &&
-		write_script ".git/hooks/pre-auto-gc" <<-\EOF &&
-		echo >&2 no gc for you &&
-		exit 1
-		EOF
 
 		git config gc.auto 3 &&
 		git config gc.autoDetach false &&
@@ -128,14 +128,12 @@ test_expect_success 'pre-auto-gc hook can stop auto gc' '
 	See "git help gc" for manual housekeeping.
 	EOF
 
-	(
-		cd pre-auto-gc-hook &&
-		write_script ".git/hooks/pre-auto-gc" <<-\EOF &&
-		echo >&2 will gc for you &&
-		exit 0
-		EOF
-		git gc --auto >../out.actual 2>../err.actual
-	) &&
+	test_hook -C pre-auto-gc-hook --clobber pre-auto-gc <<-\EOF &&
+	echo >&2 will gc for you &&
+	exit 0
+	EOF
+
+	git -C pre-auto-gc-hook gc --auto >out.actual 2>err.actual &&
 
 	test_must_be_empty out.actual &&
 	test_cmp err.expect err.actual
