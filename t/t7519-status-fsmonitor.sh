@@ -26,7 +26,7 @@ dirty_repo () {
 }
 
 write_integration_script () {
-	write_script .git/hooks/fsmonitor-test<<-\EOF
+	test_hook --setup --clobber fsmonitor-test<<-\EOF
 	if test "$#" -ne 2
 	then
 		echo "$0: exactly 2 arguments expected"
@@ -108,7 +108,7 @@ EOF
 
 # test that "update-index --fsmonitor-valid" sets the fsmonitor valid bit
 test_expect_success 'update-index --fsmonitor-valid" sets the fsmonitor valid bit' '
-	write_script .git/hooks/fsmonitor-test<<-\EOF &&
+	test_hook fsmonitor-test<<-\EOF &&
 		printf "last_update_token\0"
 	EOF
 	git update-index --fsmonitor &&
@@ -169,7 +169,7 @@ EOF
 
 # test that newly added files are marked valid
 test_expect_success 'newly added files are marked valid' '
-	write_script .git/hooks/fsmonitor-test<<-\EOF &&
+	test_hook --setup --clobber fsmonitor-test<<-\EOF &&
 		printf "last_update_token\0"
 	EOF
 	git add new &&
@@ -210,7 +210,7 @@ EOF
 
 # test that *only* files returned by the integration script get flagged as invalid
 test_expect_success '*only* files returned by the integration script get flagged as invalid' '
-	write_script .git/hooks/fsmonitor-test<<-\EOF &&
+	test_hook --clobber fsmonitor-test<<-\EOF &&
 	printf "last_update_token\0"
 	printf "dir1/modified\0"
 	EOF
@@ -231,7 +231,7 @@ test_expect_success 'refresh_index() invalidates fsmonitor cache' '
 	dirty_repo &&
 	write_integration_script &&
 	git add . &&
-	write_script .git/hooks/fsmonitor-test<<-\EOF &&
+	test_hook --clobber fsmonitor-test<<-\EOF &&
 	EOF
 	git commit -m "to reset" &&
 	git reset HEAD~1 &&
@@ -280,7 +280,7 @@ do
 		# Make sure it's actually skipping the check for modified and untracked
 		# (if enabled) files unless it is told about them.
 		test_expect_success "status doesn't detect unreported modifications" '
-			write_script .git/hooks/fsmonitor-test<<-\EOF &&
+			test_hook --clobber fsmonitor-test<<-\EOF &&
 			printf "last_update_token\0"
 			:>marker
 			EOF
@@ -414,14 +414,14 @@ test_expect_success 'status succeeds with sparse index' '
 		git -C sparse sparse-checkout init --cone --sparse-index &&
 		git -C sparse sparse-checkout set dir1 dir2 &&
 
-		write_script .git/hooks/fsmonitor-test <<-\EOF &&
+		test_hook --clobber fsmonitor-test <<-\EOF &&
 			printf "last_update_token\0"
 		EOF
 		git -C full config core.fsmonitor ../.git/hooks/fsmonitor-test &&
 		git -C sparse config core.fsmonitor ../.git/hooks/fsmonitor-test &&
 		check_sparse_index_behavior ! &&
 
-		write_script .git/hooks/fsmonitor-test <<-\EOF &&
+		test_hook --clobber fsmonitor-test <<-\EOF &&
 			printf "last_update_token\0"
 			printf "dir1/modified\0"
 		EOF
@@ -439,7 +439,7 @@ test_expect_success 'status succeeds with sparse index' '
 
 		# This one modifies outside the sparse-checkout definition
 		# and hence we expect to expand the sparse-index.
-		write_script .git/hooks/fsmonitor-test <<-\EOF &&
+		test_hook --clobber fsmonitor-test <<-\EOF &&
 			printf "last_update_token\0"
 			printf "dir1a/modified\0"
 		EOF

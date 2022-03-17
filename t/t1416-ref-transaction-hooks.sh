@@ -16,9 +16,8 @@ test_expect_success setup '
 '
 
 test_expect_success 'hook allows updating ref if successful' '
-	test_when_finished "rm .git/hooks/reference-transaction" &&
 	git reset --hard PRE &&
-	write_script .git/hooks/reference-transaction <<-\EOF &&
+	test_hook reference-transaction <<-\EOF &&
 		echo "$*" >>actual
 	EOF
 	cat >expect <<-EOF &&
@@ -30,9 +29,8 @@ test_expect_success 'hook allows updating ref if successful' '
 '
 
 test_expect_success 'hook aborts updating ref in prepared state' '
-	test_when_finished "rm .git/hooks/reference-transaction" &&
 	git reset --hard PRE &&
-	write_script .git/hooks/reference-transaction <<-\EOF &&
+	test_hook reference-transaction <<-\EOF &&
 		if test "$1" = prepared
 		then
 			exit 1
@@ -43,9 +41,9 @@ test_expect_success 'hook aborts updating ref in prepared state' '
 '
 
 test_expect_success 'hook gets all queued updates in prepared state' '
-	test_when_finished "rm .git/hooks/reference-transaction actual" &&
+	test_when_finished "rm actual" &&
 	git reset --hard PRE &&
-	write_script .git/hooks/reference-transaction <<-\EOF &&
+	test_hook reference-transaction <<-\EOF &&
 		if test "$1" = prepared
 		then
 			while read -r line
@@ -66,9 +64,9 @@ test_expect_success 'hook gets all queued updates in prepared state' '
 '
 
 test_expect_success 'hook gets all queued updates in committed state' '
-	test_when_finished "rm .git/hooks/reference-transaction actual" &&
+	test_when_finished "rm actual" &&
 	git reset --hard PRE &&
-	write_script .git/hooks/reference-transaction <<-\EOF &&
+	test_hook reference-transaction <<-\EOF &&
 		if test "$1" = committed
 		then
 			while read -r line
@@ -86,9 +84,9 @@ test_expect_success 'hook gets all queued updates in committed state' '
 '
 
 test_expect_success 'hook gets all queued updates in aborted state' '
-	test_when_finished "rm .git/hooks/reference-transaction actual" &&
+	test_when_finished "rm actual" &&
 	git reset --hard PRE &&
-	write_script .git/hooks/reference-transaction <<-\EOF &&
+	test_hook reference-transaction <<-\EOF &&
 		if test "$1" = aborted
 		then
 			while read -r line
@@ -115,11 +113,11 @@ test_expect_success 'interleaving hook calls succeed' '
 
 	git init --bare target-repo.git &&
 
-	write_script target-repo.git/hooks/reference-transaction <<-\EOF &&
+	test_hook -C target-repo.git reference-transaction <<-\EOF &&
 		echo $0 "$@" >>actual
 	EOF
 
-	write_script target-repo.git/hooks/update <<-\EOF &&
+	test_hook -C target-repo.git update <<-\EOF &&
 		echo $0 "$@" >>actual
 	EOF
 
@@ -140,7 +138,7 @@ test_expect_success 'hook does not get called on packing refs' '
 	# Pack references first such that we are in a known state.
 	git pack-refs --all &&
 
-	write_script .git/hooks/reference-transaction <<-\EOF &&
+	test_hook reference-transaction <<-\EOF &&
 		echo "$@" >>actual
 		cat >>actual
 	EOF
@@ -166,7 +164,7 @@ test_expect_success 'deleting packed ref calls hook once' '
 	git update-ref refs/heads/to-be-deleted $POST_OID &&
 	git pack-refs --all &&
 
-	write_script .git/hooks/reference-transaction <<-\EOF &&
+	test_hook reference-transaction <<-\EOF &&
 		echo "$@" >>actual
 		cat >>actual
 	EOF

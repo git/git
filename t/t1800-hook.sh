@@ -27,7 +27,7 @@ test_expect_success 'git hook run: nonexistent hook with --ignore-missing' '
 '
 
 test_expect_success 'git hook run: basic' '
-	write_script .git/hooks/test-hook <<-EOF &&
+	test_hook test-hook <<-EOF &&
 	echo Test hook
 	EOF
 
@@ -39,7 +39,7 @@ test_expect_success 'git hook run: basic' '
 '
 
 test_expect_success 'git hook run: stdout and stderr both write to our stderr' '
-	write_script .git/hooks/test-hook <<-EOF &&
+	test_hook test-hook <<-EOF &&
 	echo >&1 Will end up on stderr
 	echo >&2 Will end up on stderr
 	EOF
@@ -84,7 +84,7 @@ test_expect_success 'git hook run arg u ments without -- is not allowed' '
 '
 
 test_expect_success 'git hook run -- pass arguments' '
-	write_script .git/hooks/test-hook <<-\EOF &&
+	test_hook test-hook <<-\EOF &&
 	echo $1
 	echo $2
 	EOF
@@ -99,7 +99,7 @@ test_expect_success 'git hook run -- pass arguments' '
 '
 
 test_expect_success 'git hook run -- out-of-repo runs excluded' '
-	write_script .git/hooks/test-hook <<-EOF &&
+	test_hook test-hook <<-EOF &&
 	echo Test hook
 	EOF
 
@@ -118,6 +118,10 @@ test_expect_success 'git -c core.hooksPath=<PATH> hook run' '
 	Hook ran two
 	Hook ran three
 	Hook ran four
+	EOF
+
+	test_hook test-hook <<-EOF &&
+	echo Test hook
 	EOF
 
 	# Test various ways of specifying the path. See also

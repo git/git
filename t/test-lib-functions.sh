@@ -551,6 +551,58 @@ write_script () {
 	chmod +x "$1"
 }
 
+# Usage: test_hook [options] <hook-name> <<-\EOF
+#
+#   -C <dir>:
+#	Run all git commands in directory <dir>
+#   --setup
+#	Setup a hook for subsequent tests, i.e. don't remove it in a
+#	"test_when_finished"
+#   --clobber
+#	Overwrite an existing <hook-name>, if it exists. Implies
+#	--setup (i.e. the "test_when_finished" is assumed to have been
+#	set up already).
+test_hook () {
+	setup= &&
+	clobber= &&
+	indir= &&
+	while test $# != 0
+	do
+		case "$1" in
+		-C)
+			indir="$2" &&
+			shift
+			;;
+		--setup)
+			setup=t
+			;;
+		--clobber)
+			clobber=t
+			;;
+		-*)
+			BUG "invalid argument: $1"
+			;;
+		*)
+			break
+			;;
+		esac &&
+		shift
+	done &&
+
+	git_dir=$(git -C "$indir" rev-parse --absolute-git-dir) &&
+	hook_dir="$git_dir/hooks" &&
+	hook_file="$hook_dir/$1" &&
+	if test -z "$clobber"
+	then
+		test_path_is_missing "$hook_file"
+	fi &&
+	if test -z "$setup$clobber"
+	then
+		test_when_finished "rm \"$hook_file\""
+	fi &&
+	write_script "$hook_file"
+}
+
 # Use test_set_prereq to tell that a particular prerequisite is available.
 # The prerequisite can later be checked for in two ways:
 #

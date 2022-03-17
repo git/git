@@ -136,7 +136,7 @@ test_expect_success 'send-pack stderr contains hook messages' '
 '
 
 test_expect_success 'pre-receive hook that forgets to read its input' '
-	write_script victim.git/hooks/pre-receive <<-\EOF &&
+	test_hook --clobber -C victim.git pre-receive <<-\EOF &&
 	exit 0
 	EOF
 	rm -f victim.git/hooks/update victim.git/hooks/post-update &&

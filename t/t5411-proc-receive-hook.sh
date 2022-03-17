@@ -36,7 +36,7 @@ setup_upstream_and_workbench () {
 		TAG=$(git -C workbench rev-parse v123) &&
 
 		# setup pre-receive hook
-		write_script upstream.git/hooks/pre-receive <<-\EOF &&
+		test_hook --setup -C upstream.git pre-receive <<-\EOF &&
 		exec >&2
 		echo "# pre-receive hook"
 		while read old new ref
@@ -46,7 +46,7 @@ setup_upstream_and_workbench () {
 		EOF
 
 		# setup post-receive hook
-		write_script upstream.git/hooks/post-receive <<-\EOF &&
+		test_hook --setup -C upstream.git post-receive <<-\EOF &&
 		exec >&2
 		echo "# post-receive hook"
 		while read old new ref
