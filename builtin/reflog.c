@@ -6,14 +6,13 @@
 #include "reflog.h"
 
 #define BUILTIN_REFLOG_EXPIRE_USAGE \
-	N_("git reflog expire [--expire=<time>] " \
-	   "[--expire-unreachable=<time>] " \
-	   "[--rewrite] [--updateref] [--stale-fix] [--dry-run | -n] " \
-	   "[--verbose] [--all] <refs>...")
+	N_("git reflog expire [--expire=<time>] [--expire-unreachable=<time>]\n" \
+	   "                  [--rewrite] [--updateref] [--stale-fix]\n" \
+	   "                  [--dry-run | -n] [--verbose] [--all [--single-worktree] | <refs>...]")
 
 #define BUILTIN_REFLOG_DELETE_USAGE \
-	N_("git reflog delete [--rewrite] [--updateref] " \
-	   "[--dry-run | -n] [--verbose] <refs>...")
+	N_("git reflog delete [--rewrite] [--updateref]\n" \
+	   "                  [--dry-run | -n] [--verbose] <ref>@{<specifier>}...")
 
 #define BUILTIN_REFLOG_EXISTS_USAGE \
 	N_("git reflog exists <ref>")
