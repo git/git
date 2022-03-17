@@ -220,8 +220,9 @@ static int debug_ref_iterator_abort(struct ref_iterator *ref_iterator)
 }
 
 static struct ref_iterator_vtable debug_ref_iterator_vtable = {
-	debug_ref_iterator_advance, debug_ref_iterator_peel,
-	debug_ref_iterator_abort
+	.advance = debug_ref_iterator_advance,
+	.peel = debug_ref_iterator_peel,
+	.abort = debug_ref_iterator_abort,
 };
 
 static struct ref_iterator *

@@ -911,9 +911,9 @@ static int packed_ref_iterator_abort(struct ref_iterator *ref_iterator)
 }
 
 static struct ref_iterator_vtable packed_ref_iterator_vtable = {
-	packed_ref_iterator_advance,
-	packed_ref_iterator_peel,
-	packed_ref_iterator_abort
+	.advance = packed_ref_iterator_advance,
+	.peel = packed_ref_iterator_peel,
+	.abort = packed_ref_iterator_abort
 };
 
 static struct ref_iterator *packed_ref_iterator_begin(
