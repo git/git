@@ -74,6 +74,10 @@ UI, Workflows & Features
    refs involved, takes long time renaming them.  The command has been
    taught to show progress bar while making the user wait.
 
+ * Bundle file format gets extended to allow a partial bundle,
+   filtered by similar criteria you would give when making a
+   partial/lazy clone.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -131,6 +135,12 @@ Performance, Internal Implementation, Development Support etc.
    via run_command() API.
 
  * Count string_list items in size_t, not "unsigned int".
+
+ * The single-key interactive operation used by "git add -p" has been
+   made more robust.
+
+ * Remove unneeded <meta http-equiv=content-type...> from gitweb
+   output.
 
 
 Fixes since v2.35
@@ -320,6 +330,10 @@ Fixes since v2.35
    (not) handled has been corrected.
    (merge 6dbf4b8172 ds/commit-graph-gen-v2-fixes later to maint).
 
+ * The method to trigger malloc check used in our tests no longer work
+   with newer versions of glibc.
+   (merge baedc59543 ep/test-malloc-check-with-glibc-2.34 later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge cfc5cf428b jc/find-header later to maint).
    (merge 40e7cfdd46 jh/p4-fix-use-of-process-error-exception later to maint).
@@ -345,3 +359,4 @@ Fixes since v2.35
    (merge 04bf052eef ab/grep-patterntype later to maint).
    (merge 6ee36364eb ab/diff-free-more later to maint).
    (merge 63a36017fe nj/read-tree-doc-reffix later to maint).
+   (merge eed36fce38 sm/no-git-in-upstream-of-pipe-in-tests later to maint).
