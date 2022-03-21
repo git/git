@@ -249,6 +249,16 @@ int for_each_commit_graft(each_commit_graft_fn fn, void *cb_data)
 	return ret;
 }
 
+void reset_commit_grafts(struct repository *r)
+{
+	int i;
+
+	for (i = 0; i < r->parsed_objects->grafts_nr; i++)
+		free(r->parsed_objects->grafts[i]);
+	r->parsed_objects->grafts_nr = 0;
+	r->parsed_objects->commit_graft_prepared = 0;
+}
+
 struct commit_buffer {
 	void *buffer;
 	unsigned long size;
