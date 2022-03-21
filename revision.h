@@ -8,6 +8,7 @@
 #include "pretty.h"
 #include "diff.h"
 #include "commit-slab-decl.h"
+#include "list-objects-filter-options.h"
 
 /**
  * The revision walking API offers functions to build a list of revisions
@@ -93,6 +94,12 @@ struct rev_info {
 
 	/* The end-points specified by the end user */
 	struct rev_cmdline_info cmdline;
+
+	/*
+	 * Object filter options. No filtering is specified
+	 * if and only if filter.choice is zero.
+	 */
+	struct list_objects_filter_options filter;
 
 	/* excluding from --branches, --refs, etc. expansion */
 	struct string_list *ref_excludes;

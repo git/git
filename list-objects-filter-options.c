@@ -40,22 +40,7 @@ const char *list_object_filter_config_name(enum list_objects_filter_choice c)
 	BUG("list_object_filter_config_name: invalid argument '%d'", c);
 }
 
-/*
- * Parse value of the argument to the "filter" keyword.
- * On the command line this looks like:
- *       --filter=<arg>
- * and in the pack protocol as:
- *       "filter" SP <arg>
- *
- * The filter keyword will be used by many commands.
- * See Documentation/rev-list-options.txt for allowed values for <arg>.
- *
- * Capture the given arg as the "filter_spec".  This can be forwarded to
- * subordinate commands when necessary (although it's better to pass it through
- * expand_list_objects_filter_spec() first).  We also "intern" the arg for the
- * convenience of the current command.
- */
-static int gently_parse_list_objects_filter(
+int gently_parse_list_objects_filter(
 	struct list_objects_filter_options *filter_options,
 	const char *arg,
 	struct strbuf *errbuf)
@@ -414,4 +399,23 @@ void partial_clone_get_default_filter_spec(
 					 promisor->partial_clone_filter,
 					 &errbuf);
 	strbuf_release(&errbuf);
+}
+
+void list_objects_filter_copy(
+	struct list_objects_filter_options *dest,
+	const struct list_objects_filter_options *src)
+{
+	int i;
+	struct string_list_item *item;
+
+	/* Copy everything. We will overwrite the pointers shortly. */
+	memcpy(dest, src, sizeof(struct list_objects_filter_options));
+
+	string_list_init_dup(&dest->filter_spec);
+	for_each_string_list_item(item, &src->filter_spec)
+		string_list_append(&dest->filter_spec, item->string);
+
+	ALLOC_ARRAY(dest->sub, dest->sub_alloc);
+	for (i = 0; i < src->sub_nr; i++)
+		list_objects_filter_copy(&dest->sub[i], &src->sub[i]);
 }
