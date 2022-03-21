@@ -1732,5 +1732,6 @@ int run_commit_hook(int editor_is_used, const char *index_file,
 		strvec_push(&opt.args, arg);
 	va_end(args);
 
+	opt.invoked_hook = invoked_hook;
 	return run_hooks_opt(name, &opt);
 }
