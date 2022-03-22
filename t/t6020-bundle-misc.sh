@@ -122,6 +122,8 @@ format_and_save_expect () {
 	sed -e 's/Z$//' >expect
 }
 
+HASH_MESSAGE="The bundle uses this hash algorithm: $GIT_DEFAULT_HASH"
+
 #            (C)   (D, pull/1/head, topic/1)
 #             o --- o
 #            /       \                              (L)
@@ -194,11 +196,12 @@ test_expect_success 'create bundle from special rev: main^!' '
 
 	git bundle verify special-rev.bdl |
 		make_user_friendly_and_stable_output >actual &&
-	format_and_save_expect <<-\EOF &&
+	format_and_save_expect <<-EOF &&
 	The bundle contains this ref:
 	<COMMIT-P> refs/heads/main
 	The bundle requires this ref:
 	<COMMIT-O> Z
+	$HASH_MESSAGE
 	EOF
 	test_cmp expect actual &&
 
@@ -215,12 +218,13 @@ test_expect_success 'create bundle with --max-count option' '
 
 	git bundle verify max-count.bdl |
 		make_user_friendly_and_stable_output >actual &&
-	format_and_save_expect <<-\EOF &&
+	format_and_save_expect <<-EOF &&
 	The bundle contains these 2 refs:
 	<COMMIT-P> refs/heads/main
 	<TAG-1> refs/tags/v1
 	The bundle requires this ref:
 	<COMMIT-O> Z
+	$HASH_MESSAGE
 	EOF
 	test_cmp expect actual &&
 
@@ -240,7 +244,7 @@ test_expect_success 'create bundle with --since option' '
 
 	git bundle verify since.bdl |
 		make_user_friendly_and_stable_output >actual &&
-	format_and_save_expect <<-\EOF &&
+	format_and_save_expect <<-EOF &&
 	The bundle contains these 5 refs:
 	<COMMIT-P> refs/heads/main
 	<COMMIT-N> refs/heads/release
@@ -250,6 +254,7 @@ test_expect_success 'create bundle with --since option' '
 	The bundle requires these 2 refs:
 	<COMMIT-M> Z
 	<COMMIT-K> Z
+	$HASH_MESSAGE
 	EOF
 	test_cmp expect actual &&
 
@@ -267,11 +272,12 @@ test_expect_success 'create bundle 1 - no prerequisites' '
 	EOF
 	git bundle create stdin-1.bdl --stdin <input &&
 
-	cat >expect <<-\EOF &&
+	format_and_save_expect <<-EOF &&
 	The bundle contains these 2 refs:
 	<COMMIT-D> refs/heads/topic/1
 	<COMMIT-H> refs/heads/topic/2
 	The bundle records a complete history.
+	$HASH_MESSAGE
 	EOF
 
 	# verify bundle, which has no prerequisites
@@ -308,13 +314,14 @@ test_expect_success 'create bundle 2 - has prerequisites' '
 		--stdin \
 		release <input &&
 
-	format_and_save_expect <<-\EOF &&
+	format_and_save_expect <<-EOF &&
 	The bundle contains this ref:
 	<COMMIT-N> refs/heads/release
 	The bundle requires these 3 refs:
 	<COMMIT-D> Z
 	<COMMIT-E> Z
 	<COMMIT-G> Z
+	$HASH_MESSAGE
 	EOF
 
 	git bundle verify 2.bdl |
@@ -367,13 +374,14 @@ test_expect_success 'create bundle 3 - two refs, same object' '
 		--stdin \
 		main HEAD <input &&
 
-	format_and_save_expect <<-\EOF &&
+	format_and_save_expect <<-EOF &&
 	The bundle contains these 2 refs:
 	<COMMIT-P> refs/heads/main
 	<COMMIT-P> HEAD
 	The bundle requires these 2 refs:
 	<COMMIT-M> Z
 	<COMMIT-K> Z
+	$HASH_MESSAGE
 	EOF
 
 	git bundle verify 3.bdl |
@@ -409,12 +417,13 @@ test_expect_success 'create bundle 4 - with tags' '
 		--stdin \
 		--all <input &&
 
-	cat >expect <<-\EOF &&
+	cat >expect <<-EOF &&
 	The bundle contains these 3 refs:
 	<TAG-1> refs/tags/v1
 	<TAG-2> refs/tags/v2
 	<TAG-3> refs/tags/v3
 	The bundle records a complete history.
+	$HASH_MESSAGE
 	EOF
 
 	git bundle verify 4.bdl |
@@ -511,6 +520,7 @@ do
 		<TAG-3> refs/tags/v3
 		<COMMIT-P> HEAD
 		The bundle records a complete history.
+		$HASH_MESSAGE
 		The bundle uses this filter: $filter
 		EOF
 		test_cmp expect actual &&

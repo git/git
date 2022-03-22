@@ -278,6 +278,8 @@ int verify_bundle(struct repository *r,
 			list_refs(r, 0, NULL);
 		}
 
+		printf_ln("The bundle uses this hash algorithm: %s",
+			  header->hash_algo->name);
 		if (header->filter.choice)
 			printf_ln("The bundle uses this filter: %s",
 				  list_objects_filter_spec(&header->filter));
