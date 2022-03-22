@@ -3714,9 +3714,8 @@ static void mark_bitmap_preferred_tips(void)
 	}
 }
 
-static void get_object_list(int ac, const char **av)
+static void get_object_list(struct rev_info *revs, int ac, const char **av)
 {
-	struct rev_info revs;
 	struct setup_revision_opt s_r_opt = {
 		.allow_exclude_promisor_objects = 1,
 	};
@@ -3724,10 +3723,10 @@ static void get_object_list(int ac, const char **av)
 	int flags = 0;
 	int save_warning;
 
-	repo_init_revisions(the_repository, &revs, NULL);
+	repo_init_revisions(the_repository, revs, NULL);
 	save_commit_buffer = 0;
-	setup_revisions(ac, av, &revs, &s_r_opt);
-	list_objects_filter_copy(&revs.filter, &filter_options);
+	setup_revisions(ac, av, revs, &s_r_opt);
+	list_objects_filter_copy(&revs->filter, &filter_options);
 
 	/* make sure shallows are read */
 	is_repository_shallow(the_repository);
@@ -3757,13 +3756,13 @@ static void get_object_list(int ac, const char **av)
 			}
 			die(_("not a rev '%s'"), line);
 		}
-		if (handle_revision_arg(line, &revs, flags, REVARG_CANNOT_BE_FILENAME))
+		if (handle_revision_arg(line, revs, flags, REVARG_CANNOT_BE_FILENAME))
 			die(_("bad revision '%s'"), line);
 	}
 
 	warn_on_object_refname_ambiguity = save_warning;
 
-	if (use_bitmap_index && !get_object_list_from_bitmap(&revs))
+	if (use_bitmap_index && !get_object_list_from_bitmap(revs))
 		return;
 
 	if (use_delta_islands)
@@ -3772,24 +3771,24 @@ static void get_object_list(int ac, const char **av)
 	if (write_bitmap_index)
 		mark_bitmap_preferred_tips();
 
-	if (prepare_revision_walk(&revs))
+	if (prepare_revision_walk(revs))
 		die(_("revision walk setup failed"));
-	mark_edges_uninteresting(&revs, show_edge, sparse);
+	mark_edges_uninteresting(revs, show_edge, sparse);
 
 	if (!fn_show_object)
 		fn_show_object = show_object;
-	traverse_commit_list(&revs,
+	traverse_commit_list(revs,
 			     show_commit, fn_show_object,
 			     NULL);
 
 	if (unpack_unreachable_expiration) {
-		revs.ignore_missing_links = 1;
-		if (add_unseen_recent_objects_to_traversal(&revs,
+		revs->ignore_missing_links = 1;
+		if (add_unseen_recent_objects_to_traversal(revs,
 				unpack_unreachable_expiration))
 			die(_("unable to add recent objects"));
-		if (prepare_revision_walk(&revs))
+		if (prepare_revision_walk(revs))
 			die(_("revision walk setup failed"));
-		traverse_commit_list(&revs, record_recent_commit,
+		traverse_commit_list(revs, record_recent_commit,
 				     record_recent_object, NULL);
 	}
 
@@ -3872,6 +3871,8 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	int rev_list_index = 0;
 	int stdin_packs = 0;
 	struct string_list keep_pack_list = STRING_LIST_INIT_NODUP;
+	struct rev_info revs;
+
 	struct option pack_objects_options[] = {
 		OPT_SET_INT('q', "quiet", &progress,
 			    N_("do not show progress meter"), 0),
@@ -3975,6 +3976,8 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		BUG("too many dfs states, increase OE_DFS_STATE_BITS");
 
 	read_replace_refs = 0;
+
+	repo_init_revisions(the_repository, &revs, NULL);
 
 	sparse = git_env_bool("GIT_TEST_PACK_SPARSE", -1);
 	if (the_repository->gitdir) {
@@ -4154,7 +4157,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	} else if (!use_internal_rev_list) {
 		read_object_list_from_stdin();
 	} else {
-		get_object_list(rp.nr, rp.v);
+		get_object_list(&revs, rp.nr, rp.v);
 	}
 	cleanup_preferred_base();
 	if (include_tag && nr_result)
