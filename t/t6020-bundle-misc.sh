@@ -510,8 +510,8 @@ do
 		<TAG-2> refs/tags/v2
 		<TAG-3> refs/tags/v3
 		<COMMIT-P> HEAD
-		The bundle uses this filter: $filter
 		The bundle records a complete history.
+		The bundle uses this filter: $filter
 		EOF
 		test_cmp expect actual &&
 

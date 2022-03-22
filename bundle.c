@@ -267,11 +267,6 @@ int verify_bundle(struct repository *r,
 			  (uintmax_t)r->nr);
 		list_refs(r, 0, NULL);
 
-		if (header->filter.choice) {
-			printf_ln("The bundle uses this filter: %s",
-				  list_objects_filter_spec(&header->filter));
-		}
-
 		r = &header->prerequisites;
 		if (!r->nr) {
 			printf_ln(_("The bundle records a complete history."));
@@ -282,6 +277,10 @@ int verify_bundle(struct repository *r,
 				  (uintmax_t)r->nr);
 			list_refs(r, 0, NULL);
 		}
+
+		if (header->filter.choice)
+			printf_ln("The bundle uses this filter: %s",
+				  list_objects_filter_spec(&header->filter));
 	}
 	return ret;
 }
