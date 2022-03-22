@@ -237,8 +237,6 @@ static unsigned long cache_max_small_delta_size = 1000;
 
 static unsigned long window_memory_limit = 0;
 
-static struct list_objects_filter_options filter_options;
-
 static struct string_list uri_protocols = STRING_LIST_INIT_NODUP;
 
 enum missing_action {
@@ -3723,10 +3721,8 @@ static void get_object_list(struct rev_info *revs, int ac, const char **av)
 	int flags = 0;
 	int save_warning;
 
-	repo_init_revisions(the_repository, revs, NULL);
 	save_commit_buffer = 0;
 	setup_revisions(ac, av, revs, &s_r_opt);
-	list_objects_filter_copy(&revs->filter, &filter_options);
 
 	/* make sure shallows are read */
 	is_repository_shallow(the_repository);
@@ -3958,7 +3954,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			      &write_bitmap_index,
 			      N_("write a bitmap index if possible"),
 			      WRITE_BITMAP_QUIET, PARSE_OPT_HIDDEN),
-		OPT_PARSE_LIST_OBJECTS_FILTER(&filter_options),
+		OPT_PARSE_LIST_OBJECTS_FILTER(&revs.filter),
 		OPT_CALLBACK_F(0, "missing", NULL, N_("action"),
 		  N_("handling for missing objects"), PARSE_OPT_NONEG,
 		  option_parse_missing_action),
@@ -4080,7 +4076,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	if (!rev_list_all || !rev_list_reflog || !rev_list_index)
 		unpack_unreachable_expiration = 0;
 
-	if (filter_options.choice) {
+	if (revs.filter.choice) {
 		if (!pack_to_stdout)
 			die(_("cannot use --filter without --stdout"));
 		if (stdin_packs)
