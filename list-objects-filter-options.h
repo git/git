@@ -69,9 +69,6 @@ struct list_objects_filter_options {
 	 */
 };
 
-/* Normalized command line arguments */
-#define CL_ARG__FILTER "filter"
-
 /*
  * Parse value of the argument to the "filter" keyword.
  * On the command line this looks like:
@@ -111,7 +108,7 @@ int opt_parse_list_objects_filter(const struct option *opt,
 				  const char *arg, int unset);
 
 #define OPT_PARSE_LIST_OBJECTS_FILTER(fo) \
-	OPT_CALLBACK(0, CL_ARG__FILTER, fo, N_("args"), \
+	OPT_CALLBACK(0, "filter", fo, N_("args"), \
 	  N_("object filtering"), \
 	  opt_parse_list_objects_filter)
 
