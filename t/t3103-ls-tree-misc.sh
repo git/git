@@ -23,4 +23,13 @@ test_expect_success 'ls-tree fails with non-zero exit code on broken tree' '
 	test_must_fail git ls-tree -r HEAD
 '
 
+for opts in \
+	"--name-only --long" \
+	"--name-status --long"
+do
+	test_expect_success "usage: incompatible options: $opts" '
+		test_expect_code 129 git ls-tree $opts $tree
+    '
+done
+
 test_done
