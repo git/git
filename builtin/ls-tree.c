@@ -173,108 +173,157 @@ static int show_tree_fmt(const struct object_id *oid, struct strbuf *base,
 	return recurse;
 }
 
-static int show_default(struct show_tree_data *data)
+static int show_tree_common(struct show_tree_data *data, int *recurse,
+			    const struct object_id *oid, struct strbuf *base,
+			    const char *pathname, unsigned mode)
 {
-	size_t baselen = data->base->len;
-
-	if (cmdmode == MODE_LONG) {
-		char size_text[24];
-		if (data->type == OBJ_BLOB) {
-			unsigned long size;
-			if (oid_object_info(the_repository, data->oid, &size) == OBJ_BAD)
-				xsnprintf(size_text, sizeof(size_text), "BAD");
-			else
-				xsnprintf(size_text, sizeof(size_text),
-					  "%" PRIuMAX, (uintmax_t)size);
-		} else {
-			xsnprintf(size_text, sizeof(size_text), "-");
-		}
-		printf("%06o %s %s %7s\t", data->mode, type_name(data->type),
-		find_unique_abbrev(data->oid, abbrev), size_text);
-	} else {
-		printf("%06o %s %s\t", data->mode, type_name(data->type),
-		find_unique_abbrev(data->oid, abbrev));
-	}
-	baselen = data->base->len;
-	strbuf_addstr(data->base, data->pathname);
-	write_name_quoted_relative(data->base->buf,
-				   chomp_prefix ? ls_tree_prefix : NULL, stdout,
-				   line_termination);
-	strbuf_setlen(data->base, baselen);
-	return 1;
-}
-
-static int show_tree(const struct object_id *oid, struct strbuf *base,
-		const char *pathname, unsigned mode, void *context)
-{
-	int recurse = 0;
-	size_t baselen;
 	enum object_type type = object_type(mode);
-	struct show_tree_data data = {
-		.mode = mode,
-		.type = type,
-		.oid = oid,
-		.pathname = pathname,
-		.base = base,
-	};
+	int ret = -1;
+
+	*recurse = 0;
+	data->mode = mode;
+	data->type = type;
+	data->oid = oid;
+	data->pathname = pathname;
+	data->base = base;
 
 	if (type == OBJ_BLOB) {
 		if (ls_options & LS_TREE_ONLY)
-			return 0;
+			ret = 0;
 	} else if (type == OBJ_TREE &&
 		   show_recursive(base->buf, base->len, pathname)) {
-		recurse = READ_TREE_RECURSIVE;
+		*recurse = READ_TREE_RECURSIVE;
 		if (!(ls_options & LS_SHOW_TREES))
-			return recurse;
+			ret = *recurse;
 	}
 
-	if (cmdmode == MODE_OBJECT_ONLY) {
-		printf("%s%c", find_unique_abbrev(oid, abbrev), line_termination);
-		return recurse;
+	return ret;
+}
+
+static void show_tree_common_default_long(struct strbuf *base,
+					  const char *pathname,
+					  const size_t baselen)
+{
+	strbuf_addstr(base, pathname);
+	write_name_quoted_relative(base->buf,
+				   chomp_prefix ? ls_tree_prefix : NULL, stdout,
+				   line_termination);
+	strbuf_setlen(base, baselen);
+}
+
+static int show_tree_default(const struct object_id *oid, struct strbuf *base,
+			     const char *pathname, unsigned mode,
+			     void *context)
+{
+	int early;
+	int recurse;
+	struct show_tree_data data = { 0 };
+
+	early = show_tree_common(&data, &recurse, oid, base, pathname, mode);
+	if (early >= 0)
+		return early;
+
+	printf("%06o %s %s\t", data.mode, type_name(data.type),
+	       find_unique_abbrev(data.oid, abbrev));
+	show_tree_common_default_long(base, pathname, data.base->len);
+	return recurse;
+}
+
+static int show_tree_long(const struct object_id *oid, struct strbuf *base,
+			  const char *pathname, unsigned mode, void *context)
+{
+	int early;
+	int recurse;
+	struct show_tree_data data = { 0 };
+	char size_text[24];
+
+	early = show_tree_common(&data, &recurse, oid, base, pathname, mode);
+	if (early >= 0)
+		return early;
+
+	if (data.type == OBJ_BLOB) {
+		unsigned long size;
+		if (oid_object_info(the_repository, data.oid, &size) == OBJ_BAD)
+			xsnprintf(size_text, sizeof(size_text), "BAD");
+		else
+			xsnprintf(size_text, sizeof(size_text),
+				  "%" PRIuMAX, (uintmax_t)size);
+	} else {
+		xsnprintf(size_text, sizeof(size_text), "-");
 	}
 
-	if (cmdmode == MODE_NAME_ONLY) {
-		baselen = base->len;
-		strbuf_addstr(base, pathname);
-		write_name_quoted_relative(base->buf,
-					   chomp_prefix ? ls_tree_prefix : NULL,
-					   stdout, line_termination);
-		strbuf_setlen(base, baselen);
-		return recurse;
-	}
+	printf("%06o %s %s %7s\t", data.mode, type_name(data.type),
+	       find_unique_abbrev(data.oid, abbrev), size_text);
+	show_tree_common_default_long(base, pathname, data.base->len);
+	return 1;
+}
 
-	if (cmdmode == MODE_LONG ||
-		(!ls_options || (ls_options & LS_RECURSIVE)
-		 || (ls_options & LS_SHOW_TREES)
-		 || (ls_options & LS_TREE_ONLY)))
-			 show_default(&data);
+static int show_tree_name_only(const struct object_id *oid, struct strbuf *base,
+			       const char *pathname, unsigned mode, void *context)
+{
+	int early;
+	int recurse;
+	const size_t baselen = base->len;
+	struct show_tree_data data = { 0 };
 
+	early = show_tree_common(&data, &recurse, oid, base, pathname, mode);
+	if (early >= 0)
+		return early;
+
+	strbuf_addstr(base, pathname);
+	write_name_quoted_relative(base->buf,
+				   chomp_prefix ? ls_tree_prefix : NULL,
+				   stdout, line_termination);
+	strbuf_setlen(base, baselen);
+	return recurse;
+}
+
+static int show_tree_object(const struct object_id *oid, struct strbuf *base,
+			    const char *pathname, unsigned mode, void *context)
+{
+	int early;
+	int recurse;
+	struct show_tree_data data = { 0 };
+
+	early = show_tree_common(&data, &recurse, oid, base, pathname, mode);
+	if (early >= 0)
+		return early;
+
+	printf("%s%c", find_unique_abbrev(oid, abbrev), line_termination);
 	return recurse;
 }
 
 struct ls_tree_cmdmode_to_fmt {
 	enum ls_tree_cmdmode mode;
 	const char *const fmt;
+	read_tree_fn_t fn;
 };
 
 static struct ls_tree_cmdmode_to_fmt ls_tree_cmdmode_format[] = {
 	{
 		.mode = MODE_DEFAULT,
 		.fmt = "%(objectmode) %(objecttype) %(objectname)%x09%(path)",
+		.fn = show_tree_default,
 	},
 	{
 		.mode = MODE_LONG,
 		.fmt = "%(objectmode) %(objecttype) %(objectname) %(objectsize:padded)%x09%(path)",
+		.fn = show_tree_long,
 	},
 	{
 		.mode = MODE_NAME_ONLY, /* And MODE_NAME_STATUS */
 		.fmt = "%(path)",
+		.fn = show_tree_name_only,
 	},
 	{
 		.mode = MODE_OBJECT_ONLY,
 		.fmt = "%(objectname)",
+		.fn = show_tree_object
 	},
-	{ 0 },
+	{
+		/* fallback */
+		.fn = show_tree_default,
+	},
 };
 
 int cmd_ls_tree(int argc, const char **argv, const char *prefix)
@@ -282,7 +331,7 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 	struct object_id oid;
 	struct tree *tree;
 	int i, full_tree = 0;
-	read_tree_fn_t fn = show_tree;
+	read_tree_fn_t fn = NULL;
 	const struct option ls_tree_options[] = {
 		OPT_BIT('d', NULL, &ls_options, N_("only show trees"),
 			LS_TREE_ONLY),
@@ -311,6 +360,7 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 		OPT__ABBREV(&abbrev),
 		OPT_END()
 	};
+	struct ls_tree_cmdmode_to_fmt *m2f = ls_tree_cmdmode_format;
 
 	git_config(git_default_config, NULL);
 	ls_tree_prefix = prefix;
@@ -365,18 +415,19 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 	 * The generic show_tree_fmt() is slower than show_tree(), so
 	 * take the fast path if possible.
 	 */
-	if (format) {
-		struct ls_tree_cmdmode_to_fmt *m2f;
-
-		fn = show_tree_fmt;
-		for (m2f = ls_tree_cmdmode_format; m2f->fmt; m2f++) {
-			if (strcmp(format, m2f->fmt))
-				continue;
-
+	while (m2f) {
+		if (!m2f->fmt) {
+			fn = format ? show_tree_fmt : show_tree_default;
+		} else if (format && !strcmp(format, m2f->fmt)) {
 			cmdmode = m2f->mode;
-			fn = show_tree;
-			break;
+			fn = m2f->fn;
+		} else if (!format && cmdmode == m2f->mode) {
+			fn = m2f->fn;
+		} else {
+			m2f++;
+			continue;
 		}
+		break;
 	}
 
 	return !!read_tree(the_repository, tree, &pathspec, fn, NULL);
