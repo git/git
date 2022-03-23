@@ -6,16 +6,11 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
-# Setup hook that always succeeds
-HOOKDIR="$(git rev-parse --git-dir)/hooks"
-HOOK="$HOOKDIR/pre-push"
-mkdir -p "$HOOKDIR"
-write_script "$HOOK" <<EOF
-cat >actual
-exit 0
-EOF
-
 test_expect_success 'setup' '
+	test_hook pre-push <<-\EOF &&
+	cat >actual
+	EOF
+
 	git config push.default upstream &&
 	git init --bare repo1 &&
 	git remote add parent1 repo1 &&
@@ -28,15 +23,16 @@ test_expect_success 'setup' '
 	git push parent1 HEAD:foreign &&
 	test_cmp expect actual
 '
-write_script "$HOOK" <<EOF
-cat >actual
-exit 1
-EOF
 
 COMMIT1="$(git rev-parse HEAD)"
 export COMMIT1
 
 test_expect_success 'push with failing hook' '
+	test_hook pre-push <<-\EOF &&
+	cat >actual &&
+	exit 1
+	EOF
+
 	test_commit two &&
 	cat >expect <<-EOF &&
 	HEAD $(git rev-parse HEAD) refs/heads/main $(test_oid zero)
@@ -55,13 +51,13 @@ test_expect_success '--no-verify bypasses hook' '
 COMMIT2="$(git rev-parse HEAD)"
 export COMMIT2
 
-write_script "$HOOK" <<'EOF'
-echo "$1" >actual
-echo "$2" >>actual
-cat >>actual
-EOF
-
 test_expect_success 'push with hook' '
+	test_hook --setup pre-push <<-\EOF &&
+	echo "$1" >actual
+	echo "$2" >>actual
+	cat >>actual
+	EOF
+
 	cat >expect <<-EOF &&
 	parent1
 	repo1
@@ -136,7 +132,9 @@ test_expect_success 'set up many-ref tests' '
 '
 
 test_expect_success 'sigpipe does not cause pre-push hook failure' '
-	echo "exit 0" | write_script "$HOOK" &&
+	test_hook --clobber pre-push <<-\EOF &&
+	exit 0
+	EOF
 	git push parent1 "refs/heads/b/*:refs/heads/b/*"
 '
 

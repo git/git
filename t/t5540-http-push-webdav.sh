@@ -42,7 +42,9 @@ test_expect_success 'setup remote repository' '
 	git clone --bare test_repo test_repo.git &&
 	cd test_repo.git &&
 	git --bare update-server-info &&
-	mv hooks/post-update.sample hooks/post-update &&
+	test_hook --setup post-update <<-\EOF &&
+	exec git update-server-info
+	EOF
 	ORIG_HEAD=$(git rev-parse --verify HEAD) &&
 	cd - &&
 	mv test_repo.git "$HTTPD_DOCUMENT_ROOT_PATH"

@@ -277,16 +277,21 @@ test_expect_success 'run hook p4-pre-submit before submit' '
 		git commit -m "add hello.txt" &&
 		git config git-p4.skipSubmitEdit true &&
 		git p4 submit --dry-run >out &&
-		grep "Would apply" out &&
-		mkdir -p .git/hooks &&
-		write_script .git/hooks/p4-pre-submit <<-\EOF &&
-		exit 0
-		EOF
+		grep "Would apply" out
+	) &&
+	test_hook -C "$git" p4-pre-submit <<-\EOF &&
+	exit 0
+	EOF
+	(
+		cd "$git" &&
 		git p4 submit --dry-run >out &&
-		grep "Would apply" out &&
-		write_script .git/hooks/p4-pre-submit <<-\EOF &&
-		exit 1
-		EOF
+		grep "Would apply" out
+	) &&
+	test_hook -C "$git" --clobber p4-pre-submit <<-\EOF &&
+	exit 1
+	EOF
+	(
+		cd "$git" &&
 		test_must_fail git p4 submit --dry-run >errs 2>&1 &&
 		! grep "Would apply" errs
 	)

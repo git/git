@@ -47,25 +47,19 @@ test_expect_success 'with no hook' '
 
 '
 
-# set up fake editor for interactive editing
-cat > fake-editor <<'EOF'
-#!/bin/sh
-exit 0
-EOF
-chmod +x fake-editor
+test_expect_success 'setup fake editor for interactive editing' '
+	write_script fake-editor <<-\EOF &&
+	exit 0
+	EOF
 
-## Not using test_set_editor here so we can easily ensure the editor variable
-## is only set for the editor tests
-FAKE_EDITOR="$(pwd)/fake-editor"
-export FAKE_EDITOR
+	## Not using test_set_editor here so we can easily ensure the editor variable
+	## is only set for the editor tests
+	FAKE_EDITOR="$(pwd)/fake-editor" &&
+	export FAKE_EDITOR
+'
 
-# now install hook that always succeeds and adds a message
-HOOKDIR="$(git rev-parse --git-dir)/hooks"
-HOOK="$HOOKDIR/prepare-commit-msg"
-mkdir -p "$HOOKDIR"
-echo "#!$SHELL_PATH" > "$HOOK"
-cat >> "$HOOK" <<'EOF'
-
+test_expect_success 'setup prepare-commit-msg hook' '
+	test_hook --setup prepare-commit-msg <<\EOF
 GIT_DIR=$(git rev-parse --git-dir)
 if test -d "$GIT_DIR/rebase-merge"
 then
@@ -103,7 +97,7 @@ else
 fi
 exit 0
 EOF
-chmod +x "$HOOK"
+'
 
 echo dummy template > "$(git rev-parse --git-dir)/template"
 
@@ -265,10 +259,11 @@ test_expect_success 'with hook and editor (cherry-pick)' '
 	test "$(git log -1 --pretty=format:%s)" = merge
 '
 
-cat > "$HOOK" <<'EOF'
-#!/bin/sh
-exit 1
-EOF
+test_expect_success 'setup: commit-msg hook that always fails' '
+	test_hook --setup --clobber prepare-commit-msg <<-\EOF
+	exit 1
+	EOF
+'
 
 test_expect_success 'with failing hook' '
 
@@ -296,9 +291,9 @@ test_expect_success 'with failing hook (merge)' '
 	git checkout -B other HEAD@{1} &&
 	echo "more" >> file &&
 	git add file &&
-	rm -f "$HOOK" &&
+	test_hook --remove prepare-commit-msg &&
 	git commit -m other &&
-	write_script "$HOOK" <<-EOF &&
+	test_hook --setup prepare-commit-msg <<-\EOF &&
 	exit 1
 	EOF
 	git checkout - &&

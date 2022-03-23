@@ -1,6 +1,6 @@
 test_expect_success "setup pre-receive hook ($PROTOCOL)" '
 	mv "$upstream/hooks/pre-receive" "$upstream/hooks/pre-receive.ok" &&
-	write_script "$upstream/hooks/pre-receive" <<-EOF
+	test_hook -C "$upstream" --clobber pre-receive <<-\EOF
 	exit 1
 	EOF
 '
@@ -21,7 +21,7 @@ test_expect_success "git-push is declined ($PROTOCOL)" '
 	EOF
 	test_cmp expect actual &&
 
-	test_cmp_refs -C "$upstream" <<-EOF
+	test_cmp_refs -C "$upstream" <<-\EOF
 	<COMMIT-A> refs/heads/main
 	EOF
 '

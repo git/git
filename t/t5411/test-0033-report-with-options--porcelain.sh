@@ -1,5 +1,5 @@
 test_expect_success "setup proc-receive hook (option without matching ok, $PROTOCOL/porcelain)" '
-	write_script "$upstream/hooks/proc-receive" <<-EOF
+	test_hook -C "$upstream" --clobber proc-receive <<-EOF
 	printf >&2 "# proc-receive hook\n"
 	test-tool proc-receive -v \
 		-r "option refname refs/pull/123/head" \
@@ -31,7 +31,7 @@ test_expect_success "proc-receive: report option without matching ok ($PROTOCOL/
 '
 
 test_expect_success "setup proc-receive hook (option refname, $PROTOCOL/porcelain)" '
-	write_script "$upstream/hooks/proc-receive" <<-EOF
+	test_hook -C "$upstream" --clobber proc-receive <<-\EOF
 	printf >&2 "# proc-receive hook\n"
 	test-tool proc-receive -v \
 		-r "ok refs/for/main/topic" \
@@ -64,7 +64,7 @@ test_expect_success "proc-receive: report option refname ($PROTOCOL/porcelain)" 
 '
 
 test_expect_success "setup proc-receive hook (option refname and forced-update, $PROTOCOL/porcelain)" '
-	write_script "$upstream/hooks/proc-receive" <<-EOF
+	test_hook -C "$upstream" --clobber proc-receive <<-\EOF
 	printf >&2 "# proc-receive hook\n"
 	test-tool proc-receive -v \
 		-r "ok refs/for/main/topic" \
@@ -99,7 +99,7 @@ test_expect_success "proc-receive: report option refname and forced-update ($PRO
 '
 
 test_expect_success "setup proc-receive hook (option refname and old-oid, $PROTOCOL/porcelain)" '
-	write_script "$upstream/hooks/proc-receive" <<-EOF
+	test_hook -C "$upstream" --clobber proc-receive <<-EOF
 	printf >&2 "# proc-receive hook\n"
 	test-tool proc-receive -v \
 		-r "ok refs/for/main/topic" \
@@ -134,7 +134,7 @@ test_expect_success "proc-receive: report option refname and old-oid ($PROTOCOL/
 '
 
 test_expect_success "setup proc-receive hook (option old-oid, $PROTOCOL/porcelain)" '
-	write_script "$upstream/hooks/proc-receive" <<-EOF
+	test_hook -C "$upstream" --clobber proc-receive <<-EOF
 	printf >&2 "# proc-receive hook\n"
 	test-tool proc-receive -v \
 		-r "ok refs/for/main/topic" \
@@ -167,7 +167,7 @@ test_expect_success "proc-receive: report option old-oid ($PROTOCOL/porcelain)" 
 '
 
 test_expect_success "setup proc-receive hook (option old-oid and new-oid, $PROTOCOL/porcelain)" '
-	write_script "$upstream/hooks/proc-receive" <<-EOF
+	test_hook -C "$upstream" --clobber proc-receive <<-EOF
 	printf >&2 "# proc-receive hook\n"
 	test-tool proc-receive -v \
 		-r "ok refs/for/main/topic" \
@@ -202,7 +202,7 @@ test_expect_success "proc-receive: report option old-oid and new-oid ($PROTOCOL/
 '
 
 test_expect_success "setup proc-receive hook (report with multiple rewrites, $PROTOCOL/porcelain)" '
-	write_script "$upstream/hooks/proc-receive" <<-EOF
+	test_hook -C "$upstream" --clobber proc-receive <<-EOF
 	printf >&2 "# proc-receive hook\n"
 	test-tool proc-receive -v \
 		-r "ok refs/for/a/b/c/topic" \

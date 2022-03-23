@@ -25,16 +25,17 @@ test_expect_success 'setup repository' '
 	git commit -m two
 '
 
+setup_post_update_server_info_hook () {
+	test_hook --setup -C "$1" post-update <<-\EOF &&
+	exec git update-server-info
+	EOF
+	git -C "$1" update-server-info
+}
+
 test_expect_success 'create http-accessible bare repository with loose objects' '
 	cp -R .git "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
-	(cd "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
-	 git config core.bare true &&
-	 mkdir -p hooks &&
-	 write_script "hooks/post-update" <<-\EOF &&
-	 exec git update-server-info
-	EOF
-	 hooks/post-update
-	) &&
+	git -C "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" config core.bare true &&
+	setup_post_update_server_info_hook "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
 	git remote add public "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
 	git push public main:main
 '
@@ -62,13 +63,7 @@ test_expect_success 'create password-protected repository' '
 
 test_expect_success 'create empty remote repository' '
 	git init --bare "$HTTPD_DOCUMENT_ROOT_PATH/empty.git" &&
-	(cd "$HTTPD_DOCUMENT_ROOT_PATH/empty.git" &&
-	 mkdir -p hooks &&
-	 write_script "hooks/post-update" <<-\EOF &&
-	 exec git update-server-info
-	EOF
-	 hooks/post-update
-	)
+	setup_post_update_server_info_hook "$HTTPD_DOCUMENT_ROOT_PATH/empty.git"
 '
 
 test_expect_success 'empty dumb HTTP repository has default hash algorithm' '

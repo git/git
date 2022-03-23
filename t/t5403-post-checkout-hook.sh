@@ -10,8 +10,7 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 test_expect_success setup '
-	mkdir -p .git/hooks &&
-	write_script .git/hooks/post-checkout <<-\EOF &&
+	test_hook --setup post-checkout <<-\EOF &&
 	echo "$@" >.git/post-checkout.args
 	EOF
 	test_commit one &&
