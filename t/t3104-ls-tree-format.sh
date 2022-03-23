@@ -50,6 +50,15 @@ test_ls_tree_format \
 	"--name-only"
 
 test_ls_tree_format \
+	"%(objectname)" \
+	"--object-only"
+
+test_ls_tree_format \
+	"%(objectname)" \
+	"--object-only --abbrev" \
+	"--abbrev"
+
+test_ls_tree_format \
 	"%(objectmode) %(objecttype) %(objectname)%x09%(path)" \
 	"-t" \
 	"-t"

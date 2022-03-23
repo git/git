@@ -24,7 +24,6 @@ static struct pathspec pathspec;
 static int chomp_prefix;
 static const char *ls_tree_prefix;
 static const char *format;
-
 struct show_tree_data {
 	unsigned mode;
 	enum object_type type;
@@ -42,6 +41,7 @@ static enum ls_tree_cmdmode {
 	MODE_DEFAULT = 0,
 	MODE_LONG,
 	MODE_NAME_ONLY,
+	MODE_OBJECT_ONLY,
 } cmdmode;
 
 static void expand_objectsize(struct strbuf *line, const struct object_id *oid,
@@ -227,6 +227,11 @@ static int show_tree(const struct object_id *oid, struct strbuf *base,
 			return recurse;
 	}
 
+	if (cmdmode == MODE_OBJECT_ONLY) {
+		printf("%s%c", find_unique_abbrev(oid, abbrev), line_termination);
+		return recurse;
+	}
+
 	if (cmdmode == MODE_NAME_ONLY) {
 		baselen = base->len;
 		strbuf_addstr(base, pathname);
@@ -264,6 +269,10 @@ static struct ls_tree_cmdmode_to_fmt ls_tree_cmdmode_format[] = {
 		.mode = MODE_NAME_ONLY, /* And MODE_NAME_STATUS */
 		.fmt = "%(path)",
 	},
+	{
+		.mode = MODE_OBJECT_ONLY,
+		.fmt = "%(objectname)",
+	},
 	{ 0 },
 };
 
@@ -288,6 +297,8 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 			    MODE_NAME_ONLY),
 		OPT_CMDMODE(0, "name-status", &cmdmode, N_("list only filenames"),
 			    MODE_NAME_ONLY),
+		OPT_CMDMODE(0, "object-only", &cmdmode, N_("list only objects"),
+			    MODE_OBJECT_ONLY),
 		OPT_SET_INT(0, "full-name", &chomp_prefix,
 			    N_("use full path names"), 0),
 		OPT_BOOL(0, "full-tree", &full_tree,
