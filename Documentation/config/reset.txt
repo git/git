@@ -1,2 +1,0 @@
-reset.quiet::
-	When set to true, 'git reset' will default to the '--quiet' option.

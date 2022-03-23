@@ -392,7 +392,7 @@ static int git_reset_config(const char *var, const char *value, void *cb)
 int cmd_reset(int argc, const char **argv, const char *prefix)
 {
 	int reset_type = NONE, update_ref_status = 0, quiet = 0;
-	int refresh = -1;
+	int refresh = 1;
 	int patch_mode = 0, pathspec_file_nul = 0, unborn;
 	const char *rev, *pathspec_from_file = NULL;
 	struct object_id oid;
@@ -423,19 +423,10 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	};
 
 	git_config(git_reset_config, NULL);
-	git_config_get_bool("reset.quiet", &quiet);
-	git_config_get_bool("reset.refresh", &refresh);
 
 	argc = parse_options(argc, argv, prefix, options, git_reset_usage,
 						PARSE_OPT_KEEP_DASHDASH);
 	parse_args(&pathspec, argv, prefix, patch_mode, &rev);
-
-	/*
-	 * If refresh is completely unspecified (either by config or by command
-	 * line option), decide based on 'quiet'.
-	 */
-	if (refresh < 0)
-		refresh = !quiet;
 
 	if (pathspec_from_file) {
 		if (patch_mode)
@@ -537,8 +528,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 				t_delta_in_ms = (getnanotime() - t_begin) / 1000000;
 				if (!quiet && advice_enabled(ADVICE_RESET_NO_REFRESH_WARNING) && t_delta_in_ms > REFRESH_INDEX_DELAY_WARNING_IN_MS) {
 					advise(_("It took %.2f seconds to refresh the index after reset.  You can use\n"
-						 "'--no-refresh' to avoid this.  Set the config setting reset.refresh to false\n"
-						 "to make this the default."), t_delta_in_ms / 1000.0);
+						 "'--no-refresh' to avoid this."), t_delta_in_ms / 1000.0);
 				}
 			}
 		} else {

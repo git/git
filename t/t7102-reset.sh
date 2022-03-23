@@ -485,50 +485,17 @@ test_reset_refreshes_index () {
 }
 
 test_expect_success '--mixed refreshes the index' '
-	# Verify default behavior (with no config settings or command line
-	# options)
-	test_reset_refreshes_index
-'
-test_expect_success '--mixed --[no-]quiet sets default refresh behavior' '
-	# Verify that --[no-]quiet and `reset.quiet` (without --[no-]refresh)
-	# determine refresh behavior
+	# Verify default behavior (without --[no-]refresh or reset.refresh)
+	test_reset_refreshes_index &&
 
-	# Config setting
-	! test_reset_refreshes_index "-c reset.quiet=true" &&
-	test_reset_refreshes_index "-c reset.quiet=false" &&
-
-	# Command line option
-	! test_reset_refreshes_index "" --quiet &&
-	test_reset_refreshes_index "" --no-quiet &&
-
-	# Command line option overrides config setting
-	! test_reset_refreshes_index "-c reset.quiet=false" --quiet &&
-	test_reset_refreshes_index "-c reset.refresh=true" --no-quiet
+	# With --quiet
+	test_reset_refreshes_index "" --quiet
 '
 
 test_expect_success '--mixed --[no-]refresh sets refresh behavior' '
-	# Verify that --[no-]refresh and `reset.refresh` control index refresh
-
-	# Config setting
-	test_reset_refreshes_index "-c reset.refresh=true" &&
-	! test_reset_refreshes_index "-c reset.refresh=false" &&
-
-	# Command line option
+	# Verify that --[no-]refresh controls index refresh
 	test_reset_refreshes_index "" --refresh &&
-	! test_reset_refreshes_index "" --no-refresh &&
-
-	# Command line option overrides config setting
-	test_reset_refreshes_index "-c reset.refresh=false" --refresh &&
-	! test_reset_refreshes_index "-c reset.refresh=true" --no-refresh
-'
-
-test_expect_success '--mixed --refresh overrides --quiet refresh behavior' '
-	# Verify that *both* --refresh and `reset.refresh` override the
-	# default non-refresh behavior of --quiet
-	test_reset_refreshes_index "" "--quiet --refresh" &&
-	test_reset_refreshes_index "-c reset.quiet=true" --refresh &&
-	test_reset_refreshes_index "-c reset.refresh=true" --quiet &&
-	test_reset_refreshes_index "-c reset.refresh=true -c reset.quiet=true"
+	! test_reset_refreshes_index "" --no-refresh
 '
 
 test_expect_success '--mixed preserves skip-worktree' '
