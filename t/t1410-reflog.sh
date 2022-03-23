@@ -423,4 +423,13 @@ test_expect_success 'expire with multiple worktrees' '
 	)
 '
 
+test_expect_success REFFILES 'empty reflog' '
+	test_when_finished "rm -rf empty" &&
+	git init empty &&
+	test_commit -C empty A &&
+	>empty/.git/logs/refs/heads/foo &&
+	git -C empty reflog expire --all 2>err &&
+	test_must_be_empty err
+'
+
 test_done
