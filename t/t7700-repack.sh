@@ -381,4 +381,54 @@ test_expect_success TTY '--quiet disables progress' '
 	test_must_be_empty stderr
 '
 
+test_expect_success 'setup for update-server-info' '
+	git init update-server-info &&
+	test_commit -C update-server-info message
+'
+
+test_server_info_present () {
+	test_path_is_file update-server-info/.git/objects/info/packs &&
+	test_path_is_file update-server-info/.git/info/refs
+}
+
+test_server_info_missing () {
+	test_path_is_missing update-server-info/.git/objects/info/packs &&
+	test_path_is_missing update-server-info/.git/info/refs
+}
+
+test_server_info_cleanup () {
+	rm -f update-server-info/.git/objects/info/packs update-server-info/.git/info/refs &&
+	test_server_info_missing
+}
+
+test_expect_success 'updates server info by default' '
+	test_server_info_cleanup &&
+	git -C update-server-info repack &&
+	test_server_info_present
+'
+
+test_expect_success '-n skips updating server info' '
+	test_server_info_cleanup &&
+	git -C update-server-info repack -n &&
+	test_server_info_missing
+'
+
+test_expect_success 'repack.updateServerInfo=true updates server info' '
+	test_server_info_cleanup &&
+	git -C update-server-info -c repack.updateServerInfo=true repack &&
+	test_server_info_present
+'
+
+test_expect_success 'repack.updateServerInfo=false skips updating server info' '
+	test_server_info_cleanup &&
+	git -C update-server-info -c repack.updateServerInfo=false repack &&
+	test_server_info_missing
+'
+
+test_expect_success '-n overrides repack.updateServerInfo=true' '
+	test_server_info_cleanup &&
+	git -C update-server-info -c repack.updateServerInfo=true repack -n &&
+	test_server_info_missing
+'
+
 test_done
