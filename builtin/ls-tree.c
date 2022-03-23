@@ -66,20 +66,17 @@ static int show_tree(const struct object_id *oid, struct strbuf *base,
 {
 	int recurse = 0;
 	size_t baselen;
-	enum object_type type = OBJ_BLOB;
+	enum object_type type = object_type(mode);
 
-	if (S_ISGITLINK(mode)) {
-		type = OBJ_COMMIT;
-	} else if (S_ISDIR(mode)) {
-		if (show_recursive(base->buf, base->len, pathname)) {
-			recurse = READ_TREE_RECURSIVE;
-			if (!(ls_options & LS_SHOW_TREES))
-				return recurse;
-		}
-		type = OBJ_TREE;
+	if (type == OBJ_BLOB) {
+		if (ls_options & LS_TREE_ONLY)
+			return 0;
+	} else if (type == OBJ_TREE &&
+		   show_recursive(base->buf, base->len, pathname)) {
+		recurse = READ_TREE_RECURSIVE;
+		if (!(ls_options & LS_SHOW_TREES))
+			return recurse;
 	}
-	else if (ls_options & LS_TREE_ONLY)
-		return 0;
 
 	if (!(ls_options & LS_NAME_ONLY)) {
 		if (ls_options & LS_SHOW_SIZE) {
