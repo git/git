@@ -78,6 +78,12 @@ UI, Workflows & Features
    filtered by similar criteria you would give when making a
    partial/lazy clone.
 
+ * A new built-in userdiff driver for kotlin has been added.
+
+ * "git repack" learned a new configuration to disable triggering of
+   age-old "update-server-info" command, which is rarely useful these
+   days.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -141,6 +147,10 @@ Performance, Internal Implementation, Development Support etc.
 
  * Remove unneeded <meta http-equiv=content-type...> from gitweb
    output.
+
+ * "git name-rev" learned to use the generation numbers when setting
+   the lower bound of searching commits used to explain the revision,
+   when available, instead of committer time.
 
 
 Fixes since v2.35
@@ -360,3 +370,6 @@ Fixes since v2.35
    (merge 6ee36364eb ab/diff-free-more later to maint).
    (merge 63a36017fe nj/read-tree-doc-reffix later to maint).
    (merge eed36fce38 sm/no-git-in-upstream-of-pipe-in-tests later to maint).
+   (merge c614beb933 ep/t6423-modernize later to maint).
+   (merge 57be9c6dee ab/reflog-prep-fix later to maint).
+   (merge 5327d8982a js/in-place-reverse-in-sequencer later to maint).
