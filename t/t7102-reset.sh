@@ -488,8 +488,7 @@ test_expect_success '--mixed refreshes the index' '
 	# Verify default behavior (without --[no-]refresh or reset.refresh)
 	test_reset_refreshes_index &&
 
-	# With --quiet & reset.quiet
-	test_reset_refreshes_index "-c reset.quiet=true" &&
+	# With --quiet
 	test_reset_refreshes_index "" --quiet
 '
 
