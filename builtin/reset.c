@@ -423,7 +423,6 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	};
 
 	git_config(git_reset_config, NULL);
-	git_config_get_bool("reset.refresh", &refresh);
 
 	argc = parse_options(argc, argv, prefix, options, git_reset_usage,
 						PARSE_OPT_KEEP_DASHDASH);
@@ -529,8 +528,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 				t_delta_in_ms = (getnanotime() - t_begin) / 1000000;
 				if (!quiet && advice_enabled(ADVICE_RESET_NO_REFRESH_WARNING) && t_delta_in_ms > REFRESH_INDEX_DELAY_WARNING_IN_MS) {
 					advise(_("It took %.2f seconds to refresh the index after reset.  You can use\n"
-						 "'--no-refresh' to avoid this.  Set the config setting reset.refresh to false\n"
-						 "to make this the default."), t_delta_in_ms / 1000.0);
+						 "'--no-refresh' to avoid this."), t_delta_in_ms / 1000.0);
 				}
 			}
 		} else {

@@ -109,9 +109,7 @@ OPTIONS
 
 --refresh::
 --no-refresh::
-	Proactively refresh the index after a mixed reset. If unspecified, the
-	behavior falls back on the `reset.refresh` config option. If neither
-	`--[no-]refresh` nor `reset.refresh` are set, refresh is enabled.
+	Refresh the index after a mixed reset. Enabled by default.
 
 --pathspec-from-file=<file>::
 	Pathspec is passed in `<file>` instead of commandline args. If

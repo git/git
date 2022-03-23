@@ -493,19 +493,9 @@ test_expect_success '--mixed refreshes the index' '
 '
 
 test_expect_success '--mixed --[no-]refresh sets refresh behavior' '
-	# Verify that --[no-]refresh and `reset.refresh` control index refresh
-
-	# Config setting
-	test_reset_refreshes_index "-c reset.refresh=true" &&
-	! test_reset_refreshes_index "-c reset.refresh=false" &&
-
-	# Command line option
+	# Verify that --[no-]refresh controls index refresh
 	test_reset_refreshes_index "" --refresh &&
-	! test_reset_refreshes_index "" --no-refresh &&
-
-	# Command line option overrides config setting
-	test_reset_refreshes_index "-c reset.refresh=false" --refresh &&
-	! test_reset_refreshes_index "-c reset.refresh=true" --no-refresh
+	! test_reset_refreshes_index "" --no-refresh
 '
 
 test_expect_success '--mixed preserves skip-worktree' '
