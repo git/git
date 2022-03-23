@@ -800,6 +800,14 @@ static void append_emitted_diff_symbol(struct diff_options *o,
 	f->line = e->line ? xmemdupz(e->line, e->len) : NULL;
 }
 
+static void free_emitted_diff_symbols(struct emitted_diff_symbols *e)
+{
+	if (!e)
+		return;
+	free(e->buf);
+	free(e);
+}
+
 struct moved_entry {
 	const struct emitted_diff_symbol *es;
 	struct moved_entry *next_line;
@@ -2150,7 +2158,6 @@ static void diff_words_flush(struct emit_callback *ecbdata)
 
 		for (i = 0; i < wol->nr; i++)
 			free((void *)wol->buf[i].line);
-		free(wol->buf);
 
 		wol->nr = 0;
 	}
@@ -2228,7 +2235,7 @@ static void free_diff_words_data(struct emit_callback *ecbdata)
 {
 	if (ecbdata->diff_words) {
 		diff_words_flush(ecbdata);
-		free (ecbdata->diff_words->opt->emitted_symbols);
+		free_emitted_diff_symbols(ecbdata->diff_words->opt->emitted_symbols);
 		free (ecbdata->diff_words->opt);
 		free (ecbdata->diff_words->minus.text.ptr);
 		free (ecbdata->diff_words->minus.orig);
