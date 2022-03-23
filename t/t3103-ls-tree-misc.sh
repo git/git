@@ -24,15 +24,18 @@ test_expect_success 'ls-tree fails with non-zero exit code on broken tree' '
 '
 
 for opts in \
-	"--name-only --long" \
-	"--name-status --long" \
-	"--name-only --object-only" \
+	"--long --name-only" \
+	"--name-only --name-status" \
 	"--name-status --object-only" \
-	"--object-only --long" \
-	"--object-only --format"
+	"--object-only --long"
 do
 	test_expect_success "usage: incompatible options: $opts" '
 		test_expect_code 129 git ls-tree $opts $tree
-    '
+	'
+
+	one_opt=$(echo "$opts" | cut -d' '  -f1)
+	test_expect_success "usage: incompatible options: $one_opt and --format" '
+		test_expect_code 129 git ls-tree $one_opt --format=fmt $tree
+	'
 done
 test_done
