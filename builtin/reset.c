@@ -392,7 +392,7 @@ static int git_reset_config(const char *var, const char *value, void *cb)
 int cmd_reset(int argc, const char **argv, const char *prefix)
 {
 	int reset_type = NONE, update_ref_status = 0, quiet = 0;
-	int refresh = -1;
+	int refresh = 1;
 	int patch_mode = 0, pathspec_file_nul = 0, unborn;
 	const char *rev, *pathspec_from_file = NULL;
 	struct object_id oid;
@@ -429,13 +429,6 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, options, git_reset_usage,
 						PARSE_OPT_KEEP_DASHDASH);
 	parse_args(&pathspec, argv, prefix, patch_mode, &rev);
-
-	/*
-	 * If refresh is completely unspecified (either by config or by command
-	 * line option), decide based on 'quiet'.
-	 */
-	if (refresh < 0)
-		refresh = !quiet;
 
 	if (pathspec_from_file) {
 		if (patch_mode)
