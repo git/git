@@ -2890,6 +2890,10 @@ _git_restore ()
 	--*)
 		__gitcomp_builtin restore
 		;;
+	*)
+		if __git rev-parse --verify --quiet HEAD >/dev/null; then
+			__git_complete_index_file "--modified"
+		fi
 	esac
 }
 
