@@ -30,7 +30,6 @@
 #include "promisor-remote.h"
 #include "refs.h"
 #include "remote.h"
-#include "object-store.h"
 #include "exec-cmd.h"
 #include "hook.h"
 

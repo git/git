@@ -14,7 +14,6 @@
 #include "utf8.h"
 #include "quote.h"
 #include "thread-utils.h"
-#include "dir.h"
 
 const char git_attr__true[] = "(builtin)true";
 const char git_attr__false[] = "\0(builtin)false";

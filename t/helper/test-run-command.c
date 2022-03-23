@@ -19,7 +19,6 @@
 #include "thread-utils.h"
 #include "wildmatch.h"
 #include "gettext.h"
-#include "parse-options.h"
 
 static int number_callbacks;
 static int parallel_next(struct child_process *cp,

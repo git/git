@@ -8,7 +8,6 @@
 #include "run-command.h"
 #include "strbuf.h"
 #include "string-list.h"
-#include "cache.h"
 #include "cache-tree.h"
 #include "lockfile.h"
 #include "resolve-undo.h"
