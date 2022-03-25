@@ -25,7 +25,7 @@ struct one_watch
 	DWORD count;
 
 	struct strbuf path;
-	wchar_t wpath_longname[MAX_PATH + 1];
+	wchar_t wpath_longname[MAX_LONG_PATH + 1];
 	DWORD wpath_longname_len;
 
 	HANDLE hDir;
@@ -128,8 +128,8 @@ normalize:
  */
 static void check_for_shortnames(struct one_watch *watch)
 {
-	wchar_t buf_in[MAX_PATH + 1];
-	wchar_t buf_out[MAX_PATH + 1];
+	wchar_t buf_in[MAX_LONG_PATH + 1];
+	wchar_t buf_out[MAX_LONG_PATH + 1];
 	wchar_t *last_slash = NULL;
 	wchar_t *last_bslash = NULL;
 	wchar_t *last;
@@ -138,7 +138,7 @@ static void check_for_shortnames(struct one_watch *watch)
 	wcscpy(buf_in, watch->wpath_longname);
 	wcscpy(buf_in + watch->wpath_longname_len, L".git");
 
-	if (!GetShortPathNameW(buf_in, buf_out, MAX_PATH))
+	if (!GetShortPathNameW(buf_in, buf_out, MAX_LONG_PATH))
 		return;
 
 	last_slash = wcsrchr(buf_out, L'/');
@@ -196,8 +196,8 @@ static enum get_relative_result get_relative_longname(
 	const wchar_t *wpath, DWORD wpath_len,
 	wchar_t *wpath_longname)
 {
-	wchar_t buf_in[2 * MAX_PATH + 1];
-	wchar_t buf_out[MAX_PATH + 1];
+	wchar_t buf_in[2 * MAX_LONG_PATH + 1];
+	wchar_t buf_out[MAX_LONG_PATH + 1];
 	DWORD root_len;
 
 	/* Build L"<wt-root-path>/<event-rel-path>" */
@@ -211,7 +211,7 @@ static enum get_relative_result get_relative_longname(
 	 * shortname or a longname.  This routine allows either to be
 	 * given as input.
 	 */
-	if (!GetLongPathNameW(buf_in, buf_out, MAX_PATH)) {
+	if (!GetLongPathNameW(buf_in, buf_out, MAX_LONG_PATH)) {
 		/*
 		 * The shortname to longname conversion can fail for
 		 * various reasons, for example if the file has been
@@ -275,10 +275,10 @@ static struct one_watch *create_watch(struct fsmonitor_daemon_state *state,
 		FILE_SHARE_WRITE | FILE_SHARE_READ | FILE_SHARE_DELETE;
 	HANDLE hDir;
 	DWORD len_longname;
-	wchar_t wpath[MAX_PATH + 1];
-	wchar_t wpath_longname[MAX_PATH + 1];
+	wchar_t wpath[MAX_LONG_PATH + 1];
+	wchar_t wpath_longname[MAX_LONG_PATH + 1];
 
-	if (xutftowcs_path(wpath, path) < 0) {
+	if (xutftowcs_long_path(wpath, path) < 0) {
 		error(_("could not convert to wide characters: '%s'"), path);
 		return NULL;
 	}
@@ -293,7 +293,7 @@ static struct one_watch *create_watch(struct fsmonitor_daemon_state *state,
 		return NULL;
 	}
 
-	if (!GetLongPathNameW(wpath, wpath_longname, MAX_PATH)) {
+	if (!GetLongPathNameW(wpath, wpath_longname, MAX_LONG_PATH)) {
 		error(_("[GLE %ld] could not get longname of '%s'"),
 		      GetLastError(), path);
 		CloseHandle(hDir);
@@ -522,7 +522,7 @@ static int process_worktree_events(struct fsmonitor_daemon_state *state)
 	struct string_list cookie_list = STRING_LIST_INIT_DUP;
 	struct fsmonitor_batch *batch = NULL;
 	const char *p = watch->buffer;
-	wchar_t wpath_longname[MAX_PATH + 1];
+	wchar_t wpath_longname[MAX_LONG_PATH + 1];
 
 	/*
 	 * If the kernel gets more events than will fit in the kernel
