@@ -369,10 +369,61 @@ test_expect_success '--write-midx with preferred bitmap tips' '
 	)
 '
 
+# The first argument is expected to be a filename
+# and that file should contain the name of a .idx
+# file. Send the list of objects in that .idx file
+# into stdout.
+get_sorted_objects_from_pack () {
+	git show-index <$(cat "$1") >raw &&
+	cut -d" " -f2 raw
+}
+
 test_expect_success '--write-midx -b packs non-kept objects' '
-	GIT_TRACE2_EVENT="$(pwd)/trace.txt" \
-		git repack --write-midx -a -b &&
-	test_subcommand_inexact git pack-objects --honor-pack-keep <trace.txt
+	git init repo &&
+	test_when_finished "rm -fr repo" &&
+	(
+		cd repo &&
+
+		# Create a kept pack-file
+		test_commit base &&
+		git repack -ad &&
+		find $objdir/pack -name "*.idx" >before &&
+		test_line_count = 1 before &&
+		before_name=$(cat before) &&
+		>${before_name%.idx}.keep &&
+
+		# Create a non-kept pack-file
+		test_commit other &&
+		git repack &&
+
+		# Create loose objects
+		test_commit loose &&
+
+		# Repack everything
+		git repack --write-midx -a -b -d &&
+
+		# There should be two pack-files now, the
+		# old, kept pack and the new, non-kept pack.
+		find $objdir/pack -name "*.idx" | sort >after &&
+		test_line_count = 2 after &&
+		find $objdir/pack -name "*.keep" >kept &&
+		kept_name=$(cat kept) &&
+		echo ${kept_name%.keep}.idx >kept-idx &&
+		test_cmp before kept-idx &&
+
+		# Get object list from the kept pack.
+		get_sorted_objects_from_pack before >old.objects &&
+
+		# Get object list from the one non-kept pack-file
+		comm -13 before after >new-pack &&
+		test_line_count = 1 new-pack &&
+		get_sorted_objects_from_pack new-pack >new.objects &&
+
+		# None of the objects in the new pack should
+		# exist within the kept pack.
+		comm -12 old.objects new.objects >shared.objects &&
+		test_must_be_empty shared.objects
+	)
 '
 
 test_expect_success TTY '--quiet disables progress' '
