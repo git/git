@@ -5,8 +5,48 @@
 #include "worktree.h"
 #include "reflog.h"
 
-static const char reflog_exists_usage[] =
-N_("git reflog exists <ref>");
+#define BUILTIN_REFLOG_SHOW_USAGE \
+	N_("git reflog [show] [<log-options>] [<ref>]")
+
+#define BUILTIN_REFLOG_EXPIRE_USAGE \
+	N_("git reflog expire [--expire=<time>] [--expire-unreachable=<time>]\n" \
+	   "                  [--rewrite] [--updateref] [--stale-fix]\n" \
+	   "                  [--dry-run | -n] [--verbose] [--all [--single-worktree] | <refs>...]")
+
+#define BUILTIN_REFLOG_DELETE_USAGE \
+	N_("git reflog delete [--rewrite] [--updateref]\n" \
+	   "                  [--dry-run | -n] [--verbose] <ref>@{<specifier>}...")
+
+#define BUILTIN_REFLOG_EXISTS_USAGE \
+	N_("git reflog exists <ref>")
+
+static const char *const reflog_show_usage[] = {
+	BUILTIN_REFLOG_SHOW_USAGE,
+	NULL,
+};
+
+static const char *const reflog_expire_usage[] = {
+	BUILTIN_REFLOG_EXPIRE_USAGE,
+	NULL
+};
+
+static const char *const reflog_delete_usage[] = {
+	BUILTIN_REFLOG_DELETE_USAGE,
+	NULL
+};
+
+static const char *const reflog_exists_usage[] = {
+	BUILTIN_REFLOG_EXISTS_USAGE,
+	NULL,
+};
+
+static const char *const reflog_usage[] = {
+	BUILTIN_REFLOG_SHOW_USAGE,
+	BUILTIN_REFLOG_EXPIRE_USAGE,
+	BUILTIN_REFLOG_DELETE_USAGE,
+	BUILTIN_REFLOG_EXISTS_USAGE,
+	NULL
+};
 
 static timestamp_t default_reflog_expire;
 static timestamp_t default_reflog_expire_unreachable;
@@ -147,14 +187,6 @@ static void set_reflog_expiry_param(struct cmd_reflog_expire_cb *cb, const char 
 		cb->expire_unreachable = default_reflog_expire_unreachable;
 }
 
-static const char * reflog_expire_usage[] = {
-	N_("git reflog expire [--expire=<time>] "
-	   "[--expire-unreachable=<time>] "
-	   "[--rewrite] [--updateref] [--stale-fix] [--dry-run | -n] "
-	   "[--verbose] [--all] <refs>..."),
-	NULL
-};
-
 static int expire_unreachable_callback(const struct option *opt,
 				 const char *arg,
 				 int unset)
@@ -181,6 +213,19 @@ static int expire_total_callback(const struct option *opt,
 
 	cmd->explicit_expiry |= EXPIRE_TOTAL;
 	return 0;
+}
+
+static int cmd_reflog_show(int argc, const char **argv, const char *prefix)
+{
+	struct option options[] = {
+		OPT_END()
+	};
+
+	parse_options(argc, argv, prefix, options, reflog_show_usage,
+		      PARSE_OPT_KEEP_DASHDASH | PARSE_OPT_KEEP_ARGV0 |
+		      PARSE_OPT_KEEP_UNKNOWN);
+
+	return cmd_log_reflog(argc - 1, argv + 1, prefix);
 }
 
 static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
@@ -304,12 +349,6 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 	return status;
 }
 
-static const char * reflog_delete_usage[] = {
-	N_("git reflog delete [--rewrite] [--updateref] "
-	   "[--dry-run | -n] [--verbose] <refs>..."),
-	NULL
-};
-
 static int cmd_reflog_delete(int argc, const char **argv, const char *prefix)
 {
 	int i, status = 0;
@@ -342,57 +381,62 @@ static int cmd_reflog_delete(int argc, const char **argv, const char *prefix)
 
 static int cmd_reflog_exists(int argc, const char **argv, const char *prefix)
 {
-	int i, start = 0;
+	struct option options[] = {
+		OPT_END()
+	};
+	const char *refname;
 
-	for (i = 1; i < argc; i++) {
-		const char *arg = argv[i];
-		if (!strcmp(arg, "--")) {
-			i++;
-			break;
-		}
-		else if (arg[0] == '-')
-			usage(_(reflog_exists_usage));
-		else
-			break;
-	}
+	argc = parse_options(argc, argv, prefix, options, reflog_exists_usage,
+			     0);
+	if (!argc)
+		usage_with_options(reflog_exists_usage, options);
 
-	start = i;
-
-	if (argc - start != 1)
-		usage(_(reflog_exists_usage));
-
-	if (check_refname_format(argv[start], REFNAME_ALLOW_ONELEVEL))
-		die(_("invalid ref format: %s"), argv[start]);
-	return !reflog_exists(argv[start]);
+	refname = argv[0];
+	if (check_refname_format(refname, REFNAME_ALLOW_ONELEVEL))
+		die(_("invalid ref format: %s"), refname);
+	return !reflog_exists(refname);
 }
 
 /*
  * main "reflog"
  */
 
-static const char reflog_usage[] =
-"git reflog [ show | expire | delete | exists ]";
-
 int cmd_reflog(int argc, const char **argv, const char *prefix)
 {
-	if (argc > 1 && !strcmp(argv[1], "-h"))
-		usage(_(reflog_usage));
+	struct option options[] = {
+		OPT_END()
+	};
 
-	/* With no command, we default to showing it. */
-	if (argc < 2 || *argv[1] == '-')
-		return cmd_log_reflog(argc, argv, prefix);
+	argc = parse_options(argc, argv, prefix, options, reflog_usage,
+			     PARSE_OPT_KEEP_DASHDASH | PARSE_OPT_KEEP_ARGV0 |
+			     PARSE_OPT_KEEP_UNKNOWN |
+			     PARSE_OPT_NO_INTERNAL_HELP);
+
+	/*
+	 * With "git reflog" we default to showing it. !argc is
+	 * impossible with PARSE_OPT_KEEP_ARGV0.
+	 */
+	if (argc == 1)
+		goto log_reflog;
+
+	if (!strcmp(argv[1], "-h"))
+		usage_with_options(reflog_usage, options);
+	else if (*argv[1] == '-')
+		goto log_reflog;
 
 	if (!strcmp(argv[1], "show"))
-		return cmd_log_reflog(argc - 1, argv + 1, prefix);
-
-	if (!strcmp(argv[1], "expire"))
+		return cmd_reflog_show(argc, argv, prefix);
+	else if (!strcmp(argv[1], "expire"))
 		return cmd_reflog_expire(argc - 1, argv + 1, prefix);
-
-	if (!strcmp(argv[1], "delete"))
+	else if (!strcmp(argv[1], "delete"))
 		return cmd_reflog_delete(argc - 1, argv + 1, prefix);
-
-	if (!strcmp(argv[1], "exists"))
+	else if (!strcmp(argv[1], "exists"))
 		return cmd_reflog_exists(argc - 1, argv + 1, prefix);
 
+	/*
+	 * Fall-through for e.g. "git reflog -1", "git reflog master",
+	 * as well as the plain "git reflog" above goto above.
+	 */
+log_reflog:
 	return cmd_log_reflog(argc, argv, prefix);
 }

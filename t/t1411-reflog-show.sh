@@ -169,9 +169,4 @@ test_expect_success 'git log -g -p shows diffs vs. parents' '
 	test_cmp expect actual
 '
 
-test_expect_success 'reflog exists works' '
-	git reflog exists refs/heads/main &&
-	! git reflog exists refs/heads/nonexistent
-'
-
 test_done
