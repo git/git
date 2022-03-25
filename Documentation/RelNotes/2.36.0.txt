@@ -152,6 +152,12 @@ Performance, Internal Implementation, Development Support etc.
    the lower bound of searching commits used to explain the revision,
    when available, instead of committer time.
 
+ * Replace core.fsyncObjectFiles with two new configuration variables,
+   core.fsync and core.fsyncMethod.
+
+ * Updates to refs traditionally weren't fsync'ed, but we can
+   configure using core.fsync variable to do so.
+
 
 Fixes since v2.35
 -----------------
@@ -343,6 +349,12 @@ Fixes since v2.35
  * The method to trigger malloc check used in our tests no longer work
    with newer versions of glibc.
    (merge baedc59543 ep/test-malloc-check-with-glibc-2.34 later to maint).
+
+ * When "git fetch --recurse-submodules" grabbed submodule commits
+   that would be needed to recursively check out newly fetched commits
+   in the superproject, it only paid attention to submodules that are
+   in the current checkout of the superproject.  We now do so for all
+   submodules that have been run "git submodule init" on.
 
  * Other code cleanup, docfix, build fix, etc.
    (merge cfc5cf428b jc/find-header later to maint).
