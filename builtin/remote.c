@@ -14,7 +14,7 @@
 #include "commit-reach.h"
 
 static const char * const builtin_remote_usage[] = {
-	N_("git remote [-v | --verbose]"),
+	"git remote [-v | --verbose]",
 	N_("git remote add [-t <branch>] [-m <master>] [-f] [--tags | --no-tags] [--mirror=<fetch|push>] <name> <url>"),
 	N_("git remote rename <old> <new>"),
 	N_("git remote remove <name>"),

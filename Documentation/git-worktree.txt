@@ -286,8 +286,8 @@ CONFIGURATION FILE
 ------------------
 By default, the repository `config` file is shared across all working
 trees. If the config variables `core.bare` or `core.worktree` are
-already present in the config file, they will be applied to the main
-working trees only.
+present in the common config file and `extensions.worktreeConfig` is
+disabled, then they will be applied to the main working tree only.
 
 In order to have configuration specific to working trees, you can turn
 on the `worktreeConfig` extension, e.g.:
@@ -307,10 +307,15 @@ them to the `config.worktree` of the main working tree. You may also
 take this opportunity to review and move other configuration that you
 do not want to share to all working trees:
 
- - `core.worktree` and `core.bare` should never be shared
+ - `core.worktree` should never be shared.
+
+ - `core.bare` should not be shared if the value is `core.bare=true`.
 
  - `core.sparseCheckout` is recommended per working tree, unless you
    are sure you always use sparse checkout for all working trees.
+
+See the documentation of `extensions.worktreeConfig` in
+linkgit:git-config[1] for more details.
 
 DETAILS
 -------

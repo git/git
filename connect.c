@@ -379,7 +379,7 @@ struct ref **get_remote_heads(struct packet_reader *reader,
 
 /* Returns 1 when a valid ref has been added to `list`, 0 otherwise */
 static int process_ref_v2(struct packet_reader *reader, struct ref ***list,
-			  char **unborn_head_target)
+			  const char **unborn_head_target)
 {
 	int ret = 1;
 	int i = 0;
@@ -483,7 +483,7 @@ struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 	const char *hash_name;
 	struct strvec *ref_prefixes = transport_options ?
 		&transport_options->ref_prefixes : NULL;
-	char **unborn_head_target = transport_options ?
+	const char **unborn_head_target = transport_options ?
 		&transport_options->unborn_head_target : NULL;
 	*list = NULL;
 

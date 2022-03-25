@@ -158,6 +158,7 @@ struct rev_info {
 			bisect:1,
 			ancestry_path:1,
 			first_parent_only:1,
+			exclude_first_parent_only:1,
 			line_level_traverse:1,
 			tree_blobs_in_commit_order:1,
 
@@ -376,6 +377,7 @@ void parse_revision_opt(struct rev_info *revs, struct parse_opt_ctx_t *ctx,
 #define REVARG_COMMITTISH 02
 int handle_revision_arg(const char *arg, struct rev_info *revs,
 			int flags, unsigned revarg_opt);
+void revision_opts_finish(struct rev_info *revs);
 
 /**
  * Reset the flags used by the revision walking api. You can use this to do
@@ -402,7 +404,7 @@ const char *get_revision_mark(const struct rev_info *revs,
 void put_revision_mark(const struct rev_info *revs,
 		       const struct commit *commit);
 
-void mark_parents_uninteresting(struct commit *commit);
+void mark_parents_uninteresting(struct rev_info *revs, struct commit *commit);
 void mark_tree_uninteresting(struct repository *r, struct tree *tree);
 void mark_trees_uninteresting_sparse(struct repository *r, struct oidset *trees);
 

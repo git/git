@@ -3504,7 +3504,7 @@ static int option_parse_missing_action(const struct option *opt,
 		return 0;
 	}
 
-	die(_("invalid value for --missing"));
+	die(_("invalid value for '%s': '%s'"), "--missing", arg);
 	return 0;
 }
 
@@ -3976,9 +3976,11 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	read_replace_refs = 0;
 
 	sparse = git_env_bool("GIT_TEST_PACK_SPARSE", -1);
-	prepare_repo_settings(the_repository);
-	if (sparse < 0)
-		sparse = the_repository->settings.pack_use_sparse;
+	if (the_repository->gitdir) {
+		prepare_repo_settings(the_repository);
+		if (sparse < 0)
+			sparse = the_repository->settings.pack_use_sparse;
+	}
 
 	reset_pack_idx_option(&pack_idx_opts);
 	git_config(git_pack_config, NULL);

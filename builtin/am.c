@@ -34,6 +34,7 @@
 #include "string-list.h"
 #include "packfile.h"
 #include "repository.h"
+#include "pretty.h"
 
 /**
  * Returns the length of the first line of msg.
@@ -199,7 +200,7 @@ static int am_option_parse_empty(const struct option *opt,
 	else if (!strcmp(arg, "keep"))
 		*opt_value = KEEP_EMPTY_COMMIT;
 	else
-		return error(_("Invalid value for --empty: %s"), arg);
+		return error(_("invalid value for '%s': '%s'"), "--empty", arg);
 
 	return 0;
 }
@@ -2239,7 +2240,8 @@ static int parse_opt_patchformat(const struct option *opt, const char *arg, int 
 	 * when you add new options
 	 */
 	else
-		return error(_("Invalid value for --patch-format: %s"), arg);
+		return error(_("invalid value for '%s': '%s'"),
+			     "--patch-format", arg);
 	return 0;
 }
 
@@ -2282,7 +2284,8 @@ static int parse_opt_show_current_patch(const struct option *opt, const char *ar
 				break;
 		}
 		if (new_value >= ARRAY_SIZE(valid_modes))
-			return error(_("Invalid value for --show-current-patch: %s"), arg);
+			return error(_("invalid value for '%s': '%s'"),
+				     "--show-current-patch", arg);
 	}
 
 	if (resume->mode == RESUME_SHOW_PATCH && new_value != resume->sub_mode)

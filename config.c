@@ -6,6 +6,7 @@
  *
  */
 #include "cache.h"
+#include "date.h"
 #include "branch.h"
 #include "config.h"
 #include "environment.h"
@@ -21,6 +22,7 @@
 #include "dir.h"
 #include "color.h"
 #include "refs.h"
+#include "worktree.h"
 
 struct config_source {
 	struct config_source *prev;
@@ -2294,8 +2296,8 @@ int git_configset_get_string(struct config_set *cs, const char *key, char **dest
 		return 1;
 }
 
-int git_configset_get_string_tmp(struct config_set *cs, const char *key,
-				 const char **dest)
+static int git_configset_get_string_tmp(struct config_set *cs, const char *key,
+					const char **dest)
 {
 	const char *value;
 	if (!git_configset_get_value(cs, key, &value)) {
@@ -2622,20 +2624,6 @@ int git_config_get_max_percent_split_change(void)
 	}
 
 	return -1; /* default value */
-}
-
-int git_config_get_fsmonitor(void)
-{
-	if (git_config_get_pathname("core.fsmonitor", &core_fsmonitor))
-		core_fsmonitor = getenv("GIT_TEST_FSMONITOR");
-
-	if (core_fsmonitor && !*core_fsmonitor)
-		core_fsmonitor = NULL;
-
-	if (core_fsmonitor)
-		return 1;
-
-	return 0;
 }
 
 int git_config_get_index_threads(int *dest)
@@ -3000,6 +2988,20 @@ int git_config_set_gently(const char *key, const char *value)
 	return git_config_set_multivar_gently(key, value, NULL, 0);
 }
 
+int repo_config_set_worktree_gently(struct repository *r,
+				    const char *key, const char *value)
+{
+	/* Only use worktree-specific config if it is is already enabled. */
+	if (repository_format_worktree_config) {
+		char *file = repo_git_path(r, "config.worktree");
+		int ret = git_config_set_multivar_in_file_gently(
+					file, key, value, NULL, 0);
+		free(file);
+		return ret;
+	}
+	return repo_config_set_multivar_gently(r, key, value, NULL, 0);
+}
+
 void git_config_set(const char *key, const char *value)
 {
 	git_config_set_multivar(key, value, NULL, 0);
@@ -3297,14 +3299,28 @@ void git_config_set_multivar_in_file(const char *config_filename,
 int git_config_set_multivar_gently(const char *key, const char *value,
 				   const char *value_pattern, unsigned flags)
 {
-	return git_config_set_multivar_in_file_gently(NULL, key, value, value_pattern,
-						      flags);
+	return repo_config_set_multivar_gently(the_repository, key, value,
+					       value_pattern, flags);
+}
+
+int repo_config_set_multivar_gently(struct repository *r, const char *key,
+				    const char *value,
+				    const char *value_pattern, unsigned flags)
+{
+	char *file = repo_git_path(r, "config");
+	int res = git_config_set_multivar_in_file_gently(file,
+							 key, value,
+							 value_pattern,
+							 flags);
+	free(file);
+	return res;
 }
 
 void git_config_set_multivar(const char *key, const char *value,
 			     const char *value_pattern, unsigned flags)
 {
-	git_config_set_multivar_in_file(NULL, key, value, value_pattern,
+	git_config_set_multivar_in_file(git_path("config"),
+					key, value, value_pattern,
 					flags);
 }
 

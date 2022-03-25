@@ -1403,7 +1403,6 @@ static struct blame_origin *find_origin(struct repository *r,
 		}
 	}
 	diff_flush(&diff_opts);
-	clear_pathspec(&diff_opts.pathspec);
 	return porigin;
 }
 
@@ -1447,7 +1446,6 @@ static struct blame_origin *find_rename(struct repository *r,
 		}
 	}
 	diff_flush(&diff_opts);
-	clear_pathspec(&diff_opts.pathspec);
 	return porigin;
 }
 
@@ -2328,7 +2326,6 @@ static void find_copy_in_parent(struct blame_scoreboard *sb,
 	} while (unblamed);
 	target->suspects = reverse_blame(leftover, NULL);
 	diff_flush(&diff_opts);
-	clear_pathspec(&diff_opts.pathspec);
 }
 
 /*
@@ -2615,7 +2612,7 @@ void assign_blame(struct blame_scoreboard *sb, int opt)
 		else {
 			commit->object.flags |= UNINTERESTING;
 			if (commit->object.parsed)
-				mark_parents_uninteresting(commit);
+				mark_parents_uninteresting(sb->revs, commit);
 		}
 		/* treat root commit as boundary */
 		if (!commit->parents && !sb->show_root)

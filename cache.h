@@ -999,7 +999,6 @@ extern int core_preload_index;
 extern int precomposed_unicode;
 extern int protect_hfs;
 extern int protect_ntfs;
-extern const char *core_fsmonitor;
 
 extern int core_apply_sparse_checkout;
 extern int core_sparse_checkout_cone;
@@ -1558,48 +1557,6 @@ struct object *repo_peel_to_type(struct repository *r,
 #define peel_to_type(name, namelen, obj, type) \
 	repo_peel_to_type(the_repository, name, namelen, obj, type)
 
-enum date_mode_type {
-	DATE_NORMAL = 0,
-	DATE_HUMAN,
-	DATE_RELATIVE,
-	DATE_SHORT,
-	DATE_ISO8601,
-	DATE_ISO8601_STRICT,
-	DATE_RFC2822,
-	DATE_STRFTIME,
-	DATE_RAW,
-	DATE_UNIX
-};
-
-struct date_mode {
-	enum date_mode_type type;
-	const char *strftime_fmt;
-	int local;
-};
-
-/*
- * Convenience helper for passing a constant type, like:
- *
- *   show_date(t, tz, DATE_MODE(NORMAL));
- */
-#define DATE_MODE(t) date_mode_from_type(DATE_##t)
-struct date_mode *date_mode_from_type(enum date_mode_type type);
-
-const char *show_date(timestamp_t time, int timezone, const struct date_mode *mode);
-void show_date_relative(timestamp_t time, struct strbuf *timebuf);
-void show_date_human(timestamp_t time, int tz, const struct timeval *now,
-			struct strbuf *timebuf);
-int parse_date(const char *date, struct strbuf *out);
-int parse_date_basic(const char *date, timestamp_t *timestamp, int *offset);
-int parse_expiry_date(const char *date, timestamp_t *timestamp);
-void datestamp(struct strbuf *out);
-#define approxidate(s) approxidate_careful((s), NULL)
-timestamp_t approxidate_careful(const char *, int *);
-timestamp_t approxidate_relative(const char *date);
-void parse_date_format(const char *format, struct date_mode *mode);
-int date_overflows(timestamp_t date);
-time_t tm_to_time_t(const struct tm *tm);
-
 #define IDENT_STRICT	       1
 #define IDENT_NO_DATE	       2
 #define IDENT_NO_NAME	       4
@@ -1644,14 +1601,6 @@ struct ident_split {
  * if the input lacks timestamp and zone
  */
 int split_ident_line(struct ident_split *, const char *, int);
-
-/*
- * Like show_date, but pull the timestamp and tz parameters from
- * the ident_split. It will also sanity-check the values and produce
- * a well-known sentinel date if they appear bogus.
- */
-const char *show_ident_date(const struct ident_split *id,
-			    const struct date_mode *mode);
 
 /*
  * Compare split idents for equality or strict ordering. Note that we

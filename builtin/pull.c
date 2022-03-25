@@ -42,9 +42,9 @@ static enum rebase_type parse_config_rebase(const char *key, const char *value,
 		return v;
 
 	if (fatal)
-		die(_("Invalid value for %s: %s"), key, value);
+		die(_("invalid value for '%s': '%s'"), key, value);
 	else
-		error(_("Invalid value for %s: %s"), key, value);
+		error(_("invalid value for '%s': '%s'"), key, value);
 
 	return REBASE_INVALID;
 }
@@ -318,7 +318,7 @@ static const char *config_get_ff(void)
 	if (!strcmp(value, "only"))
 		return "--ff-only";
 
-	die(_("Invalid value for pull.ff: %s"), value);
+	die(_("invalid value for '%s': '%s'"), "pull.ff", value);
 }
 
 /**
@@ -994,8 +994,10 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 		set_reflog_message(argc, argv);
 
 	git_config(git_pull_config, NULL);
-	prepare_repo_settings(the_repository);
-	the_repository->settings.command_requires_full_index = 0;
+	if (the_repository->gitdir) {
+		prepare_repo_settings(the_repository);
+		the_repository->settings.command_requires_full_index = 0;
+	}
 
 	argc = parse_options(argc, argv, prefix, pull_options, pull_usage, 0);
 

@@ -266,6 +266,28 @@ test_expect_success 'hash-cache values are propagated from pack bitmaps' '
 	)
 '
 
+test_expect_success 'no .bitmap is written without any objects' '
+	rm -fr repo &&
+	git init repo &&
+	test_when_finished "rm -fr repo" &&
+	(
+		cd repo &&
+
+		empty="$(git pack-objects $objdir/pack/pack </dev/null)" &&
+		cat >packs <<-EOF &&
+		pack-$empty.idx
+		EOF
+
+		git multi-pack-index write --bitmap --stdin-packs \
+			<packs 2>err &&
+
+		grep "bitmap without any objects" err &&
+
+		test_path_is_file $midx &&
+		test_path_is_missing $midx-$(midx_checksum $objdir).bitmap
+	)
+'
+
 test_expect_success 'graceful fallback when missing reverse index' '
 	rm -fr repo &&
 	git init repo &&

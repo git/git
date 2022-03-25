@@ -16,7 +16,7 @@ SYNOPSIS
 	  [--depth <depth>] [--[no-]single-branch] [--no-tags]
 	  [--recurse-submodules[=<pathspec>]] [--[no-]shallow-submodules]
 	  [--[no-]remote-submodules] [--jobs <n>] [--sparse] [--[no-]reject-shallow]
-	  [--filter=<filter>] [--] <repository>
+	  [--filter=<filter> [--also-filter-submodules]] [--] <repository>
 	  [<directory>]
 
 DESCRIPTION
@@ -181,6 +181,11 @@ objects from the source repository into a pack in the cloned repository.
 	`--filter=blob:limit=<size>` will filter out all blobs of size
 	at least `<size>`. For more details on filter specifications, see
 	the `--filter` option in linkgit:git-rev-list[1].
+
+--also-filter-submodules::
+	Also apply the partial clone filter to any submodules in the repository.
+	Requires `--filter` and `--recurse-submodules`. This can be turned on by
+	default by setting the `clone.filterSubmodules` config option.
 
 --mirror::
 	Set up a mirror of the source repository.  This implies `--bare`.

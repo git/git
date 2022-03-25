@@ -267,7 +267,9 @@ int option_parse_recurse_submodules_worktree_updater(const struct option *opt,
  * ie, the config looks like: "[submodule] active\n".
  * Since that is an invalid pathspec, we should inform the user.
  */
-int is_submodule_active(struct repository *repo, const char *path)
+int is_tree_submodule_active(struct repository *repo,
+			     const struct object_id *treeish_name,
+			     const char *path)
 {
 	int ret = 0;
 	char *key = NULL;
@@ -275,7 +277,7 @@ int is_submodule_active(struct repository *repo, const char *path)
 	const struct string_list *sl;
 	const struct submodule *module;
 
-	module = submodule_from_path(repo, null_oid(), path);
+	module = submodule_from_path(repo, treeish_name, path);
 
 	/* early return if there isn't a path->module mapping */
 	if (!module)
@@ -315,6 +317,11 @@ int is_submodule_active(struct repository *repo, const char *path)
 	free(value);
 	free(key);
 	return ret;
+}
+
+int is_submodule_active(struct repository *repo, const char *path)
+{
+	return is_tree_submodule_active(repo, null_oid(), path);
 }
 
 int is_submodule_populated_gently(const char *path, int *return_error_code)

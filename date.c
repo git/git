@@ -5,6 +5,7 @@
  */
 
 #include "cache.h"
+#include "date.h"
 
 /*
  * This is like mktime, but without normalization of tm_wday and tm_yday.
@@ -205,11 +206,10 @@ void show_date_relative(timestamp_t time, struct strbuf *timebuf)
 
 struct date_mode *date_mode_from_type(enum date_mode_type type)
 {
-	static struct date_mode mode;
+	static struct date_mode mode = DATE_MODE_INIT;
 	if (type == DATE_STRFTIME)
 		BUG("cannot create anonymous strftime date_mode struct");
 	mode.type = type;
-	mode.local = 0;
 	return &mode;
 }
 
@@ -991,6 +991,11 @@ void parse_date_format(const char *format, struct date_mode *mode)
 		mode->strftime_fmt = xstrdup(p);
 	} else if (*p)
 		die("unknown date format %s", format);
+}
+
+void date_mode_release(struct date_mode *mode)
+{
+	free((char *)mode->strftime_fmt);
 }
 
 void datestamp(struct strbuf *out)

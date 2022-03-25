@@ -49,6 +49,11 @@
 #     and git-switch completion (e.g., completing "foo" when "origin/foo"
 #     exists).
 #
+#   GIT_COMPLETION_SHOW_ALL_COMMANDS
+#
+#     When set to "1" suggest all commands, including plumbing commands
+#     which are hidden by default (e.g. "cat-file" on "git ca<TAB>").
+#
 #   GIT_COMPLETION_SHOW_ALL
 #
 #     When set to "1" suggest all options, including options which are
@@ -3483,7 +3488,13 @@ __git_main ()
 			then
 				__gitcomp "$GIT_TESTING_PORCELAIN_COMMAND_LIST"
 			else
-				__gitcomp "$(__git --list-cmds=list-mainporcelain,others,nohelpers,alias,list-complete,config)"
+				local list_cmds=list-mainporcelain,others,nohelpers,alias,list-complete,config
+
+				if test "${GIT_COMPLETION_SHOW_ALL_COMMANDS-}" = "1"
+				then
+					list_cmds=builtins,$list_cmds
+				fi
+				__gitcomp "$(__git --list-cmds=$list_cmds)"
 			fi
 			;;
 		esac

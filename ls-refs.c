@@ -34,7 +34,8 @@ static void ensure_config_read(void)
 		} else if (!strcmp(str, "ignore")) {
 			/* do nothing */
 		} else {
-			die(_("invalid value '%s' for lsrefs.unborn"), str);
+			die(_("invalid value for '%s': '%s'"),
+			    "lsrefs.unborn", str);
 		}
 	}
 	config_read = 1;

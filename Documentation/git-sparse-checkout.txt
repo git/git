@@ -31,12 +31,20 @@ COMMANDS
 	Describe the patterns in the sparse-checkout file.
 
 'set'::
-	Enable the necessary config settings
-	(extensions.worktreeConfig, core.sparseCheckout,
-	core.sparseCheckoutCone) if they are not already enabled, and
-	write a set of patterns to the sparse-checkout file from the
+	Enable the necessary sparse-checkout config settings
+	(`core.sparseCheckout`, `core.sparseCheckoutCone`, and
+	`index.sparse`) if they are not already set to the desired values,
+	and write a set of patterns to the sparse-checkout file from the
 	list of arguments following the 'set' subcommand. Update the
 	working directory to match the new patterns.
++
+To ensure that adjusting the sparse-checkout settings within a worktree
+does not alter the sparse-checkout settings in other worktrees, the 'set'
+subcommand will upgrade your repository config to use worktree-specific
+config if not already present. The sparsity defined by the arguments to
+the 'set' subcommand are stored in the worktree-specific sparse-checkout
+file. See linkgit:git-worktree[1] and the documentation of
+`extensions.worktreeConfig` in linkgit:git-config[1] for more details.
 +
 When the `--stdin` option is provided, the patterns are read from
 standard in as a newline-delimited list instead of from the arguments.

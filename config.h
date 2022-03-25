@@ -267,6 +267,13 @@ void git_config_set_in_file(const char *, const char *, const char *);
 int git_config_set_gently(const char *, const char *);
 
 /**
+ * Write a config value that should apply to the current worktree. If
+ * extensions.worktreeConfig is enabled, then the write will happen in the
+ * current worktree's config. Otherwise, write to the common config file.
+ */
+int repo_config_set_worktree_gently(struct repository *, const char *, const char *);
+
+/**
  * write config values to `.git/config`, takes a key/value pair as parameter.
  */
 void git_config_set(const char *, const char *);
@@ -294,6 +301,7 @@ int git_config_parse_key(const char *, char **, size_t *);
 
 int git_config_set_multivar_gently(const char *, const char *, const char *, unsigned);
 void git_config_set_multivar(const char *, const char *, const char *, unsigned);
+int repo_config_set_multivar_gently(struct repository *, const char *, const char *, const char *, unsigned);
 int git_config_set_multivar_in_file_gently(const char *, const char *, const char *, const char *, unsigned);
 
 /**
@@ -466,7 +474,6 @@ void git_configset_clear(struct config_set *cs);
 int git_configset_get_value(struct config_set *cs, const char *key, const char **dest);
 
 int git_configset_get_string(struct config_set *cs, const char *key, char **dest);
-int git_configset_get_string_tmp(struct config_set *cs, const char *key, const char **dest);
 int git_configset_get_int(struct config_set *cs, const char *key, int *dest);
 int git_configset_get_ulong(struct config_set *cs, const char *key, unsigned long *dest);
 int git_configset_get_bool(struct config_set *cs, const char *key, int *dest);
@@ -590,7 +597,6 @@ int git_config_get_pathname(const char *key, const char **dest);
 int git_config_get_index_threads(int *dest);
 int git_config_get_split_index(void);
 int git_config_get_max_percent_split_change(void);
-int git_config_get_fsmonitor(void);
 
 /* This dies if the configured or default date is in the future */
 int git_config_get_expiry(const char *key, const char **output);

@@ -1077,6 +1077,9 @@ static int write_midx_bitmap(char *midx_name, unsigned char *midx_hash,
 	char *bitmap_name = xstrfmt("%s-%s.bitmap", midx_name, hash_to_hex(midx_hash));
 	int ret;
 
+	if (!ctx->entries_nr)
+		BUG("cannot write a bitmap without any objects");
+
 	if (flags & MIDX_WRITE_BITMAP_HASH_CACHE)
 		options |= BITMAP_OPT_HASH_CACHE;
 
@@ -1399,6 +1402,12 @@ static int write_midx_internal(const char *object_dir,
 		error(_("no pack files to index."));
 		result = 1;
 		goto cleanup;
+	}
+
+	if (!ctx.entries_nr) {
+		if (flags & MIDX_WRITE_BITMAP)
+			warning(_("refusing to write multi-pack .bitmap without any objects"));
+		flags &= ~(MIDX_WRITE_REV_INDEX | MIDX_WRITE_BITMAP);
 	}
 
 	cf = init_chunkfile(f);

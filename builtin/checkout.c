@@ -909,7 +909,8 @@ static void update_refs_for_switch(const struct checkout_opts *opts,
 				      opts->new_branch_force ? 1 : 0,
 				      opts->new_branch_log,
 				      opts->quiet,
-				      opts->track);
+				      opts->track,
+				      0);
 		free(new_branch_info->name);
 		free(new_branch_info->refname);
 		new_branch_info->name = xstrdup(opts->new_branch);
@@ -1607,9 +1608,10 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 	opts->show_progress = -1;
 
 	git_config(git_checkout_config, opts);
-
-	prepare_repo_settings(the_repository);
-	the_repository->settings.command_requires_full_index = 0;
+	if (the_repository->gitdir) {
+		prepare_repo_settings(the_repository);
+		the_repository->settings.command_requires_full_index = 0;
+	}
 
 	opts->track = BRANCH_TRACK_UNSPECIFIED;
 

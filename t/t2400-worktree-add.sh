@@ -165,8 +165,62 @@ test_expect_success '"add" default branch of a bare repo' '
 	(
 		git clone --bare . bare2 &&
 		cd bare2 &&
-		git worktree add ../there3 main
-	)
+		git worktree add ../there3 main &&
+		cd ../there3 &&
+		# Simple check that a Git command does not
+		# immediately fail with the current setup
+		git status
+	) &&
+	cat >expect <<-EOF &&
+	init.t
+	EOF
+	ls there3 >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '"add" to bare repo with worktree config' '
+	(
+		git clone --bare . bare3 &&
+		cd bare3 &&
+		git config extensions.worktreeconfig true &&
+
+		# Add config values that are erroneous to have in
+		# a config.worktree file outside of the main
+		# working tree, to check that Git filters them out
+		# when copying config during "git worktree add".
+		git config --worktree core.bare true &&
+		git config --worktree core.worktree "$(pwd)" &&
+
+		# We want to check that bogus.key is copied
+		git config --worktree bogus.key value &&
+		git config --unset core.bare &&
+		git worktree add ../there4 main &&
+		cd ../there4 &&
+
+		# Simple check that a Git command does not
+		# immediately fail with the current setup
+		git status &&
+		git worktree add --detach ../there5 &&
+		cd ../there5 &&
+		git status
+	) &&
+
+	# the worktree has the arbitrary value copied.
+	test_cmp_config -C there4 value bogus.key &&
+	test_cmp_config -C there5 value bogus.key &&
+
+	# however, core.bare and core.worktree were removed.
+	test_must_fail git -C there4 config core.bare &&
+	test_must_fail git -C there4 config core.worktree &&
+
+	cat >expect <<-EOF &&
+	init.t
+	EOF
+
+	ls there4 >actual &&
+	test_cmp expect actual &&
+	ls there5 >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'checkout with grafts' '

@@ -116,6 +116,9 @@ advice.*::
 	submoduleAlternateErrorStrategyDie::
 		Advice shown when a submodule.alternateErrorStrategy option
 		configured to "die" causes a fatal error.
+	submodulesNotUpdated::
+		Advice shown when a user runs a submodule command that fails
+		because `git submodule update --init` was not run.
 	addIgnoredFile::
 		Advice shown if a user attempts to add an ignored file to
 		the index.

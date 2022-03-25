@@ -9,6 +9,10 @@ Backward compatibility warts
  * "git name-rev --stdin" has been deprecated and issues a warning
    when used; use "git name-rev --annotate-stdin" instead.
 
+ * "git clone --filter=... --recurse-submodules" only makes the
+   top-level a partial clone, while submodules are fully cloned.  This
+   behaviour is changed to pass the same filter down to the submodules.
+
 
 Note to those who build from the source
 
@@ -24,6 +28,17 @@ UI, Workflows & Features
 
  * "git log --remerge-diff" shows the difference from mechanical merge
    result and the result that is actually recorded in a merge commit.
+
+ * "git log" and friends learned an option --exclude-first-parent-only
+   to propagate UNINTERESTING bit down only along the first-parent
+   chain, just like --first-parent option shows commits that lack the
+   UNINTERESTING bit only along the first-parent chain.
+
+ * The command line completion script (in contrib/) learned to
+   complete all Git subcommands, including the ones that are normally
+   hidden, when GIT_COMPLETION_SHOW_ALL_COMMANDS is used.
+
+ * "git branch" learned the "--recurse-submodules" option.
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -46,6 +61,17 @@ Performance, Internal Implementation, Development Support etc.
  * "git name-rev --stdin" does not behave like usual "--stdin" at
    all.  Start the process of renaming it to "--annotate-stdin".
    (merge a2585719b3 jc/name-rev-stdin later to maint).
+
+ * "git update-index", "git checkout-index", and "git clean" are
+   taught to work better with the sparse checkout feature.
+
+ * Use an internal call to reset_head() helper function instead of
+   spawning "git checkout" in "rebase", and update code paths that are
+   involved in the change.
+
+ * Messages "ort" merge backend prepares while dealing with conflicted
+   paths were unnecessarily confusing since it did not differentiate
+   inner merges and outer merges.
 
 
 Fixes since v2.35
@@ -140,6 +166,72 @@ Fixes since v2.35
  * "git diff --diff-filter=aR" is now parsed correctly.
    (merge 75408ca949 js/diff-filter-negation-fix later to maint).
 
+ * When "git subtree" wants to create a merge, it used "git merge" and
+   let it be affected by end-user's "merge.ff" configuration, which
+   has been corrected.
+   (merge 9158a3564a tk/subtree-merge-not-ff-only later to maint).
+
+ * Unlike "git apply", "git patch-id" did not handle patches with
+   hunks that has only 1 line in either preimage or postimage, which
+   has been corrected.
+   (merge 757e75c81e jz/patch-id-hunk-header-parsing-fix later to maint).
+
+ * "receive-pack" checks if it will do any ref updates (various
+   conditions could reject a push) before received objects are taken
+   out of the temporary directory used for quarantine purposes, so
+   that a push that is known-to-fail will not leave crufts that a
+   future "gc" needs to clean up.
+   (merge 5407764069 cb/clear-quarantine-early-on-all-ref-update-errors later to maint).
+
+ * Because a deletion of ref would need to remove it from both the
+   loose ref store and the packed ref store, a delete-ref operation
+   that logically removes one ref may end up invoking ref-transaction
+   hook twice, which has been corrected.
+   (merge 2ed1b64ebd ps/avoid-unnecessary-hook-invocation-with-packed-refs later to maint).
+
+ * When there is no object to write .bitmap file for, "git
+   multi-pack-index" triggered an error, instead of just skipping,
+   which has been corrected.
+   (merge eb57277ba3 tb/midx-no-bitmap-for-no-objects later to maint).
+
+ * "git cmd -h" outside a repository should error out cleanly for many
+   commands, but instead it hit a BUG(), which has been corrected.
+   (merge 87ad07d735 js/short-help-outside-repo-fix later to maint).
+
+ * "working tree" and "per-worktree ref" were in glossary, but
+   "worktree" itself wasn't, which has been corrected.
+   (merge 2df5387ed0 jc/glossary-worktree later to maint).
+
+ * L10n support for a few error messages.
+   (merge 3d3c23b3a7 bs/forbid-i18n-of-protocol-token-in-fetch-pack later to maint).
+
+ * Test modernization.
+   (merge d4fe066e4b sy/t0001-use-path-is-helper later to maint).
+
+ * "git log --graph --graph" used to leak a graph structure, and there
+   was no way to countermand "--graph" that appear earlier on the
+   command line.  A "--no-graph" option has been added and resource
+   leakage has been plugged.
+
+ * Error output given in response to an ambiguous object name has been
+   improved.
+   (merge 3a73c1dfaf ab/ambiguous-object-name later to maint).
+
+ * "git sparse-checkout" wants to work with per-worktree configuration,
+   but did not work well in a worktree attached to a bare repository.
+   (merge 3ce1138272 ds/sparse-checkout-requires-per-worktree-config later to maint).
+
+ * Setting core.untrackedCache to true failed to add the untracked
+   cache extension to the index.
+
+ * Workaround we have for versions of PCRE2 before their version 10.36
+   were in effect only for their versions newer than 10.36 by mistake,
+   which has been corrected.
+   (merge 97169fc361 rs/pcre-invalid-utf8-fix-fix later to maint).
+
+ * Document Taylor as a new member of Git PLC at SFC.  Welcome.
+   (merge e8d56ca863 tb/coc-plc-update later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge cfc5cf428b jc/find-header later to maint).
    (merge 40e7cfdd46 jh/p4-fix-use-of-process-error-exception later to maint).
@@ -157,3 +249,10 @@ Fixes since v2.35
    (merge 45d0212a71 ll/doc-mktree-typofix later to maint).
    (merge e9b272e4c1 js/no-more-legacy-stash later to maint).
    (merge 6798b08e84 ab/do-not-hide-failures-in-git-dot-pm later to maint).
+   (merge 9325285df4 po/doc-check-ignore-markup-fix later to maint).
+   (merge cd26cd6c7c sy/modernize-t-lib-read-tree-m-3way later to maint).
+   (merge d17294a05e ab/hash-object-leakfix later to maint).
+   (merge b8403129d3 jd/t0015-modernize later to maint).
+   (merge 332acc248d ds/mailmap later to maint).
+   (merge 04bf052eef ab/grep-patterntype later to maint).
+   (merge 6ee36364eb ab/diff-free-more later to maint).

@@ -462,6 +462,30 @@ test_expect_success !FAIL_PREREQS 'log with various grep.patternType configurati
 	)
 '
 
+for cmd in show whatchanged reflog format-patch
+do
+	case "$cmd" in
+	format-patch) myarg="HEAD~.." ;;
+	*) myarg= ;;
+	esac
+
+	test_expect_success "$cmd: understands grep.patternType, like 'log'" '
+		git init "pattern-type-$cmd" &&
+		(
+			cd "pattern-type-$cmd" &&
+			test_commit 1 file A &&
+			test_commit "(1|2)" file B 2 &&
+
+			git -c grep.patternType=fixed $cmd --grep="..." $myarg >actual &&
+			test_must_be_empty actual &&
+
+			git -c grep.patternType=basic $cmd --grep="..." $myarg >actual &&
+			test_file_not_empty actual
+		)
+	'
+done
+test_done
+
 test_expect_success 'log --author' '
 	cat >expect <<-\EOF &&
 	Author: <BOLD;RED>A U<RESET> Thor <author@example.com>
@@ -1682,6 +1706,75 @@ EOF
 
 test_expect_success 'log --graph with --name-only' '
 	test_cmp_graph --name-only tangle..reach
+'
+
+test_expect_success '--no-graph countermands --graph' '
+	git log >expect &&
+	git log --graph --no-graph >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--graph countermands --no-graph' '
+	git log --graph >expect &&
+	git log --no-graph --graph >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--no-graph does not unset --topo-order' '
+	git log --topo-order >expect &&
+	git log --topo-order --no-graph >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--no-graph does not unset --parents' '
+	git log --parents >expect &&
+	git log --parents --no-graph >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--reverse and --graph conflict' '
+	test_must_fail git log --reverse --graph 2>stderr &&
+	test_i18ngrep "cannot be used together" stderr
+'
+
+test_expect_success '--reverse --graph --no-graph works' '
+	git log --reverse >expect &&
+	git log --reverse --graph --no-graph >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--show-linear-break and --graph conflict' '
+	test_must_fail git log --show-linear-break --graph 2>stderr &&
+	test_i18ngrep "cannot be used together" stderr
+'
+
+test_expect_success '--show-linear-break --graph --no-graph works' '
+	git log --show-linear-break >expect &&
+	git log --show-linear-break --graph --no-graph >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--no-walk and --graph conflict' '
+	test_must_fail git log --no-walk --graph 2>stderr &&
+	test_i18ngrep "cannot be used together" stderr
+'
+
+test_expect_success '--no-walk --graph --no-graph works' '
+	git log --no-walk >expect &&
+	git log --no-walk --graph --no-graph >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--walk-reflogs and --graph conflict' '
+	test_must_fail git log --walk-reflogs --graph 2>stderr &&
+	(test_i18ngrep "cannot combine" stderr ||
+		test_i18ngrep "cannot be used together" stderr)
+'
+
+test_expect_success '--walk-reflogs --graph --no-graph works' '
+	git log --walk-reflogs >expect &&
+	git log --walk-reflogs --graph --no-graph >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'dotdot is a parent directory' '

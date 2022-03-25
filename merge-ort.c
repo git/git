@@ -651,6 +651,11 @@ static void path_msg(struct merge_options *opt,
 	dest = (opt->record_conflict_msgs_as_headers ? &tmp : sb);
 
 	va_start(ap, fmt);
+	if (opt->priv->call_depth) {
+		strbuf_addchars(dest, ' ', 2);
+		strbuf_addstr(dest, "From inner merge:");
+		strbuf_addchars(dest, ' ', opt->priv->call_depth * 2);
+	}
 	strbuf_vaddf(dest, fmt, ap);
 	va_end(ap);
 

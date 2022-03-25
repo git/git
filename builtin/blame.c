@@ -721,8 +721,8 @@ static int git_blame_config(const char *var, const char *value, void *cb)
 	}
 	if (!strcmp(var, "color.blame.repeatedlines")) {
 		if (color_parse_mem(value, strlen(value), repeated_meta_color))
-			warning(_("invalid color '%s' in color.blame.repeatedLines"),
-				value);
+			warning(_("invalid value for '%s': '%s'"),
+				"color.blame.repeatedLines", value);
 		return 0;
 	}
 	if (!strcmp(var, "color.blame.highlightrecent")) {
@@ -739,7 +739,8 @@ static int git_blame_config(const char *var, const char *value, void *cb)
 			coloring_mode &= ~(OUTPUT_COLOR_LINE |
 					    OUTPUT_SHOW_AGE_WITH_COLOR);
 		} else {
-			warning(_("invalid value for blame.coloring"));
+			warning(_("invalid value for '%s': '%s'"),
+				"blame.coloring", value);
 			return 0;
 		}
 	}
@@ -934,6 +935,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 		parse_revision_opt(&revs, &ctx, options, blame_opt_usage);
 	}
 parse_done:
+	revision_opts_finish(&revs);
 	no_whole_file_rename = !revs.diffopt.flags.follow_renames;
 	xdl_opts |= revs.diffopt.xdl_opts & XDF_INDENT_HEURISTIC;
 	revs.diffopt.flags.follow_renames = 0;

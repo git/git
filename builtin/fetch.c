@@ -764,8 +764,8 @@ static void prepare_format_display(struct ref *ref_map)
 	else if (!strcasecmp(format, "compact"))
 		compact_format = 1;
 	else
-		die(_("configuration fetch.output contains invalid value %s"),
-		    format);
+		die(_("invalid value for '%s': '%s'"),
+		    "fetch.output", format);
 
 	for (rm = ref_map; rm; rm = rm->next) {
 		if (rm->status == REF_STATUS_REJECT_SHALLOW ||
@@ -1094,11 +1094,14 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 	struct ref *rm;
 	char *url;
 	int want_status;
-	int summary_width = transport_summary_width(ref_map);
+	int summary_width = 0;
 
 	rc = open_fetch_head(&fetch_head);
 	if (rc)
 		return -1;
+
+	if (verbosity >= 0)
+		summary_width = transport_summary_width(ref_map);
 
 	if (raw_url)
 		url = transport_anonymize_url(raw_url);
@@ -1345,7 +1348,6 @@ static int prune_refs(struct refspec *rs, struct ref *ref_map,
 	int url_len, i, result = 0;
 	struct ref *ref, *stale_refs = get_stale_heads(rs, ref_map);
 	char *url;
-	int summary_width = transport_summary_width(stale_refs);
 	const char *dangling_msg = dry_run
 		? _("   (%s will become dangling)")
 		: _("   (%s has become dangling)");
@@ -1374,6 +1376,8 @@ static int prune_refs(struct refspec *rs, struct ref *ref_map,
 	}
 
 	if (verbosity >= 0) {
+		int summary_width = transport_summary_width(stale_refs);
+
 		for (ref = stale_refs; ref; ref = ref->next) {
 			struct strbuf sb = STRBUF_INIT;
 			if (!shown_url) {
@@ -1594,7 +1598,7 @@ static int do_fetch(struct transport *transport,
 	} else
 		remote_refs = NULL;
 
-	strvec_clear(&transport_ls_refs_options.ref_prefixes);
+	transport_ls_refs_options_release(&transport_ls_refs_options);
 
 	ref_map = get_ref_map(transport->remote, remote_refs, rs,
 			      tags, &autotags);
@@ -2017,8 +2021,10 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	}
 
 	git_config(git_fetch_config, NULL);
-	prepare_repo_settings(the_repository);
-	the_repository->settings.command_requires_full_index = 0;
+	if (the_repository->gitdir) {
+		prepare_repo_settings(the_repository);
+		the_repository->settings.command_requires_full_index = 0;
+	}
 
 	argc = parse_options(argc, argv, prefix,
 			     builtin_fetch_options, builtin_fetch_usage, 0);

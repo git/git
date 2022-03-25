@@ -126,7 +126,7 @@ test_expect_success 'switching to cone mode with non-cone mode patterns' '
 		cd bad-patterns &&
 		git sparse-checkout init &&
 		git sparse-checkout add dir &&
-		git config core.sparseCheckoutCone true &&
+		git config --worktree core.sparseCheckoutCone true &&
 		test_must_fail git sparse-checkout add dir 2>err &&
 		grep "existing sparse-checkout patterns do not use cone mode" err
 	)
@@ -155,9 +155,9 @@ test_expect_success 'interaction with clone --no-checkout (unborn index)' '
 '
 
 test_expect_success 'set enables config' '
-	git init empty-config &&
+	git init worktree-config &&
 	(
-		cd empty-config &&
+		cd worktree-config &&
 		test_commit test file &&
 		test_path_is_missing .git/config.worktree &&
 		git sparse-checkout set nothing &&
@@ -208,6 +208,21 @@ test_expect_success 'add to sparse-checkout' '
 	test_cmp expect actual &&
 	test_cmp expect repo/.git/info/sparse-checkout &&
 	check_files repo "a folder1 folder2"
+'
+
+test_expect_success 'worktree: add copies sparse-checkout patterns' '
+	cat repo/.git/info/sparse-checkout >old &&
+	test_when_finished cp old repo/.git/info/sparse-checkout &&
+	test_when_finished git -C repo worktree remove ../worktree &&
+	git -C repo sparse-checkout set --no-cone "/*" &&
+	git -C repo worktree add --quiet ../worktree 2>err &&
+	test_must_be_empty err &&
+	new="$(git -C worktree rev-parse --git-path info/sparse-checkout)" &&
+	test_path_is_file "$new" &&
+	test_cmp repo/.git/info/sparse-checkout "$new" &&
+	git -C worktree sparse-checkout set --cone &&
+	test_cmp_config -C worktree true core.sparseCheckoutCone &&
+	test_must_fail git -C repo core.sparseCheckoutCone
 '
 
 test_expect_success 'cone mode: match patterns' '
@@ -261,7 +276,7 @@ test_expect_success 'sparse-index enabled and disabled' '
 	test_cmp expect actual &&
 
 	git -C repo config --list >config &&
-	! grep index.sparse config
+	test_cmp_config -C repo false index.sparse
 '
 
 test_expect_success 'cone mode: init and set' '
@@ -524,13 +539,13 @@ test_expect_success 'interaction with submodules' '
 '
 
 test_expect_success 'different sparse-checkouts with worktrees' '
+	git -C repo sparse-checkout set --cone deep folder1 &&
 	git -C repo worktree add --detach ../worktree &&
-	check_files worktree "a deep folder1 folder2" &&
-	git -C worktree sparse-checkout init --cone &&
-	git -C repo sparse-checkout set folder1 &&
-	git -C worktree sparse-checkout set deep/deeper1 &&
-	check_files repo a folder1 &&
-	check_files worktree a deep
+	check_files worktree "a deep folder1" &&
+	git -C repo sparse-checkout set --cone folder1 &&
+	git -C worktree sparse-checkout set --cone deep/deeper1 &&
+	check_files repo "a folder1" &&
+	check_files worktree "a deep"
 '
 
 test_expect_success 'set using filename keeps file on-disk' '

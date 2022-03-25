@@ -16,13 +16,12 @@ unnote () {
 }
 
 #
-# Create a test repo with interesting commit graph:
+# Create a test repo with an interesting commit graph:
 #
-# A--B----------G--H--I--K--L
-#  \  \           /     /
-#   \  \         /     /
-#    C------E---F     J
-#        \_/
+# A-----B-----G--H--I--K--L
+#  \     \      /     /
+#   \     \    /     /
+#    C--D--E--F     J
 #
 # The commits are laid out from left-to-right starting with
 # the root commit A and terminating at the tip commit L.
@@ -141,6 +140,13 @@ check_result 'I B A' --date-order -- file
 check_result 'I B A' --author-date-order -- file
 check_result 'H' --first-parent -- another-file
 check_result 'H' --first-parent --topo-order -- another-file
+
+check_result 'L K I H G B A' --first-parent L
+check_result 'F E D C' --exclude-first-parent-only F ^L
+check_result '' F ^L
+check_result 'L K I H G J' L ^F
+check_result 'L K I H G B J' --exclude-first-parent-only L ^F
+check_result 'L K I H G B' --exclude-first-parent-only --first-parent L ^F
 
 check_result 'E C B A' --full-history E -- lost
 test_expect_success 'full history simplification without parent' '

@@ -341,7 +341,7 @@ test_expect_success 'stale dirs do not cause d/f conflicts (reflogs off)' '
 # Each line is 114 characters, so we need 75 to still have a few before the
 # last 8K. The 89-character padding on the final entry lines up our
 # newline exactly.
-test_expect_success SHA1 'parsing reverse reflogs at BUFSIZ boundaries' '
+test_expect_success REFFILES,SHA1 'parsing reverse reflogs at BUFSIZ boundaries' '
 	git checkout -b reflogskip &&
 	zf=$(test_oid zero_2) &&
 	ident="abc <xyz> 0000000001 +0000" &&
@@ -418,7 +418,8 @@ test_expect_success 'expire with multiple worktrees' '
 		test_commit -C link-wt foobar &&
 		test_tick &&
 		git reflog expire --verbose --all --expire=$test_tick &&
-		test_must_be_empty .git/worktrees/link-wt/logs/HEAD
+		test-tool ref-store worktree:link-wt for-each-reflog-ent HEAD >actual &&
+		test_must_be_empty actual
 	)
 '
 

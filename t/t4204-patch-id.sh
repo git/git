@@ -38,7 +38,7 @@ calc_patch_id () {
 	shift
 	git patch-id "$@" >patch-id.output &&
 	sed "s/ .*//" patch-id.output >patch-id_"$patch_name" &&
-	test_line_count -gt 0 patch-id_"$patch_name"
+	test_line_count -eq 1 patch-id_"$patch_name"
 }
 
 get_top_diff () {
@@ -166,40 +166,67 @@ test_expect_success 'patch-id respects config from subdir' '
 	)
 '
 
-cat >nonl <<\EOF
-diff --git i/a w/a
-index e69de29..2e65efe 100644
---- i/a
-+++ w/a
-@@ -0,0 +1 @@
-+a
-\ No newline at end of file
-diff --git i/b w/b
-index e69de29..6178079 100644
---- i/b
-+++ w/b
-@@ -0,0 +1 @@
-+b
-EOF
-
-cat >withnl <<\EOF
-diff --git i/a w/a
-index e69de29..7898192 100644
---- i/a
-+++ w/a
-@@ -0,0 +1 @@
-+a
-diff --git i/b w/b
-index e69de29..6178079 100644
---- i/b
-+++ w/b
-@@ -0,0 +1 @@
-+b
-EOF
-
 test_expect_success 'patch-id handles no-nl-at-eof markers' '
-	cat nonl | calc_patch_id nonl &&
-	cat withnl | calc_patch_id withnl &&
+	cat >nonl <<-\EOF &&
+	diff --git i/a w/a
+	index e69de29..2e65efe 100644
+	--- i/a
+	+++ w/a
+	@@ -0,0 +1 @@
+	+a
+	\ No newline at end of file
+	diff --git i/b w/b
+	index e69de29..6178079 100644
+	--- i/b
+	+++ w/b
+	@@ -0,0 +1 @@
+	+b
+	EOF
+	cat >withnl <<-\EOF &&
+	diff --git i/a w/a
+	index e69de29..7898192 100644
+	--- i/a
+	+++ w/a
+	@@ -0,0 +1 @@
+	+a
+	diff --git i/b w/b
+	index e69de29..6178079 100644
+	--- i/b
+	+++ w/b
+	@@ -0,0 +1 @@
+	+b
+	EOF
+	calc_patch_id nonl <nonl &&
+	calc_patch_id withnl <withnl &&
 	test_cmp patch-id_nonl patch-id_withnl
+'
+
+test_expect_success 'patch-id handles diffs with one line of before/after' '
+	cat >diffu1 <<-\EOF &&
+	diff --git a/bar b/bar
+	index bdaf90f..31051f6 100644
+	--- a/bar
+	+++ b/bar
+	@@ -2 +2,2 @@
+	 b
+	+c
+	diff --git a/car b/car
+	index 00750ed..2ae5e34 100644
+	--- a/car
+	+++ b/car
+	@@ -1 +1,2 @@
+	 3
+	+d
+	diff --git a/foo b/foo
+	index e439850..7146eb8 100644
+	--- a/foo
+	+++ b/foo
+	@@ -2 +2,2 @@
+	 a
+	+e
+	EOF
+	calc_patch_id diffu1 <diffu1 &&
+	test_config patchid.stable true &&
+	calc_patch_id diffu1stable <diffu1
 '
 test_done

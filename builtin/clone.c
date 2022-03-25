@@ -72,6 +72,8 @@ static int option_dissociate;
 static int max_jobs = -1;
 static struct string_list option_recurse_submodules = STRING_LIST_INIT_NODUP;
 static struct list_objects_filter_options filter_options;
+static int option_filter_submodules = -1;    /* unspecified */
+static int config_filter_submodules = -1;    /* unspecified */
 static struct string_list server_options = STRING_LIST_INIT_NODUP;
 static int option_remote_submodules;
 
@@ -151,6 +153,8 @@ static struct option builtin_clone_options[] = {
 	OPT_SET_INT('6', "ipv6", &family, N_("use IPv6 addresses only"),
 			TRANSPORT_FAMILY_IPV6),
 	OPT_PARSE_LIST_OBJECTS_FILTER(&filter_options),
+	OPT_BOOL(0, "also-filter-submodules", &option_filter_submodules,
+		    N_("apply partial clone filters to submodules")),
 	OPT_BOOL(0, "remote-submodules", &option_remote_submodules,
 		    N_("any cloned submodules will use their remote-tracking branch")),
 	OPT_BOOL(0, "sparse", &option_sparse_checkout,
@@ -651,7 +655,7 @@ static int git_sparse_checkout_init(const char *repo)
 	return result;
 }
 
-static int checkout(int submodule_progress)
+static int checkout(int submodule_progress, int filter_submodules)
 {
 	struct object_id oid;
 	char *head;
@@ -730,6 +734,10 @@ static int checkout(int submodule_progress)
 			strvec_push(&args, "--no-fetch");
 		}
 
+		if (filter_submodules && filter_options.choice)
+			strvec_pushf(&args, "--filter=%s",
+				     expand_list_objects_filter_spec(&filter_options));
+
 		if (option_single_branch >= 0)
 			strvec_push(&args, option_single_branch ?
 					       "--single-branch" :
@@ -750,6 +758,8 @@ static int git_clone_config(const char *k, const char *v, void *cb)
 	}
 	if (!strcmp(k, "clone.rejectshallow"))
 		config_reject_shallow = git_config_bool(k, v);
+	if (!strcmp(k, "clone.filtersubmodules"))
+		config_filter_submodules = git_config_bool(k, v);
 
 	return git_default_config(k, v, cb);
 }
@@ -872,6 +882,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	struct remote *remote;
 	int err = 0, complete_refs_before_fetch = 1;
 	int submodule_progress;
+	int filter_submodules = 0;
 
 	struct transport_ls_refs_options transport_ls_refs_options =
 		TRANSPORT_LS_REFS_OPTIONS_INIT;
@@ -1068,6 +1079,27 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		reject_shallow = option_reject_shallow;
 
 	/*
+	 * If option_filter_submodules is specified from CLI option,
+	 * ignore config_filter_submodules from git_clone_config.
+	 */
+	if (config_filter_submodules != -1)
+		filter_submodules = config_filter_submodules;
+	if (option_filter_submodules != -1)
+		filter_submodules = option_filter_submodules;
+
+	/*
+	 * Exit if the user seems to be doing something silly with submodule
+	 * filter flags (but not with filter configs, as those should be
+	 * set-and-forget).
+	 */
+	if (option_filter_submodules > 0 && !filter_options.choice)
+		die(_("the option '%s' requires '%s'"),
+		    "--also-filter-submodules", "--filter");
+	if (option_filter_submodules > 0 && !option_recurse_submodules.nr)
+		die(_("the option '%s' requires '%s'"),
+		    "--also-filter-submodules", "--recurse-submodules");
+
+	/*
 	 * apply the remote name provided by --origin only after this second
 	 * call to git_config, to ensure it overrides all config-based values.
 	 */
@@ -1235,7 +1267,8 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	}
 	else {
 		const char *branch;
-		char *ref;
+		const char *ref;
+		char *ref_free = NULL;
 
 		if (option_branch)
 			die(_("Remote branch %s not found in upstream %s"),
@@ -1251,17 +1284,16 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		    skip_prefix(transport_ls_refs_options.unborn_head_target,
 				"refs/heads/", &branch)) {
 			ref = transport_ls_refs_options.unborn_head_target;
-			transport_ls_refs_options.unborn_head_target = NULL;
 			create_symref("HEAD", ref, reflog_msg.buf);
 		} else {
 			branch = git_default_branch_name(0);
-			ref = xstrfmt("refs/heads/%s", branch);
+			ref_free = xstrfmt("refs/heads/%s", branch);
+			ref = ref_free;
 		}
 
 		if (!option_bare)
 			install_branch_config(0, branch, remote_name, ref);
-
-		free(ref);
+		free(ref_free);
 	}
 
 	write_refspec_config(src_ref_prefix, our_head_points_at,
@@ -1300,7 +1332,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	}
 
 	junk_mode = JUNK_LEAVE_REPO;
-	err = checkout(submodule_progress);
+	err = checkout(submodule_progress, filter_submodules);
 
 	free(remote_name);
 	strbuf_release(&reflog_msg);
@@ -1313,7 +1345,6 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	UNLEAK(repo);
 	junk_mode = JUNK_LEAVE_ALL;
 
-	strvec_clear(&transport_ls_refs_options.ref_prefixes);
-	free(transport_ls_refs_options.unborn_head_target);
+	transport_ls_refs_options_release(&transport_ls_refs_options);
 	return err;
 }

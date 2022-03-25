@@ -1340,9 +1340,6 @@ static int add_index_entry_with_check(struct index_state *istate, struct cache_e
 	int skip_df_check = option & ADD_CACHE_SKIP_DFCHECK;
 	int new_only = option & ADD_CACHE_NEW_ONLY;
 
-	if (!(option & ADD_CACHE_KEEP_CACHE_TREE))
-		cache_tree_invalidate_path(istate, ce->name);
-
 	/*
 	 * If this entry's path sorts after the last entry in the index,
 	 * we can avoid searching for it.
@@ -1352,6 +1349,13 @@ static int add_index_entry_with_check(struct index_state *istate, struct cache_e
 		pos = index_pos_to_insert_pos(istate->cache_nr);
 	else
 		pos = index_name_stage_pos(istate, ce->name, ce_namelen(ce), ce_stage(ce), EXPAND_SPARSE);
+
+	/*
+	 * Cache tree path should be invalidated only after index_name_stage_pos,
+	 * in case it expands a sparse index.
+	 */
+	if (!(option & ADD_CACHE_KEEP_CACHE_TREE))
+		cache_tree_invalidate_path(istate, ce->name);
 
 	/* existing match? Just replace it. */
 	if (pos >= 0) {

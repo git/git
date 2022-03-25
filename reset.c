@@ -9,37 +9,106 @@
 #include "unpack-trees.h"
 #include "hook.h"
 
-int reset_head(struct repository *r, struct object_id *oid, const char *action,
-	       const char *switch_to_branch, unsigned flags,
-	       const char *reflog_orig_head, const char *reflog_head,
-	       const char *default_reflog_action)
+static int update_refs(const struct reset_head_opts *opts,
+		       const struct object_id *oid,
+		       const struct object_id *head)
 {
-	unsigned detach_head = flags & RESET_HEAD_DETACH;
-	unsigned reset_hard = flags & RESET_HEAD_HARD;
-	unsigned run_hook = flags & RESET_HEAD_RUN_POST_CHECKOUT_HOOK;
-	unsigned refs_only = flags & RESET_HEAD_REFS_ONLY;
-	unsigned update_orig_head = flags & RESET_ORIG_HEAD;
-	struct object_id head_oid;
+	unsigned detach_head = opts->flags & RESET_HEAD_DETACH;
+	unsigned run_hook = opts->flags & RESET_HEAD_RUN_POST_CHECKOUT_HOOK;
+	unsigned update_orig_head = opts->flags & RESET_ORIG_HEAD;
+	const struct object_id *orig_head = opts->orig_head;
+	const char *switch_to_branch = opts->branch;
+	const char *reflog_branch = opts->branch_msg;
+	const char *reflog_head = opts->head_msg;
+	const char *reflog_orig_head = opts->orig_head_msg;
+	const char *default_reflog_action = opts->default_reflog_action;
+	struct object_id *old_orig = NULL, oid_old_orig;
+	struct strbuf msg = STRBUF_INIT;
+	const char *reflog_action;
+	size_t prefix_len;
+	int ret;
+
+	if ((update_orig_head && !reflog_orig_head) || !reflog_head) {
+		if (!default_reflog_action)
+			BUG("default_reflog_action must be given when reflog messages are omitted");
+		reflog_action = getenv(GIT_REFLOG_ACTION_ENVIRONMENT);
+		strbuf_addf(&msg, "%s: ", reflog_action ? reflog_action :
+							  default_reflog_action);
+	}
+	prefix_len = msg.len;
+
+	if (update_orig_head) {
+		if (!get_oid("ORIG_HEAD", &oid_old_orig))
+			old_orig = &oid_old_orig;
+		if (head) {
+			if (!reflog_orig_head) {
+				strbuf_addstr(&msg, "updating ORIG_HEAD");
+				reflog_orig_head = msg.buf;
+			}
+			update_ref(reflog_orig_head, "ORIG_HEAD",
+				   orig_head ? orig_head : head,
+				   old_orig, 0, UPDATE_REFS_MSG_ON_ERR);
+		} else if (old_orig)
+			delete_ref(NULL, "ORIG_HEAD", old_orig, 0);
+	}
+
+	if (!reflog_head) {
+		strbuf_setlen(&msg, prefix_len);
+		strbuf_addstr(&msg, "updating HEAD");
+		reflog_head = msg.buf;
+	}
+	if (!switch_to_branch)
+		ret = update_ref(reflog_head, "HEAD", oid, head,
+				 detach_head ? REF_NO_DEREF : 0,
+				 UPDATE_REFS_MSG_ON_ERR);
+	else {
+		ret = update_ref(reflog_branch ? reflog_branch : reflog_head,
+				 switch_to_branch, oid, NULL, 0,
+				 UPDATE_REFS_MSG_ON_ERR);
+		if (!ret)
+			ret = create_symref("HEAD", switch_to_branch,
+					    reflog_head);
+	}
+	if (!ret && run_hook)
+		run_hooks_l("post-checkout",
+			    oid_to_hex(head ? head : null_oid()),
+			    oid_to_hex(oid), "1", NULL);
+	strbuf_release(&msg);
+	return ret;
+}
+
+int reset_head(struct repository *r, const struct reset_head_opts *opts)
+{
+	const struct object_id *oid = opts->oid;
+	const char *switch_to_branch = opts->branch;
+	unsigned reset_hard = opts->flags & RESET_HEAD_HARD;
+	unsigned refs_only = opts->flags & RESET_HEAD_REFS_ONLY;
+	unsigned update_orig_head = opts->flags & RESET_ORIG_HEAD;
+	struct object_id *head = NULL, head_oid;
 	struct tree_desc desc[2] = { { NULL }, { NULL } };
 	struct lock_file lock = LOCK_INIT;
 	struct unpack_trees_options unpack_tree_opts = { 0 };
 	struct tree *tree;
-	const char *reflog_action;
-	struct strbuf msg = STRBUF_INIT;
-	size_t prefix_len;
-	struct object_id *orig = NULL, oid_orig,
-		*old_orig = NULL, oid_old_orig;
+	const char *action;
 	int ret = 0, nr = 0;
 
 	if (switch_to_branch && !starts_with(switch_to_branch, "refs/"))
 		BUG("Not a fully qualified branch: '%s'", switch_to_branch);
+
+	if (opts->orig_head_msg && !update_orig_head)
+		BUG("ORIG_HEAD reflog message given without updating ORIG_HEAD");
+
+	if (opts->branch_msg && !opts->branch)
+		BUG("branch reflog message given without a branch");
 
 	if (!refs_only && repo_hold_locked_index(r, &lock, LOCK_REPORT_ON_ERROR) < 0) {
 		ret = -1;
 		goto leave_reset_head;
 	}
 
-	if ((!oid || !reset_hard) && get_oid("HEAD", &head_oid)) {
+	if (!get_oid("HEAD", &head_oid)) {
+		head = &head_oid;
+	} else if (!oid || !reset_hard) {
 		ret = error(_("could not determine HEAD revision"));
 		goto leave_reset_head;
 	}
@@ -48,8 +117,9 @@ int reset_head(struct repository *r, struct object_id *oid, const char *action,
 		oid = &head_oid;
 
 	if (refs_only)
-		goto reset_head_refs;
+		return update_refs(opts, oid, head);
 
+	action = reset_hard ? "reset" : "checkout";
 	setup_unpack_trees_porcelain(&unpack_tree_opts, action);
 	unpack_tree_opts.head_idx = 1;
 	unpack_tree_opts.src_index = r->index;
@@ -59,7 +129,7 @@ int reset_head(struct repository *r, struct object_id *oid, const char *action,
 	unpack_tree_opts.merge = 1;
 	unpack_tree_opts.preserve_ignored = 0; /* FIXME: !overwrite_ignore */
 	init_checkout_metadata(&unpack_tree_opts.meta, switch_to_branch, oid, NULL);
-	if (!detach_head)
+	if (reset_hard)
 		unpack_tree_opts.reset = UNPACK_RESET_PROTECT_UNTRACKED;
 
 	if (repo_read_index_unmerged(r) < 0) {
@@ -91,49 +161,10 @@ int reset_head(struct repository *r, struct object_id *oid, const char *action,
 		goto leave_reset_head;
 	}
 
-reset_head_refs:
-	reflog_action = getenv(GIT_REFLOG_ACTION_ENVIRONMENT);
-	strbuf_addf(&msg, "%s: ", reflog_action ? reflog_action : default_reflog_action);
-	prefix_len = msg.len;
-
-	if (update_orig_head) {
-		if (!get_oid("ORIG_HEAD", &oid_old_orig))
-			old_orig = &oid_old_orig;
-		if (!get_oid("HEAD", &oid_orig)) {
-			orig = &oid_orig;
-			if (!reflog_orig_head) {
-				strbuf_addstr(&msg, "updating ORIG_HEAD");
-				reflog_orig_head = msg.buf;
-			}
-			update_ref(reflog_orig_head, "ORIG_HEAD", orig,
-				   old_orig, 0, UPDATE_REFS_MSG_ON_ERR);
-		} else if (old_orig)
-			delete_ref(NULL, "ORIG_HEAD", old_orig, 0);
-	}
-
-	if (!reflog_head) {
-		strbuf_setlen(&msg, prefix_len);
-		strbuf_addstr(&msg, "updating HEAD");
-		reflog_head = msg.buf;
-	}
-	if (!switch_to_branch)
-		ret = update_ref(reflog_head, "HEAD", oid, orig,
-				 detach_head ? REF_NO_DEREF : 0,
-				 UPDATE_REFS_MSG_ON_ERR);
-	else {
-		ret = update_ref(reflog_head, switch_to_branch, oid,
-				 NULL, 0, UPDATE_REFS_MSG_ON_ERR);
-		if (!ret)
-			ret = create_symref("HEAD", switch_to_branch,
-					    reflog_head);
-	}
-	if (run_hook)
-		run_hooks_l("post-checkout",
-			    oid_to_hex(orig ? orig : null_oid()),
-			    oid_to_hex(oid), "1", NULL);
+	if (oid != &head_oid || update_orig_head || switch_to_branch)
+		ret = update_refs(opts, oid, head);
 
 leave_reset_head:
-	strbuf_release(&msg);
 	rollback_lock_file(&lock);
 	clear_unpack_trees_porcelain(&unpack_tree_opts);
 	while (nr)

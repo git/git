@@ -2534,27 +2534,33 @@ test_expect_success 'options with value' '
 '
 
 test_expect_success 'sourcing the completion script clears cached commands' '
-	__git_compute_all_commands &&
-	verbose test -n "$__git_all_commands" &&
-	. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash" &&
-	verbose test -z "$__git_all_commands"
+	(
+		__git_compute_all_commands &&
+		verbose test -n "$__git_all_commands" &&
+		. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash" &&
+		verbose test -z "$__git_all_commands"
+	)
 '
 
 test_expect_success 'sourcing the completion script clears cached merge strategies' '
-	__git_compute_merge_strategies &&
-	verbose test -n "$__git_merge_strategies" &&
-	. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash" &&
-	verbose test -z "$__git_merge_strategies"
+	(
+		__git_compute_merge_strategies &&
+		verbose test -n "$__git_merge_strategies" &&
+		. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash" &&
+		verbose test -z "$__git_merge_strategies"
+	)
 '
 
 test_expect_success 'sourcing the completion script clears cached --options' '
-	__gitcomp_builtin checkout &&
-	verbose test -n "$__gitcomp_builtin_checkout" &&
-	__gitcomp_builtin notes_edit &&
-	verbose test -n "$__gitcomp_builtin_notes_edit" &&
-	. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash" &&
-	verbose test -z "$__gitcomp_builtin_checkout" &&
-	verbose test -z "$__gitcomp_builtin_notes_edit"
+	(
+		__gitcomp_builtin checkout &&
+		verbose test -n "$__gitcomp_builtin_checkout" &&
+		__gitcomp_builtin notes_edit &&
+		verbose test -n "$__gitcomp_builtin_notes_edit" &&
+		. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash" &&
+		verbose test -z "$__gitcomp_builtin_checkout" &&
+		verbose test -z "$__gitcomp_builtin_notes_edit"
+	)
 '
 
 test_expect_success 'option aliases are not shown by default' '
@@ -2562,12 +2568,45 @@ test_expect_success 'option aliases are not shown by default' '
 '
 
 test_expect_success 'option aliases are shown with GIT_COMPLETION_SHOW_ALL' '
-	. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash" &&
-	GIT_COMPLETION_SHOW_ALL=1 && export GIT_COMPLETION_SHOW_ALL &&
-	test_completion "git clone --recurs" <<-\EOF
-	--recurse-submodules Z
-	--recursive Z
-	EOF
+	(
+		. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash" &&
+		GIT_COMPLETION_SHOW_ALL=1 && export GIT_COMPLETION_SHOW_ALL &&
+		test_completion "git clone --recurs" <<-\EOF
+		--recurse-submodules Z
+		--recursive Z
+		EOF
+	)
+'
+
+test_expect_success 'plumbing commands are excluded without GIT_COMPLETION_SHOW_ALL_COMMANDS' '
+	(
+		. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash" &&
+		sane_unset GIT_TESTING_PORCELAIN_COMMAND_LIST &&
+
+		# Just mainporcelain, not plumbing commands
+		run_completion "git c" &&
+		grep checkout out &&
+		! grep cat-file out
+	)
+'
+
+test_expect_success 'all commands are shown with GIT_COMPLETION_SHOW_ALL_COMMANDS (also main non-builtin)' '
+	(
+		. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash" &&
+		GIT_COMPLETION_SHOW_ALL_COMMANDS=1 &&
+		export GIT_COMPLETION_SHOW_ALL_COMMANDS &&
+		sane_unset GIT_TESTING_PORCELAIN_COMMAND_LIST &&
+
+		# Both mainporcelain and plumbing commands
+		run_completion "git c" &&
+		grep checkout out &&
+		grep cat-file out &&
+
+		# Check "gitk", a "main" command, but not a built-in + more plumbing
+		run_completion "git g" &&
+		grep gitk out &&
+		grep get-tar-commit-id out
+	)
 '
 
 test_expect_success '__git_complete' '

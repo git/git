@@ -2,6 +2,7 @@
 #include "refs.h"
 #include "string-list.h"
 #include "utf8.h"
+#include "date.h"
 
 int starts_with(const char *str, const char *prefix)
 {
