@@ -23,3 +23,8 @@ void fetch_negotiator_init(struct repository *r,
 		return;
 	}
 }
+
+void fetch_negotiator_init_noop(struct fetch_negotiator *negotiator)
+{
+	noop_negotiator_init(negotiator);
+}
