@@ -130,7 +130,9 @@ int reftable_iterator_next_ref(struct reftable_iterator *it,
 {
 	struct reftable_record rec = {
 		.type = BLOCK_TYPE_REF,
-		.u.ref = *ref,
+		.u = {
+			.ref = *ref
+		},
 	};
 	int err = iterator_next(it, &rec);
 	*ref = rec.u.ref;
@@ -142,7 +144,9 @@ int reftable_iterator_next_log(struct reftable_iterator *it,
 {
 	struct reftable_record rec = {
 		.type = BLOCK_TYPE_LOG,
-		.u.log = *log,
+		.u = {
+			.log = *log,
+		},
 	};
 	int err = iterator_next(it, &rec);
 	*log = rec.u.log;
