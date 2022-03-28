@@ -181,6 +181,9 @@ Fetching Missing Objects
   currently fetches all objects referred to by the requested objects, even
   though they are not necessary.
 
+- Fetching with `--refetch` will request a complete new filtered packfile from
+  the remote, which can be used to change a filter without needing to
+  dynamically fetch missing objects.
 
 Using many promisor remotes
 ---------------------------
