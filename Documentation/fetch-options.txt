@@ -169,7 +169,8 @@ ifndef::git-pull[]
 	associated objects that are already present locally, this option fetches
 	all objects as a fresh clone would. Use this to reapply a partial clone
 	filter from configuration or using `--filter=` when the filter
-	definition has changed.
+	definition has changed. Automatic post-fetch maintenance will perform
+	object database pack consolidation to remove any duplicate objects.
 endif::git-pull[]
 
 --refmap=<refspec>::

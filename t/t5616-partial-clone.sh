@@ -216,6 +216,35 @@ test_expect_success 'fetch --refetch works with a shallow clone' '
 	test_line_count = 6 observed
 '
 
+test_expect_success 'fetch --refetch triggers repacking' '
+	GIT_TRACE2_CONFIG_PARAMS=gc.autoPackLimit,maintenance.incremental-repack.auto &&
+	export GIT_TRACE2_CONFIG_PARAMS &&
+
+	GIT_TRACE2_EVENT="$PWD/trace1.event" \
+	git -C pc1 fetch --refetch origin &&
+	test_subcommand git maintenance run --auto --no-quiet <trace1.event &&
+	grep \"param\":\"gc.autopacklimit\",\"value\":\"1\" trace1.event &&
+	grep \"param\":\"maintenance.incremental-repack.auto\",\"value\":\"-1\" trace1.event &&
+
+	GIT_TRACE2_EVENT="$PWD/trace2.event" \
+	git -c protocol.version=0 \
+		-c gc.autoPackLimit=0 \
+		-c maintenance.incremental-repack.auto=1234 \
+		-C pc1 fetch --refetch origin &&
+	test_subcommand git maintenance run --auto --no-quiet <trace2.event &&
+	grep \"param\":\"gc.autopacklimit\",\"value\":\"0\" trace2.event &&
+	grep \"param\":\"maintenance.incremental-repack.auto\",\"value\":\"-1\" trace2.event &&
+
+	GIT_TRACE2_EVENT="$PWD/trace3.event" \
+	git -c protocol.version=0 \
+		-c gc.autoPackLimit=1234 \
+		-c maintenance.incremental-repack.auto=0 \
+		-C pc1 fetch --refetch origin &&
+	test_subcommand git maintenance run --auto --no-quiet <trace3.event &&
+	grep \"param\":\"gc.autopacklimit\",\"value\":\"1\" trace3.event &&
+	grep \"param\":\"maintenance.incremental-repack.auto\",\"value\":\"0\" trace3.event
+'
+
 test_expect_success 'partial clone with transfer.fsckobjects=1 works with submodules' '
 	test_create_repo submodule &&
 	test_commit -C submodule mycommit &&

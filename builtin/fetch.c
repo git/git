@@ -2226,8 +2226,25 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 					     NULL);
 	}
 
-	if (enable_auto_gc)
+	if (enable_auto_gc) {
+		if (refetch) {
+			/*
+			 * Hint auto-maintenance strongly to encourage repacking,
+			 * but respect config settings disabling it.
+			 */
+			int opt_val;
+			if (git_config_get_int("gc.autopacklimit", &opt_val))
+				opt_val = -1;
+			if (opt_val != 0)
+				git_config_push_parameter("gc.autoPackLimit=1");
+
+			if (git_config_get_int("maintenance.incremental-repack.auto", &opt_val))
+				opt_val = -1;
+			if (opt_val != 0)
+				git_config_push_parameter("maintenance.incremental-repack.auto=-1");
+		}
 		run_auto_maintenance(verbosity < 0);
+	}
 
  cleanup:
 	string_list_clear(&list, 0);
