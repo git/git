@@ -59,7 +59,7 @@ static int prune_tags = -1; /* unspecified */
 
 static int all, append, dry_run, force, keep, multiple, update_head_ok;
 static int write_fetch_head = 1;
-static int verbosity, deepen_relative, set_upstream;
+static int verbosity, deepen_relative, set_upstream, refetch;
 static int progress = -1;
 static int enable_auto_gc = 1;
 static int tags = TAGS_DEFAULT, unshallow, update_shallow, deepen;
@@ -189,6 +189,9 @@ static struct option builtin_fetch_options[] = {
 		    N_("deepen history of shallow clone")),
 	OPT_SET_INT_F(0, "unshallow", &unshallow,
 		      N_("convert to a complete repository"),
+		      1, PARSE_OPT_NONEG),
+	OPT_SET_INT_F(0, "refetch", &refetch,
+		      N_("re-fetch without negotiating common commits"),
 		      1, PARSE_OPT_NONEG),
 	{ OPTION_STRING, 0, "submodule-prefix", &submodule_prefix, N_("dir"),
 		   N_("prepend this to submodule path output"), PARSE_OPT_HIDDEN },
@@ -1297,6 +1300,14 @@ static int check_exist_and_connected(struct ref *ref_map)
 		return -1;
 
 	/*
+	 * Similarly, if we need to refetch, we always want to perform a full
+	 * fetch ignoring existing objects.
+	 */
+	if (refetch)
+		return -1;
+
+
+	/*
 	 * check_connected() allows objects to merely be promised, but
 	 * we need all direct targets to exist.
 	 */
@@ -1492,6 +1503,8 @@ static struct transport *prepare_transport(struct remote *remote, int deepen)
 		set_option(transport, TRANS_OPT_DEEPEN_RELATIVE, "yes");
 	if (update_shallow)
 		set_option(transport, TRANS_OPT_UPDATE_SHALLOW, "yes");
+	if (refetch)
+		set_option(transport, TRANS_OPT_REFETCH, "yes");
 	if (filter_options.choice) {
 		const char *spec =
 			expand_list_objects_filter_spec(&filter_options);
