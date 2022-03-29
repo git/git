@@ -595,13 +595,6 @@ static void mark_ce_used(struct cache_entry *ce, struct unpack_trees_options *o)
 {
 	ce->ce_flags |= CE_UNPACKED;
 
-	/*
-	 * If this is a sparse directory, don't advance cache_bottom.
-	 * That will be advanced later using the cache-tree data.
-	 */
-	if (S_ISSPARSEDIR(ce->ce_mode))
-		return;
-
 	if (o->cache_bottom < o->src_index->cache_nr &&
 	    o->src_index->cache[o->cache_bottom] == ce) {
 		int bottom = o->cache_bottom;
@@ -651,24 +644,17 @@ static void mark_ce_used_same_name(struct cache_entry *ce,
 	}
 }
 
-static struct cache_entry *next_cache_entry(struct unpack_trees_options *o, int *hint)
+static struct cache_entry *next_cache_entry(struct unpack_trees_options *o)
 {
 	const struct index_state *index = o->src_index;
 	int pos = o->cache_bottom;
 
-	if (*hint > pos)
-		pos = *hint;
-
 	while (pos < index->cache_nr) {
 		struct cache_entry *ce = index->cache[pos];
-		if (!(ce->ce_flags & CE_UNPACKED)) {
-			*hint = pos + 1;
+		if (!(ce->ce_flags & CE_UNPACKED))
 			return ce;
-		}
 		pos++;
 	}
-
-	*hint = pos;
 	return NULL;
 }
 
@@ -1416,13 +1402,12 @@ static int unpack_callback(int n, unsigned long mask, unsigned long dirmask, str
 
 	/* Are we supposed to look at the index too? */
 	if (o->merge) {
-		int hint = -1;
 		while (1) {
 			int cmp;
 			struct cache_entry *ce;
 
 			if (o->diff_index_cached)
-				ce = next_cache_entry(o, &hint);
+				ce = next_cache_entry(o);
 			else
 				ce = find_cache_entry(info, p);
 
@@ -1478,7 +1463,14 @@ static int unpack_callback(int n, unsigned long mask, unsigned long dirmask, str
 			 * it does not do any look-ahead, so this is safe.
 			 */
 			if (matches) {
-				o->cache_bottom += matches;
+				/*
+				 * Only increment the cache_bottom if the
+				 * directory isn't a sparse directory index
+				 * entry (if it is, it was already incremented)
+				 * in 'mark_ce_used()'
+				 */
+				if (!src[0] || !S_ISSPARSEDIR(src[0]->ce_mode))
+					o->cache_bottom += matches;
 				return mask;
 			}
 		}
@@ -1777,7 +1769,7 @@ static int verify_absent(const struct cache_entry *,
 int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options *o)
 {
 	struct repository *repo = the_repository;
-	int i, hint, ret;
+	int i, ret;
 	static struct cache_entry *dfc;
 	struct pattern_list pl;
 	int free_pattern_list = 0;
@@ -1869,15 +1861,13 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		info.pathspec = o->pathspec;
 
 		if (o->prefix) {
-			hint = -1;
-
 			/*
 			 * Unpack existing index entries that sort before the
 			 * prefix the tree is spliced into.  Note that o->merge
 			 * is always true in this case.
 			 */
 			while (1) {
-				struct cache_entry *ce = next_cache_entry(o, &hint);
+				struct cache_entry *ce = next_cache_entry(o);
 				if (!ce)
 					break;
 				if (ce_in_traverse_path(ce, &info))
@@ -1898,9 +1888,8 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 
 	/* Any left-over entries in the index? */
 	if (o->merge) {
-		hint = -1;
 		while (1) {
-			struct cache_entry *ce = next_cache_entry(o, &hint);
+			struct cache_entry *ce = next_cache_entry(o);
 			if (!ce)
 				break;
 			if (unpack_index_entry(ce, o) < 0)

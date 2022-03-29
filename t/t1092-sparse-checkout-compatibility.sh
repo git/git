@@ -16,7 +16,9 @@ test_expect_success 'setup' '
 		echo "after deep" >e &&
 		echo "after folder1" >g &&
 		echo "after x" >z &&
-		mkdir folder1 folder2 deep x &&
+		mkdir folder1 folder2 deep before x &&
+		echo "before deep" >before/a &&
+		echo "before deep again" >before/b &&
 		mkdir deep/deeper1 deep/deeper2 deep/before deep/later &&
 		mkdir deep/deeper1/deepest &&
 		mkdir deep/deeper1/deepest2 &&
@@ -254,6 +256,7 @@ test_expect_success 'root directory cannot be sparse' '
 
 	# Verify sparse directories still present, root directory is not sparse
 	cat >expect <<-EOF &&
+	before/
 	folder1/
 	folder2/
 	x/
@@ -1444,6 +1447,7 @@ test_expect_success 'ls-files' '
 
 	cat >expect <<-\EOF &&
 	a
+	before/
 	deep/
 	e
 	folder1-
@@ -1491,6 +1495,7 @@ test_expect_success 'ls-files' '
 
 	cat >expect <<-\EOF &&
 	a
+	before/
 	deep/
 	e
 	folder1-
