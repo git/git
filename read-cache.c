@@ -133,7 +133,7 @@ static void replace_index_entry(struct index_state *istate, int nr, struct cache
 
 void rename_index_entry_at(struct index_state *istate, int nr, const char *new_name)
 {
-	struct cache_entry *old_entry = istate->cache[nr], *new_entry;
+	struct cache_entry *old_entry = istate->cache[nr], *new_entry, *refreshed;
 	int namelen = strlen(new_name);
 
 	new_entry = make_empty_cache_entry(istate, namelen);
@@ -146,7 +146,20 @@ void rename_index_entry_at(struct index_state *istate, int nr, const char *new_n
 	cache_tree_invalidate_path(istate, old_entry->name);
 	untracked_cache_remove_from_index(istate, old_entry->name);
 	remove_index_entry_at(istate, nr);
-	add_index_entry(istate, new_entry, ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE);
+
+	/*
+	 * Refresh the new index entry. Using 'refresh_cache_entry' ensures
+	 * we only update stat info if the entry is otherwise up-to-date (i.e.,
+	 * the contents/mode haven't changed). This ensures that we reflect the
+	 * 'ctime' of the rename in the index without (incorrectly) updating
+	 * the cached stat info to reflect unstaged changes on disk.
+	 */
+	refreshed = refresh_cache_entry(istate, new_entry, CE_MATCH_REFRESH);
+	if (refreshed && refreshed != new_entry) {
+		add_index_entry(istate, refreshed, ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE);
+		discard_cache_entry(new_entry);
+	} else
+		add_index_entry(istate, new_entry, ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE);
 }
 
 void fill_stat_data(struct stat_data *sd, struct stat *st)
