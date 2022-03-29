@@ -225,7 +225,7 @@ static int cmd_reflog_show(int argc, const char **argv, const char *prefix)
 		      PARSE_OPT_KEEP_DASHDASH | PARSE_OPT_KEEP_ARGV0 |
 		      PARSE_OPT_KEEP_UNKNOWN);
 
-	return cmd_log_reflog(argc - 1, argv + 1, prefix);
+	return cmd_log_reflog(argc, argv, prefix);
 }
 
 static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
@@ -425,7 +425,7 @@ int cmd_reflog(int argc, const char **argv, const char *prefix)
 		goto log_reflog;
 
 	if (!strcmp(argv[1], "show"))
-		return cmd_reflog_show(argc, argv, prefix);
+		return cmd_reflog_show(argc - 1, argv + 1, prefix);
 	else if (!strcmp(argv[1], "expire"))
 		return cmd_reflog_expire(argc - 1, argv + 1, prefix);
 	else if (!strcmp(argv[1], "delete"))
