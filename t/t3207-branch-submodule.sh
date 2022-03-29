@@ -260,7 +260,7 @@ test_expect_success 'should get fatal error upon branch creation when submodule 
 	)
 '
 
-test_expect_success 'should set up tracking of remote-tracking branches' '
+test_expect_success 'should set up tracking of remote-tracking branches by default' '
 	test_when_finished "reset_remote_test" &&
 	(
 		cd super-clone &&
@@ -286,6 +286,42 @@ test_expect_success 'should not fail when unable to set up tracking in submodule
 		test_cmp_config refs/heads/branch-a branch.branch-a.merge &&
 		test_cmp_config -C sub "" --default "" branch.branch-a.remote &&
 		test_cmp_config -C sub "" --default "" branch.branch-a.merge
+	)
+'
+
+test_expect_success '--track=inherit should set up tracking correctly' '
+	test_when_finished "reset_remote_test" &&
+	(
+		cd super-clone &&
+		git branch --recurse-submodules branch-a origin/branch-a &&
+		# Set this manually instead of using branch --set-upstream-to
+		# to circumvent the "nonexistent upstream" check.
+		git -C sub config branch.branch-a.remote origin &&
+		git -C sub config branch.branch-a.merge refs/heads/sub-branch-a &&
+		git -C sub/sub-sub config branch.branch-a.remote other &&
+		git -C sub/sub-sub config branch.branch-a.merge refs/heads/sub-sub-branch-a &&
+
+		git branch --recurse-submodules --track=inherit branch-b branch-a &&
+		test_cmp_config origin branch.branch-b.remote &&
+		test_cmp_config refs/heads/branch-a branch.branch-b.merge &&
+		test_cmp_config -C sub origin branch.branch-b.remote &&
+		test_cmp_config -C sub refs/heads/sub-branch-a branch.branch-b.merge &&
+		test_cmp_config -C sub/sub-sub other branch.branch-b.remote &&
+		test_cmp_config -C sub/sub-sub refs/heads/sub-sub-branch-a branch.branch-b.merge
+	)
+'
+
+test_expect_success '--no-track should not set up tracking' '
+	test_when_finished "reset_remote_test" &&
+	(
+		cd super-clone &&
+		git branch --recurse-submodules --no-track branch-a origin/branch-a &&
+		test_cmp_config "" --default "" branch.branch-a.remote &&
+		test_cmp_config "" --default "" branch.branch-a.merge &&
+		test_cmp_config -C sub "" --default "" branch.branch-a.remote &&
+		test_cmp_config -C sub "" --default "" branch.branch-a.merge &&
+		test_cmp_config -C sub/sub-sub "" --default "" branch.branch-a.remote &&
+		test_cmp_config -C sub/sub-sub "" --default "" branch.branch-a.merge
 	)
 '
 

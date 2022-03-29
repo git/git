@@ -233,6 +233,9 @@ static void setup_tracking(const char *new_ref, const char *orig_ref,
 	struct string_list tracking_srcs = STRING_LIST_INIT_DUP;
 	int config_flags = quiet ? 0 : BRANCH_CONFIG_VERBOSE;
 
+	if (!track)
+		BUG("asked to set up tracking, but tracking is disallowed");
+
 	memset(&tracking, 0, sizeof(tracking));
 	tracking.spec.dst = (char *)orig_ref;
 	tracking.srcs = &tracking_srcs;
@@ -529,8 +532,27 @@ static int submodule_create_branch(struct repository *r,
 		strvec_push(&child.args, "--quiet");
 	if (reflog)
 		strvec_push(&child.args, "--create-reflog");
-	if (track == BRANCH_TRACK_ALWAYS || track == BRANCH_TRACK_EXPLICIT)
-		strvec_push(&child.args, "--track");
+
+	switch (track) {
+	case BRANCH_TRACK_NEVER:
+		strvec_push(&child.args, "--no-track");
+		break;
+	case BRANCH_TRACK_ALWAYS:
+	case BRANCH_TRACK_EXPLICIT:
+		strvec_push(&child.args, "--track=direct");
+		break;
+	case BRANCH_TRACK_OVERRIDE:
+		BUG("BRANCH_TRACK_OVERRIDE cannot be used when creating a branch.");
+		break;
+	case BRANCH_TRACK_INHERIT:
+		strvec_push(&child.args, "--track=inherit");
+		break;
+	case BRANCH_TRACK_UNSPECIFIED:
+		/* Default for "git checkout". No need to pass --track. */
+	case BRANCH_TRACK_REMOTE:
+		/* Default for "git branch". No need to pass --track. */
+		break;
+	}
 
 	strvec_pushl(&child.args, name, start_oid, tracking_name, NULL);
 
@@ -609,7 +631,8 @@ void create_branches_recursively(struct repository *r, const char *name,
 	 * tedious to determine whether or not tracking was set up in the
 	 * superproject.
 	 */
-	setup_tracking(name, tracking_name, track, quiet);
+	if (track)
+		setup_tracking(name, tracking_name, track, quiet);
 
 	for (i = 0; i < submodule_entry_list.entry_nr; i++) {
 		if (submodule_create_branch(
