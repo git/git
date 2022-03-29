@@ -75,11 +75,11 @@ verify <file>::
 	cleanly to the current repository.  This includes checks on the
 	bundle format itself as well as checking that the prerequisite
 	commits exist and are fully linked in the current repository.
-	Information about additional capabilities, such as "object filter",
-	is printed. See "Capabilities" in link:technical/bundle-format.html
-	for more information. Finally, 'git bundle' prints a list of
-	missing commits, if any. The exit code is zero for success, but
-	will be nonzero if the bundle file is invalid.
+	Then, 'git bundle' prints a list of missing commits, if any.
+	Finally, information about additional capabilities, such as "object
+	filter", is printed. See "Capabilities" in link:technical/bundle-format.html
+	for more information. The exit code is zero for success, but will
+	be nonzero if the bundle file is invalid.
 
 list-heads <file>::
 	Lists the references defined in the bundle.  If followed by a
