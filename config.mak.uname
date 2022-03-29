@@ -802,9 +802,11 @@ vcxproj:
 	sed -i '/^git_broken_path_fix ".*/d' git-sh-setup
 	git add -f $(SCRIPT_LIB) $(SCRIPTS)
 
+ifndef NO_PERL
 	# Add Perl module
 	$(MAKE) $(LIB_PERL_GEN)
 	git add -f perl/build
+endif
 
 	# Add bin-wrappers, for testing
 	rm -rf bin-wrappers/
