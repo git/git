@@ -356,6 +356,13 @@ Fixes since v2.35
    in the current checkout of the superproject.  We now do so for all
    submodules that have been run "git submodule init" on.
 
+ * "git rebase $base $non_branch_commit", when $base is an ancestor or
+   the $non_branch_commit, modified the current branch, which has been
+   corrected.
+
+ * When "shallow" information is updated, we forgot to update the
+   in-core equivalent, which has been corrected.
+
  * Other code cleanup, docfix, build fix, etc.
    (merge cfc5cf428b jc/find-header later to maint).
    (merge 40e7cfdd46 jh/p4-fix-use-of-process-error-exception later to maint).
