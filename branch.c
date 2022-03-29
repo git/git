@@ -263,7 +263,7 @@ static void setup_tracking(const char *new_ref, const char *orig_ref,
 		string_list_append(tracking.srcs, orig_ref);
 	if (install_branch_config_multiple_remotes(config_flags, new_ref,
 				tracking.remote, tracking.srcs) < 0)
-		exit(-1);
+		exit(1);
 
 cleanup:
 	string_list_clear(&tracking_srcs, 0);
