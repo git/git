@@ -201,31 +201,34 @@ EOF
 	test_cmp expected check
 '
 
-test_expect_success 'ls-tree --name-only' '
-	git ls-tree --name-only $tree >current &&
-	cat >expected <<\EOF &&
-1.txt
-2.txt
-path0
-path1
-path2
-path3
-EOF
-	test_output
-'
+for opt in --name-only --name-status
+do
+	test_expect_success "ls-tree $opt" '
+		git ls-tree $opt $tree >current &&
+		cat >expected <<-\EOF &&
+		1.txt
+		2.txt
+		path0
+		path1
+		path2
+		path3
+		EOF
+		test_output
+	'
 
-test_expect_success 'ls-tree --name-only -r' '
-	git ls-tree --name-only -r $tree >current &&
-	cat >expected <<\EOF &&
-1.txt
-2.txt
-path0/a/b/c/1.txt
-path1/b/c/1.txt
-path2/1.txt
-path3/1.txt
-path3/2.txt
-EOF
-	test_output
-'
+	test_expect_success "ls-tree $opt -r" '
+		git ls-tree $opt -r $tree >current &&
+		cat >expected <<-\EOF &&
+		1.txt
+		2.txt
+		path0/a/b/c/1.txt
+		path1/b/c/1.txt
+		path2/1.txt
+		path3/1.txt
+		path3/2.txt
+		EOF
+		test_output
+	'
+done
 
 test_done
