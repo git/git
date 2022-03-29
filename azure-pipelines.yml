@@ -441,44 +441,6 @@ jobs:
       PathtoPublish: t/failed-test-artifacts
       ArtifactName: failed-test-artifacts
 
-- job: gettext_poison
-  displayName: GETTEXT_POISON
-  condition: succeeded()
-  pool:
-    vmImage: ubuntu-latest
-  steps:
-  - bash: |
-       test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
-
-       sudo apt-get update &&
-       sudo apt-get -y install git gcc make libssl-dev libcurl4-openssl-dev libexpat-dev tcl tk gettext git-email zlib1g-dev &&
-
-       export jobname=GETTEXT_POISON || exit 1
-
-       ci/run-build-and-tests.sh || {
-           ci/print-test-failures.sh
-           exit 1
-       }
-
-       test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || sudo umount "$HOME/test-cache" || exit 1
-    displayName: 'ci/run-build-and-tests.sh'
-    env:
-      GITFILESHAREPWD: $(gitfileshare.pwd)
-  - task: PublishTestResults@2
-    displayName: 'Publish Test Results **/TEST-*.xml'
-    inputs:
-      mergeTestResults: true
-      testRunTitle: 'gettext-poison'
-      platform: Linux
-      publishRunAttachments: false
-    condition: succeededOrFailed()
-  - task: PublishBuildArtifacts@1
-    displayName: 'Publish trash directories of failed tests'
-    condition: failed()
-    inputs:
-      PathtoPublish: t/failed-test-artifacts
-      ArtifactName: failed-test-artifacts
-
 - job: linux32
   displayName: Linux32
   condition: succeeded()
