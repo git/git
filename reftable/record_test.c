@@ -339,7 +339,9 @@ static void test_reftable_obj_record_roundtrip(void)
 		};
 		struct reftable_record in = {
 			.type = BLOCK_TYPE_OBJ,
-			.u.obj = recs[i],
+			.u = {
+				.obj = recs[i],
+			},
 		};
 		struct strbuf key = STRBUF_INIT;
 		struct reftable_record out = { .type = BLOCK_TYPE_OBJ };
