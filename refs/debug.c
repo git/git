@@ -220,8 +220,9 @@ static int debug_ref_iterator_abort(struct ref_iterator *ref_iterator)
 }
 
 static struct ref_iterator_vtable debug_ref_iterator_vtable = {
-	debug_ref_iterator_advance, debug_ref_iterator_peel,
-	debug_ref_iterator_abort
+	.advance = debug_ref_iterator_advance,
+	.peel = debug_ref_iterator_peel,
+	.abort = debug_ref_iterator_abort,
 };
 
 static struct ref_iterator *
@@ -259,6 +260,24 @@ static int debug_read_raw_ref(struct ref_store *ref_store, const char *refname,
 				 res, *failure_errno);
 	}
 	return res;
+}
+
+static int debug_read_symbolic_ref(struct ref_store *ref_store, const char *refname,
+				   struct strbuf *referent)
+{
+	struct debug_ref_store *drefs = (struct debug_ref_store *)ref_store;
+	struct ref_store *refs = drefs->refs;
+	int res;
+
+	res = refs->be->read_symbolic_ref(refs, refname, referent);
+	if (!res)
+		trace_printf_key(&trace_refs, "read_symbolic_ref: %s: (%s)\n",
+				 refname, referent->buf);
+	else
+		trace_printf_key(&trace_refs,
+				 "read_symbolic_ref: %s: %d\n", refname, res);
+	return res;
+
 }
 
 static struct ref_iterator *
@@ -418,30 +437,37 @@ static int debug_reflog_expire(struct ref_store *ref_store, const char *refname,
 }
 
 struct ref_storage_be refs_be_debug = {
-	NULL,
-	"debug",
-	NULL,
-	debug_init_db,
-	debug_transaction_prepare,
-	debug_transaction_finish,
-	debug_transaction_abort,
-	debug_initial_transaction_commit,
+	.next = NULL,
+	.name = "debug",
+	.init = NULL,
+	.init_db = debug_init_db,
 
-	debug_pack_refs,
-	debug_create_symref,
-	debug_delete_refs,
-	debug_rename_ref,
-	debug_copy_ref,
+	/*
+	 * None of these should be NULL. If the "files" backend (in
+	 * "struct ref_storage_be refs_be_files" in files-backend.c)
+	 * has a function we should also have a wrapper for it here.
+	 * Test the output with "GIT_TRACE_REFS=1".
+	 */
+	.transaction_prepare = debug_transaction_prepare,
+	.transaction_finish = debug_transaction_finish,
+	.transaction_abort = debug_transaction_abort,
+	.initial_transaction_commit = debug_initial_transaction_commit,
 
-	debug_ref_iterator_begin,
-	debug_read_raw_ref,
-	NULL,
+	.pack_refs = debug_pack_refs,
+	.create_symref = debug_create_symref,
+	.delete_refs = debug_delete_refs,
+	.rename_ref = debug_rename_ref,
+	.copy_ref = debug_copy_ref,
 
-	debug_reflog_iterator_begin,
-	debug_for_each_reflog_ent,
-	debug_for_each_reflog_ent_reverse,
-	debug_reflog_exists,
-	debug_create_reflog,
-	debug_delete_reflog,
-	debug_reflog_expire,
+	.iterator_begin = debug_ref_iterator_begin,
+	.read_raw_ref = debug_read_raw_ref,
+	.read_symbolic_ref = debug_read_symbolic_ref,
+
+	.reflog_iterator_begin = debug_reflog_iterator_begin,
+	.for_each_reflog_ent = debug_for_each_reflog_ent,
+	.for_each_reflog_ent_reverse = debug_for_each_reflog_ent_reverse,
+	.reflog_exists = debug_reflog_exists,
+	.create_reflog = debug_create_reflog,
+	.delete_reflog = debug_delete_reflog,
+	.reflog_expire = debug_reflog_expire,
 };
