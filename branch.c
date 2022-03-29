@@ -602,11 +602,13 @@ void create_branches_recursively(struct repository *r, const char *name,
 	 */
 	for (i = 0; i < submodule_entry_list.entry_nr; i++) {
 		if (submodule_entry_list.entries[i].repo == NULL) {
+			int code = die_message(
+				_("submodule '%s': unable to find submodule"),
+				submodule_entry_list.entries[i].submodule->name);
 			if (advice_enabled(ADVICE_SUBMODULES_NOT_UPDATED))
 				advise(_("You may try updating the submodules using 'git checkout %s && git submodule update --init'"),
 				       start_commitish);
-			die(_("submodule '%s': unable to find submodule"),
-			    submodule_entry_list.entries[i].submodule->name);
+			exit(code);
 		}
 
 		if (submodule_create_branch(
