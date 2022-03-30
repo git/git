@@ -60,19 +60,7 @@ then
 	esac
 fi
 
-if test -n "$GIT_PERF_7519_DROP_CACHE"
-then
-	# When using GIT_PERF_7519_DROP_CACHE, GIT_PERF_REPEAT_COUNT must be 1 to
-	# generate valid results. Otherwise the caching that happens for the nth
-	# run will negate the validity of the comparisons.
-	if test "$GIT_PERF_REPEAT_COUNT" -ne 1
-	then
-		echo "warning: Setting GIT_PERF_REPEAT_COUNT=1" >&2
-		GIT_PERF_REPEAT_COUNT=1
-	fi
-fi
-
-trace_start () {
+trace_start() {
 	if test -n "$GIT_PERF_7519_TRACE"
 	then
 		name="$1"
@@ -175,10 +163,10 @@ setup_for_fsmonitor_hook () {
 
 test_perf_w_drop_caches () {
 	if test -n "$GIT_PERF_7519_DROP_CACHE"; then
-		test-tool drop-caches
+		test_perf "$1" --setup "test-tool drop-caches" "$2"
+	else
+		test_perf "$@"
 	fi
-
-	test_perf "$@"
 }
 
 test_fsmonitor_suite () {
