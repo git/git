@@ -4,6 +4,9 @@
 #include "cache.h"
 #include "config.h"
 
+static intmax_t count_fsync_writeout_only;
+static intmax_t count_fsync_hardware_flush;
+
 #ifdef HAVE_RTLGENRANDOM
 /* This is required to get access to RtlGenRandom. */
 #define SystemFunction036 NTAPI SystemFunction036
@@ -564,6 +567,7 @@ int git_fsync(int fd, enum fsync_action action)
 {
 	switch (action) {
 	case FSYNC_WRITEOUT_ONLY:
+		count_fsync_writeout_only += 1;
 
 #ifdef __APPLE__
 		/*
@@ -595,6 +599,8 @@ int git_fsync(int fd, enum fsync_action action)
 		return -1;
 
 	case FSYNC_HARDWARE_FLUSH:
+		count_fsync_hardware_flush += 1;
+
 		/*
 		 * On macOS, a special fcntl is required to really flush the
 		 * caches within the storage controller. As of this writing,
@@ -608,6 +614,12 @@ int git_fsync(int fd, enum fsync_action action)
 	default:
 		BUG("unexpected git_fsync(%d) call", action);
 	}
+}
+
+void trace_git_fsync_stats(void)
+{
+	trace2_data_intmax("fsync", the_repository, "fsync/writeout-only", count_fsync_writeout_only);
+	trace2_data_intmax("fsync", the_repository, "fsync/hardware-flush", count_fsync_hardware_flush);
 }
 
 static int warn_if_unremovable(const char *op, const char *file, int rc)
