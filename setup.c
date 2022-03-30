@@ -1433,13 +1433,23 @@ const char *setup_git_directory_gently(int *nongit_ok)
 	case GIT_DIR_INVALID_OWNERSHIP:
 		if (!nongit_ok) {
 			struct strbuf quoted = STRBUF_INIT;
+			struct strbuf hint = STRBUF_INIT;
+
+#ifdef __MINGW32__
+			if (!git_env_bool("GIT_TEST_DEBUG_UNSAFE_DIRECTORIES", 0))
+				strbuf_addstr(&hint,
+					      _("\n\nSet the environment variable "
+						"GIT_TEST_DEBUG_UNSAFE_DIRECTORIES=true "
+						"and run\n"
+						"again for more information."));
+#endif
 
 			sq_quote_buf_pretty(&quoted, dir.buf);
 			die(_("detected dubious ownership in repository at '%s'\n"
 			      "To add an exception for this directory, call:\n"
 			      "\n"
-			      "\tgit config --global --add safe.directory %s"),
-			    dir.buf, quoted.buf);
+			      "\tgit config --global --add safe.directory %s%s"),
+			    dir.buf, quoted.buf, hint.buf);
 		}
 		*nongit_ok = 1;
 		break;
