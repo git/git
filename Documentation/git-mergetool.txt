@@ -101,6 +101,7 @@ success of the resolution after the custom tool has exited.
 
 CONFIGURATION
 -------------
+:git-mergetool: 1
 include::config/mergetool.txt[]
 
 TEMPORARY FILES
@@ -112,6 +113,13 @@ These are safe to remove once a file has been merged and its
 Setting the `mergetool.keepBackup` configuration variable to `false`
 causes `git mergetool` to automatically remove the backup as files
 are successfully merged.
+
+BACKEND SPECIFIC HINTS
+----------------------
+
+vimdiff
+~~~~~~~
+include::mergetools/vimdiff.txt[]
 
 GIT
 ---

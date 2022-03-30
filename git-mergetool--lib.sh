@@ -63,7 +63,7 @@ $(list_tool_variants)"
 					preamble=
 				fi
 				shown_any=yes
-				printf "%s%s\n" "$per_line_prefix" "$toolname"
+				printf "%s%-15s  %s\n" "$per_line_prefix" "$toolname" $(diff_mode && diff_cmd_help "$toolname" || merge_cmd_help "$toolname")
 			fi
 		done
 
@@ -162,8 +162,16 @@ setup_tool () {
 		return 1
 	}
 
+	diff_cmd_help () {
+		return 0
+	}
+
 	merge_cmd () {
 		return 1
+	}
+
+	merge_cmd_help () {
+		return 0
 	}
 
 	hide_resolved_enabled () {

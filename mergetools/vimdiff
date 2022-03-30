@@ -365,6 +365,25 @@ diff_cmd () {
 }
 
 
+diff_cmd_help () {
+	TOOL=$1
+
+	case "$TOOL" in
+	nvimdiff*)
+		printf "Use Neovim"
+		;;
+	gvimdiff*)
+		printf "Use gVim (requires a graphical session)"
+		;;
+	vimdiff*)
+		printf "Use Vim"
+		;;
+	esac
+
+	return 0
+}
+
+
 merge_cmd () {
 	layout=$(git config mergetool.vimdiff.layout)
 
@@ -433,6 +452,40 @@ merge_cmd () {
 	fi
 
 	return "$ret"
+}
+
+
+merge_cmd_help () {
+	TOOL=$1
+
+	case "$TOOL" in
+	nvimdiff*)
+		printf "Use Neovim "
+		;;
+	gvimdiff*)
+		printf "Use gVim (requires a graphical session) "
+		;;
+	vimdiff*)
+		printf "Use Vim "
+		;;
+	esac
+
+	case "$TOOL" in
+	*1)
+		echo "with a 2 panes layout (LOCAL and REMOTE)"
+		;;
+	*2)
+		echo "with a 3 panes layout (LOCAL, MERGED and REMOTE)"
+		;;
+	*3)
+		echo "where only the MERGED file is shown"
+		;;
+	*)
+		echo "with a custom layout (see \`git help mergetool\`'s \`BACKEND SPECIFIC HINTS\` section)"
+		;;
+	esac
+
+	return 0
 }
 
 
