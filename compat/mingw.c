@@ -3514,6 +3514,7 @@ int is_path_owned_by_current_sid(const char *path)
 	else if (sid && IsValidSid(sid)) {
 		/* Now, verify that the SID matches the current user's */
 		static PSID current_user_sid;
+		BOOL is_member;
 
 		if (!current_user_sid)
 			current_user_sid = get_current_user_sid();
@@ -3521,6 +3522,15 @@ int is_path_owned_by_current_sid(const char *path)
 		if (current_user_sid &&
 		    IsValidSid(current_user_sid) &&
 		    EqualSid(sid, current_user_sid))
+			result = 1;
+		else if (IsWellKnownSid(sid, WinBuiltinAdministratorsSid) &&
+			 CheckTokenMembership(NULL, sid, &is_member) &&
+			 is_member)
+			/*
+			 * If owned by the Administrators group, and the
+			 * current user is an administrator, we consider that
+			 * okay, too.
+			 */
 			result = 1;
 		else if (git_env_bool("GIT_TEST_DEBUG_UNSAFE_DIRECTORIES", 0)) {
 			LPSTR str1, str2, to_free1 = NULL, to_free2 = NULL;
