@@ -2,6 +2,10 @@ diff_cmd () {
 	"$merge_tool_path" "$LOCAL" "$REMOTE"
 }
 
+diff_cmd_help () {
+	echo "Use Meld (requires a graphical session)"
+}
+
 merge_cmd () {
 	check_meld_for_features
 
@@ -18,6 +22,10 @@ merge_cmd () {
 	else
 		"$merge_tool_path" $option_auto_merge "$LOCAL" "$MERGED" "$REMOTE"
 	fi
+}
+
+merge_cmd_help () {
+	echo "Use Meld (requires a graphical session) with optional \`auto merge\` (see \`git help mergetool\`'s \`CONFIGURATION\` section)"
 }
 
 # Get meld help message
