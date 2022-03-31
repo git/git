@@ -1,6 +1,6 @@
 test_expect_success "setup proc-receive hook and disable push-options ($PROTOCOL)" '
 	git -C "$upstream" config receive.advertisePushOptions false &&
-	write_script "$upstream/hooks/proc-receive" <<-EOF
+	test_hook -C "$upstream" --clobber proc-receive <<-\EOF
 	printf >&2 "# proc-receive hook\n"
 	test-tool proc-receive -v \
 		-r "ok refs/for/main/topic"
@@ -31,7 +31,7 @@ test_expect_success "enable push options ($PROTOCOL)" '
 '
 
 test_expect_success "setup version=0 for proc-receive hook ($PROTOCOL)" '
-	write_script "$upstream/hooks/proc-receive" <<-EOF
+	test_hook -C "$upstream" --clobber proc-receive <<-\EOF
 	printf >&2 "# proc-receive hook\n"
 	test-tool proc-receive -v \
 		--version 0 \
@@ -75,7 +75,7 @@ test_expect_success "proc-receive: ignore push-options for version 0 ($PROTOCOL)
 '
 
 test_expect_success "restore proc-receive hook ($PROTOCOL)" '
-	write_script "$upstream/hooks/proc-receive" <<-EOF
+	test_hook -C "$upstream" --clobber proc-receive <<-\EOF
 	printf >&2 "# proc-receive hook\n"
 	test-tool proc-receive -v \
 		-r "ok refs/for/main/topic"

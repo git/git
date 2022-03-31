@@ -169,7 +169,7 @@ test_expect_success 'atomic fetch with failing backfill' '
 	# one of both fails to update correctly.
 	#
 	# To trigger failure we simply abort when backfilling a tag.
-	write_script clone3/.git/hooks/reference-transaction <<-\EOF &&
+	test_hook -C clone3 reference-transaction <<-\EOF &&
 		while read oldrev newrev reference
 		do
 			if test "$reference" = refs/tags/tag1
@@ -201,7 +201,7 @@ test_expect_success 'atomic fetch with backfill should use single transaction' '
 		$ZERO_OID $T refs/tags/tag1
 	EOF
 
-	write_script clone4/.git/hooks/reference-transaction <<-\EOF &&
+	test_hook -C clone4 reference-transaction <<-\EOF &&
 		( echo "$*" && cat ) >>actual
 	EOF
 

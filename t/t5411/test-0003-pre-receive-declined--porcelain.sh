@@ -1,6 +1,6 @@
 test_expect_success "setup pre-receive hook ($PROTOCOL/porcelain)" '
 	mv "$upstream/hooks/pre-receive" "$upstream/hooks/pre-receive.ok" &&
-	write_script "$upstream/hooks/pre-receive" <<-EOF
+	test_hook -C "$upstream" --clobber pre-receive <<-\EOF
 	exit 1
 	EOF
 '

@@ -315,12 +315,10 @@ test_expect_success 'am --patch-format=hg applies hg patch' '
 '
 
 test_expect_success 'am with applypatch-msg hook' '
-	test_when_finished "rm -f .git/hooks/applypatch-msg" &&
 	rm -fr .git/rebase-apply &&
 	git reset --hard &&
 	git checkout first &&
-	mkdir -p .git/hooks &&
-	write_script .git/hooks/applypatch-msg <<-\EOF &&
+	test_hook applypatch-msg <<-\EOF &&
 	cat "$1" >actual-msg &&
 	echo hook-message >"$1"
 	EOF
@@ -335,12 +333,10 @@ test_expect_success 'am with applypatch-msg hook' '
 '
 
 test_expect_success 'am with failing applypatch-msg hook' '
-	test_when_finished "rm -f .git/hooks/applypatch-msg" &&
 	rm -fr .git/rebase-apply &&
 	git reset --hard &&
 	git checkout first &&
-	mkdir -p .git/hooks &&
-	write_script .git/hooks/applypatch-msg <<-\EOF &&
+	test_hook applypatch-msg <<-\EOF &&
 	exit 1
 	EOF
 	test_must_fail git am patch1 &&
@@ -350,12 +346,10 @@ test_expect_success 'am with failing applypatch-msg hook' '
 '
 
 test_expect_success 'am with pre-applypatch hook' '
-	test_when_finished "rm -f .git/hooks/pre-applypatch" &&
 	rm -fr .git/rebase-apply &&
 	git reset --hard &&
 	git checkout first &&
-	mkdir -p .git/hooks &&
-	write_script .git/hooks/pre-applypatch <<-\EOF &&
+	test_hook pre-applypatch <<-\EOF &&
 	git diff first >diff.actual
 	exit 0
 	EOF
@@ -368,12 +362,10 @@ test_expect_success 'am with pre-applypatch hook' '
 '
 
 test_expect_success 'am with failing pre-applypatch hook' '
-	test_when_finished "rm -f .git/hooks/pre-applypatch" &&
 	rm -fr .git/rebase-apply &&
 	git reset --hard &&
 	git checkout first &&
-	mkdir -p .git/hooks &&
-	write_script .git/hooks/pre-applypatch <<-\EOF &&
+	test_hook pre-applypatch <<-\EOF &&
 	exit 1
 	EOF
 	test_must_fail git am patch1 &&
@@ -383,12 +375,10 @@ test_expect_success 'am with failing pre-applypatch hook' '
 '
 
 test_expect_success 'am with post-applypatch hook' '
-	test_when_finished "rm -f .git/hooks/post-applypatch" &&
 	rm -fr .git/rebase-apply &&
 	git reset --hard &&
 	git checkout first &&
-	mkdir -p .git/hooks &&
-	write_script .git/hooks/post-applypatch <<-\EOF &&
+	test_hook post-applypatch <<-\EOF &&
 	git rev-parse HEAD >head.actual
 	git diff second >diff.actual
 	exit 0
@@ -403,12 +393,10 @@ test_expect_success 'am with post-applypatch hook' '
 '
 
 test_expect_success 'am with failing post-applypatch hook' '
-	test_when_finished "rm -f .git/hooks/post-applypatch" &&
 	rm -fr .git/rebase-apply &&
 	git reset --hard &&
 	git checkout first &&
-	mkdir -p .git/hooks &&
-	write_script .git/hooks/post-applypatch <<-\EOF &&
+	test_hook post-applypatch <<-\EOF &&
 	git rev-parse HEAD >head.actual
 	exit 1
 	EOF

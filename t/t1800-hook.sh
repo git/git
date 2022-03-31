@@ -27,7 +27,7 @@ test_expect_success 'git hook run: nonexistent hook with --ignore-missing' '
 '
 
 test_expect_success 'git hook run: basic' '
-	write_script .git/hooks/test-hook <<-EOF &&
+	test_hook test-hook <<-EOF &&
 	echo Test hook
 	EOF
 
@@ -39,7 +39,7 @@ test_expect_success 'git hook run: basic' '
 '
 
 test_expect_success 'git hook run: stdout and stderr both write to our stderr' '
-	write_script .git/hooks/test-hook <<-EOF &&
+	test_hook test-hook <<-EOF &&
 	echo >&1 Will end up on stderr
 	echo >&2 Will end up on stderr
 	EOF
@@ -53,38 +53,23 @@ test_expect_success 'git hook run: stdout and stderr both write to our stderr' '
 	test_must_be_empty stdout.actual
 '
 
-test_expect_success 'git hook run: exit codes are passed along' '
-	write_script .git/hooks/test-hook <<-EOF &&
-	exit 1
-	EOF
+for code in 1 2 128 129
+do
+	test_expect_success "git hook run: exit code $code is passed along" '
+		test_hook test-hook <<-EOF &&
+		exit $code
+		EOF
 
-	test_expect_code 1 git hook run test-hook &&
-
-	write_script .git/hooks/test-hook <<-EOF &&
-	exit 2
-	EOF
-
-	test_expect_code 2 git hook run test-hook &&
-
-	write_script .git/hooks/test-hook <<-EOF &&
-	exit 128
-	EOF
-
-	test_expect_code 128 git hook run test-hook &&
-
-	write_script .git/hooks/test-hook <<-EOF &&
-	exit 129
-	EOF
-
-	test_expect_code 129 git hook run test-hook
-'
+		test_expect_code $code git hook run test-hook
+	'
+done
 
 test_expect_success 'git hook run arg u ments without -- is not allowed' '
 	test_expect_code 129 git hook run test-hook arg u ments
 '
 
 test_expect_success 'git hook run -- pass arguments' '
-	write_script .git/hooks/test-hook <<-\EOF &&
+	test_hook test-hook <<-\EOF &&
 	echo $1
 	echo $2
 	EOF
@@ -99,7 +84,7 @@ test_expect_success 'git hook run -- pass arguments' '
 '
 
 test_expect_success 'git hook run -- out-of-repo runs excluded' '
-	write_script .git/hooks/test-hook <<-EOF &&
+	test_hook test-hook <<-EOF &&
 	echo Test hook
 	EOF
 
@@ -118,6 +103,10 @@ test_expect_success 'git -c core.hooksPath=<PATH> hook run' '
 	Hook ran two
 	Hook ran three
 	Hook ran four
+	EOF
+
+	test_hook test-hook <<-EOF &&
+	echo Test hook
 	EOF
 
 	# Test various ways of specifying the path. See also

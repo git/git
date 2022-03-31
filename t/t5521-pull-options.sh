@@ -233,7 +233,7 @@ test_expect_success 'git pull --no-verify flag passed to merge' '
 	git init src &&
 	test_commit -C src one &&
 	git clone src dst &&
-	write_script dst/.git/hooks/commit-msg <<-\EOF &&
+	test_hook -C dst commit-msg <<-\EOF &&
 	false
 	EOF
 	test_commit -C src two &&
@@ -245,7 +245,7 @@ test_expect_success 'git pull --no-verify --verify passed to merge' '
 	git init src &&
 	test_commit -C src one &&
 	git clone src dst &&
-	write_script dst/.git/hooks/commit-msg <<-\EOF &&
+	test_hook -C dst commit-msg <<-\EOF &&
 	false
 	EOF
 	test_commit -C src two &&

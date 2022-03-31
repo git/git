@@ -35,8 +35,7 @@ test_expect_success setup '
 
 test_expect_success 'unsigned push does not send push certificate' '
 	prepare_dst &&
-	mkdir -p dst/.git/hooks &&
-	write_script dst/.git/hooks/post-receive <<-\EOF &&
+	test_hook -C dst post-receive <<-\EOF &&
 	# discard the update list
 	cat >/dev/null
 	# record the push certificate
@@ -52,8 +51,7 @@ test_expect_success 'unsigned push does not send push certificate' '
 
 test_expect_success 'talking with a receiver without push certificate support' '
 	prepare_dst &&
-	mkdir -p dst/.git/hooks &&
-	write_script dst/.git/hooks/post-receive <<-\EOF &&
+	test_hook -C dst post-receive <<-\EOF &&
 	# discard the update list
 	cat >/dev/null
 	# record the push certificate
@@ -69,22 +67,19 @@ test_expect_success 'talking with a receiver without push certificate support' '
 
 test_expect_success 'push --signed fails with a receiver without push certificate support' '
 	prepare_dst &&
-	mkdir -p dst/.git/hooks &&
 	test_must_fail git push --signed dst noop ff +noff 2>err &&
 	test_i18ngrep "the receiving end does not support" err
 '
 
 test_expect_success 'push --signed=1 is accepted' '
 	prepare_dst &&
-	mkdir -p dst/.git/hooks &&
 	test_must_fail git push --signed=1 dst noop ff +noff 2>err &&
 	test_i18ngrep "the receiving end does not support" err
 '
 
 test_expect_success GPG 'no certificate for a signed push with no update' '
 	prepare_dst &&
-	mkdir -p dst/.git/hooks &&
-	write_script dst/.git/hooks/post-receive <<-\EOF &&
+	test_hook -C dst post-receive <<-\EOF &&
 	if test -n "${GIT_PUSH_CERT-}"
 	then
 		git cat-file blob $GIT_PUSH_CERT >../push-cert
@@ -96,9 +91,8 @@ test_expect_success GPG 'no certificate for a signed push with no update' '
 
 test_expect_success GPG 'signed push sends push certificate' '
 	prepare_dst &&
-	mkdir -p dst/.git/hooks &&
 	git -C dst config receive.certnonceseed sekrit &&
-	write_script dst/.git/hooks/post-receive <<-\EOF &&
+	test_hook -C dst post-receive <<-\EOF &&
 	# discard the update list
 	cat >/dev/null
 	# record the push certificate
@@ -139,10 +133,9 @@ test_expect_success GPG 'signed push sends push certificate' '
 
 test_expect_success GPGSSH 'ssh signed push sends push certificate' '
 	prepare_dst &&
-	mkdir -p dst/.git/hooks &&
 	git -C dst config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
 	git -C dst config receive.certnonceseed sekrit &&
-	write_script dst/.git/hooks/post-receive <<-\EOF &&
+	test_hook -C dst post-receive <<-\EOF &&
 	# discard the update list
 	cat >/dev/null
 	# record the push certificate
@@ -223,9 +216,8 @@ test_expect_success GPG 'inconsistent push options in signed push not allowed' '
 
 test_expect_success GPG 'fail without key and heed user.signingkey' '
 	prepare_dst &&
-	mkdir -p dst/.git/hooks &&
 	git -C dst config receive.certnonceseed sekrit &&
-	write_script dst/.git/hooks/post-receive <<-\EOF &&
+	test_hook -C dst post-receive <<-\EOF &&
 	# discard the update list
 	cat >/dev/null
 	# record the push certificate
@@ -273,9 +265,8 @@ test_expect_success GPG 'fail without key and heed user.signingkey' '
 test_expect_success GPGSM 'fail without key and heed user.signingkey x509' '
 	test_config gpg.format x509 &&
 	prepare_dst &&
-	mkdir -p dst/.git/hooks &&
 	git -C dst config receive.certnonceseed sekrit &&
-	write_script dst/.git/hooks/post-receive <<-\EOF &&
+	test_hook -C dst post-receive <<-\EOF &&
 	# discard the update list
 	cat >/dev/null
 	# record the push certificate
@@ -326,10 +317,9 @@ test_expect_success GPGSM 'fail without key and heed user.signingkey x509' '
 test_expect_success GPGSSH 'fail without key and heed user.signingkey ssh' '
 	test_config gpg.format ssh &&
 	prepare_dst &&
-	mkdir -p dst/.git/hooks &&
 	git -C dst config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
 	git -C dst config receive.certnonceseed sekrit &&
-	write_script dst/.git/hooks/post-receive <<-\EOF &&
+	test_hook -C dst post-receive <<-\EOF &&
 	# discard the update list
 	cat >/dev/null
 	# record the push certificate

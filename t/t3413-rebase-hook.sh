@@ -41,12 +41,9 @@ test_expect_success 'rebase -i' '
 '
 
 test_expect_success 'setup pre-rebase hook' '
-	mkdir -p .git/hooks &&
-	cat >.git/hooks/pre-rebase <<EOF &&
-#!$SHELL_PATH
-echo "\$1,\$2" >.git/PRE-REBASE-INPUT
-EOF
-	chmod +x .git/hooks/pre-rebase
+	test_hook --setup pre-rebase <<-\EOF
+	echo "$1,$2" >.git/PRE-REBASE-INPUT
+	EOF
 '
 
 test_expect_success 'pre-rebase hook gets correct input (1)' '
@@ -102,12 +99,9 @@ test_expect_success 'pre-rebase hook gets correct input (6)' '
 '
 
 test_expect_success 'setup pre-rebase hook that fails' '
-	mkdir -p .git/hooks &&
-	cat >.git/hooks/pre-rebase <<EOF &&
-#!$SHELL_PATH
-false
-EOF
-	chmod +x .git/hooks/pre-rebase
+	test_hook --setup --clobber pre-rebase <<-\EOF
+	false
+	EOF
 '
 
 test_expect_success 'pre-rebase hook stops rebase (1)' '

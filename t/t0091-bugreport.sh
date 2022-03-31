@@ -60,18 +60,22 @@ test_expect_success 'can create leading directories outside of a git dir' '
 
 test_expect_success 'indicates populated hooks' '
 	test_when_finished rm git-bugreport-hooks.txt &&
-	test_when_finished rm -fr .git/hooks &&
-	rm -fr .git/hooks &&
-	mkdir .git/hooks &&
-	for hook in applypatch-msg prepare-commit-msg.sample
-	do
-		write_script ".git/hooks/$hook" <<-EOF || return 1
-		echo "hook $hook exists"
-		EOF
-	done &&
+
+	test_hook applypatch-msg <<-\EOF &&
+	true
+	EOF
+	test_hook unknown-hook <<-\EOF &&
+	true
+	EOF
 	git bugreport -s hooks &&
-	grep applypatch-msg git-bugreport-hooks.txt &&
-	! grep prepare-commit-msg git-bugreport-hooks.txt
+
+	sort >expect <<-\EOF &&
+	[Enabled Hooks]
+	applypatch-msg
+	EOF
+
+	sed -ne "/^\[Enabled Hooks\]$/,/^$/p" <git-bugreport-hooks.txt >actual &&
+	test_cmp expect actual
 '
 
 test_done

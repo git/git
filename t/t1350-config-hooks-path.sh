@@ -6,11 +6,11 @@ test_description='Test the core.hooksPath configuration variable'
 
 test_expect_success 'set up a pre-commit hook in core.hooksPath' '
 	>actual &&
-	mkdir -p .git/custom-hooks .git/hooks &&
+	mkdir -p .git/custom-hooks &&
 	write_script .git/custom-hooks/pre-commit <<-\EOF &&
 	echo CUSTOM >>actual
 	EOF
-	write_script .git/hooks/pre-commit <<-\EOF
+	test_hook --setup pre-commit <<-\EOF
 	echo NORMAL >>actual
 	EOF
 '

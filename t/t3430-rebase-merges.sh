@@ -292,9 +292,9 @@ test_expect_success 'post-rewrite hook and fixups work for merges' '
 	git commit --fixup HEAD same2.t &&
 	fixup="$(git rev-parse HEAD)" &&
 
-	mkdir -p .git/hooks &&
-	test_when_finished "rm .git/hooks/post-rewrite" &&
-	echo "cat >actual" | write_script .git/hooks/post-rewrite &&
+	test_hook post-rewrite <<-\EOF &&
+	cat >actual
+	EOF
 
 	test_tick &&
 	git rebase -i --autosquash -r HEAD^^^ &&

@@ -168,7 +168,7 @@ run_git_push_porcelain_output_test() {
 	'
 
 	test_expect_success "prepare pre-receive hook ($PROTOCOL)" '
-		write_script "$upstream/hooks/pre-receive" <<-EOF
+		test_hook --setup -C "$upstream" pre-receive <<-EOF
 		exit 1
 		EOF
 	'
