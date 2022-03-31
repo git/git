@@ -549,9 +549,9 @@ static int submodule_create_branch(struct repository *r,
 		strvec_push(&child.args, "--track=inherit");
 		break;
 	case BRANCH_TRACK_UNSPECIFIED:
-		/* Default for "git checkout". No need to pass --track. */
+		/* Default for "git checkout". Do not pass --track. */
 	case BRANCH_TRACK_REMOTE:
-		/* Default for "git branch". No need to pass --track. */
+		/* Default for "git branch". Do not pass --track. */
 		break;
 	}
 
