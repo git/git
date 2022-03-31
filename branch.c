@@ -383,13 +383,10 @@ static void dwim_branch_start(struct repository *r, const char *start_name,
 	real_ref = NULL;
 	if (get_oid_mb(start_name, &oid)) {
 		if (explicit_tracking) {
-			if (advice_enabled(ADVICE_SET_UPSTREAM_FAILURE)) {
-				int code = die_message(_(upstream_missing),
-						       start_name);
-				advise(_(upstream_advice));
-				exit(code);
-			}
-			die(_(upstream_missing), start_name);
+			int code = die_message(_(upstream_missing), start_name);
+			advise_if_enabled(ADVICE_SET_UPSTREAM_FAILURE,
+					  _(upstream_advice));
+			exit(code);
 		}
 		die(_("Not a valid object name: '%s'."), start_name);
 	}
