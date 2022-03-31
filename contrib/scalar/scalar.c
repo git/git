@@ -152,7 +152,6 @@ static int set_recommended_config(int reconfigure)
 		{ "pack.useBitmaps", "false", 1 },
 		{ "pack.useSparse", "true", 1 },
 		{ "receive.autoGC", "false", 1 },
-		{ "reset.quiet", "true", 1 },
 		{ "feature.manyFiles", "false", 1 },
 		{ "feature.experimental", "false", 1 },
 		{ "fetch.unpackLimit", "1", 1 },

@@ -302,6 +302,18 @@ test_expect_success 'apply -q is quiet' '
 	test_must_be_empty output.out
 '
 
+test_expect_success 'apply --index -q is quiet' '
+	# Added file, deleted file, modified file all staged for commit
+	echo foo >new-file &&
+	echo test >file &&
+	git add new-file file &&
+	git rm other-file &&
+
+	git stash &&
+	git stash apply --index -q >output.out 2>&1 &&
+	test_must_be_empty output.out
+'
+
 test_expect_success 'save -q is quiet' '
 	git stash save --quiet >output.out 2>&1 &&
 	test_must_be_empty output.out
@@ -330,6 +342,27 @@ test_expect_success 'drop -q is quiet' '
 	git stash &&
 	git stash drop -q >output.out 2>&1 &&
 	test_must_be_empty output.out
+'
+
+test_expect_success 'stash push -q --staged refreshes the index' '
+	git reset --hard &&
+	echo test >file &&
+	git add file &&
+	git stash push -q --staged &&
+	git diff-files >output.out &&
+	test_must_be_empty output.out
+'
+
+test_expect_success 'stash apply -q --index refreshes the index' '
+	echo test >other-file &&
+	git add other-file &&
+	echo another-change >other-file &&
+	git diff-files >expect &&
+	git stash &&
+
+	git stash apply -q --index &&
+	git diff-files >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'stash -k' '
