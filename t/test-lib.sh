@@ -806,7 +806,11 @@ test_failure_ () {
 	say_color error "not ok $test_count - $1"
 	shift
 	printf '%s\n' "$*" | sed -e 's/^/#	/'
-	test "$immediate" = "" || _error_exit
+	if test -n "$immediate"
+	then
+		say_color error "1..$test_count"
+		_error_exit
+	fi
 }
 
 test_known_broken_ok_ () {

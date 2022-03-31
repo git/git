@@ -101,6 +101,19 @@ test_expect_success 'subtest: 2/3 tests passing' '
 	EOF
 '
 
+test_expect_success 'subtest: --immediate' '
+	run_sub_test_lib_test_err partial-pass \
+		--immediate &&
+	check_sub_test_lib_test_err partial-pass \
+		<<-\EOF_OUT 3<<-EOF_ERR
+	> ok 1 - passing test #1
+	> not ok 2 - failing test #2
+	> #	false
+	> 1..2
+	EOF_OUT
+	EOF_ERR
+'
+
 test_expect_success 'subtest: a failing TODO test' '
 	write_and_run_sub_test_lib_test failing-todo <<-\EOF &&
 	test_expect_success "passing test" "true"
