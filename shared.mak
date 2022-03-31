@@ -53,7 +53,7 @@ ifndef V
 	QUIET          = @
 	QUIET_GEN      = @echo '   ' GEN $@;
 
-	QUIET_MKDIR_P_PARENT  = @echo $(wspfx_SQ) MKDIR -p $(@D);
+	QUIET_MKDIR_P_PARENT  = @echo '   ' MKDIR -p $(@D);
 
 ## Used in "Makefile"
 	QUIET_CC       = @echo '   ' CC $@;
