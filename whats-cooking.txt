@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2022, #06; Mon, 28)
-X-master-at: abf474a5dd901f28013c52155411a48fd4c09922
-X-next-at: 24ac8fe03f00dc3a586a4d4fd3aca8f40dec48f0
+Subject: What's cooking in git.git (Mar 2022, #07; Wed, 30)
+X-master-at: 805e0a68082a217f0112db9ee86a022227a9c81b
+X-next-at: 59ce5fa87eb4cb23cbd2457a488784725996144b
 
-What's cooking in git.git (Mar 2022, #06; Mon, 28)
+What's cooking in git.git (Mar 2022, #07; Wed, 30)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,6 +17,15 @@ another topic already in flight" or "this may turn out to be
 useful").  Do not read too much into a topic being in (or not in)
 'seen'.  The ones marked with '.' do not appear in any of the
 integration branches, but I am still holding onto them.
+
+There are a handful topics that are marked to be expecting updates,
+some of them more than a month old.  Do authors lost interest?  I'd
+look at them myself to see if they are interesting enough (in which
+case I may try to finish the last mile for them) when I find time,
+but no promises.  Help is appreciated.
+
+Also, there are a couple of "git p4" patches, for which we seem to
+totally lack reviewers.  Help is appreciated, here, too.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -49,54 +58,149 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* gc/recursive-fetch-with-unused-submodules (2022-03-16) 10 commits
-  (merged to 'next' on 2022-03-17 at 2813b7b1c3)
- + submodule: fix latent check_has_commit() bug
- + fetch: fetch unpopulated, changed submodules
- + submodule: move logic into fetch_task_create()
- + submodule: extract get_fetch_task()
- + submodule: store new submodule commits oid_array in a struct
- + submodule: inline submodule_commits() into caller
- + submodule: make static functions read submodules from commits
- + t5526: create superproject commits with test helper
- + t5526: stop asserting on stderr literally
- + t5526: introduce test helper to assert on fetches
+* ab/refs-various-fixes (2022-03-17) 5 commits
+  (merged to 'next' on 2022-03-18 at d65ed663a7)
+ + refs debug: add a wrapper for "read_symbolic_ref"
+ + packed-backend: remove stub BUG(...) functions
+ + misc *.c: use designated initializers for struct assignments
+ + refs: use designated initializers for "struct ref_iterator_vtable"
+ + refs: use designated initializers for "struct ref_storage_be"
 
- When "git fetch --recurse-submodules" grabbed submodule commits
- that would be needed to recursively check out newly fetched commits
- in the superproject, it only paid attention to submodules that are
- in the current checkout of the superproject.  We now do so for all
- submodules that have been run "git submodule init" on.
- source: <20220308001433.94995-1-chooglen@google.com>
+ Code clean-up.
+ source: <cover-0.5-00000000000-20220317T171618Z-avarab@gmail.com>
 
 
-* ns/core-fsyncmethod (2022-03-15) 6 commits
-  (merged to 'next' on 2022-03-17 at c8a52f8cbe)
- + core.fsync: documentation and user-friendly aggregate options
- + core.fsync: new option to harden the index
- + core.fsync: add configuration parsing
- + core.fsync: introduce granular fsync control infrastructure
- + core.fsyncmethod: add writeout-only mode
- + wrapper: make inclusion of Windows csprng header tightly scoped
- (this branch is used by ns/batch-fsync and ps/fsync-refs.)
+* jc/rebase-detach-fix (2022-03-18) 2 commits
+  (merged to 'next' on 2022-03-21 at 1eb51c65c9)
+ + rebase: set REF_HEAD_DETACH in checkout_up_to_date()
+ + rebase: use test_commit helper in setup
 
- Replace core.fsyncObjectFiles with two new configuration variables,
- core.fsync and core.fsyncMethod.
- source: <pull.1093.v6.git.1646952204.gitgitgadget@gmail.com>
+ "git rebase $base $non_branch_commit", when $base is an ancestor or
+ the $non_branch_commit, modified the current branch, which has been
+ corrected.
+ source: <pull.1226.v5.git.git.1647611643.gitgitgadget@gmail.com>
 
 
-* ps/fsync-refs (2022-03-15) 2 commits
-  (merged to 'next' on 2022-03-17 at 9e007c1178)
- + core.fsync: new option to harden references
- + Merge branch 'ns/core-fsyncmethod' into ps/fsync-refs
- (this branch uses ns/core-fsyncmethod.)
+* jt/reset-grafts-when-resetting-shallow (2022-03-17) 1 commit
+  (merged to 'next' on 2022-03-21 at 7030392f37)
+ + shallow: reset commit grafts when shallow is reset
 
- Updates to refs traditionally weren't fsync'ed, but we can
- configure using core.fsync variable to do so.
- source: <47dd79106b93bb81750320d50ccaa74c24aacd28.1646992380.git.ps@pks.im>
+ When "shallow" information is updated, we forgot to update the
+ in-core equivalent, which has been corrected.
+ source: <20220317182448.1633847-1-jonathantanmy@google.com>
+
+
+* vd/cache-bottom-fix (2022-03-17) 3 commits
+  (merged to 'next' on 2022-03-21 at 6760b84f38)
+ + Revert "unpack-trees: improve performance of next_cache_entry"
+ + unpack-trees: increment cache_bottom for sparse directories
+ + t1092: add sparse directory before cone in test repo
+
+ Correct a bug in unpack-trees introduced earlier.
+ source: <pull.1179.v2.git.1647532536.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [New Topics]
+
+* cw/remote-object-info (2022-03-30) 5 commits
+ - fixup! transfer.advertiseObjectInfo: add object-info config
+ - fixup! object-info: add option for retrieving object info
+ - object-info: add option for retrieving object info
+ - transfer.advertiseObjectInfo: add object-info config
+ - fetch-pack: refactor packet writing and fetch options
+
+ Attempt to add a client component to talk with object-info
+ endpoint.
+ source: <20220328191112.3092139-1-calvinwan@google.com>
+
+
+* dp/worktree-repair-in-usage (2022-03-29) 1 commit
+ - worktree: include repair cmd in usage
+
+ Usage string fix.
+
+ Will merge to 'next'.
+ source: <e0bfbfd5320edad29d20bef5e4eab2750bc3016c.1648500426.git.gitgitgadget@gmail.com>
+
+
+* vd/mv-refresh-stat (2022-03-29) 1 commit
+ - mv: refresh stat info for moved entry
+
+ "git mv" failed to refresh the cached stat information for the
+ entry that it moved
+
+ Will merge to 'next'?
+ source: <pull.1187.v2.git.1648516027925.gitgitgadget@gmail.com>
+
+
+* ns/core-fsyncmethod (2022-03-30) 2 commits
+ - core.fsyncmethod: correctly camel-case warning message
+ - core.fsync: fix incorrect expression for default configuration
+ (this branch is used by ns/batch-fsync.)
+
+ A couple of fix-up to a topic that is now in 'master'.
+
+ Will merge to 'next'.
+ source: <pull.1193.git.1648663716891.gitgitgadget@gmail.com>
+
+
+* gc/branch-recurse-submodules-fix (2022-03-30) 4 commits
+ - branch: remove negative exit code
+ - branch --set-upstream-to: be consistent when advising
+ - branch: give submodule updating advice before exit
+ - branch: support more tracking modes when recursing
+
+ A handful of obvious clean-ups around a topic that is already in
+ 'master'.
+
+ Will merge to 'next'.
+ source: <pull.1190.git.1648584079.gitgitgadget@gmail.com>
+
+
+* ns/fsync-or-die-message-fix (2022-03-30) 1 commit
+ - object-file: pass filename to fsync_or_die
+
+ When creating a loose object file, we didn't report the exact
+ filename of the file we failed to fsync, even though the
+ information was readily available, which has been corrected.
+
+ Will merge to 'next'.
+ source: <pull.1194.git.1648664055986.gitgitgadget@gmail.com>
+
+
+* ns/trace2-fsync-stat (2022-03-30) 1 commit
+ - trace2: add stats for fsync operations
+
+ Trace2 code has been taught to report stats for fsync operations.
+
+ Will merge to 'next'.
+ source: <pull.1192.git.1648616800529.gitgitgadget@gmail.com>
+
+
+* jc/coding-guidelines-decl-in-for-loop (2022-03-30) 1 commit
+ - CodingGuidelines: give deadline for "for (int i = 0; ..."
+
+ Coding Guidelines clarification.
+
+ source: <xmqqy20r3rv7.fsf@gitster.g>
+
+--------------------------------------------------
+[Stalled]
+
+* es/superproject-aware-submodules (2022-03-09) 3 commits
+ . rev-parse: short-circuit superproject worktree when config unset
+ . introduce submodule.hasSuperproject record
+ . t7400-submodule-basic: modernize inspect() helper
+
+ A configuration variable in a repository tells if it is (or is not)
+ a submodule of a superproject.
+
+ Expecting a reroll.
+ cf. <kl6l4k45s7cb.fsf@chooglen-macbookpro.roam.corp.google.com>
+ source: <20220310004423.2627181-1-emilyshaffer@google.com>
+
+--------------------------------------------------
+[Cooking]
 
 * ab/plug-leak-in-revisions (2022-03-25) 27 commits
  - revisions API: add a TODO for diff_free(&revs->diffopt)
@@ -145,12 +249,13 @@ Release tarballs are available at:
 
 
 * ds/t7700-kept-pack-test (2022-03-25) 2 commits
- - test-lib-functions: remove test_subcommand_inexact
- - t7700: check post-condition in kept-pack test
+  (merged to 'next' on 2022-03-29 at fb03a86974)
+ + test-lib-functions: remove test_subcommand_inexact
+ + t7700: check post-condition in kept-pack test
 
  Test clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1185.v3.git.1648234967.gitgitgadget@gmail.com>
 
 
@@ -213,7 +318,7 @@ Release tarballs are available at:
  rebase.abbreviateCommands; we failed to recognize that we were in a
  multi-step cherry-pick session.
 
- Will merge to 'next'?
+ Is this even needed?  How?
  cf. <xmqqwngdzque.fsf@gitster.g>
  source: <20220325145301.3370-1-danny0838@gmail.com>
 
@@ -229,44 +334,19 @@ Release tarballs are available at:
 
 
 * ab/reftable-aix-xlc-12 (2022-03-28) 1 commit
- - reftable: make assignments portable to AIX xlc v12.01
+  (merged to 'next' on 2022-03-29 at 1d4f13e637)
+ + reftable: make assignments portable to AIX xlc v12.01
 
- Will merge to 'next'.
- source: <patch-1.1-98267695418-20220328T190642Z-avarab@gmail.com>
-
---------------------------------------------------
-[Stalled]
-
-* es/superproject-aware-submodules (2022-03-09) 3 commits
- . rev-parse: short-circuit superproject worktree when config unset
- . introduce submodule.hasSuperproject record
- . t7400-submodule-basic: modernize inspect() helper
-
- A configuration variable in a repository tells if it is (or is not)
- a submodule of a superproject.
-
- Expecting a reroll.
- cf. <kl6l4k45s7cb.fsf@chooglen-macbookpro.roam.corp.google.com>
- source: <20220310004423.2627181-1-emilyshaffer@google.com>
-
---------------------------------------------------
-[Cooking]
-
-* ab/refs-various-fixes (2022-03-17) 5 commits
-  (merged to 'next' on 2022-03-18 at d65ed663a7)
- + refs debug: add a wrapper for "read_symbolic_ref"
- + packed-backend: remove stub BUG(...) functions
- + misc *.c: use designated initializers for struct assignments
- + refs: use designated initializers for "struct ref_iterator_vtable"
- + refs: use designated initializers for "struct ref_storage_be"
-
- Code clean-up.
+ Work around AIX C compiler that does not seem to grok
+ initialization of a union member of a struct.
 
  Will merge to 'master'.
- source: <cover-0.5-00000000000-20220317T171618Z-avarab@gmail.com>
+ source: <patch-1.1-98267695418-20220328T190642Z-avarab@gmail.com>
 
 
-* ab/reflog-parse-options (2022-03-23) 8 commits
+* ab/reflog-parse-options (2022-03-28) 9 commits
+  (merged to 'next' on 2022-03-29 at deb966122b)
+ + reflog: fix 'show' subcommand's argv
   (merged to 'next' on 2022-03-25 at 1f18ebad35)
  + reflog [show]: display sensible -h output
  + reflog: convert to parse_options() API
@@ -282,17 +362,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <cover-0.8-00000000000-20220317T180439Z-avarab@gmail.com>
-
-
-* jt/reset-grafts-when-resetting-shallow (2022-03-17) 1 commit
-  (merged to 'next' on 2022-03-21 at 7030392f37)
- + shallow: reset commit grafts when shallow is reset
-
- When "shallow" information is updated, we forgot to update the
- in-core equivalent, which has been corrected.
-
- Will merge to 'master'.
- source: <20220317182448.1633847-1-jonathantanmy@google.com>
 
 
 * ab/make-optim-noop (2022-03-21) 1 commit
@@ -321,92 +390,84 @@ Release tarballs are available at:
 
 
 * ds/partial-bundle-more (2022-03-28) 6 commits
- - pack-objects: lazily set up "struct rev_info", don't leak
- - bundle: output hash information in 'verify'
- - bundle: move capabilities to end of 'verify'
- - pack-objects: parse --filter directly into revs.filter
- - pack-objects: move revs out of get_object_list()
- - list-objects-filter: remove CL_ARG__FILTER
+  (merged to 'next' on 2022-03-29 at fa892bdc2a)
+ + pack-objects: lazily set up "struct rev_info", don't leak
+ + bundle: output hash information in 'verify'
+ + bundle: move capabilities to end of 'verify'
+ + pack-objects: parse --filter directly into revs.filter
+ + pack-objects: move revs out of get_object_list()
+ + list-objects-filter: remove CL_ARG__FILTER
 
  Code clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1186.git.1647970119.gitgitgadget@gmail.com>
 
 
-* fr/vimdiff-layout (2022-03-23) 3 commits
- - vimdiff: integrate layout tests in the unit tests framework ('t' folder)
+* fr/vimdiff-layout (2022-03-30) 4 commits
+ - mergetools: add description to all diff/merge tools
  - vimdiff: add tool documentation
+ - vimdiff: integrate layout tests in the unit tests framework ('t' folder)
  - vimdiff: new implementation with layout support
 
  Reimplement "vimdiff[123]" mergetool drivers with a more generic
  layout mechanism.
 
  Will merge to 'next'?
- source: <20220319091141.4911-1-greenfoo@u92.eu>
+ source: <20220330191909.294610-1-greenfoo@u92.eu>
 
 
-* bc/stash-export (2022-03-16) 6 commits
- - doc: add stash export and import to docs
+* bc/stash-export (2022-03-29) 4 commits
  - builtin/stash: provide a way to import stashes from a ref
  - builtin/stash: provide a way to export stashes to a ref
+ - builtin/stash: factor out revision parsing into a function
  - object-name: make get_oid quietly return an error
- - builtin/stash: fill in all commit data
- - builtin/stash: factor out generic function to look up stash info
 
  A mechanism to export and import stash entries to and from a normal
  commit to transfer it across repositories has been introduced.
-
- Expecting a reroll.
- source: <20220310173236.4165310-1-sandals@crustytoothpaste.net>
+ source: <20220329214941.2018609-1-sandals@crustytoothpaste.net>
 
 
 * gc/submodule-update-part2 (2022-03-16) 8 commits
- - submodule--helper: remove forward declaration
- - submodule: move core cmd_update() logic to C
- - submodule--helper: reduce logic in run_update_procedure()
- - submodule--helper: teach update_data more options
- - builtin/submodule--helper.c: rename option struct to "opt"
- - submodule update: use die_message()
- - submodule--helper: run update using child process struct
- - Merge branch 'gc/submodule-update-part1' into gc/submodule-update-part2
+  (merged to 'next' on 2022-03-29 at 17ffb55048)
+ + submodule--helper: remove forward declaration
+ + submodule: move core cmd_update() logic to C
+ + submodule--helper: reduce logic in run_update_procedure()
+ + submodule--helper: teach update_data more options
+ + builtin/submodule--helper.c: rename option struct to "opt"
+ + submodule update: use die_message()
+ + submodule--helper: run update using child process struct
+ + Merge branch 'gc/submodule-update-part1' into gc/submodule-update-part2
 
  Move more "git submodule update" to C.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20220315210925.79289-1-chooglen@google.com>
 
 
-* ns/batch-fsync (2022-03-24) 12 commits
- - core.fsyncmethod: correctly camel-case warning message
- - core.fsyncmethod: performance tests for add and stash
+* ns/batch-fsync (2022-03-30) 14 commits
+ - core.fsyncmethod: performance tests for batch mode
+ - t/perf: add iteration setup mechanism to perf-lib
  - core.fsyncmethod: tests for batch mode
  - test-lib-functions: add parsing helpers for ls-files and ls-tree
  - core.fsync: use batch mode and sync loose objects by default on Windows
  - unpack-objects: use the bulk-checkin infrastructure
  - update-index: use the bulk-checkin infrastructure
+ - builtin/add: add ODB transaction around add_files_to_cache
+ - cache-tree: use ODB transaction around writing a tree
  - core.fsyncmethod: batched disk flushes for loose-objects
  - object-file: pass filename to fsync_or_die
- - bulk-checkin: rename 'state' variable and separate 'plugged' boolean
  - bulk-checkin: rebrand plug/unplug APIs as 'odb transactions'
+ - bulk-checkin: rename 'state' variable and separate 'plugged' boolean
  - Merge branch 'ns/core-fsyncmethod' into ns/batch-fsync
+ (this branch uses ns/core-fsyncmethod.)
 
  Introduce a filesystem-dependent mechanism to optimize the way the
  bits for many loose object files are ensured to hit the disk
  platter.
- source: <pull.1134.v3.git.1648097906.gitgitgadget@gmail.com>
 
-
-* vd/cache-bottom-fix (2022-03-17) 3 commits
-  (merged to 'next' on 2022-03-21 at 6760b84f38)
- + Revert "unpack-trees: improve performance of next_cache_entry"
- + unpack-trees: increment cache_bottom for sparse directories
- + t1092: add sparse directory before cone in test repo
-
- Correct a bug in unpack-trees introduced earlier.
-
- Will merge to 'master'.
- source: <pull.1179.v2.git.1647532536.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <pull.1134.v5.git.1648616734.gitgitgadget@gmail.com>
 
 
 * pw/add-p-single-key (2022-03-16) 5 commits
@@ -438,19 +499,6 @@ Release tarballs are available at:
  source: <pull.1148.v2.git.1647054681.gitgitgadget@gmail.com>
 
 
-* jc/rebase-detach-fix (2022-03-18) 2 commits
-  (merged to 'next' on 2022-03-21 at 1eb51c65c9)
- + rebase: set REF_HEAD_DETACH in checkout_up_to_date()
- + rebase: use test_commit helper in setup
-
- "git rebase $base $non_branch_commit", when $base is an ancestor or
- the $non_branch_commit, modified the current branch, which has been
- corrected.
-
- Will merge to 'master'.
- source: <pull.1226.v5.git.git.1647611643.gitgitgadget@gmail.com>
-
-
 * vd/stash-silence-reset (2022-03-24) 9 commits
   (merged to 'next' on 2022-03-24 at 94218f2a5f)
  + reset: show --no-refresh in the short-help
@@ -474,26 +522,27 @@ Release tarballs are available at:
 
 
 * tl/ls-tree-oid-only (2022-03-23) 15 commits
- - ls-tree: split up "fast path" callbacks
- - ls-tree: detect and error on --name-only --name-status
- - ls-tree: support --object-only option for "git-ls-tree"
- - ls-tree: introduce "--format" option
- - cocci: allow padding with `strbuf_addf()`
- - ls-tree: introduce struct "show_tree_data"
- - ls-tree: slightly refactor `show_tree()`
- - ls-tree: fix "--name-only" and "--long" combined use bug
- - ls-tree: simplify nesting if/else logic in "show_tree()"
- - ls-tree: rename "retval" to "recurse" in "show_tree()"
- - ls-tree: use "size_t", not "int" for "struct strbuf"'s "len"
- - ls-tree: use "enum object_type", not {blob,tree,commit}_type
- - ls-tree: add missing braces to "else" arms
- - ls-tree: remove commented-out code
- - ls-tree tests: add tests for --name-status
+  (merged to 'next' on 2022-03-29 at cfa87a57e7)
+ + ls-tree: split up "fast path" callbacks
+ + ls-tree: detect and error on --name-only --name-status
+ + ls-tree: support --object-only option for "git-ls-tree"
+ + ls-tree: introduce "--format" option
+ + cocci: allow padding with `strbuf_addf()`
+ + ls-tree: introduce struct "show_tree_data"
+ + ls-tree: slightly refactor `show_tree()`
+ + ls-tree: fix "--name-only" and "--long" combined use bug
+ + ls-tree: simplify nesting if/else logic in "show_tree()"
+ + ls-tree: rename "retval" to "recurse" in "show_tree()"
+ + ls-tree: use "size_t", not "int" for "struct strbuf"'s "len"
+ + ls-tree: use "enum object_type", not {blob,tree,commit}_type
+ + ls-tree: add missing braces to "else" arms
+ + ls-tree: remove commented-out code
+ + ls-tree tests: add tests for --name-status
 
  "git ls-tree" learns "--oid-only" option, similar to "--name-only",
  and more generalized "--format" option.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover.1648026472.git.dyroneteng@gmail.com>
 
 
@@ -585,7 +634,7 @@ Release tarballs are available at:
  Insert a layer of preprocessor macros for common functions in xdiff
  codebase.
 
- Expecting a (hopefully final) reroll.
+ Expecting a reroll.
  cf. <xmqqbkyudb8n.fsf@gitster.g>
  source: <20220217225408.GB7@edef91d97c94>
 
@@ -653,15 +702,14 @@ Release tarballs are available at:
  source: <pull.1161.v2.git.1645815142.gitgitgadget@gmail.com>
 
 
-* tk/untracked-cache-with-uall (2022-02-25) 1 commit
+* tk/untracked-cache-with-uall (2022-03-29) 2 commits
  - untracked-cache: support '--untracked-files=all' if configured
+ - untracked-cache: test untracked-cache-bypassing behavior with -uall
 
  The performance of the "untracked cache" feature has been improved
  when "--untracked-files=<mode>" and "status.showUntrackedFiles"
  are combined.
-
- Expecting a reroll.
- source: <pull.985.v2.git.1645811564461.gitgitgadget@gmail.com>
+ source: <pull.985.v5.git.1648553134.gitgitgadget@gmail.com>
 
 
 * ab/commit-plug-leaks (2022-02-16) 2 commits
