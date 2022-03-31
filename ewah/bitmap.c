@@ -216,11 +216,6 @@ int bitmap_is_subset(struct bitmap *self, struct bitmap *other)
 	return 0;
 }
 
-void bitmap_reset(struct bitmap *bitmap)
-{
-	memset(bitmap->words, 0x0, bitmap->word_alloc * sizeof(eword_t));
-}
-
 void bitmap_free(struct bitmap *bitmap)
 {
 	if (bitmap == NULL)
