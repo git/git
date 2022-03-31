@@ -312,10 +312,6 @@ int has_object(struct repository *r, const struct object_id *oid,
  * These functions can be removed once all callers have migrated to
  * has_object() and/or oid_object_info_extended().
  */
-#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
-#define has_sha1_file_with_flags(sha1, flags) repo_has_sha1_file_with_flags(the_repository, sha1, flags)
-#define has_sha1_file(sha1) repo_has_sha1_file(the_repository, sha1)
-#endif
 int repo_has_object_file(struct repository *r, const struct object_id *oid);
 int repo_has_object_file_with_flags(struct repository *r,
 				    const struct object_id *oid, int flags);
