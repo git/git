@@ -3073,9 +3073,10 @@ static int module_create_branch(int argc, const char **argv, const char *prefix)
 		OPT__FORCE(&force, N_("force creation"), 0),
 		OPT_BOOL(0, "create-reflog", &reflog,
 			 N_("create the branch's reflog")),
-		OPT_SET_INT('t', "track", &track,
-			    N_("set up tracking mode (see git-pull(1))"),
-			    BRANCH_TRACK_EXPLICIT),
+		OPT_CALLBACK_F('t', "track",  &track, "(direct|inherit)",
+			N_("set branch tracking configuration"),
+			PARSE_OPT_OPTARG,
+			parse_opt_tracking_mode),
 		OPT__DRY_RUN(&dry_run,
 			     N_("show whether the branch would be created")),
 		OPT_END()
