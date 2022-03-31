@@ -84,6 +84,10 @@ UI, Workflows & Features
    age-old "update-server-info" command, which is rarely useful these
    days.
 
+ * "git stash" does not allow subcommands it internally runs as its
+   implementation detail, except for "git reset", to emit messages;
+   now "git reset" part has also been squelched.
+
 
 Performance, Internal Implementation, Development Support etc.
 
