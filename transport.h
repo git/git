@@ -16,6 +16,7 @@ struct git_transport_options {
 	unsigned update_shallow : 1;
 	unsigned reject_shallow : 1;
 	unsigned deepen_relative : 1;
+	unsigned refetch : 1;
 
 	/* see documentation of corresponding flag in fetch-pack.h */
 	unsigned from_promisor : 1;
@@ -215,6 +216,9 @@ void transport_check_allowed(const char *type);
 
 /* Filter objects for partial clone and fetch */
 #define TRANS_OPT_LIST_OBJECTS_FILTER "filter"
+
+/* Refetch all objects without negotiating */
+#define TRANS_OPT_REFETCH "refetch"
 
 /* Request atomic (all-or-nothing) updates when pushing */
 #define TRANS_OPT_ATOMIC "atomic"

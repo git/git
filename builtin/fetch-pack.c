@@ -153,6 +153,10 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 			args.from_promisor = 1;
 			continue;
 		}
+		if (!strcmp("--refetch", arg)) {
+			args.refetch = 1;
+			continue;
+		}
 		if (skip_prefix(arg, ("--filter="), &arg)) {
 			parse_list_objects_filter(&args.filter_options, arg);
 			continue;
