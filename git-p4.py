@@ -30,26 +30,28 @@
 # pylint: disable=wrong-import-order
 # pylint: disable=wrong-import-position
 #
+
 import sys
 if sys.version_info.major < 3 and sys.version_info.minor < 7:
     sys.stderr.write("git-p4: requires Python 2.7 or later.\n")
     sys.exit(1)
-import os
-import optparse
+
+import ctypes
+import errno
 import functools
+import glob
 import marshal
-import subprocess
-import tempfile
-import time
+import optparse
+import os
 import platform
 import re
 import shutil
 import stat
+import subprocess
+import tempfile
+import time
 import zipfile
 import zlib
-import ctypes
-import errno
-import glob
 
 # On python2.7 where raw_input() and input() are both availble,
 # we want raw_input's semantics, but aliased to input for python3
