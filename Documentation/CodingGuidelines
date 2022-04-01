@@ -227,7 +227,10 @@ For C programs:
    the first statement (i.e. -Wdeclaration-after-statement).
 
  - Declaring a variable in the for loop "for (int i = 0; i < 10; i++)"
-   is still not allowed in this codebase.
+   is still not allowed in this codebase.  We are in the process of
+   allowing it by waiting to see that 44ba10d6 (revision: use C99
+   declaration of variable in for() loop, 2021-11-14) does not get
+   complaints.  Let's revisit this around November 2022.
 
  - NULL pointers shall be written as NULL, not as 0.
 
