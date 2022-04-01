@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git worktree add' [-f] [--detach] [--checkout] [--lock [--reason <string>]] [-b <new-branch>] <path> [<commit-ish>]
-'git worktree list' [-v | --porcelain]
+'git worktree list' [-v | --porcelain [-z]]
 'git worktree lock' [--reason <string>] <worktree>
 'git worktree move' <worktree> <new-path>
 'git worktree prune' [-n] [-v] [--expire <expire>]
@@ -224,7 +224,14 @@ This can also be set up as the default behaviour by using the
 --porcelain::
 	With `list`, output in an easy-to-parse format for scripts.
 	This format will remain stable across Git versions and regardless of user
-	configuration.  See below for details.
+	configuration.  It is recommended to combine this with `-z`.
+	See below for details.
+
+-z::
+	Terminate each line with a NUL rather than a newline when
+	`--porcelain` is specified with `list`. This makes it possible
+	to parse the output when a worktree path contains a newline
+	character.
 
 -q::
 --quiet::
@@ -416,7 +423,8 @@ worktree itself.
 
 Porcelain Format
 ~~~~~~~~~~~~~~~~
-The porcelain format has a line per attribute.  Attributes are listed with a
+The porcelain format has a line per attribute.  If `-z` is given then the lines
+are terminated with NUL rather than a newline.  Attributes are listed with a
 label and value separated by a single space.  Boolean attributes (like `bare`
 and `detached`) are listed as a label only, and are present only
 if the value is true.  Some attributes (like `locked`) can be listed as a label
@@ -454,7 +462,7 @@ prunable gitdir file points to non-existent location
 
 ------------
 
-If the lock reason contains "unusual" characters such as newline, they
+Unless `-z` is used any "unusual" characters in the lock reason such as newlines
 are escaped and the entire reason is quoted as explained for the
 configuration variable `core.quotePath` (see linkgit:git-config[1]).
 For Example:
