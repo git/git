@@ -388,13 +388,10 @@ static void dwim_branch_start(struct repository *r, const char *start_name,
 	real_ref = NULL;
 	if (get_oid_mb(start_name, &oid)) {
 		if (explicit_tracking) {
-			if (advice_enabled(ADVICE_SET_UPSTREAM_FAILURE)) {
-				int code = die_message(_(upstream_missing),
-						       start_name);
-				advise(_(upstream_advice));
-				exit(code);
-			}
-			die(_(upstream_missing), start_name);
+			int code = die_message(_(upstream_missing), start_name);
+			advise_if_enabled(ADVICE_SET_UPSTREAM_FAILURE,
+					  _(upstream_advice));
+			exit(code);
 		}
 		die(_("not a valid object name: '%s'"), start_name);
 	}
@@ -554,9 +551,9 @@ static int submodule_create_branch(struct repository *r,
 		strvec_push(&child.args, "--track=inherit");
 		break;
 	case BRANCH_TRACK_UNSPECIFIED:
-		/* Default for "git checkout". No need to pass --track. */
+		/* Default for "git checkout". Do not pass --track. */
 	case BRANCH_TRACK_REMOTE:
-		/* Default for "git branch". No need to pass --track. */
+		/* Default for "git branch". Do not pass --track. */
 		break;
 	}
 
