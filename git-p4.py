@@ -3521,7 +3521,6 @@ class P4Sync(Command, P4UserMap):
                 if source not in self.knownBranches:
                     lostAndFoundBranches.add(source)
 
-
         for branch in lostAndFoundBranches:
             self.knownBranches[branch] = branch
 
@@ -3745,7 +3744,6 @@ class P4Sync(Command, P4UserMap):
                 sys.stderr.write("p4 exitcode: %s\n" % info['p4ExitCode'])
                 sys.exit(1)
 
-
             change = int(info["change"])
             if change > newestRevision:
                 newestRevision = change
@@ -3772,7 +3770,6 @@ class P4Sync(Command, P4UserMap):
             print("IO error with git fast-import. Is your git version recent enough?")
             print("IO error details: {}".format(err))
             print(self.gitError.read())
-
 
     def importRevisions(self, args, branch_arg_given):
         changes = []
