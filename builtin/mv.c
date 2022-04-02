@@ -202,11 +202,20 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 				bad = _("bad source");
 				goto act_on_entry;
 			}
-
-			if (!ignore_sparse)
+			if (!ignore_sparse) {
 				string_list_append(&only_match_skip_worktree, src);
-			else
+				goto act_on_entry;
+			}
+			/* Check if dst exists in index */
+			if (cache_name_pos(dst, strlen(dst)) < 0) {
 				modes[i] = SPARSE;
+				goto act_on_entry;
+			}
+			if (!force) {
+				bad = _("destination exists");
+				goto act_on_entry;
+			}
+			modes[i] = SPARSE;
 			goto act_on_entry;
 		}
 		if (!strncmp(src, dst, length) &&

@@ -262,7 +262,7 @@ test_expect_success 'can move out-of-cone file with --sparse' '
 	test_path_is_file sub/file1
 '
 
-test_expect_failure 'refuse to move sparse file to existing destination' '
+test_expect_success 'refuse to move sparse file to existing destination' '
 	test_when_finished "cleanup_sparse_checkout" &&
 	mkdir folder1 &&
 	touch folder1/file1 &&
@@ -275,7 +275,7 @@ test_expect_failure 'refuse to move sparse file to existing destination' '
 	test_cmp expect stderr
 '
 
-test_expect_failure 'move sparse file to existing destination with --force and --sparse' '
+test_expect_success 'move sparse file to existing destination with --force and --sparse' '
 	test_when_finished "cleanup_sparse_checkout" &&
 	mkdir folder1 &&
 	touch folder1/file1 &&
