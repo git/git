@@ -13,7 +13,7 @@ struct repository;
 struct string_list;
 struct strbuf;
 
-enum {
+enum submodule_recurse_mode {
 	RECURSE_SUBMODULES_ONLY = -5,
 	RECURSE_SUBMODULES_CHECK = -4,
 	RECURSE_SUBMODULES_ERROR = -3,
