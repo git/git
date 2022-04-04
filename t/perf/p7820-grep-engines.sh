@@ -49,13 +49,15 @@ do
 		fi
 		if ! test_have_prereq PERF_GREP_ENGINES_THREADS
 		then
-			test_perf $prereq "$engine grep$GIT_PERF_7820_GREP_OPTS '$pattern'" "
+			test_perf "$engine grep$GIT_PERF_7820_GREP_OPTS '$pattern'" \
+				--prereq "$prereq" "
 				git -c grep.patternType=$engine grep$GIT_PERF_7820_GREP_OPTS -- '$pattern' >'out.$engine' || :
 			"
 		else
 			for threads in $GIT_PERF_GREP_THREADS
 			do
-				test_perf PTHREADS,$prereq "$engine grep$GIT_PERF_7820_GREP_OPTS '$pattern' with $threads threads" "
+				test_perf "$engine grep$GIT_PERF_7820_GREP_OPTS '$pattern' with $threads threads"
+					--prereq PTHREADS,$prereq "
 					git -c grep.patternType=$engine -c grep.threads=$threads grep$GIT_PERF_7820_GREP_OPTS -- '$pattern' >'out.$engine.$threads' || :
 				"
 			done

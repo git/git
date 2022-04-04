@@ -6,11 +6,24 @@
 
 #include "cache.h"
 
+void prepare_loose_object_bulk_checkin(void);
+void fsync_loose_object_bulk_checkin(int fd, const char *filename);
+
 int index_bulk_checkin(struct object_id *oid,
 		       int fd, size_t size, enum object_type type,
 		       const char *path, unsigned flags);
 
-void plug_bulk_checkin(void);
-void unplug_bulk_checkin(void);
+/*
+ * Tell the object database to optimize for adding
+ * multiple objects. end_odb_transaction must be called
+ * to make new objects visible.
+ */
+void begin_odb_transaction(void);
+
+/*
+ * Tell the object database to make any objects from the
+ * current transaction visible.
+ */
+void end_odb_transaction(void);
 
 #endif
