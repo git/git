@@ -250,6 +250,9 @@ static int set_git_option(struct git_transport_options *opts,
 		list_objects_filter_die_if_populated(&opts->filter_options);
 		parse_list_objects_filter(&opts->filter_options, value);
 		return 0;
+	} else if (!strcmp(name, TRANS_OPT_REFETCH)) {
+		opts->refetch = !!value;
+		return 0;
 	} else if (!strcmp(name, TRANS_OPT_REJECT_SHALLOW)) {
 		opts->reject_shallow = !!value;
 		return 0;
@@ -384,6 +387,7 @@ static int fetch_refs_via_pack(struct transport *transport,
 	args.update_shallow = data->options.update_shallow;
 	args.from_promisor = data->options.from_promisor;
 	args.filter_options = data->options.filter_options;
+	args.refetch = data->options.refetch;
 	args.stateless_rpc = transport->stateless_rpc;
 	args.server_options = transport->server_options;
 	args.negotiation_tips = data->options.negotiation_tips;
