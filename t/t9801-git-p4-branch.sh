@@ -129,6 +129,16 @@ test_expect_success 'import depot, branch detection' '
 	)
 '
 
+test_expect_success 'sync specific detected branch' '
+	test_when_finished cleanup_git &&
+	git p4 clone --dest="$git" --detect-branches //depot@all &&
+	(
+		cd "$git" &&
+		git p4 sync --branch=depot/branch2 >out &&
+		test_i18ngrep "No changes to import!" out
+	)
+'
+
 test_expect_success 'import depot, branch detection, branchList branch definition' '
 	test_when_finished cleanup_git &&
 	test_create_repo "$git" &&
