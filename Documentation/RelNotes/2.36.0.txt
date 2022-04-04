@@ -88,6 +88,20 @@ UI, Workflows & Features
    implementation detail, except for "git reset", to emit messages;
    now "git reset" part has also been squelched.
 
+ * "git ls-tree" learns "--oid-only" option, similar to "--name-only",
+   and more generalized "--format" option.
+
+ * "git fetch --refetch" learned to fetch everything without telling
+   the other side what we already have, which is useful when you
+   cannot trust what you have in the local object store.
+
+ * "git branch" gives hint when branch tracking cannot be established
+   because fetch refspecs from multiple remote repositories overlap.
+
+ * "git worktree list --porcelain" did not c-quote pathnames and lock
+   reasons with unsafe bytes correctly, which is worked around by
+   introducing NUL terminated output format with "-z".
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -161,6 +175,9 @@ Performance, Internal Implementation, Development Support etc.
 
  * Updates to refs traditionally weren't fsync'ed, but we can
    configure using core.fsync variable to do so.
+
+ * "git reflog" command now uses parse-options API to parse its
+   command line options.
 
 
 Fixes since v2.35
@@ -367,6 +384,19 @@ Fixes since v2.35
  * When "shallow" information is updated, we forgot to update the
    in-core equivalent, which has been corrected.
 
+ * When creating a loose object file, we didn't report the exact
+   filename of the file we failed to fsync, even though the
+   information was readily available, which has been corrected.
+
+ * "git am" can read from the standard input when no mailbox is given
+   on the command line, but the end-user gets no indication when it
+   happens, making Git appear stuck.
+   (merge 7b20af6a06 jc/mailsplit-warn-on-tty later to maint).
+
+ * "git mv" failed to refresh the cached stat information for the
+   entry it moved.
+   (merge b7f9130a06 vd/mv-refresh-stat later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge cfc5cf428b jc/find-header later to maint).
    (merge 40e7cfdd46 jh/p4-fix-use-of-process-error-exception later to maint).
@@ -396,3 +426,5 @@ Fixes since v2.35
    (merge c614beb933 ep/t6423-modernize later to maint).
    (merge 57be9c6dee ab/reflog-prep-fix later to maint).
    (merge 5327d8982a js/in-place-reverse-in-sequencer later to maint).
+   (merge 2e2c0be51e dp/worktree-repair-in-usage later to maint).
+   (merge 6563706568 jc/coding-guidelines-decl-in-for-loop later to maint).
