@@ -9,6 +9,7 @@ GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
+. $TEST_DIRECTORY/lib-unique-files.sh
 
 test_expect_success 'usage on cmd and subcommand invalid option' '
 	test_expect_code 129 git stash --invalid-option 2>usage &&
@@ -1409,6 +1410,25 @@ test_expect_success 'stash handles skip-worktree entries nicely' '
 
 	git rev-parse --verify refs/stash:A.t
 '
+
+
+BATCH_CONFIGURATION='-c core.fsync=loose-object -c core.fsyncmethod=batch'
+
+test_expect_success 'stash with core.fsyncmethod=batch' "
+	test_create_unique_files 2 4 files_base_dir &&
+	GIT_TEST_FSYNC=1 git $BATCH_CONFIGURATION stash push -u -- ./files_base_dir/ &&
+
+	# The files were untracked, so use the third parent,
+	# which contains the untracked files
+	git ls-tree -r stash^3 -- ./files_base_dir/ |
+	test_parse_ls_tree_oids >stashed_files_oids &&
+
+	# We created 2 dirs with 4 files each (8 files total) above
+	test_line_count = 8 stashed_files_oids &&
+	git cat-file --batch-check='%(objectname)' <stashed_files_oids >stashed_files_actual &&
+	test_cmp stashed_files_oids stashed_files_actual
+"
+
 
 test_expect_success 'git stash succeeds despite directory/file change' '
 	test_create_repo directory_file_switch_v1 &&
