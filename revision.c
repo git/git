@@ -2691,9 +2691,9 @@ static int handle_revision_pseudo_opt(struct rev_info *revs,
 		revs->no_walk = 0;
 	} else if (!strcmp(arg, "--single-worktree")) {
 		revs->single_worktree = 1;
-	} else if (skip_prefix(arg, ("--" CL_ARG__FILTER "="), &arg)) {
+	} else if (skip_prefix(arg, ("--filter="), &arg)) {
 		parse_list_objects_filter(&revs->filter, arg);
-	} else if (!strcmp(arg, ("--no-" CL_ARG__FILTER))) {
+	} else if (!strcmp(arg, ("--no-filter"))) {
 		list_objects_filter_set_no_filter(&revs->filter);
 	} else {
 		return 0;
