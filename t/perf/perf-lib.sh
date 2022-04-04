@@ -189,19 +189,40 @@ exit $ret' >&3 2>&4
 }
 
 test_wrapper_ () {
+	local test_wrapper_func_ test_title_
 	test_wrapper_func_=$1; shift
+	test_title_=$1; shift
 	test_start_
-	test "$#" = 3 && { test_prereq=$1; shift; } || test_prereq=
-	test "$#" = 2 ||
-	BUG "not 2 or 3 parameters to test-expect-success"
+	test_prereq=
+	test_perf_setup_=
+	while test $# != 0
+	do
+		case $1 in
+		--prereq)
+			test_prereq=$2
+			shift
+			;;
+		--setup)
+			test_perf_setup_=$2
+			shift
+			;;
+		*)
+			break
+			;;
+		esac
+		shift
+	done
+	test "$#" = 1 || BUG "test_wrapper_ needs 2 positional parameters"
 	export test_prereq
-	if ! test_skip "$@"
+	export test_perf_setup_
+
+	if ! test_skip "$test_title_" "$@"
 	then
 		base=$(basename "$0" .sh)
 		echo "$test_count" >>"$perf_results_dir"/$base.subtests
 		echo "$1" >"$perf_results_dir"/$base.$test_count.descr
 		base="$perf_results_dir"/"$PERF_RESULTS_PREFIX$(basename "$0" .sh)"."$test_count"
-		"$test_wrapper_func_" "$@"
+		"$test_wrapper_func_" "$test_title_" "$@"
 	fi
 
 	test_finish_
@@ -214,6 +235,16 @@ test_perf_ () {
 		echo "perf $test_count - $1:"
 	fi
 	for i in $(test_seq 1 $GIT_PERF_REPEAT_COUNT); do
+		if test -n "$test_perf_setup_"
+		then
+			say >&3 "setup: $test_perf_setup_"
+			if ! test_eval_ $test_perf_setup_
+			then
+				test_failure_ "$test_perf_setup_"
+				break
+			fi
+
+		fi
 		say >&3 "running: $2"
 		if test_run_perf_ "$2"
 		then
@@ -237,11 +268,24 @@ test_perf_ () {
 	rm test_time.*
 }
 
+# Usage: test_perf 'title' [options] 'perf-test'
+#	Run the performance test script specified in perf-test with
+#	optional prerequisite and setup steps.
+# Options:
+#	--prereq prerequisites: Skip the test if prequisites aren't met
+#	--setup "setup-steps": Run setup steps prior to each measured iteration
+#
 test_perf () {
 	test_wrapper_ test_perf_ "$@"
 }
 
 test_size_ () {
+	if test -n "$test_perf_setup_"
+	then
+		say >&3 "setup: $test_perf_setup_"
+		test_eval_ $test_perf_setup_
+	fi
+
 	say >&3 "running: $2"
 	if test_eval_ "$2" 3>"$base".result; then
 		test_ok_ "$1"
@@ -249,6 +293,14 @@ test_size_ () {
 		test_failure_ "$@"
 	fi
 }
+
+# Usage: test_size 'title' [options] 'size-test'
+#	Run the size test script specified in size-test with optional
+#	prerequisites and setup steps. Returns the numeric value
+#	returned by size-test.
+# Options:
+#	--prereq prerequisites: Skip the test if prequisites aren't met
+#	--setup "setup-steps": Run setup steps prior to the size measurement
 
 test_size () {
 	test_wrapper_ test_size_ "$@"
