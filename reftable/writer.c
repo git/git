@@ -257,7 +257,9 @@ int reftable_writer_add_ref(struct reftable_writer *w,
 {
 	struct reftable_record rec = {
 		.type = BLOCK_TYPE_REF,
-		.u.ref = *ref,
+		.u = {
+			.ref = *ref
+		},
 	};
 	int err = 0;
 
@@ -308,7 +310,9 @@ static int reftable_writer_add_log_verbatim(struct reftable_writer *w,
 {
 	struct reftable_record rec = {
 		.type = BLOCK_TYPE_LOG,
-		.u.log = *log,
+		.u = {
+			.log = *log,
+		},
 	};
 	if (w->block_writer &&
 	    block_writer_type(w->block_writer) == BLOCK_TYPE_REF) {
@@ -401,7 +405,9 @@ static int writer_finish_section(struct reftable_writer *w)
 		for (i = 0; i < idx_len; i++) {
 			struct reftable_record rec = {
 				.type = BLOCK_TYPE_INDEX,
-				.u.idx = idx[i],
+				.u = {
+					.idx = idx[i],
+				},
 			};
 			if (block_writer_add(w->block_writer, &rec) == 0) {
 				continue;
