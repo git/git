@@ -19,6 +19,10 @@ diff_cmd () {
 	fi
 }
 
+diff_cmd_help () {
+	echo "Use HelixCore P4Merge (requires a graphical session)"
+}
+
 merge_cmd () {
 	if ! $base_present
 	then
@@ -33,4 +37,8 @@ create_empty_file () {
 	>"$empty_file"
 
 	printf "%s" "$empty_file"
+}
+
+merge_cmd_help () {
+	echo "Use HelixCore P4Merge (requires a graphical session)"
 }
