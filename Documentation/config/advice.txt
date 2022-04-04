@@ -138,4 +138,7 @@ advice.*::
 		checkout.
 	diverging::
 		Advice shown when a fast-forward is not possible.
+	useCoreFSMonitorConfig::
+		Advice shown if the deprecated 'core.useBuiltinFSMonitor' config
+		setting is in use.
 --
