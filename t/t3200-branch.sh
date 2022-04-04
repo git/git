@@ -1039,13 +1039,27 @@ test_expect_success 'checkout -b with -l makes reflog when core.logAllRefUpdates
 	git rev-parse --verify gamma@{0}
 '
 
-test_expect_success 'avoid ambiguous track' '
+test_expect_success 'avoid ambiguous track and advise' '
 	git config branch.autosetupmerge true &&
 	git config remote.ambi1.url lalala &&
 	git config remote.ambi1.fetch refs/heads/lalala:refs/heads/main &&
 	git config remote.ambi2.url lilili &&
 	git config remote.ambi2.fetch refs/heads/lilili:refs/heads/main &&
-	test_must_fail git branch all1 main &&
+	cat <<-EOF >expected &&
+	fatal: not tracking: ambiguous information for ref '\''refs/heads/main'\''
+	hint: There are multiple remotes whose fetch refspecs map to the remote
+	hint: tracking ref '\''refs/heads/main'\'':
+	hint:   ambi1
+	hint:   ambi2
+	hint: ''
+	hint: This is typically a configuration error.
+	hint: ''
+	hint: To support setting up tracking branches, ensure that
+	hint: different remotes'\'' fetch refspecs map into different
+	hint: tracking namespaces.
+	EOF
+	test_must_fail git branch all1 main 2>actual &&
+	test_cmp expected actual &&
 	test -z "$(git config branch.all1.merge)"
 '
 
