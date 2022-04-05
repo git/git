@@ -10,7 +10,7 @@
 #include "packfile.h"
 #include "object-store.h"
 
-static int bulk_checkin_plugged;
+static int odb_transaction_nesting;
 
 static struct bulk_checkin_packfile {
 	char *pack_tmp_name;
@@ -280,20 +280,29 @@ int index_bulk_checkin(struct object_id *oid,
 {
 	int status = deflate_to_pack(&bulk_checkin_packfile, oid, fd, size, type,
 				     path, flags);
-	if (!bulk_checkin_plugged)
+	if (!odb_transaction_nesting)
 		flush_bulk_checkin_packfile(&bulk_checkin_packfile);
 	return status;
 }
 
-void plug_bulk_checkin(void)
+void begin_odb_transaction(void)
 {
-	assert(!bulk_checkin_plugged);
-	bulk_checkin_plugged = 1;
+	odb_transaction_nesting += 1;
 }
 
-void unplug_bulk_checkin(void)
+void flush_odb_transaction(void)
 {
-	assert(bulk_checkin_plugged);
-	bulk_checkin_plugged = 0;
 	flush_bulk_checkin_packfile(&bulk_checkin_packfile);
+}
+
+void end_odb_transaction(void)
+{
+	odb_transaction_nesting -= 1;
+	if (odb_transaction_nesting < 0)
+		BUG("Unbalanced ODB transaction nesting");
+
+	if (odb_transaction_nesting)
+		return;
+
+	flush_odb_transaction();
 }
