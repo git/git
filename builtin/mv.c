@@ -13,6 +13,7 @@
 #include "string-list.h"
 #include "parse-options.h"
 #include "submodule.h"
+#include "entry.h"
 
 static const char * const builtin_mv_usage[] = {
 	N_("git mv [<options>] <source>... <destination>"),
@@ -304,6 +305,11 @@ remove_entry:
 		const char *src = source[i], *dst = destination[i];
 		enum update_mode mode = modes[i];
 		int pos;
+		struct checkout state = CHECKOUT_INIT;
+		state.istate = &the_index;
+
+		if (force)
+			state.force = 1;
 		if (show_only || verbose)
 			printf(_("Renaming %s to %s\n"), src, dst);
 		if (show_only)
@@ -328,6 +334,17 @@ remove_entry:
 		pos = cache_name_pos(src, strlen(src));
 		assert(pos >= 0);
 		rename_cache_entry_at(pos, dst);
+
+		if ((mode & SPARSE) &&
+		    (path_in_sparse_checkout(dst, &the_index))) {
+			int dst_pos;
+
+			dst_pos = cache_name_pos(dst, strlen(dst));
+			active_cache[dst_pos]->ce_flags &= ~CE_SKIP_WORKTREE;
+
+			if (checkout_entry(active_cache[dst_pos], &state, NULL, NULL))
+				die(_("cannot checkout %s"), active_cache[dst_pos]->name);
+		}
 	}
 
 	if (gitmodules_modified)
