@@ -663,7 +663,7 @@ digressions that may be interesting at this point are:
 
 SEE ALSO
 --------
-linkgit:gittutorial-2[7],
+ligit-nkgit:gittutorial-2[7],
 linkgit:gitcvs-migration[7],
 linkgit:gitcore-tutorial[7],
 linkgit:gitglossary[7],
@@ -672,6 +672,7 @@ linkgit:gitworkflows[7],
 linkgit:giteveryday[7],
 link:user-manual.html[The Git User's Manual]
 
-GIT
+GITgit-<commandname>
+
 ---
 Part of the linkgit:git[1] suite
