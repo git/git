@@ -10,9 +10,9 @@
 #include "packfile.h"
 #include "object-store.h"
 
-static struct bulk_checkin_state {
-	unsigned plugged:1;
+static int bulk_checkin_plugged;
 
+static struct bulk_checkin_packfile {
 	char *pack_tmp_name;
 	struct hashfile *f;
 	off_t offset;
@@ -21,7 +21,7 @@ static struct bulk_checkin_state {
 	struct pack_idx_entry **written;
 	uint32_t alloc_written;
 	uint32_t nr_written;
-} state;
+} bulk_checkin_packfile;
 
 static void finish_tmp_packfile(struct strbuf *basename,
 				const char *pack_tmp_name,
@@ -39,7 +39,7 @@ static void finish_tmp_packfile(struct strbuf *basename,
 	free(idx_tmp_name);
 }
 
-static void finish_bulk_checkin(struct bulk_checkin_state *state)
+static void flush_bulk_checkin_packfile(struct bulk_checkin_packfile *state)
 {
 	unsigned char hash[GIT_MAX_RAWSZ];
 	struct strbuf packname = STRBUF_INIT;
@@ -80,7 +80,7 @@ clear_exit:
 	reprepare_packed_git(the_repository);
 }
 
-static int already_written(struct bulk_checkin_state *state, struct object_id *oid)
+static int already_written(struct bulk_checkin_packfile *state, struct object_id *oid)
 {
 	int i;
 
@@ -112,7 +112,7 @@ static int already_written(struct bulk_checkin_state *state, struct object_id *o
  * status before calling us just in case we ask it to call us again
  * with a new pack.
  */
-static int stream_to_pack(struct bulk_checkin_state *state,
+static int stream_to_pack(struct bulk_checkin_packfile *state,
 			  git_hash_ctx *ctx, off_t *already_hashed_to,
 			  int fd, size_t size, enum object_type type,
 			  const char *path, unsigned flags)
@@ -189,7 +189,7 @@ static int stream_to_pack(struct bulk_checkin_state *state,
 }
 
 /* Lazily create backing packfile for the state */
-static void prepare_to_stream(struct bulk_checkin_state *state,
+static void prepare_to_stream(struct bulk_checkin_packfile *state,
 			      unsigned flags)
 {
 	if (!(flags & HASH_WRITE_OBJECT) || state->f)
@@ -204,7 +204,7 @@ static void prepare_to_stream(struct bulk_checkin_state *state,
 		die_errno("unable to write pack header");
 }
 
-static int deflate_to_pack(struct bulk_checkin_state *state,
+static int deflate_to_pack(struct bulk_checkin_packfile *state,
 			   struct object_id *result_oid,
 			   int fd, size_t size,
 			   enum object_type type, const char *path,
@@ -251,7 +251,7 @@ static int deflate_to_pack(struct bulk_checkin_state *state,
 			BUG("should not happen");
 		hashfile_truncate(state->f, &checkpoint);
 		state->offset = checkpoint.offset;
-		finish_bulk_checkin(state);
+		flush_bulk_checkin_packfile(state);
 		if (lseek(fd, seekback, SEEK_SET) == (off_t) -1)
 			return error("cannot seek back");
 	}
@@ -278,21 +278,22 @@ int index_bulk_checkin(struct object_id *oid,
 		       int fd, size_t size, enum object_type type,
 		       const char *path, unsigned flags)
 {
-	int status = deflate_to_pack(&state, oid, fd, size, type,
+	int status = deflate_to_pack(&bulk_checkin_packfile, oid, fd, size, type,
 				     path, flags);
-	if (!state.plugged)
-		finish_bulk_checkin(&state);
+	if (!bulk_checkin_plugged)
+		flush_bulk_checkin_packfile(&bulk_checkin_packfile);
 	return status;
 }
 
 void plug_bulk_checkin(void)
 {
-	state.plugged = 1;
+	assert(!bulk_checkin_plugged);
+	bulk_checkin_plugged = 1;
 }
 
 void unplug_bulk_checkin(void)
 {
-	state.plugged = 0;
-	if (state.f)
-		finish_bulk_checkin(&state);
+	assert(bulk_checkin_plugged);
+	bulk_checkin_plugged = 0;
+	flush_bulk_checkin_packfile(&bulk_checkin_packfile);
 }
