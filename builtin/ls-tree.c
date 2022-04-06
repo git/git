@@ -255,7 +255,7 @@ static int show_tree_long(const struct object_id *oid, struct strbuf *base,
 	printf("%06o %s %s %7s\t", data.mode, type_name(data.type),
 	       find_unique_abbrev(data.oid, abbrev), size_text);
 	show_tree_common_default_long(base, pathname, data.base->len);
-	return 1;
+	return recurse;
 }
 
 static int show_tree_name_only(const struct object_id *oid, struct strbuf *base,
