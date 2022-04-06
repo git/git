@@ -51,8 +51,8 @@ Repository:	https://github.com/Arusekk/git-po
 Leader:		Arusekk <arek_koz@o2.pl>
 
 Language:	pt_PT (Portuguese - Portugal)
-Repository:	https://github.com/git-l10n-pt-PT/git-po/
-Leader:		Daniel Santos <daniel@brilhante.top>
+Repository:	https://codeberg.org/git-pt/Git-PO-pt_PT/
+Leader:		Daniel Santos <dacs.git@brilhante.top>
 
 Language:	ru (Russian)
 Repository:	https://github.com/DJm00n/git-po-ru/
