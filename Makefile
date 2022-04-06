@@ -1972,6 +1972,7 @@ endif
 
 ifneq ($(findstring openssl,$(CSPRNG_METHOD)),)
 	BASIC_CFLAGS += -DHAVE_OPENSSL_CSPRNG
+	EXTLIBS += -lcrypto -lssl
 endif
 
 ifneq ($(PROCFS_EXECUTABLE_PATH),)
