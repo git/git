@@ -390,7 +390,7 @@ gitman.texi: $(MAN_XML) cat-texi.perl texi.xsl
 	$(RM) $@+
 
 gitman.info: gitman.texi
-	$(QUIET_MAKEINFO)$(MAKEINFO) --no-split --no-validate $*.texi
+	$(QUIET_MAKEINFO)$(MAKEINFO) --no-split --no-validate $<
 
 $(patsubst %.txt,%.texi,$(MAN_TXT)): %.texi : %.xml
 	$(QUIET_DB2TEXI)$(DOCBOOK2X_TEXI) --to-stdout $*.xml >$@
