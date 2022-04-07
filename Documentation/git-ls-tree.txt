@@ -156,7 +156,7 @@ objectname::
 	The name of the object.
 objectsize[:padded]::
 	The size of the object ("-" if it's a tree).
-	It also supports a padded format of size with "%(size:padded)".
+	It also supports a padded format of size with "%(objectsize:padded)".
 path::
 	The pathname of the object.
 
