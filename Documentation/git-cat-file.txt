@@ -12,7 +12,7 @@ SYNOPSIS
 'git cat-file' <type> <object>
 'git cat-file' (-e | -p) <object>
 'git cat-file' (-t | -s) [--allow-unknown-type] <object>
-'git cat-file' (--batch | --batch-check) [--batch-all-objects]
+'git cat-file' (--batch | --batch-check | --batch-command) [--batch-all-objects]
 	     [--buffer] [--follow-symlinks] [--unordered]
 	     [--textconv | --filters]
 'git cat-file' (--textconv | --filters)
