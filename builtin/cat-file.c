@@ -16,6 +16,7 @@
 #include "packfile.h"
 #include "object-store.h"
 #include "promisor-remote.h"
+#include "hashmap.h"
 
 enum batch_mode {
 	BATCH_MODE_CONTENTS,
@@ -530,13 +531,100 @@ static int batch_unordered_packed(const struct object_id *oid,
 				      data);
 }
 
+typedef int (*parse_cmd_unordered_fn)(const struct object_id *,
+				      struct packed_git *, uint32_t, void *);
+
 typedef void (*parse_cmd_fn_t)(struct batch_options *, const char *,
 			       struct strbuf *, struct expand_data *);
+
+struct oid2fn {
+	struct hashmap_entry ent;
+	const char *oid;
+	parse_cmd_unordered_fn fn;
+	parse_cmd_fn_t fn_loose;
+};
+
+static int oid2fn_cmp(const void *hashmap_cmp_fn_data,
+		      const struct hashmap_entry *eptr,
+		      const struct hashmap_entry *entry_or_key,
+		      const void *keydata)
+{
+	const struct oid2fn *o1, *o2;
+
+	o1 = container_of(eptr, const struct oid2fn, ent);
+	o2 = container_of(entry_or_key, const struct oid2fn, ent);
+
+	return strcmp(o1->oid, o2->oid);
+
+}
+
+struct unordered_data {
+	struct hashmap *map;
+	struct object_cb_data *cb_data;
+};
+
+static int parse_cmd_unordered_packed(const struct object_id *oid,
+				  struct packed_git *pack,
+				  uint32_t pos,
+				  void *data)
+{
+	struct unordered_data *cb = data;
+	struct hashmap *map = cb->map;
+	struct oid2fn k, *e;
+	char *oid_str = oid_to_hex(oid);
+	int ret = 0;
+
+	k.oid = oid_str;
+	hashmap_entry_init(&k.ent, strhash(oid_str));
+
+	e = hashmap_remove_entry(map, &k, ent, NULL);
+	while (e) {
+		ret = e->fn(oid, pack, pos, cb->cb_data);
+
+		if (ret)
+			return ret;
+
+			/* get the next one */
+		e = hashmap_remove_entry(map, &k, ent, NULL);
+	}
+
+	return 0;
+}
 
 struct queued_cmd {
 	parse_cmd_fn_t fn;
 	char *line;
 };
+
+static int parse_cmd_unordered_contents(const struct object_id *oid,
+				     struct packed_git *pack,
+				     uint32_t pos,
+				     void *vdata)
+{
+	struct object_cb_data *data = vdata;
+
+	data->opt->batch_mode = BATCH_MODE_CONTENTS;
+	return batch_unordered_object(oid, pack,
+				      nth_packed_object_offset(pack, pos),
+				      data);
+
+
+}
+
+static int parse_cmd_unordered_info(const struct object_id *oid,
+				     struct packed_git *pack,
+				     uint32_t pos,
+				     void *vdata)
+{
+	struct object_cb_data *data = vdata;
+
+	data->opt->batch_mode = BATCH_MODE_INFO;
+
+	return batch_unordered_object(oid, pack,
+				      nth_packed_object_offset(pack, pos),
+				      data);
+
+}
 
 static void parse_cmd_contents(struct batch_options *opt,
 			     const char *line,
@@ -556,19 +644,45 @@ static void parse_cmd_info(struct batch_options *opt,
 	batch_one_object(line, output, opt, data);
 }
 
+static void dispatch_calls_unordered(struct batch_options *opt,
+				     struct strbuf *output,
+				     struct object_cb_data *cb,
+				     struct hashmap *hashmap)
+{
+	struct unordered_data ud = {0};
+	struct hashmap_iter iter;
+	struct oid2fn *entry;
+
+	ud.map = hashmap;
+	ud.cb_data = cb;
+
+	for_each_packed_object(parse_cmd_unordered_packed,
+			       &ud, FOR_EACH_OBJECT_PACK_ORDER);
+
+	hashmap_for_each_entry(hashmap, &iter, entry, ent) {
+		entry->fn_loose(cb->opt, entry->oid, cb->scratch, cb->expand);
+		hashmap_remove(hashmap, &entry->ent, 0);
+		free(entry);
+	};
+
+	fflush(stdout);
+}
+
 static void dispatch_calls(struct batch_options *opt,
 		struct strbuf *output,
 		struct expand_data *data,
 		struct queued_cmd *cmd,
 		int nr)
 {
+
 	int i;
 
 	if (!opt->buffer_output)
 		die(_("flush is only for --buffer mode"));
 
-	for (i = 0; i < nr; i++)
+	for (i = 0; i < nr; i++) {
 		cmd[i].fn(opt, cmd[i].line, output, data);
+	}
 
 	fflush(stdout);
 }
@@ -587,10 +701,11 @@ static void free_cmds(struct queued_cmd *cmd, size_t *nr)
 static const struct parse_cmd {
 	const char *name;
 	parse_cmd_fn_t fn;
+	parse_cmd_unordered_fn unordered_fn;
 	unsigned takes_args;
 } commands[] = {
-	{ "contents", parse_cmd_contents, 1},
-	{ "info", parse_cmd_info, 1},
+	{ "contents", parse_cmd_contents, parse_cmd_unordered_contents, 1},
+	{ "info", parse_cmd_info, parse_cmd_unordered_info, 1},
 	{ "flush", NULL, 0},
 };
 
@@ -601,6 +716,12 @@ static void batch_objects_command(struct batch_options *opt,
 	struct strbuf input = STRBUF_INIT;
 	struct queued_cmd *queued_cmd = NULL;
 	size_t alloc = 0, nr = 0;
+	struct hashmap map;
+
+	if (opt->unordered) {
+		unsigned flags = 0;
+		hashmap_init(&map, oid2fn_cmp, &flags, 0);
+	}
 
 	while (!strbuf_getline(&input, stdin)) {
 		int i;
@@ -636,15 +757,38 @@ static void batch_objects_command(struct batch_options *opt,
 			die(_("unknown command: '%s'"), input.buf);
 
 		if (!strcmp(cmd->name, "flush")) {
-			dispatch_calls(opt, output, data, queued_cmd, nr);
+			if (opt->unordered) {
+				struct object_cb_data cb;
+				struct oidset seen = OIDSET_INIT;
+
+				cb.seen = &seen;
+				cb.opt = opt;
+				cb.expand = data;
+				cb.scratch = output;
+				dispatch_calls_unordered(opt, output, &cb, &map);
+			} else {
+				dispatch_calls(opt, output, data, queued_cmd, nr);
+			}
 			free_cmds(queued_cmd, &nr);
 		} else if (!opt->buffer_output) {
 			cmd->fn(opt, p, output, data);
 		} else {
-			ALLOC_GROW(queued_cmd, nr + 1, alloc);
-			call.fn = cmd->fn;
-			call.line = xstrdup_or_null(p);
-			queued_cmd[nr++] = call;
+			char *oid = xstrdup_or_null(p);
+			if (opt->unordered) {
+				struct oid2fn *e;
+
+				e = xmalloc(sizeof(struct oid2fn));
+				e->oid = oid;
+				e->fn = cmd->unordered_fn;
+				e->fn_loose = cmd->fn;
+				hashmap_entry_init(&e->ent, strhash(oid));
+				hashmap_add(&map, &e->ent);
+			} else {
+				ALLOC_GROW(queued_cmd, nr + 1, alloc);
+				call.fn = cmd->fn;
+				call.line = oid;
+				queued_cmd[nr++] = call;
+			}
 		}
 	}
 
