@@ -151,11 +151,11 @@ names can be used:
 objectmode::
 	The mode of the object.
 objecttype::
-	The type of the object (`blob` or `tree`).
+	The type of the object (`commit`, `blob` or `tree`).
 objectname::
 	The name of the object.
 objectsize[:padded]::
-	The size of the object ("-" if it's a tree).
+	The size of a `blob` object ("-" if it's a `commit` or `tree`).
 	It also supports a padded format of size with "%(objectsize:padded)".
 path::
 	The pathname of the object.
