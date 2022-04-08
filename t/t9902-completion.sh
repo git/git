@@ -1529,28 +1529,45 @@ test_expect_success 'cone mode sparse-checkout completes directory names with sp
 	)
 '
 
-# use FUNNYNAMES to avoid running on Windows, which doesn't permit backslashes or tabs in paths
-test_expect_success FUNNYNAMES 'cone mode sparse-checkout completes directory names with backslashes and tabs' '
+# use FUNNYNAMES to avoid running on Windows, which doesn't permit tabs in paths
+test_expect_success FUNNYNAMES 'cone mode sparse-checkout completes directory names with tabs' '
+	# reset sparse-checkout
+	git -C sparse-checkout sparse-checkout disable &&
+	(
+		cd sparse-checkout &&
+		mkdir "$(printf "directory\twith\ttabs")" &&
+		>"$(printf "directory\twith\ttabs")/randomfile" &&
+		git add . &&
+		git commit -m "Add directory with tabs" &&
+		git sparse-checkout set --cone \
+			"$(printf "directory\twith\ttabs")" &&
+		test_completion "git sparse-checkout add dir" <<-\EOF &&
+		directory	with	tabs/
+		EOF
+		rm -rf "$(printf "directory\twith\ttabs")" &&
+		git add . &&
+		git commit -m "Remove directory with tabs"
+	)
+'
+
+# use FUNNYNAMES to avoid running on Windows, and !CYGWIN for Cygwin, as neither permit backslashes in paths
+test_expect_success FUNNYNAMES,!CYGWIN 'cone mode sparse-checkout completes directory names with backslashes' '
 	# reset sparse-checkout
 	git -C sparse-checkout sparse-checkout disable &&
 	(
 		cd sparse-checkout &&
 		mkdir "directory\with\backslashes" &&
-		mkdir "$(printf "directory\twith\ttabs")" &&
 		>"directory\with\backslashes/randomfile" &&
-		>"$(printf "directory\twith\ttabs")/randomfile" &&
 		git add . &&
-		git commit -m "Add directory with backslashes and directory with tabs" &&
-		git sparse-checkout set --cone "directory\with\backslashes" \
-			"$(printf "directory\twith\ttabs")" &&
+		git commit -m "Add directory with backslashes" &&
+		git sparse-checkout set --cone \
+			"directory\with\backslashes" &&
 		test_completion "git sparse-checkout add dir" <<-\EOF &&
 		directory\with\backslashes/
-		directory	with	tabs/
 		EOF
 		rm -rf "directory\with\backslashes" &&
-		rm -rf "$(printf "directory\twith\ttabs")" &&
 		git add . &&
-		git commit -m "Remove directory with backslashes and directory with tabs"
+		git commit -m "Remove directory with backslashes"
 	)
 '
 
