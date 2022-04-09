@@ -1221,8 +1221,9 @@ PTHREAD_CFLAGS =
 SPARSE_FLAGS ?= -std=gnu99
 SP_EXTRA_FLAGS = -Wno-universal-initializer
 
-# For informing GIT-BUILD-OPTIONS of the SANITIZE=leak target
+# For informing GIT-BUILD-OPTIONS of the SANITIZE=leak,address targets
 SANITIZE_LEAK =
+SANITIZE_ADDRESS =
 
 # For the 'coccicheck' target; setting SPATCH_BATCH_SIZE higher will
 # usually result in less CPU usage at the cost of higher peak memory.
@@ -1272,6 +1273,7 @@ SANITIZE_LEAK = YesCompiledWithIt
 endif
 ifneq ($(filter address,$(SANITIZERS)),)
 NO_REGEX = NeededForASAN
+SANITIZE_ADDRESS = YesCompiledWithIt
 endif
 endif
 
@@ -2853,6 +2855,7 @@ GIT-BUILD-OPTIONS: FORCE
 	@echo PAGER_ENV=\''$(subst ','\'',$(subst ','\'',$(PAGER_ENV)))'\' >>$@+
 	@echo DC_SHA1=\''$(subst ','\'',$(subst ','\'',$(DC_SHA1)))'\' >>$@+
 	@echo SANITIZE_LEAK=\''$(subst ','\'',$(subst ','\'',$(SANITIZE_LEAK)))'\' >>$@+
+	@echo SANITIZE_ADDRESS=\''$(subst ','\'',$(subst ','\'',$(SANITIZE_ADDRESS)))'\' >>$@+
 	@echo X=\'$(X)\' >>$@+
 ifdef TEST_OUTPUT_DIRECTORY
 	@echo TEST_OUTPUT_DIRECTORY=\''$(subst ','\'',$(subst ','\'',$(TEST_OUTPUT_DIRECTORY)))'\' >>$@+
