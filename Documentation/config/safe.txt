@@ -26,3 +26,9 @@ directory was listed in the `safe.directory` list. If `safe.directory=*`
 is set in system config and you want to re-enable this protection, then
 initialize your list with an empty value before listing the repositories
 that you deem safe.
++
+Due to the permission model on Windows where ACLs are used instead of
+Unix' simpler permission model, it can be a bit tricky to figure out why
+a directory is considered unsafe. To help with this, Git will provide
+more detailed information when the environment variable
+`GIT_TEST_DEBUG_UNSAFE_DIRECTORIES` is set to `true`.

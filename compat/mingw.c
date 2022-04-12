@@ -1,6 +1,7 @@
 #include "../git-compat-util.h"
 #include "win32.h"
 #include <aclapi.h>
+#include <sddl.h>
 #include <conio.h>
 #include <wchar.h>
 #include <winioctl.h>
@@ -3513,6 +3514,7 @@ int is_path_owned_by_current_sid(const char *path)
 	else if (sid && IsValidSid(sid)) {
 		/* Now, verify that the SID matches the current user's */
 		static PSID current_user_sid;
+		BOOL is_member;
 
 		if (!current_user_sid)
 			current_user_sid = get_current_user_sid();
@@ -3521,6 +3523,35 @@ int is_path_owned_by_current_sid(const char *path)
 		    IsValidSid(current_user_sid) &&
 		    EqualSid(sid, current_user_sid))
 			result = 1;
+		else if (IsWellKnownSid(sid, WinBuiltinAdministratorsSid) &&
+			 CheckTokenMembership(NULL, sid, &is_member) &&
+			 is_member)
+			/*
+			 * If owned by the Administrators group, and the
+			 * current user is an administrator, we consider that
+			 * okay, too.
+			 */
+			result = 1;
+		else if (git_env_bool("GIT_TEST_DEBUG_UNSAFE_DIRECTORIES", 0)) {
+			LPSTR str1, str2, to_free1 = NULL, to_free2 = NULL;
+
+			if (ConvertSidToStringSidA(sid, &str1))
+				to_free1 = str1;
+			else
+				str1 = "(inconvertible)";
+
+			if (!current_user_sid)
+				str2 = "(none)";
+			else if (!IsValidSid(current_user_sid))
+				str2 = "(invalid)";
+			else if (ConvertSidToStringSidA(current_user_sid, &str2))
+				to_free2 = str2;
+			else
+				str2 = "(inconvertible)";
+			warning("'%s' is owned by:\n\t'%s'\nbut the current user is:\n\t'%s'", path, str1, str2);
+			LocalFree(to_free1);
+			LocalFree(to_free2);
+		}
 	}
 
 	/*
