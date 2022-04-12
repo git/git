@@ -1,5 +1,7 @@
 #include "../git-compat-util.h"
 #include "win32.h"
+#include <aclapi.h>
+#include <sddl.h>
 #include <conio.h>
 #include <wchar.h>
 #include <winioctl.h>
@@ -3444,6 +3446,122 @@ static void setup_windows_environment(void)
 	 */
 	if (!(tmp = getenv("MSYS")) || !strstr(tmp, "winsymlinks:nativestrict"))
 		has_symlinks = 0;
+}
+
+static PSID get_current_user_sid(void)
+{
+	HANDLE token;
+	DWORD len = 0;
+	PSID result = NULL;
+
+	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token))
+		return NULL;
+
+	if (!GetTokenInformation(token, TokenUser, NULL, 0, &len)) {
+		TOKEN_USER *info = xmalloc((size_t)len);
+		if (GetTokenInformation(token, TokenUser, info, len, &len)) {
+			len = GetLengthSid(info->User.Sid);
+			result = xmalloc(len);
+			if (!CopySid(len, result, info->User.Sid)) {
+				error(_("failed to copy SID (%ld)"),
+				      GetLastError());
+				FREE_AND_NULL(result);
+			}
+		}
+		FREE_AND_NULL(info);
+	}
+	CloseHandle(token);
+
+	return result;
+}
+
+int is_path_owned_by_current_sid(const char *path)
+{
+	WCHAR wpath[MAX_PATH];
+	PSID sid = NULL;
+	PSECURITY_DESCRIPTOR descriptor = NULL;
+	DWORD err;
+
+	static wchar_t home[MAX_PATH];
+
+	int result = 0;
+
+	if (xutftowcs_path(wpath, path) < 0)
+		return 0;
+
+	/*
+	 * On Windows, the home directory is owned by the administrator, but for
+	 * all practical purposes, it belongs to the user. Do pretend that it is
+	 * owned by the user.
+	 */
+	if (!*home) {
+		DWORD size = ARRAY_SIZE(home);
+		DWORD len = GetEnvironmentVariableW(L"HOME", home, size);
+		if (!len || len > size)
+			wcscpy(home, L"::N/A::");
+	}
+	if (!wcsicmp(wpath, home))
+		return 1;
+
+	/* Get the owner SID */
+	err = GetNamedSecurityInfoW(wpath, SE_FILE_OBJECT,
+				    OWNER_SECURITY_INFORMATION |
+				    DACL_SECURITY_INFORMATION,
+				    &sid, NULL, NULL, NULL, &descriptor);
+
+	if (err != ERROR_SUCCESS)
+		error(_("failed to get owner for '%s' (%ld)"), path, err);
+	else if (sid && IsValidSid(sid)) {
+		/* Now, verify that the SID matches the current user's */
+		static PSID current_user_sid;
+		BOOL is_member;
+
+		if (!current_user_sid)
+			current_user_sid = get_current_user_sid();
+
+		if (current_user_sid &&
+		    IsValidSid(current_user_sid) &&
+		    EqualSid(sid, current_user_sid))
+			result = 1;
+		else if (IsWellKnownSid(sid, WinBuiltinAdministratorsSid) &&
+			 CheckTokenMembership(NULL, sid, &is_member) &&
+			 is_member)
+			/*
+			 * If owned by the Administrators group, and the
+			 * current user is an administrator, we consider that
+			 * okay, too.
+			 */
+			result = 1;
+		else if (git_env_bool("GIT_TEST_DEBUG_UNSAFE_DIRECTORIES", 0)) {
+			LPSTR str1, str2, to_free1 = NULL, to_free2 = NULL;
+
+			if (ConvertSidToStringSidA(sid, &str1))
+				to_free1 = str1;
+			else
+				str1 = "(inconvertible)";
+
+			if (!current_user_sid)
+				str2 = "(none)";
+			else if (!IsValidSid(current_user_sid))
+				str2 = "(invalid)";
+			else if (ConvertSidToStringSidA(current_user_sid, &str2))
+				to_free2 = str2;
+			else
+				str2 = "(inconvertible)";
+			warning("'%s' is owned by:\n\t'%s'\nbut the current user is:\n\t'%s'", path, str1, str2);
+			LocalFree(to_free1);
+			LocalFree(to_free2);
+		}
+	}
+
+	/*
+	 * We can release the security descriptor struct only now because `sid`
+	 * actually points into this struct.
+	 */
+	if (descriptor)
+		LocalFree(descriptor);
+
+	return result;
 }
 
 int is_valid_win32_path(const char *path, int allow_literal_nul)

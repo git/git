@@ -489,6 +489,13 @@ char *mingw_strbuf_realpath(struct strbuf *resolved, const char *path);
 #endif
 
 /**
+ * Verifies that the specified path is owned by the user running the
+ * current process.
+ */
+int is_path_owned_by_current_sid(const char *path);
+#define is_path_owned_by_current_user is_path_owned_by_current_sid
+
+/**
  * Verifies that the given path is a valid one on Windows.
  *
  * In particular, path segments are disallowed which

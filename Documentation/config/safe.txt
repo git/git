@@ -1,0 +1,27 @@
+safe.directory::
+	These config entries specify Git-tracked directories that are
+	considered safe even if they are owned by someone other than the
+	current user. By default, Git will refuse to even parse a Git
+	config of a repository owned by someone else, let alone run its
+	hooks, and this config setting allows users to specify exceptions,
+	e.g. for intentionally shared repositories (see the `--shared`
+	option in linkgit:git-init[1]).
++
+This is a multi-valued setting, i.e. you can add more than one directory
+via `git config --add`. To reset the list of safe directories (e.g. to
+override any such directories specified in the system config), add a
+`safe.directory` entry with an empty value.
++
+This config setting is only respected when specified in a system or global
+config, not when it is specified in a repository config or via the command
+line option `-c safe.directory=<path>`.
++
+The value of this setting is interpolated, i.e. `~/<path>` expands to a
+path relative to the home directory and `%(prefix)/<path>` expands to a
+path relative to Git's (runtime) prefix.
++
+Due to the permission model on Windows where ACLs are used instead of
+Unix' simpler permission model, it can be a bit tricky to figure out why
+a directory is considered unsafe. To help with this, Git will provide
+more detailed information when the environment variable
+`GIT_TEST_DEBUG_UNSAFE_DIRECTORIES` is set to `true`.
