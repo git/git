@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Apr 2022, #02; Fri, 8)
-X-master-at: ab1f2765f78e75ee51dface57e1071b3b7f42b09
-X-next-at: be66c8963cc046090ab0eb1f750e71f594a2a4e4
+Subject: What's cooking in git.git (Apr 2022, #03; Tue, 12)
+X-master-at: 11cfe552610386954886543f5de87dcc49ad5735
+X-next-at: 64f902a358a9e80c900e2fb98bca7fe335154015
 
-What's cooking in git.git (Apr 2022, #02; Fri, 8)
+What's cooking in git.git (Apr 2022, #03; Tue, 12)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -18,8 +18,11 @@ useful").  Do not read too much into a topic being in (or not in)
 'seen'.  The ones marked with '.' do not appear in any of the
 integration branches, but I am still holding onto them.
 
-I just tagged Git 2.36-rc1; thank you, everybody, who reported and
-fixed glitches in the -rc0 preview release.
+Security releases for the 2.30-2.35 maintenance tracks have been
+tagged to address CVE-2022-24765, where multi-user machines with a
+shared "mob" directory a user can trick other users into running a
+command of their choice easily.  The fix has been merged up to Git
+2.36-rc2 and also all integration branches above.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -52,116 +55,50 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* bc/csprng-mktemps (2022-04-06) 1 commit
-  (merged to 'next' on 2022-04-06 at 5510589561)
- + git-compat-util: really support openssl as a source of entropy
+* ja/i18n-fix-for-2.36 (2022-04-11) 1 commit
+  (merged to 'next' on 2022-04-11 at 0953a117dc)
+ + i18n: fix some badly formatted i18n strings
 
- Build fix.
- source: <20220405042826.56vyilttx3lo4scv@carlos-mbp.lan>
-
-
-* ld/sparse-index-bash-completion (2022-04-08) 1 commit
- - t9902: split test to run on appropriate systems
-
- Test regression fix.
- source: <20220408095353.11183-1-adam@dinwoodie.org>
-
-
-* tl/ls-tree-oid-only (2022-04-08) 1 commit
- - ls-tree doc: document interaction with submodules
-
- Docfix.
- source: <patch-1.1-183b9639ae7-20220408T155704Z-avarab@gmail.com>
+ Fixes to some localizable strings.
+ source: <pull.1212.git.1649705011178.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [New Topics]
 
-* ah/convert-warning-message (2022-04-08) 1 commit
- - convert: clarify line ending conversion warning
+* pw/test-malloc-with-sanitize-address (2022-04-11) 1 commit
+ - tests: make SANITIZE=address imply TEST_NO_MALLOC_CHECK
 
- Update a few end-user facing messages around eol conversion.
-
- Will merge to 'next'?
- source: <20220408044154.9947-1-alexhenrie24@gmail.com>
-
-
-* cg/vscode-with-gdb (2022-04-08) 1 commit
- - contrib/vscode/: debugging with VS Code and gdb
-
- VS code configuration updates.
+ Avoid problems from interaction between malloc_check and address
+ sanitizer.
 
  Will merge to 'next'.
- source: <20220407204001.112287-2-cogoni.guillaume@gmail.com>
+ source: <pull.1210.git.1649507317350.gitgitgadget@gmail.com>
 
 
-* gf/unused-includes (2022-04-06) 2 commits
- - apply.c: remove unnecessary include
- - serve.c: remove unnecessary include
+* rs/t7812-pcre2-ws-bug-test (2022-04-11) 1 commit
+ - t7812: test PCRE2 whitespace bug
 
- Remove unused includes.
+ A test to ensure workaround for an earlier pcre2 bug does work.
 
- Will merge to 'next'?
- source: <20220331194436.58005-1-garrit@slashdev.space>
-
-
-* km/t3501-use-test-helpers (2022-04-06) 1 commit
- - t3501: remove test -f and stop ignoring git <cmd> exit code
-
- Test script updates.
-
- Will merge to 'next'?
- source: <20220405134742.17526-2-khalid.masum.92@gmail.com>
-
-
-* pb/submodule-recurse-mode-enum (2022-04-06) 1 commit
- - submodule.h: use a named enum for RECURSE_SUBMODULES_*
-
- Small code clean-up.
-
- Will merge to 'next'?
- source: <pull.1111.v2.git.1649092211419.gitgitgadget@gmail.com>
-
-
-* rs/commit-summary-wo-break-rewrite (2022-04-06) 1 commit
- - commit, sequencer: turn off break_opt for commit summary
-
- The commit summary shown after making a commit is matched to what
- is given in "git status" not to use the break-rewrite heuristics.
-
- Will merge to 'next'?
- source: <c35bd0aa-2e46-e710-2b39-89f18bad0097@web.de>
-
-
-* tk/p4-utf8-bom (2022-04-06) 1 commit
- - git-p4: preserve utf8 BOM when importing from p4 to git
-
- "git p4" update.
-
- Will merge to 'next'?
- source: <pull.1203.git.1649051436934.gitgitgadget@gmail.com>
-
-
-* tk/p4-with-explicity-sync (2022-04-06) 1 commit
- - git-p4: support explicit sync of arbitrary existing git-p4 refs
-
- "git p4" update.
-
- Will merge to 'next'?
- source: <pull.1202.git.1649049054600.gitgitgadget@gmail.com>
-
-
-* ab/env-array (2022-04-06) 3 commits
- - run-command API users: use "env" not "env_array" in comments & names
- - run-command API: rename "env_array" to "env"
- - cocci: add a rename of "struct child_process"'s "env_array" to "env"
-
- source: <cover-0.3-00000000000-20220406T104134Z-avarab@gmail.com>
+ Will merge to 'next'.
+ source: <3a49649d-8ff9-e5a7-e3fd-33fee5068ae8@web.de>
 
 --------------------------------------------------
 [Stalled]
 
+* ab/commit-plug-leaks (2022-02-16) 2 commits
+ - commit: use strbuf_release() instead of UNLEAK()
+ - commit: fix "author_ident" leak
+
+ Leakfixes in the top-level called-once function.
+
+ Expecting a reroll.
+ I think UNLEAK->strbuf_release() is a regression.
+ source: <cover-0.2-00000000000-20220216T081844Z-avarab@gmail.com>
+
+
 * dl/prompt-pick-fix (2022-03-25) 1 commit
- - git-prompt: fix sequencer/todo detection
+ . git-prompt: fix sequencer/todo detection
 
  Fix shell prompt script (in contrib/) for those who set
  rebase.abbreviateCommands; we failed to recognize that we were in a
@@ -201,6 +138,91 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* ah/convert-warning-message (2022-04-08) 1 commit
+ - convert: clarify line ending conversion warning
+
+ Update a few end-user facing messages around eol conversion.
+
+ Will merge to 'next'.
+ source: <20220408044154.9947-1-alexhenrie24@gmail.com>
+
+
+* cg/vscode-with-gdb (2022-04-08) 1 commit
+ - contrib/vscode/: debugging with VS Code and gdb
+
+ VS code configuration updates.
+
+ Will merge to 'next'.
+ source: <20220407204001.112287-2-cogoni.guillaume@gmail.com>
+
+
+* gf/unused-includes (2022-04-06) 2 commits
+ - apply.c: remove unnecessary include
+ - serve.c: remove unnecessary include
+
+ Remove unused includes.
+
+ Will merge to 'next'.
+ source: <20220331194436.58005-1-garrit@slashdev.space>
+
+
+* km/t3501-use-test-helpers (2022-04-06) 1 commit
+ - t3501: remove test -f and stop ignoring git <cmd> exit code
+
+ Test script updates.
+
+ Will merge to 'next'.
+ source: <20220405134742.17526-2-khalid.masum.92@gmail.com>
+
+
+* pb/submodule-recurse-mode-enum (2022-04-06) 1 commit
+ - submodule.h: use a named enum for RECURSE_SUBMODULES_*
+
+ Small code clean-up.
+
+ Will merge to 'next'.
+ source: <pull.1111.v2.git.1649092211419.gitgitgadget@gmail.com>
+
+
+* rs/commit-summary-wo-break-rewrite (2022-04-06) 1 commit
+ - commit, sequencer: turn off break_opt for commit summary
+
+ The commit summary shown after making a commit is matched to what
+ is given in "git status" not to use the break-rewrite heuristics.
+
+ Will merge to 'next'.
+ source: <c35bd0aa-2e46-e710-2b39-89f18bad0097@web.de>
+
+
+* tk/p4-utf8-bom (2022-04-06) 1 commit
+ - git-p4: preserve utf8 BOM when importing from p4 to git
+
+ "git p4" update.
+
+ Will merge to 'next'.
+ source: <pull.1203.git.1649051436934.gitgitgadget@gmail.com>
+
+
+* tk/p4-with-explicity-sync (2022-04-06) 1 commit
+ - git-p4: support explicit sync of arbitrary existing git-p4 refs
+
+ "git p4" update.
+
+ Will merge to 'next'.
+ source: <pull.1202.git.1649049054600.gitgitgadget@gmail.com>
+
+
+* ab/env-array (2022-04-06) 3 commits
+ - run-command API users: use "env" not "env_array" in comments & names
+ - run-command API: rename "env_array" to "env"
+ - cocci: add a rename of "struct child_process"'s "env_array" to "env"
+
+ Rename .env_array member to .env in the child_process structure.
+
+ On hold.
+ source: <cover-0.3-00000000000-20220406T104134Z-avarab@gmail.com>
+
+
 * ab/misc-cleanup (2022-04-01) 6 commits
   (merged to 'next' on 2022-04-04 at c5fb674865)
  + alloc.[ch]: remove alloc_report() function
@@ -222,7 +244,7 @@ Release tarballs are available at:
  "git -v" and "git -h" are now understood as "git --version" and
  "git --help".
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20220331212709.36036-1-garrit@slashdev.space>
 
 
@@ -269,6 +291,8 @@ Release tarballs are available at:
 
  Plug the memory leaks from the trickiest API of all, the revision
  walker.
+
+ Will merge to 'next'?
  source: <cover-v5-00.27-00000000000-20220402T102002Z-avarab@gmail.com>
 
 
@@ -285,7 +309,7 @@ Release tarballs are available at:
  Build a moral equivalent of js/ci-github-workflow-markup on top of
  ab/ci-setup-simplify.
 
- Waiting for discussion to settle.
+ How does this compare feature-wise with js/ci-github-workflow-markup?
  source: <RFC-cover-v3-0.6-00000000000-20220325T183946Z-avarab@gmail.com>
 
 
@@ -320,7 +344,10 @@ Release tarballs are available at:
  Drive more actions done in CI via the Makefile instead of shell
  commands sprinkled in .github/workflows/main.yml
 
- Waiting for discussion to settle.
+ Unless "doing more in Makefile" is fundamentally undesirable, I am
+ inclined to take this, together with ab/ci-github-workflow-markup
+ to replace js/ci-github-workflow-markup
+ cf. <xmqq4k361a57.fsf@gitster.g>
  source: <cover-v2-00.25-00000000000-20220325T182534Z-avarab@gmail.com>
 
 
@@ -347,7 +374,7 @@ Release tarballs are available at:
  source: <20220330191909.294610-1-greenfoo@u92.eu>
 
 
-* bc/stash-export (2022-04-03) 4 commits
+* bc/stash-export (2022-04-08) 4 commits
  - builtin/stash: provide a way to import stashes from a ref
  - builtin/stash: provide a way to export stashes to a ref
  - builtin/stash: factor out revision parsing into a function
@@ -357,7 +384,7 @@ Release tarballs are available at:
  commit to transfer it across repositories has been introduced.
 
  Will merge to 'next'?
- source: <20220403182250.904933-1-sandals@crustytoothpaste.net>
+ source: <20220407215352.3491567-1-sandals@crustytoothpaste.net>
 
 
 * ns/batch-fsync (2022-04-06) 13 commits
@@ -394,6 +421,9 @@ Release tarballs are available at:
  - sparse-checkout: make --cone the default
  - tests: stop assuming --no-cone is the default mode for sparse-checkout
 
+ Deprecate non-cone mode of the sparse-checkout feature.
+
+ Will merge to 'next'?
  source: <pull.1148.v2.git.1647054681.gitgitgadget@gmail.com>
 
 
@@ -488,17 +518,6 @@ Release tarballs are available at:
 
  Will cook in 'next'.
  source: <pull.985.v6.git.1648742535.gitgitgadget@gmail.com>
-
-
-* ab/commit-plug-leaks (2022-02-16) 2 commits
- - commit: use strbuf_release() instead of UNLEAK()
- - commit: fix "author_ident" leak
-
- Leakfixes in the top-level called-once function.
-
- Expecting a reroll.
- I think UNLEAK->strbuf_release() is a regression.
- source: <cover-0.2-00000000000-20220216T081844Z-avarab@gmail.com>
 
 
 * jh/builtin-fsmonitor-part3 (2022-03-25) 28 commits
