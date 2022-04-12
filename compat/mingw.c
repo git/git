@@ -2645,9 +2645,20 @@ static void setup_windows_environment(void)
 		convert_slashes(tmp);
 	}
 
-	/* simulate TERM to enable auto-color (see color.c) */
-	if (!getenv("TERM"))
-		setenv("TERM", "cygwin", 1);
+
+	/*
+	 * Make sure TERM is set up correctly to enable auto-color
+	 * (see color.c .) Use "cygwin" for older OS releases which
+	 * works correctly with MSYS2 utilities on older consoles.
+	 */
+	if (!getenv("TERM")) {
+		if ((GetVersion() >> 16) < 15063)
+			setenv("TERM", "cygwin", 0);
+		else {
+			setenv("TERM", "xterm-256color", 0);
+			setenv("COLORTERM", "truecolor", 0);
+		}
+	}
 
 	/* calculate HOME if not set */
 	if (!getenv("HOME")) {
