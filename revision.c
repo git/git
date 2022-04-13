@@ -2928,6 +2928,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 
 void release_revisions(struct rev_info *revs)
 {
+	free_commit_list(revs->commits);
 	object_array_clear(&revs->pending);
 }
 
