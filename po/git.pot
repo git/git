@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2022-04-06 14:40+0800\n"
+"POT-Creation-Date: 2022-04-13 14:52+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1010,7 +1010,7 @@ msgid "cannot checkout %s"
 msgstr ""
 
 #: apply.c:3412 apply.c:3423 apply.c:3469 midx.c:105 pack-revindex.c:214
-#: setup.c:309
+#: setup.c:310
 #, c-format
 msgid "failed to read %s"
 msgstr ""
@@ -3116,7 +3116,7 @@ msgid "Marked %d islands, done.\n"
 msgstr ""
 
 #: diff-merges.c:81 gpg-interface.c:719 gpg-interface.c:734 ls-refs.c:37
-#: parallel-checkout.c:42 sequencer.c:2805 setup.c:562 builtin/am.c:203
+#: parallel-checkout.c:42 sequencer.c:2805 setup.c:563 builtin/am.c:203
 #: builtin/am.c:2243 builtin/am.c:2287 builtin/blame.c:724 builtin/blame.c:742
 #: builtin/fetch.c:792 builtin/pack-objects.c:3515 builtin/pull.c:45
 #: builtin/pull.c:47 builtin/pull.c:321
@@ -4227,7 +4227,7 @@ msgstr ""
 msgid "'%s': unable to read %s"
 msgstr ""
 
-#: grep.c:1876 setup.c:177 builtin/clone.c:308 builtin/diff.c:90
+#: grep.c:1876 setup.c:178 builtin/clone.c:308 builtin/diff.c:90
 #: builtin/rm.c:136
 #, c-format
 msgid "failed to stat '%s'"
@@ -8129,19 +8129,19 @@ msgstr ""
 msgid "the script was already rearranged."
 msgstr ""
 
-#: setup.c:134
+#: setup.c:135
 #, c-format
 msgid "'%s' is outside repository at '%s'"
 msgstr ""
 
-#: setup.c:186
+#: setup.c:187
 #, c-format
 msgid ""
 "%s: no such path in the working tree.\n"
 "Use 'git <command> -- <path>...' to specify paths that do not exist locally."
 msgstr ""
 
-#: setup.c:199
+#: setup.c:200
 #, c-format
 msgid ""
 "ambiguous argument '%s': unknown revision or path not in the working tree.\n"
@@ -8149,12 +8149,12 @@ msgid ""
 "'git <command> [<revision>...] -- [<file>...]'"
 msgstr ""
 
-#: setup.c:265
+#: setup.c:266
 #, c-format
 msgid "option '%s' must come before non-option arguments"
 msgstr ""
 
-#: setup.c:284
+#: setup.c:285
 #, c-format
 msgid ""
 "ambiguous argument '%s': both revision and filename\n"
@@ -8162,118 +8162,127 @@ msgid ""
 "'git <command> [<revision>...] -- [<file>...]'"
 msgstr ""
 
-#: setup.c:420
+#: setup.c:421
 msgid "unable to set up work tree using invalid config"
 msgstr ""
 
-#: setup.c:424 builtin/rev-parse.c:895
+#: setup.c:425 builtin/rev-parse.c:895
 msgid "this operation must be run in a work tree"
 msgstr ""
 
-#: setup.c:723
+#: setup.c:724
 #, c-format
 msgid "Expected git repo version <= %d, found %d"
 msgstr ""
 
-#: setup.c:731
+#: setup.c:732
 msgid "unknown repository extension found:"
 msgid_plural "unknown repository extensions found:"
 msgstr[0] ""
 msgstr[1] ""
 
-#: setup.c:745
+#: setup.c:746
 msgid "repo version is 0, but v1-only extension found:"
 msgid_plural "repo version is 0, but v1-only extensions found:"
 msgstr[0] ""
 msgstr[1] ""
 
-#: setup.c:766
+#: setup.c:767
 #, c-format
 msgid "error opening '%s'"
 msgstr ""
 
-#: setup.c:768
+#: setup.c:769
 #, c-format
 msgid "too large to be a .git file: '%s'"
 msgstr ""
 
-#: setup.c:770
+#: setup.c:771
 #, c-format
 msgid "error reading %s"
 msgstr ""
 
-#: setup.c:772
+#: setup.c:773
 #, c-format
 msgid "invalid gitfile format: %s"
 msgstr ""
 
-#: setup.c:774
+#: setup.c:775
 #, c-format
 msgid "no path in gitfile: %s"
 msgstr ""
 
-#: setup.c:776
+#: setup.c:777
 #, c-format
 msgid "not a git repository: %s"
 msgstr ""
 
-#: setup.c:878
+#: setup.c:879
 #, c-format
 msgid "'$%s' too big"
 msgstr ""
 
-#: setup.c:892
+#: setup.c:893
 #, c-format
 msgid "not a git repository: '%s'"
 msgstr ""
 
-#: setup.c:921 setup.c:923 setup.c:954
+#: setup.c:922 setup.c:924 setup.c:955
 #, c-format
 msgid "cannot chdir to '%s'"
 msgstr ""
 
-#: setup.c:926 setup.c:982 setup.c:992 setup.c:1031 setup.c:1039
+#: setup.c:927 setup.c:983 setup.c:993 setup.c:1032 setup.c:1040
 msgid "cannot come back to cwd"
 msgstr ""
 
-#: setup.c:1053
+#: setup.c:1054
 #, c-format
 msgid "failed to stat '%*s%s%s'"
 msgstr ""
 
-#: setup.c:1296
+#: setup.c:1338
 msgid "Unable to read current working directory"
 msgstr ""
 
-#: setup.c:1305 setup.c:1311
+#: setup.c:1347 setup.c:1353
 #, c-format
 msgid "cannot change to '%s'"
 msgstr ""
 
-#: setup.c:1316
+#: setup.c:1358
 #, c-format
 msgid "not a git repository (or any of the parent directories): %s"
 msgstr ""
 
-#: setup.c:1322
+#: setup.c:1364
 #, c-format
 msgid ""
 "not a git repository (or any parent up to mount point %s)\n"
 "Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set)."
 msgstr ""
 
-#: setup.c:1447
+#: setup.c:1374
+#, c-format
+msgid ""
+"unsafe repository ('%s' is owned by someone else)\n"
+"To add an exception for this directory, call:\n"
+"\n"
+"\tgit config --global --add safe.directory %s"
+msgstr ""
+
+#: setup.c:1502
 #, c-format
 msgid ""
 "problem with core.sharedRepository filemode value (0%.3o).\n"
 "The owner of files must always have read and write permissions."
 msgstr ""
 
-#: setup.c:1509
+#: setup.c:1564
 msgid "fork failed"
 msgstr ""
 
-#: setup.c:1514
+#: setup.c:1569
 msgid "setsid failed"
 msgstr ""
 
@@ -21956,7 +21965,7 @@ msgstr ""
 msgid ""
 "git submodule--helper clone [--prefix=<path>] [--quiet] [--reference "
 "<repository>] [--name <name>] [--depth <depth>] [--single-branch] [--filter "
-"<filter-spec>]--url <url> --path <path>"
+"<filter-spec>] --url <url> --path <path>"
 msgstr ""
 
 #: builtin/submodule--helper.c:1943
@@ -22215,7 +22224,7 @@ msgstr ""
 #: builtin/submodule--helper.c:3085
 msgid ""
 "git submodule--helper create-branch [-f|--force] [--create-reflog] [-q|--"
-"quiet] [-t|--track] [-n|--dry-run] <name> <start_oid> <start_name>"
+"quiet] [-t|--track] [-n|--dry-run] <name> <start-oid> <start-name>"
 msgstr ""
 
 #: builtin/submodule--helper.c:3097
@@ -25110,30 +25119,33 @@ msgstr ""
 msgid "invalid transfer encoding"
 msgstr ""
 
-#: git-send-email.perl:2099
+#: git-send-email.perl:2100
 #, perl-format
-msgid "fatal: %s: rejected by %s hook\n"
+msgid ""
+"fatal: %s: rejected by %s hook\n"
+"%s\n"
+"warning: no patches were sent\n"
 msgstr ""
 
-#: git-send-email.perl:2111 git-send-email.perl:2164 git-send-email.perl:2174
+#: git-send-email.perl:2110 git-send-email.perl:2163 git-send-email.perl:2173
 #, perl-format
 msgid "unable to open %s: %s\n"
 msgstr ""
 
-#: git-send-email.perl:2114
+#: git-send-email.perl:2113
 #, perl-format
 msgid ""
 "fatal: %s:%d is longer than 998 characters\n"
 "warning: no patches were sent\n"
 msgstr ""
 
-#: git-send-email.perl:2132
+#: git-send-email.perl:2131
 #, perl-format
 msgid "Skipping %s with backup suffix '%s'.\n"
 msgstr ""
 
 #. TRANSLATORS: please keep "[y|N]" as is.
-#: git-send-email.perl:2136
+#: git-send-email.perl:2135
 #, perl-format
 msgid "Do you really want to send %s? [y|N]: "
 msgstr ""
