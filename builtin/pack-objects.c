@@ -4167,11 +4167,13 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		read_object_list_from_stdin();
 	} else if (pfd.have_revs) {
 		get_object_list(&pfd.revs, rp.nr, rp.v);
+		release_revisions(&pfd.revs);
 	} else {
 		struct rev_info revs;
 
 		repo_init_revisions(the_repository, &revs, NULL);
 		get_object_list(&revs, rp.nr, rp.v);
+		release_revisions(&revs);
 	}
 	cleanup_preferred_base();
 	if (include_tag && nr_result)

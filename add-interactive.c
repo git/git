@@ -570,6 +570,7 @@ static int get_modified_files(struct repository *r,
 
 		if (ps)
 			clear_pathspec(&rev.prune_data);
+		release_revisions(&rev);
 	}
 	hashmap_clear_and_free(&s.file_map, struct pathname_entry, ent);
 	if (unmerged_count)

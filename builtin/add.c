@@ -340,6 +340,7 @@ static int edit_patch(int argc, const char **argv, const char *prefix)
 
 	unlink(file);
 	free(file);
+	release_revisions(&rev);
 	return 0;
 }
 

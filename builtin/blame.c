@@ -1203,5 +1203,6 @@ parse_done:
 
 cleanup:
 	cleanup_scoreboard(&sb);
+	release_revisions(&revs);
 	return 0;
 }

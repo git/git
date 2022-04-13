@@ -1061,6 +1061,7 @@ static struct commit **find_commits_for_midx_bitmap(uint32_t *indexed_commits_nr
 	if (indexed_commits_nr_p)
 		*indexed_commits_nr_p = cb.commits_nr;
 
+	release_revisions(&revs);
 	return cb.commits;
 }
 

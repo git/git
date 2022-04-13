@@ -884,6 +884,7 @@ static int check_ancestors(struct repository *r, int rev_nr,
 	/* Clean up objects used, as they will be reused. */
 	clear_commit_marks_many(rev_nr, rev, ALL_REV_FLAGS);
 
+	release_revisions(&revs);
 	return res;
 }
 
@@ -964,6 +965,7 @@ static void show_diff_tree(struct repository *r,
 
 	setup_revisions(ARRAY_SIZE(argv) - 1, argv, &opt, NULL);
 	log_tree_commit(&opt, commit);
+	release_revisions(&opt);
 }
 
 /*

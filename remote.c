@@ -2172,6 +2172,7 @@ static int stat_branch_pair(const char *branch_name, const char *base,
 	clear_commit_marks(theirs, ALL_REV_FLAGS);
 
 	strvec_clear(&argv);
+	release_revisions(&revs);
 	return 1;
 }
 

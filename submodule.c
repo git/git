@@ -900,9 +900,11 @@ static void collect_changed_submodules(struct repository *r,
 		diff_rev.diffopt.format_callback_data = &data;
 		diff_rev.dense_combined_merges = 1;
 		diff_tree_combined_merge(commit, &diff_rev);
+		release_revisions(&diff_rev);
 	}
 
 	reset_revision_walk();
+	release_revisions(&rev);
 }
 
 static void free_submodules_oids(struct string_list *submodules)
