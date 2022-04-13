@@ -1100,9 +1100,14 @@ static int safe_directory_cb(const char *key, const char *value, void *d)
 {
 	struct safe_directory_data *data = d;
 
-	if (!value || !*value)
+	if (strcmp(key, "safe.directory"))
+		return 0;
+
+	if (!value || !*value) {
 		data->is_safe = 0;
-	else {
+	} else if (!strcmp(value, "*")) {
+		data->is_safe = 1;
+	} else {
 		const char *interpolated = NULL;
 
 		if (!git_config_pathname(&interpolated, key, value) &&
@@ -1119,7 +1124,8 @@ static int ensure_valid_ownership(const char *path)
 {
 	struct safe_directory_data data = { .path = path };
 
-	if (is_path_owned_by_current_user(path))
+	if (is_path_owned_by_current_user(path) &&
+	    !git_env_bool("GIT_TEST_ASSUME_DIFFERENT_OWNER", 0))
 		return 1;
 
 	read_very_early_config(safe_directory_cb, &data);
@@ -1368,9 +1374,17 @@ const char *setup_git_directory_gently(int *nongit_ok)
 		break;
 	case GIT_DIR_INVALID_OWNERSHIP:
 		if (!nongit_ok) {
+			struct strbuf prequoted = STRBUF_INIT;
 			struct strbuf quoted = STRBUF_INIT;
 
-			sq_quote_buf_pretty(&quoted, dir.buf);
+#ifdef __MINGW32__
+			if (dir.buf[0] == '/')
+				strbuf_addstr(&prequoted, "%(prefix)/");
+#endif
+
+			strbuf_add(&prequoted, dir.buf, dir.len);
+			sq_quote_buf_pretty(&quoted, prequoted.buf);
+
 			die(_("unsafe repository ('%s' is owned by someone else)\n"
 			      "To add an exception for this directory, call:\n"
 			      "\n"
