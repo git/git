@@ -90,7 +90,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git Turkish Localization Project\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2022-04-06 14:40+0800\n"
+"POT-Creation-Date: 2022-04-13 14:52+0800\n"
 "PO-Revision-Date: 2022-04-06 16:00+0300\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish (https://github.com/bitigchi/git-po/)\n"
@@ -1208,7 +1208,7 @@ msgid "cannot checkout %s"
 msgstr "%s çıkışı yapılamıyor"
 
 #: apply.c:3412 apply.c:3423 apply.c:3469 midx.c:105 pack-revindex.c:214
-#: setup.c:309
+#: setup.c:310
 #, c-format
 msgid "failed to read %s"
 msgstr "%s okunamadı"
@@ -3421,7 +3421,7 @@ msgid "Marked %d islands, done.\n"
 msgstr "%d delta adası imlendi, bitti.\n"
 
 #: diff-merges.c:81 gpg-interface.c:719 gpg-interface.c:734 ls-refs.c:37
-#: parallel-checkout.c:42 sequencer.c:2805 setup.c:562 builtin/am.c:203
+#: parallel-checkout.c:42 sequencer.c:2805 setup.c:563 builtin/am.c:203
 #: builtin/am.c:2243 builtin/am.c:2287 builtin/blame.c:724 builtin/blame.c:742
 #: builtin/fetch.c:792 builtin/pack-objects.c:3515 builtin/pull.c:45
 #: builtin/pull.c:47 builtin/pull.c:321
@@ -4584,7 +4584,7 @@ msgstr ""
 msgid "'%s': unable to read %s"
 msgstr "'%s': %s okunamıyor"
 
-#: grep.c:1876 setup.c:177 builtin/clone.c:308 builtin/diff.c:90
+#: grep.c:1876 setup.c:178 builtin/clone.c:308 builtin/diff.c:90
 #: builtin/rm.c:136
 #, c-format
 msgid "failed to stat '%s'"
@@ -4894,7 +4894,8 @@ msgstr "'%s' girdisi (%s ağacında) ağaç kipine iye; ancak bir ağaç değil"
 #, c-format
 msgid "entry '%s' in tree %s has blob mode, but is not a blob"
 msgstr ""
-"'%s' girdisi (%s ağacında) ikili nesne kipine iye; ancak bir ikili nesne değil"
+"'%s' girdisi (%s ağacında) ikili nesne kipine iye; ancak bir ikili nesne "
+"değil"
 
 #: list-objects.c:415
 #, c-format
@@ -8801,12 +8802,12 @@ msgstr "gerekli olmayan seçim komutları atlanamadı"
 msgid "the script was already rearranged."
 msgstr "betik halihazırda yeniden düzenlenmişti"
 
-#: setup.c:134
+#: setup.c:135
 #, c-format
 msgid "'%s' is outside repository at '%s'"
 msgstr "'%s', '%s' konumunda depo dışında"
 
-#: setup.c:186
+#: setup.c:187
 #, c-format
 msgid ""
 "%s: no such path in the working tree.\n"
@@ -8815,7 +8816,7 @@ msgstr ""
 "%s: Çalışma ağacında böyle bir yol yok.\n"
 "Yerelde var olmayan yolları belirtmek için 'git <komut> -- <yol>... kullanın."
 
-#: setup.c:199
+#: setup.c:200
 #, c-format
 msgid ""
 "ambiguous argument '%s': unknown revision or path not in the working tree.\n"
@@ -8827,12 +8828,12 @@ msgstr ""
 "Yolları revizyonlardan ayırmak için '--' kullanın, şöyle:\n"
 "'git <komut> [<revizyon>...] -- [<dosya>...]'"
 
-#: setup.c:265
+#: setup.c:266
 #, c-format
 msgid "option '%s' must come before non-option arguments"
 msgstr "'%s' seçeneği seçenek olmayan argümanlardan önce gelmeli"
 
-#: setup.c:284
+#: setup.c:285
 #, c-format
 msgid ""
 "ambiguous argument '%s': both revision and filename\n"
@@ -8843,100 +8844,100 @@ msgstr ""
 "Yolları revizyonlardan ayırmak için '--' kullanın, şöyle:\n"
 "'git <komut> [<revizyon>...] -- [<dosya>...]'"
 
-#: setup.c:420
+#: setup.c:421
 msgid "unable to set up work tree using invalid config"
 msgstr "geçersiz yapılandırma kullanılarak çalışma ağacı kurulamıyor"
 
-#: setup.c:424 builtin/rev-parse.c:895
+#: setup.c:425 builtin/rev-parse.c:895
 msgid "this operation must be run in a work tree"
 msgstr "bu işlem bir çalışma ağacı içinde çalıştırılmalı"
 
-#: setup.c:723
+#: setup.c:724
 #, c-format
 msgid "Expected git repo version <= %d, found %d"
 msgstr "Beklenen git repo sürümü <= %d, %d bulundu"
 
-#: setup.c:731
+#: setup.c:732
 msgid "unknown repository extension found:"
 msgid_plural "unknown repository extensions found:"
 msgstr[0] "bilinmeyen depo genişletmesi bulundu:"
 msgstr[1] "bilinmeyen depo genişletmeleri bulundu:"
 
-#: setup.c:745
+#: setup.c:746
 msgid "repo version is 0, but v1-only extension found:"
 msgid_plural "repo version is 0, but v1-only extensions found:"
 msgstr[0] "depo sürümü 0; ancak v1'e özel genişletme bulundu:"
 msgstr[1] "depo sürümü 0; ancak v1'e özel genişletmeler bulundu:"
 
-#: setup.c:766
+#: setup.c:767
 #, c-format
 msgid "error opening '%s'"
 msgstr "'%s' açılırken hata"
 
-#: setup.c:768
+#: setup.c:769
 #, c-format
 msgid "too large to be a .git file: '%s'"
 msgstr "bir .git dosyası olabilmek için çok büyük: '%s'"
 
-#: setup.c:770
+#: setup.c:771
 #, c-format
 msgid "error reading %s"
 msgstr "%s okunurken hata"
 
-#: setup.c:772
+#: setup.c:773
 #, c-format
 msgid "invalid gitfile format: %s"
 msgstr "geçersiz gitfile biçimi: %s"
 
-#: setup.c:774
+#: setup.c:775
 #, c-format
 msgid "no path in gitfile: %s"
 msgstr "gitfile içinde yol yok: %s"
 
-#: setup.c:776
+#: setup.c:777
 #, c-format
 msgid "not a git repository: %s"
 msgstr "bir git deposu değil: %s"
 
-#: setup.c:878
+#: setup.c:879
 #, c-format
 msgid "'$%s' too big"
 msgstr "'$%s' çok büyük"
 
-#: setup.c:892
+#: setup.c:893
 #, c-format
 msgid "not a git repository: '%s'"
 msgstr "bir git deposu değil: '%s'"
 
-#: setup.c:921 setup.c:923 setup.c:954
+#: setup.c:922 setup.c:924 setup.c:955
 #, c-format
 msgid "cannot chdir to '%s'"
 msgstr "'%s' konumuna chdir yapılamıyor"
 
-#: setup.c:926 setup.c:982 setup.c:992 setup.c:1031 setup.c:1039
+#: setup.c:927 setup.c:983 setup.c:993 setup.c:1032 setup.c:1040
 msgid "cannot come back to cwd"
 msgstr "cwd'ye geri dönülemiyor"
 
-#: setup.c:1053
+#: setup.c:1054
 #, c-format
 msgid "failed to stat '%*s%s%s'"
 msgstr "'%*s%s%s' bilgileri alınamadı"
 
-#: setup.c:1296
+#: setup.c:1338
 msgid "Unable to read current working directory"
 msgstr "Şu anki çalışma dizini okunamıyor"
 
-#: setup.c:1305 setup.c:1311
+#: setup.c:1347 setup.c:1353
 #, c-format
 msgid "cannot change to '%s'"
 msgstr "şuraya değiştirilemiyor: '%s'"
 
-#: setup.c:1316
+#: setup.c:1358
 #, c-format
 msgid "not a git repository (or any of the parent directories): %s"
 msgstr "bir git deposu (veya üst dizinlerinden birisi) değil: %s"
 
-#: setup.c:1322
+#: setup.c:1364
 #, c-format
 msgid ""
 "not a git repository (or any parent up to mount point %s)\n"
@@ -8946,7 +8947,20 @@ msgstr ""
 "Dosya sistemi sınırında duruluyor (GIT_DISCOVERY_ACROSS_FILESYSTEM "
 "ayarlanmamış)."
 
-#: setup.c:1447
+#: setup.c:1374
+#, c-format
+msgid ""
+"unsafe repository ('%s' is owned by someone else)\n"
+"To add an exception for this directory, call:\n"
+"\n"
+"\tgit config --global --add safe.directory %s"
+msgstr ""
+"güvensiz depo ('%s' sahibi bir başkası)\n"
+"Bu dizin için bir istisna eklemek için şunu çağırın:\n"
+"\n"
+"\tgit config --global --add safe.directory %s"
+
+#: setup.c:1502
 #, c-format
 msgid ""
 "problem with core.sharedRepository filemode value (0%.3o).\n"
@@ -8955,11 +8969,11 @@ msgstr ""
 "core.sharedRepository dosya kipi değeri ile sorun (0%.3o).\n"
 "Dosyaların sahibinin her zaman okuma ve yazma izni olması gerekir."
 
-#: setup.c:1509
+#: setup.c:1564
 msgid "fork failed"
 msgstr "çatallama başarısız"
 
-#: setup.c:1514
+#: setup.c:1569
 msgid "setsid failed"
 msgstr "setsid başarısız"
 
@@ -12518,7 +12532,8 @@ msgstr "komutları stdin'den oku"
 #: builtin/cat-file.c:861
 msgid "with --batch[-check]: ignores stdin, batches all known objects"
 msgstr ""
-"--batch[-check] ile stdin'i yok sayar, bilinen tüm nesneleri bir araya getirir"
+"--batch[-check] ile stdin'i yok sayar, bilinen tüm nesneleri bir araya "
+"getirir"
 
 #: builtin/cat-file.c:863
 msgid "Change or optimize batch output"
@@ -12557,7 +12572,8 @@ msgstr "ikili nesne/ağaç"
 
 #: builtin/cat-file.c:876
 msgid "use a <path> for (--textconv | --filters); Not with 'batch'"
-msgstr "(--textconv | --filters) için bir <yol> kullan; ancak 'batch' ile değil"
+msgstr ""
+"(--textconv | --filters) için bir <yol> kullan; ancak 'batch' ile değil"
 
 #: builtin/cat-file.c:894
 #, c-format
@@ -20551,7 +20567,7 @@ msgid ""
 "unrecognized empty type '%s'; valid values are \"drop\", \"keep\", and \"ask"
 "\"."
 msgstr ""
-"tanımlanamayan boş tür '%s'; geçerli türler: \"drop\", \"keep\" ve \"ask\""
+"Tanımlanamayan boş tür '%s'; geçerli türler: \"drop\", \"keep\" ve \"ask\"."
 
 #: builtin/rebase.c:970
 #, c-format
@@ -21056,7 +21072,8 @@ msgstr "tüm başvuruların başvuru günlüklerini işle"
 
 #: builtin/reflog.c:261
 msgid "limits processing to reflogs from the current worktree only"
-msgstr "başvuru günlüklerine işlemeyi yalnızca geçerli çalışma ağacına sınırlar"
+msgstr ""
+"başvuru günlüklerine işlemeyi yalnızca geçerli çalışma ağacına sınırlar"
 
 #: builtin/reflog.c:294
 #, c-format
@@ -22145,7 +22162,8 @@ msgid ""
 "It took %.2f seconds to refresh the index after reset.  You can use\n"
 "'--no-refresh' to avoid this."
 msgstr ""
-"Sıfırlamadan sonra indeksi yenilemek %.2f saniye sürdü. Bundan kaçınmak için\n"
+"Sıfırlamadan sonra indeksi yenilemek %.2f saniye sürdü. Bundan kaçınmak "
+"için\n"
 "'--no-refresh' kullanabilirsiniz."
 
 #: builtin/reset.c:547
@@ -22617,8 +22635,8 @@ msgstr "--reflog seçeneği için bir dal adı gerekli"
 #, c-format
 msgid "only %d entry can be shown at one time."
 msgid_plural "only %d entries can be shown at one time."
-msgstr[0] "aynı anda yalnızca %d girdi gösterilebilir"
-msgstr[1] "aynı anda yalnızca %d girdi gösterilebilir"
+msgstr[0] "Aynı anda yalnızca %d girdi gösterilebilir."
+msgstr[1] "Aynı anda yalnızca %d girdi gösterilebilir."
 
 #: builtin/show-branch.c:745
 #, c-format
@@ -22779,16 +22797,16 @@ msgid ""
 "specify directories rather than patterns.  If your directory starts with a "
 "'!', pass --skip-checks"
 msgstr ""
-"dizgiler yerine dizinleri belirt; dizininiz bir '!' ile başlıyorsa "
-"--skip-checks'i geç"
+"dizgiler yerine dizinleri belirt; dizininiz bir '!' ile başlıyorsa --skip-"
+"checks'i geç"
 
 #: builtin/sparse-checkout.c:716
 msgid ""
 "specify directories rather than patterns.  If your directory really has any "
 "of '*?[]\\' in it, pass --skip-checks"
 msgstr ""
-"dizgiler yerine dizinleri belirt; dizininizin içinde '*?[[\\' varsa "
-"--skip-checks'i geç"
+"dizgiler yerine dizinleri belirt; dizininizin içinde '*?[[\\' varsa --skip-"
+"checks'i geç"
 
 #: builtin/sparse-checkout.c:732
 #, c-format
@@ -22805,8 +22823,8 @@ msgid ""
 "pass a leading slash before paths such as '%s' if you want a single file "
 "(see NON-CONE PROBLEMS in the git-sparse-checkout manual)."
 msgstr ""
-"tek bir dosya istiyorsanız yollardan önce bir eğik çizgi geçirin ('%s' gibi) "
-"git-sparse-checkout kılavuzunda NON-CONE PROBLEMS'a bakın)"
+"Tek bir dosya istiyorsanız yollardan önce bir eğik çizgi geçirin ('%s' gibi) "
+"git-sparse-checkout kılavuzunda NON-CONE PROBLEMS'a bakın)."
 
 #: builtin/sparse-checkout.c:739
 msgid "git sparse-checkout add [--skip-checks] (--stdin | <patterns>)"
@@ -23480,11 +23498,11 @@ msgstr "boş olmayan dizine klonlamaya izin verme"
 msgid ""
 "git submodule--helper clone [--prefix=<path>] [--quiet] [--reference "
 "<repository>] [--name <name>] [--depth <depth>] [--single-branch] [--filter "
-"<filter-spec>]--url <url> --path <path>"
+"<filter-spec>] --url <url> --path <path>"
 msgstr ""
 "git submodule--helper clone [--prefix=<yol>] [--quiet] [--reference "
 "<depo>] [--name <ad>] [--depth <derinlik>] [--single-branch] [--filter "
-"<süzgeç-belirteci>]--url <url> --path <yol>"
+"<süzgeç-belirteci>] --url <url> --path <yol>"
 
 #: builtin/submodule--helper.c:1943
 #, c-format
@@ -23672,8 +23690,8 @@ msgid ""
 msgstr ""
 "git submodule [--quiet] update [--init [--filter=<süzgeç-blrtç>]] [--remote] "
 "[-N|--no-fetch] [-f|--force] [--checkout|--merge|--rebase] [--[no-]recommend-"
-"shallow] [--reference <depo>] [--recursive] [--[no-]single-branch] "
-"[--] [<yol>...]"
+"shallow] [--reference <depo>] [--recursive] [--[no-]single-branch] [--] "
+"[<yol>...]"
 
 #: builtin/submodule--helper.c:2767
 msgid "bad value for update parameter"
@@ -23753,11 +23771,10 @@ msgstr "dalın oluşturulup oluşturulmayacağını göster"
 #: builtin/submodule--helper.c:3085
 msgid ""
 "git submodule--helper create-branch [-f|--force] [--create-reflog] [-q|--"
-"quiet] [-t|--track] [-n|--dry-run] <name> <start_oid> <start_name>"
+"quiet] [-t|--track] [-n|--dry-run] <name> <start-oid> <start-name>"
 msgstr ""
 "git submodule--helper create-branch [-f|--force] [--create-reflog] [-q|--"
-"quiet] [-t|--track] [-n|--dry-run] <ad> <başlangıç-nesne-kimliği> "
-"<başlangıç-adı>"
+"quiet] [-t|--track] [-n|--dry-run] <ad> <başlangıç-oid> <başlangıç-adı>"
 
 #: builtin/submodule--helper.c:3097
 #, c-format
@@ -24519,8 +24536,7 @@ msgstr "'%s' -> '%s' kopyalanamadı; aralıklı çıkış düzgün çalışmayab
 #: builtin/worktree.c:268
 #, c-format
 msgid "failed to copy worktree config from '%s' to '%s'"
-msgstr ""
-"çalışma ağacı yapılandırması '%s' -> '%s' konumuna kopyalanamadı"
+msgstr "çalışma ağacı yapılandırması '%s' -> '%s' konumuna kopyalanamadı"
 
 #: builtin/worktree.c:280 builtin/worktree.c:285
 #, c-format
@@ -26850,17 +26866,23 @@ msgstr "ileti 7 bit olarak gönderilemiyor"
 msgid "invalid transfer encoding"
 msgstr "geçersiz aktarım kodlaması"
 
-#: git-send-email.perl:2099
+#: git-send-email.perl:2100
 #, perl-format
-msgid "fatal: %s: rejected by %s hook\n"
-msgstr "onulmaz: %s: %s kanca tarafından reddedildi\n"
+msgid ""
+"fatal: %s: rejected by %s hook\n"
+"%s\n"
+"warning: no patches were sent\n"
+msgstr ""
+"onulmaz: %s: %s kancası tarafından reddedildi\n"
+"%s\n"
+"uyarı: hiçbir yama gönderilmedi\n"
 
-#: git-send-email.perl:2111 git-send-email.perl:2164 git-send-email.perl:2174
+#: git-send-email.perl:2110 git-send-email.perl:2163 git-send-email.perl:2173
 #, perl-format
 msgid "unable to open %s: %s\n"
 msgstr "%s açılamıyor: %s\n"
 
-#: git-send-email.perl:2114
+#: git-send-email.perl:2113
 #, perl-format
 msgid ""
 "fatal: %s:%d is longer than 998 characters\n"
@@ -26869,13 +26891,13 @@ msgstr ""
 "onulmaz: %s:%d, 998 karakterden uzun\n"
 "uyarı: hiçbir yama gönderilmedi\n"
 
-#: git-send-email.perl:2132
+#: git-send-email.perl:2131
 #, perl-format
 msgid "Skipping %s with backup suffix '%s'.\n"
 msgstr "%s, yedek sonek '%s' ile atlanıyor.\n"
 
 #. TRANSLATORS: please keep "[y|N]" as is.
-#: git-send-email.perl:2136
+#: git-send-email.perl:2135
 #, perl-format
 msgid "Do you really want to send %s? [y|N]: "
 msgstr "%s ögesini gerçekten göndermek istiyor musunuz? [y|N]: "
