@@ -1456,10 +1456,9 @@ static int limit_list(struct rev_info *revs)
 	if (revs->left_only || revs->right_only)
 		limit_left_right(newlist, revs);
 
-	if (bottom) {
+	if (bottom)
 		limit_to_ancestry(bottom, newlist);
-		free_commit_list(bottom);
-	}
+	free_commit_list(bottom);
 
 	/*
 	 * Check if any commits have become TREESAME by some of their parents
@@ -4080,10 +4079,8 @@ static void create_boundary_commit_list(struct rev_info *revs)
 	 * boundary commits anyway.  (This is what the code has always
 	 * done.)
 	 */
-	if (revs->commits) {
-		free_commit_list(revs->commits);
-		revs->commits = NULL;
-	}
+	free_commit_list(revs->commits);
+	revs->commits = NULL;
 
 	/*
 	 * Put all of the actual boundary commits from revs->boundary_commits
@@ -4220,10 +4217,8 @@ struct commit *get_revision(struct rev_info *revs)
 		graph_update(revs->graph, c);
 	if (!c) {
 		free_saved_parents(revs);
-		if (revs->previous_parents) {
-			free_commit_list(revs->previous_parents);
-			revs->previous_parents = NULL;
-		}
+		free_commit_list(revs->previous_parents);
+		revs->previous_parents = NULL;
 	}
 	return c;
 }

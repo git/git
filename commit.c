@@ -397,17 +397,14 @@ int parse_commit_buffer(struct repository *r, struct commit *item, const void *b
 
 	if (item->object.parsed)
 		return 0;
-
-	if (item->parents) {
-		/*
-		 * Presumably this is leftover from an earlier failed parse;
-		 * clear it out in preparation for us re-parsing (we'll hit the
-		 * same error, but that's good, since it lets our caller know
-		 * the result cannot be trusted.
-		 */
-		free_commit_list(item->parents);
-		item->parents = NULL;
-	}
+	/*
+	 * Presumably this is leftover from an earlier failed parse;
+	 * clear it out in preparation for us re-parsing (we'll hit the
+	 * same error, but that's good, since it lets our caller know
+	 * the result cannot be trusted.
+	 */
+	free_commit_list(item->parents);
+	item->parents = NULL;
 
 	tail += size;
 	if (tail <= bufptr + tree_entry_len + 1 || memcmp(bufptr, "tree ", 5) ||

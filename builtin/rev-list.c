@@ -213,10 +213,8 @@ static void show_commit(struct commit *commit, void *data)
 
 static void finish_commit(struct commit *commit)
 {
-	if (commit->parents) {
-		free_commit_list(commit->parents);
-		commit->parents = NULL;
-	}
+	free_commit_list(commit->parents);
+	commit->parents = NULL;
 	free_commit_buffer(the_repository->parsed_objects,
 			   commit);
 }
