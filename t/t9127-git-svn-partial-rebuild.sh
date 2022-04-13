@@ -5,7 +5,6 @@
 
 test_description='git svn partial-rebuild tests'
 
-TEST_FAILS_SANITIZE_LEAK=true
 . ./lib-git-svn.sh
 
 test_expect_success 'initialize svnrepo' '
