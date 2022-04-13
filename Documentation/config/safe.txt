@@ -19,3 +19,10 @@ line option `-c safe.directory=<path>`.
 The value of this setting is interpolated, i.e. `~/<path>` expands to a
 path relative to the home directory and `%(prefix)/<path>` expands to a
 path relative to Git's (runtime) prefix.
++
+To completely opt-out of this security check, set `safe.directory` to the
+string `*`. This will allow all repositories to be treated as if their
+directory was listed in the `safe.directory` list. If `safe.directory=*`
+is set in system config and you want to re-enable this protection, then
+initialize your list with an empty value before listing the repositories
+that you deem safe.
