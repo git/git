@@ -1,5 +1,5 @@
-git-fsmonitor--daemon(1)
-========================
+git-fsmonitor{litdd}daemon(1)
+=============================
 
 NAME
 ----
@@ -8,10 +8,10 @@ git-fsmonitor--daemon - A Built-in File System Monitor
 SYNOPSIS
 --------
 [verse]
-'git fsmonitor--daemon' start
-'git fsmonitor--daemon' run
-'git fsmonitor--daemon' stop
-'git fsmonitor--daemon' status
+'git fsmonitor{litdd}daemon' start
+'git fsmonitor{litdd}daemon' run
+'git fsmonitor{litdd}daemon' stop
+'git fsmonitor{litdd}daemon' status
 
 DESCRIPTION
 -----------

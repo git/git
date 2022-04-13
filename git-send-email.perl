@@ -2096,10 +2096,9 @@ sub validate_patch {
 			chdir($cwd_save) or die("chdir: $!");
 		}
 		if ($hook_error) {
-			$hook_error = sprintf(__("fatal: %s: rejected by %s hook\n" .
-						 $hook_error . "\n" .
-						 "warning: no patches were sent\n"),
-					      $fn, $hook_name);
+			$hook_error = sprintf(
+			    __("fatal: %s: rejected by %s hook\n%s\nwarning: no patches were sent\n"),
+			    $fn, $hook_name, $hook_error);
 			die $hook_error;
 		}
 	}

@@ -63,7 +63,7 @@ core.protectNTFS::
 
 core.fsmonitor::
 	If set to true, enable the built-in file system monitor
-	daemon for this working directory (linkgit:git-fsmonitor--daemon[1]).
+	daemon for this working directory (linkgit:git-fsmonitor{litdd}daemon[1]).
 +
 Like hook-based file system monitors, the built-in file system monitor
 can speed up Git commands that need to refresh the Git index

@@ -397,6 +397,8 @@ Fixes since v2.35
    entry it moved.
    (merge b7f9130a06 vd/mv-refresh-stat later to maint).
 
+ * Fix for CVE-2022-24765 has been merged up from 2.35.2 and others.
+
  * Other code cleanup, docfix, build fix, etc.
    (merge cfc5cf428b jc/find-header later to maint).
    (merge 40e7cfdd46 jh/p4-fix-use-of-process-error-exception later to maint).
