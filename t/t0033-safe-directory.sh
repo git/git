@@ -21,6 +21,11 @@ test_expect_success 'safe.directory does not match' '
 	expect_rejected_dir
 '
 
+test_expect_success 'path exist as different key' '
+	git config --global foo.bar "$(pwd)" &&
+	expect_rejected_dir
+'
+
 test_expect_success 'safe.directory matches' '
 	git config --global --add safe.directory "$(pwd)" &&
 	git status
