@@ -78,8 +78,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2022-04-06 14:40+0800\n"
-"PO-Revision-Date: 2022-04-09 18:50+0200\n"
+"POT-Creation-Date: 2022-04-13 14:52+0800\n"
+"PO-Revision-Date: 2022-04-13 21:17+0200\n"
 "Last-Translator: Cédric Malard <c.malard-git@valdun.net>\n"
 "Language-Team: Jean-Noël Avila <jn.avila@free.fr>\n"
 "Language: fr\n"
@@ -1222,7 +1222,7 @@ msgid "cannot checkout %s"
 msgstr "extraction de %s impossible"
 
 #: apply.c:3412 apply.c:3423 apply.c:3469 midx.c:105 pack-revindex.c:214
-#: setup.c:309
+#: setup.c:310
 #, c-format
 msgid "failed to read %s"
 msgstr "échec de la lecture de %s"
@@ -2160,7 +2160,9 @@ msgstr "sous-module '%s' : impossible de trouver le sous-module"
 msgid ""
 "You may try updating the submodules using 'git checkout %s && git submodule "
 "update --init'"
-msgstr "Vous pouvez essayer de mettre à jour les sous-modules en utilisant 'git checkout %s && git submodule update --init'"
+msgstr ""
+"Vous pouvez essayer de mettre à jour les sous-modules en utilisant 'git "
+"checkout %s && git submodule update --init'"
 
 #: branch.c:672 branch.c:698
 #, c-format
@@ -2407,8 +2409,10 @@ msgstr "Collecte des commits référencés"
 #, c-format
 msgid "Finding commits for commit graph in %<PRIuMAX> pack"
 msgid_plural "Finding commits for commit graph in %<PRIuMAX> packs"
-msgstr[0] "Recherche de commits pour un graphe de commits dans %<PRIuMAX> paquet"
-msgstr[1] "Recherche de commits pour un graphe de commits dans %<PRIuMAX> paquets"
+msgstr[0] ""
+"Recherche de commits pour un graphe de commits dans %<PRIuMAX> paquet"
+msgstr[1] ""
+"Recherche de commits pour un graphe de commits dans %<PRIuMAX> paquets"
 
 #: commit-graph.c:1714
 #, c-format
@@ -2640,7 +2644,9 @@ msgstr "plus de mémoire"
 
 #: compat/terminal.c:167
 msgid "cannot resume in the background, please use 'fg' to resume"
-msgstr "impossible de reprendre en arrière plan, veuillez utiliser 'fg' pour reprendre"
+msgstr ""
+"impossible de reprendre en arrière plan, veuillez utiliser 'fg' pour "
+"reprendre"
 
 #: compat/terminal.c:168
 msgid "cannot restore terminal settings"
@@ -2680,7 +2686,9 @@ msgstr ""
 msgid ""
 "remote URLs cannot be configured in file directly or indirectly included by "
 "includeIf.hasconfig:remote.*.url"
-msgstr "les URL distantes ne peuvent pas être configurées dans un fichier directement ou indirectement inclus par includeIf.hasconfig:remote.*.url"
+msgstr ""
+"les URL distantes ne peuvent pas être configurées dans un fichier "
+"directement ou indirectement inclus par includeIf.hasconfig:remote.*.url"
 
 #: config.c:508
 #, c-format
@@ -3481,7 +3489,7 @@ msgid "Marked %d islands, done.\n"
 msgstr "Marquage de %d îlots, fait.\n"
 
 #: diff-merges.c:81 gpg-interface.c:719 gpg-interface.c:734 ls-refs.c:37
-#: parallel-checkout.c:42 sequencer.c:2805 setup.c:562 builtin/am.c:203
+#: parallel-checkout.c:42 sequencer.c:2805 setup.c:563 builtin/am.c:203
 #: builtin/am.c:2243 builtin/am.c:2287 builtin/blame.c:724 builtin/blame.c:742
 #: builtin/fetch.c:792 builtin/pack-objects.c:3515 builtin/pull.c:45
 #: builtin/pull.c:47 builtin/pull.c:321
@@ -4676,7 +4684,7 @@ msgstr ""
 msgid "'%s': unable to read %s"
 msgstr "'%s' : lecture de %s impossible"
 
-#: grep.c:1876 setup.c:177 builtin/clone.c:308 builtin/diff.c:90
+#: grep.c:1876 setup.c:178 builtin/clone.c:308 builtin/diff.c:90
 #: builtin/rm.c:136
 #, c-format
 msgid "failed to stat '%s'"
@@ -8952,12 +8960,12 @@ msgstr "impossible d'éviter les commandes de picorage non nécessaires"
 msgid "the script was already rearranged."
 msgstr "le script a déjà été réarrangé."
 
-#: setup.c:134
+#: setup.c:135
 #, c-format
 msgid "'%s' is outside repository at '%s'"
 msgstr "'%s' est hors du dépôt à '%s'"
 
-#: setup.c:186
+#: setup.c:187
 #, c-format
 msgid ""
 "%s: no such path in the working tree.\n"
@@ -8967,7 +8975,7 @@ msgstr ""
 "Utilisez 'git <commande> -- <chemin>...' pour spécifier des chemins qui "
 "n'existent pas localement."
 
-#: setup.c:199
+#: setup.c:200
 #, c-format
 msgid ""
 "ambiguous argument '%s': unknown revision or path not in the working tree.\n"
@@ -8978,14 +8986,14 @@ msgstr ""
 "Utilisez '--' pour séparer les chemins des révisions, comme ceci :\n"
 "'git <commande> [<révision>...] -- [<chemin>...]'"
 
-#: setup.c:265
+#: setup.c:266
 #, c-format
 msgid "option '%s' must come before non-option arguments"
 msgstr ""
 "l'option '%s' doit être présente avant les arguments qui ne sont pas des "
 "options"
 
-#: setup.c:284
+#: setup.c:285
 #, c-format
 msgid ""
 "ambiguous argument '%s': both revision and filename\n"
@@ -8996,28 +9004,28 @@ msgstr ""
 "Utilisez '--' pour séparer les chemins des révisions, comme ceci :\n"
 "'git <commande> [<révision>...] -- [<chemin>...]'"
 
-#: setup.c:420
+#: setup.c:421
 msgid "unable to set up work tree using invalid config"
 msgstr ""
 "impossible de mettre en place le répertoire de travail en utilisant une "
 "configuration invalide"
 
-#: setup.c:424 builtin/rev-parse.c:895
+#: setup.c:425 builtin/rev-parse.c:895
 msgid "this operation must be run in a work tree"
 msgstr "cette opération doit être effectuée dans un arbre de travail"
 
-#: setup.c:723
+#: setup.c:724
 #, c-format
 msgid "Expected git repo version <= %d, found %d"
 msgstr "Version attendue du dépôt git <= %d, %d trouvée"
 
-#: setup.c:731
+#: setup.c:732
 msgid "unknown repository extension found:"
 msgid_plural "unknown repository extensions found:"
 msgstr[0] "extension de dépôt inconnue trouvée :"
 msgstr[1] "extensions de dépôt inconnues trouvées :"
 
-#: setup.c:745
+#: setup.c:746
 msgid "repo version is 0, but v1-only extension found:"
 msgid_plural "repo version is 0, but v1-only extensions found:"
 msgstr[0] ""
@@ -9025,75 +9033,75 @@ msgstr[0] ""
 msgstr[1] ""
 "la version du dépôt est 0, mais des extensions uniquement v1 trouvées :"
 
-#: setup.c:766
+#: setup.c:767
 #, c-format
 msgid "error opening '%s'"
 msgstr "erreur à l'ouverture de '%s'"
 
-#: setup.c:768
+#: setup.c:769
 #, c-format
 msgid "too large to be a .git file: '%s'"
 msgstr "trop gros pour être une fichier .git : '%s'"
 
-#: setup.c:770
+#: setup.c:771
 #, c-format
 msgid "error reading %s"
 msgstr "erreur à la lecture de %s"
 
-#: setup.c:772
+#: setup.c:773
 #, c-format
 msgid "invalid gitfile format: %s"
 msgstr "format de fichier git invalide : %s"
 
-#: setup.c:774
+#: setup.c:775
 #, c-format
 msgid "no path in gitfile: %s"
 msgstr "aucun chemin dans le fichier git : %s"
 
-#: setup.c:776
+#: setup.c:777
 #, c-format
 msgid "not a git repository: %s"
 msgstr "ce n'est pas un dépôt git : %s"
 
-#: setup.c:878
+#: setup.c:879
 #, c-format
 msgid "'$%s' too big"
 msgstr "'$%s' trop gros"
 
-#: setup.c:892
+#: setup.c:893
 #, c-format
 msgid "not a git repository: '%s'"
 msgstr "ce n'est pas un dépôt git : '%s'"
 
-#: setup.c:921 setup.c:923 setup.c:954
+#: setup.c:922 setup.c:924 setup.c:955
 #, c-format
 msgid "cannot chdir to '%s'"
 msgstr "impossible de se déplacer vers le répertoire (chdir) '%s'"
 
-#: setup.c:926 setup.c:982 setup.c:992 setup.c:1031 setup.c:1039
+#: setup.c:927 setup.c:983 setup.c:993 setup.c:1032 setup.c:1040
 msgid "cannot come back to cwd"
 msgstr "impossible de revenir au répertoire de travail courant"
 
-#: setup.c:1053
+#: setup.c:1054
 #, c-format
 msgid "failed to stat '%*s%s%s'"
 msgstr "échec du stat de '%*s%s%s'"
 
-#: setup.c:1296
+#: setup.c:1338
 msgid "Unable to read current working directory"
 msgstr "Impossible d'accéder au répertoire de travail courant"
 
-#: setup.c:1305 setup.c:1311
+#: setup.c:1347 setup.c:1353
 #, c-format
 msgid "cannot change to '%s'"
 msgstr "impossible de modifier en '%s'"
 
-#: setup.c:1316
+#: setup.c:1358
 #, c-format
 msgid "not a git repository (or any of the parent directories): %s"
 msgstr "ni ceci ni aucun de ses répertoires parents n'est un dépôt git : %s"
 
-#: setup.c:1322
+#: setup.c:1364
 #, c-format
 msgid ""
 "not a git repository (or any parent up to mount point %s)\n"
@@ -9104,7 +9112,20 @@ msgstr ""
 "Arrêt à la limite du système de fichiers (GIT_DISCOVERY_ACROSS_FILESYSTEM "
 "n'est pas défini)."
 
-#: setup.c:1447
+#: setup.c:1374
+#, c-format
+msgid ""
+"unsafe repository ('%s' is owned by someone else)\n"
+"To add an exception for this directory, call:\n"
+"\n"
+"\tgit config --global --add safe.directory %s"
+msgstr ""
+"dépôt non sécurisé ('%s' appartient à quelqu'un d'autre)\n"
+"Pour ajouter une exception pour ce dépôt, lancez :\n"
+"\n"
+"\tgit config --global --add safe.directory %s"
+
+#: setup.c:1502
 #, c-format
 msgid ""
 "problem with core.sharedRepository filemode value (0%.3o).\n"
@@ -9114,11 +9135,11 @@ msgstr ""
 "Le propriétaire des fichiers doit toujours avoir les droits en lecture et "
 "écriture."
 
-#: setup.c:1509
+#: setup.c:1564
 msgid "fork failed"
 msgstr "échec de la bifurcation"
 
-#: setup.c:1514
+#: setup.c:1569
 msgid "setsid failed"
 msgstr "échec du setsid"
 
@@ -12060,7 +12081,9 @@ msgstr "git branch [<options>] [-r | -a] [--merged | --no-merged]"
 msgid ""
 "git branch [<options>] [-f] [--recurse-submodules] <branch-name> [<start-"
 "point>]"
-msgstr "git branch [<options>] [-f] [--recurse-submodules] <nom-de-branche> [<point-de-départ>]"
+msgstr ""
+"git branch [<options>] [-f] [--recurse-submodules] <nom-de-branche> [<point-"
+"de-départ>]"
 
 #: builtin/branch.c:31
 msgid "git branch [<options>] [-l] [<pattern>...]"
@@ -12383,7 +12406,9 @@ msgstr "HEAD non trouvée sous refs/heads !"
 msgid ""
 "branch with --recurse-submodules can only be used if submodule."
 "propagateBranches is enabled"
-msgstr "brancher avec --recurse-submodules ne peut être utilisé que si submodule.propagateBranches est activé"
+msgstr ""
+"brancher avec --recurse-submodules ne peut être utilisé que si submodule."
+"propagateBranches est activé"
 
 #: builtin/branch.c:741
 msgid "--recurse-submodules can only be used to create branches"
@@ -12679,7 +12704,8 @@ msgid ""
 "             [--buffer] [--follow-symlinks] [--unordered]\n"
 "             [--textconv | --filters]"
 msgstr ""
-"git cat-file (--batch | --batch-check | --batch-command) [--batch-all-objects]\n"
+"git cat-file (--batch | --batch-check | --batch-command) [--batch-all-"
+"objects]\n"
 "             [--buffer] [--follow-symlinks] [--unordered]\n"
 "             [--textconv | --filters]"
 
@@ -12737,7 +12763,8 @@ msgstr "lire les commandes depuis l'entrée standard"
 
 #: builtin/cat-file.c:861
 msgid "with --batch[-check]: ignores stdin, batches all known objects"
-msgstr "avec --batch[-check] : ignore stdin, gère tous les objets connus par lots"
+msgstr ""
+"avec --batch[-check] : ignore stdin, gère tous les objets connus par lots"
 
 #: builtin/cat-file.c:863
 msgid "Change or optimize batch output"
@@ -12759,7 +12786,9 @@ msgstr "ne pas ordonner les objets avant de les émettre"
 msgid ""
 "Emit object (blob or tree) with conversion or filter (stand-alone, or with "
 "batch)"
-msgstr "Émet l'objet (blob ou arbre) avec une conversion ou un filtre (autonome ou en lot)"
+msgstr ""
+"Émet l'objet (blob ou arbre) avec une conversion ou un filtre (autonome ou "
+"en lot)"
 
 #: builtin/cat-file.c:872
 msgid "run textconv on object's content"
@@ -12775,7 +12804,9 @@ msgstr "blob|arbre"
 
 #: builtin/cat-file.c:876
 msgid "use a <path> for (--textconv | --filters); Not with 'batch'"
-msgstr "utiliser un <chemin> spécifique pour (--textconv | --filters); pas pour les lots"
+msgstr ""
+"utiliser un <chemin> spécifique pour (--textconv | --filters); pas pour les "
+"lots"
 
 #: builtin/cat-file.c:894
 #, c-format
@@ -12845,7 +12876,8 @@ msgstr "lire les noms de fichier depuis l'entrée standard"
 
 #: builtin/check-attr.c:25 builtin/check-ignore.c:27
 msgid "terminate input and output records by a NUL character"
-msgstr "terminer les enregistrements en entrée et en sortie par un caractère NUL"
+msgstr ""
+"terminer les enregistrements en entrée et en sortie par un caractère NUL"
 
 #: builtin/check-ignore.c:21 builtin/checkout.c:1550 builtin/gc.c:550
 #: builtin/worktree.c:565
@@ -13260,7 +13292,9 @@ msgstr "une branche est attendue, mais un commit '%s' a été reçu"
 #: builtin/checkout.c:1429
 msgid ""
 "If you want to detach HEAD at the commit, try again with the --detach option."
-msgstr "Si vous souhaitez détacher HEAD à ce commit, réessayez avec l'option --detach."
+msgstr ""
+"Si vous souhaitez détacher HEAD à ce commit, réessayez avec l'option --"
+"detach."
 
 #: builtin/checkout.c:1442
 msgid ""
@@ -17329,7 +17363,9 @@ msgstr "l'option '%s' n'accepte pas d'argument sans option"
 #: builtin/help.c:631
 msgid ""
 "the '--no-[external-commands|aliases]' options can only be used with '--all'"
-msgstr "les options '--no-[external-commands|aliases]' ne peuvent être utilisées qu'avec '--all'"
+msgstr ""
+"les options '--no-[external-commands|aliases]' ne peuvent être utilisées "
+"qu'avec '--all'"
 
 #: builtin/help.c:643 builtin/help.c:671
 #, c-format
@@ -17342,7 +17378,8 @@ msgstr "'git help config' pour plus d'information"
 
 #: builtin/hook.c:10
 msgid "git hook run [--ignore-missing] <hook-name> [-- <hook-args>]"
-msgstr "git hook run [--ignore-missing] <nom-de-crochet> [-- <arguments-de-crochet>]"
+msgstr ""
+"git hook run [--ignore-missing] <nom-de-crochet> [-- <arguments-de-crochet>]"
 
 #: builtin/hook.c:30
 msgid "silently ignore missing requested <hook-name>"
@@ -18488,7 +18525,9 @@ msgstr ""
 
 #: builtin/ls-tree.c:391
 msgid "--format can't be combined with other format-altering options"
-msgstr "--format ne peut pas être combiné avec d'autres options de modification de format"
+msgstr ""
+"--format ne peut pas être combiné avec d'autres options de modification de "
+"format"
 
 #. TRANSLATORS: keep <> in "<" mail ">" info.
 #: builtin/mailinfo.c:14
@@ -21352,7 +21391,8 @@ msgid ""
 msgstr ""
 "git reflog expire [--expire=<temps>] [--expire-unreachable=<temps>]\n"
 "                  [--rewrite] [--updateref] [--stale-fix]\n"
-"                  [--dry-run | -n] [--verbose] [--all [--single-worktree] | <réfs>...]"
+"                  [--dry-run | -n] [--verbose] [--all [--single-worktree] | "
+"<réfs>...]"
 
 #: builtin/reflog.c:17
 msgid ""
@@ -21378,11 +21418,14 @@ msgstr "ne pas réellement élaguer des entrées"
 #: builtin/reflog.c:243 builtin/reflog.c:362
 msgid ""
 "rewrite the old SHA1 with the new SHA1 of the entry that now precedes it"
-msgstr "réécrire l'ancien SHA1 avec le nouveau SHA1 de l'entrée qui la précède maintenant"
+msgstr ""
+"réécrire l'ancien SHA1 avec le nouveau SHA1 de l'entrée qui la précède "
+"maintenant"
 
 #: builtin/reflog.c:246 builtin/reflog.c:365
 msgid "update the reference to the value of the top reflog entry"
-msgstr "mettre à jour la référence avec la valeur de l'entrée en tête de reflog"
+msgstr ""
+"mettre à jour la référence avec la valeur de l'entrée en tête de reflog"
 
 #: builtin/reflog.c:248 builtin/reflog.c:367
 msgid "print extra information on screen"
@@ -21400,7 +21443,9 @@ msgstr "élaguer les entrées plus vieilles que <temps>"
 msgid ""
 "prune entries older than <time> that are not reachable from the current tip "
 "of the branch"
-msgstr "élaguer les entrées plus anciennes que <temps> qui ne sont pas joignables depuis le sommet actuel de la branche"
+msgstr ""
+"élaguer les entrées plus anciennes que <temps> qui ne sont pas joignables "
+"depuis le sommet actuel de la branche"
 
 #: builtin/reflog.c:258
 msgid "prune any reflog entries that point to broken commits"
@@ -22517,7 +22562,8 @@ msgid ""
 "It took %.2f seconds to refresh the index after reset.  You can use\n"
 "'--no-refresh' to avoid this."
 msgstr ""
-"%.2f secondes ont été nécessaires pour rafraîchir l'index après la réinitialisation.\n"
+"%.2f secondes ont été nécessaires pour rafraîchir l'index après la "
+"réinitialisation.\n"
 "Vous pouvez utiliser '--no-refresh' pour éviter ceci."
 
 #: builtin/reset.c:547
@@ -23155,37 +23201,48 @@ msgstr ""
 
 #: builtin/sparse-checkout.c:707
 msgid "please run from the toplevel directory in non-cone mode"
-msgstr "veuillez lancer depuis le répertoire de niveau supérieur en mode non-cone"
+msgstr ""
+"veuillez lancer depuis le répertoire de niveau supérieur en mode non-cone"
 
 #: builtin/sparse-checkout.c:712
 msgid "specify directories rather than patterns (no leading slash)"
-msgstr "spécifier les répertoires plutôt que les motifs (sans barre oblique au début)"
+msgstr ""
+"spécifier les répertoires plutôt que les motifs (sans barre oblique au début)"
 
 #: builtin/sparse-checkout.c:714
 msgid ""
 "specify directories rather than patterns.  If your directory starts with a "
 "'!', pass --skip-checks"
-msgstr "spécifier les répertoires plutôt que les motifs. Si votre répertoire commence par un '!', passez --skip-checks"
+msgstr ""
+"spécifier les répertoires plutôt que les motifs. Si votre répertoire "
+"commence par un '!', passez --skip-checks"
 
 #: builtin/sparse-checkout.c:716
 msgid ""
 "specify directories rather than patterns.  If your directory really has any "
 "of '*?[]\\' in it, pass --skip-checks"
-msgstr "spécifier les répertoires plutôt que les motifs. Si votre répertoire contient au moins caractère '*?[]\\\\', passez --skip-checks"
+msgstr ""
+"spécifier les répertoires plutôt que les motifs. Si votre répertoire "
+"contient au moins caractère '*?[]\\\\', passez --skip-checks"
 
 #: builtin/sparse-checkout.c:732
 #, c-format
 msgid ""
 "'%s' is not a directory; to treat it as a directory anyway, rerun with --"
 "skip-checks"
-msgstr "'%s' n'est pas un répertoire ; pour le traiter tout de même comme un répertoire, relancez avec --skip-checks"
+msgstr ""
+"'%s' n'est pas un répertoire ; pour le traiter tout de même comme un "
+"répertoire, relancez avec --skip-checks"
 
 #: builtin/sparse-checkout.c:734
 #, c-format
 msgid ""
 "pass a leading slash before paths such as '%s' if you want a single file "
 "(see NON-CONE PROBLEMS in the git-sparse-checkout manual)."
-msgstr "passez une barre oblique en préfixe de chemins tels que '%s' si vous voulez un seul fichier (voir PROBLÈMES DE NON-CONE dans la page de manuel de git-sparse-checkout)."
+msgstr ""
+"passez une barre oblique en préfixe de chemins tels que '%s' si vous voulez "
+"un seul fichier (voir PROBLÈMES DE NON-CONE dans la page de manuel de git-"
+"sparse-checkout)."
 
 #: builtin/sparse-checkout.c:739
 msgid "git sparse-checkout add [--skip-checks] (--stdin | <patterns>)"
@@ -23194,7 +23251,9 @@ msgstr "git sparse-checkout add [--skip-checks] (--stdin | <motifs>)"
 #: builtin/sparse-checkout.c:752 builtin/sparse-checkout.c:797
 msgid ""
 "skip some sanity checks on the given paths that might give false positives"
-msgstr "sauter certaines vérifications sanitaires sur les chemins indiqués qui pourraient provoquer ds faux positifs"
+msgstr ""
+"sauter certaines vérifications sanitaires sur les chemins indiqués qui "
+"pourraient provoquer ds faux positifs"
 
 #: builtin/sparse-checkout.c:755 builtin/sparse-checkout.c:800
 msgid "read patterns from standard in"
@@ -23208,7 +23267,9 @@ msgstr "aucun sparse-checkout auquel on peut ajouter"
 msgid ""
 "git sparse-checkout set [--[no-]cone] [--[no-]sparse-index] [--skip-checks] "
 "(--stdin | <patterns>)"
-msgstr "git sparse-checkout set [--[no-]cone] [--[no-]sparse-index] [--skip-checks] (--stdin | <motifs>)"
+msgstr ""
+"git sparse-checkout set [--[no-]cone] [--[no-]sparse-index] [--skip-checks] "
+"(--stdin | <motifs>)"
 
 #: builtin/sparse-checkout.c:854
 msgid "must be in a sparse-checkout to reapply sparsity patterns"
@@ -23874,7 +23935,7 @@ msgstr "interdire de cloner dans un répertoire non-vide"
 msgid ""
 "git submodule--helper clone [--prefix=<path>] [--quiet] [--reference "
 "<repository>] [--name <name>] [--depth <depth>] [--single-branch] [--filter "
-"<filter-spec>]--url <url> --path <path>"
+"<filter-spec>] --url <url> --path <path>"
 msgstr "git submodule--helper clone [--prefix=<chemin>] [--quiet] [--reference <dépôt>] [--name <nom>] [--depth <profondeur>] [--single-branch] [--filter <spécificateur-de-filtre>]--url <url> --path <chemin>"
 
 #: builtin/submodule--helper.c:1943
@@ -23990,7 +24051,8 @@ msgstr "impossible de trouver une poignée de dépôt pour le sous-module '%s'"
 #: builtin/submodule--helper.c:2588
 #, c-format
 msgid "Unable to find current revision in submodule path '%s'"
-msgstr "Impossible de trouver la révision actuelle dans le chemin de sous-module '%s'"
+msgstr ""
+"Impossible de trouver la révision actuelle dans le chemin de sous-module '%s'"
 
 #: builtin/submodule--helper.c:2599
 #, c-format
@@ -24000,7 +24062,8 @@ msgstr "Impossible de rapatrier dans le chemin de sous-module '%s'"
 #: builtin/submodule--helper.c:2604
 #, c-format
 msgid "Unable to find %s revision in submodule path '%s'"
-msgstr "Impossible de trouver la révision %s dans le chemin de sous-module '%s'"
+msgstr ""
+"Impossible de trouver la révision %s dans le chemin de sous-module '%s'"
 
 #: builtin/submodule--helper.c:2640
 #, c-format
@@ -24062,7 +24125,11 @@ msgid ""
 "[-N|--no-fetch] [-f|--force] [--checkout|--merge|--rebase] [--[no-]recommend-"
 "shallow] [--reference <repository>] [--recursive] [--[no-]single-branch] "
 "[--] [<path>...]"
-msgstr "git submodule [--quiet] update [--init [--filter=<spécificateur-de-filtre>]] [--remote] [-N|--no-fetch] [-f|--force] [--checkout|--merge|--rebase] [--[no-]recommend-shallow] [--reference <dépôt>] [--recursive] [--[no-]single-branch] [--] [<chemin>...]"
+msgstr ""
+"git submodule [--quiet] update [--init [--filter=<spécificateur-de-filtre>]] "
+"[--remote] [-N|--no-fetch] [-f|--force] [--checkout|--merge|--rebase] [--"
+"[no-]recommend-shallow] [--reference <dépôt>] [--recursive] [--[no-]single-"
+"branch] [--] [<chemin>...]"
 
 #: builtin/submodule--helper.c:2767
 msgid "bad value for update parameter"
@@ -24144,8 +24211,10 @@ msgstr "afficher si la branche serait créée"
 #: builtin/submodule--helper.c:3085
 msgid ""
 "git submodule--helper create-branch [-f|--force] [--create-reflog] [-q|--"
-"quiet] [-t|--track] [-n|--dry-run] <name> <start_oid> <start_name>"
-msgstr "git submodule--helper create-branch [-f|--force] [--create-reflog] [-q|--quiet] [-t|--track] [-n|--dry-run] <nom> <oid-départ> <nom-de-départ>"
+"quiet] [-t|--track] [-n|--dry-run] <name> <start-oid> <start-name>"
+msgstr ""
+"git submodule--helper create-branch [-f|--force] [--create-reflog] [-q|--"
+"quiet] [-t|--track] [-n|--dry-run] <nom> <oid-départ> <nom-de-départ>"
 
 #: builtin/submodule--helper.c:3097
 #, c-format
@@ -24704,13 +24773,17 @@ msgstr "effacer le bit de validité fsmonitor"
 msgid ""
 "core.splitIndex is set to false; remove or change it, if you really want to "
 "enable split index"
-msgstr "core.splitIndex est réglé à false ; supprimez-le ou changez-le si vous souhaitez vraiment activer l'index scindé"
+msgstr ""
+"core.splitIndex est réglé à false ; supprimez-le ou changez-le si vous "
+"souhaitez vraiment activer l'index scindé"
 
 #: builtin/update-index.c:1204
 msgid ""
 "core.splitIndex is set to true; remove or change it, if you really want to "
 "disable split index"
-msgstr "core.splitIndex est réglé à vrai ; supprimez-le ou changez-le si vous souhaitez vraiment désactiver l'index scindé"
+msgstr ""
+"core.splitIndex est réglé à vrai ; supprimez-le ou changez-le si vous "
+"souhaitez vraiment désactiver l'index scindé"
 
 #: builtin/update-index.c:1216
 msgid ""
@@ -24922,12 +24995,15 @@ msgstr ""
 #: builtin/worktree.c:248
 #, c-format
 msgid "failed to copy '%s' to '%s'; sparse-checkout may not work correctly"
-msgstr "échec de la copie de '%s' vers '%s' ; les extractions clairsemées pourraient ne pas fonctionner correctement"
+msgstr ""
+"échec de la copie de '%s' vers '%s' ; les extractions clairsemées pourraient "
+"ne pas fonctionner correctement"
 
 #: builtin/worktree.c:268
 #, c-format
 msgid "failed to copy worktree config from '%s' to '%s'"
-msgstr "impossible de copier la configuration d'arbre de travail de '%s' vers '%s'"
+msgstr ""
+"impossible de copier la configuration d'arbre de travail de '%s' vers '%s'"
 
 #: builtin/worktree.c:280 builtin/worktree.c:285
 #, c-format
@@ -27320,17 +27396,23 @@ msgstr "impossible d'envoyer un message comme 7bit"
 msgid "invalid transfer encoding"
 msgstr "codage de transfert invalide"
 
-#: git-send-email.perl:2099
+#: git-send-email.perl:2100
 #, perl-format
-msgid "fatal: %s: rejected by %s hook\n"
-msgstr "fatal : %s : rejetée par le crocher %s\n"
+msgid ""
+"fatal: %s: rejected by %s hook\n"
+"%s\n"
+"warning: no patches were sent\n"
+msgstr ""
+"fatal : %s : rejeté par le crochet %s\n"
+"%s\n"
+"attention : aucun patch envoyé\n"
 
-#: git-send-email.perl:2111 git-send-email.perl:2164 git-send-email.perl:2174
+#: git-send-email.perl:2110 git-send-email.perl:2163 git-send-email.perl:2173
 #, perl-format
 msgid "unable to open %s: %s\n"
 msgstr "impossible d'ouvrir %s :%s\n"
 
-#: git-send-email.perl:2114
+#: git-send-email.perl:2113
 #, perl-format
 msgid ""
 "fatal: %s:%d is longer than 998 characters\n"
@@ -27339,16 +27421,20 @@ msgstr ""
 "fatal : %s : %d est plus long que 998 caractères \n"
 "attention : aucun patch envoyé\n"
 
-#: git-send-email.perl:2132
+#: git-send-email.perl:2131
 #, perl-format
 msgid "Skipping %s with backup suffix '%s'.\n"
 msgstr "%s sauté avec un suffix de sauvegarde '%s'.\n"
 
 #. TRANSLATORS: please keep "[y|N]" as is.
-#: git-send-email.perl:2136
+#: git-send-email.perl:2135
 #, perl-format
 msgid "Do you really want to send %s? [y|N]: "
 msgstr "Souhaitez-vous réellement envoyer %s ?[y|N] : "
+
+#, perl-format
+#~ msgid "fatal: %s: rejected by %s hook\n"
+#~ msgstr "fatal : %s : rejetée par le crocher %s\n"
 
 #~ msgid "git archive --list"
 #~ msgstr "git archive --list"
@@ -27619,16 +27705,6 @@ msgstr "Souhaitez-vous réellement envoyer %s ?[y|N] : "
 #, sh-format
 #~ msgid "Failed to recurse into submodule path '$displaypath'"
 #~ msgstr "Échec de parcours dans le chemin du sous-module '$displaypath'"
-
-#, perl-format
-#~ msgid ""
-#~ "fatal: %s: rejected by sendemail-validate hook\n"
-#~ "%s\n"
-#~ "warning: no patches were sent\n"
-#~ msgstr ""
-#~ "fatal : %s : rejeté par le crochet sendemail-validate\n"
-#~ "%s\n"
-#~ "attention : aucun patch envoyé\n"
 
 #~ msgid "--index outside a repository"
 #~ msgstr "--index hors d'un dépôt"
