@@ -46,10 +46,10 @@ UI, Workflows & Features
 
  * "git branch" learned the "--recurse-submodules" option.
 
- * A not-so-common mistake is to write a script to feed "git bisect
-   run" without making it executable, in which case all tests will
-   exit with 126 or 127 error codes, even on revisions that are marked
-   as good.  Try to recognize this situation and stop iteration early.
+ * A user can forget to make a script file executable before giving
+   it to "git bisect run".  In such a case, all tests will exit with
+   126 or 127 error codes, even on revisions that are marked as good.
+   Try to recognize this situation and stop iteration early.
 
  * When "index-pack" dies due to incoming data exceeding the maximum
    allowed input size, include the value of the limit in the error
