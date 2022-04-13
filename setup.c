@@ -1034,6 +1034,9 @@ static int safe_directory_cb(const char *key, const char *value, void *d)
 {
 	struct safe_directory_data *data = d;
 
+	if (strcmp(key, "safe.directory"))
+		return 0;
+
 	if (!value || !*value)
 		data->is_safe = 0;
 	else {
