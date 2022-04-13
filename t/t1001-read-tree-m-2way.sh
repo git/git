@@ -21,6 +21,7 @@ In the test, these paths are used:
 	yomin   - not in H or M
 '
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-read-tree.sh
 
