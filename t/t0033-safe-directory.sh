@@ -36,4 +36,14 @@ test_expect_success 'safe.directory matches, but is reset' '
 	expect_rejected_dir
 '
 
+test_expect_success 'safe.directory=*' '
+	git config --global --add safe.directory "*" &&
+	git status
+'
+
+test_expect_success 'safe.directory=*, but is reset' '
+	git config --global --add safe.directory "" &&
+	expect_rejected_dir
+'
+
 test_done
