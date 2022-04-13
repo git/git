@@ -2768,9 +2768,7 @@ int is_path_owned_by_current_sid(const char *path, struct strbuf *report)
 				    DACL_SECURITY_INFORMATION,
 				    &sid, NULL, NULL, NULL, &descriptor);
 
-	if (err != ERROR_SUCCESS)
-		error(_("failed to get owner for '%s' (%ld)"), path, err);
-	else if (sid && IsValidSid(sid)) {
+	if (err == ERROR_SUCCESS && sid && IsValidSid(sid)) {
 		/* Now, verify that the SID matches the current user's */
 		static PSID current_user_sid;
 		BOOL is_member;
