@@ -606,6 +606,10 @@ static struct commit *one_relevant_parent(const struct rev_info *revs,
  *
  *   2. We saw anything except REV_TREE_NEW.
  */
+#define REV_TREE_SAME		0
+#define REV_TREE_NEW		1	/* Only new files */
+#define REV_TREE_OLD		2	/* Only files removed */
+#define REV_TREE_DIFFERENT	3	/* Mixed changes */
 static int tree_difference = REV_TREE_SAME;
 
 static void file_add_remove(struct diff_options *options,

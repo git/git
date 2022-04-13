@@ -329,32 +329,6 @@ struct rev_info {
 	struct tmp_objdir *remerge_objdir;
 };
 
-int ref_excluded(struct string_list *, const char *path);
-void clear_ref_exclusion(struct string_list **);
-void add_ref_exclusion(struct string_list **, const char *exclude);
-
-
-#define REV_TREE_SAME		0
-#define REV_TREE_NEW		1	/* Only new files */
-#define REV_TREE_OLD		2	/* Only files removed */
-#define REV_TREE_DIFFERENT	3	/* Mixed changes */
-
-/* revision.c */
-typedef void (*show_early_output_fn_t)(struct rev_info *, struct commit_list *);
-extern volatile show_early_output_fn_t show_early_output;
-
-struct setup_revision_opt {
-	const char *def;
-	void (*tweak)(struct rev_info *, struct setup_revision_opt *);
-	unsigned int	assume_dashdash:1,
-			allow_exclude_promisor_objects:1;
-	unsigned revarg_opt;
-};
-
-#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
-#define init_revisions(revs, prefix) repo_init_revisions(the_repository, revs, prefix)
-#endif
-
 /**
  * Initialize a rev_info structure with default values. The third parameter may
  * be NULL or can be prefix path, and then the `.prefix` variable will be set
@@ -366,6 +340,9 @@ struct setup_revision_opt {
 void repo_init_revisions(struct repository *r,
 			 struct rev_info *revs,
 			 const char *prefix);
+#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
+#define init_revisions(revs, prefix) repo_init_revisions(the_repository, revs, prefix)
+#endif
 
 /**
  * Parse revision information, filling in the `rev_info` structure, and
@@ -374,6 +351,13 @@ void repo_init_revisions(struct repository *r,
  * head of the argument list. The last parameter is used in case no
  * parameter given by the first two arguments.
  */
+struct setup_revision_opt {
+	const char *def;
+	void (*tweak)(struct rev_info *, struct setup_revision_opt *);
+	unsigned int	assume_dashdash:1,
+			allow_exclude_promisor_objects:1;
+	unsigned revarg_opt;
+};
 int setup_revisions(int argc, const char **argv, struct rev_info *revs,
 		    struct setup_revision_opt *);
 
@@ -422,6 +406,14 @@ void mark_tree_uninteresting(struct repository *r, struct tree *tree);
 void mark_trees_uninteresting_sparse(struct repository *r, struct oidset *trees);
 
 void show_object_with_name(FILE *, struct object *, const char *);
+
+/**
+ * Helpers to check if a "struct string_list" item matches with
+ * wildmatch().
+ */
+int ref_excluded(struct string_list *, const char *path);
+void clear_ref_exclusion(struct string_list **);
+void add_ref_exclusion(struct string_list **, const char *exclude);
 
 /**
  * This function can be used if you want to add commit objects as revision
@@ -477,5 +469,11 @@ int rewrite_parents(struct rev_info *revs,
  * history simplification is off.
  */
 struct commit_list *get_saved_parents(struct rev_info *revs, const struct commit *commit);
+
+/**
+ * Global for the (undocumented) "--early-output" flag for "git log".
+ */
+typedef void (*show_early_output_fn_t)(struct rev_info *, struct commit_list *);
+extern volatile show_early_output_fn_t show_early_output;
 
 #endif
