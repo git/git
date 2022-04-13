@@ -741,7 +741,7 @@ char *interpolate_path(const char *path, int real_home)
 
 #ifdef __MINGW32__
 	if (path[0] == '/') {
-		warning(_("encountered old-style '%s' that should be '%%(prefix)%s'"), path, path);
+		warning(_("encountered old-style '%s' that should be '%%(prefix)/%s'"), path, path);
 		return system_path(path + 1);
 	}
 #endif
