@@ -917,6 +917,7 @@ static int show_stash(int argc, const char **argv, const char *prefix)
 cleanup:
 	strvec_clear(&stash_args);
 	free_stash_info(&info);
+	release_revisions(&rev);
 	if (do_usage)
 		usage_with_options(git_stash_show_usage, options);
 	return ret;
