@@ -13,6 +13,15 @@ Backward compatibility warts
    top-level a partial clone, while submodules are fully cloned.  This
    behaviour is changed to pass the same filter down to the submodules.
 
+ * With the fixes for CVE-2022-24765 that are common with versions of
+   Git 2.30.4, 2.31.3, 2.32.2, 2.33.3, 2.34.3, and 2.35.3, Git has
+   been taught not to recognise repositories owned by other users, in
+   order to avoid getting affected by their config files and hooks.
+   You can list the path to the safe/trusted repositories that may be
+   owned by others on a multi-valued configuration variable
+   `safe.directory` to override this behaviour, or use '*' to declare
+   that you trust anything.
+
 
 Note to those who build from the source
 
@@ -46,10 +55,10 @@ UI, Workflows & Features
 
  * "git branch" learned the "--recurse-submodules" option.
 
- * A not-so-common mistake is to write a script to feed "git bisect
-   run" without making it executable, in which case all tests will
-   exit with 126 or 127 error codes, even on revisions that are marked
-   as good.  Try to recognize this situation and stop iteration early.
+ * A user can forget to make a script file executable before giving
+   it to "git bisect run".  In such a case, all tests will exit with
+   126 or 127 error codes, even on revisions that are marked as good.
+   Try to recognize this situation and stop iteration early.
 
  * When "index-pack" dies due to incoming data exceeding the maximum
    allowed input size, include the value of the limit in the error
@@ -396,8 +405,6 @@ Fixes since v2.35
  * "git mv" failed to refresh the cached stat information for the
    entry it moved.
    (merge b7f9130a06 vd/mv-refresh-stat later to maint).
-
- * Fix for CVE-2022-24765 has been merged up from 2.35.2 and others.
 
  * Other code cleanup, docfix, build fix, etc.
    (merge cfc5cf428b jc/find-header later to maint).
