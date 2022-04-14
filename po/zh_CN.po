@@ -144,8 +144,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2022-04-06 14:40+0800\n"
-"PO-Revision-Date: 2022-04-06 21:16+0100\n"
+"POT-Creation-Date: 2022-04-13 14:52+0800\n"
+"PO-Revision-Date: 2022-04-14 15:39+0100\n"
 "Last-Translator: Fangyi Zhou <me@fangyi.io>\n"
 "Language-Team: GitHub <https://github.com/fangyi-zhou/git-po/>\n"
 "Language: zh_CN\n"
@@ -1235,7 +1235,7 @@ msgid "cannot checkout %s"
 msgstr "不能检出 %s"
 
 #: apply.c:3412 apply.c:3423 apply.c:3469 midx.c:105 pack-revindex.c:214
-#: setup.c:309
+#: setup.c:310
 #, c-format
 msgid "failed to read %s"
 msgstr "无法读取 %s"
@@ -2634,8 +2634,8 @@ msgid ""
 "remote URLs cannot be configured in file directly or indirectly included by "
 "includeIf.hasconfig:remote.*.url"
 msgstr ""
-"远程 URL 不能在文件中配置，不管直接地还是通过 includeIf.hasconfig:remote.*.url 间接"
-"包含地。"
+"远程 URL 不能在文件中配置，不管直接地还是通过 includeIf.hasconfig:remote.*."
+"url 间接地包含。"
 
 #: config.c:508
 #, c-format
@@ -3406,7 +3406,7 @@ msgid "Marked %d islands, done.\n"
 msgstr "已标记 %d 个数据岛，结束。\n"
 
 #: diff-merges.c:81 gpg-interface.c:719 gpg-interface.c:734 ls-refs.c:37
-#: parallel-checkout.c:42 sequencer.c:2805 setup.c:562 builtin/am.c:203
+#: parallel-checkout.c:42 sequencer.c:2805 setup.c:563 builtin/am.c:203
 #: builtin/am.c:2243 builtin/am.c:2287 builtin/blame.c:724 builtin/blame.c:742
 #: builtin/fetch.c:792 builtin/pack-objects.c:3515 builtin/pull.c:45
 #: builtin/pull.c:47 builtin/pull.c:321
@@ -4536,7 +4536,7 @@ msgstr ""
 msgid "'%s': unable to read %s"
 msgstr "'%s'：无法读取 %s"
 
-#: grep.c:1876 setup.c:177 builtin/clone.c:308 builtin/diff.c:90
+#: grep.c:1876 setup.c:178 builtin/clone.c:308 builtin/diff.c:90
 #: builtin/rm.c:136
 #, c-format
 msgid "failed to stat '%s'"
@@ -8686,12 +8686,12 @@ msgstr "无法跳过不必要的拣选"
 msgid "the script was already rearranged."
 msgstr "脚本已经重新编排。"
 
-#: setup.c:134
+#: setup.c:135
 #, c-format
 msgid "'%s' is outside repository at '%s'"
 msgstr "'%s' 在位于 '%s' 的仓库之外"
 
-#: setup.c:186
+#: setup.c:187
 #, c-format
 msgid ""
 "%s: no such path in the working tree.\n"
@@ -8700,7 +8700,7 @@ msgstr ""
 "%s：工作区中无此路径。\n"
 "使用命令 'git <命令> -- <路径>...' 来指定本地不存在的路径。"
 
-#: setup.c:199
+#: setup.c:200
 #, c-format
 msgid ""
 "ambiguous argument '%s': unknown revision or path not in the working tree.\n"
@@ -8711,12 +8711,12 @@ msgstr ""
 "使用 '--' 来分隔版本和路径，例如：\n"
 "'git <命令> [<版本>...] -- [<文件>...]'"
 
-#: setup.c:265
+#: setup.c:266
 #, c-format
 msgid "option '%s' must come before non-option arguments"
 msgstr "选项 '%s' 必须在其他非选项参数之前"
 
-#: setup.c:284
+#: setup.c:285
 #, c-format
 msgid ""
 "ambiguous argument '%s': both revision and filename\n"
@@ -8727,100 +8727,100 @@ msgstr ""
 "使用 '--' 来分隔版本和路径，例如：\n"
 "'git <命令> [<版本>...] -- [<文件>...]'"
 
-#: setup.c:420
+#: setup.c:421
 msgid "unable to set up work tree using invalid config"
 msgstr "无法使用无效配置来创建工作区"
 
-#: setup.c:424 builtin/rev-parse.c:895
+#: setup.c:425 builtin/rev-parse.c:895
 msgid "this operation must be run in a work tree"
 msgstr "该操作必须在一个工作区中运行"
 
-#: setup.c:723
+#: setup.c:724
 #, c-format
 msgid "Expected git repo version <= %d, found %d"
 msgstr "期望 git 仓库版本 <= %d，却得到 %d"
 
-#: setup.c:731
+#: setup.c:732
 msgid "unknown repository extension found:"
 msgid_plural "unknown repository extensions found:"
 msgstr[0] "发现未知的仓库扩展："
 msgstr[1] "发现未知的仓库扩展："
 
-#: setup.c:745
+#: setup.c:746
 msgid "repo version is 0, but v1-only extension found:"
 msgid_plural "repo version is 0, but v1-only extensions found:"
 msgstr[0] "仓库的版本是 0，但是发现仅用于 v1 的扩展："
 msgstr[1] "仓库的版本是 0，但是发现仅用于 v1 的扩展："
 
-#: setup.c:766
+#: setup.c:767
 #, c-format
 msgid "error opening '%s'"
 msgstr "打开 '%s' 出错"
 
-#: setup.c:768
+#: setup.c:769
 #, c-format
 msgid "too large to be a .git file: '%s'"
 msgstr "文件太大，无法作为 .git 文件：'%s'"
 
-#: setup.c:770
+#: setup.c:771
 #, c-format
 msgid "error reading %s"
 msgstr "读取 %s 出错"
 
-#: setup.c:772
+#: setup.c:773
 #, c-format
 msgid "invalid gitfile format: %s"
 msgstr "无效的 gitfile 格式：%s"
 
-#: setup.c:774
+#: setup.c:775
 #, c-format
 msgid "no path in gitfile: %s"
 msgstr "在 gitfile 中没有路径：%s"
 
-#: setup.c:776
+#: setup.c:777
 #, c-format
 msgid "not a git repository: %s"
 msgstr "不是 git 仓库：%s"
 
-#: setup.c:878
+#: setup.c:879
 #, c-format
 msgid "'$%s' too big"
 msgstr "'$%s' 太大"
 
-#: setup.c:892
+#: setup.c:893
 #, c-format
 msgid "not a git repository: '%s'"
 msgstr "不是 git 仓库：'%s'"
 
-#: setup.c:921 setup.c:923 setup.c:954
+#: setup.c:922 setup.c:924 setup.c:955
 #, c-format
 msgid "cannot chdir to '%s'"
 msgstr "不能切换目录到 '%s'"
 
-#: setup.c:926 setup.c:982 setup.c:992 setup.c:1031 setup.c:1039
+#: setup.c:927 setup.c:983 setup.c:993 setup.c:1032 setup.c:1040
 msgid "cannot come back to cwd"
 msgstr "无法返回当前工作目录"
 
-#: setup.c:1053
+#: setup.c:1054
 #, c-format
 msgid "failed to stat '%*s%s%s'"
 msgstr "无法获取 '%*s%s%s' 状态（stat）"
 
-#: setup.c:1296
+#: setup.c:1338
 msgid "Unable to read current working directory"
 msgstr "不能读取当前工作目录"
 
-#: setup.c:1305 setup.c:1311
+#: setup.c:1347 setup.c:1353
 #, c-format
 msgid "cannot change to '%s'"
 msgstr "不能切换到 '%s'"
 
-#: setup.c:1316
+#: setup.c:1358
 #, c-format
 msgid "not a git repository (or any of the parent directories): %s"
 msgstr "不是 git 仓库（或者任何父目录）：%s"
 
-#: setup.c:1322
+#: setup.c:1364
 #, c-format
 msgid ""
 "not a git repository (or any parent up to mount point %s)\n"
@@ -8829,7 +8829,21 @@ msgstr ""
 "不是 git 仓库（或者直至挂载点 %s 的任何父目录）\n"
 "停止在文件系统边界（未设置 GIT_DISCOVERY_ACROSS_FILESYSTEM）。"
 
-#: setup.c:1447
+#: setup.c:1374
+#, c-format
+msgid ""
+"unsafe repository ('%s' is owned by someone else)\n"
+"To add an exception for this directory, call:\n"
+"\n"
+"\tgit config --global --add safe.directory %s"
+msgstr ""
+"仓库不安全（'%s' 的所有者是其他人）\n"
+"要为本仓库创建特例，请使用：\n"
+"\n"
+"\tgit config --global --add safe.directory %s"
+
+
+#: setup.c:1502
 #, c-format
 msgid ""
 "problem with core.sharedRepository filemode value (0%.3o).\n"
@@ -8838,11 +8852,11 @@ msgstr ""
 "参数 core.sharedRepository 的文件属性值有问题（0%.3o）。\n"
 "文件属主必须始终拥有读写权限。"
 
-#: setup.c:1509
+#: setup.c:1564
 msgid "fork failed"
 msgstr "fork 失败"
 
-#: setup.c:1514
+#: setup.c:1569
 msgid "setsid failed"
 msgstr "setsid 失败"
 
@@ -22438,8 +22452,7 @@ msgstr ""
 msgid ""
 "'%s' is not a directory; to treat it as a directory anyway, rerun with --"
 "skip-checks"
-msgstr ""
-"'%s' 不是目录；若无论如何都要将它当作目录，使用 --skip-checks 重新运行"
+msgstr "'%s' 不是目录；若无论如何都要将它当作目录，使用 --skip-checks 重新运行"
 
 #: builtin/sparse-checkout.c:734
 #, c-format
@@ -23110,7 +23123,7 @@ msgstr "不允许克隆到一个非空目录"
 msgid ""
 "git submodule--helper clone [--prefix=<path>] [--quiet] [--reference "
 "<repository>] [--name <name>] [--depth <depth>] [--single-branch] [--filter "
-"<filter-spec>]--url <url> --path <path>"
+"<filter-spec>] --url <url> --path <path>"
 msgstr ""
 "git submodule--helper clone [--prefix=<路径>] [--quiet] [--reference <仓库>] "
 "[--name <名字>] [--depth <深度>] [--single-branch] [--filter <过滤器规格>] --"
@@ -23377,7 +23390,7 @@ msgstr "显示是否将要创建分支"
 #: builtin/submodule--helper.c:3085
 msgid ""
 "git submodule--helper create-branch [-f|--force] [--create-reflog] [-q|--"
-"quiet] [-t|--track] [-n|--dry-run] <name> <start_oid> <start_name>"
+"quiet] [-t|--track] [-n|--dry-run] <name> <start-oid> <start-name>"
 msgstr ""
 "git submodule--helper create-branch [-f|--force] [--create-reflog] [-q|--"
 "quiet] [-t|--track] [-n|--dry-run] <名称> <起始对象 ID> <起始名称>"
@@ -26425,17 +26438,23 @@ msgstr "不能以 7bit 形式发送信息"
 msgid "invalid transfer encoding"
 msgstr "无效的传送编码"
 
-#: git-send-email.perl:2099
+#: git-send-email.perl:2100
 #, perl-format
-msgid "fatal: %s: rejected by %s hook\n"
-msgstr "致命错误： %s： 被 %s 钩子拒绝\n"
+msgid ""
+"fatal: %s: rejected by %s hook\n"
+"%s\n"
+"warning: no patches were sent\n"
+msgstr ""
+"致命错误：%s：被 %s 钩子拒绝\n"
+"%s\n"
+"警告：补丁未能发送\n"
 
-#: git-send-email.perl:2111 git-send-email.perl:2164 git-send-email.perl:2174
+#: git-send-email.perl:2110 git-send-email.perl:2163 git-send-email.perl:2173
 #, perl-format
 msgid "unable to open %s: %s\n"
 msgstr "不能打开 %s：%s\n"
 
-#: git-send-email.perl:2114
+#: git-send-email.perl:2113
 #, perl-format
 msgid ""
 "fatal: %s:%d is longer than 998 characters\n"
@@ -26444,274 +26463,13 @@ msgstr ""
 "致命错误：%s:%d 超过 998 字符\n"
 "警告：补丁未能发送\n"
 
-#: git-send-email.perl:2132
+#: git-send-email.perl:2131
 #, perl-format
 msgid "Skipping %s with backup suffix '%s'.\n"
 msgstr "略过 %s 含备份后缀 '%s'。\n"
 
 #. TRANSLATORS: please keep "[y|N]" as is.
-#: git-send-email.perl:2136
+#: git-send-email.perl:2135
 #, perl-format
 msgid "Do you really want to send %s? [y|N]: "
 msgstr "您真的要发送 %s？[y|N]："
-
-#~ msgid "git archive --list"
-#~ msgstr "git archive --list"
-
-#, c-format
-#~ msgid "unknown value for --diff-merges: %s"
-#~ msgstr "未知的 --diff-merges 取值：%s"
-
-#, c-format
-#~ msgid "invalid value '%s' for lsrefs.unborn"
-#~ msgstr "lsrefs.unborn 的取值 '%s' 无效"
-
-#~ msgid "backend for `git stash -p`"
-#~ msgstr "`git stash -p` 的后端"
-
-#, c-format
-#~ msgid "Invalid value for --empty: %s"
-#~ msgstr "--empty 的值无效：%s"
-
-#, c-format
-#~ msgid "Invalid value for --patch-format: %s"
-#~ msgstr "无效的 --patch-format 值：%s"
-
-#, c-format
-#~ msgid "Invalid value for --show-current-patch: %s"
-#~ msgstr "无效的 --show-current-patch 值：%s"
-
-#~ msgid ""
-#~ "git bisect--helper --bisect-terms [--term-good | --term-old | --term-bad "
-#~ "| --term-new]"
-#~ msgstr ""
-#~ "git bisect--helper --bisect-terms [--term-good | --term-old | --term-bad "
-#~ "| --term-new]"
-
-#~ msgid "git bisect--helper --bisect-next"
-#~ msgstr "git bisect--helper --bisect-next"
-
-#~ msgid "git bisect--helper --bisect-visualize"
-#~ msgstr "git bisect--helper --bisect-visualize"
-
-#, c-format
-#~ msgid "invalid color '%s' in color.blame.repeatedLines"
-#~ msgstr "设置 color.blame.repeatedLines 中的无效颜色 '%s'"
-
-#~ msgid "invalid value for blame.coloring"
-#~ msgstr "设置 blame.coloring 中的无效取值"
-
-#~ msgid ""
-#~ "git cat-file (-t [--allow-unknown-type] | -s [--allow-unknown-type] | -e "
-#~ "| -p | <type> | --textconv | --filters) [--path=<path>] <object>"
-#~ msgstr ""
-#~ "git cat-file (-t [--allow-unknown-type] | -s [--allow-unknown-type] | -e "
-#~ "| -p | <类型> | --textconv | --filters) [--path=<路径>] <对象>"
-
-#~ msgid "show object type"
-#~ msgstr "显示对象类型"
-
-#~ msgid "exit with zero when there's no error"
-#~ msgstr "当没有错误时退出并返回零"
-
-#~ msgid "show info and content of objects fed from the standard input"
-#~ msgstr "显示从标准输入提供的对象的信息和内容"
-
-#~ msgid "show info about objects fed from the standard input"
-#~ msgstr "显示从标准输入提供的对象的信息"
-
-#~ msgid "follow in-tree symlinks (used with --batch or --batch-check)"
-#~ msgstr "跟随树内符号链接（和 --batch 或 --batch-check 共用）"
-
-#~ msgid "show all objects with --batch or --batch-check"
-#~ msgstr "使用 --batch 或 --batch-check 参数显示所有对象"
-
-#~ msgid "do not order --batch-all-objects output"
-#~ msgstr "不要对 --batch-all-objects 的输出排序"
-
-#~ msgid "set up tracking mode (see git-pull(1))"
-#~ msgstr "设置跟踪模式（参见 git-pull(1)）"
-
-#~ msgid "Using both --reset-author and --author does not make sense"
-#~ msgstr "同时使用 --reset-author 和 --author 没有意义"
-
-#~ msgid "Options --squash and --fixup cannot be used together"
-#~ msgstr "选项 --squash 和 --fixup 不能同时使用"
-
-#~ msgid "Only one of -c/-C/-F/--fixup can be used."
-#~ msgstr "只能用一个 -c/-C/-F/--fixup 选项。"
-
-#~ msgid "Option -m cannot be combined with -c/-C/-F."
-#~ msgstr "选项 -m 不能和 -c/-C/-F 同时使用。"
-
-#~ msgid ""
-#~ "Only one of --include/--only/--all/--interactive/--patch can be used."
-#~ msgstr "只能用一个 --include/--only/--all/--interactive/--patch 选项。"
-
-#~ msgid "git count-objects [-v] [-H | --human-readable]"
-#~ msgstr "git count-objects [-v] [-H | --human-readable]"
-
-#, c-format
-#~ msgid "configuration fetch.output contains invalid value %s"
-#~ msgstr "配置变量 fetch.output 包含无效值 %s"
-
-#~ msgid "--cached or --untracked cannot be used with --no-index"
-#~ msgstr "--cached 或 --untracked 不能与 --no-index 同时使用"
-
-#~ msgid "--untracked cannot be used with --cached"
-#~ msgstr "--untracked 不能与 --cached 同时使用"
-
-#~ msgid "git hash-object  --stdin-paths"
-#~ msgstr "git hash-object  --stdin-paths"
-
-#~ msgid "git help [-g|--guides]"
-#~ msgstr "git help [-g|--guides]"
-
-#~ msgid "git help [-c|--config]"
-#~ msgstr "git help [-c|--config]"
-
-#~ msgid "git mktag"
-#~ msgstr "git mktag"
-
-#~ msgid "git mktree [-z] [--missing] [--batch]"
-#~ msgstr "git mktree [-z] [--missing] [--batch]"
-
-#~ msgid "read from stdin"
-#~ msgstr "从标准输入读取"
-
-#~ msgid "git notes merge --commit [-v | -q]"
-#~ msgstr "git notes merge --commit [-v | -q]"
-
-#~ msgid "git notes merge --abort [-v | -q]"
-#~ msgstr "git notes merge --abort [-v | -q]"
-
-#~ msgid "git notes get-ref"
-#~ msgstr "git notes get-ref"
-
-#~ msgid "invalid value for --missing"
-#~ msgstr "选项 --missing 的值无效"
-
-#~ msgid "git prune-packed [-n | --dry-run] [-q | --quiet]"
-#~ msgstr "git prune-packed [-n | --dry-run] [-q | --quiet]"
-
-#, c-format
-#~ msgid "Invalid value for %s: %s"
-#~ msgstr "%s 的值无效：%s"
-
-#, c-format
-#~ msgid "Invalid value for pull.ff: %s"
-#~ msgstr "pull.ff 的取值无效：%s"
-
-#~ msgid "git rebase --continue | --abort | --skip | --edit-todo"
-#~ msgstr "git rebase --continue | --abort | --skip | --edit-todo"
-
-#, c-format
-#~ msgid "'%s' is not a valid timestamp"
-#~ msgstr "'%s' 不是一个有效的时间戳"
-
-#~ msgid "git reflog [ show | expire | delete | exists ]"
-#~ msgstr "git reflog [ show | expire | delete | exists ]"
-
-#~ msgid "git remote [-v | --verbose]"
-#~ msgstr "git remote [-v | --verbose]"
-
-#~ msgid "git replace [-f] --convert-graft-file"
-#~ msgstr "git replace [-f] --convert-graft-file"
-
-#, c-format
-#~ msgid ""
-#~ "\n"
-#~ "It took %.2f seconds to enumerate unstaged changes after reset.  You can\n"
-#~ "use '--quiet' to avoid this.  Set the config setting reset.quiet to true\n"
-#~ "to make this the default.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "重置后，枚举未暂存变更花费了 %.2f 秒。 您可以使用 '--quiet' 避免此情况。\n"
-#~ "将配置变量 reset.quiet 设置为 true 可使其成为默认值。\n"
-
-#~ msgid "git sparse-checkout list"
-#~ msgstr "git sparse-checkout list"
-
-#~ msgid "unable to upgrade repository format to enable worktreeConfig"
-#~ msgstr "无法升级仓库格式以启用 worktreeConfig"
-
-#~ msgid "git sparse-checkout init [--cone] [--[no-]sparse-index]"
-#~ msgstr "git sparse-checkout init [--cone] [--[no-]sparse-index]"
-
-#~ msgid "git sparse-checkout reapply [--[no-]cone] [--[no-]sparse-index]"
-#~ msgstr "git sparse-checkout reapply [--[no-]cone] [--[no-]sparse-index]"
-
-#~ msgid "git sparse-checkout disable"
-#~ msgstr "git sparse-checkout disable"
-
-#~ msgid ""
-#~ "the stash.useBuiltin support has been removed!\n"
-#~ "See its entry in 'git help config' for details."
-#~ msgstr ""
-#~ "对 stash.useBuiltin 的支持已被删除！\n"
-#~ "详见 'git help config' 中的条目。"
-
-#~ msgid "git stripspace [-s | --strip-comments]"
-#~ msgstr "git stripspace [-s | --strip-comments]"
-
-#~ msgid "git stripspace [-c | --comment-lines]"
-#~ msgstr "git stripspace [-c | --comment-lines]"
-
-#~ msgid "submodule--helper print-default-remote takes no arguments"
-#~ msgstr "submodule--helper print-default-remote 不带参数"
-
-#~ msgid "git submodule--helper update-clone [--prefix=<path>] [<path>...]"
-#~ msgstr "git submodule--helper update-clone [--prefix=<路径>] [<路径>...]"
-
-#~ msgid "suppress output for update by rebase or merge"
-#~ msgstr "抑制变基或合并更新的输出"
-
-#~ msgid "overrides update mode in case the repository is a fresh clone"
-#~ msgstr "当仓库是新的克隆时，覆盖更新模式"
-
-#~ msgid "depth for shallow fetch"
-#~ msgstr "浅获取的深度"
-
-#~ msgid "sha1"
-#~ msgstr "sha1"
-
-#~ msgid "SHA1 expected by superproject"
-#~ msgstr "上层项目期待的 SHA1"
-
-#~ msgid "subsha1"
-#~ msgstr "subsha1"
-
-#~ msgid "SHA1 of submodule's HEAD"
-#~ msgstr "子模块头指针的 SHA1"
-
-#~ msgid "git submodule--helper run-update-procedure [<options>] <path>"
-#~ msgstr "git submodule--helper run-update-procedure [<选项>] <路径>"
-
-#~ msgid "git submodule--helper config --check-writeable"
-#~ msgstr "git submodule--helper config --check-writeable"
-
-#~ msgid "git update-server-info [--force]"
-#~ msgstr "git update-server-info [--force]"
-
-#~ msgid "Initialize and modify the sparse-checkout"
-#~ msgstr "初始化及修改稀疏检出"
-
-#, sh-format
-#~ msgid ""
-#~ "Unable to find current ${remote_name}/${branch} revision in submodule "
-#~ "path '$sm_path'"
-#~ msgstr "无法在子模组路径 '$sm_path' 中找到当前版本 ${remote_name}/${branch}"
-
-#, sh-format
-#~ msgid "Failed to recurse into submodule path '$displaypath'"
-#~ msgstr "无法递归进子模组路径 '$displaypath'"
-
-#, perl-format
-#~ msgid ""
-#~ "fatal: %s: rejected by sendemail-validate hook\n"
-#~ "%s\n"
-#~ "warning: no patches were sent\n"
-#~ msgstr ""
-#~ "致命错误：%s：被 sendemail-validate 挂钩拒绝\n"
-#~ "%s\n"
-#~ "警告：补丁未能发送\n"
