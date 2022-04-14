@@ -298,12 +298,6 @@ Fixes since v2.35
    future "gc" needs to clean up.
    (merge 5407764069 cb/clear-quarantine-early-on-all-ref-update-errors later to maint).
 
- * Because a deletion of ref would need to remove it from both the
-   loose ref store and the packed ref store, a delete-ref operation
-   that logically removes one ref may end up invoking ref-transaction
-   hook twice, which has been corrected.
-   (merge 2ed1b64ebd ps/avoid-unnecessary-hook-invocation-with-packed-refs later to maint).
-
  * When there is no object to write .bitmap file for, "git
    multi-pack-index" triggered an error, instead of just skipping,
    which has been corrected.
@@ -350,10 +344,6 @@ Fixes since v2.35
  * "git checkout -b branch/with/multi/level/name && git stash" only
    recorded the last level component of the branch name, which has
    been corrected.
-
- * "git fetch" can make two separate fetches, but ref updates coming
-   from them were in two separate ref transactions under "--atomic",
-   which has been corrected.
 
  * Check the return value from parse_tree_indirect() to turn segfaults
    into calls to die().
