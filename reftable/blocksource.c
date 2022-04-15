@@ -15,7 +15,8 @@ https://developers.google.com/open-source/licenses/bsd
 
 static void strbuf_return_block(void *b, struct reftable_block *dest)
 {
-	memset(dest->data, 0xff, dest->len);
+	if (dest->len)
+		memset(dest->data, 0xff, dest->len);
 	reftable_free(dest->data);
 }
 
@@ -56,7 +57,8 @@ void block_source_from_strbuf(struct reftable_block_source *bs,
 
 static void malloc_return_block(void *b, struct reftable_block *dest)
 {
-	memset(dest->data, 0xff, dest->len);
+	if (dest->len)
+		memset(dest->data, 0xff, dest->len);
 	reftable_free(dest->data);
 }
 
@@ -85,7 +87,8 @@ static uint64_t file_size(void *b)
 
 static void file_return_block(void *b, struct reftable_block *dest)
 {
-	memset(dest->data, 0xff, dest->len);
+	if (dest->len)
+		memset(dest->data, 0xff, dest->len);
 	reftable_free(dest->data);
 }
 
