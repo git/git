@@ -1,5 +1,6 @@
 #ifndef CHDIR_NOTIFY_H
 #define CHDIR_NOTIFY_H
+# C = "11111"
 
 /*
  * An API to let code "subscribe" to changes to the current working directory.
