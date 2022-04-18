@@ -1,24 +1,26 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Apr 2022, #04; Thu, 14)
-X-master-at: 4027e30c5395c9c1aeea85e99f51ac62f5148145
-X-next-at: 8af0fa9b8e9e4d9f3a9661b1fd1f8c8822364ea5
+Subject: What's cooking in git.git (Apr 2022, #05; Mon, 18)
+X-master-at: 6cd33dceed60949e2dbc32e3f0f5e67c4c882e1e
+X-next-at: b9c8b46e9451eb1f82393119d53aa151b6f7ff83
 
-What's cooking in git.git (Apr 2022, #04; Thu, 14)
+What's cooking in git.git (Apr 2022, #05; Mon, 18)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
 prefixed with '+' are in 'next' (being in 'next' is a sign that a
 topic is stable enough to be used and are candidate to be in a
 future release).  Commits prefixed with '-' are only in 'seen',
-which means nothing more than that I have found them of interest for
-some reason (like "it may have hard-to-resolve conflicts with
-another topic already in flight" or "this may turn out to be
-useful").  Do not read too much into a topic being in (or not in)
-'seen'.  The ones marked with '.' do not appear in any of the
-integration branches, but I am still holding onto them.
+and aren't considered "accepted" at all.
 
-Copies of the source code to Git live in many repositories, and the
+Git 2.36 has been tagged.  As usual, we'll keep the tree closed for
+a few days for anything other than brown-paper-bag bugfixes (if
+needed) and then by the end of the week hopefully we can start
+sifting what is in 'next' to those to graduate to 'master' and those
+to be kicked back to 'seen'.  We'll start taking new topics probably
+next week at the earliest.
+
+cCopies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
 repositories have only a subset of branches.
 
@@ -49,39 +51,25 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* jc/relnotes-updates (2022-04-13) 2 commits
-  (merged to 'next' on 2022-04-14 at a19d9a5cc2)
- + RelNotes: mention safe.directory
- + RelNotes: clarify "bisect run unexecutable" tweak
+* cb/buggy-gcc-12-workaround (2022-04-15) 2 commits
+  (merged to 'next' on 2022-04-15 at 48e68dd0fd)
+ + config.mak.dev: alternative workaround to gcc 12 warning in http.c
+ + config.mak.dev: workaround gcc 12 bug affecting "pedantic" CI job
 
- Wording updates for 2.36 release notes.
-
-* jc/revert-ref-transaction-hook-changes (2022-04-13) 3 commits
-  (merged to 'next' on 2022-04-14 at 94ac0baec8)
- + RelNotes: revert the description on the reverted topics
- + Revert "fetch: increase test coverage of fetches"
- + Revert "Merge branch 'ps/avoid-unnecessary-hook-invocation-with-packed-refs'"
-
- Revert the "deletion of a ref should not trigger transaction events
- for loose and packed ref backends separately" that regresses the
- behaviour when a ref is not modified since it was packed.
+ A couple of work around for CI breaking warnings from gcc 12.
+ source: <20220415231342.35980-1-carenas@gmail.com>
 
 --------------------------------------------------
 [New Topics]
 
-* sa/t1011-use-helpers (2022-04-12) 1 commit
- - t1011: replace test -f with test_path_is_file
+* cm/reftable-0-length-memset (2022-04-15) 1 commit
+ - reftable: avoid undefined behaviour breaking t0032
 
- A GSoC practice.
+ Code clean-up.
 
- Will merge to 'next'.
- source: <20220412203722.10484-1-siddharthasthana31@gmail.com>
+ Will merge to 'next'?
+ source: <20220415083058.29495-1-carenas@gmail.com>
 
-
-* ep/coverage-report-wants-test-to-have-run (2022-04-13) 1 commit
- - Makefile: add a prerequisite to the coverage-report target
-
- source: <20220414022513.31465-1-gitter.spiros@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -137,6 +125,21 @@ Release tarballs are available at:
 
 --------------------------------------------------
 [Cooking]
+
+* sa/t1011-use-helpers (2022-04-12) 1 commit
+ - t1011: replace test -f with test_path_is_file
+
+ A GSoC practice.
+
+ Will merge to 'next'.
+ source: <20220412203722.10484-1-siddharthasthana31@gmail.com>
+
+
+* ep/coverage-report-wants-test-to-have-run (2022-04-13) 1 commit
+ - Makefile: add a prerequisite to the coverage-report target
+
+ source: <20220414022513.31465-1-gitter.spiros@gmail.com>
+
 
 * pw/test-malloc-with-sanitize-address (2022-04-11) 1 commit
  - tests: make SANITIZE=address imply TEST_NO_MALLOC_CHECK
@@ -505,13 +508,6 @@ Release tarballs are available at:
  Expecting a reroll.
  cf. <xmqqbkyudb8n.fsf@gitster.g>
  source: <20220217225408.GB7@edef91d97c94>
-
-
-* ab/http-gcc-12-workaround (2022-03-25) 1 commit
- - http API: fix dangling pointer issue noted by GCC 12.0
-
- Work around false warning pre-release of GCC 12.
- source: <patch-v3-1.1-69190804c67-20220325T143322Z-avarab@gmail.com>
 
 
 * tk/simple-autosetupmerge (2022-02-25) 2 commits
