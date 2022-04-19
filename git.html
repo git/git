@@ -1,0 +1,34 @@
+<!doctype html>
+<html dir="ltr" lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <title>새 탭</title>
+    <style>
+      body {
+        background: #353535;
+        margin: 0;
+      }
+
+      #backgroundImage {
+        border: none;
+        height: 100%;
+        pointer-events: none;
+        position: fixed;
+        top: 0;
+        visibility: hidden;
+        width: 100%;
+      }
+
+      [show-background-image] #backgroundImage {
+        visibility: visible;
+      }
+    </style>
+  </head>
+  <body>
+    <iframe id="backgroundImage" src="chrome-untrusted://new-tab-page/custom_background_image?url=https%3A%2F%2Flh4.googleusercontent.com%2Fproxy%2Fc2SYjcBfLkSPyMg8EDth3N-cu46pf3tEfs_NpN3xed-uI5mD8LvKgWM0S92jtMc9s7AHNjHshb1_0RYmRg1jqT1Y-tLyWOSScebY%3Dw3840-h2160-p-k-no-nd-mv"></iframe>
+    <ntp-app></ntp-app>
+    <script type="module" src="new_tab_page.js"></script>
+    <link rel="stylesheet" href="chrome://resources/css/text_defaults_md.css">
+    <link rel="stylesheet" href="shared_vars.css">
+  </body>
+</html>
