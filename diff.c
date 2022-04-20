@@ -4136,18 +4136,13 @@ static void prep_temp_blob(struct index_state *istate,
 			   int mode)
 {
 	struct strbuf buf = STRBUF_INIT;
-	struct strbuf tempfile = STRBUF_INIT;
 	char *path_dup = xstrdup(path);
 	const char *base = basename(path_dup);
 	struct checkout_metadata meta;
 
 	init_checkout_metadata(&meta, NULL, NULL, oid);
 
-	/* Generate "XXXXXX_basename.ext" */
-	strbuf_addstr(&tempfile, "XXXXXX_");
-	strbuf_addstr(&tempfile, base);
-
-	temp->tempfile = mks_tempfile_ts(tempfile.buf, strlen(base) + 1);
+	temp->tempfile = mks_tempfile_dt("git-blob-XXXXXX", base);
 	if (!temp->tempfile)
 		die_errno("unable to create temp-file");
 	if (convert_to_working_tree(istate, path,
@@ -4162,7 +4157,6 @@ static void prep_temp_blob(struct index_state *istate,
 	oid_to_hex_r(temp->hex, oid);
 	xsnprintf(temp->mode, sizeof(temp->mode), "%06o", mode);
 	strbuf_release(&buf);
-	strbuf_release(&tempfile);
 	free(path_dup);
 }
 
