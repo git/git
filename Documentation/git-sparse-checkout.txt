@@ -70,11 +70,11 @@ SET' below for more details).  In the past, this was not the default,
 and `--cone` needed to be specified or `core.sparseCheckoutCone` needed
 to be enabled.
 +
-When `--no-cone` is passed or `core.sparseCheckoutCone` is set to false,
-the input list is considered a list of patterns.  This mode is harder
-to use and less performant, and is thus not recommended.  See the
-"Sparse Checkout" section of linkgit:git-read-tree[1] and the "Pattern
-Set" sections below for more details.
+When `--no-cone` is passed, the input list is considered a list of
+patterns.  This mode is harder to use and less performant, and is thus
+not recommended.  See the "Sparse Checkout" section of
+linkgit:git-read-tree[1] and the "Pattern Set" sections below for more
+details.
 +
 Use the `--[no-]sparse-index` option to use a sparse index (the
 default is to not use it).  A sparse index reduces the size of the
@@ -196,9 +196,9 @@ In addition to the above two patterns, we also expect that all files in the
 root directory are included. If a recursive pattern is added, then all
 leading directories are added as parent patterns.
 
-By default, when running `git sparse-checkout init`, the root directory is
-added as a parent pattern. At this point, the sparse-checkout file contains
-the following patterns:
+By default, when running `git sparse-checkout set` with no directories
+specified, the root directory is added as a parent pattern. At this
+point, the sparse-checkout file contains the following patterns:
 
 ----------------
 /*
