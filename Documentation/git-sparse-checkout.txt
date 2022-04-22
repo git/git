@@ -73,8 +73,8 @@ to be enabled.
 When `--no-cone` is passed, the input list is considered a list of
 patterns.  This mode is harder to use and less performant, and is thus
 not recommended.  See the "Sparse Checkout" section of
-linkgit:git-read-tree[1] and the "Pattern Set" sections below for more
-details.
+linkgit:git-read-tree[1] and the "Internals...Pattern Set" sections
+below for more details.
 +
 Use the `--[no-]sparse-index` option to use a sparse index (the
 default is to not use it).  A sparse index reduces the size of the
@@ -136,8 +136,8 @@ paths to pass to a subsequent 'set' or 'add' command.  However,
 the disable command, so the easy restore of calling a plain `init`
 decreased in utility.
 
-SPARSE CHECKOUT
----------------
+INTERNALS -- SPARSE CHECKOUT
+----------------------------
 
 "Sparse checkout" allows populating the working directory sparsely.  It
 uses the skip-worktree bit (see linkgit:git-update-index[1]) to tell Git
@@ -161,24 +161,8 @@ To repopulate the working directory with all files, use the
 `git sparse-checkout disable` command.
 
 
-FULL PATTERN SET
-----------------
-
-By default, the sparse-checkout file uses the same syntax as `.gitignore`
-files.
-
-While `$GIT_DIR/info/sparse-checkout` is usually used to specify what
-files are included, you can also specify what files are _not_ included,
-using negative patterns. For example, to remove the file `unwanted`:
-
-----------------
-/*
-!unwanted
-----------------
-
-
-CONE PATTERN SET
-----------------
+INTERNALS -- CONE PATTERN SET
+-----------------------------
 
 The full pattern set allows for arbitrary pattern matches and complicated
 inclusion/exclusion rules. These can result in O(N*M) pattern matches when
@@ -256,8 +240,24 @@ use `git add` and `git commit` to store them, then remove any remaining files
 manually to ensure Git can behave optimally.
 
 
-SUBMODULES
-----------
+INTERNALS -- FULL PATTERN SET
+-----------------------------
+
+By default, the sparse-checkout file uses the same syntax as `.gitignore`
+files.
+
+While `$GIT_DIR/info/sparse-checkout` is usually used to specify what
+files are included, you can also specify what files are _not_ included,
+using negative patterns. For example, to remove the file `unwanted`:
+
+----------------
+/*
+!unwanted
+----------------
+
+
+INTERNALS -- SUBMODULES
+-----------------------
 
 If your repository contains one or more submodules, then submodules
 are populated based on interactions with the `git submodule` command.
