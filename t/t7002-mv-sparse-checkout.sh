@@ -27,7 +27,7 @@ test_expect_success 'setup' "
 test_expect_success 'mv refuses to move sparse-to-sparse' '
 	test_when_finished rm -f e &&
 	git reset --hard &&
-	git sparse-checkout set a &&
+	git sparse-checkout set --no-cone a &&
 	touch b &&
 	test_must_fail git mv b e 2>stderr &&
 	cat sparse_error_header >expect &&
