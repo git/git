@@ -192,7 +192,40 @@ on this file. The files matching the patterns in the file will
 appear in the working directory, and the rest will not.
 
 
-INTERNALS -- CONE PATTERN SET
+INTERNALS -- CONE MODE HANDLING
+-------------------------------
+
+The "cone mode", which is the default, lets you specify only what
+directories to include.  For any directory specified, all paths below
+that directory will be included, and any paths immediately under
+leading directories (including the toplevel directory) will also be
+included.  Thus, if you specified the directory
+    Documentation/technical/
+then your sparse checkout would contain:
+
+  * all files in the toplevel-directory
+  * all files immediately under Documentation/
+  * all files at any depth under Documentation/technical/
+
+Also, in cone mode, even if no directories are specified, then the
+files in the toplevel directory will be included.
+
+When changing the sparse-checkout patterns in cone mode, Git will inspect each
+tracked directory that is not within the sparse-checkout cone to see if it
+contains any untracked files. If all of those files are ignored due to the
+`.gitignore` patterns, then the directory will be deleted. If any of the
+untracked files within that directory is not ignored, then no deletions will
+occur within that directory and a warning message will appear. If these files
+are important, then reset your sparse-checkout definition so they are included,
+use `git add` and `git commit` to store them, then remove any remaining files
+manually to ensure Git can behave optimally.
+
+See also the "Internals -- Cone Pattern Set" section to learn how the
+directories are transformed under the hood into a subset of the
+Full Pattern Set of sparse-checkout.
+
+
+INTERNALS -- FULL PATTERN SET
 -----------------------------
 
 The full pattern set allows for arbitrary pattern matches and complicated
@@ -201,31 +234,62 @@ updating the index, where N is the number of patterns and M is the number
 of paths in the index. To combat this performance issue, a more restricted
 pattern set is allowed when `core.sparseCheckoutCone` is enabled.
 
-The accepted patterns in the cone pattern set are:
+The sparse-checkout file uses the same syntax as `.gitignore` files;
+see linkgit:gitignore[5] for details.  Here, though, the patterns are
+usually being used to select which files to include rather than which
+files to exclude.  (However, it can get a bit confusing since
+gitignore-style patterns have negations defined by patterns which
+begin with a '!', so you can also select files to _not_ include.)
+
+For example, to select everything, and then to remove the file
+`unwanted` (so that every file will appear in your working tree except
+the file named `unwanted`):
+
+    git sparse-checkout set --no-cone '/*' '!unwanted'
+
+These patterns are just placed into the
+`$GIT_DIR/info/sparse-checkout` as-is, so the contents of that file
+at this point would be
+
+----------------
+/*
+!unwanted
+----------------
+
+See also the "Sparse Checkout" section of linkgit:git-read-tree[1] to
+learn more about the gitignore-style patterns used in sparse
+checkouts.
+
+
+INTERNALS -- CONE PATTERN SET
+-----------------------------
+
+In cone mode, only directories are accepted, but they are translated into
+the same gitignore-style patterns used in the full pattern set.  We refer
+to the particular patterns used in those mode as being of one of two types:
 
 1. *Recursive:* All paths inside a directory are included.
 
 2. *Parent:* All files immediately inside a directory are included.
 
-In addition to the above two patterns, we also expect that all files in the
-root directory are included. If a recursive pattern is added, then all
-leading directories are added as parent patterns.
-
-By default, when running `git sparse-checkout set` with no directories
-specified, the root directory is added as a parent pattern. At this
-point, the sparse-checkout file contains the following patterns:
+Since cone mode always includes files at the toplevel, when running
+`git sparse-checkout set` with no directories specified, the toplevel
+directory is added as a parent pattern.  At this point, the
+sparse-checkout file contains the following patterns:
 
 ----------------
 /*
 !/*/
 ----------------
 
-This says "include everything in root, but nothing two levels below root."
+This says "include everything immediately under the toplevel
+directory, but nothing at any level below that."
 
-When in cone mode, the `git sparse-checkout set` subcommand takes a list of
-directories. In this mode, the command `git sparse-checkout set A/B/C` sets
-the directory `A/B/C` as a recursive pattern, the directories `A` and `A/B`
-are added as parent patterns. The resulting sparse-checkout file is now
+When in cone mode, the `git sparse-checkout set` subcommand takes a
+list of directories.  The command `git sparse-checkout set A/B/C` sets
+the directory `A/B/C` as a recursive pattern, the directories `A` and
+`A/B` are added as parent patterns. The resulting sparse-checkout file
+is now
 
 ----------------
 /*
@@ -244,11 +308,14 @@ Unless `core.sparseCheckoutCone` is explicitly set to `false`, Git will
 parse the sparse-checkout file expecting patterns of these types. Git will
 warn if the patterns do not match.  If the patterns do match the expected
 format, then Git will use faster hash-based algorithms to compute inclusion
-in the sparse-checkout.
+in the sparse-checkout.  If they do not match, git will behave as though
+`core.sparseCheckoutCone` was false, regardless of its setting.
 
-In the cone mode case, the `git sparse-checkout list` subcommand will list the
-directories that define the recursive patterns. For the example sparse-checkout
-file above, the output is as follows:
+In the cone mode case, despite the fact that full patterns are written
+to the $GIT_DIR/info/sparse-checkout file, the `git sparse-checkout
+list` subcommand will list the directories that define the recursive
+patterns. For the example sparse-checkout file above, the output is as
+follows:
 
 --------------------------
 $ git sparse-checkout list
@@ -259,32 +326,6 @@ If `core.ignoreCase=true`, then the pattern-matching algorithm will use a
 case-insensitive check. This corrects for case mismatched filenames in the
 'git sparse-checkout set' command to reflect the expected cone in the working
 directory.
-
-When changing the sparse-checkout patterns in cone mode, Git will inspect each
-tracked directory that is not within the sparse-checkout cone to see if it
-contains any untracked files. If all of those files are ignored due to the
-`.gitignore` patterns, then the directory will be deleted. If any of the
-untracked files within that directory is not ignored, then no deletions will
-occur within that directory and a warning message will appear. If these files
-are important, then reset your sparse-checkout definition so they are included,
-use `git add` and `git commit` to store them, then remove any remaining files
-manually to ensure Git can behave optimally.
-
-
-INTERNALS -- FULL PATTERN SET
------------------------------
-
-By default, the sparse-checkout file uses the same syntax as `.gitignore`
-files.
-
-While `$GIT_DIR/info/sparse-checkout` is usually used to specify what
-files are included, you can also specify what files are _not_ included,
-using negative patterns. For example, to remove the file `unwanted`:
-
-----------------
-/*
-!unwanted
-----------------
 
 
 INTERNALS -- SUBMODULES
