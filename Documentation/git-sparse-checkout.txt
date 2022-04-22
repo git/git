@@ -15,11 +15,11 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-This command is used to create sparse checkouts, which means that it
-changes the working tree from having all tracked files present, to only
-have a subset of them.  It can also switch which subset of files are
-present, or undo and go back to having all tracked files present in the
-working copy.
+This command is used to create sparse checkouts, which change the
+working tree from having all tracked files present to only having a
+subset of those files.  It can also switch which subset of files are
+present, or undo and go back to having all tracked files present in
+the working copy.
 
 The subset of files is chosen by providing a list of directories in
 cone mode (the default), or by providing a list of patterns in

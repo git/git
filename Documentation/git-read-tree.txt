@@ -375,10 +375,13 @@ have finished your work-in-progress), attempt the merge again.
 SPARSE CHECKOUT
 ---------------
 
-Note: The `update-index` and `read-tree` primitives for supporting the
-skip-worktree bit predated the introduction of
-linkgit:git-sparse-checkout[1].  Users are encouraged to use
-`sparse-checkout` in preference to these low-level primitives.
+Note: The skip-worktree capabilities in linkgit:git-update-index[1]
+and `read-tree` predated the introduction of
+linkgit:git-sparse-checkout[1].  Users are encouraged to use the
+`sparse-checkout` command in preference to these plumbing commands for
+sparse-checkout/skip-worktree related needs.  However, the information
+below might be useful to users trying to understand the pattern style
+used in non-cone mode of the `sparse-checkout` command.
 
 "Sparse checkout" allows populating the working directory sparsely.
 It uses the skip-worktree bit (see linkgit:git-update-index[1]) to
