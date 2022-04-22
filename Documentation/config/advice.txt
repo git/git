@@ -56,6 +56,9 @@ advice.*::
 		Advice on how to set your identity configuration when
 		your information is guessed from the system username and
 		domain name.
+	nameTooLong::
+		Advice shown if a filepath operation is attempted where the
+		path was too long.
 	nestedTag::
 		Advice shown if a user attempts to recursively tag a tag object.
 	pushAlreadyExists::
