@@ -71,10 +71,9 @@ and `--cone` needed to be specified or `core.sparseCheckoutCone` needed
 to be enabled.
 +
 When `--no-cone` is passed, the input list is considered a list of
-patterns.  This mode is harder to use and less performant, and is thus
-not recommended.  See the "Sparse Checkout" section of
-linkgit:git-read-tree[1] and the "Internals...Pattern Set" sections
-below for more details.
+patterns.  This mode has a number of drawbacks, including not working
+with some options like `--sparse-index`.  As explained in the
+"Non-cone Problems" section below, we do not recommend using it.
 +
 Use the `--[no-]sparse-index` option to use a sparse index (the
 default is to not use it).  A sparse index reduces the size of the
@@ -190,6 +189,97 @@ skip-worktree reference bitmap. When Git updates the working
 directory, it updates the skip-worktree bits in the index based
 on this file. The files matching the patterns in the file will
 appear in the working directory, and the rest will not.
+
+INTERNALS -- NON-CONE PROBLEMS
+------------------------------
+
+The `$GIT_DIR/info/sparse-checkout` file populated by the `set` and
+`add` subcommands is defined to be a bunch of patterns (one per line)
+using the same syntax as `.gitignore` files.  In cone mode, these
+patterns are restricted to matching directories (and users only ever
+need supply or see directory names), while in non-cone mode any
+gitignore-style pattern is permitted.  Using the full gitignore-style
+patterns in non-cone mode has a number of shortcomings:
+
+  * Fundamentally, it makes various worktree-updating processes (pull,
+    merge, rebase, switch, reset, checkout, etc.) require O(N*M) pattern
+    matches, where N is the number of patterns and M is the number of
+    paths in the index.  This scales poorly.
+
+  * Avoiding the scaling issue has to be done via limiting the number
+    of patterns via specifying leading directory name or glob.
+
+  * Passing globs on the command line is error-prone as users may
+    forget to quote the glob, causing the shell to expand it into all
+    matching files and pass them all individually along to
+    sparse-checkout set/add.  While this could also be a problem with
+    e.g. "git grep -- *.c", mistakes with grep/log/status appear in
+    the immediate output.  With sparse-checkout, the mistake gets
+    recorded at the time the sparse-checkout command is run and might
+    not be problematic until the user later switches branches or rebases
+    or merges, thus putting a delay between the user's error and when
+    they have a chance to catch/notice it.
+
+  * Related to the previous item, sparse-checkout has an 'add'
+    subcommand but no 'remove' subcommand.  Even if a 'remove'
+    subcommand were added, undoing an accidental unquoted glob runs
+    the risk of "removing too much", as it may remove entries that had
+    been included before the accidental add.
+
+  * Non-cone mode uses gitignore-style patterns to select what to
+    *include* (with the exception of negated patterns), while
+    .gitignore files use gitignore-style patterns to select what to
+    *exclude* (with the exception of negated patterns).  The
+    documentation on gitignore-style patterns usually does not talk in
+    terms of matching or non-matching, but on what the user wants to
+    "exclude".  This can cause confusion for users trying to learn how
+    to specify sparse-checkout patterns to get their desired behavior.
+
+  * Every other git subcommand that wants to provide "special path
+    pattern matching" of some sort uses pathspecs, but non-cone mode
+    for sparse-checkout uses gitignore patterns, which feels
+    inconsistent.
+
+  * It has edge cases where the "right" behavior is unclear.  Two examples:
+
+    First, two users are in a subdirectory, and the first runs
+       git sparse-checkout set '/toplevel-dir/*.c'
+    while the second runs
+       git sparse-checkout set relative-dir
+    Should those arguments be transliterated into
+       current/subdirectory/toplevel-dir/*.c
+    and
+       current/subdirectory/relative-dir
+    before inserting into the sparse-checkout file?  The user who typed
+    the first command is probably aware that arguments to set/add are
+    supposed to be patterns in non-cone mode, and probably would not be
+    happy with such a transliteration.  However, many gitignore-style
+    patterns are just paths, which might be what the user who typed the
+    second command was thinking, and they'd be upset if their argument
+    wasn't transliterated.
+
+    Second, what should bash-completion complete on for set/add commands
+    for non-cone users?  If it suggests paths, is it exacerbating the
+    problem above?  Also, if it suggests paths, what if the user has a
+    file or directory that begins with either a '!' or '#' or has a '*',
+    '\', '?', '[', or ']' in its name?  And if it suggests paths, will
+    it complete "/pro" to "/proc" (in the root filesytem) rather than to
+    "/progress.txt" in the current directory?  (Note that users are
+    likely to want to start paths with a leading '/' in non-cone mode,
+    for the same reason that .gitignore files often have one.)
+    Completing on files or directories might give nasty surprises in
+    all these cases.
+
+  * The excessive flexibility made other extensions essentially
+    impractical.  `--sparse-index` is likely impossible in non-cone
+    mode; even if it is somehow feasible, it would have been far more
+    work to implement and may have been too slow in practice.  Some
+    ideas for adding coupling between partial clones and sparse
+    checkouts are only practical with a more restricted set of paths
+    as well.
+
+For all these reasons, non-cone mode is deprecated.  Please switch to
+using cone mode.
 
 
 INTERNALS -- CONE MODE HANDLING
