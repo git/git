@@ -51,6 +51,7 @@ static struct {
 	[ADVICE_GRAFT_FILE_DEPRECATED]			= { "graftFileDeprecated", 1 },
 	[ADVICE_IGNORED_HOOK]				= { "ignoredHook", 1 },
 	[ADVICE_IMPLICIT_IDENTITY]			= { "implicitIdentity", 1 },
+	[ADVICE_NAME_TOO_LONG]				= { "nameTooLong", 1 },
 	[ADVICE_NESTED_TAG]				= { "nestedTag", 1 },
 	[ADVICE_OBJECT_NAME_WARNING]			= { "objectNameWarning", 1 },
 	[ADVICE_PUSH_ALREADY_EXISTS]			= { "pushAlreadyExists", 1 },
