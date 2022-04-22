@@ -59,6 +59,7 @@ static struct {
 	[ADVICE_IGNORED_HOOK]				= { "ignoredHook" },
 	[ADVICE_IMPLICIT_IDENTITY]			= { "implicitIdentity" },
 	[ADVICE_MERGE_CONFLICT]				= { "mergeConflict" },
+	[ADVICE_NAME_TOO_LONG]				= { "nameTooLong" },
 	[ADVICE_NESTED_TAG]				= { "nestedTag" },
 	[ADVICE_OBJECT_NAME_WARNING]			= { "objectNameWarning" },
 	[ADVICE_PUSH_ALREADY_EXISTS]			= { "pushAlreadyExists" },
