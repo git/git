@@ -118,6 +118,9 @@ advice.*::
 	waitingForEditor::
 		Print a message to the terminal whenever Git is waiting for
 		editor input from the user.
+	nameTooLong::
+		Advice shown if a filepath operation is attempted where the
+		path was too long.
 	nestedTag::
 		Advice shown if a user attempts to recursively tag a tag object.
 	submoduleAlternateErrorStrategyDie::
