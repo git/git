@@ -22,8 +22,8 @@ present, or undo and go back to having all tracked files present in the
 working copy.
 
 The subset of files is chosen by providing a list of directories in
-cone mode (which is recommended), or by providing a list of patterns
-in non-cone mode.
+cone mode (the default), or by providing a list of patterns in
+non-cone mode.
 
 When in a sparse-checkout, other Git commands behave a bit differently.
 For example, switching branches will not update paths outside the
@@ -60,7 +60,7 @@ When the `--stdin` option is provided, the directories or patterns are
 read from standard in as a newline-delimited list instead of from the
 arguments.
 +
-When `--cone` is passed or `core.sparseCheckoutCone` is enabled, the
+When `--cone` is passed or `core.sparseCheckoutCone` is not false, the
 input list is considered a list of directories.  This allows for
 better performance with a limited set of patterns (see 'CONE PATTERN
 SET' below).  The input format matches the output of `git ls-tree
@@ -68,10 +68,9 @@ SET' below).  The input format matches the output of `git ls-tree
 double quote (") as C-style quoted strings.  Note that the set command
 will write patterns to the sparse-checkout file to include all files
 contained in those directories (recursively) as well as files that are
-siblings of ancestor directories. This may become the default in the
-future; --no-cone can be passed to request non-cone mode.
+siblings of ancestor directories.
 +
-When `--no-cone` is passed or `core.sparseCheckoutCone` is not enabled,
+When `--no-cone` is passed or `core.sparseCheckoutCone` is set to false,
 the input list is considered a list of patterns.  This mode is harder
 to use and less performant, and is thus not recommended.  See the
 "Sparse Checkout" section of linkgit:git-read-tree[1] and the "Pattern
@@ -227,10 +226,11 @@ patterns. The resulting sparse-checkout file is now
 Here, order matters, so the negative patterns are overridden by the positive
 patterns that appear lower in the file.
 
-If `core.sparseCheckoutCone=true`, then Git will parse the sparse-checkout file
-expecting patterns of these types. Git will warn if the patterns do not match.
-If the patterns do match the expected format, then Git will use faster hash-
-based algorithms to compute inclusion in the sparse-checkout.
+Unless `core.sparseCheckoutCone` is explicitly set to `false`, Git will
+parse the sparse-checkout file expecting patterns of these types. Git will
+warn if the patterns do not match.  If the patterns do match the expected
+format, then Git will use faster hash-based algorithms to compute inclusion
+in the sparse-checkout.
 
 In the cone mode case, the `git sparse-checkout list` subcommand will list the
 directories that define the recursive patterns. For the example sparse-checkout
