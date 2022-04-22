@@ -44,9 +44,9 @@ COMMANDS
 	Enable the necessary sparse-checkout config settings
 	(`core.sparseCheckout`, `core.sparseCheckoutCone`, and
 	`index.sparse`) if they are not already set to the desired values,
-	and write a set of patterns to the sparse-checkout file from the
-	list of arguments following the 'set' subcommand. Update the
-	working directory to match the new patterns.
+	populate the sparse-checkout file from the list of arguments
+	following the 'set' subcommand, and update the working directory to
+	match.
 +
 To ensure that adjusting the sparse-checkout settings within a worktree
 does not alter the sparse-checkout settings in other worktrees, the 'set'
@@ -60,15 +60,15 @@ When the `--stdin` option is provided, the directories or patterns are
 read from standard in as a newline-delimited list instead of from the
 arguments.
 +
-When `--cone` is passed or `core.sparseCheckoutCone` is not false, the
-input list is considered a list of directories.  This allows for
-better performance with a limited set of patterns (see 'CONE PATTERN
-SET' below).  The input format matches the output of `git ls-tree
---name-only`.  This includes interpreting pathnames that begin with a
-double quote (") as C-style quoted strings.  Note that the set command
-will write patterns to the sparse-checkout file to include all files
-contained in those directories (recursively) as well as files that are
-siblings of ancestor directories.
+By default, the input list is considered a list of directories, matching
+the output of `git ls-tree -d --name-only`.  This includes interpreting
+pathnames that begin with a double quote (") as C-style quoted strings.
+Note that all files under the specified directories (at any depth) will
+be included in the sparse checkout, as well as files that are siblings
+of either the given directory or any of its ancestors (see 'CONE PATTERN
+SET' below for more details).  In the past, this was not the default,
+and `--cone` needed to be specified or `core.sparseCheckoutCone` needed
+to be enabled.
 +
 When `--no-cone` is passed or `core.sparseCheckoutCone` is set to false,
 the input list is considered a list of patterns.  This mode is harder
@@ -208,10 +208,9 @@ the following patterns:
 This says "include everything in root, but nothing two levels below root."
 
 When in cone mode, the `git sparse-checkout set` subcommand takes a list of
-directories instead of a list of sparse-checkout patterns. In this mode,
-the command `git sparse-checkout set A/B/C` sets the directory `A/B/C` as
-a recursive pattern, the directories `A` and `A/B` are added as parent
-patterns. The resulting sparse-checkout file is now
+directories. In this mode, the command `git sparse-checkout set A/B/C` sets
+the directory `A/B/C` as a recursive pattern, the directories `A` and `A/B`
+are added as parent patterns. The resulting sparse-checkout file is now
 
 ----------------
 /*
