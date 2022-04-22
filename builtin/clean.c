@@ -26,6 +26,7 @@
 #include "pathspec.h"
 #include "help.h"
 #include "prompt.h"
+#include "advice.h"
 
 static int require_force = -1; /* unset */
 static int interactive;
@@ -221,6 +222,9 @@ static int remove_dirs(struct strbuf *path, const char *prefix, int force_flag,
 			quote_path(path->buf, prefix, &quoted, 0);
 			errno = saved_errno;
 			warning_errno(_(msg_warn_remove_failed), quoted.buf);
+			if (saved_errno == ENAMETOOLONG) {
+				advise_if_enabled(ADVICE_NAME_TOO_LONG, _("Setting `core.longPaths` may allow the deletion to succeed."));
+			}
 			*dir_gone = 0;
 		}
 		ret = res;
@@ -256,6 +260,9 @@ static int remove_dirs(struct strbuf *path, const char *prefix, int force_flag,
 				quote_path(path->buf, prefix, &quoted, 0);
 				errno = saved_errno;
 				warning_errno(_(msg_warn_remove_failed), quoted.buf);
+				if (saved_errno == ENAMETOOLONG) {
+					advise_if_enabled(ADVICE_NAME_TOO_LONG, _("Setting `core.longPaths` may allow the deletion to succeed."));
+				}
 				*dir_gone = 0;
 				ret = 1;
 			}
@@ -299,6 +306,9 @@ static int remove_dirs(struct strbuf *path, const char *prefix, int force_flag,
 				quote_path(path->buf, prefix, &quoted, 0);
 				errno = saved_errno;
 				warning_errno(_(msg_warn_remove_failed), quoted.buf);
+				if (saved_errno == ENAMETOOLONG) {
+					advise_if_enabled(ADVICE_NAME_TOO_LONG, _("Setting `core.longPaths` may allow the deletion to succeed."));
+				}
 				*dir_gone = 0;
 				ret = 1;
 			}
@@ -1109,6 +1119,9 @@ int cmd_clean(int argc,
 				qname = quote_path(item->string, NULL, &buf, 0);
 				errno = saved_errno;
 				warning_errno(_(msg_warn_remove_failed), qname);
+				if (saved_errno == ENAMETOOLONG) {
+					advise_if_enabled(ADVICE_NAME_TOO_LONG, _("Setting `core.longPaths` may allow the deletion to succeed."));
+				}
 				errors++;
 			} else if (!quiet) {
 				qname = quote_path(item->string, NULL, &buf, 0);
