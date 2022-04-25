@@ -1235,6 +1235,9 @@ struct active_request_slot *get_active_slot(void)
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPAUTH, http_auth_methods);
 	if (http_auth.password || curl_empty_auth_enabled())
 		init_curl_http_auth(slot->curl);
+	
+	if(getenv("CURLOPT_CUSTOMREQUEST"))
+		curl_easy_setopt(slot->curl, CURLOPT_CUSTOMREQUEST, getenv("CURLOPT_CUSTOMREQUEST"));
 
 	return slot;
 }
