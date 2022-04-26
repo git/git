@@ -182,7 +182,7 @@ included, Git breaks the cycle by prohibiting these files from affecting
 the resolution of these conditions (thus, prohibiting them from
 declaring remote URLs).
 +
-As for the naming of this keyword, it is for forwards compatibiliy with
+As for the naming of this keyword, it is for forwards compatibility with
 a naming scheme that supports more variable-based include conditions,
 but currently Git only supports the exact keyword described above.
 

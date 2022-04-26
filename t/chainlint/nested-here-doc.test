@@ -1,4 +1,4 @@
-# LINT: inner "EOF" not misintrepreted as closing ARBITRARY here-doc
+# LINT: inner "EOF" not misinterpreted as closing ARBITRARY here-doc
 cat <<ARBITRARY >foop &&
 naddle
 fub <<EOF
@@ -9,7 +9,7 @@ formp
 ARBITRARY
 
 (
-# LINT: inner "EOF" not misintrepreted as closing INPUT_END here-doc
+# LINT: inner "EOF" not misinterpreted as closing INPUT_END here-doc
 	cat <<-\INPUT_END &&
 	fish are mice
 	but geese go slow
