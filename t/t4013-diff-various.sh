@@ -542,6 +542,20 @@ test_expect_success 'diff-tree --stdin with log formatting' '
 	test_cmp expect actual
 '
 
+test_expect_success 'diff-tree --stdin with pathspec' '
+	cat >expect <<-EOF &&
+	Third
+
+	dir/sub
+	Second
+
+	dir/sub
+	EOF
+	git rev-list master^ |
+	git diff-tree -r --stdin --name-only --format=%s dir >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'diff -I<regex>: setup' '
 	git checkout master &&
 	test_seq 50 >file0 &&
