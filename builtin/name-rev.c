@@ -18,7 +18,7 @@
 #define CUTOFF_DATE_SLOP 86400
 
 struct rev_name {
-	char *tip_name;
+	const char *tip_name;
 	timestamp_t taggerdate;
 	int generation;
 	int distance;
@@ -84,7 +84,7 @@ static int commit_is_before_cutoff(struct commit *commit)
 
 static int is_valid_rev_name(const struct rev_name *name)
 {
-	return name && (name->generation || name->tip_name);
+	return name && name->tip_name;
 }
 
 static struct rev_name *get_commit_rev_name(const struct commit *commit)
@@ -146,20 +146,9 @@ static struct rev_name *create_or_update_name(struct commit *commit,
 {
 	struct rev_name *name = commit_rev_name_at(&rev_names, commit);
 
-	if (is_valid_rev_name(name)) {
-		if (!is_better_name(name, taggerdate, generation, distance, from_tag))
-			return NULL;
-
-		/*
-		 * This string might still be shared with ancestors
-		 * (generation > 0).  We can release it here regardless,
-		 * because the new name that has just won will be better
-		 * for them as well, so name_rev() will replace these
-		 * stale pointers when it processes the parents.
-		 */
-		if (!name->generation)
-			free(name->tip_name);
-	}
+	if (is_valid_rev_name(name) &&
+	    !is_better_name(name, taggerdate, generation, distance, from_tag))
+		return NULL;
 
 	name->taggerdate = taggerdate;
 	name->generation = generation;
