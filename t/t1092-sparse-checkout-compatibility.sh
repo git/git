@@ -1159,12 +1159,21 @@ test_expect_success 'show (cached blobs/trees)' '
 	test_sparse_match git show :folder1/a &&
 
 	# Asking "git show" for directories in the index
-	# does not work as implemented. The error message is
-	# different for a full checkout and a sparse checkout
-	# when the directory is outside of the cone.
+	# had different behavior depending on the existence
+	# of a sparse index.
 	test_all_match test_must_fail git show :deep/ &&
 	test_must_fail git -C full-checkout show :folder1/ &&
-	test_sparse_match test_must_fail git show :folder1/
+	test_must_fail git -C sparse-checkout show :folder1/ &&
+
+	git -C sparse-index show :folder1/ >actual &&
+	git -C full-checkout show HEAD:folder1 >expect &&
+
+	# The output of "git show" includes the way we referenced the
+	# objects, so strip that out.
+	test_line_count = 4 actual &&
+	tail -n 2 actual >actual-trunc &&
+	tail -n 2 expect >expect-trunc &&
+	test_cmp expect-trunc actual-trunc
 '
 
 test_expect_success 'submodule handling' '
@@ -1386,6 +1395,13 @@ test_expect_success 'sparse index is not expanded: diff' '
 	test_all_match git diff --cached &&
 	ensure_not_expanded diff &&
 	ensure_not_expanded diff --cached
+'
+
+test_expect_success 'sparse index is not expanded: show' '
+	init_repos &&
+
+	ensure_not_expanded show :a &&
+	ensure_not_expanded show :deep/a
 '
 
 test_expect_success 'sparse index is not expanded: update-index' '
