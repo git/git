@@ -1151,29 +1151,32 @@ test_expect_success 'clean' '
 	test_sparse_match test_path_is_dir folder1
 '
 
-test_expect_success 'show (cached blobs/trees)' '
-	init_repos &&
+for builtin in show rev-parse
+do
+	test_expect_success "$builtin (cached blobs/trees)" "
+		init_repos &&
 
-	test_all_match git show :a &&
-	test_all_match git show :deep/a &&
-	test_sparse_match git show :folder1/a &&
+		test_all_match git $builtin :a &&
+		test_all_match git $builtin :deep/a &&
+		test_sparse_match git $builtin :folder1/a &&
 
-	# The error message differs depending on whether
-	# the directory exists in the worktree.
-	test_all_match test_must_fail git show :deep/ &&
-	test_must_fail git -C full-checkout show :folder1/ &&
-	test_sparse_match test_must_fail git show :folder1/ &&
+		# The error message differs depending on whether
+		# the directory exists in the worktree.
+		test_all_match test_must_fail git $builtin :deep/ &&
+		test_must_fail git -C full-checkout $builtin :folder1/ &&
+		test_sparse_match test_must_fail git $builtin :folder1/ &&
 
-	# Change the sparse cone for an extra case:
-	run_on_sparse git sparse-checkout set deep/deeper1 &&
+		# Change the sparse cone for an extra case:
+		run_on_sparse git sparse-checkout set deep/deeper1 &&
 
-	# deep/deeper2 is a sparse directory in the sparse index.
-	test_sparse_match test_must_fail git show :deep/deeper2/ &&
+		# deep/deeper2 is a sparse directory in the sparse index.
+		test_sparse_match test_must_fail git $builtin :deep/deeper2/ &&
 
-	# deep/deeper2/deepest is not in the sparse index, but
-	# will trigger an index expansion.
-	test_sparse_match test_must_fail git show :deep/deeper2/deepest/
-'
+		# deep/deeper2/deepest is not in the sparse index, but
+		# will trigger an index expansion.
+		test_sparse_match test_must_fail git $builtin :deep/deeper2/deepest/
+	"
+done
 
 test_expect_success 'submodule handling' '
 	init_repos &&
@@ -1396,11 +1399,13 @@ test_expect_success 'sparse index is not expanded: diff' '
 	ensure_not_expanded diff --cached
 '
 
-test_expect_success 'sparse index is not expanded: show' '
+test_expect_success 'sparse index is not expanded: show and rev-parse' '
 	init_repos &&
 
 	ensure_not_expanded show :a &&
-	ensure_not_expanded show :deep/a
+	ensure_not_expanded show :deep/a &&
+	ensure_not_expanded rev-parse :a &&
+	ensure_not_expanded rev-parse :deep/a
 '
 
 test_expect_success 'sparse index is not expanded: update-index' '
