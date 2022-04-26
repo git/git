@@ -670,6 +670,39 @@ test_expect_success 'submodule update --init skips submodule with update=none' '
 	)
 '
 
+test_expect_success 'submodule update with pathspec warns against uninitialized ones' '
+	test_when_finished "rm -fr selective" &&
+	git clone super selective &&
+	(
+		cd selective &&
+		git submodule init submodule &&
+
+		git submodule update submodule 2>err &&
+		! grep "Submodule path .* not initialized" err &&
+
+		git submodule update rebasing 2>err &&
+		grep "Submodule path .rebasing. not initialized" err &&
+
+		test_path_exists submodule/.git &&
+		test_path_is_missing rebasing/.git
+	)
+
+'
+
+test_expect_success 'submodule update without pathspec updates only initialized ones' '
+	test_when_finished "rm -fr selective" &&
+	git clone super selective &&
+	(
+		cd selective &&
+		git submodule init submodule &&
+		git submodule update 2>err &&
+		test_path_exists submodule/.git &&
+		test_path_is_missing rebasing/.git &&
+		! grep "Submodule path .* not initialized" err
+	)
+
+'
+
 test_expect_success 'submodule update continues after checkout error' '
 	(cd super &&
 	 git reset --hard HEAD &&
