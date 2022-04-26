@@ -1881,6 +1881,20 @@ static char *resolve_relative_path(struct repository *r, const char *rel)
 			   rel);
 }
 
+static int reject_tree_in_index(struct repository *repo,
+				int only_to_die,
+				const struct cache_entry *ce,
+				int stage,
+				const char *prefix,
+				const char *cp)
+{
+	if (!S_ISSPARSEDIR(ce->ce_mode))
+		return 0;
+	if (only_to_die)
+		diagnose_invalid_index_path(repo, stage, prefix, cp);
+	return -1;
+}
+
 static enum get_oid_result get_oid_with_context_1(struct repository *repo,
 				  const char *name,
 				  unsigned flags,
@@ -1955,9 +1969,12 @@ static enum get_oid_result get_oid_with_context_1(struct repository *repo,
 			    memcmp(ce->name, cp, namelen))
 				break;
 			if (ce_stage(ce) == stage) {
+				free(new_path);
+				if (reject_tree_in_index(repo, only_to_die, ce,
+							 stage, prefix, cp))
+					return -1;
 				oidcpy(oid, &ce->oid);
 				oc->mode = ce->ce_mode;
-				free(new_path);
 				return 0;
 			}
 			pos++;

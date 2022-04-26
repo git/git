@@ -1165,15 +1165,8 @@ test_expect_success 'show (cached blobs/trees)' '
 	test_must_fail git -C full-checkout show :folder1/ &&
 	test_must_fail git -C sparse-checkout show :folder1/ &&
 
-	git -C sparse-index show :folder1/ >actual &&
-	git -C full-checkout show HEAD:folder1 >expect &&
-
-	# The output of "git show" includes the way we referenced the
-	# objects, so strip that out.
-	test_line_count = 4 actual &&
-	tail -n 2 actual >actual-trunc &&
-	tail -n 2 expect >expect-trunc &&
-	test_cmp expect-trunc actual-trunc
+	test_must_fail git -C sparse-index show :folder1/ 2>err &&
+	grep "is in the index, but not at stage 0" err
 '
 
 test_expect_success 'submodule handling' '
