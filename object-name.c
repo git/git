@@ -1832,7 +1832,8 @@ static void diagnose_invalid_index_path(struct repository *r,
 		pos = -pos - 1;
 	if (pos < istate->cache_nr) {
 		ce = istate->cache[pos];
-		if (ce_namelen(ce) == namelen &&
+		if (!S_ISSPARSEDIR(ce->ce_mode) &&
+		    ce_namelen(ce) == namelen &&
 		    !memcmp(ce->name, filename, namelen))
 			die(_("path '%s' is in the index, but not at stage %d\n"
 			    "hint: Did you mean ':%d:%s'?"),
@@ -1848,7 +1849,8 @@ static void diagnose_invalid_index_path(struct repository *r,
 		pos = -pos - 1;
 	if (pos < istate->cache_nr) {
 		ce = istate->cache[pos];
-		if (ce_namelen(ce) == fullname.len &&
+		if (!S_ISSPARSEDIR(ce->ce_mode) &&
+		    ce_namelen(ce) == fullname.len &&
 		    !memcmp(ce->name, fullname.buf, fullname.len))
 			die(_("path '%s' is in the index, but not '%s'\n"
 			    "hint: Did you mean ':%d:%s' aka ':%d:./%s'?"),
