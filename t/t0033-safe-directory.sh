@@ -16,6 +16,19 @@ test_expect_success 'safe.directory is not set' '
 	expect_rejected_dir
 '
 
+test_expect_success 'ignoring safe.directory on the command line' '
+	test_must_fail git -c safe.directory="$(pwd)" status 2>err &&
+	grep "unsafe repository" err
+'
+
+test_expect_success 'ignoring safe.directory in repo config' '
+	(
+		unset GIT_TEST_ASSUME_DIFFERENT_OWNER &&
+		git config safe.directory "$(pwd)"
+	) &&
+	expect_rejected_dir
+'
+
 test_expect_success 'safe.directory does not match' '
 	git config --global safe.directory bogus &&
 	expect_rejected_dir
