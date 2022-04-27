@@ -9,7 +9,7 @@ export GIT_TEST_ASSUME_DIFFERENT_OWNER
 
 expect_rejected_dir () {
 	test_must_fail git status 2>err &&
-	grep "safe.directory" err
+	grep "unsafe repository" err
 }
 
 test_expect_success 'safe.directory is not set' '
