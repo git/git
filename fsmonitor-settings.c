@@ -62,8 +62,8 @@ static int check_deprecated_builtin_config(struct repository *r)
 	   core_use_builtin_fsmonitor) {
 		if (!git_env_bool("GIT_SUPPRESS_USEBUILTINFSMONITOR_ADVICE", 0)) {
 			advise_if_enabled(ADVICE_USE_CORE_FSMONITOR_CONFIG,
-					  _("core.useBuiltinFSMonitor will be deprecated "
-					    "soon; use core.fsmonitor instead"));
+					  _("core.useBuiltinFSMonitor=true is deprecated;"
+					    "please set core.fsmonitor=true instead"));
 			setenv("GIT_SUPPRESS_USEBUILTINFSMONITOR_ADVICE", "1", 1);
 		}
 		fsm_settings__set_ipc(r);
