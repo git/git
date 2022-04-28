@@ -195,6 +195,7 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 		int saved_dcctc = 0;
 
 		opt->diffopt.rotate_to_strict = 0;
+		opt->diffopt.no_free = 1;
 		if (opt->diffopt.detect_rename) {
 			if (!the_index.cache)
 				repo_read_index(the_repository);
@@ -217,6 +218,8 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 		}
 		opt->diffopt.degraded_cc_to_c = saved_dcctc;
 		opt->diffopt.needed_rename_limit = saved_nrl;
+		opt->diffopt.no_free = 0;
+		diff_free(&opt->diffopt);
 	}
 
 	return diff_result_code(&opt->diffopt, 0);
