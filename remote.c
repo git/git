@@ -543,6 +543,8 @@ static const char *remotes_remote_for_branch(struct remote_state *remote_state,
 	}
 	if (explicit)
 		*explicit = 0;
+	if (remote_state->remotes_nr == 1)
+		return remote_state->remotes[0]->name;
 	return "origin";
 }
 
