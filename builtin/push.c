@@ -2,6 +2,7 @@
  * "git push"
  */
 #include "cache.h"
+#include "branch.h"
 #include "config.h"
 #include "refs.h"
 #include "refspec.h"
@@ -151,7 +152,8 @@ static NORETURN void die_push_simple(struct branch *branch,
 	 * upstream to a non-branch, we should probably be showing
 	 * them the big ugly fully qualified ref.
 	 */
-	const char *advice_maybe = "";
+	const char *advice_pushdefault_maybe = "";
+	const char *advice_automergesimple_maybe = "";
 	const char *short_upstream = branch->merge[0]->src;
 
 	skip_prefix(short_upstream, "refs/heads/", &short_upstream);
@@ -161,9 +163,16 @@ static NORETURN void die_push_simple(struct branch *branch,
 	 * push.default.
 	 */
 	if (push_default == PUSH_DEFAULT_UNSPECIFIED)
-		advice_maybe = _("\n"
+		advice_pushdefault_maybe = _("\n"
 				 "To choose either option permanently, "
-				 "see push.default in 'git help config'.");
+				 "see push.default in 'git help config'.\n");
+	if (git_branch_track != BRANCH_TRACK_SIMPLE)
+		advice_automergesimple_maybe = _("\n"
+				 "To avoid automatically configuring "
+				 "upstream branches when their name\n"
+				 "doesn't match the local branch, see option "
+				 "'simple' of branch.autosetupmerge\n"
+				 "in 'git help config'.\n");
 	die(_("The upstream branch of your current branch does not match\n"
 	      "the name of your current branch.  To push to the upstream branch\n"
 	      "on the remote, use\n"
@@ -173,9 +182,10 @@ static NORETURN void die_push_simple(struct branch *branch,
 	      "To push to the branch of the same name on the remote, use\n"
 	      "\n"
 	      "    git push %s HEAD\n"
-	      "%s"),
+	      "%s%s"),
 	    remote->name, short_upstream,
-	    remote->name, advice_maybe);
+	    remote->name, advice_pushdefault_maybe,
+	    advice_automergesimple_maybe);
 }
 
 static const char message_detached_head_die[] =

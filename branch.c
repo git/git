@@ -44,9 +44,9 @@ static int find_tracked_branch(struct remote *remote, void *priv)
 			string_list_clear(tracking->srcs, 0);
 		break;
 		}
+		/* remote_find_tracking() searches by src if present */
 		tracking->spec.src = NULL;
 	}
-
 	return 0;
 }
 
@@ -264,15 +264,23 @@ static void setup_tracking(const char *new_ref, const char *orig_ref,
 
 	if (!tracking.matches)
 		switch (track) {
+		/* If ref is not remote, still use local */
 		case BRANCH_TRACK_ALWAYS:
 		case BRANCH_TRACK_EXPLICIT:
 		case BRANCH_TRACK_OVERRIDE:
+		/* Remote matches not evaluated */
 		case BRANCH_TRACK_INHERIT:
 			break;
+		/* Otherwise, if no remote don't track */
 		default:
 			goto cleanup;
 		}
 
+	/*
+	 * This check does not apply to BRANCH_TRACK_INHERIT;
+	 * that supports multiple entries in tracking_srcs but
+	 * leaves tracking.matches at 0.
+	 */
 	if (tracking.matches > 1) {
 		int status = die_message(_("not tracking: ambiguous information for ref '%s'"),
 					    orig_ref);
@@ -305,6 +313,21 @@ static void setup_tracking(const char *new_ref, const char *orig_ref,
 			strbuf_release(&remotes_advice);
 		}
 		exit(status);
+	}
+
+	if (track == BRANCH_TRACK_SIMPLE) {
+		/*
+		 * Only track if remote branch name matches.
+		 * Reaching into items[0].string is safe because
+		 * we know there is at least one and not more than
+		 * one entry (because only BRANCH_TRACK_INHERIT can
+		 * produce more than one entry).
+		 */
+		const char *tracked_branch;
+		if (!skip_prefix(tracking.srcs->items[0].string,
+				 "refs/heads/", &tracked_branch) ||
+		    strcmp(tracked_branch, new_ref))
+			return;
 	}
 
 	if (tracking.srcs->nr < 1)
@@ -603,6 +626,8 @@ static int submodule_create_branch(struct repository *r,
 		/* Default for "git checkout". Do not pass --track. */
 	case BRANCH_TRACK_REMOTE:
 		/* Default for "git branch". Do not pass --track. */
+	case BRANCH_TRACK_SIMPLE:
+		/* Config-driven only. Do not pass --track. */
 		break;
 	}
 
