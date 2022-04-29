@@ -162,6 +162,20 @@ test_expect_success 'push from/to branch with tracking fails with nothing ' '
 	test_push_failure nothing
 '
 
+test_expect_success 'push from/to new branch succeeds with upstream if push.autoSetupRemote' '
+	git checkout -b new-branch-a &&
+	test_config push.autoSetupRemote true &&
+	test_config branch.new-branch-a.remote parent1 &&
+	test_push_success upstream new-branch-a
+'
+
+test_expect_success 'push from/to new branch succeeds with simple if push.autoSetupRemote' '
+	git checkout -b new-branch-c &&
+	test_config push.autoSetupRemote true &&
+	test_config branch.new-branch-c.remote parent1 &&
+	test_push_success simple new-branch-c
+'
+
 test_expect_success '"matching" fails if none match' '
 	git init --bare empty &&
 	test_must_fail git push empty : 2>actual &&

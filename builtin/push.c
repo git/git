@@ -195,16 +195,32 @@ static const char message_detached_head_die[] =
 	   "\n"
 	   "    git push %s HEAD:<name-of-remote-branch>\n");
 
-static const char *get_upstream_ref(struct branch *branch, const char *remote_name)
+static const char *get_upstream_ref(int flags, struct branch *branch, const char *remote_name)
 {
-	if (!branch->merge_nr || !branch->merge || !branch->remote_name)
+	if (branch->merge_nr == 0 && (flags & TRANSPORT_PUSH_AUTO_UPSTREAM)) {
+		/* if missing, assume same; set_upstream will be defined later */
+		return branch->refname;
+	}
+
+	if (!branch->merge_nr || !branch->merge || !branch->remote_name) {
+		const char *advice_autosetup_maybe = "";
+		if (!(flags & TRANSPORT_PUSH_AUTO_UPSTREAM)) {
+			advice_autosetup_maybe = _("\n"
+					   "To have this happen automatically for "
+					   "branches without a tracking\n"
+					   "upstream, see 'push.autoSetupRemote' "
+					   "in 'git help config'.\n");
+		}
 		die(_("The current branch %s has no upstream branch.\n"
 		    "To push the current branch and set the remote as upstream, use\n"
 		    "\n"
-		    "    git push --set-upstream %s %s\n"),
+		    "    git push --set-upstream %s %s\n"
+		    "%s"),
 		    branch->name,
 		    remote_name,
-		    branch->name);
+		    branch->name,
+		    advice_autosetup_maybe);
+	}
 	if (branch->merge_nr != 1)
 		die(_("The current branch %s has multiple upstream branches, "
 		    "refusing to push."), branch->name);
@@ -212,7 +228,7 @@ static const char *get_upstream_ref(struct branch *branch, const char *remote_na
 	return branch->merge[0]->src;
 }
 
-static void setup_default_push_refspecs(struct remote *remote)
+static void setup_default_push_refspecs(int *flags, struct remote *remote)
 {
 	struct branch *branch;
 	const char *dst;
@@ -244,7 +260,7 @@ static void setup_default_push_refspecs(struct remote *remote)
 	case PUSH_DEFAULT_SIMPLE:
 		if (!same_remote)
 			break;
-		if (strcmp(branch->refname, get_upstream_ref(branch, remote->name)))
+		if (strcmp(branch->refname, get_upstream_ref(*flags, branch, remote->name)))
 			die_push_simple(branch, remote);
 		break;
 
@@ -254,12 +270,20 @@ static void setup_default_push_refspecs(struct remote *remote)
 			      "your current branch '%s', without telling me what to push\n"
 			      "to update which remote branch."),
 			    remote->name, branch->name);
-		dst = get_upstream_ref(branch, remote->name);
+		dst = get_upstream_ref(*flags, branch, remote->name);
 		break;
 
 	case PUSH_DEFAULT_CURRENT:
 		break;
 	}
+
+	/*
+	 * this is a default push - if auto-upstream is enabled and there is
+	 * no upstream defined, then set it (with options 'simple', 'upstream',
+	 * and 'current').
+	 */
+	if ((*flags & TRANSPORT_PUSH_AUTO_UPSTREAM) && branch->merge_nr == 0)
+		*flags |= TRANSPORT_PUSH_SET_UPSTREAM;
 
 	refspec_appendf(&rs, "%s:%s", branch->refname, dst);
 }
@@ -411,7 +435,7 @@ static int do_push(int flags,
 		if (remote->push.nr) {
 			push_refspec = &remote->push;
 		} else if (!(flags & TRANSPORT_PUSH_MIRROR))
-			setup_default_push_refspecs(remote);
+			setup_default_push_refspecs(&flags, remote);
 	}
 	errs = 0;
 	url_nr = push_url_of_remote(remote, &url);
@@ -481,6 +505,10 @@ static int git_push_config(const char *k, const char *v, void *cb)
 			*flags |= TRANSPORT_PUSH_FOLLOW_TAGS;
 		else
 			*flags &= ~TRANSPORT_PUSH_FOLLOW_TAGS;
+		return 0;
+	} else if (!strcmp(k, "push.autosetupremote")) {
+		if (git_config_bool(k, v))
+			*flags |= TRANSPORT_PUSH_AUTO_UPSTREAM;
 		return 0;
 	} else if (!strcmp(k, "push.gpgsign")) {
 		const char *value;
