@@ -500,6 +500,13 @@ test_expect_success 'path limiting with import-marks does not lose unmodified fi
 	grep file0 actual
 '
 
+test_expect_success 'path limiting works' '
+	git fast-export simple -- file >actual &&
+	sed -ne "s/^M .* //p" <actual | sort -u >actual.files &&
+	echo file >expect &&
+	test_cmp expect actual.files
+'
+
 test_expect_success 'avoid corrupt stream with non-existent mark' '
 	test_create_repo avoid_non_existent_mark &&
 	(
