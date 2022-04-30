@@ -1883,6 +1883,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	rev.diff = 1;
 	rev.max_parents = 1;
 	rev.diffopt.flags.recursive = 1;
+	rev.diffopt.no_free = 1;
 	rev.subject_prefix = fmt_patch_subject_prefix;
 	memset(&s_r_opt, 0, sizeof(s_r_opt));
 	s_r_opt.def = "HEAD";
@@ -2008,13 +2009,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 
 	if (use_stdout) {
 		setup_pager();
-	} else if (rev.diffopt.close_file) {
-		/*
-		 * The diff code parsed --output; it has already opened the
-		 * file, but we must instruct it not to close after each diff.
-		 */
-		rev.diffopt.no_free = 1;
-	} else {
+	} else if (!rev.diffopt.close_file) {
 		int saved;
 
 		if (!output_directory)
