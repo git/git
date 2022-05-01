@@ -1106,8 +1106,10 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	 * apply the remote name provided by --origin only after this second
 	 * call to git_config, to ensure it overrides all config-based values.
 	 */
-	if (option_origin != NULL)
+	if (option_origin != NULL) {
+		free(remote_name);
 		remote_name = xstrdup(option_origin);
+	}
 
 	if (remote_name == NULL)
 		remote_name = xstrdup("origin");
