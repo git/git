@@ -465,7 +465,7 @@ static void parse_treeish_arg(const char **argv,
 	}
 
 	tree = parse_tree_indirect(&oid);
-	if (tree == NULL)
+	if (!tree)
 		die(_("not a tree object: %s"), oid_to_hex(&oid));
 
 	if (prefix) {

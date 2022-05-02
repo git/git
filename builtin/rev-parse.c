@@ -476,7 +476,7 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 
 		/* name(s) */
 		s = strpbrk(sb.buf, flag_chars);
-		if (s == NULL)
+		if (!s)
 			s = help;
 
 		if (s - sb.buf == 1) /* short option only */

@@ -72,7 +72,7 @@ static int list_replace_refs(const char *pattern, const char *format)
 {
 	struct show_data data;
 
-	if (pattern == NULL)
+	if (!pattern)
 		pattern = "*";
 	data.pattern = pattern;
 

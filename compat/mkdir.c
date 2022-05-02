@@ -9,7 +9,7 @@ int compat_mkdir_wo_trailing_slash(const char *dir, mode_t mode)
 	size_t len = strlen(dir);
 
 	if (len && dir[len-1] == '/') {
-		if ((tmp_dir = strdup(dir)) == NULL)
+		if (!(tmp_dir = strdup(dir)))
 			return -1;
 		tmp_dir[len-1] = '\0';
 	}

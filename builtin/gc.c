@@ -446,7 +446,7 @@ static const char *lock_repo_for_gc(int force, pid_t* ret_pid)
 			fscanf(fp, scan_fmt, &pid, locking_host) == 2 &&
 			/* be gentle to concurrent "gc" on remote hosts */
 			(strcmp(locking_host, my_host) || !kill(pid, 0) || errno == EPERM);
-		if (fp != NULL)
+		if (fp)
 			fclose(fp);
 		if (should_exit) {
 			if (fd >= 0)
@@ -2238,7 +2238,7 @@ static int systemd_timer_write_unit_templates(const char *exec_path)
 		goto error;
 	}
 	file = fopen_or_warn(filename, "w");
-	if (file == NULL)
+	if (!file)
 		goto error;
 
 	unit = "# This file was created and is maintained by Git.\n"
@@ -2267,7 +2267,7 @@ static int systemd_timer_write_unit_templates(const char *exec_path)
 
 	filename = xdg_config_home_systemd("git-maintenance@.service");
 	file = fopen_or_warn(filename, "w");
-	if (file == NULL)
+	if (!file)
 		goto error;
 
 	unit = "# This file was created and is maintained by Git.\n"
