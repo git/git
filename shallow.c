@@ -560,7 +560,7 @@ static void paint_down(struct paint_info *info, const struct object_id *oid,
 		else
 			c->object.flags |= SEEN;
 
-		if (*refs == NULL)
+		if (!*refs)
 			*refs = bitmap;
 		else {
 			memcpy(tmp, *refs, bitmap_size);

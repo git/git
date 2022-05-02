@@ -483,7 +483,7 @@ int submodule_uses_worktrees(const char *path)
 		return 0;
 
 	d = readdir_skip_dot_and_dotdot(dir);
-	if (d != NULL)
+	if (d)
 		ret = 1;
 	closedir(dir);
 	return ret;

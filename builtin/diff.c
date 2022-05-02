@@ -352,7 +352,7 @@ static void symdiff_prepare(struct rev_info *rev, struct symdiff *sym)
 			othercount++;
 			continue;
 		}
-		if (map == NULL)
+		if (!map)
 			map = bitmap_new();
 		bitmap_set(map, i);
 	}

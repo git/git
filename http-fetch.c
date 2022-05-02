@@ -55,7 +55,7 @@ static void fetch_single_packfile(struct object_id *packfile_hash,
 	http_init(NULL, url, 0);
 
 	preq = new_direct_http_pack_request(packfile_hash->hash, xstrdup(url));
-	if (preq == NULL)
+	if (!preq)
 		die("couldn't create http pack request");
 	preq->slot->results = &results;
 	preq->index_pack_args = index_pack_args;

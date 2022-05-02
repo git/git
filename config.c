@@ -3190,7 +3190,7 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 			goto out_free;
 		}
 		/* if nothing to unset, error out */
-		if (value == NULL) {
+		if (!value) {
 			ret = CONFIG_NOTHING_SET;
 			goto out_free;
 		}
@@ -3206,7 +3206,7 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 		int i, new_line = 0;
 		struct config_options opts;
 
-		if (value_pattern == NULL)
+		if (!value_pattern)
 			store.value_pattern = NULL;
 		else if (value_pattern == CONFIG_REGEX_NONE)
 			store.value_pattern = CONFIG_REGEX_NONE;
@@ -3346,7 +3346,7 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 		}
 
 		/* write the pair (value == NULL means unset) */
-		if (value != NULL) {
+		if (value) {
 			if (!store.section_seen) {
 				if (write_section(fd, key, &store) < 0)
 					goto write_err_out;
@@ -3567,7 +3567,7 @@ static int git_config_copy_or_rename_section_in_file(const char *config_filename
 			offset = section_name_match(&buf[i], old_name);
 			if (offset > 0) {
 				ret++;
-				if (new_name == NULL) {
+				if (!new_name) {
 					remove = 1;
 					continue;
 				}

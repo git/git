@@ -1728,7 +1728,7 @@ void *read_object_file_extended(struct repository *r,
 		die(_("loose object %s (stored in %s) is corrupt"),
 		    oid_to_hex(repl), path);
 
-	if ((p = has_packed_and_bad(r, repl)) != NULL)
+	if ((p = has_packed_and_bad(r, repl)))
 		die(_("packed object %s (stored in %s) is corrupt"),
 		    oid_to_hex(repl), p->pack_name);
 	obj_read_unlock();

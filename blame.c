@@ -1072,7 +1072,7 @@ static struct blame_entry *blame_merge(struct blame_entry *list1,
 	if (p1->s_lno <= p2->s_lno) {
 		do {
 			tail = &p1->next;
-			if ((p1 = *tail) == NULL) {
+			if (!(p1 = *tail)) {
 				*tail = p2;
 				return list1;
 			}
@@ -1082,7 +1082,7 @@ static struct blame_entry *blame_merge(struct blame_entry *list1,
 		*tail = p2;
 		do {
 			tail = &p2->next;
-			if ((p2 = *tail) == NULL)  {
+			if (!(p2 = *tail))  {
 				*tail = p1;
 				return list1;
 			}
@@ -1090,7 +1090,7 @@ static struct blame_entry *blame_merge(struct blame_entry *list1,
 		*tail = p1;
 		do {
 			tail = &p1->next;
-			if ((p1 = *tail) == NULL) {
+			if (!(p1 = *tail)) {
 				*tail = p2;
 				return list1;
 			}

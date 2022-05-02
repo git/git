@@ -84,7 +84,7 @@ static void promisor_remote_move_to_tail(struct promisor_remote_config *config,
 					 struct promisor_remote *r,
 					 struct promisor_remote *previous)
 {
-	if (r->next == NULL)
+	if (!r->next)
 		return;
 
 	if (previous)

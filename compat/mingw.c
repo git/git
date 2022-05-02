@@ -1060,7 +1060,7 @@ char *mingw_mktemp(char *template)
 int mkstemp(char *template)
 {
 	char *filename = mktemp(template);
-	if (filename == NULL)
+	if (!filename)
 		return -1;
 	return open(filename, O_RDWR | O_CREAT, 0600);
 }
@@ -2332,7 +2332,7 @@ int setitimer(int type, struct itimerval *in, struct itimerval *out)
 	static const struct timeval zero;
 	static int atexit_done;
 
-	if (out != NULL)
+	if (out)
 		return errno = EINVAL,
 			error("setitimer param 3 != NULL not implemented");
 	if (!is_timeval_eq(&in->it_interval, &zero) &&
@@ -2361,7 +2361,7 @@ int sigaction(int sig, struct sigaction *in, struct sigaction *out)
 	if (sig != SIGALRM)
 		return errno = EINVAL,
 			error("sigaction only implemented for SIGALRM");
-	if (out != NULL)
+	if (out)
 		return errno = EINVAL,
 			error("sigaction: param 3 != NULL not implemented");
 

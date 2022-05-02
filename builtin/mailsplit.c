@@ -120,7 +120,7 @@ static int populate_maildir_list(struct string_list *list, const char *path)
 	for (sub = subs; *sub; ++sub) {
 		free(name);
 		name = xstrfmt("%s/%s", path, *sub);
-		if ((dir = opendir(name)) == NULL) {
+		if (!(dir = opendir(name))) {
 			if (errno == ENOENT)
 				continue;
 			error_errno("cannot opendir %s", name);

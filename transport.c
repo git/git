@@ -438,7 +438,7 @@ static int fetch_refs_via_pack(struct transport *transport,
 		args.self_contained_and_connected;
 	data->options.connectivity_checked = args.connectivity_checked;
 
-	if (refs == NULL)
+	if (!refs)
 		ret = -1;
 	if (report_unmatched_refs(to_fetch, nr_heads))
 		ret = -1;

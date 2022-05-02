@@ -3054,7 +3054,7 @@ char *git_url_basename(const char *repo, int is_bundle, int is_bare)
 	 * Skip scheme.
 	 */
 	start = strstr(repo, "://");
-	if (start == NULL)
+	if (!start)
 		start = repo;
 	else
 		start += 3;
