@@ -35,7 +35,7 @@ static int count_dir_entries(const char *dirname)
 	DIR *dir = opendir(dirname);
 	int len = 0;
 	struct dirent *d;
-	if (dir == NULL)
+	if (!dir)
 		return 0;
 
 	while ((d = readdir(dir))) {
