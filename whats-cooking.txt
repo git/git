@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Apr 2022, #07; Thu, 28)
+Subject: What's cooking in git.git (May 2022, #01; Mon, 2)
 X-master-at: 0f828332d5ac36fc63b7d8202652efa152809856
 X-next-at: e40c2bad7a72449dac987539a750bfb48c4d77c8
 
-What's cooking in git.git (Apr 2022, #07; Thu, 28)
+What's cooking in git.git (May 2022, #01; Mon, 2)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -15,8 +15,9 @@ and aren't considered "accepted" at all.
 
 The 2.36 release unfortunately turned out to be a release with
 unusually high number of regressions.  We have dealt with a few of
-them on the 'master' front already, and there are a few more whose
-fixes have not been adequately reviewed or agreed upon.
+them on the 'master' front already, there are a few that look simple
+and obvious that should graduate before 2.36.1, but there are a few
+more whose fixes have not been adequately reviewed or agreed upon.
 
  - hooks no longer is connected directly to the standard output.
    cf. <CA+dzEBn108QoMA28f0nC8K21XT+Afua0V2Qv8XkR8rAeqUCCZw@mail.gmail.com>
@@ -53,93 +54,93 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* gc/submodule-update-part2 (2022-04-26) 1 commit
-  (merged to 'next' on 2022-04-26 at 673a597451)
- + submodule--helper: fix initialization of warn_if_uninitialized
-
- "git submodule update" without pathspec should silently skip an
- uninitialized submodule, but it started to become noisy by mistake.
-
- This fixes a regression in 2.36 and is slate to go to 2.36.1
- source: <pull.1258.v2.git.git.1650890741430.gitgitgadget@gmail.com>
-
-
-* jc/diff-tree-stdin-fix (2022-04-26) 1 commit
-  (merged to 'next' on 2022-04-26 at acf23a19ac)
- + 2.36 gitk/diff-tree --stdin regression fix
-
- "diff-tree --stdin" has been broken for about a year, but 2.36
- release broke it even worse by breaking running the command with
- <pathspec>, which in turn broke "gitk" and got noticed.  This has
- been corrected by aligning its behaviour to that of "log".
-
- This fixes a regression in 2.36 and is slate to go to 2.36.1
- source: <xmqq7d7bsu2n.fsf@gitster.g>
-
-
-* rs/name-rev-fix-free-after-use (2022-04-23) 1 commit
-  (merged to 'next' on 2022-04-26 at 975e329ff9)
- + Revert "name-rev: release unused name strings"
-
- Regression fix for 2.36 where "git name-rev" started to sometimes
- reference strings after they are freed.
-
- This fixes a regression in 2.36 and is slate to go to 2.36.1
- source: <340c8810-d912-7b18-d46e-a9d43f20216a@web.de>
-
---------------------------------------------------
 [New Topics]
 
-* ds/sparse-colon-path (2022-04-26) 5 commits
- - rev-parse: integrate with sparse index
- - object-name: diagnose trees in index properly
- - object-name: reject trees found in the index
- - show: integrate with the sparse index
- - t1092: add compatibility tests for 'git show'
+* ep/equals-null-cocci (2022-05-02) 2 commits
+ - tree-wide: apply equals-null.cocci
+ - Merge branch 'ep/maint-equals-null-cocci' into ep/equals-null-cocci
+ (this branch uses ep/maint-equals-null-cocci.)
 
- "git show :<path>" learned to work better with the sparse-index
- feature.
+ Merges up ep/maint-equals-null-cocci to the current codebase.
 
  Will merge to 'next'?
- source: <pull.1207.v2.git.1651005800.gitgitgadget@gmail.com>
 
 
-* cb/path-owner-check-with-sudo (2022-04-28) 3 commits
- - t: add tests for safe.directory when running with sudo
- - Documentation: explain how safe.directory works when running under sudo
- - git-compat-util: avoid failing dir ownership checks if running privileged
+* ep/maint-equals-null-cocci (2022-05-02) 4 commits
+ - tree-wide: apply equals-null.cocci
+ - Merge branch 'ep/maint-equals-null-cocci' for maint-2.35
+ - tree-wide: apply equals-null.cocci
+ - contrib/coccinnelle: add equals-null.cocci
+ (this branch is used by ep/equals-null-cocci.)
 
- With a recent update to refuse access to repositories of other
- people by default, "sudo make install" and "sudo git describe"
- stopped working.  This series intends to loosen it while keeping
- the safety.
+ Introduce and apply coccinelle rule to discourage an explicit
+ comparison between a pointer and NULL, and applies the clean-up to
+ the maintenance track.
 
- source: <20220428105852.94449-1-carenas@gmail.com>
-
-
-* pb/ggg-in-mfc-doc (2022-04-27) 3 commits
- - MyFirstContribution: drop PR description for GGG single-patch contributions
- - MyFirstContribution: also explain cover letter in GitGitGadget section
- - MyFirstContribution: move cover letter description to a separate file
-
- Documentation update.
-
- Expecting a reroll.
- cf. <706e34fb-fb0c-e86d-5d0f-0bd052566b3a@gmail.com>
- source: <pull.1226.git.1651086288.gitgitgadget@gmail.com>
+ Will merge to 'next'?
 
 
-* sg/safe-directory-tests-and-docs (2022-04-27) 3 commits
- - safe.directory: document and check that it's ignored in the environment
- - t0033-safe-directory: check when 'safe.directory' is ignored
- - t0033-safe-directory: check the error message without matching the trash dir
+* jc/clone-remote-name-leak-fix (2022-04-30) 1 commit
+ - clone: plug a miniscule leak
 
- New tests for the safe.directory mechanism.
+ "git clone --origin X" leaked piece of memory that held value read
+ from the clone.defaultRemoteName configuration variable, which has
+ been plugged.
 
  Will merge to 'next'.
- source: <20220427170649.4949-1-szeder.dev@gmail.com>
+ source: <xmqqlevl4ysk.fsf@gitster.g>
+
+
+* jc/cocci-xstrdup-or-null-fix (2022-04-30) 1 commit
+ - cocci: drop bogus xstrdup_or_null() rule
+
+ Get rid of a bogus and over-eager coccinelle rule.
+
+ Will merge to 'next'.
+ source: <xmqq1qxd6e4x.fsf@gitster.g>
+
+
+* js/wait-or-whine-can-fail (2022-04-28) 1 commit
+ - run-command: don't spam trace2_child_exit()
+
+ We used to log an error return from wait_or_whine() as process
+ termination of the waited child, which was incorrect.
+
+ Needs clarifying "in rare cases".
+ source: <4616d09ffa632bd2c9e308a713c4bdf2a1328c3c.1651179450.git.steadmon@google.com>
+
+
+* jc/show-pathspec-fix (2022-04-29) 1 commit
+ - 2.36 show regression fix
+
+ "git show <commit1> <commit2>... -- <pathspec>" lost the pathspec
+ when showing the second and subsequent commits, which has been
+ corrected.
+
+ Will merge to 'next' and then to 'master'.
+ source: <xmqqo80j87g0.fsf_-_@gitster.g>
+
+
+* rs/format-patch-pathspec-fix (2022-04-30) 1 commit
+ - 2.36 format-patch regression fix
+
+ "git format-patch <args> -- <pathspec>" lost the pathspec when
+ showing the second and subsequent commits, which has been
+ corrected.
+
+ Will merge to 'next' and then to 'master'.
+ source: <c36896a1-6247-123b-4fa3-b7eb24af1897@web.de>
+
+
+* rs/fast-export-pathspec-fix (2022-04-30) 1 commit
+ - 2.36 fast-export regression fix
+
+ "git fast-export -- <pathspec>" lost the pathspec when showing the
+ second and subsequent commits, which has been corrected.
+
+ Will merge to 'next' and then to 'master'.
+ source: <2c988c7b-0efe-4222-4a43-8124fe1a9da6@web.de>
+
 
 --------------------------------------------------
 [Stalled]
@@ -195,6 +196,55 @@ Release tarballs are available at:
 
 --------------------------------------------------
 [Cooking]
+
+* ds/sparse-colon-path (2022-04-26) 5 commits
+ - rev-parse: integrate with sparse index
+ - object-name: diagnose trees in index properly
+ - object-name: reject trees found in the index
+ - show: integrate with the sparse index
+ - t1092: add compatibility tests for 'git show'
+
+ "git show :<path>" learned to work better with the sparse-index
+ feature.
+
+ Will merge to 'next'?
+ source: <pull.1207.v2.git.1651005800.gitgitgadget@gmail.com>
+
+
+* cb/path-owner-check-with-sudo (2022-04-28) 3 commits
+ - t: add tests for safe.directory when running with sudo
+ - Documentation: explain how safe.directory works when running under sudo
+ - git-compat-util: avoid failing dir ownership checks if running privileged
+
+ With a recent update to refuse access to repositories of other
+ people by default, "sudo make install" and "sudo git describe"
+ stopped working.  This series intends to loosen it while keeping
+ the safety.
+ source: <20220428105852.94449-1-carenas@gmail.com>
+
+
+* pb/ggg-in-mfc-doc (2022-04-27) 3 commits
+ - MyFirstContribution: drop PR description for GGG single-patch contributions
+ - MyFirstContribution: also explain cover letter in GitGitGadget section
+ - MyFirstContribution: move cover letter description to a separate file
+
+ Documentation update.
+
+ Expecting a reroll.
+ cf. <706e34fb-fb0c-e86d-5d0f-0bd052566b3a@gmail.com>
+ source: <pull.1226.git.1651086288.gitgitgadget@gmail.com>
+
+
+* sg/safe-directory-tests-and-docs (2022-04-27) 3 commits
+ - safe.directory: document and check that it's ignored in the environment
+ - t0033-safe-directory: check when 'safe.directory' is ignored
+ - t0033-safe-directory: check the error message without matching the trash dir
+
+ New tests for the safe.directory mechanism.
+
+ Will merge to 'next'.
+ source: <20220427170649.4949-1-szeder.dev@gmail.com>
+
 
 * ah/rebase-keep-base-fix (2022-04-21) 1 commit
  - rebase: use correct base for --keep-base when a branch is given
@@ -366,7 +416,6 @@ Release tarballs are available at:
  - stash: expand sparse-checkout compatibility testing
 
  Teach "git stash" to work better with sparse index entries.
-
  source: <pull.1171.v2.git.1651083378.gitgitgadget@gmail.com>
 
 
@@ -761,14 +810,18 @@ Release tarballs are available at:
  source: <20220217225408.GB7@edef91d97c94>
 
 
-* tk/simple-autosetupmerge (2022-04-22) 1 commit
- - merge: new autosetupmerge option 'simple' for matching branches
+* tk/simple-autosetupmerge (2022-04-29) 3 commits
+ - push: new config option "push.autoSetupRemote" supports "simple" push
+ - push: default to single remote even when not named origin
+ - branch: new autosetupmerge option 'simple' for matching branches
 
  "git -c branch.autosetupmerge=simple branch $A $B" will set the $B
  as $A's upstream only when $A and $B shares the same name, and "git
  -c push.default=simple" on branch $A would push to update the
- branch $A at the remote $B came from.
- source: <pull.1161.v4.git.1647843442911.gitgitgadget@gmail.com>
+ branch $A at the remote $B came from.  Also more places use the
+ sole remote, if exists, before defaulting to 'origin'.
+
+ source: <pull.1161.v5.git.1651226206.gitgitgadget@gmail.com>
 
 
 * tk/untracked-cache-with-uall (2022-04-01) 2 commits
