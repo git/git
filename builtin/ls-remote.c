@@ -116,7 +116,7 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 	}
 
 	transport = transport_get(remote, NULL);
-	if (uploadpack != NULL)
+	if (uploadpack)
 		transport_set_option(transport, TRANS_OPT_UPLOADPACK, uploadpack);
 	if (server_options.nr)
 		transport->server_options = &server_options;

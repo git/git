@@ -591,7 +591,7 @@ int rerere_remaining(struct repository *r, struct string_list *merge_rr)
 		else if (conflict_type == RESOLVED) {
 			struct string_list_item *it;
 			it = string_list_lookup(merge_rr, (const char *)e->name);
-			if (it != NULL) {
+			if (it) {
 				free_rerere_id(it);
 				it->util = RERERE_RESOLVED;
 			}

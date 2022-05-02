@@ -192,7 +192,7 @@ static int xdl_prepare_ctx(unsigned int pass, mmfile_t *mf, long narec, xpparam_
 	}
 
 	nrec = 0;
-	if ((cur = blk = xdl_mmfile_first(mf, &bsize)) != NULL) {
+	if ((cur = blk = xdl_mmfile_first(mf, &bsize))) {
 		for (top = blk + bsize; cur < top; ) {
 			prev = cur;
 			hav = xdl_hash_record(&cur, top, xpp->flags);

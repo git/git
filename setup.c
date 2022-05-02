@@ -1404,7 +1404,7 @@ int git_config_perm(const char *var, const char *value)
 	int i;
 	char *endptr;
 
-	if (value == NULL)
+	if (!value)
 		return PERM_GROUP;
 
 	if (!strcmp(value, "umask"))

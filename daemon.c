@@ -451,7 +451,7 @@ static void copy_to_log(int fd)
 	FILE *fp;
 
 	fp = fdopen(fd, "r");
-	if (fp == NULL) {
+	if (!fp) {
 		logerror("fdopen of error channel failed");
 		close(fd);
 		return;

@@ -733,7 +733,7 @@ char *interpolate_path(const char *path, int real_home)
 	struct strbuf user_path = STRBUF_INIT;
 	const char *to_copy = path;
 
-	if (path == NULL)
+	if (!path)
 		goto return_null;
 
 	if (skip_prefix(path, "%(prefix)/", &path))
