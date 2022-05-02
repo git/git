@@ -1261,6 +1261,7 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 	revs.diffopt.format_callback = show_filemodify;
 	revs.diffopt.format_callback_data = &paths_of_changed_objects;
 	revs.diffopt.flags.recursive = 1;
+	revs.diffopt.no_free = 1;
 	while ((commit = get_revision(&revs)))
 		handle_commit(commit, &revs, &paths_of_changed_objects);
 
