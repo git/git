@@ -342,7 +342,7 @@ int fsm_listen__ctor(struct fsmonitor_daemon_state *state)
 					   data->cfar_paths_to_watch,
 					   kFSEventStreamEventIdSinceNow,
 					   0.001, flags);
-	if (data->stream == NULL)
+	if (!data->stream)
 		goto failed;
 
 	/*
