@@ -170,7 +170,7 @@ Some functions have a `_va_fl()` suffix to indicate that they also
 take a `va_list` argument.
 
 Some functions have a `_printf_fl()` suffix to indicate that they also
-take a varargs argument.
+take a `printf()` style format with a variable number of arguments.
 
 There are CPP wrapper macros and `#ifdef`s to hide most of these details.
 See `trace2.h` for more details.  The following discussion will only
