@@ -5,7 +5,7 @@ information to stderr or a file.  The Trace2 feature is inactive unless
 explicitly enabled by enabling one or more Trace2 Targets.
 
 The Trace2 API is intended to replace the existing (Trace1)
-printf-style tracing provided by the existing `GIT_TRACE` and
+`printf()`-style tracing provided by the existing `GIT_TRACE` and
 `GIT_TRACE_PERFORMANCE` facilities.  During initial implementation,
 Trace2 and Trace1 may operate in parallel.
 
@@ -34,7 +34,7 @@ Format details are given in a later section.
 
 === The Normal Format Target
 
-The normal format target is a traditional printf format and similar
+The normal format target is a traditional `printf()` format and similar
 to the GIT_TRACE format.  This format is enabled with the `GIT_TRACE2`
 environment variable or the `trace2.normalTarget` system or global
 config setting.
@@ -234,7 +234,7 @@ Events are written as lines of the form:
 	is the event name.
 
 `<event-message>`::
-	is a free-form printf message intended for human consumption.
+	is a free-form `printf()` message intended for human consumption.
 +
 Note that this may contain embedded LF or CRLF characters that are
 not escaped, so the event may spill across multiple lines.
@@ -300,7 +300,7 @@ This field is in anticipation of in-proc submodules in the future.
 	indicate a broad category, such as "index" or "status".
 
 `<perf-event-message>`::
-	is a free-form printf message intended for human consumption.
+	is a free-form `printf()` message intended for human consumption.
 
 ------------
 15:33:33.532712 wt-status.c:2310                  | d0 | main                     | region_enter | r1  |  0.126064 |           | status     | label:print
@@ -588,7 +588,7 @@ with "?".
 
 `"child_exit"`::
 	This event is generated after the current process has returned
-	from the waitpid() and collected the exit information from the
+	from the `waitpid()` and collected the exit information from the
 	child.
 +
 ------------
@@ -609,7 +609,7 @@ process may be a shell script which doesn't have a session-id.)
 +
 Note that the `t_rel` field contains the observed run time in seconds
 for the child process (starting before the fork/exec/spawn and
-stopping after the waitpid() and includes OS process creation overhead).
+stopping after the `waitpid()` and includes OS process creation overhead).
 So this time will be slightly larger than the atexit time reported by
 the child process itself.
 
