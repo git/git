@@ -35,7 +35,7 @@ Format details are given in a later section.
 === The Normal Format Target
 
 The normal format target is a traditional `printf()` format and similar
-to the GIT_TRACE format.  This format is enabled with the `GIT_TRACE2`
+to the `GIT_TRACE` format.  This format is enabled with the `GIT_TRACE2`
 environment variable or the `trace2.normalTarget` system or global
 config setting.
 
@@ -69,8 +69,8 @@ $ cat ~/log.normal
 === The Performance Format Target
 
 The performance format target (PERF) is a column-based format to
-replace GIT_TRACE_PERFORMANCE and is suitable for development and
-testing, possibly to complement tools like gprof.  This format is
+replace `GIT_TRACE_PERFORMANCE` and is suitable for development and
+testing, possibly to complement tools like `gprof`.  This format is
 enabled with the `GIT_TRACE2_PERF` environment variable or the
 `trace2.perfTarget` system or global config setting.
 
@@ -172,7 +172,7 @@ take a `va_list` argument.
 Some functions have a `_printf_fl()` suffix to indicate that they also
 take a varargs argument.
 
-There are CPP wrapper macros and ifdefs to hide most of these details.
+There are CPP wrapper macros and `#ifdef`s to hide most of these details.
 See `trace2.h` for more details.  The following discussion will only
 describe the simplified forms.
 
@@ -1214,11 +1214,11 @@ as each thread starts and allocates TLS storage.
 There are a few issues to resolve before we can completely
 switch to Trace2.
 
-* Updating existing tests that assume GIT_TRACE format messages.
+* Updating existing tests that assume `GIT_TRACE` format messages.
 
-* How to best handle custom GIT_TRACE_<key> messages?
+* How to best handle custom `GIT_TRACE_<key>` messages?
 
-** The GIT_TRACE_<key> mechanism allows each <key> to write to a
+** The `GIT_TRACE_<key>` mechanism allows each <key> to write to a
 different file (in addition to just stderr).
 
 ** Do we want to maintain that ability or simply write to the existing
