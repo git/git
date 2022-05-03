@@ -533,7 +533,7 @@ these special values are used:
 ------------
 
 `"cmd_mode"`::
-	This event, when present, describes the command variant This
+	This event, when present, describes the command variant. This
 	event may be emitted more than once.
 +
 ------------
