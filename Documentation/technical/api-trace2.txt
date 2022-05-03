@@ -24,8 +24,8 @@ for example.
 
 Trace2 is controlled using `trace2.*` config values in the system and
 global config files and `GIT_TRACE2*` environment variables.  Trace2 does
-not read from repo local or worktree config files or respect `-c`
-command line config settings.
+not read from repo local or worktree config files, nor does it respect
+`-c` command line config settings.
 
 == Trace2 Targets
 
@@ -34,8 +34,8 @@ Format details are given in a later section.
 
 === The Normal Format Target
 
-The normal format target is a tradition printf format and similar
-to GIT_TRACE format.  This format is enabled with the `GIT_TRACE2`
+The normal format target is a traditional printf format and similar
+to the GIT_TRACE format.  This format is enabled with the `GIT_TRACE2`
 environment variable or the `trace2.normalTarget` system or global
 config setting.
 
@@ -635,7 +635,7 @@ process may be a shell script which doesn't have a session-id.)
 +
 This event is generated after the child is started in the background
 and given a little time to boot up and start working.  If the child
-startups normally and while the parent is still waiting, the "ready"
+starts up normally while the parent is still waiting, the "ready"
 field will have the value "ready".
 If the child is too slow to start and the parent times out, the field
 will have the value "timeout".
@@ -949,7 +949,7 @@ atexit elapsed:3.868970 code:0
 
 Regions::
 
-	Regions can be use to time an interesting section of code.
+	Regions can be used to time an interesting section of code.
 +
 ----------------
 void wt_status_collect(struct wt_status *s)
@@ -1103,9 +1103,9 @@ Thread Events::
 
 	Thread messages added to a thread-proc.
 +
-For example, the multithreaded preload-index code can be
+For example, the multi-threaded preload-index code can be
 instrumented with a region around the thread pool and then
-per-thread start and exit events within the threadproc.
+per-thread start and exit events within the thread-proc.
 +
 ----------------
 static void *preload_thread(void *_data)
