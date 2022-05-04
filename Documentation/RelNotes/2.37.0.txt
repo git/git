@@ -17,3 +17,37 @@ Fixes since v2.36
  * Regression fix for 2.36 where "git name-rev" started to sometimes
    reference strings after they are freed.
    (merge 45a14f578e rs/name-rev-fix-free-after-use later to maint).
+
+ * "git show <commit1> <commit2>... -- <pathspec>" lost the pathspec
+   when showing the second and subsequent commits, which has been
+   corrected.
+   (merge 5cdb38458e jc/show-pathspec-fix later to maint).
+
+ * "git fast-export -- <pathspec>" lost the pathspec when showing the
+   second and subsequent commits, which has been corrected.
+   (merge d1c25272f5 rs/fast-export-pathspec-fix later to maint).
+
+ * "git format-patch <args> -- <pathspec>" lost the pathspec when
+   showing the second and subsequent commits, which has been
+   corrected.
+   (merge 91f8f7e46f rs/format-patch-pathspec-fix later to maint).
+
+ * "git clone --origin X" leaked piece of memory that held value read
+   from the clone.defaultRemoteName configuration variable, which has
+   been plugged.
+   (merge 6dfadc8981 jc/clone-remote-name-leak-fix later to maint).
+
+ * Get rid of a bogus and over-eager coccinelle rule.
+   (merge 08bdd3a185 jc/cocci-xstrdup-or-null-fix later to maint).
+
+ * The path taken by "git multi-pack-index" command from the end user
+   was compared with path internally prepared by the tool withut first
+   normalizing, which lead to duplicated paths not being noticed,
+   which has been corrected.
+   (merge 11f9e8de3d ds/midx-normalize-pathname-before-comparison later to maint).
+
+ * Correct choices of C compilers used in various CI jobs.
+   (merge 3506cae04f ab/cc-package-fixes later to maint).
+
+ * Code clean-up.
+   (merge e6b2582da3 cm/reftable-0-length-memset later to maint).
