@@ -417,7 +417,7 @@ static void finish_early_output(struct rev_info *rev)
 	show_early_header(rev, "done", n);
 }
 
-static int cmd_log_walk(struct rev_info *rev)
+static int cmd_log_walk_no_free(struct rev_info *rev)
 {
 	struct commit *commit;
 	int saved_nrl = 0;
@@ -444,7 +444,6 @@ static int cmd_log_walk(struct rev_info *rev)
 	 * and HAS_CHANGES being accumulated in rev->diffopt, so be careful to
 	 * retain that state information if replacing rev->diffopt in this loop
 	 */
-	rev->diffopt.no_free = 1;
 	while ((commit = get_revision(rev)) != NULL) {
 		if (!log_tree_commit(rev, commit) && rev->max_count >= 0)
 			/*
@@ -469,8 +468,6 @@ static int cmd_log_walk(struct rev_info *rev)
 	}
 	rev->diffopt.degraded_cc_to_c = saved_dcctc;
 	rev->diffopt.needed_rename_limit = saved_nrl;
-	rev->diffopt.no_free = 0;
-	diff_free(&rev->diffopt);
 
 	if (rev->remerge_diff) {
 		tmp_objdir_destroy(rev->remerge_objdir);
@@ -482,6 +479,17 @@ static int cmd_log_walk(struct rev_info *rev)
 		return 02;
 	}
 	return diff_result_code(&rev->diffopt, 0);
+}
+
+static int cmd_log_walk(struct rev_info *rev)
+{
+	int retval;
+
+	rev->diffopt.no_free = 1;
+	retval = cmd_log_walk_no_free(rev);
+	rev->diffopt.no_free = 0;
+	diff_free(&rev->diffopt);
+	return retval;
 }
 
 static int git_log_config(const char *var, const char *value, void *cb)
@@ -680,6 +688,7 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 
 	count = rev.pending.nr;
 	objects = rev.pending.objects;
+	rev.diffopt.no_free = 1;
 	for (i = 0; i < count && !ret; i++) {
 		struct object *o = objects[i].item;
 		const char *name = objects[i].name;
@@ -725,12 +734,16 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 			rev.pending.nr = rev.pending.alloc = 0;
 			rev.pending.objects = NULL;
 			add_object_array(o, name, &rev.pending);
-			ret = cmd_log_walk(&rev);
+			ret = cmd_log_walk_no_free(&rev);
 			break;
 		default:
 			ret = error(_("unknown type: %d"), o->type);
 		}
 	}
+
+	rev.diffopt.no_free = 0;
+	diff_free(&rev.diffopt);
+
 	free(objects);
 	return ret;
 }
