@@ -44,7 +44,7 @@ static char const * const builtin_multi_pack_index_usage[] = {
 };
 
 static struct opts_multi_pack_index {
-	const char *object_dir;
+	char *object_dir;
 	const char *preferred_pack;
 	const char *refs_snapshot;
 	unsigned long batch_size;
@@ -52,9 +52,23 @@ static struct opts_multi_pack_index {
 	int stdin_packs;
 } opts;
 
+
+static int parse_object_dir(const struct option *opt, const char *arg,
+			    int unset)
+{
+	free(opts.object_dir);
+	if (unset)
+		opts.object_dir = xstrdup(get_object_directory());
+	else
+		opts.object_dir = real_pathdup(arg, 1);
+	return 0;
+}
+
 static struct option common_opts[] = {
-	OPT_FILENAME(0, "object-dir", &opts.object_dir,
-	  N_("object directory containing set of packfile and pack-index pairs")),
+	OPT_CALLBACK(0, "object-dir", &opts.object_dir,
+	  N_("directory"),
+	  N_("object directory containing set of packfile and pack-index pairs"),
+	  parse_object_dir),
 	OPT_END(),
 };
 
@@ -232,31 +246,40 @@ static int cmd_multi_pack_index_repack(int argc, const char **argv)
 int cmd_multi_pack_index(int argc, const char **argv,
 			 const char *prefix)
 {
+	int res;
 	struct option *builtin_multi_pack_index_options = common_opts;
 
 	git_config(git_default_config, NULL);
+
+	if (the_repository &&
+	    the_repository->objects &&
+	    the_repository->objects->odb)
+		opts.object_dir = xstrdup(the_repository->objects->odb->path);
 
 	argc = parse_options(argc, argv, prefix,
 			     builtin_multi_pack_index_options,
 			     builtin_multi_pack_index_usage,
 			     PARSE_OPT_STOP_AT_NON_OPTION);
 
-	if (!opts.object_dir)
-		opts.object_dir = get_object_directory();
-
 	if (!argc)
 		goto usage;
 
 	if (!strcmp(argv[0], "repack"))
-		return cmd_multi_pack_index_repack(argc, argv);
+		res = cmd_multi_pack_index_repack(argc, argv);
 	else if (!strcmp(argv[0], "write"))
-		return cmd_multi_pack_index_write(argc, argv);
+		res =  cmd_multi_pack_index_write(argc, argv);
 	else if (!strcmp(argv[0], "verify"))
-		return cmd_multi_pack_index_verify(argc, argv);
+		res =  cmd_multi_pack_index_verify(argc, argv);
 	else if (!strcmp(argv[0], "expire"))
-		return cmd_multi_pack_index_expire(argc, argv);
+		res =  cmd_multi_pack_index_expire(argc, argv);
+	else {
+		error(_("unrecognized subcommand: %s"), argv[0]);
+		goto usage;
+	}
 
-	error(_("unrecognized subcommand: %s"), argv[0]);
+	free(opts.object_dir);
+	return res;
+
 usage:
 	usage_with_options(builtin_multi_pack_index_usage,
 			   builtin_multi_pack_index_options);

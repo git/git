@@ -1132,17 +1132,26 @@ cleanup:
 static struct multi_pack_index *lookup_multi_pack_index(struct repository *r,
 							const char *object_dir)
 {
+	struct multi_pack_index *result = NULL;
 	struct multi_pack_index *cur;
+	char *obj_dir_real = real_pathdup(object_dir, 1);
+	struct strbuf cur_path_real = STRBUF_INIT;
 
 	/* Ensure the given object_dir is local, or a known alternate. */
-	find_odb(r, object_dir);
+	find_odb(r, obj_dir_real);
 
 	for (cur = get_multi_pack_index(r); cur; cur = cur->next) {
-		if (!strcmp(object_dir, cur->object_dir))
-			return cur;
+		strbuf_realpath(&cur_path_real, cur->object_dir, 1);
+		if (!strcmp(obj_dir_real, cur_path_real.buf)) {
+			result = cur;
+			goto cleanup;
+		}
 	}
 
-	return NULL;
+cleanup:
+	free(obj_dir_real);
+	strbuf_release(&cur_path_real);
+	return result;
 }
 
 static int write_midx_internal(const char *object_dir,
