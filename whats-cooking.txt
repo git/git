@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (May 2022, #01; Mon, 2)
-X-master-at: 0f828332d5ac36fc63b7d8202652efa152809856
-X-next-at: e40c2bad7a72449dac987539a750bfb48c4d77c8
+Subject: What's cooking in git.git (May 2022, #02; Thu, 5)
+X-master-at: f5aaf72f1b5aeb3b77bccabce014ea2590e823e2
+X-next-at: b09085170807c0234d945e787c60e6af100d2712
 
-What's cooking in git.git (May 2022, #01; Mon, 2)
+What's cooking in git.git (May 2022, #02; Thu, 5)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -15,15 +15,22 @@ and aren't considered "accepted" at all.
 
 The 2.36 release unfortunately turned out to be a release with
 unusually high number of regressions.  We have dealt with a few of
-them on the 'master' front already, there are a few that look simple
-and obvious that should graduate before 2.36.1, but there are a few
-more whose fixes have not been adequately reviewed or agreed upon.
+them on the 'master' front already, and I am planning to cut 2.36.1
+soonish by merging them down to 'maint'.
+
+There are a few more whose fixes have not been adequately reviewed
+or agreed upon.
 
  - hooks no longer is connected directly to the standard output.
    cf. <CA+dzEBn108QoMA28f0nC8K21XT+Afua0V2Qv8XkR8rAeqUCCZw@mail.gmail.com>
 
  - "sudo make install" does not work out-of-the-box.
    cf. <4ef9287b-6260-9538-7c89-cffb611520ee@maurel.de>
+
+These fixed soon, 2.36.2 needs to follow, but one step at a time.
+
+We're in week #2 of this cycle (https://tinyurl.com/gitCal), which
+is expected to conclude in early July.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -54,93 +61,127 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[New Topics]
+[Graduated to 'master']
 
-* ep/equals-null-cocci (2022-05-02) 2 commits
- - tree-wide: apply equals-null.cocci
- - Merge branch 'ep/maint-equals-null-cocci' into ep/equals-null-cocci
- (this branch uses ep/maint-equals-null-cocci.)
+* ab/cc-package-fixes (2022-04-22) 1 commit
+  (merged to 'next' on 2022-05-02 at 59e6137286)
+ + CI: select CC based on CC_PACKAGE (again)
 
- Merges up ep/maint-equals-null-cocci to the current codebase.
-
- Will merge to 'next'?
+ Correct choices of C compilers used in various CI jobs.
+ source: <patch-v3-1.1-8b3444ecc87-20220422T092015Z-avarab@gmail.com>
 
 
-* ep/maint-equals-null-cocci (2022-05-02) 4 commits
- - tree-wide: apply equals-null.cocci
- - Merge branch 'ep/maint-equals-null-cocci' for maint-2.35
- - tree-wide: apply equals-null.cocci
- - contrib/coccinnelle: add equals-null.cocci
- (this branch is used by ep/equals-null-cocci.)
+* cm/reftable-0-length-memset (2022-04-15) 1 commit
+  (merged to 'next' on 2022-05-02 at 781715e2b7)
+ + reftable: avoid undefined behaviour breaking t0032
 
- Introduce and apply coccinelle rule to discourage an explicit
- comparison between a pointer and NULL, and applies the clean-up to
- the maintenance track.
+ Code clean-up.
+ source: <20220415083058.29495-1-carenas@gmail.com>
 
- Will merge to 'next'?
+
+* ds/midx-normalize-pathname-before-comparison (2022-04-25) 3 commits
+  (merged to 'next' on 2022-05-02 at aba30d3c42)
+ + cache: use const char * for get_object_directory()
+ + multi-pack-index: use --object-dir real path
+ + midx: use real paths in lookup_multi_pack_index()
+
+ The path taken by "git multi-pack-index" command from the end user
+ was compared with path internally prepared by the tool withut first
+ normalizing, which lead to duplicated paths not being noticed,
+ which has been corrected.
+ source: <pull.1221.v2.git.1650911234.gitgitgadget@gmail.com>
 
 
 * jc/clone-remote-name-leak-fix (2022-04-30) 1 commit
- - clone: plug a miniscule leak
+  (merged to 'next' on 2022-05-02 at 32a51558ea)
+ + clone: plug a miniscule leak
 
  "git clone --origin X" leaked piece of memory that held value read
  from the clone.defaultRemoteName configuration variable, which has
  been plugged.
-
- Will merge to 'next'.
  source: <xmqqlevl4ysk.fsf@gitster.g>
 
 
 * jc/cocci-xstrdup-or-null-fix (2022-04-30) 1 commit
- - cocci: drop bogus xstrdup_or_null() rule
+  (merged to 'next' on 2022-05-02 at dda0f8bfce)
+ + cocci: drop bogus xstrdup_or_null() rule
 
  Get rid of a bogus and over-eager coccinelle rule.
-
- Will merge to 'next'.
  source: <xmqq1qxd6e4x.fsf@gitster.g>
 
 
-* js/wait-or-whine-can-fail (2022-04-28) 1 commit
- - run-command: don't spam trace2_child_exit()
-
- We used to log an error return from wait_or_whine() as process
- termination of the waited child, which was incorrect.
-
- Needs clarifying "in rare cases".
- source: <4616d09ffa632bd2c9e308a713c4bdf2a1328c3c.1651179450.git.steadmon@google.com>
-
-
 * jc/show-pathspec-fix (2022-04-29) 1 commit
- - 2.36 show regression fix
+  (merged to 'next' on 2022-05-02 at 7781c7b275)
+ + 2.36 show regression fix
 
  "git show <commit1> <commit2>... -- <pathspec>" lost the pathspec
  when showing the second and subsequent commits, which has been
  corrected.
-
- Will merge to 'next' and then to 'master'.
  source: <xmqqo80j87g0.fsf_-_@gitster.g>
 
 
+* rs/fast-export-pathspec-fix (2022-04-30) 1 commit
+  (merged to 'next' on 2022-05-02 at 0fb97cb01d)
+ + 2.36 fast-export regression fix
+
+ "git fast-export -- <pathspec>" lost the pathspec when showing the
+ second and subsequent commits, which has been corrected.
+ source: <2c988c7b-0efe-4222-4a43-8124fe1a9da6@web.de>
+
+
 * rs/format-patch-pathspec-fix (2022-04-30) 1 commit
- - 2.36 format-patch regression fix
+  (merged to 'next' on 2022-05-02 at 1f0a9f982a)
+ + 2.36 format-patch regression fix
 
  "git format-patch <args> -- <pathspec>" lost the pathspec when
  showing the second and subsequent commits, which has been
  corrected.
-
- Will merge to 'next' and then to 'master'.
  source: <c36896a1-6247-123b-4fa3-b7eb24af1897@web.de>
 
+--------------------------------------------------
+[New Topics]
 
-* rs/fast-export-pathspec-fix (2022-04-30) 1 commit
- - 2.36 fast-export regression fix
+* ac/remote-v-with-object-list-filters (2022-05-04) 1 commit
+ - builtin/remote.c: teach `-v` to list filters for promisor remotes
 
- "git fast-export -- <pathspec>" lost the pathspec when showing the
- second and subsequent commits, which has been corrected.
+ source: <pull.1227.v2.git.1651591253333.gitgitgadget@gmail.com>
 
- Will merge to 'next' and then to 'master'.
- source: <2c988c7b-0efe-4222-4a43-8124fe1a9da6@web.de>
 
+* cc/http-curlopt-resolve (2022-05-04) 1 commit
+ - http: add custom hostname to IP address resolutions
+
+ source: <20220504104601.136403-1-chriscool@tuxfamily.org>
+
+
+* js/trace2-doc-fixes (2022-05-04) 6 commits
+ - trace2 docs: add missing full stop
+ - trace2 docs: clarify what `varargs` is all about
+ - trace2 docs: fix a JSON formatted example
+ - trace2 docs: surround more terms in backticks
+ - trace2 docs: "printf" is not an English word
+ - trace2 docs: a couple of grammar fixes
+
+ source: <pull.1172.v2.git.1651573607.gitgitgadget@gmail.com>
+
+
+* jx/l10n-workflow-change (2022-05-04) 9 commits
+ - l10n: Document the new l10n workflow
+ - Makefile: add "po-init" rule to initialize po/XX.po
+ - Makefile: add "po-update" rule to update po/XX.po
+ - po/git.pot: don't check in result of "make pot"
+ - po/git.pot: this is now a generated file
+ - i18n CI: stop allowing non-ASCII source messages in po/git.pot
+ - Makefile: have "make pot" not "reset --hard"
+ - Makefile: generate "po/git.pot" from stable LOCALIZED_C
+ - Makefile: sort "po/git.pot" by file location
+
+ source: <20220503132354.9567-1-worldhello.net@gmail.com>
+
+
+* tk/p4-metadata-coding-strategies (2022-05-04) 1 commit
+ - git-p4: improve encoding handling to support inconsistent encodings
+
+ source: <pull.1206.v4.git.1651346812586.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -181,21 +222,59 @@ Release tarballs are available at:
  source: <20220310004423.2627181-1-emilyshaffer@google.com>
 
 
-* cw/remote-object-info (2022-03-30) 5 commits
- . fixup! transfer.advertiseObjectInfo: add object-info config
- . fixup! object-info: add option for retrieving object info
- . object-info: add option for retrieving object info
- . transfer.advertiseObjectInfo: add object-info config
- . fetch-pack: refactor packet writing and fetch options
+* cw/remote-object-info (2022-05-04) 10 commits
+ - SQUASH??? ensure that coccicheck is happy
+ - SQUASH??? compilation fix
+ - cat-file: add --batch-command remote-object-info command
+ - cat-file: move parse_cmd and DEFAULT_FORMAT up
+ - transport: add object-info fallback to fetch
+ - transport: add client side capability to request object-info
+ - object-info: send attribute packet regardless of object ids
+ - object-store: add function to free object_info contents
+ - fetch-pack: move fetch default settings
+ - fetch-pack: refactor packet writing
 
- Attempt to add a client component to talk with object-info
- endpoint.
+ A client component to talk with the object-info endpoint.
 
  Expecting a reroll.
- source: <20220328191112.3092139-1-calvinwan@google.com>
+ source: <20220502170904.2770649-1-calvinwan@google.com>
 
 --------------------------------------------------
 [Cooking]
+
+* ep/equals-null-cocci (2022-05-02) 2 commits
+ - tree-wide: apply equals-null.cocci
+ - Merge branch 'ep/maint-equals-null-cocci' into ep/equals-null-cocci
+ (this branch uses ep/maint-equals-null-cocci.)
+
+ Merges up ep/maint-equals-null-cocci to the current codebase.
+
+ Will merge to 'next'?
+
+
+* ep/maint-equals-null-cocci (2022-05-02) 4 commits
+ - tree-wide: apply equals-null.cocci
+ - Merge branch 'ep/maint-equals-null-cocci' for maint-2.35
+ - tree-wide: apply equals-null.cocci
+ - contrib/coccinnelle: add equals-null.cocci
+ (this branch is used by ep/equals-null-cocci.)
+
+ Introduce and apply coccinelle rule to discourage an explicit
+ comparison between a pointer and NULL, and applies the clean-up to
+ the maintenance track.
+
+ Will merge to 'next'?
+
+
+* js/wait-or-whine-can-fail (2022-04-28) 1 commit
+ - run-command: don't spam trace2_child_exit()
+
+ We used to log an error return from wait_or_whine() as process
+ termination of the waited child, which was incorrect.
+
+ Needs clarifying "in rare cases".
+ source: <4616d09ffa632bd2c9e308a713c4bdf2a1328c3c.1651179450.git.steadmon@google.com>
+
 
 * ds/sparse-colon-path (2022-04-26) 5 commits
  - rev-parse: integrate with sparse index
@@ -207,20 +286,20 @@ Release tarballs are available at:
  "git show :<path>" learned to work better with the sparse-index
  feature.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <pull.1207.v2.git.1651005800.gitgitgadget@gmail.com>
 
 
-* cb/path-owner-check-with-sudo (2022-04-28) 3 commits
- - t: add tests for safe.directory when running with sudo
- - Documentation: explain how safe.directory works when running under sudo
+* cb/path-owner-check-with-sudo (2022-05-02) 3 commits
+ - t0034: enhance framework to allow testing more commands under sudo
  - git-compat-util: avoid failing dir ownership checks if running privileged
+ - t: document regression git safe.directory when using sudo
 
  With a recent update to refuse access to repositories of other
  people by default, "sudo make install" and "sudo git describe"
  stopped working.  This series intends to loosen it while keeping
  the safety.
- source: <20220428105852.94449-1-carenas@gmail.com>
+ source: <20220502183920.88982-1-carenas@gmail.com>
 
 
 * pb/ggg-in-mfc-doc (2022-04-27) 3 commits
@@ -247,12 +326,13 @@ Release tarballs are available at:
 
 
 * ah/rebase-keep-base-fix (2022-04-21) 1 commit
- - rebase: use correct base for --keep-base when a branch is given
+  (merged to 'next' on 2022-05-02 at 8e6071e208)
+ + rebase: use correct base for --keep-base when a branch is given
 
  "git rebase --keep-base <upstream> <branch-to-rebase>" computed the
  commit to rebase onto incorrectly, which has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20220421044233.894255-1-alexhenrie24@gmail.com>
 
 
@@ -266,20 +346,22 @@ Release tarballs are available at:
 
 
 * ea/rebase-code-simplify (2022-04-20) 1 commit
- - rebase: simplify an assignment of options.type in cmd_rebase
+  (merged to 'next' on 2022-05-02 at 88ed49c2d0)
+ + rebase: simplify an assignment of options.type in cmd_rebase
 
  Code clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20220418172721.215898-1-eantoranz@gmail.com>
 
 
 * kt/commit-graph-plug-fp-leak-on-error (2022-04-20) 1 commit
- - commit-graph: close file before returning NULL
+  (merged to 'next' on 2022-05-02 at c3bcb92518)
+ + commit-graph: close file before returning NULL
 
  Fix a leak of FILE * in an error codepath.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1213.git.1650302007395.gitgitgadget@gmail.com>
 
 
@@ -314,20 +396,6 @@ Release tarballs are available at:
  source: <0220423142559.32507-5-carenas@gmail.com>
 
 
-* ds/midx-normalize-pathname-before-comparison (2022-04-25) 3 commits
- - cache: use const char * for get_object_directory()
- - multi-pack-index: use --object-dir real path
- - midx: use real paths in lookup_multi_pack_index()
-
- The path taken by "git multi-pack-index" command from the end user
- was compared with path internally prepared by the tool withut first
- normalizing, which lead to duplicated paths not being noticed,
- which has been corrected.
-
- Will merge to 'next'.
- source: <pull.1221.v2.git.1650911234.gitgitgadget@gmail.com>
-
-
 * jc/show-branch-g-current (2022-04-21) 1 commit
  - show-branch: -g and --current are incompatible
 
@@ -346,15 +414,6 @@ Release tarballs are available at:
 
  Will merge to 'next'.
  source: <2ad1dd80-e79f-7304-219c-db24bb269c4d@web.de>
-
-
-* ab/cc-package-fixes (2022-04-22) 1 commit
- - CI: select CC based on CC_PACKAGE (again)
-
- Correct choices of C compilers used in various CI jobs.
-
- Will merge to 'next'.
- source: <patch-v3-1.1-8b3444ecc87-20220422T092015Z-avarab@gmail.com>
 
 
 * ab/hooks-regression-fix (2022-04-21) 6 commits
@@ -419,15 +478,6 @@ Release tarballs are available at:
  source: <pull.1171.v2.git.1651083378.gitgitgadget@gmail.com>
 
 
-* cm/reftable-0-length-memset (2022-04-15) 1 commit
- - reftable: avoid undefined behaviour breaking t0032
-
- Code clean-up.
-
- Will merge to 'next'.
- source: <20220415083058.29495-1-carenas@gmail.com>
-
-
 * sa/t1011-use-helpers (2022-04-12) 1 commit
  - t1011: replace test -f with test_path_is_file
 
@@ -444,12 +494,13 @@ Release tarballs are available at:
 
 
 * pw/test-malloc-with-sanitize-address (2022-04-11) 1 commit
- - tests: make SANITIZE=address imply TEST_NO_MALLOC_CHECK
+  (merged to 'next' on 2022-05-02 at a25766055f)
+ + tests: make SANITIZE=address imply TEST_NO_MALLOC_CHECK
 
  Avoid problems from interaction between malloc_check and address
  sanitizer.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1210.git.1649507317350.gitgitgadget@gmail.com>
 
 
@@ -509,12 +560,13 @@ Release tarballs are available at:
 
 
 * rs/commit-summary-wo-break-rewrite (2022-04-06) 1 commit
- - commit, sequencer: turn off break_opt for commit summary
+  (merged to 'next' on 2022-05-02 at c40509b820)
+ + commit, sequencer: turn off break_opt for commit summary
 
  The commit summary shown after making a commit is matched to what
  is given in "git status" not to use the break-rewrite heuristics.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <c35bd0aa-2e46-e710-2b39-89f18bad0097@web.de>
 
 
@@ -708,7 +760,8 @@ Release tarballs are available at:
  A mechanism to export and import stash entries to and from a normal
  commit to transfer it across repositories has been introduced.
 
- Will merge to 'next'?
+ Expecting a reroll.
+ cf. <YnL2d4Vr9Vr7W4Hj@camp.crustytoothpaste.net>
  source: <20220407215352.3491567-1-sandals@crustytoothpaste.net>
 
 
@@ -748,7 +801,7 @@ Release tarballs are available at:
 
  Deprecate non-cone mode of the sparse-checkout feature.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <pull.1148.v3.git.1650594746.gitgitgadget@gmail.com>
 
 
@@ -820,7 +873,6 @@ Release tarballs are available at:
  -c push.default=simple" on branch $A would push to update the
  branch $A at the remote $B came from.  Also more places use the
  sole remote, if exists, before defaulting to 'origin'.
-
  source: <pull.1161.v5.git.1651226206.gitgitgadget@gmail.com>
 
 
@@ -895,19 +947,17 @@ Release tarballs are available at:
  source: <pull.1132.v2.git.1645547423.gitgitgadget@gmail.com>
 
 
-* js/scalar-diagnose (2022-02-06) 6 commits
+* js/scalar-diagnose (2022-05-04) 7 commits
  - scalar: teach `diagnose` to gather loose objects information
  - scalar: teach `diagnose` to gather packfile info
  - scalar diagnose: include disk space information
- - scalar: add `diagnose`
+ - Implement `scalar diagnose`
  - scalar: validate the optional enlistment argument
+ - archive --add-file-with-contents: allow paths containing colons
  - archive: optionally add "virtual" files
 
  Implementation of "scalar diagnose" subcommand.
-
- On hold.
- cf. <nycvar.QRO.7.76.6.2203012353090.11118@tvgsbejvaqbjf.bet>
- source: <pull.1128.v2.git.1644187146.gitgitgadget@gmail.com>
+ source: <pull.1128.v3.git.1651677919.gitgitgadget@gmail.com>
 
 
 * en/merge-tree (2022-02-23) 13 commits
