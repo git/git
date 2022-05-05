@@ -1098,6 +1098,7 @@ int log_tree_commit(struct rev_info *opt, struct commit *commit)
 	opt->loginfo = &log;
 	opt->diffopt.no_free = 1;
 
+	/* NEEDSWORK: no restoring of no_free?  Why? */
 	if (opt->line_level_traverse)
 		return line_log_print(opt, commit);
 
