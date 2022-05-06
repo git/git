@@ -193,7 +193,7 @@ def prompt(prompt_text):
 if bytes is not str:
     # For python3, always encode and decode as appropriate
     def decode_text_stream(s):
-        return s.decode() if isinstance(s, bytes) else s
+        return s.decode('utf-8', 'ignore') if isinstance(s, bytes) else s
     def encode_text_stream(s):
         return s.encode() if isinstance(s, str) else s
 else:
@@ -707,7 +707,7 @@ def p4CmdList(cmd, stdin=None, stdin_mode='w+b', cb=None, skip_info=False,
                 for key, value in entry.items():
                     key = key.decode()
                     if isinstance(value, bytes) and not (key in ('data', 'path', 'clientFile') or key.startswith('depotFile')):
-                        value = value.decode()
+                        value = value.decode('utf-8', 'ignore')
                     decoded_entry[key] = value
                 # Parse out data if it's an error response
                 if decoded_entry.get('code') == 'error' and 'data' in decoded_entry:
