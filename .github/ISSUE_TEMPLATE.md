@@ -26,6 +26,7 @@ $ cmd.exe /c ver
 > type "C:\Program Files\Git\etc\install-options.txt"
 > type "C:\Program Files (x86)\Git\etc\install-options.txt"
 > type "%USERPROFILE%\AppData\Local\Programs\Git\etc\install-options.txt"
+> type "$env:USERPROFILE\AppData\Local\Programs\Git\etc\install-options.txt"
 $ cat /etc/install-options.txt
 
 ** insert your machine's response here **
