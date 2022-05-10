@@ -118,7 +118,7 @@ static int index_has_unmerged_entries(struct index_state *istate)
 	return 0;
 }
 
-static int is_sparse_index_allowed(struct index_state *istate, int flags)
+int is_sparse_index_allowed(struct index_state *istate, int flags)
 {
 	if (!core_apply_sparse_checkout || !core_sparse_checkout_cone)
 		return 0;
