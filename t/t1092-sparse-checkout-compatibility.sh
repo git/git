@@ -1389,7 +1389,7 @@ test_expect_success 'sparse-index is not expanded: stash' '
 	ensure_not_expanded stash drop stash@{0} &&
 
 	echo >>sparse-index/deep/new &&
-	! ensure_not_expanded stash -u &&
+	ensure_not_expanded stash -u &&
 	(
 		WITHOUT_UNTRACKED_TXT=1 &&
 		! ensure_not_expanded stash pop
