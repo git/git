@@ -1392,7 +1392,7 @@ test_expect_success 'sparse-index is not expanded: stash' '
 	ensure_not_expanded stash -u &&
 	(
 		WITHOUT_UNTRACKED_TXT=1 &&
-		! ensure_not_expanded stash pop
+		ensure_not_expanded stash pop
 	) &&
 
 	ensure_not_expanded stash create &&
