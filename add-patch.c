@@ -8,6 +8,7 @@
 #include "diff.h"
 #include "compat/terminal.h"
 #include "prompt.h"
+#include "refs.h"
 
 enum prompt_mode_type {
 	PROMPT_MODE_CHANGE = 0, PROMPT_DELETION, PROMPT_ADDITION, PROMPT_HUNK,
@@ -1701,35 +1702,36 @@ int run_add_p(struct repository *r, enum add_p_mode mode,
 		{ r }, STRBUF_INIT, STRBUF_INIT, STRBUF_INIT, STRBUF_INIT
 	};
 	size_t i, binary_count = 0;
+	struct object_id rev_oid, head_oid;
+	int rev_equals_head = 0;
 
 	init_add_i_state(&s.s, r);
 
 	if (mode == ADD_P_STASH)
 		s.mode = &patch_mode_stash;
 	else if (mode == ADD_P_RESET) {
-		/*
-		 * NEEDSWORK: Instead of comparing to the literal "HEAD",
-		 * compare the commit objects instead so that other ways of
-		 * saying the same thing (such as "@") are also handled
-		 * appropriately.
-		 *
-		 * This applies to the cases below too.
-		 */
-		if (!revision || !strcmp(revision, "HEAD"))
+		if (!resolve_ref_unsafe("HEAD", RESOLVE_REF_READING, &head_oid, NULL))
+			die("no such ref: HEAD");
+		if (revision) {
+			if (!resolve_ref_unsafe(revision, RESOLVE_REF_READING, &rev_oid, NULL))
+				die("no such ref: %s", revision);
+			rev_equals_head = strcmp(oid_to_hex(&rev_oid), oid_to_hex(&head_oid));
+		}
+		if (!revision || !rev_equals_head)
 			s.mode = &patch_mode_reset_head;
 		else
 			s.mode = &patch_mode_reset_nothead;
 	} else if (mode == ADD_P_CHECKOUT) {
 		if (!revision)
 			s.mode = &patch_mode_checkout_index;
-		else if (!strcmp(revision, "HEAD"))
+		else if (!rev_equals_head)
 			s.mode = &patch_mode_checkout_head;
 		else
 			s.mode = &patch_mode_checkout_nothead;
 	} else if (mode == ADD_P_WORKTREE) {
 		if (!revision)
 			s.mode = &patch_mode_checkout_index;
-		else if (!strcmp(revision, "HEAD"))
+		else if (!rev_equals_head)
 			s.mode = &patch_mode_worktree_head;
 		else
 			s.mode = &patch_mode_worktree_nothead;
