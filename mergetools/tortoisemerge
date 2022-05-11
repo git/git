@@ -2,6 +2,10 @@ can_diff () {
 	return 1
 }
 
+diff_cmd_help () {
+	echo "Use TortoiseMerge (requires a graphical session)"
+}
+
 merge_cmd () {
 	if $base_present
 	then
@@ -29,4 +33,8 @@ translate_merge_tool_path() {
 	else
 		echo tortoisemerge
 	fi
+}
+
+merge_cmd_help () {
+	echo "Use TortoiseMerge (requires a graphical session)"
 }
