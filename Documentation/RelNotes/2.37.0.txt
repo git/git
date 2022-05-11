@@ -69,6 +69,22 @@ Fixes since v2.36
    when processing only parts of the file.
    (merge e5f5d7d42e ea/progress-partial-blame later to maint).
 
+ * "git rebase --keep-base <upstream> <branch-to-rebase>" computed the
+   commit to rebase onto incorrectly, which has been corrected.
+   (merge 9e5ebe9668 ah/rebase-keep-base-fix later to maint).
+
+ * Fix a leak of FILE * in an error codepath.
+   (merge c0befa0c03 kt/commit-graph-plug-fp-leak-on-error later to maint).
+
+ * Avoid problems from interaction between malloc_check and address
+   sanitizer.
+   (merge 067109a5e7 pw/test-malloc-with-sanitize-address later to maint).
+
+ * The commit summary shown after making a commit is matched to what
+   is given in "git status" not to use the break-rewrite heuristics.
+   (merge 84792322ed rs/commit-summary-wo-break-rewrite later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge e6b2582da3 cm/reftable-0-length-memset later to maint).
    (merge 0b75e5bf22 ab/misc-cleanup later to maint).
+   (merge 52e1ab8a76 ea/rebase-code-simplify later to maint).
