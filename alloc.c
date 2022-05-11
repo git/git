@@ -27,7 +27,6 @@ union any_object {
 };
 
 struct alloc_state {
-	int count; /* total number of nodes allocated */
 	int nr;    /* number of nodes left in current allocation */
 	void *p;   /* first free node in current allocation */
 
@@ -63,7 +62,6 @@ static inline void *alloc_node(struct alloc_state *s, size_t node_size)
 		s->slabs[s->slab_nr++] = s->p;
 	}
 	s->nr--;
-	s->count++;
 	ret = s->p;
 	s->p = (char *)s->p + node_size;
 	memset(ret, 0, node_size);
@@ -121,23 +119,4 @@ void *alloc_commit_node(struct repository *r)
 	struct commit *c = alloc_node(r->parsed_objects->commit_state, sizeof(struct commit));
 	init_commit_node(c);
 	return c;
-}
-
-static void report(const char *name, unsigned int count, size_t size)
-{
-	fprintf(stderr, "%10s: %8u (%"PRIuMAX" kB)\n",
-			name, count, (uintmax_t) size);
-}
-
-#define REPORT(name, type)	\
-    report(#name, r->parsed_objects->name##_state->count, \
-		  r->parsed_objects->name##_state->count * sizeof(type) >> 10)
-
-void alloc_report(struct repository *r)
-{
-	REPORT(blob, struct blob);
-	REPORT(tree, struct tree);
-	REPORT(commit, struct commit);
-	REPORT(tag, struct tag);
-	REPORT(object, union any_object);
 }
