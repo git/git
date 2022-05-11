@@ -1,6 +1,19 @@
 Git v2.37 Release Notes
 =======================
 
+UI, Workflows & Features
+
+ * "vimdiff[123]" mergetool drivers have been reimplemented with a
+   more generic layout mechanism.
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ * The performance of the "untracked cache" feature has been improved
+   when "--untracked-files=<mode>" and "status.showUntrackedFiles"
+   are combined.
+
+
 Fixes since v2.36
 -----------------
 
@@ -49,5 +62,13 @@ Fixes since v2.36
  * Correct choices of C compilers used in various CI jobs.
    (merge 3506cae04f ab/cc-package-fixes later to maint).
 
- * Code clean-up.
+ * Various cleanups to "git p4".
+   (merge 4ff0108d9e jh/p4-various-fixups later to maint).
+
+ * The progress meter of "git blame" was showing incorrect numbers
+   when processing only parts of the file.
+   (merge e5f5d7d42e ea/progress-partial-blame later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
    (merge e6b2582da3 cm/reftable-0-length-memset later to maint).
+   (merge 0b75e5bf22 ab/misc-cleanup later to maint).
