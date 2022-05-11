@@ -1187,11 +1187,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		} else {
 			strbuf_reset(&buf);
 			strbuf_addf(&buf, "%s/interactive", merge_dir());
-			if(file_exists(buf.buf)) {
-				options.type = REBASE_MERGE;
+			options.type = REBASE_MERGE;
+			if (file_exists(buf.buf))
 				options.flags |= REBASE_INTERACTIVE_EXPLICIT;
-			} else
-				options.type = REBASE_MERGE;
 		}
 		options.state_dir = merge_dir();
 	}
