@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (May 2022, #02; Thu, 5)
-X-master-at: f5aaf72f1b5aeb3b77bccabce014ea2590e823e2
-X-next-at: b09085170807c0234d945e787c60e6af100d2712
+Subject: What's cooking in git.git (May 2022, #03; Tue, 10)
+X-master-at: e8005e4871f130c4e402ddca2032c111252f070a
+X-next-at: 7c58a9bb42e7a3326f92385eb92bb0e04adc04ba
 
-What's cooking in git.git (May 2022, #02; Thu, 5)
+What's cooking in git.git (May 2022, #03; Tue, 10)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -13,13 +13,12 @@ topic is stable enough to be used and are candidate to be in a
 future release).  Commits prefixed with '-' are only in 'seen',
 and aren't considered "accepted" at all.
 
-The 2.36 release unfortunately turned out to be a release with
-unusually high number of regressions.  We have dealt with a few of
-them on the 'master' front already, and I am planning to cut 2.36.1
-soonish by merging them down to 'maint'.
+The 2.36 release turned out to be a release with unusually high
+number of regressions.  Git 2.36.1 has been tagged to deliver fixes
+to a handful of them.
 
-There are a few more whose fixes have not been adequately reviewed
-or agreed upon.
+There unfortunately are a few more whose fixes have not been
+adequately reviewed or agreed upon.
 
  - hooks no longer is connected directly to the standard output.
    cf. <CA+dzEBn108QoMA28f0nC8K21XT+Afua0V2Qv8XkR8rAeqUCCZw@mail.gmail.com>
@@ -27,10 +26,10 @@ or agreed upon.
  - "sudo make install" does not work out-of-the-box.
    cf. <4ef9287b-6260-9538-7c89-cffb611520ee@maurel.de>
 
-These fixed soon, 2.36.2 needs to follow, but one step at a time.
+These fixed soon, a new maintenance release needs to follow.
 
-We're in week #2 of this cycle (https://tinyurl.com/gitCal), which
-is expected to conclude in early July.
+This cycle will conclude in early July (https://tinyurl.com/gitCal);
+we are in week #3 of the cycle.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -61,130 +60,52 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* ab/cc-package-fixes (2022-04-22) 1 commit
-  (merged to 'next' on 2022-05-02 at 59e6137286)
- + CI: select CC based on CC_PACKAGE (again)
-
- Correct choices of C compilers used in various CI jobs.
- source: <patch-v3-1.1-8b3444ecc87-20220422T092015Z-avarab@gmail.com>
-
-
-* cm/reftable-0-length-memset (2022-04-15) 1 commit
-  (merged to 'next' on 2022-05-02 at 781715e2b7)
- + reftable: avoid undefined behaviour breaking t0032
-
- Code clean-up.
- source: <20220415083058.29495-1-carenas@gmail.com>
-
-
-* ds/midx-normalize-pathname-before-comparison (2022-04-25) 3 commits
-  (merged to 'next' on 2022-05-02 at aba30d3c42)
- + cache: use const char * for get_object_directory()
- + multi-pack-index: use --object-dir real path
- + midx: use real paths in lookup_multi_pack_index()
-
- The path taken by "git multi-pack-index" command from the end user
- was compared with path internally prepared by the tool withut first
- normalizing, which lead to duplicated paths not being noticed,
- which has been corrected.
- source: <pull.1221.v2.git.1650911234.gitgitgadget@gmail.com>
-
-
-* jc/clone-remote-name-leak-fix (2022-04-30) 1 commit
-  (merged to 'next' on 2022-05-02 at 32a51558ea)
- + clone: plug a miniscule leak
-
- "git clone --origin X" leaked piece of memory that held value read
- from the clone.defaultRemoteName configuration variable, which has
- been plugged.
- source: <xmqqlevl4ysk.fsf@gitster.g>
-
-
-* jc/cocci-xstrdup-or-null-fix (2022-04-30) 1 commit
-  (merged to 'next' on 2022-05-02 at dda0f8bfce)
- + cocci: drop bogus xstrdup_or_null() rule
-
- Get rid of a bogus and over-eager coccinelle rule.
- source: <xmqq1qxd6e4x.fsf@gitster.g>
-
-
-* jc/show-pathspec-fix (2022-04-29) 1 commit
-  (merged to 'next' on 2022-05-02 at 7781c7b275)
- + 2.36 show regression fix
-
- "git show <commit1> <commit2>... -- <pathspec>" lost the pathspec
- when showing the second and subsequent commits, which has been
- corrected.
- source: <xmqqo80j87g0.fsf_-_@gitster.g>
-
-
-* rs/fast-export-pathspec-fix (2022-04-30) 1 commit
-  (merged to 'next' on 2022-05-02 at 0fb97cb01d)
- + 2.36 fast-export regression fix
-
- "git fast-export -- <pathspec>" lost the pathspec when showing the
- second and subsequent commits, which has been corrected.
- source: <2c988c7b-0efe-4222-4a43-8124fe1a9da6@web.de>
-
-
-* rs/format-patch-pathspec-fix (2022-04-30) 1 commit
-  (merged to 'next' on 2022-05-02 at 1f0a9f982a)
- + 2.36 format-patch regression fix
-
- "git format-patch <args> -- <pathspec>" lost the pathspec when
- showing the second and subsequent commits, which has been
- corrected.
- source: <c36896a1-6247-123b-4fa3-b7eb24af1897@web.de>
-
---------------------------------------------------
 [New Topics]
 
-* ac/remote-v-with-object-list-filters (2022-05-04) 1 commit
- - builtin/remote.c: teach `-v` to list filters for promisor remotes
+* cd/bisect-messages-from-pre-flight-states (2022-05-06) 2 commits
+ - bisect: output bisect setup status in bisect log
+ - bisect: output state before we are ready to compute bisection
 
- source: <pull.1227.v2.git.1651591253333.gitgitgadget@gmail.com>
+ "git bisect" was too silent before it is ready to start computing
+ the actual bisection, which has been corrected.
 
-
-* cc/http-curlopt-resolve (2022-05-04) 1 commit
- - http: add custom hostname to IP address resolutions
-
- source: <20220504104601.136403-1-chriscool@tuxfamily.org>
-
-
-* js/trace2-doc-fixes (2022-05-04) 6 commits
- - trace2 docs: add missing full stop
- - trace2 docs: clarify what `varargs` is all about
- - trace2 docs: fix a JSON formatted example
- - trace2 docs: surround more terms in backticks
- - trace2 docs: "printf" is not an English word
- - trace2 docs: a couple of grammar fixes
-
- source: <pull.1172.v2.git.1651573607.gitgitgadget@gmail.com>
+ Expecting a (hopefully final) reroll.
+ cf. <xmqqh762le32.fsf@gitster.g>
+ source: <cover.1651796862.git.chris@chrisdown.name>
 
 
-* jx/l10n-workflow-change (2022-05-04) 9 commits
- - l10n: Document the new l10n workflow
- - Makefile: add "po-init" rule to initialize po/XX.po
- - Makefile: add "po-update" rule to update po/XX.po
- - po/git.pot: don't check in result of "make pot"
- - po/git.pot: this is now a generated file
- - i18n CI: stop allowing non-ASCII source messages in po/git.pot
- - Makefile: have "make pot" not "reset --hard"
- - Makefile: generate "po/git.pot" from stable LOCALIZED_C
- - Makefile: sort "po/git.pot" by file location
+* mg/detect-compiler-in-c-locale (2022-05-09) 1 commit
+ - detect-compiler: make detection independent of locale
 
- source: <20220503132354.9567-1-worldhello.net@gmail.com>
+ Build procedure fixup.
+
+ Will merge to 'next'.
+ source: <f306f43f375bc9b9c98e85260587442e5d9ef0ba.1652094958.git.git@grubix.eu>
 
 
-* tk/p4-metadata-coding-strategies (2022-05-04) 1 commit
- - git-p4: improve encoding handling to support inconsistent encodings
+* gc/pull-recurse-submodules (2022-05-10) 1 commit
+ - pull: only pass '--recurse-submodules' to subcommands
 
- source: <pull.1206.v4.git.1651346812586.gitgitgadget@gmail.com>
+ "git pull" without "--recurse-submodules=<arg>" made
+ submodule.recurse take precedence over fetch.recurseSubmodules by
+ mistake, which has been corrected.
+
+ Expecting a reroll to retitle it.
+ cf. <3234941c-5190-819f-fe3a-f528942c6b44@gmail.com>
+ source: <pull.1262.v2.git.git.1652210747614.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Stalled]
+
+* js/wait-or-whine-can-fail (2022-04-28) 1 commit
+ - run-command: don't spam trace2_child_exit()
+
+ We used to log an error return from wait_or_whine() as process
+ termination of the waited child, which was incorrect.
+
+ Needs clarifying "in rare cases".
+ source: <4616d09ffa632bd2c9e308a713c4bdf2a1328c3c.1651179450.git.steadmon@google.com>
+
 
 * ab/commit-plug-leaks (2022-02-16) 2 commits
  - commit: use strbuf_release() instead of UNLEAK()
@@ -222,7 +143,8 @@ Release tarballs are available at:
  source: <20220310004423.2627181-1-emilyshaffer@google.com>
 
 
-* cw/remote-object-info (2022-05-04) 10 commits
+* cw/remote-object-info (2022-05-06) 11 commits
+ - SQUASH??? coccicheck
  - SQUASH??? ensure that coccicheck is happy
  - SQUASH??? compilation fix
  - cat-file: add --batch-command remote-object-info command
@@ -242,6 +164,65 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* ac/remote-v-with-object-list-filters (2022-05-09) 1 commit
+ - builtin/remote.c: teach `-v` to list filters for promisor remotes
+
+ "git remote -v" now shows the list-objects-filter used during
+ fetching from the remote, if available.
+ source: <pull.1227.v4.git.1652095969026.gitgitgadget@gmail.com>
+
+
+* cc/http-curlopt-resolve (2022-05-09) 1 commit
+ - http: add custom hostname to IP address resolutions
+
+ With the new http.curloptResolve configuration, the CURLOPT_RESOLVE
+ mechanism that allows cURL based applications to use pre-resolved
+ IP addresses for the requests is exposed to the scripts.
+
+ Will merge to 'next'?
+ source: <20220509153834.485871-1-chriscool@tuxfamily.org>
+
+
+* js/trace2-doc-fixes (2022-05-04) 6 commits
+ - trace2 docs: add missing full stop
+ - trace2 docs: clarify what `varargs` is all about
+ - trace2 docs: fix a JSON formatted example
+ - trace2 docs: surround more terms in backticks
+ - trace2 docs: "printf" is not an English word
+ - trace2 docs: a couple of grammar fixes
+
+ Trace2 documentation updates.
+
+ Will merge to 'next'.
+ source: <pull.1172.v2.git.1651573607.gitgitgadget@gmail.com>
+
+
+* jx/l10n-workflow-change (2022-05-04) 9 commits
+ - l10n: Document the new l10n workflow
+ - Makefile: add "po-init" rule to initialize po/XX.po
+ - Makefile: add "po-update" rule to update po/XX.po
+ - po/git.pot: don't check in result of "make pot"
+ - po/git.pot: this is now a generated file
+ - i18n CI: stop allowing non-ASCII source messages in po/git.pot
+ - Makefile: have "make pot" not "reset --hard"
+ - Makefile: generate "po/git.pot" from stable LOCALIZED_C
+ - Makefile: sort "po/git.pot" by file location
+
+ A workflow change for translators are being proposed.
+
+ cf. <YnRI6u+dV5GNHoD9@acer>
+ source: <20220503132354.9567-1-worldhello.net@gmail.com>
+
+
+* tk/p4-metadata-coding-strategies (2022-05-04) 1 commit
+ - git-p4: improve encoding handling to support inconsistent encodings
+
+ "git p4" updates.
+
+ Will merge to 'next'?
+ source: <pull.1206.v4.git.1651346812586.gitgitgadget@gmail.com>
+
+
 * ep/equals-null-cocci (2022-05-02) 2 commits
  - tree-wide: apply equals-null.cocci
  - Merge branch 'ep/maint-equals-null-cocci' into ep/equals-null-cocci
@@ -249,7 +230,7 @@ Release tarballs are available at:
 
  Merges up ep/maint-equals-null-cocci to the current codebase.
 
- Will merge to 'next'?
+ Will merge to 'next'.
 
 
 * ep/maint-equals-null-cocci (2022-05-02) 4 commits
@@ -263,17 +244,7 @@ Release tarballs are available at:
  comparison between a pointer and NULL, and applies the clean-up to
  the maintenance track.
 
- Will merge to 'next'?
-
-
-* js/wait-or-whine-can-fail (2022-04-28) 1 commit
- - run-command: don't spam trace2_child_exit()
-
- We used to log an error return from wait_or_whine() as process
- termination of the waited child, which was incorrect.
-
- Needs clarifying "in rare cases".
- source: <4616d09ffa632bd2c9e308a713c4bdf2a1328c3c.1651179450.git.steadmon@google.com>
+ Will merge to 'next'.
 
 
 * ds/sparse-colon-path (2022-04-26) 5 commits
@@ -290,16 +261,18 @@ Release tarballs are available at:
  source: <pull.1207.v2.git.1651005800.gitgitgadget@gmail.com>
 
 
-* cb/path-owner-check-with-sudo (2022-05-02) 3 commits
- - t0034: enhance framework to allow testing more commands under sudo
+* cb/path-owner-check-with-sudo (2022-05-10) 3 commits
+ - t0034: add negative tests and allow git init to mostly work under sudo
  - git-compat-util: avoid failing dir ownership checks if running privileged
- - t: document regression git safe.directory when using sudo
+ - t: regression git needs safe.directory when using sudo
 
  With a recent update to refuse access to repositories of other
  people by default, "sudo make install" and "sudo git describe"
  stopped working.  This series intends to loosen it while keeping
  the safety.
- source: <20220502183920.88982-1-carenas@gmail.com>
+
+ Will merge to 'next'?
+ source: <20220510174616.18629-1-carenas@gmail.com>
 
 
 * pb/ggg-in-mfc-doc (2022-04-27) 3 commits
@@ -465,17 +438,18 @@ Release tarballs are available at:
  source: <pull.1214.v2.git.1650894450441.gitgitgadget@gmail.com>
 
 
-* vd/sparse-stash (2022-04-27) 7 commits
+* vd/sparse-stash (2022-05-10) 6 commits
  - unpack-trees: preserve index sparsity
- - stash: merge applied stash with merge-ort
- - merge-recursive: add merge function arg to 'merge_recursive_generic'
+ - stash: apply stash using 'merge_ort_nonrecursive()'
  - read-cache: set sparsity when index is new
  - sparse-index: expose 'is_sparse_index_allowed()'
  - stash: integrate with sparse index
  - stash: expand sparse-checkout compatibility testing
 
  Teach "git stash" to work better with sparse index entries.
- source: <pull.1171.v2.git.1651083378.gitgitgadget@gmail.com>
+
+ Will merge to 'next'?
+ source: <pull.1171.v3.git.1652225552.gitgitgadget@gmail.com>
 
 
 * sa/t1011-use-helpers (2022-04-12) 1 commit
@@ -610,7 +584,7 @@ Release tarballs are available at:
 
  Code clean-up.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <cover-v4-0.6-00000000000-20220331T014349Z-avarab@gmail.com>
 
 
@@ -631,7 +605,7 @@ Release tarballs are available at:
  The progress meter of "git blame" was showing incorrect numbers
  when processing only parts of the file.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20220406181320.16911-1-eantoranz@gmail.com>
 
 
@@ -747,7 +721,7 @@ Release tarballs are available at:
  Reimplement "vimdiff[123]" mergetool drivers with a more generic
  layout mechanism.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20220330191909.294610-1-greenfoo@u92.eu>
 
 
@@ -885,7 +859,7 @@ Release tarballs are available at:
  when "--untracked-files=<mode>" and "status.showUntrackedFiles"
  are combined.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <pull.985.v6.git.1648742535.gitgitgadget@gmail.com>
 
 
@@ -947,17 +921,17 @@ Release tarballs are available at:
  source: <pull.1132.v2.git.1645547423.gitgitgadget@gmail.com>
 
 
-* js/scalar-diagnose (2022-05-04) 7 commits
+* js/scalar-diagnose (2022-05-10) 7 commits
  - scalar: teach `diagnose` to gather loose objects information
  - scalar: teach `diagnose` to gather packfile info
  - scalar diagnose: include disk space information
- - Implement `scalar diagnose`
+ - scalar: implement `scalar diagnose`
  - scalar: validate the optional enlistment argument
  - archive --add-file-with-contents: allow paths containing colons
  - archive: optionally add "virtual" files
 
  Implementation of "scalar diagnose" subcommand.
- source: <pull.1128.v3.git.1651677919.gitgitgadget@gmail.com>
+ source: <pull.1128.v4.git.1652210824.gitgitgadget@gmail.com>
 
 
 * en/merge-tree (2022-02-23) 13 commits
@@ -1012,7 +986,7 @@ Release tarballs are available at:
 
  Various cleanups to "git p4".
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20220401142504.58995-1-jholdsworth@nvidia.com>
 
 
