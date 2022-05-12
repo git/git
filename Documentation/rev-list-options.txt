@@ -25,6 +25,11 @@ ordering and formatting options, such as `--reverse`.
 --after=<date>::
 	Show commits more recent than a specific date.
 
+--since-as-filter=<date>::
+	Show all commits more recent than a specific date. This visits
+	all commits in the range, rather than stopping at the first commit which
+	is older than a specific date.
+
 --until=<date>::
 --before=<date>::
 	Show commits older than a specific date.
