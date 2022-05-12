@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (May 2022, #03; Tue, 10)
-X-master-at: e8005e4871f130c4e402ddca2032c111252f070a
-X-next-at: 7c58a9bb42e7a3326f92385eb92bb0e04adc04ba
+Subject: What's cooking in git.git (May 2022, #04; Thu, 12)
+X-master-at: 277cf0bc36094f6dc4297d8c9cef79df045b735d
+X-next-at: 0e6072fb45b2316f096b16b5a8b4fee15a93929e
 
-What's cooking in git.git (May 2022, #03; Tue, 10)
+What's cooking in git.git (May 2022, #04; Thu, 12)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -13,12 +13,8 @@ topic is stable enough to be used and are candidate to be in a
 future release).  Commits prefixed with '-' are only in 'seen',
 and aren't considered "accepted" at all.
 
-The 2.36 release turned out to be a release with unusually high
-number of regressions.  Git 2.36.1 has been tagged to deliver fixes
-to a handful of them.
-
-There unfortunately are a few more whose fixes have not been
-adequately reviewed or agreed upon.
+There unfortunately are still a few regressions whose fixes have
+been reviewed but not yet rerolled.
 
  - hooks no longer is connected directly to the standard output.
    cf. <CA+dzEBn108QoMA28f0nC8K21XT+Afua0V2Qv8XkR8rAeqUCCZw@mail.gmail.com>
@@ -26,7 +22,11 @@ adequately reviewed or agreed upon.
  - "sudo make install" does not work out-of-the-box.
    cf. <4ef9287b-6260-9538-7c89-cffb611520ee@maurel.de>
 
-These fixed soon, a new maintenance release needs to follow.
+With these fixed soon, a new maintenance release needs to follow.
+
+The tip of 'next' has been rewound and rebuilt, after the remaining
+topics that have been cooking in 'next' from the previous cycle have
+been flushed to 'master'.
 
 This cycle will conclude in early July (https://tinyurl.com/gitCal);
 we are in week #3 of the cycle.
@@ -60,42 +60,243 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* ab/misc-cleanup (2022-04-01) 6 commits
+  (merged to 'next' on 2022-04-04 at c5fb674865)
+ + alloc.[ch]: remove alloc_report() function
+ + object-store.h: remove unused has_sha1_file*()
+ + pack-bitmap-write: remove unused bitmap_reset() function
+ + xdiff/xmacros.h: remove unused XDL_PTRFREE
+ + configure.ac: remove USE_PIC comment
+ + run-command.h: remove always unused "clean_on_exit_handler_cbdata"
+
+ Code clean-up.
+ source: <cover-v4-0.6-00000000000-20220331T014349Z-avarab@gmail.com>
+
+
+* ah/rebase-keep-base-fix (2022-04-21) 1 commit
+  (merged to 'next' on 2022-05-02 at 8e6071e208)
+ + rebase: use correct base for --keep-base when a branch is given
+
+ "git rebase --keep-base <upstream> <branch-to-rebase>" computed the
+ commit to rebase onto incorrectly, which has been corrected.
+ source: <20220421044233.894255-1-alexhenrie24@gmail.com>
+
+
+* ea/progress-partial-blame (2022-04-06) 1 commit
+  (merged to 'next' on 2022-04-07 at 7df8392d71)
+ + blame: report correct number of lines in progress when using ranges
+
+ The progress meter of "git blame" was showing incorrect numbers
+ when processing only parts of the file.
+ source: <20220406181320.16911-1-eantoranz@gmail.com>
+
+
+* ea/rebase-code-simplify (2022-04-20) 1 commit
+  (merged to 'next' on 2022-05-02 at 88ed49c2d0)
+ + rebase: simplify an assignment of options.type in cmd_rebase
+
+ Code clean-up.
+ source: <20220418172721.215898-1-eantoranz@gmail.com>
+
+
+* fr/vimdiff-layout (2022-04-03) 4 commits
+  (merged to 'next' on 2022-04-04 at 5d1c8197d0)
+ + mergetools: add description to all diff/merge tools
+ + vimdiff: add tool documentation
+ + vimdiff: integrate layout tests in the unit tests framework ('t' folder)
+ + vimdiff: new implementation with layout support
+
+ Reimplement "vimdiff[123]" mergetool drivers with a more generic
+ layout mechanism.
+ source: <20220330191909.294610-1-greenfoo@u92.eu>
+
+
+* jh/p4-various-fixups (2022-04-01) 22 commits
+  (merged to 'next' on 2022-04-04 at 251b14976f)
+ + git-p4: sort imports
+ + git-p4: seperate multiple statements onto seperate lines
+ + git-p4: move inline comments to line above
+ + git-p4: only seperate code blocks by a single empty line
+ + git-p4: compare to singletons with "is" and "is not"
+ + git-p4: normalize indentation of lines in conditionals
+ + git-p4: ensure there is a single space around all operators
+ + git-p4: ensure every comment has a single #
+ + git-p4: remove spaces between dictionary keys and colons
+ + git-p4: remove redundant backslash-continuations inside brackets
+ + git-p4: remove extraneous spaces before function arguments
+ + git-p4: place a single space after every comma
+ + git-p4: removed brackets when assigning multiple return values
+ + git-p4: remove spaces around default arguments
+ + git-p4: remove padding from lists, tuples and function arguments
+ + git-p4: sort and de-duplcate pylint disable list
+ + git-p4: remove commented code
+ + git-p4: convert descriptive class and function comments into docstrings
+ + git-p4: improve consistency of docstring formatting
+ + git-p4: indent with 4-spaces
+ + git-p4: remove unneeded semicolons from statements
+ + git-p4: add blank lines between functions and class definitions
+
+ Various cleanups to "git p4".
+ source: <20220401142504.58995-1-jholdsworth@nvidia.com>
+
+
+* kt/commit-graph-plug-fp-leak-on-error (2022-04-20) 1 commit
+  (merged to 'next' on 2022-05-02 at c3bcb92518)
+ + commit-graph: close file before returning NULL
+
+ Fix a leak of FILE * in an error codepath.
+ source: <pull.1213.git.1650302007395.gitgitgadget@gmail.com>
+
+
+* pw/test-malloc-with-sanitize-address (2022-04-11) 1 commit
+  (merged to 'next' on 2022-05-02 at a25766055f)
+ + tests: make SANITIZE=address imply TEST_NO_MALLOC_CHECK
+
+ Avoid problems from interaction between malloc_check and address
+ sanitizer.
+ source: <pull.1210.git.1649507317350.gitgitgadget@gmail.com>
+
+
+* rs/commit-summary-wo-break-rewrite (2022-04-06) 1 commit
+  (merged to 'next' on 2022-05-02 at c40509b820)
+ + commit, sequencer: turn off break_opt for commit summary
+
+ The commit summary shown after making a commit is matched to what
+ is given in "git status" not to use the break-rewrite heuristics.
+ source: <c35bd0aa-2e46-e710-2b39-89f18bad0097@web.de>
+
+
+* tk/untracked-cache-with-uall (2022-04-01) 2 commits
+  (merged to 'next' on 2022-04-04 at 2e11f1ac0c)
+ + untracked-cache: support '--untracked-files=all' if configured
+ + untracked-cache: test untracked-cache-bypassing behavior with -uall
+
+ The performance of the "untracked cache" feature has been improved
+ when "--untracked-files=<mode>" and "status.showUntrackedFiles"
+ are combined.
+ source: <pull.985.v6.git.1648742535.gitgitgadget@gmail.com>
+
+--------------------------------------------------
 [New Topics]
 
-* cd/bisect-messages-from-pre-flight-states (2022-05-06) 2 commits
- - bisect: output bisect setup status in bisect log
- - bisect: output state before we are ready to compute bisection
+* gg/worktree-from-the-above (2022-05-11) 2 commits
+ - dir: minor refactoring / clean-up
+ - dir: consider worktree config in path recursion
 
- "git bisect" was too silent before it is ready to start computing
- the actual bisection, which has been corrected.
+ With a non-bare repository, with core.worktree pointing at a
+ directory that has the repository as its subdirectory, regressed in
+ Git 2.27 days.
 
- Expecting a (hopefully final) reroll.
- cf. <xmqqh762le32.fsf@gitster.g>
- source: <cover.1651796862.git.chris@chrisdown.name>
-
-
-* mg/detect-compiler-in-c-locale (2022-05-09) 1 commit
- - detect-compiler: make detection independent of locale
-
- Build procedure fixup.
-
- Will merge to 'next'.
- source: <f306f43f375bc9b9c98e85260587442e5d9ef0ba.1652094958.git.git@grubix.eu>
+ Expecting a reroll.
+ source: <20220510171527.25778-1-ggossdev@gmail.com>
 
 
-* gc/pull-recurse-submodules (2022-05-10) 1 commit
- - pull: only pass '--recurse-submodules' to subcommands
+* jc/update-ozlabs-url (2022-05-11) 1 commit
+  (merged to 'next' on 2022-05-12 at d6b14040b6)
+ + SubmittingPatches: use more stable git.ozlabs.org URL
 
- "git pull" without "--recurse-submodules=<arg>" made
- submodule.recurse take precedence over fetch.recurseSubmodules by
- mistake, which has been corrected.
+ Will merge to 'master'.
 
- Expecting a reroll to retitle it.
- cf. <3234941c-5190-819f-fe3a-f528942c6b44@gmail.com>
- source: <pull.1262.v2.git.git.1652210747614.gitgitgadget@gmail.com>
+
+* jc/archive-add-file-normalize-mode (2022-05-12) 1 commit
+ - archive: do not let on-disk mode leak to zip archives
+
+ "git archive --add-file=<path>" picked up the raw permission bits
+ from the path and propagated to zip output in some cases, without
+ normalization, which has been corrected (tar output did not have
+ this issue).
+
+ Will merge to 'next'?
+ source: <xmqqmtfme8v6.fsf@gitster.g>
 
 --------------------------------------------------
 [Stalled]
+
+* js/bisect-in-c (2022-02-23) 14 commits
+ - bisect: no longer try to clean up left-over `.git/head-name` files
+ - bisect: remove Cogito-related code
+ - bisect: turn `git bisect` into a full built-in
+ - bisect: move even the option parsing to `bisect--helper`
+ - bisect--helper: return only correct exit codes in `cmd_*()`
+ - bisect--helper: move the `BISECT_STATE` case to the end
+ - bisect--helper: make `--bisect-state` optional
+ - bisect--helper: align the sub-command order with git-bisect.sh
+ - bisect--helper: using `--bisect-state` without an argument is a bug
+ - bisect--helper: really retire `--bisect-autostart`
+ - bisect--helper: really retire --bisect-next-check
+ - bisect--helper: retire the --no-log option
+ - bisect: avoid double-quoting when printing the failed command
+ - bisect run: fix the error message
+
+ Final bits of "git bisect.sh" have been rewritten in C.
+
+ Expecting a reroll.
+ cf. <220225.86ilt27uln.gmgdl@evledraar.gmail.com>
+ source: <pull.1132.v2.git.1645547423.gitgitgadget@gmail.com>
+
+
+* et/xdiff-indirection (2022-02-17) 1 commit
+ - xdiff: provide indirection to git functions
+
+ Insert a layer of preprocessor macros for common functions in xdiff
+ codebase.
+
+ Expecting a reroll.
+ cf. <xmqqbkyudb8n.fsf@gitster.g>
+ source: <20220217225408.GB7@edef91d97c94>
+
+
+* js/ci-github-workflow-markup (2022-03-01) 9 commits
+ - ci: call `finalize_test_case_output` a little later
+ - ci: use `--github-workflow-markup` in the GitHub workflow
+ - ci: optionally mark up output in the GitHub workflow
+ - test(junit): avoid line feeds in XML attributes
+ - tests: refactor --write-junit-xml code
+ - ci/run-build-and-tests: add some structure to the GitHub workflow output
+ - ci: make it easier to find failed tests' logs in the GitHub workflow
+ - ci/run-build-and-tests: take a more high-level view
+ - ci: fix code style
+
+ Update the GitHub workflow support to make it quicker to get to the
+ failing test.
+
+ Expecting a reroll.
+ cf. <52382f7c-5b6a-63b6-2eb2-26c12f31f529@gmail.com>
+ source: <pull.1117.v2.git.1646130289.gitgitgadget@gmail.com>
+
+
+* bc/stash-export (2022-04-08) 4 commits
+ - builtin/stash: provide a way to import stashes from a ref
+ - builtin/stash: provide a way to export stashes to a ref
+ - builtin/stash: factor out revision parsing into a function
+ - object-name: make get_oid quietly return an error
+
+ A mechanism to export and import stash entries to and from a normal
+ commit to transfer it across repositories has been introduced.
+
+ Expecting a reroll.
+ cf. <YnL2d4Vr9Vr7W4Hj@camp.crustytoothpaste.net>
+ source: <20220407215352.3491567-1-sandals@crustytoothpaste.net>
+
+
+* ab/hooks-regression-fix (2022-04-21) 6 commits
+ - hook API: fix v2.36.0 regression: hooks should be connected to a TTY
+ - hook API: don't redundantly re-set "no_stdin" and "stdout_to_stderr"
+ - hook tests: fix redirection logic error in 96e7225b310
+ - run-command: add an "ungroup" option to run_process_parallel()
+ - run-command tests: test stdout of run_command_parallel()
+ - run-command API: replace run_processes_parallel_tr2() with opts struct
+
+ In Git 2.36 we revamped the way how hooks are invoked.  One change
+ that is end-user visible is that the output of a hook is no longer
+ directly connected to the standard output of "git" that spawns the
+ hook, which was noticed post release.  This is getting corrected.
+
+ Expecting a reroll.
+ source: <cover-0.6-00000000000-20220421T122108Z-avarab@gmail.com>
+
 
 * js/wait-or-whine-can-fail (2022-04-28) 1 commit
  - run-command: don't spam trace2_child_exit()
@@ -105,17 +306,6 @@ Release tarballs are available at:
 
  Needs clarifying "in rare cases".
  source: <4616d09ffa632bd2c9e308a713c4bdf2a1328c3c.1651179450.git.steadmon@google.com>
-
-
-* ab/commit-plug-leaks (2022-02-16) 2 commits
- - commit: use strbuf_release() instead of UNLEAK()
- - commit: fix "author_ident" leak
-
- Leakfixes in the top-level called-once function.
-
- Expecting a reroll.
- I think UNLEAK->strbuf_release() is a regression.
- source: <cover-0.2-00000000000-20220216T081844Z-avarab@gmail.com>
 
 
 * dl/prompt-pick-fix (2022-03-25) 1 commit
@@ -164,6 +354,62 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* ab/commit-plug-leaks (2022-05-12) 1 commit
+ - commit: fix "author_ident" leak
+
+ Leakfix in the top-level called-once function.
+
+ Will merge to 'next'?
+ source: <xmqqzgjmcqlg.fsf@gitster.g>
+
+
+* ab/valgrind-fixes (2022-05-12) 4 commits
+ - commit-graph.c: don't assume that stat() succeeds
+ - object-file: fix a unpack_loose_header() regression in 3b6a8db3b03
+ - log test: skip a failing mkstemp() test under valgrind
+ - tests: using custom GIT_EXEC_PATH breaks --valgrind tests
+
+ A bit of test framework fixes with a few fixes to issues found by
+ valgrind.
+
+ Will merge to 'next'?
+ source: <20220512223218.237544-1-gitster@pobox.com>
+
+
+* cd/bisect-messages-from-pre-flight-states (2022-05-11) 2 commits
+  (merged to 'next' on 2022-05-12 at 0e6072fb45)
+ + bisect: output bisect setup status in bisect log
+ + bisect: output state before we are ready to compute bisection
+
+ "git bisect" was too silent before it is ready to start computing
+ the actual bisection, which has been corrected.
+
+ Will merge to 'master'.
+ source: <cover.1652291688.git.chris@chrisdown.name>
+
+
+* mg/detect-compiler-in-c-locale (2022-05-09) 1 commit
+  (merged to 'next' on 2022-05-12 at 58c7d6e461)
+ + detect-compiler: make detection independent of locale
+
+ Build procedure fixup.
+
+ Will merge to 'master'.
+ source: <f306f43f375bc9b9c98e85260587442e5d9ef0ba.1652094958.git.git@grubix.eu>
+
+
+* gc/pull-recurse-submodules (2022-05-11) 1 commit
+  (merged to 'next' on 2022-05-12 at fe15c34c7a)
+ + pull: do not let submodule.recurse override fetch.recurseSubmodules
+
+ "git pull" without "--recurse-submodules=<arg>" made
+ submodule.recurse take precedence over fetch.recurseSubmodules by
+ mistake, which has been corrected.
+
+ Will merge to 'master'.
+ source: <pull.1262.v2.git.git.1652210747614.gitgitgadget@gmail.com>
+
+
 * ac/remote-v-with-object-list-filters (2022-05-09) 1 commit
  - builtin/remote.c: teach `-v` to list filters for promisor remotes
 
@@ -184,16 +430,17 @@ Release tarballs are available at:
 
 
 * js/trace2-doc-fixes (2022-05-04) 6 commits
- - trace2 docs: add missing full stop
- - trace2 docs: clarify what `varargs` is all about
- - trace2 docs: fix a JSON formatted example
- - trace2 docs: surround more terms in backticks
- - trace2 docs: "printf" is not an English word
- - trace2 docs: a couple of grammar fixes
+  (merged to 'next' on 2022-05-12 at b37c6a8c2e)
+ + trace2 docs: add missing full stop
+ + trace2 docs: clarify what `varargs` is all about
+ + trace2 docs: fix a JSON formatted example
+ + trace2 docs: surround more terms in backticks
+ + trace2 docs: "printf" is not an English word
+ + trace2 docs: a couple of grammar fixes
 
  Trace2 documentation updates.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1172.v2.git.1651573607.gitgitgadget@gmail.com>
 
 
@@ -275,38 +522,30 @@ Release tarballs are available at:
  source: <20220510174616.18629-1-carenas@gmail.com>
 
 
-* pb/ggg-in-mfc-doc (2022-04-27) 3 commits
+* pb/ggg-in-mfc-doc (2022-05-10) 5 commits
  - MyFirstContribution: drop PR description for GGG single-patch contributions
- - MyFirstContribution: also explain cover letter in GitGitGadget section
- - MyFirstContribution: move cover letter description to a separate file
+ - MyFirstContribution: reference "The cover letter" in GitGitGadget section
+ - MyFirstContribution: reference "The cover letter" in "Preparing Email"
+ - MyFirstContribution: add standalone section on cover letter
+ - MyFirstContribution: add "Anatomy of a Patch Series" section
 
  Documentation update.
 
  Expecting a reroll.
- cf. <706e34fb-fb0c-e86d-5d0f-0bd052566b3a@gmail.com>
- source: <pull.1226.git.1651086288.gitgitgadget@gmail.com>
+ cf. <a955b9f1-3e11-70c5-b390-a35b420d6835@gmail.com>
+ source: <pull.1226.v2.git.1652233654.gitgitgadget@gmail.com>
 
 
 * sg/safe-directory-tests-and-docs (2022-04-27) 3 commits
- - safe.directory: document and check that it's ignored in the environment
- - t0033-safe-directory: check when 'safe.directory' is ignored
- - t0033-safe-directory: check the error message without matching the trash dir
+  (merged to 'next' on 2022-05-12 at 2a6a11d6bf)
+ + safe.directory: document and check that it's ignored in the environment
+ + t0033-safe-directory: check when 'safe.directory' is ignored
+ + t0033-safe-directory: check the error message without matching the trash dir
 
  New tests for the safe.directory mechanism.
 
- Will merge to 'next'.
- source: <20220427170649.4949-1-szeder.dev@gmail.com>
-
-
-* ah/rebase-keep-base-fix (2022-04-21) 1 commit
-  (merged to 'next' on 2022-05-02 at 8e6071e208)
- + rebase: use correct base for --keep-base when a branch is given
-
- "git rebase --keep-base <upstream> <branch-to-rebase>" computed the
- commit to rebase onto incorrectly, which has been corrected.
-
  Will merge to 'master'.
- source: <20220421044233.894255-1-alexhenrie24@gmail.com>
+ source: <20220427170649.4949-1-szeder.dev@gmail.com>
 
 
 * cg/tools-for-git-doc (2022-04-21) 1 commit
@@ -318,43 +557,8 @@ Release tarballs are available at:
  source: <20220421084515.21236-2-cogoni.guillaume@gmail.com>
 
 
-* ea/rebase-code-simplify (2022-04-20) 1 commit
-  (merged to 'next' on 2022-05-02 at 88ed49c2d0)
- + rebase: simplify an assignment of options.type in cmd_rebase
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <20220418172721.215898-1-eantoranz@gmail.com>
-
-
-* kt/commit-graph-plug-fp-leak-on-error (2022-04-20) 1 commit
-  (merged to 'next' on 2022-05-02 at c3bcb92518)
- + commit-graph: close file before returning NULL
-
- Fix a leak of FILE * in an error codepath.
-
- Will merge to 'master'.
- source: <pull.1213.git.1650302007395.gitgitgadget@gmail.com>
-
-
-* ab/valgrind-fixes (2022-04-21) 4 commits
- - object-file: fix a unpack_loose_header() regression in 3b6a8db3b03
- - commit-graph.c: don't assume that stat() succeeds
- - log test: skip a failing mkstemp() test under valgrind
- - tests: make RUNTIME_PREFIX compatible with --valgrind
-
- A bit of test framework fixes with a few fixes to issues found by
- valgrind.
-
- Expecting a reroll.
- source: <cover-0.4-00000000000-20220421T200733Z-avarab@gmail.com>
-
-
-* cb/ci-make-p4-optional (2022-04-25) 6 commits
- - fixup! ci: make failure to find perforce more user friendly
- - fixup! CI: use https, not http to download binaries from perforce.com
- - CI: use https, not http to download binaries from perforce.com
+* cb/ci-make-p4-optional (2022-05-12) 4 commits
+ - ci: use https, not http to download binaries from perforce.com
  - ci: reintroduce prevention from perforce being quarantined in macOS
  - ci: avoid brew for installing perforce
  - ci: make failure to find perforce more user friendly
@@ -364,9 +568,8 @@ Release tarballs are available at:
  failing the whole CI job, just let it skip the p4 tests when this
  happens.
 
- Expecting a reroll.
- source: <20220423142559.32507-1-carenas@gmail.com>
- source: <0220423142559.32507-5-carenas@gmail.com>
+ Will merge to 'next'?
+ source: <20220512223940.238367-1-gitster@pobox.com>
 
 
 * jc/show-branch-g-current (2022-04-21) 1 commit
@@ -379,31 +582,15 @@ Release tarballs are available at:
 
 
 * rs/external-diff-tempfile (2022-04-20) 2 commits
- - diff: use mks_tempfile_dt()
- - tempfile: add mks_tempfile_dt()
+  (merged to 'next' on 2022-05-12 at b357b518b3)
+ + diff: use mks_tempfile_dt()
+ + tempfile: add mks_tempfile_dt()
 
  The temporary files fed to external diff command are now generated
  inside a new temporary directory under the same basename.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <2ad1dd80-e79f-7304-219c-db24bb269c4d@web.de>
-
-
-* ab/hooks-regression-fix (2022-04-21) 6 commits
- - hook API: fix v2.36.0 regression: hooks should be connected to a TTY
- - hook API: don't redundantly re-set "no_stdin" and "stdout_to_stderr"
- - hook tests: fix redirection logic error in 96e7225b310
- - run-command: add an "ungroup" option to run_process_parallel()
- - run-command tests: test stdout of run_command_parallel()
- - run-command API: replace run_processes_parallel_tr2() with opts struct
-
- In Git 2.36 we revamped the way how hooks are invoked.  One change
- that is end-user visible is that the output of a hook is no longer
- directly connected to the standard output of "git" that spawns the
- hook, which was noticed post release.  This is getting corrected.
-
- Expecting a reroll.
- source: <cover-0.6-00000000000-20220421T122108Z-avarab@gmail.com>
 
 
 * ar/send-email-confirm-by-default (2022-04-22) 1 commit
@@ -417,7 +604,8 @@ Release tarballs are available at:
 
 
 * mv/log-since-as-filter (2022-04-23) 1 commit
- - log: "--since-as-filter" option is a non-terminating "--since" variant
+  (merged to 'next' on 2022-05-12 at dc93e4e93a)
+ + log: "--since-as-filter" option is a non-terminating "--since" variant
 
  "git log --since=X" will stop traversal upon seeing a commit that
  is older than X, but there may be commits behind it that is younger
@@ -425,16 +613,17 @@ Release tarballs are available at:
  option is added to keep digging without stopping, and instead
  filter out commits with timestamp older than X.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <YmP4TaYmSEi6GeB4@vmiklos.hu>
 
 
 * ds/do-not-call-bug-on-bad-refs (2022-04-25) 1 commit
- - clone: die() instead of BUG() on bad refs
+  (merged to 'next' on 2022-05-12 at af4d003dfb)
+ + clone: die() instead of BUG() on bad refs
 
  Code clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1214.v2.git.1650894450441.gitgitgadget@gmail.com>
 
 
@@ -453,11 +642,12 @@ Release tarballs are available at:
 
 
 * sa/t1011-use-helpers (2022-04-12) 1 commit
- - t1011: replace test -f with test_path_is_file
+  (merged to 'next' on 2022-05-12 at 5bed8531e3)
+ + t1011: replace test -f with test_path_is_file
 
  A GSoC practice.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20220412203722.10484-1-siddharthasthana31@gmail.com>
 
 
@@ -467,98 +657,84 @@ Release tarballs are available at:
  source: <20220414022513.31465-1-gitter.spiros@gmail.com>
 
 
-* pw/test-malloc-with-sanitize-address (2022-04-11) 1 commit
-  (merged to 'next' on 2022-05-02 at a25766055f)
- + tests: make SANITIZE=address imply TEST_NO_MALLOC_CHECK
-
- Avoid problems from interaction between malloc_check and address
- sanitizer.
-
- Will merge to 'master'.
- source: <pull.1210.git.1649507317350.gitgitgadget@gmail.com>
-
-
 * rs/t7812-pcre2-ws-bug-test (2022-04-11) 1 commit
- - t7812: test PCRE2 whitespace bug
+  (merged to 'next' on 2022-05-12 at 0e0ce3b493)
+ + t7812: test PCRE2 whitespace bug
 
  A test to ensure workaround for an earlier pcre2 bug does work.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <3a49649d-8ff9-e5a7-e3fd-33fee5068ae8@web.de>
 
 
 * ah/convert-warning-message (2022-04-08) 1 commit
- - convert: clarify line ending conversion warning
+  (merged to 'next' on 2022-05-12 at a9f8f32904)
+ + convert: clarify line ending conversion warning
 
  Update a few end-user facing messages around eol conversion.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20220408044154.9947-1-alexhenrie24@gmail.com>
 
 
 * cg/vscode-with-gdb (2022-04-08) 1 commit
- - contrib/vscode/: debugging with VS Code and gdb
+  (merged to 'next' on 2022-05-12 at 2635bf0c8c)
+ + contrib/vscode/: debugging with VS Code and gdb
 
  VS code configuration updates.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20220407204001.112287-2-cogoni.guillaume@gmail.com>
 
 
 * gf/unused-includes (2022-04-06) 2 commits
- - apply.c: remove unnecessary include
- - serve.c: remove unnecessary include
+  (merged to 'next' on 2022-05-12 at 690a2d8976)
+ + apply.c: remove unnecessary include
+ + serve.c: remove unnecessary include
 
  Remove unused includes.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20220331194436.58005-1-garrit@slashdev.space>
 
 
 * km/t3501-use-test-helpers (2022-04-06) 1 commit
- - t3501: remove test -f and stop ignoring git <cmd> exit code
+  (merged to 'next' on 2022-05-12 at 66c5cd1c32)
+ + t3501: remove test -f and stop ignoring git <cmd> exit code
 
  Test script updates.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20220405134742.17526-2-khalid.masum.92@gmail.com>
 
 
 * pb/submodule-recurse-mode-enum (2022-04-06) 1 commit
- - submodule.h: use a named enum for RECURSE_SUBMODULES_*
+  (merged to 'next' on 2022-05-12 at 1164a4c9b7)
+ + submodule.h: use a named enum for RECURSE_SUBMODULES_*
 
  Small code clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1111.v2.git.1649092211419.gitgitgadget@gmail.com>
 
 
-* rs/commit-summary-wo-break-rewrite (2022-04-06) 1 commit
-  (merged to 'next' on 2022-05-02 at c40509b820)
- + commit, sequencer: turn off break_opt for commit summary
-
- The commit summary shown after making a commit is matched to what
- is given in "git status" not to use the break-rewrite heuristics.
-
- Will merge to 'master'.
- source: <c35bd0aa-2e46-e710-2b39-89f18bad0097@web.de>
-
-
 * tk/p4-utf8-bom (2022-04-06) 1 commit
- - git-p4: preserve utf8 BOM when importing from p4 to git
+  (merged to 'next' on 2022-05-12 at 7bb2e70e7b)
+ + git-p4: preserve utf8 BOM when importing from p4 to git
 
  "git p4" update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1203.git.1649051436934.gitgitgadget@gmail.com>
 
 
 * tk/p4-with-explicity-sync (2022-04-06) 1 commit
- - git-p4: support explicit sync of arbitrary existing git-p4 refs
+  (merged to 'next' on 2022-05-12 at 81e662edae)
+ + git-p4: support explicit sync of arbitrary existing git-p4 refs
 
  "git p4" update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1202.git.1649049054600.gitgitgadget@gmail.com>
 
 
@@ -573,40 +749,15 @@ Release tarballs are available at:
  source: <cover-0.3-00000000000-20220406T104134Z-avarab@gmail.com>
 
 
-* ab/misc-cleanup (2022-04-01) 6 commits
-  (merged to 'next' on 2022-04-04 at c5fb674865)
- + alloc.[ch]: remove alloc_report() function
- + object-store.h: remove unused has_sha1_file*()
- + pack-bitmap-write: remove unused bitmap_reset() function
- + xdiff/xmacros.h: remove unused XDL_PTRFREE
- + configure.ac: remove USE_PIC comment
- + run-command.h: remove always unused "clean_on_exit_handler_cbdata"
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <cover-v4-0.6-00000000000-20220331T014349Z-avarab@gmail.com>
-
-
 * gf/shorthand-version-and-help (2022-03-31) 1 commit
- - cli: add -v and -h shorthands
+  (merged to 'next' on 2022-05-12 at 54ca8b25e0)
+ + cli: add -v and -h shorthands
 
  "git -v" and "git -h" are now understood as "git --version" and
  "git --help".
 
- Will merge to 'next'.
- source: <20220331212709.36036-1-garrit@slashdev.space>
-
-
-* ea/progress-partial-blame (2022-04-06) 1 commit
-  (merged to 'next' on 2022-04-07 at 7df8392d71)
- + blame: report correct number of lines in progress when using ranges
-
- The progress meter of "git blame" was showing incorrect numbers
- when processing only parts of the file.
-
  Will merge to 'master'.
- source: <20220406181320.16911-1-eantoranz@gmail.com>
+ source: <20220331212709.36036-1-garrit@slashdev.space>
 
 
 * ab/plug-leak-in-revisions (2022-04-13) 28 commits
@@ -703,40 +854,13 @@ Release tarballs are available at:
 
 
 * kf/p4-multiple-remotes (2022-03-21) 1 commit
- - git-p4: fix issue with multiple perforce remotes
+  (merged to 'next' on 2022-05-12 at 447ed8ee3e)
+ + git-p4: fix issue with multiple perforce remotes
 
  "git p4" update.
 
  Will merge to 'next'?
  source: <pull.1180.git.1647866603032.gitgitgadget@gmail.com>
-
-
-* fr/vimdiff-layout (2022-04-03) 4 commits
-  (merged to 'next' on 2022-04-04 at 5d1c8197d0)
- + mergetools: add description to all diff/merge tools
- + vimdiff: add tool documentation
- + vimdiff: integrate layout tests in the unit tests framework ('t' folder)
- + vimdiff: new implementation with layout support
-
- Reimplement "vimdiff[123]" mergetool drivers with a more generic
- layout mechanism.
-
- Will merge to 'master'.
- source: <20220330191909.294610-1-greenfoo@u92.eu>
-
-
-* bc/stash-export (2022-04-08) 4 commits
- - builtin/stash: provide a way to import stashes from a ref
- - builtin/stash: provide a way to export stashes to a ref
- - builtin/stash: factor out revision parsing into a function
- - object-name: make get_oid quietly return an error
-
- A mechanism to export and import stash entries to and from a normal
- commit to transfer it across repositories has been introduced.
-
- Expecting a reroll.
- cf. <YnL2d4Vr9Vr7W4Hj@camp.crustytoothpaste.net>
- source: <20220407215352.3491567-1-sandals@crustytoothpaste.net>
 
 
 * ns/batch-fsync (2022-04-06) 13 commits
@@ -807,36 +931,6 @@ Release tarballs are available at:
  source: <cover.1646266835.git.me@ttaylorr.com>
 
 
-* js/ci-github-workflow-markup (2022-03-01) 9 commits
- - ci: call `finalize_test_case_output` a little later
- - ci: use `--github-workflow-markup` in the GitHub workflow
- - ci: optionally mark up output in the GitHub workflow
- - test(junit): avoid line feeds in XML attributes
- - tests: refactor --write-junit-xml code
- - ci/run-build-and-tests: add some structure to the GitHub workflow output
- - ci: make it easier to find failed tests' logs in the GitHub workflow
- - ci/run-build-and-tests: take a more high-level view
- - ci: fix code style
-
- Update the GitHub workflow support to make it quicker to get to the
- failing test.
-
- Expecting a reroll.
- cf. <52382f7c-5b6a-63b6-2eb2-26c12f31f529@gmail.com>
- source: <pull.1117.v2.git.1646130289.gitgitgadget@gmail.com>
-
-
-* et/xdiff-indirection (2022-02-17) 1 commit
- - xdiff: provide indirection to git functions
-
- Insert a layer of preprocessor macros for common functions in xdiff
- codebase.
-
- Expecting a reroll.
- cf. <xmqqbkyudb8n.fsf@gitster.g>
- source: <20220217225408.GB7@edef91d97c94>
-
-
 * tk/simple-autosetupmerge (2022-04-29) 3 commits
  - push: new config option "push.autoSetupRemote" supports "simple" push
  - push: default to single remote even when not named origin
@@ -847,20 +941,9 @@ Release tarballs are available at:
  -c push.default=simple" on branch $A would push to update the
  branch $A at the remote $B came from.  Also more places use the
  sole remote, if exists, before defaulting to 'origin'.
+
+ Thoughts?
  source: <pull.1161.v5.git.1651226206.gitgitgadget@gmail.com>
-
-
-* tk/untracked-cache-with-uall (2022-04-01) 2 commits
-  (merged to 'next' on 2022-04-04 at 2e11f1ac0c)
- + untracked-cache: support '--untracked-files=all' if configured
- + untracked-cache: test untracked-cache-bypassing behavior with -uall
-
- The performance of the "untracked cache" feature has been improved
- when "--untracked-files=<mode>" and "status.showUntrackedFiles"
- are combined.
-
- Will merge to 'master'.
- source: <pull.985.v6.git.1648742535.gitgitgadget@gmail.com>
 
 
 * jh/builtin-fsmonitor-part3 (2022-04-22) 29 commits
@@ -895,33 +978,14 @@ Release tarballs are available at:
  - Merge branch 'jh/builtin-fsmonitor-part2' into jh/builtin-fsmonitor-part3
 
  More fsmonitor--daemon.
+
+ Expecting a hopefully final reroll.
+ cf. <nycvar.QRO.7.76.6.2205121726260.352@tvgsbejvaqbjf.bet>
  source: <pull.1143.v6.git.1650662994.gitgitgadget@gmail.com>
 
 
-* js/bisect-in-c (2022-02-23) 14 commits
- - bisect: no longer try to clean up left-over `.git/head-name` files
- - bisect: remove Cogito-related code
- - bisect: turn `git bisect` into a full built-in
- - bisect: move even the option parsing to `bisect--helper`
- - bisect--helper: return only correct exit codes in `cmd_*()`
- - bisect--helper: move the `BISECT_STATE` case to the end
- - bisect--helper: make `--bisect-state` optional
- - bisect--helper: align the sub-command order with git-bisect.sh
- - bisect--helper: using `--bisect-state` without an argument is a bug
- - bisect--helper: really retire `--bisect-autostart`
- - bisect--helper: really retire --bisect-next-check
- - bisect--helper: retire the --no-log option
- - bisect: avoid double-quoting when printing the failed command
- - bisect run: fix the error message
-
- Final bits of "git bisect.sh" have been rewritten in C.
-
- Expecting a reroll.
- cf. <220225.86ilt27uln.gmgdl@evledraar.gmail.com>
- source: <pull.1132.v2.git.1645547423.gitgitgadget@gmail.com>
-
-
-* js/scalar-diagnose (2022-05-10) 7 commits
+* js/scalar-diagnose (2022-05-12) 8 commits
+ - fixup: archive: optionally add "virtual" files
  - scalar: teach `diagnose` to gather loose objects information
  - scalar: teach `diagnose` to gather packfile info
  - scalar diagnose: include disk space information
@@ -931,6 +995,8 @@ Release tarballs are available at:
  - archive: optionally add "virtual" files
 
  Implementation of "scalar diagnose" subcommand.
+
+ Will merge to 'next' after squashing the fix in?
  source: <pull.1128.v4.git.1652210824.gitgitgadget@gmail.com>
 
 
@@ -957,37 +1023,6 @@ Release tarballs are available at:
  On hold.
  cf. <CABPp-BGZ7OAYRR5YKRsxJSo-C=ho+qcNAkqwkim8CkhCfCeHsA@mail.gmail.com>
  source: <pull.1122.v6.git.1645602413.gitgitgadget@gmail.com>
-
-
-* jh/p4-various-fixups (2022-04-01) 22 commits
-  (merged to 'next' on 2022-04-04 at 251b14976f)
- + git-p4: sort imports
- + git-p4: seperate multiple statements onto seperate lines
- + git-p4: move inline comments to line above
- + git-p4: only seperate code blocks by a single empty line
- + git-p4: compare to singletons with "is" and "is not"
- + git-p4: normalize indentation of lines in conditionals
- + git-p4: ensure there is a single space around all operators
- + git-p4: ensure every comment has a single #
- + git-p4: remove spaces between dictionary keys and colons
- + git-p4: remove redundant backslash-continuations inside brackets
- + git-p4: remove extraneous spaces before function arguments
- + git-p4: place a single space after every comma
- + git-p4: removed brackets when assigning multiple return values
- + git-p4: remove spaces around default arguments
- + git-p4: remove padding from lists, tuples and function arguments
- + git-p4: sort and de-duplcate pylint disable list
- + git-p4: remove commented code
- + git-p4: convert descriptive class and function comments into docstrings
- + git-p4: improve consistency of docstring formatting
- + git-p4: indent with 4-spaces
- + git-p4: remove unneeded semicolons from statements
- + git-p4: add blank lines between functions and class definitions
-
- Various cleanups to "git p4".
-
- Will merge to 'master'.
- source: <20220401142504.58995-1-jholdsworth@nvidia.com>
 
 
 * js/use-builtin-add-i (2021-12-01) 2 commits
