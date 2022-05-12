@@ -1080,8 +1080,12 @@ def findUpstreamBranchPoint(head="HEAD"):
         log = extractLogMessageFromGitCommit(tip)
         settings = extractSettingsGitLog(log)
         if "depot-paths" in settings:
+            git_branch = "remotes/p4/" + branch
             paths = ",".join(settings["depot-paths"])
-            branchByDepotPath[paths] = "remotes/p4/" + branch
+            branchByDepotPath[paths] = git_branch
+            if "change" in settings:
+                paths = paths + ";" + settings["change"]
+                branchByDepotPath[paths] = git_branch
 
     settings = None
     parent = 0
@@ -1091,6 +1095,10 @@ def findUpstreamBranchPoint(head="HEAD"):
         settings = extractSettingsGitLog(log)
         if "depot-paths" in settings:
             paths = ",".join(settings["depot-paths"])
+            if "change" in settings:
+                expaths = paths + ";" + settings["change"]
+                if expaths in branchByDepotPath:
+                    return [branchByDepotPath[expaths], settings]
             if paths in branchByDepotPath:
                 return [branchByDepotPath[paths], settings]
 
