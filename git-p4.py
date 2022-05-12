@@ -3046,6 +3046,16 @@ class P4Sync(Command, P4UserMap):
             print("\nIgnoring apple filetype file %s" % file['depotFile'])
             return
 
+        if type_base == "utf8":
+            # The type utf8 explicitly means utf8 *with BOM*. These are
+            # streamed just like regular text files, however, without
+            # the BOM in the stream.
+            # Therefore, to accurately import these files into git, we
+            # need to explicitly re-add the BOM before writing.
+            # 'contents' is a set of bytes in this case, so create the
+            # BOM prefix as a b'' literal.
+            contents = [b'\xef\xbb\xbf' + contents[0]] + contents[1:]
+
         # Note that we do not try to de-mangle keywords on utf16 files,
         # even though in theory somebody may want that.
         regexp = p4_keywords_regexp_for_type(type_base, type_mods)
