@@ -66,8 +66,7 @@ test_expect_success 'cherry-pick after renaming branch' '
 
 	git checkout rename2 &&
 	git cherry-pick added &&
-	test $(git rev-parse HEAD^) = $(git rev-parse rename2) &&
-	test -f opos &&
+	test_cmp_rev rename2 HEAD^ &&
 	grep "Add extra line at the end" opos &&
 	git reflog -1 | grep cherry-pick
 
@@ -77,9 +76,9 @@ test_expect_success 'revert after renaming branch' '
 
 	git checkout rename1 &&
 	git revert added &&
-	test $(git rev-parse HEAD^) = $(git rev-parse rename1) &&
-	test -f spoo &&
-	! grep "Add extra line at the end" spoo &&
+	test_cmp_rev rename1 HEAD^ &&
+	test_path_is_file spoo &&
+	test_cmp_rev initial:oops HEAD:spoo &&
 	git reflog -1 | grep revert
 
 '
