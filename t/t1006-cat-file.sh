@@ -681,7 +681,7 @@ test_expect_success 'cat-file -t and -s on corrupt loose object' '
 
 		# Setup and create the empty blob and its path
 		empty_path=$(git rev-parse --git-path objects/$(test_oid_to_path "$EMPTY_BLOB")) &&
-		git hash-object -w --stdin </dev/null &&
+		empty_blob=$(git hash-object -w --stdin </dev/null) &&
 
 		# Create another blob and its path
 		echo other >other.blob &&
@@ -722,7 +722,13 @@ test_expect_success 'cat-file -t and -s on corrupt loose object' '
 		# content out as-is. Try to make it zlib-invalid.
 		mv -f other.blob "$empty_path" &&
 		test_must_fail git fsck 2>err.fsck &&
-		grep "^error: inflate: data stream error (" err.fsck
+		cat >expect <<-EOF &&
+		error: inflate: data stream error (incorrect header check)
+		error: unable to unpack header of ./$empty_path
+		error: $empty_blob: object corrupt or missing: ./$empty_path
+		EOF
+		grep "^error: " err.fsck >actual &&
+		test_cmp expect actual
 	)
 '
 
