@@ -37,13 +37,14 @@ macos-latest)
 	test -z "$BREW_INSTALL_PACKAGES" ||
 	brew install $BREW_INSTALL_PACKAGES
 	brew link --force gettext
-	brew install --cask --no-quarantine perforce || {
-		# Update the definitions and try again
-		cask_repo="$(brew --repository)"/Library/Taps/homebrew/homebrew-cask &&
-		git -C "$cask_repo" pull --no-stat --ff-only &&
-		brew install --cask --no-quarantine perforce
-	} ||
-	brew install homebrew/cask/perforce
+	mkdir -p $HOME/bin
+	(
+		cd $HOME/bin
+		wget -q "https://cdist2.perforce.com/perforce/r21.2/bin.macosx1015x86_64/helix-core-server.tgz" &&
+		tar -xf helix-core-server.tgz
+	)
+	PATH="$PATH:${HOME}/bin"
+	export PATH
 
 	if test -n "$CC_PACKAGE"
 	then
