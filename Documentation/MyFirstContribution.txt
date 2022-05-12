@@ -1046,46 +1046,26 @@ directory you specified - you're nearly ready to send out your review!
 [[preparing-cover-letter]]
 === Preparing Email
 
-In addition to an email per patch, the Git community also expects your patches
-to come with a cover letter, typically with a subject line [PATCH 0/x] (where
-x is the number of patches you're sending). Since you invoked `format-patch`
-with `--cover-letter`, you've already got a template ready. Open it up in your
-favorite editor.
+Since you invoked `format-patch` with `--cover-letter`, you've already got a
+cover letter template ready. Open it up in your favorite editor.
 
 You should see a number of headers present already. Check that your `From:`
-header is correct. Then modify your `Subject:` to something which succinctly
-covers the purpose of your entire topic branch, for example:
+header is correct. Then modify your `Subject:` (see <<cover-letter,above>> for
+how to choose good title for your patch series):
 
 ----
-Subject: [PATCH 0/7] adding the 'psuh' command
+Subject: [PATCH 0/7] Add the 'psuh' command
 ----
 
 Make sure you retain the ``[PATCH 0/X]'' part; that's what indicates to the Git
-community that this email is the beginning of a review, and many reviewers
-filter their email for this type of flag.
+community that this email is the beginning of a patch series, and many
+reviewers filter their email for this type of flag.
 
 You'll need to add some extra parameters when you invoke `git send-email` to add
 the cover letter.
 
-Next you'll have to fill out the body of your cover letter. This is an important
-component of change submission as it explains to the community from a high level
-what you're trying to do, and why, in a way that's more apparent than just
-looking at your diff. Be sure to explain anything your diff doesn't make clear
-on its own.
-
-Here's an example body for `psuh`:
-
-----
-Our internal metrics indicate widespread interest in the command
-git-psuh - that is, many users are trying to use it, but finding it is
-unavailable, using some unknown workaround instead.
-
-The following handful of patches add the psuh command and implement some
-handy features on top of it.
-
-This patchset is part of the MyFirstContribution tutorial and should not
-be merged.
-----
+Next you'll have to fill out the body of your cover letter. Again, see
+<<cover-letter,above>> for what content to include.
 
 The template created by `git format-patch --cover-letter` includes a diffstat.
 This gives reviewers a summary of what they're in for when reviewing your topic.
