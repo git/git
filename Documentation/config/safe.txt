@@ -13,8 +13,8 @@ override any such directories specified in the system config), add a
 `safe.directory` entry with an empty value.
 +
 This config setting is only respected when specified in a system or global
-config, not when it is specified in a repository config or via the command
-line option `-c safe.directory=<path>`.
+config, not when it is specified in a repository config, via the command
+line option `-c safe.directory=<path>`, or in environment variables.
 +
 The value of this setting is interpolated, i.e. `~/<path>` expands to a
 path relative to the home directory and `%(prefix)/<path>` expands to a
