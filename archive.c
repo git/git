@@ -342,7 +342,7 @@ int write_archive_entries(struct archiver_args *args,
 		else
 			err = write_entry(args, &fake_oid, path_in_archive.buf,
 					  path_in_archive.len,
-					  info->stat.st_mode,
+					  canon_mode(info->stat.st_mode),
 					  content.buf, content.len);
 		if (err)
 			break;
