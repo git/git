@@ -904,6 +904,16 @@ respectively as the subject and body of the cover letter for your change. Refer
 to <<cover-letter,"The cover letter">> above for advice on how to title your
 submission and what content to include in the description.
 
+NOTE: For single-patch contributions, your commit message should already be
+meaningful and explain at a high level the purpose (what is happening and why)
+of your patch, so you usually do not need any additional context. In that case,
+remove the PR description that GitHub automatically generates from your commit
+message (your PR description should be empty). If you do need to supply even
+more context, you can do so in that space and it will be appended to the email
+that GitGitGadget will send, between the three-dash line and the diffstat
+(see <<single-patch,Bonus Chapter: One-Patch Changes>> for how this looks once
+submitted).
+
 When you're happy, submit your pull request.
 
 [[run-ci-ggg]]
