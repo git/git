@@ -710,13 +710,61 @@ dependencies. `prove` also makes the output nicer.
 Go ahead and commit this change, as well.
 
 [[ready-to-share]]
-== Getting Ready to Share
+== Getting Ready to Share: Anatomy of a Patch Series
 
 You may have noticed already that the Git project performs its code reviews via
 emailed patches, which are then applied by the maintainer when they are ready
-and approved by the community. The Git project does not accept patches from
+and approved by the community. The Git project does not accept contributions from
 pull requests, and the patches emailed for review need to be formatted a
-specific way. At this point the tutorial diverges, in order to demonstrate two
+specific way.
+
+:patch-series: https://lore.kernel.org/git/pull.1218.git.git.1645209647.gitgitgadget@gmail.com/
+:lore: https://lore.kernel.org/git/
+
+Before taking a look at how to convert your commits into emailed patches,
+let's analyze what the end result, a "patch series", looks like. Here is an
+{patch-series}[example] of the summary view for a patch series on the web interface of
+the {lore}[Git mailing list archive]:
+
+----
+2022-02-18 18:40 [PATCH 0/3] libify reflog John Cai via GitGitGadget
+2022-02-18 18:40 ` [PATCH 1/3] reflog: libify delete reflog function and helpers John Cai via GitGitGadget
+2022-02-18 19:10   ` Ævar Arnfjörð Bjarmason [this message]
+2022-02-18 19:39     ` Taylor Blau
+2022-02-18 19:48       ` Ævar Arnfjörð Bjarmason
+2022-02-18 19:35   ` Taylor Blau
+2022-02-21  1:43     ` John Cai
+2022-02-21  1:50       ` Taylor Blau
+2022-02-23 19:50         ` John Cai
+2022-02-18 20:00   ` // other replies ellided
+2022-02-18 18:40 ` [PATCH 2/3] reflog: call reflog_delete from reflog.c John Cai via GitGitGadget
+2022-02-18 19:15   ` Ævar Arnfjörð Bjarmason
+2022-02-18 20:26     ` Junio C Hamano
+2022-02-18 18:40 ` [PATCH 3/3] stash: call reflog_delete from reflog.c John Cai via GitGitGadget
+2022-02-18 19:20   ` Ævar Arnfjörð Bjarmason
+2022-02-19  0:21     ` Taylor Blau
+2022-02-22  2:36     ` John Cai
+2022-02-22 10:51       ` Ævar Arnfjörð Bjarmason
+2022-02-18 19:29 ` [PATCH 0/3] libify reflog Ævar Arnfjörð Bjarmason
+2022-02-22 18:30 ` [PATCH v2 0/3] libify reflog John Cai via GitGitGadget
+2022-02-22 18:30   ` [PATCH v2 1/3] stash: add test to ensure reflog --rewrite --updatref behavior John Cai via GitGitGadget
+2022-02-23  8:54     ` Ævar Arnfjörð Bjarmason
+2022-02-23 21:27       ` Junio C Hamano
+// continued
+----
+
+We can note a few things:
+
+- Each commit is sent as a separate email, with the commit message title as
+  subject, prefixed with "[PATCH _i_/_n_]" for the _i_-th commit of an
+  _n_-commit series.
+- Each patch is sent as a reply to an introductory email called the _cover
+  letter_ of the series, prefixed "[PATCH 0/_n_]".
+- Subsequent iterations of the patch series are labelled "[PATCH v2]", "[PATCH
+  v3]", etc. and sent with a new cover letter, itself a reply to the cover
+  letter of the previous iteration (more on that below).
+
+At this point the tutorial diverges, in order to demonstrate two
 different methods of formatting your patchset and getting it reviewed.
 
 The first method to be covered is GitGitGadget, which is useful for those
