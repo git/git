@@ -171,6 +171,7 @@ struct grep_opt {
 	int show_hunk_mark;
 	int file_break;
 	int heading;
+	unsigned max_count;
 	void *priv;
 
 	void (*output)(struct grep_opt *opt, const void *data, size_t size);
