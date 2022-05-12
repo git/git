@@ -1686,6 +1686,8 @@ static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int colle
 		bol = eol + 1;
 		if (!left)
 			break;
+		if (opt->max_count != (unsigned)-1 && count == opt->max_count)
+			break;
 		left--;
 		lno++;
 	}

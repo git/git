@@ -961,6 +961,8 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		OPT_BOOL_F(0, "ext-grep", &external_grep_allowed__ignored,
 			   N_("allow calling of grep(1) (ignored by this build)"),
 			   PARSE_OPT_NOCOMPLETE),
+		OPT_INTEGER('m', "max-count", &opt.max_count,
+			N_("maximum number of results per file")),
 		OPT_END()
 	};
 	grep_prefix = prefix;
@@ -1100,6 +1102,13 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 
 	if (recurse_submodules && untracked)
 		die(_("--untracked not supported with --recurse-submodules"));
+
+	/*
+	 * Optimize out the case where the amount of matches is limited to zero.
+	 * We do this to keep results consistent with GNU grep(1).
+	 */
+	if (opt.max_count == 0)
+		exit(EXIT_FAILURE);
 
 	if (show_in_pager) {
 		if (num_threads > 1)
