@@ -41,7 +41,8 @@ macos-latest)
 	(
 		cd $HOME/bin
 		wget -q "https://cdist2.perforce.com/perforce/r21.2/bin.macosx1015x86_64/helix-core-server.tgz" &&
-		tar -xf helix-core-server.tgz
+		tar -xf helix-core-server.tgz &&
+		sudo xattr -d com.apple.quarantine p4 p4d 2>/dev/null || true
 	)
 	PATH="$PATH:${HOME}/bin"
 	export PATH
