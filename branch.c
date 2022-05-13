@@ -466,7 +466,7 @@ static void dwim_branch_start(struct repository *r, const char *start_name,
 		break;
 	}
 
-	if ((commit = lookup_commit_reference(r, &oid)) == NULL)
+	if (!(commit = lookup_commit_reference(r, &oid)))
 		die(_("not a valid branch point: '%s'"), start_name);
 	if (out_real_ref) {
 		*out_real_ref = real_ref;

@@ -474,7 +474,7 @@ static int bisect_terms(struct bisect_terms *terms, const char *option)
 	if (get_terms(terms))
 		return error(_("no terms defined"));
 
-	if (option == NULL) {
+	if (!option) {
 		printf(_("Your current terms are %s for the old state\n"
 			 "and %s for the new state.\n"),
 		       terms->term_good, terms->term_bad);
