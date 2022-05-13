@@ -698,8 +698,10 @@ core.sparseCheckout::
 
 core.sparseCheckoutCone::
 	Enables the "cone mode" of the sparse checkout feature. When the
-	sparse-checkout file contains a limited set of patterns, then this
-	mode provides significant performance advantages. See
+	sparse-checkout file contains a limited set of patterns, this
+	mode provides significant performance advantages. The "non
+	cone mode" can be requested to allow specifying a more flexible
+	patterns by setting this variable to 'false'. See
 	linkgit:git-sparse-checkout[1] for more information.
 
 core.abbrev::

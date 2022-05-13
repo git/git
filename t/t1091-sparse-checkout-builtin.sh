@@ -72,7 +72,7 @@ test_expect_success 'git sparse-checkout list (populated)' '
 '
 
 test_expect_success 'git sparse-checkout init' '
-	git -C repo sparse-checkout init &&
+	git -C repo sparse-checkout init --no-cone &&
 	cat >expect <<-\EOF &&
 	/*
 	!/*/
@@ -111,6 +111,7 @@ test_expect_success 'init with existing sparse-checkout' '
 
 test_expect_success 'clone --sparse' '
 	git clone --sparse "file://$(pwd)/repo" clone &&
+	git -C clone sparse-checkout reapply --no-cone &&
 	git -C clone sparse-checkout list >actual &&
 	cat >expect <<-\EOF &&
 	/*
@@ -124,7 +125,7 @@ test_expect_success 'switching to cone mode with non-cone mode patterns' '
 	git init bad-patterns &&
 	(
 		cd bad-patterns &&
-		git sparse-checkout init &&
+		git sparse-checkout init --no-cone &&
 		git sparse-checkout add dir &&
 		git config --worktree core.sparseCheckoutCone true &&
 		test_must_fail git sparse-checkout add dir 2>err &&
@@ -402,7 +403,7 @@ test_expect_success 'revert to old sparse-checkout on empty update' '
 		git sparse-checkout set nothing 2>err &&
 		test_i18ngrep ! "Sparse checkout leaves no entry on working directory" err &&
 		test_i18ngrep ! ".git/index.lock" err &&
-		git sparse-checkout set file
+		git sparse-checkout set --no-cone file
 	)
 '
 
@@ -424,7 +425,7 @@ test_expect_success 'sparse-checkout (init|set|disable) warns with dirty status'
 	git clone repo dirty &&
 	echo dirty >dirty/folder1/a &&
 
-	git -C dirty sparse-checkout init 2>err &&
+	git -C dirty sparse-checkout init --no-cone 2>err &&
 	test_i18ngrep "warning.*The following paths are not up to date" err &&
 
 	git -C dirty sparse-checkout set /folder2/* /deep/deeper1/* 2>err &&
@@ -435,7 +436,7 @@ test_expect_success 'sparse-checkout (init|set|disable) warns with dirty status'
 	test_must_be_empty err &&
 
 	git -C dirty reset --hard &&
-	git -C dirty sparse-checkout init &&
+	git -C dirty sparse-checkout init --no-cone &&
 	git -C dirty sparse-checkout set /folder2/* /deep/deeper1/* &&
 	test_path_is_missing dirty/folder1/a &&
 	git -C dirty sparse-checkout disable &&
@@ -451,7 +452,7 @@ test_expect_success 'sparse-checkout (init|set|disable) warns with unmerged stat
 	EOF
 	git -C unmerged update-index --index-info <input &&
 
-	git -C unmerged sparse-checkout init 2>err &&
+	git -C unmerged sparse-checkout init --no-cone 2>err &&
 	test_i18ngrep "warning.*The following paths are unmerged" err &&
 
 	git -C unmerged sparse-checkout set /folder2/* /deep/deeper1/* 2>err &&
@@ -462,7 +463,7 @@ test_expect_success 'sparse-checkout (init|set|disable) warns with unmerged stat
 	test_i18ngrep "warning.*The following paths are unmerged" err &&
 
 	git -C unmerged reset --hard &&
-	git -C unmerged sparse-checkout init &&
+	git -C unmerged sparse-checkout init --no-cone &&
 	git -C unmerged sparse-checkout set /folder2/* /deep/deeper1/* &&
 	git -C unmerged sparse-checkout disable
 '
