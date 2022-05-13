@@ -7,6 +7,7 @@
 #include "cache-tree.h"
 #include "unpack-trees.h"
 #include "merge-recursive.h"
+#include "merge-ort-wrappers.h"
 #include "strvec.h"
 #include "run-command.h"
 #include "dir.h"
@@ -492,13 +493,13 @@ static void unstage_changes_unless_new(struct object_id *orig_tree)
 static int do_apply_stash(const char *prefix, struct stash_info *info,
 			  int index, int quiet)
 {
-	int ret;
+	int clean, ret;
 	int has_index = index;
 	struct merge_options o;
 	struct object_id c_tree;
 	struct object_id index_tree;
-	struct commit *result;
-	const struct object_id *bases[1];
+	struct tree *head, *merge, *merge_base;
+	struct lock_file lock = LOCK_INIT;
 
 	read_cache_preload(NULL);
 	if (refresh_and_write_cache(REFRESH_QUIET, 0, 0))
@@ -541,6 +542,7 @@ static int do_apply_stash(const char *prefix, struct stash_info *info,
 
 	o.branch1 = "Updated upstream";
 	o.branch2 = "Stashed changes";
+	o.ancestor = "Stash base";
 
 	if (oideq(&info->b_tree, &c_tree))
 		o.branch1 = "Version stash was based on";
@@ -551,10 +553,26 @@ static int do_apply_stash(const char *prefix, struct stash_info *info,
 	if (o.verbosity >= 3)
 		printf_ln(_("Merging %s with %s"), o.branch1, o.branch2);
 
-	bases[0] = &info->b_tree;
+	head = lookup_tree(o.repo, &c_tree);
+	merge = lookup_tree(o.repo, &info->w_tree);
+	merge_base = lookup_tree(o.repo, &info->b_tree);
 
-	ret = merge_recursive_generic(&o, &c_tree, &info->w_tree, 1, bases,
-				      &result);
+	repo_hold_locked_index(o.repo, &lock, LOCK_DIE_ON_ERROR);
+	clean = merge_ort_nonrecursive(&o, head, merge, merge_base);
+
+	/*
+	 * If 'clean' >= 0, reverse the value for 'ret' so 'ret' is 0 when the
+	 * merge was clean, and nonzero if the merge was unclean or encountered
+	 * an error.
+	 */
+	ret = clean >= 0 ? !clean : clean;
+
+	if (ret < 0)
+		rollback_lock_file(&lock);
+	else if (write_locked_index(o.repo->index, &lock,
+				      COMMIT_LOCK | SKIP_IF_UNCHANGED))
+		ret = error(_("could not write index"));
+
 	if (ret) {
 		rerere(0);
 
@@ -1769,6 +1787,9 @@ int cmd_stash(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, prefix, options, git_stash_usage,
 			     PARSE_OPT_KEEP_UNKNOWN | PARSE_OPT_KEEP_DASHDASH);
+
+	prepare_repo_settings(the_repository);
+	the_repository->settings.command_requires_full_index = 0;
 
 	index_file = get_index_file();
 	strbuf_addf(&stash_index_path, "%s.stash.%" PRIuMAX, index_file,

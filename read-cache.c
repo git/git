@@ -2260,6 +2260,20 @@ static unsigned long load_cache_entries_threaded(struct index_state *istate, con
 	return consumed;
 }
 
+static void set_new_index_sparsity(struct index_state *istate)
+{
+	/*
+	 * If the index's repo exists, mark it sparse according to
+	 * repo settings.
+	 */
+	if (istate->repo) {
+		prepare_repo_settings(istate->repo);
+		if (!istate->repo->settings.command_requires_full_index &&
+		    is_sparse_index_allowed(istate, 0))
+			istate->sparse_index = 1;
+	}
+}
+
 /* remember to discard_cache() before reading a different cache! */
 int do_read_index(struct index_state *istate, const char *path, int must_exist)
 {
@@ -2281,8 +2295,10 @@ int do_read_index(struct index_state *istate, const char *path, int must_exist)
 	istate->timestamp.nsec = 0;
 	fd = open(path, O_RDONLY);
 	if (fd < 0) {
-		if (!must_exist && errno == ENOENT)
+		if (!must_exist && errno == ENOENT) {
+			set_new_index_sparsity(istate);
 			return 0;
+		}
 		die_errno(_("%s: index file open failed"), path);
 	}
 
