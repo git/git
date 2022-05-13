@@ -26,3 +26,16 @@ directory was listed in the `safe.directory` list. If `safe.directory=*`
 is set in system config and you want to re-enable this protection, then
 initialize your list with an empty value before listing the repositories
 that you deem safe.
++
+As explained, Git only allows you to access repositories owned by
+yourself, i.e. the user who is running Git, by default.  When Git
+is running as 'root' in a non Windows platform that provides sudo,
+ however, git checks the SUDO_UID environment variable that sudo creates
+and will allow access to the uid recorded as its value instead.
+This is to make it easy to perform a common sequence during installation
+"make && sudo make install".  A git process running under 'sudo' runs as
+'root' but the 'sudo' command exports the environment variable to record
+which id the original user has.
+If that is not what you would prefer and want git to only trust
+repositories that are owned by root instead, then you must remove
+the `SUDO_UID` variable from root's environment before invoking git.
