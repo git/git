@@ -5,7 +5,7 @@ test_description='remote push rejects are reported by client'
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-	write_script .git/hooks/update <<-\EOF &&
+	test_hook update <<-\EOF &&
 	exit 1
 	EOF
 	echo 1 >file &&

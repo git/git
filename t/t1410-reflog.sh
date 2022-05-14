@@ -106,6 +106,28 @@ test_expect_success setup '
 	test_line_count = 4 output
 '
 
+test_expect_success 'correct usage on sub-command -h' '
+	test_expect_code 129 git reflog expire -h >err &&
+	grep "git reflog expire" err
+'
+
+test_expect_success 'correct usage on "git reflog show -h"' '
+	test_expect_code 129 git reflog show -h >err &&
+	grep -F "git reflog [show]" err
+'
+
+test_expect_success 'pass through -- to sub-command' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	test_commit -C repo message --a-file contents dash-tag &&
+
+	git -C repo reflog show -- --does-not-exist >out &&
+	test_must_be_empty out &&
+	git -C repo reflog show >expect &&
+	git -C repo reflog show -- --a-file >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success rewind '
 	test_tick && git reset --hard HEAD~2 &&
 	test -f C &&
@@ -341,7 +363,7 @@ test_expect_success 'stale dirs do not cause d/f conflicts (reflogs off)' '
 # Each line is 114 characters, so we need 75 to still have a few before the
 # last 8K. The 89-character padding on the final entry lines up our
 # newline exactly.
-test_expect_success SHA1 'parsing reverse reflogs at BUFSIZ boundaries' '
+test_expect_success REFFILES,SHA1 'parsing reverse reflogs at BUFSIZ boundaries' '
 	git checkout -b reflogskip &&
 	zf=$(test_oid zero_2) &&
 	ident="abc <xyz> 0000000001 +0000" &&
@@ -418,8 +440,18 @@ test_expect_success 'expire with multiple worktrees' '
 		test_commit -C link-wt foobar &&
 		test_tick &&
 		git reflog expire --verbose --all --expire=$test_tick &&
-		test_must_be_empty .git/worktrees/link-wt/logs/HEAD
+		test-tool ref-store worktree:link-wt for-each-reflog-ent HEAD >actual &&
+		test_must_be_empty actual
 	)
+'
+
+test_expect_success REFFILES 'empty reflog' '
+	test_when_finished "rm -rf empty" &&
+	git init empty &&
+	test_commit -C empty A &&
+	>empty/.git/logs/refs/heads/foo &&
+	git -C empty reflog expire --all 2>err &&
+	test_must_be_empty err
 '
 
 test_done

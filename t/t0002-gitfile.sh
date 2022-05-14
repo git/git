@@ -65,9 +65,11 @@ test_expect_success 'check commit-tree' '
 	test_path_is_file "$REAL/objects/$(objpath $SHA)"
 '
 
-test_expect_success 'check rev-list' '
+test_expect_success !SANITIZE_LEAK 'check rev-list' '
 	git update-ref "HEAD" "$SHA" &&
-	test "$SHA" = "$(git rev-list HEAD)"
+	git rev-list HEAD >actual &&
+	echo $SHA >expected &&
+	test_cmp expected actual
 '
 
 test_expect_success 'setup_git_dir twice in subdir' '

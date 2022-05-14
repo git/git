@@ -3,6 +3,7 @@
 #include "commit-graph.h"
 #include "repository.h"
 #include "object-store.h"
+#include "bloom.h"
 
 int cmd__read_graph(int argc, const char **argv)
 {
@@ -43,6 +44,18 @@ int cmd__read_graph(int argc, const char **argv)
 		printf(" bloom_indexes");
 	if (graph->chunk_bloom_data)
 		printf(" bloom_data");
+	printf("\n");
+
+	printf("options:");
+	if (graph->bloom_filter_settings)
+		printf(" bloom(%"PRIu32",%"PRIu32",%"PRIu32")",
+		       graph->bloom_filter_settings->hash_version,
+		       graph->bloom_filter_settings->bits_per_entry,
+		       graph->bloom_filter_settings->num_hashes);
+	if (graph->read_generation_data)
+		printf(" read_generation_data");
+	if (graph->topo_levels)
+		printf(" topo_levels");
 	printf("\n");
 
 	UNLEAK(graph);

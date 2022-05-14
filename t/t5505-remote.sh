@@ -753,7 +753,9 @@ test_expect_success 'rename a remote' '
 	(
 		cd four &&
 		git config branch.main.pushRemote origin &&
-		git remote rename origin upstream &&
+		GIT_TRACE2_EVENT=$(pwd)/trace \
+			git remote rename --progress origin upstream &&
+		test_region progress "Renaming remote references" trace &&
 		grep "pushRemote" .git/config &&
 		test -z "$(git for-each-ref refs/remotes/origin)" &&
 		test "$(git symbolic-ref refs/remotes/upstream/HEAD)" = "refs/remotes/upstream/main" &&

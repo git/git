@@ -99,13 +99,9 @@ static int convert_to_sparse_rec(struct index_state *istate,
 
 int set_sparse_index_config(struct repository *repo, int enable)
 {
-	int res;
-	char *config_path = repo_git_path(repo, "config.worktree");
-	res = git_config_set_in_file_gently(config_path,
-					    "index.sparse",
-					    enable ? "true" : NULL);
-	free(config_path);
-
+	int res = repo_config_set_worktree_gently(repo,
+						  "index.sparse",
+						  enable ? "true" : "false");
 	prepare_repo_settings(repo);
 	repo->settings.sparse_index = enable;
 	return res;
@@ -136,7 +132,7 @@ static int is_sparse_index_allowed(struct index_state *istate, int flags)
 		/*
 		 * The sparse index is not (yet) integrated with a split index.
 		 */
-		if (istate->split_index)
+		if (istate->split_index || git_env_bool("GIT_TEST_SPLIT_INDEX", 0))
 			return 0;
 		/*
 		 * The GIT_TEST_SPARSE_INDEX environment variable triggers the
@@ -339,6 +335,80 @@ void ensure_correct_sparsity(struct index_state *istate)
 		convert_to_sparse(istate, 0);
 	else
 		ensure_full_index(istate);
+}
+
+static int path_found(const char *path, const char **dirname, size_t *dir_len,
+		      int *dir_found)
+{
+	struct stat st;
+	char *newdir;
+	char *tmp;
+
+	/*
+	 * If dirname corresponds to a directory that doesn't exist, and this
+	 * path starts with dirname, then path can't exist.
+	 */
+	if (!*dir_found && !memcmp(path, *dirname, *dir_len))
+		return 0;
+
+	/*
+	 * If path itself exists, return 1.
+	 */
+	if (!lstat(path, &st))
+		return 1;
+
+	/*
+	 * Otherwise, path does not exist so we'll return 0...but we'll first
+	 * determine some info about its parent directory so we can avoid
+	 * lstat calls for future cache entries.
+	 */
+	newdir = strrchr(path, '/');
+	if (!newdir)
+		return 0; /* Didn't find a parent dir; just return 0 now. */
+
+	/*
+	 * If path starts with directory (which we already lstat'ed and found),
+	 * then no need to lstat parent directory again.
+	 */
+	if (*dir_found && *dirname && memcmp(path, *dirname, *dir_len))
+		return 0;
+
+	/* Free previous dirname, and cache path's dirname */
+	*dirname = path;
+	*dir_len = newdir - path + 1;
+
+	tmp = xstrndup(path, *dir_len);
+	*dir_found = !lstat(tmp, &st);
+	free(tmp);
+
+	return 0;
+}
+
+void clear_skip_worktree_from_present_files(struct index_state *istate)
+{
+	const char *last_dirname = NULL;
+	size_t dir_len = 0;
+	int dir_found = 1;
+
+	int i;
+
+	if (!core_apply_sparse_checkout ||
+	    sparse_expect_files_outside_of_patterns)
+		return;
+
+restart:
+	for (i = 0; i < istate->cache_nr; i++) {
+		struct cache_entry *ce = istate->cache[i];
+
+		if (ce_skip_worktree(ce) &&
+		    path_found(ce->name, &last_dirname, &dir_len, &dir_found)) {
+			if (S_ISSPARSEDIR(ce->ce_mode)) {
+				ensure_full_index(istate);
+				goto restart;
+			}
+			ce->ce_flags &= ~CE_SKIP_WORKTREE;
+		}
+	}
 }
 
 /*

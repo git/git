@@ -1,3 +1,6 @@
+# Import tree-wide shared Makefile behavior and libraries
+include ../../shared.mak
+
 -include ../../config.mak
 export GIT_TEST_OPTIONS
 

@@ -82,13 +82,20 @@ struct ll_merge_options {
 	long xdl_opts;
 };
 
+enum ll_merge_result {
+	LL_MERGE_ERROR = -1,
+	LL_MERGE_OK = 0,
+	LL_MERGE_CONFLICT,
+	LL_MERGE_BINARY_CONFLICT,
+};
+
 /**
  * Perform a three-way single-file merge in core.  This is a thin wrapper
  * around `xdl_merge` that takes the path and any merge backend specified in
  * `.gitattributes` or `.git/info/attributes` into account.
  * Returns 0 for a clean merge.
  */
-int ll_merge(mmbuffer_t *result_buf,
+enum ll_merge_result ll_merge(mmbuffer_t *result_buf,
 	     const char *path,
 	     mmfile_t *ancestor, const char *ancestor_label,
 	     mmfile_t *ours, const char *our_label,

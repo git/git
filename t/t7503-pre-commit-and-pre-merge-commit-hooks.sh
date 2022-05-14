@@ -7,37 +7,6 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
-HOOKDIR="$(git rev-parse --git-dir)/hooks"
-PRECOMMIT="$HOOKDIR/pre-commit"
-PREMERGE="$HOOKDIR/pre-merge-commit"
-
-# Prepare sample scripts that write their $0 to actual_hooks
-test_expect_success 'sample script setup' '
-	mkdir -p "$HOOKDIR" &&
-	write_script "$HOOKDIR/success.sample" <<-\EOF &&
-	echo $0 >>actual_hooks
-	exit 0
-	EOF
-	write_script "$HOOKDIR/fail.sample" <<-\EOF &&
-	echo $0 >>actual_hooks
-	exit 1
-	EOF
-	write_script "$HOOKDIR/non-exec.sample" <<-\EOF &&
-	echo $0 >>actual_hooks
-	exit 1
-	EOF
-	chmod -x "$HOOKDIR/non-exec.sample" &&
-	write_script "$HOOKDIR/require-prefix.sample" <<-\EOF &&
-	echo $0 >>actual_hooks
-	test $GIT_PREFIX = "success/"
-	EOF
-	write_script "$HOOKDIR/check-author.sample" <<-\EOF
-	echo $0 >>actual_hooks
-	test "$GIT_AUTHOR_NAME" = "New Author" &&
-	test "$GIT_AUTHOR_EMAIL" = "newauthor@example.com"
-	EOF
-'
-
 test_expect_success 'root commit' '
 	echo "root" >file &&
 	git add file &&
@@ -96,10 +65,16 @@ test_expect_success '--no-verify with no hook (merge)' '
 	test_path_is_missing actual_hooks
 '
 
+setup_success_hook () {
+	test_when_finished "rm -f actual_hooks expected_hooks" &&
+	echo "$1" >expected_hooks &&
+	test_hook "$1" <<-EOF
+	echo $1 >>actual_hooks
+	EOF
+}
+
 test_expect_success 'with succeeding hook' '
-	test_when_finished "rm -f \"$PRECOMMIT\" expected_hooks actual_hooks" &&
-	cp "$HOOKDIR/success.sample" "$PRECOMMIT" &&
-	echo "$PRECOMMIT" >expected_hooks &&
+	setup_success_hook "pre-commit" &&
 	echo "more" >>file &&
 	git add file &&
 	git commit -m "more" &&
@@ -107,9 +82,7 @@ test_expect_success 'with succeeding hook' '
 '
 
 test_expect_success 'with succeeding hook (merge)' '
-	test_when_finished "rm -f \"$PREMERGE\" expected_hooks actual_hooks" &&
-	cp "$HOOKDIR/success.sample" "$PREMERGE" &&
-	echo "$PREMERGE" >expected_hooks &&
+	setup_success_hook "pre-merge-commit" &&
 	git checkout side &&
 	git merge -m "merge main" main &&
 	git checkout main &&
@@ -117,17 +90,14 @@ test_expect_success 'with succeeding hook (merge)' '
 '
 
 test_expect_success 'automatic merge fails; both hooks are available' '
-	test_when_finished "rm -f \"$PREMERGE\" \"$PRECOMMIT\"" &&
-	test_when_finished "rm -f expected_hooks actual_hooks" &&
-	test_when_finished "git checkout main" &&
-	cp "$HOOKDIR/success.sample" "$PREMERGE" &&
-	cp "$HOOKDIR/success.sample" "$PRECOMMIT" &&
+	setup_success_hook "pre-commit" &&
+	setup_success_hook "pre-merge-commit" &&
 
 	git checkout conflicting-a &&
 	test_must_fail git merge -m "merge conflicting-b" conflicting-b &&
 	test_path_is_missing actual_hooks &&
 
-	echo "$PRECOMMIT" >expected_hooks &&
+	echo "pre-commit" >expected_hooks &&
 	echo a+b >conflicting &&
 	git add conflicting &&
 	git commit -m "resolve conflict" &&
@@ -135,8 +105,7 @@ test_expect_success 'automatic merge fails; both hooks are available' '
 '
 
 test_expect_success '--no-verify with succeeding hook' '
-	test_when_finished "rm -f \"$PRECOMMIT\" actual_hooks" &&
-	cp "$HOOKDIR/success.sample" "$PRECOMMIT" &&
+	setup_success_hook "pre-commit" &&
 	echo "even more" >>file &&
 	git add file &&
 	git commit --no-verify -m "even more" &&
@@ -144,8 +113,7 @@ test_expect_success '--no-verify with succeeding hook' '
 '
 
 test_expect_success '--no-verify with succeeding hook (merge)' '
-	test_when_finished "rm -f \"$PREMERGE\" actual_hooks" &&
-	cp "$HOOKDIR/success.sample" "$PREMERGE" &&
+	setup_success_hook "pre-merge-commit" &&
 	git branch -f side side-orig &&
 	git checkout side &&
 	git merge --no-verify -m "merge main" main &&
@@ -153,10 +121,19 @@ test_expect_success '--no-verify with succeeding hook (merge)' '
 	test_path_is_missing actual_hooks
 '
 
+setup_failing_hook () {
+	test_when_finished "rm -f actual_hooks" &&
+	test_hook "$1" <<-EOF
+	echo $1-failing-hook >>actual_hooks
+	exit 1
+	EOF
+}
+
 test_expect_success 'with failing hook' '
-	test_when_finished "rm -f \"$PRECOMMIT\" expected_hooks actual_hooks" &&
-	cp "$HOOKDIR/fail.sample" "$PRECOMMIT" &&
-	echo "$PRECOMMIT" >expected_hooks &&
+	setup_failing_hook "pre-commit" &&
+	test_when_finished "rm -f expected_hooks" &&
+	echo "pre-commit-failing-hook" >expected_hooks &&
+
 	echo "another" >>file &&
 	git add file &&
 	test_must_fail git commit -m "another" &&
@@ -164,8 +141,7 @@ test_expect_success 'with failing hook' '
 '
 
 test_expect_success '--no-verify with failing hook' '
-	test_when_finished "rm -f \"$PRECOMMIT\" actual_hooks" &&
-	cp "$HOOKDIR/fail.sample" "$PRECOMMIT" &&
+	setup_failing_hook "pre-commit" &&
 	echo "stuff" >>file &&
 	git add file &&
 	git commit --no-verify -m "stuff" &&
@@ -173,9 +149,8 @@ test_expect_success '--no-verify with failing hook' '
 '
 
 test_expect_success 'with failing hook (merge)' '
-	test_when_finished "rm -f \"$PREMERGE\" expected_hooks actual_hooks" &&
-	cp "$HOOKDIR/fail.sample" "$PREMERGE" &&
-	echo "$PREMERGE" >expected_hooks &&
+	setup_failing_hook "pre-merge-commit" &&
+	echo "pre-merge-commit-failing-hook" >expected_hooks &&
 	git checkout side &&
 	test_must_fail git merge -m "merge main" main &&
 	git checkout main &&
@@ -183,8 +158,8 @@ test_expect_success 'with failing hook (merge)' '
 '
 
 test_expect_success '--no-verify with failing hook (merge)' '
-	test_when_finished "rm -f \"$PREMERGE\" actual_hooks" &&
-	cp "$HOOKDIR/fail.sample" "$PREMERGE" &&
+	setup_failing_hook "pre-merge-commit" &&
+
 	git branch -f side side-orig &&
 	git checkout side &&
 	git merge --no-verify -m "merge main" main &&
@@ -192,9 +167,18 @@ test_expect_success '--no-verify with failing hook (merge)' '
 	test_path_is_missing actual_hooks
 '
 
+setup_non_exec_hook () {
+	test_when_finished "rm -f actual_hooks" &&
+	test_hook "$1" <<-\EOF &&
+	echo non-exec >>actual_hooks
+	exit 1
+	EOF
+	test_hook --disable "$1"
+}
+
+
 test_expect_success POSIXPERM 'with non-executable hook' '
-	test_when_finished "rm -f \"$PRECOMMIT\" actual_hooks" &&
-	cp "$HOOKDIR/non-exec.sample" "$PRECOMMIT" &&
+	setup_non_exec_hook "pre-commit" &&
 	echo "content" >>file &&
 	git add file &&
 	git commit -m "content" &&
@@ -202,8 +186,7 @@ test_expect_success POSIXPERM 'with non-executable hook' '
 '
 
 test_expect_success POSIXPERM '--no-verify with non-executable hook' '
-	test_when_finished "rm -f \"$PRECOMMIT\" actual_hooks" &&
-	cp "$HOOKDIR/non-exec.sample" "$PRECOMMIT" &&
+	setup_non_exec_hook "pre-commit" &&
 	echo "more content" >>file &&
 	git add file &&
 	git commit --no-verify -m "more content" &&
@@ -211,8 +194,7 @@ test_expect_success POSIXPERM '--no-verify with non-executable hook' '
 '
 
 test_expect_success POSIXPERM 'with non-executable hook (merge)' '
-	test_when_finished "rm -f \"$PREMERGE\" actual_hooks" &&
-	cp "$HOOKDIR/non-exec.sample" "$PREMERGE" &&
+	setup_non_exec_hook "pre-merge" &&
 	git branch -f side side-orig &&
 	git checkout side &&
 	git merge -m "merge main" main &&
@@ -221,8 +203,7 @@ test_expect_success POSIXPERM 'with non-executable hook (merge)' '
 '
 
 test_expect_success POSIXPERM '--no-verify with non-executable hook (merge)' '
-	test_when_finished "rm -f \"$PREMERGE\" actual_hooks" &&
-	cp "$HOOKDIR/non-exec.sample" "$PREMERGE" &&
+	setup_non_exec_hook "pre-merge" &&
 	git branch -f side side-orig &&
 	git checkout side &&
 	git merge --no-verify -m "merge main" main &&
@@ -230,10 +211,18 @@ test_expect_success POSIXPERM '--no-verify with non-executable hook (merge)' '
 	test_path_is_missing actual_hooks
 '
 
+setup_require_prefix_hook () {
+	test_when_finished "rm -f expected_hooks" &&
+	echo require-prefix >expected_hooks &&
+	test_hook pre-commit <<-\EOF
+	echo require-prefix >>actual_hooks
+	test $GIT_PREFIX = "success/"
+	EOF
+}
+
 test_expect_success 'with hook requiring GIT_PREFIX' '
-	test_when_finished "rm -rf \"$PRECOMMIT\" expected_hooks actual_hooks success" &&
-	cp "$HOOKDIR/require-prefix.sample" "$PRECOMMIT" &&
-	echo "$PRECOMMIT" >expected_hooks &&
+	test_when_finished "rm -rf actual_hooks success" &&
+	setup_require_prefix_hook &&
 	echo "more content" >>file &&
 	git add file &&
 	mkdir success &&
@@ -245,9 +234,8 @@ test_expect_success 'with hook requiring GIT_PREFIX' '
 '
 
 test_expect_success 'with failing hook requiring GIT_PREFIX' '
-	test_when_finished "rm -rf \"$PRECOMMIT\" expected_hooks actual_hooks fail" &&
-	cp "$HOOKDIR/require-prefix.sample" "$PRECOMMIT" &&
-	echo "$PRECOMMIT" >expected_hooks &&
+	test_when_finished "rm -rf actual_hooks fail" &&
+	setup_require_prefix_hook &&
 	echo "more content" >>file &&
 	git add file &&
 	mkdir fail &&
@@ -259,13 +247,23 @@ test_expect_success 'with failing hook requiring GIT_PREFIX' '
 	test_cmp expected_hooks actual_hooks
 '
 
+setup_require_author_hook () {
+	test_when_finished "rm -f expected_hooks actual_hooks" &&
+	echo check-author >expected_hooks &&
+	test_hook pre-commit <<-\EOF
+	echo check-author >>actual_hooks
+	test "$GIT_AUTHOR_NAME" = "New Author" &&
+	test "$GIT_AUTHOR_EMAIL" = "newauthor@example.com"
+	EOF
+}
+
+
 test_expect_success 'check the author in hook' '
-	test_when_finished "rm -f \"$PRECOMMIT\" expected_hooks actual_hooks" &&
-	cp "$HOOKDIR/check-author.sample" "$PRECOMMIT" &&
+	setup_require_author_hook &&
 	cat >expected_hooks <<-EOF &&
-	$PRECOMMIT
-	$PRECOMMIT
-	$PRECOMMIT
+	check-author
+	check-author
+	check-author
 	EOF
 	test_must_fail git commit --allow-empty -m "by a.u.thor" &&
 	(

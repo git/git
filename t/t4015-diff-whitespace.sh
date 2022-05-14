@@ -6,6 +6,8 @@
 test_description='Test special whitespace in diff engine.
 
 '
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-diff.sh
 
@@ -1622,7 +1624,7 @@ test_expect_success 'cmd option assumes configured colored-moved' '
 	test_cmp expected actual
 '
 
-test_expect_success 'no effect from --color-moved with --word-diff' '
+test_expect_success 'no effect on diff from --color-moved with --word-diff' '
 	cat <<-\EOF >text.txt &&
 	Lorem Ipsum is simply dummy text of the printing and typesetting industry.
 	EOF
@@ -1633,6 +1635,12 @@ test_expect_success 'no effect from --color-moved with --word-diff' '
 	EOF
 	git diff --color-moved --word-diff >actual &&
 	git diff --word-diff >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success !SANITIZE_LEAK 'no effect on show from --color-moved with --word-diff' '
+	git show --color-moved --word-diff >actual &&
+	git show --word-diff >expect &&
 	test_cmp expect actual
 '
 
@@ -2016,7 +2024,7 @@ test_expect_success '--color-moved rewinds for MIN_ALNUM_COUNT' '
 	test_cmp expected actual
 '
 
-test_expect_success 'move detection with submodules' '
+test_expect_success !SANITIZE_LEAK 'move detection with submodules' '
 	test_create_repo bananas &&
 	echo ripe >bananas/recipe &&
 	git -C bananas add recipe &&

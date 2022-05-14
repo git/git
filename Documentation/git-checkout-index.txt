@@ -12,6 +12,7 @@ SYNOPSIS
 'git checkout-index' [-u] [-q] [-a] [-f] [-n] [--prefix=<string>]
 		   [--stage=<number>|all]
 		   [--temp]
+		   [--ignore-skip-worktree-bits]
 		   [-z] [--stdin]
 		   [--] [<file>...]
 
@@ -37,8 +38,9 @@ OPTIONS
 
 -a::
 --all::
-	checks out all files in the index.  Cannot be used
-	together with explicit filenames.
+	checks out all files in the index except for those with the
+	skip-worktree bit set (see `--ignore-skip-worktree-bits`).
+	Cannot be used together with explicit filenames.
 
 -n::
 --no-create::
@@ -58,6 +60,10 @@ OPTIONS
 	Instead of copying the files to the working directory
 	write the content to temporary files.  The temporary name
 	associations will be written to stdout.
+
+--ignore-skip-worktree-bits::
+	Check out all files, including those with the skip-worktree bit
+	set.
 
 --stdin::
 	Instead of taking list of paths from the command line,

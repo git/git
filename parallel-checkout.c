@@ -39,8 +39,8 @@ void get_parallel_checkout_configs(int *num_workers, int *threshold)
 
 	if (env_workers && *env_workers) {
 		if (strtol_i(env_workers, 10, num_workers)) {
-			die("invalid value for GIT_TEST_CHECKOUT_WORKERS: '%s'",
-			    env_workers);
+			die(_("invalid value for '%s': '%s'"),
+			    "GIT_TEST_CHECKOUT_WORKERS", env_workers);
 		}
 		if (*num_workers < 1)
 			*num_workers = online_cpus();

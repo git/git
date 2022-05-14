@@ -59,6 +59,10 @@ while (<>) {
 	    # and highly variable.  Just omit them.
 	    goto SKIP_LINE;
 	}
+	if ($tokens[$col_category] =~ m/fsync/) {
+	    # fsync events aren't interesting for the test
+	    goto SKIP_LINE;
+	}
     }
 
     # t_abs and t_rel are either blank or a float.  Replace the float

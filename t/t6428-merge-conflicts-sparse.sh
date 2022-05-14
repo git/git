@@ -112,7 +112,7 @@ test_expect_success 'conflicting entries written to worktree even if sparse' '
 	)
 '
 
-test_expect_merge_algorithm failure success 'present-despite-SKIP_WORKTREE handled reasonably' '
+test_expect_success 'present-despite-SKIP_WORKTREE handled reasonably' '
 	test_setup_numerals in_the_way &&
 	(
 		cd numerals_in_the_way &&
@@ -132,26 +132,13 @@ test_expect_merge_algorithm failure success 'present-despite-SKIP_WORKTREE handl
 
 		test_must_fail git merge -s recursive B^0 &&
 
-		git ls-files -t >index_files &&
-		test_cmp expected-index index_files &&
+		test_path_is_missing .git/MERGE_HEAD &&
 
-		test_path_is_file README &&
 		test_path_is_file numerals &&
 
-		test_cmp expected-merge numerals &&
-
-		# There should still be a file with "foobar" in it
-		grep foobar * &&
-
-		# 5 other files:
-		#   * expected-merge
-		#   * expected-index
-		#   * index_files
-		#   * others
-		#   * whatever name was given to the numerals file that had
-		#     "foobar" in it
-		git ls-files -o >others &&
-		test_line_count = 5 others
+		# numerals should still have "foobar" in it
+		echo foobar >expect &&
+		test_cmp expect numerals
 	)
 '
 

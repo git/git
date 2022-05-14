@@ -312,16 +312,13 @@ test_expect_success 'cleans up MIDX when appropriate' '
 		checksum=$(midx_checksum $objdir) &&
 		test_path_is_file $midx &&
 		test_path_is_file $midx-$checksum.bitmap &&
-		test_path_is_file $midx-$checksum.rev &&
 
 		test_commit repack-3 &&
 		GIT_TEST_MULTI_PACK_INDEX=0 git repack -Adb --write-midx &&
 
 		test_path_is_file $midx &&
 		test_path_is_missing $midx-$checksum.bitmap &&
-		test_path_is_missing $midx-$checksum.rev &&
 		test_path_is_file $midx-$(midx_checksum $objdir).bitmap &&
-		test_path_is_file $midx-$(midx_checksum $objdir).rev &&
 
 		test_commit repack-4 &&
 		GIT_TEST_MULTI_PACK_INDEX=0 git repack -Adb &&
@@ -354,7 +351,6 @@ test_expect_success '--write-midx with preferred bitmap tips' '
 		test_line_count = 1 before &&
 
 		rm -fr $midx-$(midx_checksum $objdir).bitmap &&
-		rm -fr $midx-$(midx_checksum $objdir).rev &&
 		rm -fr $midx &&
 
 		# instead of constructing the snapshot ourselves (c.f., the test
@@ -373,16 +369,117 @@ test_expect_success '--write-midx with preferred bitmap tips' '
 	)
 '
 
+# The first argument is expected to be a filename
+# and that file should contain the name of a .idx
+# file. Send the list of objects in that .idx file
+# into stdout.
+get_sorted_objects_from_pack () {
+	git show-index <$(cat "$1") >raw &&
+	cut -d" " -f2 raw
+}
+
 test_expect_success '--write-midx -b packs non-kept objects' '
-	GIT_TRACE2_EVENT="$(pwd)/trace.txt" \
-		git repack --write-midx -a -b &&
-	test_subcommand_inexact git pack-objects --honor-pack-keep <trace.txt
+	git init repo &&
+	test_when_finished "rm -fr repo" &&
+	(
+		cd repo &&
+
+		# Create a kept pack-file
+		test_commit base &&
+		git repack -ad &&
+		find $objdir/pack -name "*.idx" >before &&
+		test_line_count = 1 before &&
+		before_name=$(cat before) &&
+		>${before_name%.idx}.keep &&
+
+		# Create a non-kept pack-file
+		test_commit other &&
+		git repack &&
+
+		# Create loose objects
+		test_commit loose &&
+
+		# Repack everything
+		git repack --write-midx -a -b -d &&
+
+		# There should be two pack-files now, the
+		# old, kept pack and the new, non-kept pack.
+		find $objdir/pack -name "*.idx" | sort >after &&
+		test_line_count = 2 after &&
+		find $objdir/pack -name "*.keep" >kept &&
+		kept_name=$(cat kept) &&
+		echo ${kept_name%.keep}.idx >kept-idx &&
+		test_cmp before kept-idx &&
+
+		# Get object list from the kept pack.
+		get_sorted_objects_from_pack before >old.objects &&
+
+		# Get object list from the one non-kept pack-file
+		comm -13 before after >new-pack &&
+		test_line_count = 1 new-pack &&
+		get_sorted_objects_from_pack new-pack >new.objects &&
+
+		# None of the objects in the new pack should
+		# exist within the kept pack.
+		comm -12 old.objects new.objects >shared.objects &&
+		test_must_be_empty shared.objects
+	)
 '
 
 test_expect_success TTY '--quiet disables progress' '
 	test_terminal env GIT_PROGRESS_DELAY=0 \
 		git -C midx repack -ad --quiet --write-midx 2>stderr &&
 	test_must_be_empty stderr
+'
+
+test_expect_success 'setup for update-server-info' '
+	git init update-server-info &&
+	test_commit -C update-server-info message
+'
+
+test_server_info_present () {
+	test_path_is_file update-server-info/.git/objects/info/packs &&
+	test_path_is_file update-server-info/.git/info/refs
+}
+
+test_server_info_missing () {
+	test_path_is_missing update-server-info/.git/objects/info/packs &&
+	test_path_is_missing update-server-info/.git/info/refs
+}
+
+test_server_info_cleanup () {
+	rm -f update-server-info/.git/objects/info/packs update-server-info/.git/info/refs &&
+	test_server_info_missing
+}
+
+test_expect_success 'updates server info by default' '
+	test_server_info_cleanup &&
+	git -C update-server-info repack &&
+	test_server_info_present
+'
+
+test_expect_success '-n skips updating server info' '
+	test_server_info_cleanup &&
+	git -C update-server-info repack -n &&
+	test_server_info_missing
+'
+
+test_expect_success 'repack.updateServerInfo=true updates server info' '
+	test_server_info_cleanup &&
+	git -C update-server-info -c repack.updateServerInfo=true repack &&
+	test_server_info_present
+'
+
+test_expect_success 'repack.updateServerInfo=false skips updating server info' '
+	test_server_info_cleanup &&
+	git -C update-server-info -c repack.updateServerInfo=false repack &&
+	test_server_info_missing
+'
+
+test_expect_success '-n overrides repack.updateServerInfo=true' '
+	test_server_info_cleanup &&
+	git -C update-server-info -c repack.updateServerInfo=true repack -n &&
+	test_server_info_missing
 '
 
 test_done

@@ -183,4 +183,25 @@ void strbuf_worktree_ref(const struct worktree *wt,
 			 struct strbuf *sb,
 			 const char *refname);
 
+/**
+ * Enable worktree config for the first time. This will make the following
+ * adjustments:
+ *
+ * 1. Add extensions.worktreeConfig=true in the common config file.
+ *
+ * 2. If the common config file has a core.worktree value, then that value
+ *    is moved to the main worktree's config.worktree file.
+ *
+ * 3. If the common config file has a core.bare enabled, then that value
+ *    is moved to the main worktree's config.worktree file.
+ *
+ * If extensions.worktreeConfig is already true, then this method
+ * terminates early without any of the above steps. The existing config
+ * arrangement is assumed to be intentional.
+ *
+ * Returns 0 on success. Reports an error message and returns non-zero
+ * if any of these steps fail.
+ */
+int init_worktree_config(struct repository *r);
+
 #endif

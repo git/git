@@ -162,16 +162,10 @@ test_expect_success 'atomic push obeys update hook preventing a branch to be pus
 		test_commit two &&
 		git push --mirror up
 	) &&
-	(
-		cd upstream &&
-		HOOKDIR="$(git rev-parse --git-dir)/hooks" &&
-		HOOK="$HOOKDIR/update" &&
-		mkdir -p "$HOOKDIR" &&
-		write_script "$HOOK" <<-\EOF
-			# only allow update to main from now on
-			test "$1" = "refs/heads/main"
-		EOF
-	) &&
+	test_hook -C upstream update <<-\EOF &&
+	# only allow update to main from now on
+	test "$1" = "refs/heads/main"
+	EOF
 	(
 		cd workbench &&
 		git checkout main &&

@@ -25,3 +25,8 @@ repack.writeBitmaps::
 	space and extra time spent on the initial repack.  This has
 	no effect if multiple packfiles are created.
 	Defaults to true on bare repos, false otherwise.
+
+repack.updateServerInfo::
+	If set to false, linkgit:git-repack[1] will not run
+	linkgit:git-update-server-info[1]. Defaults to true. Can be overridden
+	when true by the `-n` option of linkgit:git-repack[1].

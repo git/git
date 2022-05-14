@@ -8,8 +8,8 @@ git-help - Display help information about Git
 SYNOPSIS
 --------
 [verse]
-'git help' [-a|--all [--[no-]verbose]]
-	   [[-i|--info] [-m|--man] [-w|--web]] [<command>|<guide>]
+'git help' [-a|--all] [--[no-]verbose] [--[no-]external-commands] [--[no-]aliases]
+'git help' [[-i|--info] [-m|--man] [-w|--web]] [<command>|<guide>]
 'git help' [-g|--guides]
 'git help' [-c|--config]
 
@@ -46,8 +46,15 @@ OPTIONS
 -------
 -a::
 --all::
-	Prints all the available commands on the standard output. This
-	option overrides any given command or guide name.
+	Prints all the available commands on the standard output.
+
+--no-external-commands::
+	When used with `--all`, exclude the listing of external "git-*"
+	commands found in the `$PATH`.
+
+--no-aliases::
+	When used with `--all`, exclude the listing of configured
+	aliases.
 
 --verbose::
 	When used with `--all` print description for all recognized

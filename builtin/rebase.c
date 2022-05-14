@@ -28,6 +28,7 @@
 #include "sequencer.h"
 #include "rebase-interactive.h"
 #include "reset.h"
+#include "hook.h"
 
 #define DEFAULT_REFLOG_ACTION "rebase"
 
@@ -36,7 +37,7 @@ static char const * const builtin_rebase_usage[] = {
 		"[--onto <newbase> | --keep-base] [<upstream> [<branch>]]"),
 	N_("git rebase [-i] [options] [--exec <cmd>] [--onto <newbase>] "
 		"--root [<branch>]"),
-	N_("git rebase --continue | --abort | --skip | --edit-todo"),
+	"git rebase --continue | --abort | --skip | --edit-todo",
 	NULL
 };
 
@@ -570,7 +571,8 @@ static int finish_rebase(struct rebase_options *opts)
 
 static int move_to_original_branch(struct rebase_options *opts)
 {
-	struct strbuf orig_head_reflog = STRBUF_INIT, head_reflog = STRBUF_INIT;
+	struct strbuf branch_reflog = STRBUF_INIT, head_reflog = STRBUF_INIT;
+	struct reset_head_opts ropts = { 0 };
 	int ret;
 
 	if (!opts->head_name)
@@ -579,16 +581,17 @@ static int move_to_original_branch(struct rebase_options *opts)
 	if (!opts->onto)
 		BUG("move_to_original_branch without onto");
 
-	strbuf_addf(&orig_head_reflog, "rebase finished: %s onto %s",
+	strbuf_addf(&branch_reflog, "rebase finished: %s onto %s",
 		    opts->head_name, oid_to_hex(&opts->onto->object.oid));
 	strbuf_addf(&head_reflog, "rebase finished: returning to %s",
 		    opts->head_name);
-	ret = reset_head(the_repository, NULL, "", opts->head_name,
-			 RESET_HEAD_REFS_ONLY,
-			 orig_head_reflog.buf, head_reflog.buf,
-			 DEFAULT_REFLOG_ACTION);
+	ropts.branch = opts->head_name;
+	ropts.flags = RESET_HEAD_REFS_ONLY;
+	ropts.branch_msg = branch_reflog.buf;
+	ropts.head_msg = head_reflog.buf;
+	ret = reset_head(the_repository, &ropts);
 
-	strbuf_release(&orig_head_reflog);
+	strbuf_release(&branch_reflog);
 	strbuf_release(&head_reflog);
 	return ret;
 }
@@ -670,13 +673,15 @@ static int run_am(struct rebase_options *opts)
 
 	status = run_command(&format_patch);
 	if (status) {
+		struct reset_head_opts ropts = { 0 };
 		unlink(rebased_patches);
 		free(rebased_patches);
 		strvec_clear(&am.args);
 
-		reset_head(the_repository, &opts->orig_head, "checkout",
-			   opts->head_name, 0,
-			   "HEAD", NULL, DEFAULT_REFLOG_ACTION);
+		ropts.oid = &opts->orig_head;
+		ropts.branch = opts->head_name;
+		ropts.default_reflog_action = DEFAULT_REFLOG_ACTION;
+		reset_head(the_repository, &ropts);
 		error(_("\ngit encountered an error while preparing the "
 			"patches to replay\n"
 			"these revisions:\n"
@@ -810,6 +815,28 @@ static int rebase_config(const char *var, const char *value, void *data)
 	}
 
 	return git_default_config(var, value, data);
+}
+
+static int checkout_up_to_date(struct rebase_options *options)
+{
+	struct strbuf buf = STRBUF_INIT;
+	struct reset_head_opts ropts = { 0 };
+	int ret = 0;
+
+	strbuf_addf(&buf, "%s: checkout %s",
+		    getenv(GIT_REFLOG_ACTION_ENVIRONMENT),
+		    options->switch_to);
+	ropts.oid = &options->orig_head;
+	ropts.branch = options->head_name;
+	ropts.flags = RESET_HEAD_RUN_POST_CHECKOUT_HOOK;
+	if (!ropts.branch)
+		ropts.flags |=  RESET_HEAD_DETACH;
+	ropts.head_msg = buf.buf;
+	if (reset_head(the_repository, &ropts) < 0)
+		ret = error(_("could not switch to %s"), options->switch_to);
+	strbuf_release(&buf);
+
+	return ret;
 }
 
 /*
@@ -1017,6 +1044,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	int reschedule_failed_exec = -1;
 	int allow_preemptive_ff = 1;
 	int preserve_merges_selected = 0;
+	struct reset_head_opts ropts = { 0 };
 	struct option builtin_rebase_options[] = {
 		OPT_STRING(0, "onto", &options.onto_name,
 			   N_("revision"),
@@ -1159,11 +1187,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		} else {
 			strbuf_reset(&buf);
 			strbuf_addf(&buf, "%s/interactive", merge_dir());
-			if(file_exists(buf.buf)) {
-				options.type = REBASE_MERGE;
+			options.type = REBASE_MERGE;
+			if (file_exists(buf.buf))
 				options.flags |= REBASE_INTERACTIVE_EXPLICIT;
-			} else
-				options.type = REBASE_MERGE;
 		}
 		options.state_dir = merge_dir();
 	}
@@ -1254,9 +1280,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 		rerere_clear(the_repository, &merge_rr);
 		string_list_clear(&merge_rr, 1);
-
-		if (reset_head(the_repository, NULL, "reset", NULL, RESET_HEAD_HARD,
-			       NULL, NULL, DEFAULT_REFLOG_ACTION) < 0)
+		ropts.flags = RESET_HEAD_HARD;
+		if (reset_head(the_repository, &ropts) < 0)
 			die(_("could not discard worktree changes"));
 		remove_branch_state(the_repository, 0);
 		if (read_basic_state(&options))
@@ -1273,9 +1298,11 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 		if (read_basic_state(&options))
 			exit(1);
-		if (reset_head(the_repository, &options.orig_head, "reset",
-			       options.head_name, RESET_HEAD_HARD,
-			       NULL, NULL, DEFAULT_REFLOG_ACTION) < 0)
+		ropts.oid = &options.orig_head;
+		ropts.branch = options.head_name;
+		ropts.flags = RESET_HEAD_HARD;
+		ropts.default_reflog_action = DEFAULT_REFLOG_ACTION;
+		if (reset_head(the_repository, &ropts) < 0)
 			die(_("could not move back to %s"),
 			    oid_to_hex(&options.orig_head));
 		remove_branch_state(the_repository, 0);
@@ -1554,33 +1581,6 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		options.upstream_arg = "--root";
 	}
 
-	/* Make sure the branch to rebase onto is valid. */
-	if (keep_base) {
-		strbuf_reset(&buf);
-		strbuf_addstr(&buf, options.upstream_name);
-		strbuf_addstr(&buf, "...");
-		options.onto_name = xstrdup(buf.buf);
-	} else if (!options.onto_name)
-		options.onto_name = options.upstream_name;
-	if (strstr(options.onto_name, "...")) {
-		if (get_oid_mb(options.onto_name, &merge_base) < 0) {
-			if (keep_base)
-				die(_("'%s': need exactly one merge base with branch"),
-				    options.upstream_name);
-			else
-				die(_("'%s': need exactly one merge base"),
-				    options.onto_name);
-		}
-		options.onto = lookup_commit_or_die(&merge_base,
-						    options.onto_name);
-	} else {
-		options.onto =
-			lookup_commit_reference_by_name(options.onto_name);
-		if (!options.onto)
-			die(_("Does not point to a valid commit '%s'"),
-				options.onto_name);
-	}
-
 	/*
 	 * If the branch to rebase is given, that is the branch we will rebase
 	 * branch_name -- branch/commit being rebased, or
@@ -1630,6 +1630,34 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	} else
 		BUG("unexpected number of arguments left to parse");
 
+	/* Make sure the branch to rebase onto is valid. */
+	if (keep_base) {
+		strbuf_reset(&buf);
+		strbuf_addstr(&buf, options.upstream_name);
+		strbuf_addstr(&buf, "...");
+		strbuf_addstr(&buf, branch_name);
+		options.onto_name = xstrdup(buf.buf);
+	} else if (!options.onto_name)
+		options.onto_name = options.upstream_name;
+	if (strstr(options.onto_name, "...")) {
+		if (get_oid_mb(options.onto_name, &merge_base) < 0) {
+			if (keep_base)
+				die(_("'%s': need exactly one merge base with branch"),
+				    options.upstream_name);
+			else
+				die(_("'%s': need exactly one merge base"),
+				    options.onto_name);
+		}
+		options.onto = lookup_commit_or_die(&merge_base,
+						    options.onto_name);
+	} else {
+		options.onto =
+			lookup_commit_reference_by_name(options.onto_name);
+		if (!options.onto)
+			die(_("Does not point to a valid commit '%s'"),
+				options.onto_name);
+	}
+
 	if (options.fork_point > 0) {
 		struct commit *head =
 			lookup_commit_reference(the_repository,
@@ -1641,10 +1669,10 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	if (repo_read_index(the_repository) < 0)
 		die(_("could not read index"));
 
-	if (options.autostash) {
-		create_autostash(the_repository, state_dir_path("autostash", &options),
-				 DEFAULT_REFLOG_ACTION);
-	}
+	if (options.autostash)
+		create_autostash(the_repository,
+				 state_dir_path("autostash", &options));
+
 
 	if (require_clean_work_tree(the_repository, "rebase",
 				    _("Please commit or stash them."), 1, 1)) {
@@ -1673,21 +1701,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		if (!(options.flags & REBASE_FORCE)) {
 			/* Lazily switch to the target branch if needed... */
 			if (options.switch_to) {
-				strbuf_reset(&buf);
-				strbuf_addf(&buf, "%s: checkout %s",
-					    getenv(GIT_REFLOG_ACTION_ENVIRONMENT),
-					    options.switch_to);
-				if (reset_head(the_repository,
-					       &options.orig_head, "checkout",
-					       options.head_name,
-					       RESET_HEAD_RUN_POST_CHECKOUT_HOOK,
-					       NULL, buf.buf,
-					       DEFAULT_REFLOG_ACTION) < 0) {
-					ret = error(_("could not switch to "
-							"%s"),
-						      options.switch_to);
+				ret = checkout_up_to_date(&options);
+				if (ret)
 					goto cleanup;
-				}
 			}
 
 			if (!(options.flags & REBASE_NO_QUIET))
@@ -1712,7 +1728,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 	/* If a hook exists, give it a chance to interrupt*/
 	if (!ok_to_skip_pre_rebase &&
-	    run_hook_le(NULL, "pre-rebase", options.upstream_arg,
+	    run_hooks_l("pre-rebase", options.upstream_arg,
 			argc ? argv[0] : NULL, NULL))
 		die(_("The pre-rebase hook refused to rebase."));
 
@@ -1754,10 +1770,13 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 	strbuf_addf(&msg, "%s: checkout %s",
 		    getenv(GIT_REFLOG_ACTION_ENVIRONMENT), options.onto_name);
-	if (reset_head(the_repository, &options.onto->object.oid, "checkout", NULL,
-		       RESET_HEAD_DETACH | RESET_ORIG_HEAD |
-		       RESET_HEAD_RUN_POST_CHECKOUT_HOOK,
-		       NULL, msg.buf, DEFAULT_REFLOG_ACTION))
+	ropts.oid = &options.onto->object.oid;
+	ropts.orig_head = &options.orig_head,
+	ropts.flags = RESET_HEAD_DETACH | RESET_ORIG_HEAD |
+			RESET_HEAD_RUN_POST_CHECKOUT_HOOK;
+	ropts.head_msg = msg.buf;
+	ropts.default_reflog_action = DEFAULT_REFLOG_ACTION;
+	if (reset_head(the_repository, &ropts))
 		die(_("Could not detach HEAD"));
 	strbuf_release(&msg);
 
@@ -1772,9 +1791,11 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		strbuf_addf(&msg, "rebase finished: %s onto %s",
 			options.head_name ? options.head_name : "detached HEAD",
 			oid_to_hex(&options.onto->object.oid));
-		reset_head(the_repository, NULL, "Fast-forwarded", options.head_name,
-			   RESET_HEAD_REFS_ONLY, "HEAD", msg.buf,
-			   DEFAULT_REFLOG_ACTION);
+		memset(&ropts, 0, sizeof(ropts));
+		ropts.branch = options.head_name;
+		ropts.flags = RESET_HEAD_REFS_ONLY;
+		ropts.head_msg = msg.buf;
+		reset_head(the_repository, &ropts);
 		strbuf_release(&msg);
 		ret = finish_rebase(&options);
 		goto cleanup;

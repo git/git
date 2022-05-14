@@ -85,4 +85,12 @@ test_expect_success 'scalar delete with enlistment' '
 	test_path_is_missing cloned
 '
 
+test_expect_success 'scalar supports -c/-C' '
+	test_when_finished "scalar delete sub" &&
+	git init sub &&
+	scalar -C sub -c status.aheadBehind=bogus register &&
+	test -z "$(git -C sub config --local status.aheadBehind)" &&
+	test true = "$(git -C sub config core.preloadIndex)"
+'
+
 test_done

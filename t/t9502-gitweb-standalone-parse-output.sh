@@ -34,7 +34,7 @@ EOF
 #
 # This will check that gitweb HTTP header contains proposed filename
 # as <basename> with '.tar' suffix added, and that generated tarfile
-# (gitweb message body) has <prefix> as prefix for al files in tarfile
+# (gitweb message body) has <prefix> as prefix for all files in tarfile
 #
 # <prefix> default to <basename>
 check_snapshot () {
@@ -205,6 +205,19 @@ test_expect_success 'xss checks' '
 	xss "a=rss&p=$TAG" &&
 	xss "a=rss&p=foo.git&f=$TAG" &&
 	xss "" "$TAG+"
+'
+
+no_http_equiv_content_type() {
+	gitweb_run "$@" &&
+	! grep -E "http-equiv=['\"]?content-type" gitweb.body
+}
+
+# See: <https://html.spec.whatwg.org/dev/semantics.html#attr-meta-http-equiv-content-type>
+test_expect_success 'no http-equiv="content-type" in XHTML' '
+	no_http_equiv_content_type &&
+	no_http_equiv_content_type "p=.git" &&
+	no_http_equiv_content_type "p=.git;a=log" &&
+	no_http_equiv_content_type "p=.git;a=tree"
 '
 
 test_done

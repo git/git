@@ -6,6 +6,7 @@
 #include "hashmap.h"
 #include "submodule.h"
 #include "strbuf.h"
+#include "tree-walk.h"
 
 /**
  * The submodule config cache API allows to read submodule
@@ -101,4 +102,37 @@ int check_submodule_name(const char *name);
 void fetch_config_from_gitmodules(int *max_children, int *recurse_submodules);
 void update_clone_config_from_gitmodules(int *max_jobs);
 
+/*
+ * Submodule entry that contains relevant information about a
+ * submodule in a tree.
+ */
+struct submodule_tree_entry {
+	/* The submodule's tree entry. */
+	struct name_entry *name_entry;
+	/*
+	 * A struct repository corresponding to the submodule. May be
+	 * NULL if the submodule has not been updated.
+	 */
+	struct repository *repo;
+	/*
+	 * A struct submodule containing the submodule config in the
+	 * tree's .gitmodules.
+	 */
+	const struct submodule *submodule;
+};
+
+struct submodule_entry_list {
+	struct submodule_tree_entry *entries;
+	int entry_nr;
+	int entry_alloc;
+};
+
+/**
+ * Given a treeish, return all submodules in the tree and its subtrees,
+ * but excluding nested submodules. Callers that require nested
+ * submodules are expected to recurse into the submodules themselves.
+ */
+void submodules_of_tree(struct repository *r,
+			const struct object_id *treeish_name,
+			struct submodule_entry_list *ret);
 #endif /* SUBMODULE_CONFIG_H */

@@ -161,6 +161,15 @@ test_expect_success 'fetch --update-shallow' '
 	)
 '
 
+test_expect_success 'fetch --update-shallow into a repo with submodules' '
+	git init a-submodule &&
+	test_commit -C a-submodule foo &&
+	git init repo-with-sub &&
+	git -C repo-with-sub submodule add ../a-submodule a-submodule &&
+	git -C repo-with-sub commit -m "added submodule" &&
+	git -C repo-with-sub fetch --update-shallow ../shallow/.git refs/heads/*:refs/remotes/shallow/*
+'
+
 test_expect_success 'fetch --update-shallow (with fetch.writeCommitGraph)' '
 	(
 	cd shallow &&

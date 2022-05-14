@@ -30,8 +30,8 @@
 #include "promisor-remote.h"
 #include "refs.h"
 #include "remote.h"
-#include "object-store.h"
 #include "exec-cmd.h"
+#include "hook.h"
 
 #define FAILED_RUN "failed to run %s"
 
@@ -394,7 +394,7 @@ static int need_to_gc(void)
 	else
 		return 0;
 
-	if (run_hook_le(NULL, "pre-auto-gc", NULL))
+	if (run_hooks("pre-auto-gc"))
 		return 0;
 	return 1;
 }

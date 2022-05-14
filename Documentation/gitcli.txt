@@ -19,6 +19,15 @@ Many commands take revisions (most often "commits", but sometimes
 "tree-ish", depending on the context and command) and paths as their
 arguments.  Here are the rules:
 
+ * Options come first and then args.
+    A subcommand may take dashed options (which may take their own
+    arguments, e.g. "--max-parents 2") and arguments.  You SHOULD
+    give dashed options first and then arguments.  Some commands may
+    accept dashed options after you have already gave non-option
+    arguments (which may make the command ambiguous), but you should
+    not rely on it (because eventually we may find a way to fix
+    these ambiguity by enforcing the "options then args" rule).
+
  * Revisions come first and then paths.
    E.g. in `git diff v1.0 v2.0 arch/x86 include/asm-x86`,
    `v1.0` and `v2.0` are revisions and `arch/x86` and `include/asm-x86`
@@ -72,24 +81,24 @@ you will.
 Here are the rules regarding the "flags" that you should follow when you are
 scripting Git:
 
- * it's preferred to use the non-dashed form of Git commands, which means that
+ * It's preferred to use the non-dashed form of Git commands, which means that
    you should prefer `git foo` to `git-foo`.
 
- * splitting short options to separate words (prefer `git foo -a -b`
+ * Splitting short options to separate words (prefer `git foo -a -b`
    to `git foo -ab`, the latter may not even work).
 
- * when a command-line option takes an argument, use the 'stuck' form.  In
+ * When a command-line option takes an argument, use the 'stuck' form.  In
    other words, write `git foo -oArg` instead of `git foo -o Arg` for short
    options, and `git foo --long-opt=Arg` instead of `git foo --long-opt Arg`
    for long options.  An option that takes optional option-argument must be
    written in the 'stuck' form.
 
- * when you give a revision parameter to a command, make sure the parameter is
+ * When you give a revision parameter to a command, make sure the parameter is
    not ambiguous with a name of a file in the work tree.  E.g. do not write
    `git log -1 HEAD` but write `git log -1 HEAD --`; the former will not work
    if you happen to have a file called `HEAD` in the work tree.
 
- * many commands allow a long option `--option` to be abbreviated
+ * Many commands allow a long option `--option` to be abbreviated
    only to their unique prefix (e.g. if there is no other option
    whose name begins with `opt`, you may be able to spell `--opt` to
    invoke the `--option` flag), but you should fully spell them out

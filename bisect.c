@@ -724,7 +724,8 @@ static int is_expected_rev(const struct object_id *oid)
 	return res;
 }
 
-static enum bisect_error bisect_checkout(const struct object_id *bisect_rev, int no_checkout)
+enum bisect_error bisect_checkout(const struct object_id *bisect_rev,
+				  int no_checkout)
 {
 	char bisect_rev_hex[GIT_MAX_HEXSZ + 1];
 	struct commit *commit;

@@ -141,9 +141,13 @@ from all available files.
 See also <<FILES>>.
 
 --worktree::
-	Similar to `--local` except that `.git/config.worktree` is
+	Similar to `--local` except that `$GIT_DIR/config.worktree` is
 	read from or written to if `extensions.worktreeConfig` is
-	present. If not it's the same as `--local`.
+	enabled. If not it's the same as `--local`. Note that `$GIT_DIR`
+	is equal to `$GIT_COMMON_DIR` for the main working tree, but is of
+	the form `$GIT_DIR/worktrees/<id>/` for other working trees. See
+	linkgit:git-worktree[1] to learn how to enable
+	`extensions.worktreeConfig`.
 
 -f <config-file>::
 --file <config-file>::

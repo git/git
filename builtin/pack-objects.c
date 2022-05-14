@@ -237,8 +237,6 @@ static unsigned long cache_max_small_delta_size = 1000;
 
 static unsigned long window_memory_limit = 0;
 
-static struct list_objects_filter_options filter_options;
-
 static struct string_list uri_protocols = STRING_LIST_INIT_NODUP;
 
 enum missing_action {
@@ -1199,16 +1197,26 @@ static void write_pack_file(void)
 			display_progress(progress_state, written);
 		}
 
-		/*
-		 * Did we write the wrong # entries in the header?
-		 * If so, rewrite it like in fast-import
-		 */
 		if (pack_to_stdout) {
-			finalize_hashfile(f, hash, CSUM_HASH_IN_STREAM | CSUM_CLOSE);
+			/*
+			 * We never fsync when writing to stdout since we may
+			 * not be writing to an actual pack file. For instance,
+			 * the upload-pack code passes a pipe here. Calling
+			 * fsync on a pipe results in unnecessary
+			 * synchronization with the reader on some platforms.
+			 */
+			finalize_hashfile(f, hash, FSYNC_COMPONENT_NONE,
+					  CSUM_HASH_IN_STREAM | CSUM_CLOSE);
 		} else if (nr_written == nr_remaining) {
-			finalize_hashfile(f, hash, CSUM_HASH_IN_STREAM | CSUM_FSYNC | CSUM_CLOSE);
+			finalize_hashfile(f, hash, FSYNC_COMPONENT_PACK,
+					  CSUM_HASH_IN_STREAM | CSUM_FSYNC | CSUM_CLOSE);
 		} else {
-			int fd = finalize_hashfile(f, hash, 0);
+			/*
+			 * If we wrote the wrong number of entries in the
+			 * header, rewrite it like in fast-import.
+			 */
+
+			int fd = finalize_hashfile(f, hash, FSYNC_COMPONENT_PACK, 0);
 			fixup_pack_header_footer(fd, hash, pack_tmp_name,
 						 nr_written, hash, offset);
 			close(fd);
@@ -1802,7 +1810,7 @@ static void add_preferred_base(struct object_id *oid)
 		return;
 
 	data = read_object_with_reference(the_repository, oid,
-					  tree_type, &size, &tree_oid);
+					  OBJ_TREE, &size, &tree_oid);
 	if (!data)
 		return;
 
@@ -3504,7 +3512,7 @@ static int option_parse_missing_action(const struct option *opt,
 		return 0;
 	}
 
-	die(_("invalid value for --missing"));
+	die(_("invalid value for '%s': '%s'"), "--missing", arg);
 	return 0;
 }
 
@@ -3651,7 +3659,7 @@ static int pack_options_allow_reuse(void)
 
 static int get_object_list_from_bitmap(struct rev_info *revs)
 {
-	if (!(bitmap_git = prepare_bitmap_walk(revs, &filter_options, 0)))
+	if (!(bitmap_git = prepare_bitmap_walk(revs, 0)))
 		return -1;
 
 	if (pack_options_allow_reuse() &&
@@ -3714,9 +3722,8 @@ static void mark_bitmap_preferred_tips(void)
 	}
 }
 
-static void get_object_list(int ac, const char **av)
+static void get_object_list(struct rev_info *revs, int ac, const char **av)
 {
-	struct rev_info revs;
 	struct setup_revision_opt s_r_opt = {
 		.allow_exclude_promisor_objects = 1,
 	};
@@ -3724,9 +3731,8 @@ static void get_object_list(int ac, const char **av)
 	int flags = 0;
 	int save_warning;
 
-	repo_init_revisions(the_repository, &revs, NULL);
 	save_commit_buffer = 0;
-	setup_revisions(ac, av, &revs, &s_r_opt);
+	setup_revisions(ac, av, revs, &s_r_opt);
 
 	/* make sure shallows are read */
 	is_repository_shallow(the_repository);
@@ -3756,13 +3762,13 @@ static void get_object_list(int ac, const char **av)
 			}
 			die(_("not a rev '%s'"), line);
 		}
-		if (handle_revision_arg(line, &revs, flags, REVARG_CANNOT_BE_FILENAME))
+		if (handle_revision_arg(line, revs, flags, REVARG_CANNOT_BE_FILENAME))
 			die(_("bad revision '%s'"), line);
 	}
 
 	warn_on_object_refname_ambiguity = save_warning;
 
-	if (use_bitmap_index && !get_object_list_from_bitmap(&revs))
+	if (use_bitmap_index && !get_object_list_from_bitmap(revs))
 		return;
 
 	if (use_delta_islands)
@@ -3771,24 +3777,24 @@ static void get_object_list(int ac, const char **av)
 	if (write_bitmap_index)
 		mark_bitmap_preferred_tips();
 
-	if (prepare_revision_walk(&revs))
+	if (prepare_revision_walk(revs))
 		die(_("revision walk setup failed"));
-	mark_edges_uninteresting(&revs, show_edge, sparse);
+	mark_edges_uninteresting(revs, show_edge, sparse);
 
 	if (!fn_show_object)
 		fn_show_object = show_object;
-	traverse_commit_list_filtered(&filter_options, &revs,
-				      show_commit, fn_show_object, NULL,
-				      NULL);
+	traverse_commit_list(revs,
+			     show_commit, fn_show_object,
+			     NULL);
 
 	if (unpack_unreachable_expiration) {
-		revs.ignore_missing_links = 1;
-		if (add_unseen_recent_objects_to_traversal(&revs,
+		revs->ignore_missing_links = 1;
+		if (add_unseen_recent_objects_to_traversal(revs,
 				unpack_unreachable_expiration))
 			die(_("unable to add recent objects"));
-		if (prepare_revision_walk(&revs))
+		if (prepare_revision_walk(revs))
 			die(_("revision walk setup failed"));
-		traverse_commit_list(&revs, record_recent_commit,
+		traverse_commit_list(revs, record_recent_commit,
 				     record_recent_object, NULL);
 	}
 
@@ -3861,6 +3867,21 @@ static int option_parse_unpack_unreachable(const struct option *opt,
 	return 0;
 }
 
+struct po_filter_data {
+	unsigned have_revs:1;
+	struct rev_info revs;
+};
+
+static struct list_objects_filter_options *po_filter_revs_init(void *value)
+{
+	struct po_filter_data *data = value;
+
+	repo_init_revisions(the_repository, &data->revs, NULL);
+	data->have_revs = 1;
+
+	return &data->revs.filter;
+}
+
 int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 {
 	int use_internal_rev_list = 0;
@@ -3871,6 +3892,8 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	int rev_list_index = 0;
 	int stdin_packs = 0;
 	struct string_list keep_pack_list = STRING_LIST_INIT_NODUP;
+	struct po_filter_data pfd = { .have_revs = 0 };
+
 	struct option pack_objects_options[] = {
 		OPT_SET_INT('q', "quiet", &progress,
 			    N_("do not show progress meter"), 0),
@@ -3956,7 +3979,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			      &write_bitmap_index,
 			      N_("write a bitmap index if possible"),
 			      WRITE_BITMAP_QUIET, PARSE_OPT_HIDDEN),
-		OPT_PARSE_LIST_OBJECTS_FILTER(&filter_options),
+		OPT_PARSE_LIST_OBJECTS_FILTER_INIT(&pfd, po_filter_revs_init),
 		OPT_CALLBACK_F(0, "missing", NULL, N_("action"),
 		  N_("handling for missing objects"), PARSE_OPT_NONEG,
 		  option_parse_missing_action),
@@ -3976,9 +3999,11 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	read_replace_refs = 0;
 
 	sparse = git_env_bool("GIT_TEST_PACK_SPARSE", -1);
-	prepare_repo_settings(the_repository);
-	if (sparse < 0)
-		sparse = the_repository->settings.pack_use_sparse;
+	if (the_repository->gitdir) {
+		prepare_repo_settings(the_repository);
+		if (sparse < 0)
+			sparse = the_repository->settings.pack_use_sparse;
+	}
 
 	reset_pack_idx_option(&pack_idx_opts);
 	git_config(git_pack_config, NULL);
@@ -4074,7 +4099,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	if (!rev_list_all || !rev_list_reflog || !rev_list_index)
 		unpack_unreachable_expiration = 0;
 
-	if (filter_options.choice) {
+	if (pfd.have_revs && pfd.revs.filter.choice) {
 		if (!pack_to_stdout)
 			die(_("cannot use --filter without --stdout"));
 		if (stdin_packs)
@@ -4150,8 +4175,13 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			add_unreachable_loose_objects();
 	} else if (!use_internal_rev_list) {
 		read_object_list_from_stdin();
+	} else if (pfd.have_revs) {
+		get_object_list(&pfd.revs, rp.nr, rp.v);
 	} else {
-		get_object_list(rp.nr, rp.v);
+		struct rev_info revs;
+
+		repo_init_revisions(the_repository, &revs, NULL);
+		get_object_list(&revs, rp.nr, rp.v);
 	}
 	cleanup_preferred_base();
 	if (include_tag && nr_result)

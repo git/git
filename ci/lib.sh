@@ -122,7 +122,7 @@ then
 	test macos != "$CI_OS_NAME" || CI_OS_NAME=osx
 	CI_REPO_SLUG="$GITHUB_REPOSITORY"
 	CI_JOB_ID="$GITHUB_RUN_ID"
-	CC="${CC:-gcc}"
+	CC="${CC_PACKAGE:-${CC:-gcc}}"
 	DONT_SKIP_TAGS=t
 
 	cache_dir="$HOME/none"
@@ -197,7 +197,6 @@ esac
 case "$jobname" in
 linux32)
 	CC=gcc
-	MAKEFLAGS="$MAKEFLAGS NO_UNCOMPRESS2=1"
 	;;
 linux-musl)
 	CC=gcc

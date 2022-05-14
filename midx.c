@@ -33,6 +33,7 @@
 #define MIDX_CHUNKID_OIDLOOKUP 0x4f49444c /* "OIDL" */
 #define MIDX_CHUNKID_OBJECTOFFSETS 0x4f4f4646 /* "OOFF" */
 #define MIDX_CHUNKID_LARGEOFFSETS 0x4c4f4646 /* "LOFF" */
+#define MIDX_CHUNKID_REVINDEX 0x52494458 /* "RIDX" */
 #define MIDX_CHUNK_FANOUT_SIZE (sizeof(uint32_t) * 256)
 #define MIDX_CHUNK_OFFSET_WIDTH (2 * sizeof(uint32_t))
 #define MIDX_CHUNK_LARGE_OFFSET_WIDTH (sizeof(uint64_t))
@@ -160,6 +161,9 @@ struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local
 		die(_("multi-pack-index missing required object offsets chunk"));
 
 	pair_chunk(cf, MIDX_CHUNKID_LARGEOFFSETS, &m->chunk_large_offsets);
+
+	if (git_env_bool("GIT_TEST_MIDX_READ_RIDX", 1))
+		pair_chunk(cf, MIDX_CHUNKID_REVINDEX, &m->chunk_revindex);
 
 	m->num_objects = ntohl(m->chunk_oid_fanout[255]);
 
@@ -833,6 +837,18 @@ static int write_midx_large_offsets(struct hashfile *f,
 	return 0;
 }
 
+static int write_midx_revindex(struct hashfile *f,
+			       void *data)
+{
+	struct write_midx_context *ctx = data;
+	uint32_t i;
+
+	for (i = 0; i < ctx->entries_nr; i++)
+		hashwrite_be32(f, ctx->pack_order[i]);
+
+	return 0;
+}
+
 struct midx_pack_order_data {
 	uint32_t nr;
 	uint32_t pack;
@@ -1061,6 +1077,9 @@ static int write_midx_bitmap(char *midx_name, unsigned char *midx_hash,
 	char *bitmap_name = xstrfmt("%s-%s.bitmap", midx_name, hash_to_hex(midx_hash));
 	int ret;
 
+	if (!ctx->entries_nr)
+		BUG("cannot write a bitmap without any objects");
+
 	if (flags & MIDX_WRITE_BITMAP_HASH_CACHE)
 		options |= BITMAP_OPT_HASH_CACHE;
 
@@ -1113,17 +1132,26 @@ cleanup:
 static struct multi_pack_index *lookup_multi_pack_index(struct repository *r,
 							const char *object_dir)
 {
+	struct multi_pack_index *result = NULL;
 	struct multi_pack_index *cur;
+	char *obj_dir_real = real_pathdup(object_dir, 1);
+	struct strbuf cur_path_real = STRBUF_INIT;
 
 	/* Ensure the given object_dir is local, or a known alternate. */
-	find_odb(r, object_dir);
+	find_odb(r, obj_dir_real);
 
 	for (cur = get_multi_pack_index(r); cur; cur = cur->next) {
-		if (!strcmp(object_dir, cur->object_dir))
-			return cur;
+		strbuf_realpath(&cur_path_real, cur->object_dir, 1);
+		if (!strcmp(obj_dir_real, cur_path_real.buf)) {
+			result = cur;
+			goto cleanup;
+		}
 	}
 
-	return NULL;
+cleanup:
+	free(obj_dir_real);
+	strbuf_release(&cur_path_real);
+	return result;
 }
 
 static int write_midx_internal(const char *object_dir,
@@ -1385,6 +1413,12 @@ static int write_midx_internal(const char *object_dir,
 		goto cleanup;
 	}
 
+	if (!ctx.entries_nr) {
+		if (flags & MIDX_WRITE_BITMAP)
+			warning(_("refusing to write multi-pack .bitmap without any objects"));
+		flags &= ~(MIDX_WRITE_REV_INDEX | MIDX_WRITE_BITMAP);
+	}
+
 	cf = init_chunkfile(f);
 
 	add_chunk(cf, MIDX_CHUNKID_PACKNAMES, pack_name_concat_len,
@@ -1403,16 +1437,22 @@ static int write_midx_internal(const char *object_dir,
 			(size_t)ctx.num_large_offsets * MIDX_CHUNK_LARGE_OFFSET_WIDTH,
 			write_midx_large_offsets);
 
+	if (flags & (MIDX_WRITE_REV_INDEX | MIDX_WRITE_BITMAP)) {
+		ctx.pack_order = midx_pack_order(&ctx);
+		add_chunk(cf, MIDX_CHUNKID_REVINDEX,
+			  ctx.entries_nr * sizeof(uint32_t),
+			  write_midx_revindex);
+	}
+
 	write_midx_header(f, get_num_chunks(cf), ctx.nr - dropped_packs);
 	write_chunkfile(cf, &ctx);
 
-	finalize_hashfile(f, midx_hash, CSUM_FSYNC | CSUM_HASH_IN_STREAM);
+	finalize_hashfile(f, midx_hash, FSYNC_COMPONENT_PACK_METADATA,
+			  CSUM_FSYNC | CSUM_HASH_IN_STREAM);
 	free_chunkfile(cf);
 
-	if (flags & (MIDX_WRITE_REV_INDEX | MIDX_WRITE_BITMAP))
-		ctx.pack_order = midx_pack_order(&ctx);
-
-	if (flags & MIDX_WRITE_REV_INDEX)
+	if (flags & MIDX_WRITE_REV_INDEX &&
+	    git_env_bool("GIT_TEST_MIDX_WRITE_REV", 0))
 		write_midx_reverse_index(midx_name.buf, midx_hash, &ctx);
 	if (flags & MIDX_WRITE_BITMAP) {
 		if (write_midx_bitmap(midx_name.buf, midx_hash, &ctx,

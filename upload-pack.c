@@ -1400,13 +1400,19 @@ static int parse_want(struct packet_writer *writer, const char *line,
 	const char *arg;
 	if (skip_prefix(line, "want ", &arg)) {
 		struct object_id oid;
+		struct commit *commit;
 		struct object *o;
 
 		if (get_oid_hex(arg, &oid))
 			die("git upload-pack: protocol error, "
 			    "expected to get oid, not '%s'", line);
 
-		o = parse_object(the_repository, &oid);
+		commit = lookup_commit_in_graph(the_repository, &oid);
+		if (commit)
+			o = &commit->object;
+		else
+			o = parse_object(the_repository, &oid);
+
 		if (!o) {
 			packet_writer_error(writer,
 					    "upload-pack: not our ref %s",
@@ -1434,7 +1440,7 @@ static int parse_want_ref(struct packet_writer *writer, const char *line,
 	if (skip_prefix(line, "want-ref ", &refname_nons)) {
 		struct object_id oid;
 		struct string_list_item *item;
-		struct object *o;
+		struct object *o = NULL;
 		struct strbuf refname = STRBUF_INIT;
 
 		strbuf_addf(&refname, "%s%s", get_git_namespace(), refname_nons);
@@ -1448,7 +1454,15 @@ static int parse_want_ref(struct packet_writer *writer, const char *line,
 		item = string_list_append(wanted_refs, refname_nons);
 		item->util = oiddup(&oid);
 
-		o = parse_object_or_die(&oid, refname_nons);
+		if (!starts_with(refname_nons, "refs/tags/")) {
+			struct commit *commit = lookup_commit_in_graph(the_repository, &oid);
+			if (commit)
+				o = &commit->object;
+		}
+
+		if (!o)
+			o = parse_object_or_die(&oid, refname_nons);
+
 		if (!(o->flags & WANTED)) {
 			o->flags |= WANTED;
 			add_object_array(o, NULL, want_obj);

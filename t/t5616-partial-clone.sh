@@ -166,6 +166,85 @@ test_expect_success 'manual prefetch of missing objects' '
 	test_line_count = 0 observed.oids
 '
 
+# create new commits in "src" repo to establish a history on file.4.txt
+# and push to "srv.bare".
+test_expect_success 'push new commits to server for file.4.txt' '
+	for x in a b c d e f
+	do
+		echo "Mod file.4.txt $x" >src/file.4.txt &&
+		if list_contains "a,b" "$x"; then
+			printf "%10000s" X >>src/file.4.txt
+		fi &&
+		if list_contains "c,d" "$x"; then
+			printf "%20000s" X >>src/file.4.txt
+		fi &&
+		git -C src add file.4.txt &&
+		git -C src commit -m "mod $x" || return 1
+	done &&
+	git -C src push -u srv main
+'
+
+# Do partial fetch to fetch smaller files; then verify that without --refetch
+# applying a new filter does not refetch missing large objects. Then use
+# --refetch to apply the new filter on existing commits. Test it under both
+# protocol v2 & v0.
+test_expect_success 'apply a different filter using --refetch' '
+	git -C pc1 fetch --filter=blob:limit=999 origin &&
+	git -C pc1 rev-list --quiet --objects --missing=print \
+		main..origin/main >observed &&
+	test_line_count = 4 observed &&
+
+	git -C pc1 fetch --filter=blob:limit=19999 --refetch origin &&
+	git -C pc1 rev-list --quiet --objects --missing=print \
+		main..origin/main >observed &&
+	test_line_count = 2 observed &&
+
+	git -c protocol.version=0 -C pc1 fetch --filter=blob:limit=29999 \
+		--refetch origin &&
+	git -C pc1 rev-list --quiet --objects --missing=print \
+		main..origin/main >observed &&
+	test_line_count = 0 observed
+'
+
+test_expect_success 'fetch --refetch works with a shallow clone' '
+	git clone --no-checkout --depth=1 --filter=blob:none "file://$(pwd)/srv.bare" pc1s &&
+	git -C pc1s rev-list --objects --missing=print HEAD >observed &&
+	test_line_count = 6 observed &&
+
+	GIT_TRACE=1 git -C pc1s fetch --filter=blob:limit=999 --refetch origin &&
+	git -C pc1s rev-list --objects --missing=print HEAD >observed &&
+	test_line_count = 6 observed
+'
+
+test_expect_success 'fetch --refetch triggers repacking' '
+	GIT_TRACE2_CONFIG_PARAMS=gc.autoPackLimit,maintenance.incremental-repack.auto &&
+	export GIT_TRACE2_CONFIG_PARAMS &&
+
+	GIT_TRACE2_EVENT="$PWD/trace1.event" \
+	git -C pc1 fetch --refetch origin &&
+	test_subcommand git maintenance run --auto --no-quiet <trace1.event &&
+	grep \"param\":\"gc.autopacklimit\",\"value\":\"1\" trace1.event &&
+	grep \"param\":\"maintenance.incremental-repack.auto\",\"value\":\"-1\" trace1.event &&
+
+	GIT_TRACE2_EVENT="$PWD/trace2.event" \
+	git -c protocol.version=0 \
+		-c gc.autoPackLimit=0 \
+		-c maintenance.incremental-repack.auto=1234 \
+		-C pc1 fetch --refetch origin &&
+	test_subcommand git maintenance run --auto --no-quiet <trace2.event &&
+	grep \"param\":\"gc.autopacklimit\",\"value\":\"0\" trace2.event &&
+	grep \"param\":\"maintenance.incremental-repack.auto\",\"value\":\"-1\" trace2.event &&
+
+	GIT_TRACE2_EVENT="$PWD/trace3.event" \
+	git -c protocol.version=0 \
+		-c gc.autoPackLimit=1234 \
+		-c maintenance.incremental-repack.auto=0 \
+		-C pc1 fetch --refetch origin &&
+	test_subcommand git maintenance run --auto --no-quiet <trace3.event &&
+	grep \"param\":\"gc.autopacklimit\",\"value\":\"1\" trace3.event &&
+	grep \"param\":\"maintenance.incremental-repack.auto\",\"value\":\"0\" trace3.event
+'
+
 test_expect_success 'partial clone with transfer.fsckobjects=1 works with submodules' '
 	test_create_repo submodule &&
 	test_commit -C submodule mycommit &&
@@ -225,7 +304,7 @@ test_expect_success 'use fsck before and after manually fetching a missing subtr
 
 	# Auto-fetch all remaining trees and blobs with --missing=error
 	git -C dst rev-list --missing=error --objects main >fetched_objects &&
-	test_line_count = 70 fetched_objects &&
+	test_line_count = 88 fetched_objects &&
 
 	awk -f print_1.awk fetched_objects |
 	xargs -n1 git -C dst cat-file -t >fetched_types &&

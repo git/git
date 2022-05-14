@@ -5,6 +5,7 @@
 
 struct commit;
 struct reflog_walk_info;
+struct date_mode;
 
 void init_reflog_walk(struct reflog_walk_info **info);
 int add_reflog_for_walk(struct reflog_walk_info *info,

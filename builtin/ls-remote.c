@@ -155,6 +155,7 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 
 	ref_array_clear(&ref_array);
 	if (transport_disconnect(transport))
-		return 1;
+		status = 1;
+	transport_ls_refs_options_release(&transport_options);
 	return status;
 }

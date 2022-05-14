@@ -619,11 +619,23 @@ test_expect_success 'usage: --negotiate-only without --negotiation-tip' '
 	setup_negotiate_only "$SERVER" "$URI" &&
 
 	cat >err.expect <<-\EOF &&
-	fatal: --negotiate-only needs one or more --negotiate-tip=*
+	fatal: --negotiate-only needs one or more --negotiation-tip=*
 	EOF
 
 	test_must_fail git -c protocol.version=2 -C client fetch \
 		--negotiate-only \
+		origin 2>err.actual &&
+	test_cmp err.expect err.actual
+'
+
+test_expect_success 'usage: --negotiate-only with --recurse-submodules' '
+	cat >err.expect <<-\EOF &&
+	fatal: options '\''--negotiate-only'\'' and '\''--recurse-submodules'\'' cannot be used together
+	EOF
+
+	test_must_fail git -c protocol.version=2 -C client fetch \
+		--negotiate-only \
+		--recurse-submodules \
 		origin 2>err.actual &&
 	test_cmp err.expect err.actual
 '

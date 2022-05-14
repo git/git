@@ -25,4 +25,14 @@ test_expect_success 'read-tree --prefix' '
 	cmp expect actual
 '
 
+test_expect_success 'read-tree --prefix with leading slash exits with error' '
+	git rm -rf . &&
+	test_must_fail git read-tree --prefix=/two/ $tree &&
+	git read-tree --prefix=two/ $tree &&
+
+	git rm -rf . &&
+	test_must_fail git read-tree --prefix=/ $tree &&
+	git read-tree --prefix= $tree
+'
+
 test_done

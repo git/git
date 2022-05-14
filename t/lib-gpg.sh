@@ -40,7 +40,7 @@ test_lazy_prereq GPG '
 		#		> lib-gpg/ownertrust
 		mkdir "$GNUPGHOME" &&
 		chmod 0700 "$GNUPGHOME" &&
-		(gpgconf --kill gpg-agent || : ) &&
+		(gpgconf --kill all || : ) &&
 		gpg --homedir "${GNUPGHOME}" --import \
 			"$TEST_DIRECTORY"/lib-gpg/keyring.gpg &&
 		gpg --homedir "${GNUPGHOME}" --import-ownertrust \
@@ -72,12 +72,11 @@ test_lazy_prereq GPGSM '
 		--passphrase-fd 0 --pinentry-mode loopback \
 		--import "$TEST_DIRECTORY"/lib-gpg/gpgsm_cert.p12 &&
 
-	gpgsm --homedir "${GNUPGHOME}" -K |
-	grep fingerprint: |
-	cut -d" " -f4 |
-	tr -d "\\n" >"${GNUPGHOME}/trustlist.txt" &&
+	gpgsm --homedir "${GNUPGHOME}" -K --with-colons |
+	awk -F ":" "/^fpr:/ {printf \"%s S relax\\n\", \$10}" \
+		>"${GNUPGHOME}/trustlist.txt" &&
+	(gpgconf --reload all || : ) &&
 
-	echo " S relax" >>"${GNUPGHOME}/trustlist.txt" &&
 	echo hello | gpgsm --homedir "${GNUPGHOME}" >/dev/null \
 	       -u committer@example.com -o /dev/null --sign -
 '

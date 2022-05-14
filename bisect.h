@@ -3,6 +3,7 @@
 
 struct commit_list;
 struct repository;
+struct object_id;
 
 /*
  * Find bisection. If something is found, `reaches` will be the number of
@@ -68,5 +69,8 @@ int estimate_bisect_steps(int all);
 void read_bisect_terms(const char **bad, const char **good);
 
 int bisect_clean_state(void);
+
+enum bisect_error bisect_checkout(const struct object_id *bisect_rev,
+				  int no_checkout);
 
 #endif

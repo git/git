@@ -71,5 +71,6 @@ struct urlmatch_config {
 }
 
 int urlmatch_config_entry(const char *var, const char *value, void *cb);
+void urlmatch_config_release(struct urlmatch_config *config);
 
 #endif /* URL_MATCH_H */

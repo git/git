@@ -619,9 +619,7 @@ test_expect_success 'rebase a detached HEAD' '
 '
 
 test_expect_success 'rebase a commit violating pre-commit' '
-
-	mkdir -p .git/hooks &&
-	write_script .git/hooks/pre-commit <<-\EOF &&
+	test_hook pre-commit <<-\EOF &&
 	test -z "$(git diff --cached --check)"
 	EOF
 	echo "monde! " >> file1 &&
@@ -636,8 +634,6 @@ test_expect_success 'rebase a commit violating pre-commit' '
 '
 
 test_expect_success 'rebase with a file named HEAD in worktree' '
-
-	rm -fr .git/hooks &&
 	git reset --hard &&
 	git checkout -b branch3 A &&
 
@@ -1688,10 +1684,8 @@ test_expect_success 'valid author header when author contains single quote' '
 '
 
 test_expect_success 'post-commit hook is called' '
-	test_when_finished "rm -f .git/hooks/post-commit" &&
 	>actual &&
-	mkdir -p .git/hooks &&
-	write_script .git/hooks/post-commit <<-\EOS &&
+	test_hook post-commit <<-\EOS &&
 	git rev-parse HEAD >>actual
 	EOS
 	(

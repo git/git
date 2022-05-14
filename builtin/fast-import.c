@@ -19,6 +19,7 @@
 #include "mem-pool.h"
 #include "commit-reach.h"
 #include "khash.h"
+#include "date.h"
 
 #define PACK_ID_BITS 16
 #define MAX_PACK_ID ((1<<PACK_ID_BITS)-1)
@@ -176,8 +177,9 @@ static int global_argc;
 static const char **global_argv;
 
 /* Memory pools */
-static struct mem_pool fi_mem_pool =  {NULL, 2*1024*1024 -
-				       sizeof(struct mp_block), 0 };
+static struct mem_pool fi_mem_pool = {
+	.block_alloc = 2*1024*1024 - sizeof(struct mp_block),
+};
 
 /* Atom management */
 static unsigned int atom_table_sz = 4451;
@@ -205,7 +207,9 @@ static int import_marks_file_done;
 static int relative_marks_paths;
 
 /* Our last blob */
-static struct last_object last_blob = { STRBUF_INIT, 0, 0, 0 };
+static struct last_object last_blob = {
+	.data = STRBUF_INIT,
+ };
 
 /* Tree management */
 static unsigned int tree_entry_alloc = 1000;
@@ -231,7 +235,10 @@ static struct tag *last_tag;
 static whenspec_type whenspec = WHENSPEC_RAW;
 static struct strbuf command_buf = STRBUF_INIT;
 static int unread_command_buf;
-static struct recent_command cmd_hist = {&cmd_hist, &cmd_hist, NULL};
+static struct recent_command cmd_hist = {
+	.prev = &cmd_hist,
+	.next = &cmd_hist,
+};
 static struct recent_command *cmd_tail = &cmd_hist;
 static struct recent_command *rc_free;
 static unsigned int cmd_save = 100;
@@ -858,7 +865,7 @@ static void end_packfile(void)
 		struct tag *t;
 
 		close_pack_windows(pack_data);
-		finalize_hashfile(pack_file, cur_pack_oid.hash, 0);
+		finalize_hashfile(pack_file, cur_pack_oid.hash, FSYNC_COMPONENT_PACK, 0);
 		fixup_pack_header_footer(pack_data->pack_fd, pack_data->hash,
 					 pack_data->pack_name, object_count,
 					 cur_pack_oid.hash, pack_size);
@@ -937,8 +944,8 @@ static int store_object(
 	git_hash_ctx c;
 	git_zstream s;
 
-	hdrlen = xsnprintf((char *)hdr, sizeof(hdr), "%s %lu",
-			   type_name(type), (unsigned long)dat->len) + 1;
+	hdrlen = format_object_header((char *)hdr, sizeof(hdr), type,
+				      dat->len);
 	the_hash_algo->init_fn(&c);
 	the_hash_algo->update_fn(&c, hdr, hdrlen);
 	the_hash_algo->update_fn(&c, dat->buf, dat->len);
@@ -1091,7 +1098,7 @@ static void stream_blob(uintmax_t len, struct object_id *oidout, uintmax_t mark)
 	hashfile_checkpoint(pack_file, &checkpoint);
 	offset = checkpoint.offset;
 
-	hdrlen = xsnprintf((char *)out_buf, out_sz, "blob %" PRIuMAX, len) + 1;
+	hdrlen = format_object_header((char *)out_buf, out_sz, OBJ_BLOB, len);
 
 	the_hash_algo->init_fn(&c);
 	the_hash_algo->update_fn(&c, out_buf, hdrlen);
@@ -2483,7 +2490,7 @@ static void note_change_n(const char *p, struct branch *b, unsigned char *old_fa
 		unsigned long size;
 		char *buf = read_object_with_reference(the_repository,
 						       &commit_oid,
-						       commit_type, &size,
+						       OBJ_COMMIT, &size,
 						       &commit_oid);
 		if (!buf || size < the_hash_algo->hexsz + 6)
 			die("Not a valid commit: %s", p);
@@ -2555,7 +2562,7 @@ static void parse_from_existing(struct branch *b)
 		char *buf;
 
 		buf = read_object_with_reference(the_repository,
-						 &b->oid, commit_type, &size,
+						 &b->oid, OBJ_COMMIT, &size,
 						 &b->oid);
 		parse_from_commit(b, buf, size);
 		free(buf);
@@ -2651,7 +2658,7 @@ static struct hash_list *parse_merge(unsigned int *count)
 			unsigned long size;
 			char *buf = read_object_with_reference(the_repository,
 							       &n->oid,
-							       commit_type,
+							       OBJ_COMMIT,
 							       &size, &n->oid);
 			if (!buf || size < the_hash_algo->hexsz + 6)
 				die("Not a valid commit: %s", from);

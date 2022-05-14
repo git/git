@@ -5,6 +5,7 @@
 
 struct commit;
 struct tree;
+struct strmap;
 
 struct merge_result {
 	/*
@@ -22,6 +23,15 @@ struct merge_result {
 	 * (thus possibly including files containing conflict markers).
 	 */
 	struct tree *tree;
+
+	/*
+	 * Special messages and conflict notices for various paths
+	 *
+	 * This is a map of pathnames to strbufs.  It contains various
+	 * warning/conflict/notice messages (possibly multiple per path)
+	 * that callers may want to use.
+	 */
+	struct strmap *path_messages;
 
 	/*
 	 * Additional metadata used by merge_switch_to_result() or future calls

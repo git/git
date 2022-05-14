@@ -22,6 +22,7 @@ static int delta_base_offset = 1;
 static int pack_kept_objects = -1;
 static int write_bitmaps = -1;
 static int use_delta_islands;
+static int run_update_server_info = 1;
 static char *packdir, *packtmp_name, *packtmp;
 
 static const char *const git_repack_usage[] = {
@@ -52,6 +53,10 @@ static int repack_config(const char *var, const char *value, void *cb)
 	}
 	if (!strcmp(var, "repack.usedeltaislands")) {
 		use_delta_islands = git_config_bool(var, value);
+		return 0;
+	}
+	if (strcmp(var, "repack.updateserverinfo") == 0) {
+		run_update_server_info = git_config_bool(var, value);
 		return 0;
 	}
 	return git_default_config(var, value, cb);
@@ -620,7 +625,6 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	const char *unpack_unreachable = NULL;
 	int keep_unreachable = 0;
 	struct string_list keep_pack_list = STRING_LIST_INIT_NODUP;
-	int no_update_server_info = 0;
 	struct pack_objects_args po_args = {NULL};
 	int geometric_factor = 0;
 	int write_midx = 0;
@@ -637,8 +641,8 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 				N_("pass --no-reuse-delta to git-pack-objects")),
 		OPT_BOOL('F', NULL, &po_args.no_reuse_object,
 				N_("pass --no-reuse-object to git-pack-objects")),
-		OPT_BOOL('n', NULL, &no_update_server_info,
-				N_("do not run git-update-server-info")),
+		OPT_NEGBIT('n', NULL, &run_update_server_info,
+				N_("do not run git-update-server-info"), 1),
 		OPT__QUIET(&po_args.quiet, N_("be quiet")),
 		OPT_BOOL('l', "local", &po_args.local,
 				N_("pass --local to git-pack-objects")),
@@ -939,7 +943,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 			prune_shallow(PRUNE_QUICK);
 	}
 
-	if (!no_update_server_info)
+	if (run_update_server_info)
 		update_server_info(0);
 	remove_temporary_files();
 

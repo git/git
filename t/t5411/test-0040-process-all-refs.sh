@@ -17,7 +17,7 @@ test_expect_success "setup upstream branches ($PROTOCOL)" '
 '
 
 test_expect_success "setup proc-receive hook ($PROTOCOL)" '
-	write_script "$upstream/hooks/proc-receive" <<-EOF
+	test_hook -C "$upstream" --clobber proc-receive <<-EOF
 	printf >&2 "# proc-receive hook\n"
 	test-tool proc-receive -v \
 		-r "ok refs/heads/main" \

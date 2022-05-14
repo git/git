@@ -187,11 +187,32 @@ test_expect_success 'read-tree updates worktree, absent case' '
 	test ! -f init.t
 '
 
+test_expect_success 'read-tree will not throw away dirty changes, non-sparse' '
+	echo "/*" >.git/info/sparse-checkout &&
+	read_tree_u_must_succeed -m -u HEAD &&
+
+	echo dirty >init.t &&
+	read_tree_u_must_fail -m -u HEAD^ &&
+	test_path_is_file init.t &&
+	grep -q dirty init.t
+'
+
+test_expect_success 'read-tree will not throw away dirty changes, sparse' '
+	echo "/*" >.git/info/sparse-checkout &&
+	read_tree_u_must_succeed -m -u HEAD &&
+
+	echo dirty >init.t &&
+	echo sub/added >.git/info/sparse-checkout &&
+	read_tree_u_must_fail -m -u HEAD^ &&
+	test_path_is_file init.t &&
+	grep -q dirty init.t
+'
+
 test_expect_success 'read-tree updates worktree, dirty case' '
 	echo sub/added >.git/info/sparse-checkout &&
 	git checkout -f top &&
 	echo dirty >init.t &&
-	read_tree_u_must_succeed -m -u HEAD^ &&
+	read_tree_u_must_fail -m -u HEAD^ &&
 	grep -q dirty init.t &&
 	rm init.t
 '

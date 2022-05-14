@@ -129,6 +129,20 @@ test_expect_success 'rebase --keep-base main from topic' '
 	test_cmp expect actual
 '
 
+test_expect_success 'rebase --keep-base main topic from main' '
+	git checkout main &&
+	git branch -f topic G &&
+
+	git rebase --keep-base main topic &&
+	git rev-parse C >base.expect &&
+	git merge-base main HEAD >base.actual &&
+	test_cmp base.expect base.actual &&
+
+	git rev-parse HEAD~2 >actual &&
+	git rev-parse C^0 >expect &&
+	test_cmp expect actual
+'
+
 test_expect_success 'rebase --keep-base main from side' '
 	git reset --hard &&
 	git checkout side &&
@@ -144,6 +158,21 @@ test_expect_success 'rebase -i --keep-base main from topic' '
 
 	set_fake_editor &&
 	EXPECT_COUNT=2 git rebase -i --keep-base main &&
+	git rev-parse C >base.expect &&
+	git merge-base main HEAD >base.actual &&
+	test_cmp base.expect base.actual &&
+
+	git rev-parse HEAD~2 >actual &&
+	git rev-parse C^0 >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rebase -i --keep-base main topic from main' '
+	git checkout main &&
+	git branch -f topic G &&
+
+	set_fake_editor &&
+	EXPECT_COUNT=2 git rebase -i --keep-base main topic &&
 	git rev-parse C >base.expect &&
 	git merge-base main HEAD >base.actual &&
 	test_cmp base.expect base.actual &&

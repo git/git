@@ -93,7 +93,7 @@ CHUNK DATA:
       2 bits of the lowest byte, storing the 33rd and 34th bit of the
       commit time.
 
-  Generation Data (ID: {'G', 'D', 'A', 'T' }) (N * 4 bytes) [Optional]
+  Generation Data (ID: {'G', 'D', 'A', '2' }) (N * 4 bytes) [Optional]
     * This list of 4-byte values store corrected commit date offsets for the
       commits, arranged in the same order as commit data chunk.
     * If the corrected commit date offset cannot be stored within 31 bits,
@@ -104,7 +104,7 @@ CHUNK DATA:
       by compatible versions of Git and in case of split commit-graph chains,
       the topmost layer also has Generation Data chunk.
 
-  Generation Data Overflow (ID: {'G', 'D', 'O', 'V' }) [Optional]
+  Generation Data Overflow (ID: {'G', 'D', 'O', '2' }) [Optional]
     * This list of 8-byte values stores the corrected commit date offsets
       for commits with corrected commit date offsets that cannot be
       stored within 31 bits.
@@ -156,3 +156,11 @@ CHUNK DATA:
 TRAILER:
 
 	H-byte HASH-checksum of all of the above.
+
+== Historical Notes:
+
+The Generation Data (GDA2) and Generation Data Overflow (GDO2) chunks have
+the number '2' in their chunk IDs because a previous version of Git wrote
+possibly erroneous data in these chunks with the IDs "GDAT" and "GDOV". By
+changing the IDs, newer versions of Git will silently ignore those older
+chunks and write the new information without trusting the incorrect data.

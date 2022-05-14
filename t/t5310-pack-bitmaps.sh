@@ -397,4 +397,32 @@ test_expect_success 'pack.preferBitmapTips' '
 	)
 '
 
+test_expect_success 'complains about multiple pack bitmaps' '
+	rm -fr repo &&
+	git init repo &&
+	test_when_finished "rm -fr repo" &&
+	(
+		cd repo &&
+
+		test_commit base &&
+
+		git repack -adb &&
+		bitmap="$(ls .git/objects/pack/pack-*.bitmap)" &&
+		mv "$bitmap" "$bitmap.bak" &&
+
+		test_commit other &&
+		git repack -ab &&
+
+		mv "$bitmap.bak" "$bitmap" &&
+
+		find .git/objects/pack -type f -name "*.pack" >packs &&
+		find .git/objects/pack -type f -name "*.bitmap" >bitmaps &&
+		test_line_count = 2 packs &&
+		test_line_count = 2 bitmaps &&
+
+		git rev-list --use-bitmap-index HEAD 2>err &&
+		grep "ignoring extra bitmap file" err
+	)
+'
+
 test_done

@@ -16,7 +16,7 @@
 #include "log-tree.h"
 #include "diffcore.h"
 #include "exec-cmd.h"
-#include "entry.h"
+#include "reflog.h"
 
 #define INCLUDE_ALL_FILES 2
 
@@ -310,7 +310,7 @@ static int reset_head(void)
 	 * API for resetting.
 	 */
 	cp.git_cmd = 1;
-	strvec_push(&cp.args, "reset");
+	strvec_pushl(&cp.args, "reset", "--quiet", "--refresh", NULL);
 
 	return run_command(&cp);
 }
@@ -634,20 +634,9 @@ static int reflog_is_empty(const char *refname)
 
 static int do_drop_stash(struct stash_info *info, int quiet)
 {
-	int ret;
-	struct child_process cp_reflog = CHILD_PROCESS_INIT;
-
-	/*
-	 * reflog does not provide a simple function for deleting refs. One will
-	 * need to be added to avoid implementing too much reflog code here
-	 */
-
-	cp_reflog.git_cmd = 1;
-	strvec_pushl(&cp_reflog.args, "reflog", "delete", "--updateref",
-		     "--rewrite", NULL);
-	strvec_push(&cp_reflog.args, info->revision.buf);
-	ret = run_command(&cp_reflog);
-	if (!ret) {
+	if (!reflog_delete(info->revision.buf,
+			   EXPIRE_REFLOGS_REWRITE | EXPIRE_REFLOGS_UPDATE_REF,
+			   0)) {
 		if (!quiet)
 			printf_ln(_("Dropped %s (%s)"), info->revision.buf,
 				  oid_to_hex(&info->w_commit));
@@ -788,7 +777,6 @@ static int list_stash(int argc, const char **argv, const char *prefix)
 static int show_stat = 1;
 static int show_patch;
 static int show_include_untracked;
-static int use_legacy_stash;
 
 static int git_stash_config(const char *var, const char *value, void *cb)
 {
@@ -802,10 +790,6 @@ static int git_stash_config(const char *var, const char *value, void *cb)
 	}
 	if (!strcmp(var, "stash.showincludeuntracked")) {
 		show_include_untracked = git_config_bool(var, value);
-		return 0;
-	}
-	if (!strcmp(var, "stash.usebuiltin")) {
-		use_legacy_stash = !git_config_bool(var, value);
 		return 0;
 	}
 	return git_diff_basic_config(var, value, cb);
@@ -1332,7 +1316,7 @@ static int do_create_stash(const struct pathspec *ps, struct strbuf *stash_msg_b
 
 	branch_ref = resolve_ref_unsafe("HEAD", 0, NULL, &flags);
 	if (flags & REF_ISSYMREF)
-		branch_name = strrchr(branch_ref, '/') + 1;
+		skip_prefix(branch_ref, "refs/heads/", &branch_name);
 	head_short_sha1 = find_unique_abbrev(&head_commit->object.oid,
 					     DEFAULT_ABBREV);
 	strbuf_addf(&msg, "%s: %s ", branch_name, head_short_sha1);
@@ -1539,8 +1523,12 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 			struct child_process cp = CHILD_PROCESS_INIT;
 
 			cp.git_cmd = 1;
-			if (startup_info->original_cwd)
+			if (startup_info->original_cwd) {
 				cp.dir = startup_info->original_cwd;
+				strvec_pushf(&cp.env_array, "%s=%s",
+					     GIT_WORK_TREE_ENVIRONMENT,
+					     the_repository->worktree);
+			}
 			strvec_pushl(&cp.args, "clean", "--force",
 				     "--quiet", "-d", ":/", NULL);
 			if (include_untracked == INCLUDE_ALL_FILES)
@@ -1634,7 +1622,8 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 			struct child_process cp = CHILD_PROCESS_INIT;
 
 			cp.git_cmd = 1;
-			strvec_pushl(&cp.args, "reset", "-q", "--", NULL);
+			strvec_pushl(&cp.args, "reset", "-q", "--refresh", "--",
+				     NULL);
 			add_pathspecs(&cp.args, ps);
 			if (run_command(&cp)) {
 				ret = -1;
@@ -1778,11 +1767,6 @@ int cmd_stash(int argc, const char **argv, const char *prefix)
 
 	git_config(git_stash_config, NULL);
 
-	if (use_legacy_stash ||
-	    !git_env_bool("GIT_TEST_STASH_USE_BUILTIN", -1))
-		warning(_("the stash.useBuiltin support has been removed!\n"
-			  "See its entry in 'git help config' for details."));
-
 	argc = parse_options(argc, argv, prefix, options, git_stash_usage,
 			     PARSE_OPT_KEEP_UNKNOWN | PARSE_OPT_KEEP_DASHDASH);
 
@@ -1815,8 +1799,8 @@ int cmd_stash(int argc, const char **argv, const char *prefix)
 	else if (!strcmp(argv[0], "save"))
 		return !!save_stash(argc, argv, prefix);
 	else if (*argv[0] != '-')
-		usage_msg_opt(xstrfmt(_("unknown subcommand: %s"), argv[0]),
-			      git_stash_usage, options);
+		usage_msg_optf(_("unknown subcommand: %s"),
+			       git_stash_usage, options, argv[0]);
 
 	/* Assume 'stash push' */
 	strvec_push(&args, "push");

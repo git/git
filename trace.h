@@ -126,71 +126,6 @@ void trace_command_performance(const char **argv);
 void trace_verbatim(struct trace_key *key, const void *buf, unsigned len);
 uint64_t trace_performance_enter(void);
 
-#ifndef HAVE_VARIADIC_MACROS
-
-/**
- * Prints a formatted message, similar to printf.
- */
-__attribute__((format (printf, 1, 2)))
-void trace_printf(const char *format, ...);
-
-__attribute__((format (printf, 2, 3)))
-void trace_printf_key(struct trace_key *key, const char *format, ...);
-
-/**
- * Prints a formatted message, followed by a quoted list of arguments.
- */
-__attribute__((format (printf, 2, 3)))
-void trace_argv_printf(const char **argv, const char *format, ...);
-
-/**
- * Prints the strbuf, without additional formatting (i.e. doesn't
- * choke on `%` or even `\0`).
- */
-void trace_strbuf(struct trace_key *key, const struct strbuf *data);
-
-/**
- * Prints elapsed time (in nanoseconds) if GIT_TRACE_PERFORMANCE is enabled.
- *
- * Example:
- * ------------
- * uint64_t t = 0;
- * for (;;) {
- * 	// ignore
- * t -= getnanotime();
- * // code section to measure
- * t += getnanotime();
- * // ignore
- * }
- * trace_performance(t, "frotz");
- * ------------
- */
-__attribute__((format (printf, 2, 3)))
-void trace_performance(uint64_t nanos, const char *format, ...);
-
-/**
- * Prints elapsed time since 'start' if GIT_TRACE_PERFORMANCE is enabled.
- *
- * Example:
- * ------------
- * uint64_t start = getnanotime();
- * // code section to measure
- * trace_performance_since(start, "foobar");
- * ------------
- */
-__attribute__((format (printf, 2, 3)))
-void trace_performance_since(uint64_t start, const char *format, ...);
-
-__attribute__((format (printf, 1, 2)))
-void trace_performance_leave(const char *format, ...);
-
-#else
-
-/*
- * Macros to add file:line - see above for C-style declarations of how these
- * should be used.
- */
-
 /*
  * TRACE_CONTEXT may be set to __FUNCTION__ if the compiler supports it. The
  * default is __FILE__, as it is consistent with assert(), and static function
@@ -204,7 +139,10 @@ void trace_performance_leave(const char *format, ...);
 # define TRACE_CONTEXT __FILE__
 #endif
 
-/*
+/**
+ * Macros to add the file:line of the calling code, instead of that of
+ * the trace function itself.
+ *
  * Note: with C99 variadic macros, __VA_ARGS__ must include the last fixed
  * parameter ('format' in this case). Otherwise, a call without variable
  * arguments will have a surplus ','. E.g.:
@@ -220,6 +158,16 @@ void trace_performance_leave(const char *format, ...);
  * comma, but this is non-standard.
  */
 
+/**
+ * trace_printf(), accepts "const char *format, ...".
+ *
+ * Prints a formatted message, similar to printf.
+ */
+#define trace_printf(...) trace_printf_key(&trace_default_key, __VA_ARGS__)
+
+/**
+ * trace_printf_key(), accepts "struct trace_key *key, const char *format, ...".
+ */
 #define trace_printf_key(key, ...)					    \
 	do {								    \
 		if (trace_pass_fl(key))					    \
@@ -227,8 +175,11 @@ void trace_performance_leave(const char *format, ...);
 					    __VA_ARGS__);		    \
 	} while (0)
 
-#define trace_printf(...) trace_printf_key(&trace_default_key, __VA_ARGS__)
-
+/**
+ * trace_argv_printf(), accepts "struct trace_key *key, const char *format, ...)".
+ *
+ * Prints a formatted message, followed by a quoted list of arguments.
+ */
 #define trace_argv_printf(argv, ...)					    \
 	do {								    \
 		if (trace_pass_fl(&trace_default_key))			    \
@@ -236,12 +187,36 @@ void trace_performance_leave(const char *format, ...);
 					    argv, __VA_ARGS__);		    \
 	} while (0)
 
+/**
+ * trace_strbuf(), accepts "struct trace_key *key, const struct strbuf *data".
+ *
+ * Prints the strbuf, without additional formatting (i.e. doesn't
+ * choke on `%` or even `\0`).
+ */
 #define trace_strbuf(key, data)						    \
 	do {								    \
 		if (trace_pass_fl(key))					    \
 			trace_strbuf_fl(TRACE_CONTEXT, __LINE__, key, data);\
 	} while (0)
 
+/**
+ * trace_performance(), accepts "uint64_t nanos, const char *format, ...".
+ *
+ * Prints elapsed time (in nanoseconds) if GIT_TRACE_PERFORMANCE is enabled.
+ *
+ * Example:
+ * ------------
+ * uint64_t t = 0;
+ * for (;;) {
+ * 	// ignore
+ * t -= getnanotime();
+ * // code section to measure
+ * t += getnanotime();
+ * // ignore
+ * }
+ * trace_performance(t, "frotz");
+ * ------------
+ */
 #define trace_performance(nanos, ...)					    \
 	do {								    \
 		if (trace_pass_fl(&trace_perf_key))			    \
@@ -249,6 +224,18 @@ void trace_performance_leave(const char *format, ...);
 					     __VA_ARGS__);		    \
 	} while (0)
 
+/**
+ * trace_performance_since(), accepts "uint64_t start, const char *format, ...".
+ *
+ * Prints elapsed time since 'start' if GIT_TRACE_PERFORMANCE is enabled.
+ *
+ * Example:
+ * ------------
+ * uint64_t start = getnanotime();
+ * // code section to measure
+ * trace_performance_since(start, "foobar");
+ * ------------
+ */
 #define trace_performance_since(start, ...)				    \
 	do {								    \
 		if (trace_pass_fl(&trace_perf_key))			    \
@@ -257,6 +244,9 @@ void trace_performance_leave(const char *format, ...);
 					     __VA_ARGS__);		    \
 	} while (0)
 
+/**
+ * trace_performance_leave(), accepts "const char *format, ...".
+ */
 #define trace_performance_leave(...)					    \
 	do {								    \
 		if (trace_pass_fl(&trace_perf_key))			    \
@@ -284,7 +274,5 @@ static inline int trace_pass_fl(struct trace_key *key)
 {
 	return key->fd || !key->initialized;
 }
-
-#endif /* HAVE_VARIADIC_MACROS */
 
 #endif /* TRACE_H */

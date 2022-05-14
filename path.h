@@ -169,20 +169,6 @@ void report_linked_checkout_garbage(void);
 		return r->cached_paths.var; \
 	}
 
-struct path_cache {
-	const char *squash_msg;
-	const char *merge_msg;
-	const char *merge_rr;
-	const char *merge_mode;
-	const char *merge_head;
-	const char *merge_autostash;
-	const char *auto_merge;
-	const char *fetch_head;
-	const char *shallow;
-};
-
-#define PATH_CACHE_INIT { 0 }
-
 const char *git_path_squash_msg(struct repository *r);
 const char *git_path_merge_msg(struct repository *r);
 const char *git_path_merge_rr(struct repository *r);

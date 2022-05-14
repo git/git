@@ -2,7 +2,6 @@
 
 test_description='git rev-list --max-count and --skip test'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -14,39 +13,39 @@ test_expect_success 'setup' '
 '
 
 test_expect_success 'no options' '
-    test $(git rev-list HEAD | wc -l) = 5
+	test_stdout_line_count = 5 git rev-list HEAD
 '
 
 test_expect_success '--max-count' '
-    test $(git rev-list HEAD --max-count=0 | wc -l) = 0 &&
-    test $(git rev-list HEAD --max-count=3 | wc -l) = 3 &&
-    test $(git rev-list HEAD --max-count=5 | wc -l) = 5 &&
-    test $(git rev-list HEAD --max-count=10 | wc -l) = 5
+	test_stdout_line_count = 0 git rev-list HEAD --max-count=0 &&
+	test_stdout_line_count = 3 git rev-list HEAD --max-count=3 &&
+	test_stdout_line_count = 5 git rev-list HEAD --max-count=5 &&
+	test_stdout_line_count = 5 git rev-list HEAD --max-count=10
 '
 
 test_expect_success '--max-count all forms' '
-    test $(git rev-list HEAD --max-count=1 | wc -l) = 1 &&
-    test $(git rev-list HEAD -1 | wc -l) = 1 &&
-    test $(git rev-list HEAD -n1 | wc -l) = 1 &&
-    test $(git rev-list HEAD -n 1 | wc -l) = 1
+	test_stdout_line_count = 1 git rev-list HEAD --max-count=1 &&
+	test_stdout_line_count = 1 git rev-list HEAD -1 &&
+	test_stdout_line_count = 1 git rev-list HEAD -n1 &&
+	test_stdout_line_count = 1 git rev-list HEAD -n 1
 '
 
 test_expect_success '--skip' '
-    test $(git rev-list HEAD --skip=0 | wc -l) = 5 &&
-    test $(git rev-list HEAD --skip=3 | wc -l) = 2 &&
-    test $(git rev-list HEAD --skip=5 | wc -l) = 0 &&
-    test $(git rev-list HEAD --skip=10 | wc -l) = 0
+	test_stdout_line_count = 5 git rev-list HEAD --skip=0 &&
+	test_stdout_line_count = 2 git rev-list HEAD --skip=3 &&
+	test_stdout_line_count = 0 git rev-list HEAD --skip=5 &&
+	test_stdout_line_count = 0 git rev-list HEAD --skip=10
 '
 
 test_expect_success '--skip --max-count' '
-    test $(git rev-list HEAD --skip=0 --max-count=0 | wc -l) = 0 &&
-    test $(git rev-list HEAD --skip=0 --max-count=10 | wc -l) = 5 &&
-    test $(git rev-list HEAD --skip=3 --max-count=0 | wc -l) = 0 &&
-    test $(git rev-list HEAD --skip=3 --max-count=1 | wc -l) = 1 &&
-    test $(git rev-list HEAD --skip=3 --max-count=2 | wc -l) = 2 &&
-    test $(git rev-list HEAD --skip=3 --max-count=10 | wc -l) = 2 &&
-    test $(git rev-list HEAD --skip=5 --max-count=10 | wc -l) = 0 &&
-    test $(git rev-list HEAD --skip=10 --max-count=10 | wc -l) = 0
+	test_stdout_line_count = 0 git rev-list HEAD --skip=0 --max-count=0 &&
+	test_stdout_line_count = 5 git rev-list HEAD --skip=0 --max-count=10 &&
+	test_stdout_line_count = 0 git rev-list HEAD --skip=3 --max-count=0 &&
+	test_stdout_line_count = 1 git rev-list HEAD --skip=3 --max-count=1 &&
+	test_stdout_line_count = 2 git rev-list HEAD --skip=3 --max-count=2 &&
+	test_stdout_line_count = 2 git rev-list HEAD --skip=3 --max-count=10 &&
+	test_stdout_line_count = 0 git rev-list HEAD --skip=5 --max-count=10 &&
+	test_stdout_line_count = 0 git rev-list HEAD --skip=10 --max-count=10
 '
 
 test_done

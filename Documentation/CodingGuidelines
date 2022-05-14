@@ -26,6 +26,13 @@ code.  For Git in general, a few rough rules are:
    go and fix it up."
    Cf. http://lkml.iu.edu/hypermail/linux/kernel/1001.3/01069.html
 
+ - Log messages to explain your changes are as important as the
+   changes themselves.  Clearly written code and in-code comments
+   explain how the code works and what is assumed from the surrounding
+   context.  The log messages explain what the changes wanted to
+   achieve and why the changes were necessary (more on this in the
+   accompanying SubmittingPatches document).
+
 Make your code readable and sensible, and don't try to be clever.
 
 As for more concrete guidelines, just imitate the existing code
@@ -210,6 +217,9 @@ For C programs:
    . since mid 2017 with 512f41cf, we have been using designated
      initializers for array (e.g. "int array[10] = { [5] = 2 }").
 
+   . since early 2021 with 765dc168882, we have been using variadic
+     macros, mostly for printf-like trace and debug macros.
+
    These used to be forbidden, but we have not heard any breakage
    report, and they are assumed to be safe.
 
@@ -217,7 +227,10 @@ For C programs:
    the first statement (i.e. -Wdeclaration-after-statement).
 
  - Declaring a variable in the for loop "for (int i = 0; i < 10; i++)"
-   is still not allowed in this codebase.
+   is still not allowed in this codebase.  We are in the process of
+   allowing it by waiting to see that 44ba10d6 (revision: use C99
+   declaration of variable in for() loop, 2021-11-14) does not get
+   complaints.  Let's revisit this around November 2022.
 
  - NULL pointers shall be written as NULL, not as 0.
 

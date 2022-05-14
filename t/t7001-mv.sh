@@ -4,6 +4,25 @@ test_description='git mv in subdirs'
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-diff-data.sh
 
+test_expect_success 'mv -f refreshes updated index entry' '
+	echo test >bar &&
+	git add bar &&
+	git commit -m test &&
+
+	echo foo >foo &&
+	git add foo &&
+
+	# Wait one second to ensure ctime of rename will differ from original
+	# file creation ctime.
+	sleep 1 &&
+	git mv -f foo bar &&
+	git reset --merge HEAD &&
+
+	# Verify the index has been reset
+	git diff-files >out &&
+	test_must_be_empty out
+'
+
 test_expect_success 'prepare reference tree' '
 	mkdir path0 path1 &&
 	COPYING_test_data >path0/COPYING &&

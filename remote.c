@@ -508,9 +508,8 @@ static void read_config(struct repository *repo)
 
 	repo->remote_state->current_branch = NULL;
 	if (startup_info->have_repository) {
-		int ignore_errno;
 		const char *head_ref = refs_resolve_ref_unsafe(
-			get_main_ref_store(repo), "HEAD", 0, NULL, &flag, &ignore_errno);
+			get_main_ref_store(repo), "HEAD", 0, NULL, &flag);
 		if (head_ref && (flag & REF_ISSYMREF) &&
 		    skip_prefix(head_ref, "refs/heads/", &head_ref)) {
 			repo->remote_state->current_branch = make_branch(
@@ -1946,13 +1945,9 @@ const char *branch_get_push(struct branch *branch, struct strbuf *err)
 	return branch->push_tracking_ref;
 }
 
-static int ignore_symref_update(const char *refname)
+static int ignore_symref_update(const char *refname, struct strbuf *scratch)
 {
-	int flag;
-
-	if (!resolve_ref_unsafe(refname, 0, NULL, &flag))
-		return 0; /* non-existing refs are OK */
-	return (flag & REF_ISSYMREF);
+	return !refs_read_symbolic_ref(get_main_ref_store(the_repository), refname, scratch);
 }
 
 /*
@@ -1965,6 +1960,7 @@ static int ignore_symref_update(const char *refname)
 static struct ref *get_expanded_map(const struct ref *remote_refs,
 				    const struct refspec_item *refspec)
 {
+	struct strbuf scratch = STRBUF_INIT;
 	const struct ref *ref;
 	struct ref *ret = NULL;
 	struct ref **tail = &ret;
@@ -1972,11 +1968,13 @@ static struct ref *get_expanded_map(const struct ref *remote_refs,
 	for (ref = remote_refs; ref; ref = ref->next) {
 		char *expn_name = NULL;
 
+		strbuf_reset(&scratch);
+
 		if (strchr(ref->name, '^'))
 			continue; /* a dereference item */
 		if (match_name_with_pattern(refspec->src, ref->name,
 					    refspec->dst, &expn_name) &&
-		    !ignore_symref_update(expn_name)) {
+		    !ignore_symref_update(expn_name, &scratch)) {
 			struct ref *cpy = copy_ref(ref);
 
 			cpy->peer_ref = alloc_ref(expn_name);
@@ -1988,6 +1986,7 @@ static struct ref *get_expanded_map(const struct ref *remote_refs,
 		free(expn_name);
 	}
 
+	strbuf_release(&scratch);
 	return ret;
 }
 

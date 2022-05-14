@@ -24,6 +24,7 @@ and their offsets into multiple packfiles. It contains:
 ** An offset within the jth packfile for the object.
 * If large offsets are required, we use another list of large
   offsets similar to version 2 pack-indexes.
+- An optional list of objects in pseudo-pack order (used with MIDX bitmaps).
 
 Thus, we can provide O(log N) lookup time for any number
 of packfiles.

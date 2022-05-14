@@ -311,32 +311,39 @@ struct progress *start_delayed_sparse_progress(const char *title,
 
 static void finish_if_sparse(struct progress *progress)
 {
-	if (progress &&
-	    progress->sparse &&
+	if (progress->sparse &&
 	    progress->last_value != progress->total)
 		display_progress(progress, progress->total);
 }
 
-void stop_progress(struct progress **p_progress)
+static void force_last_update(struct progress *progress, const char *msg)
 {
-	if (!p_progress)
-		BUG("don't provide NULL to stop_progress");
+	char *buf;
+	struct throughput *tp = progress->throughput;
 
-	finish_if_sparse(*p_progress);
-
-	if (*p_progress) {
-		trace2_data_intmax("progress", the_repository, "total_objects",
-				   (*p_progress)->total);
-
-		if ((*p_progress)->throughput)
-			trace2_data_intmax("progress", the_repository,
-					   "total_bytes",
-					   (*p_progress)->throughput->curr_total);
-
-		trace2_region_leave("progress", (*p_progress)->title, the_repository);
+	if (tp) {
+		uint64_t now_ns = progress_getnanotime(progress);
+		unsigned int misecs, rate;
+		misecs = ((now_ns - progress->start_ns) * 4398) >> 32;
+		rate = tp->curr_total / (misecs ? misecs : 1);
+		throughput_string(&tp->display, tp->curr_total, rate);
 	}
+	progress_update = 1;
+	buf = xstrfmt(", %s.\n", msg);
+	display(progress, progress->last_value, buf);
+	free(buf);
+}
 
-	stop_progress_msg(p_progress, _("done"));
+static void log_trace2(struct progress *progress)
+{
+	trace2_data_intmax("progress", the_repository, "total_objects",
+			   progress->total);
+
+	if (progress->throughput)
+		trace2_data_intmax("progress", the_repository, "total_bytes",
+				   progress->throughput->curr_total);
+
+	trace2_region_leave("progress", progress->title, the_repository);
 }
 
 void stop_progress_msg(struct progress **p_progress, const char *msg)
@@ -350,23 +357,12 @@ void stop_progress_msg(struct progress **p_progress, const char *msg)
 	if (!progress)
 		return;
 	*p_progress = NULL;
-	if (progress->last_value != -1) {
-		/* Force the last update */
-		char *buf;
-		struct throughput *tp = progress->throughput;
 
-		if (tp) {
-			uint64_t now_ns = progress_getnanotime(progress);
-			unsigned int misecs, rate;
-			misecs = ((now_ns - progress->start_ns) * 4398) >> 32;
-			rate = tp->curr_total / (misecs ? misecs : 1);
-			throughput_string(&tp->display, tp->curr_total, rate);
-		}
-		progress_update = 1;
-		buf = xstrfmt(", %s.\n", msg);
-		display(progress, progress->last_value, buf);
-		free(buf);
-	}
+	finish_if_sparse(progress);
+	if (progress->last_value != -1)
+		force_last_update(progress, msg);
+	log_trace2(progress);
+
 	clear_progress_signal();
 	strbuf_release(&progress->counters_sb);
 	if (progress->throughput)

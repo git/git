@@ -160,14 +160,21 @@ int cmd_read_tree(int argc, const char **argv, const char *cmd_prefix)
 	argc = parse_options(argc, argv, cmd_prefix, read_tree_options,
 			     read_tree_usage, 0);
 
-	hold_locked_index(&lock_file, LOCK_DIE_ON_ERROR);
-
 	prefix_set = opts.prefix ? 1 : 0;
 	if (1 < opts.merge + opts.reset + prefix_set)
 		die("Which one? -m, --reset, or --prefix?");
 
+	/* Prefix should not start with a directory separator */
+	if (opts.prefix && opts.prefix[0] == '/')
+		die("Invalid prefix, prefix cannot start with '/'");
+
 	if (opts.reset)
 		opts.reset = UNPACK_RESET_OVERWRITE_UNTRACKED;
+
+	prepare_repo_settings(the_repository);
+	the_repository->settings.command_requires_full_index = 0;
+
+	hold_locked_index(&lock_file, LOCK_DIE_ON_ERROR);
 
 	/*
 	 * NEEDSWORK
@@ -209,6 +216,9 @@ int cmd_read_tree(int argc, const char **argv, const char *cmd_prefix)
 	/* otherwise, opts.preserve_ignored is irrelevant */
 	if (opts.merge && !opts.index_only)
 		setup_work_tree();
+
+	if (opts.skip_sparse_checkout)
+		ensure_full_index(&the_index);
 
 	if (opts.merge) {
 		switch (stage - 1) {

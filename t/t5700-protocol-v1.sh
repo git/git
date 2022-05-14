@@ -149,6 +149,21 @@ test_expect_success 'push with file:// using protocol v1' '
 	grep "push< version 1" log
 '
 
+test_expect_success 'cloning branchless tagless but not refless remote' '
+	rm -rf server client &&
+
+	git -c init.defaultbranch=main init server &&
+	echo foo >server/foo.txt &&
+	git -C server add foo.txt &&
+	git -C server commit -m "message" &&
+	git -C server update-ref refs/notbranch/alsonottag HEAD &&
+	git -C server checkout --detach &&
+	git -C server branch -D main &&
+	git -C server symbolic-ref HEAD refs/heads/nonexistentbranch &&
+
+	git -c protocol.version=1 clone "file://$(pwd)/server" client
+'
+
 # Test protocol v1 with 'ssh://' transport
 #
 test_expect_success 'setup ssh wrapper' '

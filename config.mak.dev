@@ -20,8 +20,13 @@ endif
 endif
 endif
 
+ifneq ($(uname_S),FreeBSD)
 ifneq ($(or $(filter gcc6,$(COMPILER_FEATURES)),$(filter clang7,$(COMPILER_FEATURES))),)
 DEVELOPER_CFLAGS += -std=gnu99
+endif
+else
+# FreeBSD cannot limit to C99 because its system headers unconditionally
+# rely on C11 features.
 endif
 
 DEVELOPER_CFLAGS += -Wdeclaration-after-statement
@@ -58,6 +63,12 @@ ifneq ($(filter gcc4,$(COMPILER_FEATURES)),)
 ifeq ($(filter gcc5,$(COMPILER_FEATURES)),)
 DEVELOPER_CFLAGS += -Wno-uninitialized
 endif
+endif
+
+# https://bugzilla.redhat.com/show_bug.cgi?id=2075786
+ifneq ($(filter gcc12,$(COMPILER_FEATURES)),)
+DEVELOPER_CFLAGS += -Wno-error=stringop-overread
+DEVELOPER_CFLAGS += -Wno-error=dangling-pointer
 endif
 
 GIT_TEST_PERL_FATAL_WARNINGS = YesPlease

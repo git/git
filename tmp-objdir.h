@@ -47,6 +47,12 @@ int tmp_objdir_migrate(struct tmp_objdir *);
 int tmp_objdir_destroy(struct tmp_objdir *);
 
 /*
+ * Remove all objects from the temporary object directory, while leaving it
+ * around so more objects can be added.
+ */
+void tmp_objdir_discard_objects(struct tmp_objdir *);
+
+/*
  * Add the temporary object directory as an alternate object store in the
  * current process.
  */

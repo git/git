@@ -101,6 +101,10 @@ be in a separate packet, and the list must end with a flush packet.
 	current shallow boundary instead of from the tip of each
 	remote branch history.
 
+--refetch::
+	Skips negotiating commits with the server in order to fetch all matching
+	objects. Use to reapply a new partial clone blob/tree filter.
+
 --no-progress::
 	Do not show the progress.
 

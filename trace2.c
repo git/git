@@ -214,6 +214,7 @@ int trace2_cmd_exit_fl(const char *file, int line, int code)
 	if (!trace2_enabled)
 		return code;
 
+	trace_git_fsync_stats();
 	trace2_collect_process_info(TRACE2_PROCESS_INFO_EXIT);
 
 	tr2main_exit_code = code;
@@ -641,20 +642,6 @@ void trace2_region_enter_printf_fl(const char *file, int line,
 	va_end(ap);
 }
 
-#ifndef HAVE_VARIADIC_MACROS
-void trace2_region_enter_printf(const char *category, const char *label,
-				const struct repository *repo, const char *fmt,
-				...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	trace2_region_enter_printf_va_fl(NULL, 0, category, label, repo, fmt,
-					 ap);
-	va_end(ap);
-}
-#endif
-
 void trace2_region_leave_printf_va_fl(const char *file, int line,
 				      const char *category, const char *label,
 				      const struct repository *repo,
@@ -716,20 +703,6 @@ void trace2_region_leave_printf_fl(const char *file, int line,
 					 ap);
 	va_end(ap);
 }
-
-#ifndef HAVE_VARIADIC_MACROS
-void trace2_region_leave_printf(const char *category, const char *label,
-				const struct repository *repo, const char *fmt,
-				...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	trace2_region_leave_printf_va_fl(NULL, 0, category, label, repo, fmt,
-					 ap);
-	va_end(ap);
-}
-#endif
 
 void trace2_data_string_fl(const char *file, int line, const char *category,
 			   const struct repository *repo, const char *key,
@@ -825,17 +798,6 @@ void trace2_printf_fl(const char *file, int line, const char *fmt, ...)
 	trace2_printf_va_fl(file, line, fmt, ap);
 	va_end(ap);
 }
-
-#ifndef HAVE_VARIADIC_MACROS
-void trace2_printf(const char *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	trace2_printf_va_fl(NULL, 0, fmt, ap);
-	va_end(ap);
-}
-#endif
 
 const char *trace2_session_id(void)
 {

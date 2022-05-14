@@ -461,9 +461,9 @@ static int write_tar_filter_archive(const struct archiver *ar,
 }
 
 static struct archiver tar_archiver = {
-	"tar",
-	write_tar_archive,
-	ARCHIVER_REMOTE
+	.name = "tar",
+	.write_archive = write_tar_archive,
+	.flags = ARCHIVER_REMOTE,
 };
 
 void init_tar_archiver(void)

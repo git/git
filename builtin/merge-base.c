@@ -138,6 +138,7 @@ int cmd_merge_base(int argc, const char **argv, const char *prefix)
 	int rev_nr = 0;
 	int show_all = 0;
 	int cmdmode = 0;
+	int ret;
 
 	struct option options[] = {
 		OPT_BOOL('a', "all", &show_all, N_("output all common ancestors")),
@@ -159,12 +160,14 @@ int cmd_merge_base(int argc, const char **argv, const char *prefix)
 		if (argc < 2)
 			usage_with_options(merge_base_usage, options);
 		if (show_all)
-			die("--is-ancestor cannot be used with --all");
+			die(_("options '%s' and '%s' cannot be used together"),
+			    "--is-ancestor", "--all");
 		return handle_is_ancestor(argc, argv);
 	}
 
 	if (cmdmode == 'r' && show_all)
-		die("--independent cannot be used with --all");
+		die(_("options '%s' and '%s' cannot be used together"),
+		    "--independent", "--all");
 
 	if (cmdmode == 'o')
 		return handle_octopus(argc, argv, show_all);
@@ -184,5 +187,7 @@ int cmd_merge_base(int argc, const char **argv, const char *prefix)
 	ALLOC_ARRAY(rev, argc);
 	while (argc-- > 0)
 		rev[rev_nr++] = get_commit_reference(*argv++);
-	return show_merge_base(rev, rev_nr, show_all);
+	ret = show_merge_base(rev, rev_nr, show_all);
+	free(rev);
+	return ret;
 }

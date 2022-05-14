@@ -16,6 +16,7 @@ struct git_transport_options {
 	unsigned update_shallow : 1;
 	unsigned reject_shallow : 1;
 	unsigned deepen_relative : 1;
+	unsigned refetch : 1;
 
 	/* see documentation of corresponding flag in fetch-pack.h */
 	unsigned from_promisor : 1;
@@ -216,6 +217,9 @@ void transport_check_allowed(const char *type);
 /* Filter objects for partial clone and fetch */
 #define TRANS_OPT_LIST_OBJECTS_FILTER "filter"
 
+/* Refetch all objects without negotiating */
+#define TRANS_OPT_REFETCH "refetch"
+
 /* Request atomic (all-or-nothing) updates when pushing */
 #define TRANS_OPT_ATOMIC "atomic"
 
@@ -257,14 +261,18 @@ struct transport_ls_refs_options {
 	/*
 	 * If unborn_head_target is not NULL, and the remote reports HEAD as
 	 * pointing to an unborn branch, transport_get_remote_refs() stores the
-	 * unborn branch in unborn_head_target. It should be freed by the
-	 * caller.
+	 * unborn branch in unborn_head_target.
 	 */
-	char *unborn_head_target;
+	const char *unborn_head_target;
 };
 #define TRANSPORT_LS_REFS_OPTIONS_INIT { \
 	.ref_prefixes = STRVEC_INIT, \
 }
+
+/**
+ * Release the "struct transport_ls_refs_options".
+ */
+void transport_ls_refs_options_release(struct transport_ls_refs_options *opts);
 
 /*
  * Retrieve refs from a remote.

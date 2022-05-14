@@ -16,7 +16,9 @@ test_expect_success 'setup' '
 		echo "after deep" >e &&
 		echo "after folder1" >g &&
 		echo "after x" >z &&
-		mkdir folder1 folder2 deep x &&
+		mkdir folder1 folder2 deep before x &&
+		echo "before deep" >before/a &&
+		echo "before deep again" >before/b &&
 		mkdir deep/deeper1 deep/deeper2 deep/before deep/later &&
 		mkdir deep/deeper1/deepest &&
 		mkdir deep/deeper1/deepest2 &&
@@ -244,6 +246,25 @@ test_expect_success 'expanded in-memory index matches full index' '
 	test_sparse_match git ls-files --stage
 '
 
+test_expect_success 'root directory cannot be sparse' '
+	init_repos &&
+
+	# Remove all in-cone files and directories from the index, collapse index
+	# with `git sparse-checkout reapply`
+	git -C sparse-index rm -r . &&
+	git -C sparse-index sparse-checkout reapply &&
+
+	# Verify sparse directories still present, root directory is not sparse
+	cat >expect <<-EOF &&
+	before/
+	folder1/
+	folder2/
+	x/
+	EOF
+	git -C sparse-index ls-files --sparse >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'status with options' '
 	init_repos &&
 	test_sparse_match ls &&
@@ -258,6 +279,13 @@ test_expect_success 'status with options' '
 	test_all_match git status --porcelain=v2 &&
 	test_all_match git status --porcelain=v2 -z -u &&
 	test_all_match git status --porcelain=v2 -uno
+'
+
+test_expect_success 'status with diff in unexpanded sparse directory' '
+	init_repos &&
+	test_all_match git checkout rename-base &&
+	test_all_match git reset --soft rename-out-to-out &&
+	test_all_match git status --porcelain=v2
 '
 
 test_expect_success 'status reports sparse-checkout' '
@@ -367,7 +395,7 @@ test_expect_success 'status/add: outside sparse cone' '
 	write_script edit-contents <<-\EOF &&
 	echo text >>$1
 	EOF
-	run_on_sparse ../edit-contents folder1/a &&
+	run_on_all ../edit-contents folder1/a &&
 	run_on_all ../edit-contents folder1/new &&
 
 	test_sparse_match git status --porcelain=v2 &&
@@ -376,8 +404,8 @@ test_expect_success 'status/add: outside sparse cone' '
 	test_sparse_match test_must_fail git add folder1/a &&
 	grep "Disable or modify the sparsity rules" sparse-checkout-err &&
 	test_sparse_unstaged folder1/a &&
-	test_sparse_match test_must_fail git add --refresh folder1/a &&
-	grep "Disable or modify the sparsity rules" sparse-checkout-err &&
+	test_all_match git add --refresh folder1/a &&
+	test_must_be_empty sparse-checkout-err &&
 	test_sparse_unstaged folder1/a &&
 	test_sparse_match test_must_fail git add folder1/new &&
 	grep "Disable or modify the sparsity rules" sparse-checkout-err &&
@@ -593,13 +621,11 @@ test_expect_success 'reset with pathspecs outside sparse definition' '
 
 	test_sparse_match git reset update-folder1 -- folder1 &&
 	git -C full-checkout reset update-folder1 -- folder1 &&
-	test_sparse_match git status --porcelain=v2 &&
-	test_all_match git rev-parse HEAD:folder1 &&
+	test_all_match git ls-files -s -- folder1 &&
 
 	test_sparse_match git reset update-folder2 -- folder2/a &&
 	git -C full-checkout reset update-folder2 -- folder2/a &&
-	test_sparse_match git status --porcelain=v2 &&
-	test_all_match git rev-parse HEAD:folder2/a
+	test_all_match git ls-files -s -- folder2/a
 '
 
 test_expect_success 'reset with wildcard pathspec' '
@@ -627,6 +653,260 @@ test_expect_success 'reset with wildcard pathspec' '
 	test_sparse_match git reset base -- folder1/\* &&
 	git -C full-checkout reset base -- folder1/\* &&
 	test_all_match git ls-files -s -- folder1
+'
+
+test_expect_success 'update-index modify outside sparse definition' '
+	init_repos &&
+
+	write_script edit-contents <<-\EOF &&
+	echo text >>$1
+	EOF
+
+	# Create & modify folder1/a
+	# Note that this setup is a manual way of reaching the erroneous
+	# condition in which a `skip-worktree` enabled, outside-of-cone file
+	# exists on disk. It is used here to ensure `update-index` is stable
+	# and behaves predictably if such a condition occurs.
+	run_on_sparse mkdir -p folder1 &&
+	run_on_sparse cp ../initial-repo/folder1/a folder1/a &&
+	run_on_all ../edit-contents folder1/a &&
+
+	# If file has skip-worktree enabled, but the file is present, it is
+	# treated the same as if skip-worktree is disabled
+	test_all_match git status --porcelain=v2 &&
+	test_all_match git update-index folder1/a &&
+	test_all_match git status --porcelain=v2 &&
+
+	# When skip-worktree is disabled (even on files outside sparse cone), file
+	# is updated in the index
+	test_sparse_match git update-index --no-skip-worktree folder1/a &&
+	test_all_match git status --porcelain=v2 &&
+	test_all_match git update-index folder1/a &&
+	test_all_match git status --porcelain=v2
+'
+
+test_expect_success 'update-index --add outside sparse definition' '
+	init_repos &&
+
+	write_script edit-contents <<-\EOF &&
+	echo text >>$1
+	EOF
+
+	# Create folder1, add new file
+	run_on_sparse mkdir -p folder1 &&
+	run_on_all ../edit-contents folder1/b &&
+
+	# The *untracked* out-of-cone file is added to the index because it does
+	# not have a `skip-worktree` bit to signal that it should be ignored
+	# (unlike in `git add`, which will fail due to the file being outside
+	# the sparse checkout definition).
+	test_all_match git update-index --add folder1/b &&
+	test_all_match git status --porcelain=v2
+'
+
+# NEEDSWORK: `--remove`, unlike the rest of `update-index`, does not ignore
+# `skip-worktree` entries by default and will remove them from the index.
+# The `--ignore-skip-worktree-entries` flag must be used in conjunction with
+# `--remove` to ignore the `skip-worktree` entries and prevent their removal
+# from the index.
+test_expect_success 'update-index --remove outside sparse definition' '
+	init_repos &&
+
+	# When --ignore-skip-worktree-entries is _not_ specified:
+	# out-of-cone, not-on-disk files are removed from the index
+	test_sparse_match git update-index --remove folder1/a &&
+	cat >expect <<-EOF &&
+	D	folder1/a
+	EOF
+	test_sparse_match git diff --cached --name-status &&
+	test_cmp expect sparse-checkout-out &&
+
+	# Reset the state
+	test_all_match git reset --hard &&
+
+	# When --ignore-skip-worktree-entries is specified, out-of-cone
+	# (skip-worktree) files are ignored
+	test_sparse_match git update-index --remove --ignore-skip-worktree-entries folder1/a &&
+	test_sparse_match git diff --cached --name-status &&
+	test_must_be_empty sparse-checkout-out &&
+
+	# Reset the state
+	test_all_match git reset --hard &&
+
+	# --force-remove supercedes --ignore-skip-worktree-entries, removing
+	# a skip-worktree file from the index (and disk) when both are specified
+	# with --remove
+	test_sparse_match git update-index --force-remove --ignore-skip-worktree-entries folder1/a &&
+	cat >expect <<-EOF &&
+	D	folder1/a
+	EOF
+	test_sparse_match git diff --cached --name-status &&
+	test_cmp expect sparse-checkout-out
+'
+
+test_expect_success 'update-index with directories' '
+	init_repos &&
+
+	# update-index will exit silently when provided with a directory name
+	# containing a trailing slash
+	test_all_match git update-index deep/ folder1/ &&
+	grep "Ignoring path deep/" sparse-checkout-err &&
+	grep "Ignoring path folder1/" sparse-checkout-err &&
+
+	# When update-index is given a directory name WITHOUT a trailing slash, it will
+	# behave in different ways depending on the status of the directory on disk:
+	# * if it exists, the command exits with an error ("add individual files instead")
+	# * if it does NOT exist (e.g., in a sparse-checkout), it is assumed to be a
+	#   file and either triggers an error ("does not exist  and --remove not passed")
+	#   or is ignored completely (when using --remove)
+	test_all_match test_must_fail git update-index deep &&
+	run_on_all test_must_fail git update-index folder1 &&
+	test_must_fail git -C full-checkout update-index --remove folder1 &&
+	test_sparse_match git update-index --remove folder1 &&
+	test_all_match git status --porcelain=v2
+'
+
+test_expect_success 'update-index --again file outside sparse definition' '
+	init_repos &&
+
+	test_all_match git checkout -b test-reupdate &&
+
+	# Update HEAD without modifying the index to introduce a difference in
+	# folder1/a
+	test_sparse_match git reset --soft update-folder1 &&
+
+	# Because folder1/a differs in the index vs HEAD,
+	# `git update-index --no-skip-worktree --again` will effectively perform
+	# `git update-index --no-skip-worktree folder1/a` and remove the skip-worktree
+	# flag from folder1/a
+	test_sparse_match git update-index --no-skip-worktree --again &&
+	test_sparse_match git status --porcelain=v2 &&
+
+	cat >expect <<-EOF &&
+	D	folder1/a
+	EOF
+	test_sparse_match git diff --name-status &&
+	test_cmp expect sparse-checkout-out
+'
+
+test_expect_success 'update-index --cacheinfo' '
+	init_repos &&
+
+	deep_a_oid=$(git -C full-checkout rev-parse update-deep:deep/a) &&
+	folder2_oid=$(git -C full-checkout rev-parse update-folder2:folder2) &&
+	folder1_a_oid=$(git -C full-checkout rev-parse update-folder1:folder1/a) &&
+
+	test_all_match git update-index --cacheinfo 100644 $deep_a_oid deep/a &&
+	test_all_match git status --porcelain=v2 &&
+
+	# Cannot add sparse directory, even in sparse index case
+	test_all_match test_must_fail git update-index --add --cacheinfo 040000 $folder2_oid folder2/ &&
+
+	# Sparse match only: the new outside-of-cone entry is added *without* skip-worktree,
+	# so `git status` reports it as "deleted" in the worktree
+	test_sparse_match git update-index --add --cacheinfo 100644 $folder1_a_oid folder1/a &&
+	test_sparse_match git status --porcelain=v2 &&
+	cat >expect <<-EOF &&
+	MD folder1/a
+	EOF
+	test_sparse_match git status --short -- folder1/a &&
+	test_cmp expect sparse-checkout-out &&
+
+	# To return folder1/a to "normal" for a sparse checkout (ignored &
+	# outside-of-cone), add the skip-worktree flag.
+	test_sparse_match git update-index --skip-worktree folder1/a &&
+	cat >expect <<-EOF &&
+	S folder1/a
+	EOF
+	test_sparse_match git ls-files -t -- folder1/a &&
+	test_cmp expect sparse-checkout-out
+'
+
+for MERGE_TREES in "base HEAD update-folder2" \
+		   "update-folder1 update-folder2" \
+		   "update-folder2"
+do
+	test_expect_success "'read-tree -mu $MERGE_TREES' with files outside sparse definition" '
+		init_repos &&
+
+		# Although the index matches, without --no-sparse-checkout, outside-of-
+		# definition files will not exist on disk for sparse checkouts
+		test_all_match git read-tree -mu $MERGE_TREES &&
+		test_all_match git status --porcelain=v2 &&
+		test_path_is_missing sparse-checkout/folder2 &&
+		test_path_is_missing sparse-index/folder2 &&
+
+		test_all_match git read-tree --reset -u HEAD &&
+		test_all_match git status --porcelain=v2 &&
+
+		test_all_match git read-tree -mu --no-sparse-checkout $MERGE_TREES &&
+		test_all_match git status --porcelain=v2 &&
+		test_cmp sparse-checkout/folder2/a sparse-index/folder2/a &&
+		test_cmp sparse-checkout/folder2/a full-checkout/folder2/a
+
+	'
+done
+
+test_expect_success 'read-tree --merge with edit/edit conflicts in sparse directories' '
+	init_repos &&
+
+	# Merge of multiple changes to same directory (but not same files) should
+	# succeed
+	test_all_match git read-tree -mu base rename-base update-folder1 &&
+	test_all_match git status --porcelain=v2 &&
+
+	test_all_match git reset --hard &&
+
+	test_all_match git read-tree -mu rename-base update-folder2 &&
+	test_all_match git status --porcelain=v2 &&
+
+	test_all_match git reset --hard &&
+
+	test_all_match test_must_fail git read-tree -mu base update-folder1 rename-out-to-in &&
+	test_all_match test_must_fail git read-tree -mu rename-out-to-in update-folder1
+'
+
+test_expect_success 'read-tree --prefix' '
+	init_repos &&
+
+	# If files differing between the index and target <commit-ish> exist
+	# inside the prefix, `read-tree --prefix` should fail
+	test_all_match test_must_fail git read-tree --prefix=deep/ deepest &&
+	test_all_match test_must_fail git read-tree --prefix=folder1/ update-folder1 &&
+
+	# If no differing index entries exist matching the prefix,
+	# `read-tree --prefix` updates the index successfully
+	test_all_match git rm -rf deep/deeper1/deepest/ &&
+	test_all_match git read-tree --prefix=deep/deeper1/deepest -u deepest &&
+	test_all_match git status --porcelain=v2 &&
+
+	test_all_match git rm -rf --sparse folder1/ &&
+	test_all_match git read-tree --prefix=folder1/ -u update-folder1 &&
+	test_all_match git status --porcelain=v2 &&
+
+	test_all_match git rm -rf --sparse folder2/0 &&
+	test_all_match git read-tree --prefix=folder2/0/ -u rename-out-to-out &&
+	test_all_match git status --porcelain=v2
+'
+
+test_expect_success 'read-tree --merge with directory-file conflicts' '
+	init_repos &&
+
+	test_all_match git checkout -b test-branch rename-base &&
+
+	# Although the index matches, without --no-sparse-checkout, outside-of-
+	# definition files will not exist on disk for sparse checkouts
+	test_sparse_match git read-tree -mu rename-out-to-out &&
+	test_sparse_match git status --porcelain=v2 &&
+	test_path_is_missing sparse-checkout/folder2 &&
+	test_path_is_missing sparse-index/folder2 &&
+
+	test_sparse_match git read-tree --reset -u HEAD &&
+	test_sparse_match git status --porcelain=v2 &&
+
+	test_sparse_match git read-tree -mu --no-sparse-checkout rename-out-to-out &&
+	test_sparse_match git status --porcelain=v2 &&
+	test_cmp sparse-checkout/folder2/0/1 sparse-index/folder2/0/1
 '
 
 test_expect_success 'merge, cherry-pick, and rebase' '
@@ -754,6 +1034,74 @@ test_expect_success 'cherry-pick with conflicts' '
 	test_all_match test_must_fail git cherry-pick to-cherry-pick
 '
 
+test_expect_success 'checkout-index inside sparse definition' '
+	init_repos &&
+
+	run_on_all rm -f deep/a &&
+	test_all_match git checkout-index -- deep/a &&
+	test_all_match git status --porcelain=v2 &&
+
+	echo test >>new-a &&
+	run_on_all cp ../new-a a &&
+	test_all_match test_must_fail git checkout-index -- a &&
+	test_all_match git checkout-index -f -- a &&
+	test_all_match git status --porcelain=v2
+'
+
+test_expect_success 'checkout-index outside sparse definition' '
+	init_repos &&
+
+	# Without --ignore-skip-worktree-bits, outside-of-cone files will trigger
+	# an error
+	test_sparse_match test_must_fail git checkout-index -- folder1/a &&
+	test_i18ngrep "folder1/a has skip-worktree enabled" sparse-checkout-err &&
+	test_path_is_missing folder1/a &&
+
+	# With --ignore-skip-worktree-bits, outside-of-cone files are checked out
+	test_sparse_match git checkout-index --ignore-skip-worktree-bits -- folder1/a &&
+	test_cmp sparse-checkout/folder1/a sparse-index/folder1/a &&
+	test_cmp sparse-checkout/folder1/a full-checkout/folder1/a &&
+
+	run_on_sparse rm -rf folder1 &&
+	echo test >new-a &&
+	run_on_sparse mkdir -p folder1 &&
+	run_on_all cp ../new-a folder1/a &&
+
+	test_all_match test_must_fail git checkout-index --ignore-skip-worktree-bits -- folder1/a &&
+	test_all_match git checkout-index -f --ignore-skip-worktree-bits -- folder1/a &&
+	test_cmp sparse-checkout/folder1/a sparse-index/folder1/a &&
+	test_cmp sparse-checkout/folder1/a full-checkout/folder1/a
+'
+
+test_expect_success 'checkout-index with folders' '
+	init_repos &&
+
+	# Inside checkout definition
+	test_all_match test_must_fail git checkout-index -f -- deep/ &&
+
+	# Outside checkout definition
+	# Note: although all tests fail (as expected), the messaging differs. For
+	# non-sparse index checkouts, the error is that the "file" does not appear
+	# in the index; for sparse checkouts, the error is explicitly that the
+	# entry is a sparse directory.
+	run_on_all test_must_fail git checkout-index -f -- folder1/ &&
+	test_cmp full-checkout-err sparse-checkout-err &&
+	! test_cmp full-checkout-err sparse-index-err &&
+	grep "is a sparse directory" sparse-index-err
+'
+
+test_expect_success 'checkout-index --all' '
+	init_repos &&
+
+	test_all_match git checkout-index --all &&
+	test_sparse_match test_path_is_missing folder1 &&
+
+	# --ignore-skip-worktree-bits will cause `skip-worktree` files to be
+	# checked out, causing the outside-of-cone `folder1` to exist on-disk
+	test_all_match git checkout-index --ignore-skip-worktree-bits --all &&
+	test_all_match test_path_exists folder1
+'
+
 test_expect_success 'clean' '
 	init_repos &&
 
@@ -763,23 +1111,42 @@ test_expect_success 'clean' '
 	test_all_match git commit -m "ignore bogus files" &&
 
 	run_on_sparse mkdir folder1 &&
+	run_on_all mkdir -p deep/untracked-deep &&
 	run_on_all touch folder1/bogus &&
+	run_on_all touch folder1/untracked &&
+	run_on_all touch deep/untracked-deep/bogus &&
+	run_on_all touch deep/untracked-deep/untracked &&
 
 	test_all_match git status --porcelain=v2 &&
 	test_all_match git clean -f &&
 	test_all_match git status --porcelain=v2 &&
 	test_sparse_match ls &&
 	test_sparse_match ls folder1 &&
+	run_on_all test_path_exists folder1/bogus &&
+	run_on_all test_path_is_missing folder1/untracked &&
+	run_on_all test_path_exists deep/untracked-deep/bogus &&
+	run_on_all test_path_exists deep/untracked-deep/untracked &&
+
+	test_all_match git clean -fd &&
+	test_all_match git status --porcelain=v2 &&
+	test_sparse_match ls &&
+	test_sparse_match ls folder1 &&
+	run_on_all test_path_exists folder1/bogus &&
+	run_on_all test_path_exists deep/untracked-deep/bogus &&
+	run_on_all test_path_is_missing deep/untracked-deep/untracked &&
 
 	test_all_match git clean -xf &&
 	test_all_match git status --porcelain=v2 &&
 	test_sparse_match ls &&
 	test_sparse_match ls folder1 &&
+	run_on_all test_path_is_missing folder1/bogus &&
+	run_on_all test_path_exists deep/untracked-deep/bogus &&
 
 	test_all_match git clean -xdf &&
 	test_all_match git status --porcelain=v2 &&
 	test_sparse_match ls &&
 	test_sparse_match ls folder1 &&
+	run_on_all test_path_is_missing deep/untracked-deep/bogus &&
 
 	test_sparse_match test_path_is_dir folder1
 '
@@ -898,6 +1265,8 @@ test_expect_success 'sparse-index is not expanded' '
 	echo >>sparse-index/untracked.txt &&
 	ensure_not_expanded add . &&
 
+	ensure_not_expanded checkout-index -f a &&
+	ensure_not_expanded checkout-index -f --all &&
 	for ref in update-deep update-folder1 update-folder2 update-deep
 	do
 		echo >>sparse-index/README.md &&
@@ -925,6 +1294,8 @@ test_expect_success 'sparse-index is not expanded' '
 
 	# Wildcard identifies only full sparse directories, no index expansion
 	ensure_not_expanded reset deepest -- folder\* &&
+
+	ensure_not_expanded clean -fd &&
 
 	ensure_not_expanded checkout -f update-deep &&
 	test_config -C sparse-index pull.twohead ort &&
@@ -1001,6 +1372,24 @@ test_expect_success 'sparse index is not expanded: diff' '
 	ensure_not_expanded diff --cached
 '
 
+test_expect_success 'sparse index is not expanded: update-index' '
+	init_repos &&
+
+	deep_a_oid=$(git -C full-checkout rev-parse update-deep:deep/a) &&
+	ensure_not_expanded update-index --cacheinfo 100644 $deep_a_oid deep/a &&
+
+	echo "test" >sparse-index/README.md &&
+	echo "test2" >sparse-index/a &&
+	rm -f sparse-index/deep/a &&
+
+	ensure_not_expanded update-index --add README.md &&
+	ensure_not_expanded update-index a &&
+	ensure_not_expanded update-index --remove deep/a &&
+
+	ensure_not_expanded reset --soft update-deep &&
+	ensure_not_expanded update-index --add --remove --again
+'
+
 test_expect_success 'sparse index is not expanded: blame' '
 	init_repos &&
 
@@ -1023,6 +1412,27 @@ test_expect_success 'sparse index is not expanded: fetch/pull' '
 	ensure_not_expanded pull full base
 '
 
+test_expect_success 'sparse index is not expanded: read-tree' '
+	init_repos &&
+
+	ensure_not_expanded checkout -b test-branch update-folder1 &&
+	for MERGE_TREES in "base HEAD update-folder2" \
+			   "base HEAD rename-base" \
+			   "base update-folder2" \
+			   "base rename-base" \
+			   "update-folder2"
+	do
+		ensure_not_expanded read-tree -mu $MERGE_TREES &&
+		ensure_not_expanded reset --hard || return 1
+	done &&
+
+	rm -rf sparse-index/deep/deeper2 &&
+	ensure_not_expanded add . &&
+	ensure_not_expanded commit -m "test" &&
+
+	ensure_not_expanded read-tree --prefix=deep/deeper2 -u deepest
+'
+
 test_expect_success 'ls-files' '
 	init_repos &&
 
@@ -1037,6 +1447,7 @@ test_expect_success 'ls-files' '
 
 	cat >expect <<-\EOF &&
 	a
+	before/
 	deep/
 	e
 	folder1-
@@ -1057,36 +1468,34 @@ test_expect_success 'ls-files' '
 	test_cmp dense sparse &&
 
 	# Set up a strange condition of having a file edit
-	# outside of the sparse-checkout cone. This is just
-	# to verify that sparse-checkout and sparse-index
-	# behave the same in this case.
+	# outside of the sparse-checkout cone. We want to verify
+	# that all modes handle this the same, and detect the
+	# modification.
 	write_script edit-content <<-\EOF &&
-	mkdir folder1 &&
+	mkdir -p folder1 &&
 	echo content >>folder1/a
 	EOF
-	run_on_sparse ../edit-content &&
+	run_on_all ../edit-content &&
 
-	# ls-files does not currently notice modified files whose
-	# cache entries are marked SKIP_WORKTREE. This may change
-	# in the future, but here we test that sparse index does
-	# not accidentally create a change of behavior.
-	test_sparse_match git ls-files --modified &&
-	test_must_be_empty sparse-checkout-out &&
-	test_must_be_empty sparse-index-out &&
+	test_all_match git ls-files --modified &&
 
 	git -C sparse-index ls-files --sparse --modified >sparse-index-out &&
-	test_must_be_empty sparse-index-out &&
+	cat >expect <<-\EOF &&
+	folder1/a
+	EOF
+	test_cmp expect sparse-index-out &&
 
 	# Add folder1 to the sparse-checkout cone and
 	# check that ls-files shows the expanded files.
 	test_sparse_match git sparse-checkout add folder1 &&
-	test_sparse_match git ls-files --modified &&
+	test_all_match git ls-files --modified &&
 
 	test_all_match git ls-files &&
 	git -C sparse-index ls-files --sparse >actual &&
 
 	cat >expect <<-\EOF &&
 	a
+	before/
 	deep/
 	e
 	folder1-

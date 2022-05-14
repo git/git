@@ -433,7 +433,6 @@ static int verify_ssh_signed_buffer(struct signature_check *sigc,
 	struct tempfile *buffer_file;
 	int ret = -1;
 	const char *line;
-	size_t trust_size;
 	char *principal;
 	struct strbuf ssh_principals_out = STRBUF_INIT;
 	struct strbuf ssh_principals_err = STRBUF_INIT;
@@ -502,15 +501,30 @@ static int verify_ssh_signed_buffer(struct signature_check *sigc,
 		ret = -1;
 	} else {
 		/* Check every principal we found (one per line) */
-		for (line = ssh_principals_out.buf; *line;
-		     line = strchrnul(line + 1, '\n')) {
-			while (*line == '\n')
-				line++;
-			if (!*line)
-				break;
+		const char *next;
+		for (line = ssh_principals_out.buf;
+		     *line;
+		     line = next) {
+			const char *end_of_text;
 
-			trust_size = strcspn(line, "\n");
-			principal = xmemdupz(line, trust_size);
+			next = end_of_text = strchrnul(line, '\n');
+
+			 /* Did we find a LF, and did we have CR before it? */
+			if (*end_of_text &&
+			    line < end_of_text &&
+			    end_of_text[-1] == '\r')
+				end_of_text--;
+
+			/* Unless we hit NUL, skip over the LF we found */
+			if (*next)
+				next++;
+
+			/* Not all lines are data.  Skip empty ones */
+			if (line == end_of_text)
+				continue;
+
+			/* We now know we have an non-empty line. Process it */
+			principal = xmemdupz(line, end_of_text - line);
 
 			child_process_init(&ssh_keygen);
 			strbuf_release(&ssh_keygen_out);
@@ -702,7 +716,7 @@ int git_gpg_config(const char *var, const char *value, void *cb)
 			return config_error_nonbool(var);
 		fmt = get_format_by_name(value);
 		if (!fmt)
-			return error("unsupported value for %s: %s",
+			return error(_("invalid value for '%s': '%s'"),
 				     var, value);
 		use_format = fmt;
 		return 0;
@@ -717,8 +731,8 @@ int git_gpg_config(const char *var, const char *value, void *cb)
 		free(trust);
 
 		if (ret)
-			return error("unsupported value for %s: %s", var,
-				     value);
+			return error(_("invalid value for '%s': '%s'"),
+				     var, value);
 		return 0;
 	}
 
@@ -920,6 +934,7 @@ static int sign_buffer_gpg(struct strbuf *buffer, struct strbuf *signature,
 	struct child_process gpg = CHILD_PROCESS_INIT;
 	int ret;
 	size_t bottom;
+	const char *cp;
 	struct strbuf gpg_status = STRBUF_INIT;
 
 	strvec_pushl(&gpg.args,
@@ -939,7 +954,13 @@ static int sign_buffer_gpg(struct strbuf *buffer, struct strbuf *signature,
 			   signature, 1024, &gpg_status, 0);
 	sigchain_pop(SIGPIPE);
 
-	ret |= !strstr(gpg_status.buf, "\n[GNUPG:] SIG_CREATED ");
+	for (cp = gpg_status.buf;
+	     cp && (cp = strstr(cp, "[GNUPG:] SIG_CREATED "));
+	     cp++) {
+		if (cp == gpg_status.buf || cp[-1] == '\n')
+			break; /* found */
+	}
+	ret |= !cp;
 	strbuf_release(&gpg_status);
 	if (ret)
 		return error(_("gpg failed to sign the data"));

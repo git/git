@@ -2,6 +2,7 @@
 #define PRETTY_H
 
 #include "cache.h"
+#include "date.h"
 #include "string-list.h"
 
 struct commit;
@@ -162,5 +163,14 @@ int format_set_trailers_options(struct process_trailer_options *opts,
 			struct strbuf *kvsepbuf,
 			const char **arg,
 			char **invalid_arg);
+
+/*
+ * Like show_date, but pull the timestamp and tz parameters from
+ * the ident_split. It will also sanity-check the values and produce
+ * a well-known sentinel date if they appear bogus.
+ */
+const char *show_ident_date(const struct ident_split *id,
+			    const struct date_mode *mode);
+
 
 #endif /* PRETTY_H */

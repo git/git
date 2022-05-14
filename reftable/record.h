@@ -58,18 +58,18 @@ struct reftable_record_vtable {
 
 	/* is this a tombstone? */
 	int (*is_deletion)(const void *rec);
-};
 
-/* record is a generic wrapper for different types of records. */
-struct reftable_record {
-	void *data;
-	struct reftable_record_vtable *ops;
+	/* Are two records equal? This assumes they have the same type. Returns 0 for non-equal. */
+	int (*equal)(const void *a, const void *b, int hash_size);
+
+	/* Print on stdout, for debugging. */
+	void (*print)(const void *rec, int hash_size);
 };
 
 /* returns true for recognized block types. Block start with the block type. */
 int reftable_is_block_type(uint8_t typ);
 
-/* creates a malloced record of the given type. Dispose with record_destroy */
+/* return an initialized record for the given type */
 struct reftable_record reftable_new_record(uint8_t typ);
 
 /* Encode `key` into `dest`. Sets `is_restart` to indicate a restart. Returns
@@ -97,8 +97,25 @@ struct reftable_obj_record {
 	int offset_len;
 };
 
-/* see struct record_vtable */
+/* record is a generic wrapper for different types of records. It is normally
+ * created on the stack, or embedded within another struct. If the type is
+ * known, a fresh instance can be initialized explicitly. Otherwise, use
+ * reftable_new_record() to initialize generically (as the index_record is not
+ * valid as 0-initialized structure)
+ */
+struct reftable_record {
+	uint8_t type;
+	union {
+		struct reftable_ref_record ref;
+		struct reftable_log_record log;
+		struct reftable_obj_record obj;
+		struct reftable_index_record idx;
+	} u;
+};
 
+/* see struct record_vtable */
+int reftable_record_equal(struct reftable_record *a, struct reftable_record *b, int hash_size);
+void reftable_record_print(struct reftable_record *rec, int hash_size);
 void reftable_record_key(struct reftable_record *rec, struct strbuf *dest);
 uint8_t reftable_record_type(struct reftable_record *rec);
 void reftable_record_copy_from(struct reftable_record *rec,
@@ -111,24 +128,8 @@ int reftable_record_decode(struct reftable_record *rec, struct strbuf key,
 			   int hash_size);
 int reftable_record_is_deletion(struct reftable_record *rec);
 
-/* zeroes out the embedded record */
+/* frees and zeroes out the embedded record */
 void reftable_record_release(struct reftable_record *rec);
-
-/* clear and deallocate embedded record, and zero `rec`. */
-void reftable_record_destroy(struct reftable_record *rec);
-
-/* initialize generic records from concrete records. The generic record should
- * be zeroed out. */
-void reftable_record_from_obj(struct reftable_record *rec,
-			      struct reftable_obj_record *objrec);
-void reftable_record_from_index(struct reftable_record *rec,
-				struct reftable_index_record *idxrec);
-void reftable_record_from_ref(struct reftable_record *rec,
-			      struct reftable_ref_record *refrec);
-void reftable_record_from_log(struct reftable_record *rec,
-			      struct reftable_log_record *logrec);
-struct reftable_ref_record *reftable_record_as_ref(struct reftable_record *ref);
-struct reftable_log_record *reftable_record_as_log(struct reftable_record *ref);
 
 /* for qsort. */
 int reftable_ref_record_compare_name(const void *a, const void *b);

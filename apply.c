@@ -103,7 +103,8 @@ int init_apply_state(struct apply_state *state,
 	state->linenr = 1;
 	string_list_init_nodup(&state->fn_table);
 	string_list_init_nodup(&state->limit_by_name);
-	string_list_init_nodup(&state->symlink_changes);
+	strset_init(&state->removed_symlinks);
+	strset_init(&state->kept_symlinks);
 	strbuf_init(&state->root, 0);
 
 	git_apply_config();
@@ -117,7 +118,8 @@ int init_apply_state(struct apply_state *state,
 void clear_apply_state(struct apply_state *state)
 {
 	string_list_clear(&state->limit_by_name, 0);
-	string_list_clear(&state->symlink_changes, 0);
+	strset_clear(&state->removed_symlinks);
+	strset_clear(&state->kept_symlinks);
 	strbuf_release(&state->root);
 
 	/* &state->fn_table is cleared at the end of apply_patch() */
@@ -217,13 +219,18 @@ static void free_fragment_list(struct fragment *list)
 	}
 }
 
-static void free_patch(struct patch *patch)
+void release_patch(struct patch *patch)
 {
 	free_fragment_list(patch->fragments);
 	free(patch->def_name);
 	free(patch->old_name);
 	free(patch->new_name);
 	free(patch->result);
+}
+
+static void free_patch(struct patch *patch)
+{
+	release_patch(patch);
 	free(patch);
 }
 
@@ -3157,7 +3164,7 @@ static int apply_binary(struct apply_state *state,
 		 * See if the old one matches what the patch
 		 * applies to.
 		 */
-		hash_object_file(the_hash_algo, img->buf, img->len, blob_type,
+		hash_object_file(the_hash_algo, img->buf, img->len, OBJ_BLOB,
 				 &oid);
 		if (strcmp(oid_to_hex(&oid), patch->old_oid_prefix))
 			return error(_("the patch applies to '%s' (%s), "
@@ -3203,7 +3210,7 @@ static int apply_binary(struct apply_state *state,
 				     name);
 
 		/* verify that the result matches */
-		hash_object_file(the_hash_algo, img->buf, img->len, blob_type,
+		hash_object_file(the_hash_algo, img->buf, img->len, OBJ_BLOB,
 				 &oid);
 		if (strcmp(oid_to_hex(&oid), patch->new_oid_prefix))
 			return error(_("binary patch to '%s' creates incorrect result (expecting %s, got %s)"),
@@ -3492,7 +3499,7 @@ static int three_way_merge(struct apply_state *state,
 {
 	mmfile_t base_file, our_file, their_file;
 	mmbuffer_t result = { NULL };
-	int status;
+	enum ll_merge_result status;
 
 	/* resolve trivial cases first */
 	if (oideq(base, ours))
@@ -3509,6 +3516,9 @@ static int three_way_merge(struct apply_state *state,
 			  &their_file, "theirs",
 			  state->repo->index,
 			  NULL);
+	if (status == LL_MERGE_BINARY_CONFLICT)
+		warning("Cannot merge binary files: %s (%s vs. %s)",
+			path, "ours", "theirs");
 	free(base_file.ptr);
 	free(our_file.ptr);
 	free(their_file.ptr);
@@ -3589,7 +3599,7 @@ static int try_threeway(struct apply_state *state,
 
 	/* Preimage the patch was prepared for */
 	if (patch->is_new)
-		write_object_file("", 0, blob_type, &pre_oid);
+		write_object_file("", 0, OBJ_BLOB, &pre_oid);
 	else if (get_oid(patch->old_oid_prefix, &pre_oid) ||
 		 read_blob_object(&buf, &pre_oid, patch->old_mode))
 		return error(_("repository lacks the necessary blob to perform 3-way merge."));
@@ -3605,7 +3615,7 @@ static int try_threeway(struct apply_state *state,
 		return -1;
 	}
 	/* post_oid is theirs */
-	write_object_file(tmp_image.buf, tmp_image.len, blob_type, &post_oid);
+	write_object_file(tmp_image.buf, tmp_image.len, OBJ_BLOB, &post_oid);
 	clear_image(&tmp_image);
 
 	/* our_oid is ours */
@@ -3618,7 +3628,7 @@ static int try_threeway(struct apply_state *state,
 			return error(_("cannot read the current contents of '%s'"),
 				     patch->old_name);
 	}
-	write_object_file(tmp_image.buf, tmp_image.len, blob_type, &our_oid);
+	write_object_file(tmp_image.buf, tmp_image.len, OBJ_BLOB, &our_oid);
 	clear_image(&tmp_image);
 
 	/* in-core three-way merge between post and our using pre as base */
@@ -3814,59 +3824,31 @@ static int check_to_create(struct apply_state *state,
 	return 0;
 }
 
-static uintptr_t register_symlink_changes(struct apply_state *state,
-					  const char *path,
-					  uintptr_t what)
-{
-	struct string_list_item *ent;
-
-	ent = string_list_lookup(&state->symlink_changes, path);
-	if (!ent) {
-		ent = string_list_insert(&state->symlink_changes, path);
-		ent->util = (void *)0;
-	}
-	ent->util = (void *)(what | ((uintptr_t)ent->util));
-	return (uintptr_t)ent->util;
-}
-
-static uintptr_t check_symlink_changes(struct apply_state *state, const char *path)
-{
-	struct string_list_item *ent;
-
-	ent = string_list_lookup(&state->symlink_changes, path);
-	if (!ent)
-		return 0;
-	return (uintptr_t)ent->util;
-}
-
 static void prepare_symlink_changes(struct apply_state *state, struct patch *patch)
 {
 	for ( ; patch; patch = patch->next) {
 		if ((patch->old_name && S_ISLNK(patch->old_mode)) &&
 		    (patch->is_rename || patch->is_delete))
 			/* the symlink at patch->old_name is removed */
-			register_symlink_changes(state, patch->old_name, APPLY_SYMLINK_GOES_AWAY);
+			strset_add(&state->removed_symlinks, patch->old_name);
 
 		if (patch->new_name && S_ISLNK(patch->new_mode))
 			/* the symlink at patch->new_name is created or remains */
-			register_symlink_changes(state, patch->new_name, APPLY_SYMLINK_IN_RESULT);
+			strset_add(&state->kept_symlinks, patch->new_name);
 	}
 }
 
 static int path_is_beyond_symlink_1(struct apply_state *state, struct strbuf *name)
 {
 	do {
-		unsigned int change;
-
 		while (--name->len && name->buf[name->len] != '/')
 			; /* scan backwards */
 		if (!name->len)
 			break;
 		name->buf[name->len] = '\0';
-		change = check_symlink_changes(state, name->buf);
-		if (change & APPLY_SYMLINK_IN_RESULT)
+		if (strset_contains(&state->kept_symlinks, name->buf))
 			return 1;
-		if (change & APPLY_SYMLINK_GOES_AWAY)
+		if (strset_contains(&state->removed_symlinks, name->buf))
 			/*
 			 * This cannot be "return 0", because we may
 			 * see a new one created at a higher level.
@@ -4346,7 +4328,7 @@ static int add_index_file(struct apply_state *state,
 			}
 			fill_stat_cache_info(state->repo->index, ce, &st);
 		}
-		if (write_object_file(buf, size, blob_type, &ce->oid) < 0) {
+		if (write_object_file(buf, size, OBJ_BLOB, &ce->oid) < 0) {
 			discard_cache_entry(ce);
 			return error(_("unable to create backing store "
 				       "for newly created file %s"), path);

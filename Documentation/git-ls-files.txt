@@ -156,7 +156,7 @@ a space) at the start of each line:
 
 --recurse-submodules::
 	Recursively calls ls-files on each active submodule in the repository.
-	Currently there is only support for the --cached mode.
+	Currently there is only support for the --cached and --stage modes.
 
 --abbrev[=<n>]::
 	Instead of showing the full 40-byte hexadecimal object

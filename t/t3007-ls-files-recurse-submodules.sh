@@ -34,6 +34,23 @@ test_expect_success 'ls-files correctly outputs files in submodule' '
 	test_cmp expect actual
 '
 
+test_expect_success '--stage' '
+	GITMODULES_HASH=$(git rev-parse HEAD:.gitmodules) &&
+	A_HASH=$(git rev-parse HEAD:a) &&
+	B_HASH=$(git rev-parse HEAD:b/b) &&
+	C_HASH=$(git -C submodule rev-parse HEAD:c) &&
+
+	cat >expect <<-EOF &&
+	100644 $GITMODULES_HASH 0	.gitmodules
+	100644 $A_HASH 0	a
+	100644 $B_HASH 0	b/b
+	100644 $C_HASH 0	submodule/c
+	EOF
+
+	git ls-files --stage --recurse-submodules >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'ls-files correctly outputs files in submodule with -z' '
 	lf_to_nul >expect <<-\EOF &&
 	.gitmodules
@@ -292,7 +309,6 @@ test_incompatible_with_recurse_submodules () {
 test_incompatible_with_recurse_submodules --deleted
 test_incompatible_with_recurse_submodules --modified
 test_incompatible_with_recurse_submodules --others
-test_incompatible_with_recurse_submodules --stage
 test_incompatible_with_recurse_submodules --killed
 test_incompatible_with_recurse_submodules --unmerged
 

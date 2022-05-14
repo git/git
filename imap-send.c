@@ -27,7 +27,7 @@
 #include "exec-cmd.h"
 #include "run-command.h"
 #include "parse-options.h"
-#ifdef NO_OPENSSL
+#if defined(NO_OPENSSL) && !defined(HAVE_OPENSSL_CSPRNG)
 typedef void *SSL;
 #endif
 #ifdef USE_CURL_FOR_IMAP_SEND
@@ -98,17 +98,7 @@ struct imap_server_conf {
 };
 
 static struct imap_server_conf server = {
-	NULL,	/* name */
-	NULL,	/* tunnel */
-	NULL,	/* host */
-	0,	/* port */
-	NULL,	/* folder */
-	NULL,	/* user */
-	NULL,	/* pass */
-	0,   	/* use_ssl */
-	1,   	/* ssl_verify */
-	0,   	/* use_html */
-	NULL,	/* auth_method */
+	.ssl_verify = 1,
 };
 
 struct imap_socket {

@@ -121,7 +121,6 @@ struct git_attr;
 /* opaque structures used internally for attribute collection */
 struct all_attrs_item;
 struct attr_stack;
-struct index_state;
 
 /*
  * Given a string, return the gitattribute object that

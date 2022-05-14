@@ -3,7 +3,7 @@ test_expect_success "setup receive.procReceiveRefs" '
 '
 
 test_expect_success "setup proc-receive hook" '
-	write_script "$upstream/hooks/proc-receive" <<-EOF
+	test_hook -C "$upstream" --clobber proc-receive <<-EOF
 	printf >&2 "# proc-receive hook\n"
 	test-tool proc-receive -v \
 		-r "ok refs/for/main/topic1" \

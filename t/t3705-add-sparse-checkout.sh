@@ -19,6 +19,7 @@ setup_sparse_entry () {
 	fi &&
 	git add sparse_entry &&
 	git update-index --skip-worktree sparse_entry &&
+	git config core.sparseCheckout false &&
 	git commit --allow-empty -m "ensure sparse_entry exists at HEAD" &&
 	SPARSE_ENTRY_BLOB=$(git rev-parse :sparse_entry)
 }
@@ -126,6 +127,7 @@ test_expect_success 'git add --chmod does not update sparse entries' '
 '
 
 test_expect_success 'git add --renormalize does not update sparse entries' '
+	test_when_finished rm .gitattributes &&
 	test_config core.autocrlf false &&
 	setup_sparse_entry "LINEONE\r\nLINETWO\r\n" &&
 	echo "sparse_entry text=auto" >.gitattributes &&

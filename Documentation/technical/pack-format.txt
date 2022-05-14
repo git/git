@@ -376,6 +376,11 @@ CHUNK DATA:
 	[Optional] Object Large Offsets (ID: {'L', 'O', 'F', 'F'})
 	    8-byte offsets into large packfiles.
 
+	[Optional] Bitmap pack order (ID: {'R', 'I', 'D', 'X'})
+	    A list of MIDX positions (one per object in the MIDX, num_objects in
+	    total, each a 4-byte unsigned integer in network byte order), sorted
+	    according to their relative bitmap/pseudo-pack positions.
+
 TRAILER:
 
 	Index checksum of the above contents.
@@ -456,9 +461,5 @@ In short, a MIDX's pseudo-pack is the de-duplicated concatenation of
 objects in packs stored by the MIDX, laid out in pack order, and the
 packs arranged in MIDX order (with the preferred pack coming first).
 
-Finally, note that the MIDX's reverse index is not stored as a chunk in
-the multi-pack-index itself. This is done because the reverse index
-includes the checksum of the pack or MIDX to which it belongs, which
-makes it impossible to write in the MIDX. To avoid races when rewriting
-the MIDX, a MIDX reverse index includes the MIDX's checksum in its
-filename (e.g., `multi-pack-index-xyz.rev`).
+The MIDX's reverse index is stored in the optional 'RIDX' chunk within
+the MIDX itself.

@@ -125,6 +125,21 @@ struct bundle_transport_data {
 	unsigned get_refs_from_bundle_called : 1;
 };
 
+static void get_refs_from_bundle_inner(struct transport *transport)
+{
+	struct bundle_transport_data *data = transport->data;
+
+	data->get_refs_from_bundle_called = 1;
+
+	if (data->fd > 0)
+		close(data->fd);
+	data->fd = read_bundle_header(transport->url, &data->header);
+	if (data->fd < 0)
+		die(_("could not read bundle '%s'"), transport->url);
+
+	transport->hash_algo = data->header.hash_algo;
+}
+
 static struct ref *get_refs_from_bundle(struct transport *transport,
 					int for_push,
 					struct transport_ls_refs_options *transport_options)
@@ -136,15 +151,7 @@ static struct ref *get_refs_from_bundle(struct transport *transport,
 	if (for_push)
 		return NULL;
 
-	data->get_refs_from_bundle_called = 1;
-
-	if (data->fd > 0)
-		close(data->fd);
-	data->fd = read_bundle_header(transport->url, &data->header);
-	if (data->fd < 0)
-		die(_("could not read bundle '%s'"), transport->url);
-
-	transport->hash_algo = data->header.hash_algo;
+	get_refs_from_bundle_inner(transport);
 
 	for (i = 0; i < data->header.references.nr; i++) {
 		struct string_list_item *e = data->header.references.items + i;
@@ -169,7 +176,7 @@ static int fetch_refs_from_bundle(struct transport *transport,
 		strvec_push(&extra_index_pack_args, "-v");
 
 	if (!data->get_refs_from_bundle_called)
-		get_refs_from_bundle(transport, 0, NULL);
+		get_refs_from_bundle_inner(transport);
 	ret = unbundle(the_repository, &data->header, data->fd,
 		       &extra_index_pack_args);
 	transport->hash_algo = data->header.hash_algo;
@@ -242,6 +249,9 @@ static int set_git_option(struct git_transport_options *opts,
 	} else if (!strcmp(name, TRANS_OPT_LIST_OBJECTS_FILTER)) {
 		list_objects_filter_die_if_populated(&opts->filter_options);
 		parse_list_objects_filter(&opts->filter_options, value);
+		return 0;
+	} else if (!strcmp(name, TRANS_OPT_REFETCH)) {
+		opts->refetch = !!value;
 		return 0;
 	} else if (!strcmp(name, TRANS_OPT_REJECT_SHALLOW)) {
 		opts->reject_shallow = !!value;
@@ -377,6 +387,7 @@ static int fetch_refs_via_pack(struct transport *transport,
 	args.update_shallow = data->options.update_shallow;
 	args.from_promisor = data->options.from_promisor;
 	args.filter_options = data->options.filter_options;
+	args.refetch = data->options.refetch;
 	args.stateless_rpc = transport->stateless_rpc;
 	args.server_options = transport->server_options;
 	args.negotiation_tips = data->options.negotiation_tips;
@@ -1292,7 +1303,7 @@ int transport_push(struct repository *r,
 							       &transport_options);
 		trace2_region_leave("transport_push", "get_refs_list", r);
 
-		strvec_clear(&transport_options.ref_prefixes);
+		transport_ls_refs_options_release(&transport_options);
 
 		if (flags & TRANSPORT_PUSH_ALL)
 			match_flags |= MATCH_REFS_ALL;
@@ -1418,6 +1429,12 @@ const struct ref *transport_get_remote_refs(struct transport *transport,
 	}
 
 	return transport->remote_refs;
+}
+
+void transport_ls_refs_options_release(struct transport_ls_refs_options *opts)
+{
+	strvec_clear(&opts->ref_prefixes);
+	free((char *)opts->unborn_head_target);
 }
 
 int transport_fetch_refs(struct transport *transport, struct ref *refs)

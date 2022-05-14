@@ -1,3 +1,6 @@
+#include "git-compat-util.h"
+
+#if ZLIB_VERNUM < 0x1290
 /* taken from zlib's uncompr.c
 
    commit cacf7f1d4e3d44d871b605da3b647f07d718623f
@@ -8,15 +11,10 @@
 
 */
 
-#include "../reftable/system.h"
-#define z_const
-
 /*
  * Copyright (C) 1995-2003, 2010, 2014, 2016 Jean-loup Gailly, Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
-
-#include <zlib.h>
 
 /* clang-format off */
 
@@ -93,3 +91,6 @@ int ZEXPORT uncompress2 (
 	   err == Z_BUF_ERROR && left + stream.avail_out ? Z_DATA_ERROR :
 	   err;
 }
+#else
+static void *dummy_variable = &dummy_variable;
+#endif
