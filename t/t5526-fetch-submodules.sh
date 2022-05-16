@@ -1125,4 +1125,31 @@ test_expect_success 'fetch --recurse-submodules updates name-conflicted, unpopul
 	)
 '
 
+test_expect_success 'fetch --all with --recurse-submodules' '
+	test_when_finished "rm -fr src_clone" &&
+	git clone --recurse-submodules src src_clone &&
+	(
+		cd src_clone &&
+		git config submodule.recurse true &&
+		git config fetch.parallel 0 &&
+		git fetch --all 2>../fetch-log
+	) &&
+	grep "^Fetching submodule sub$" fetch-log >fetch-subs &&
+	test_line_count = 1 fetch-subs
+'
+
+test_expect_success 'fetch --all with --recurse-submodules with multiple' '
+	test_when_finished "rm -fr src_clone" &&
+	git clone --recurse-submodules src src_clone &&
+	(
+		cd src_clone &&
+		git remote add secondary ../src &&
+		git config submodule.recurse true &&
+		git config fetch.parallel 0 &&
+		git fetch --all 2>../fetch-log
+	) &&
+	grep "Fetching submodule sub" fetch-log >fetch-subs &&
+	test_line_count = 2 fetch-subs
+'
+
 test_done
