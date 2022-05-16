@@ -434,6 +434,7 @@ void apply_push_cas(struct push_cas_option *, struct remote *, struct ref *);
  * http://a.com/b  ../../../c       http:/c          error out
  * http://a.com/b  ../../../../c    http:c           error out
  * http://a.com/b  ../../../../../c    .:c           error out
+ * http://a.com/b  http://d.org/e   http://d.org/e   as is
  * NEEDSWORK: Given how chop_last_dir() works, this function is broken
  * when a local part has a colon in its path component, too.
  */

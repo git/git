@@ -2761,10 +2761,18 @@ char *relative_url(const char *remote_url, const char *url,
 	int is_relative = 0;
 	int colonsep = 0;
 	char *out;
-	char *remoteurl = xstrdup(remote_url);
+	char *remoteurl;
 	struct strbuf sb = STRBUF_INIT;
-	size_t len = strlen(remoteurl);
+	size_t len;
 
+	if (!url_is_local_not_ssh(url) || is_absolute_path(url))
+		return xstrdup(url);
+
+	len = strlen(remote_url);
+	if (!len)
+		BUG("invalid empty remote_url");
+
+	remoteurl = xstrdup(remote_url);
 	if (is_dir_sep(remoteurl[len-1]))
 		remoteurl[len-1] = '\0';
 
