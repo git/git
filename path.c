@@ -1413,7 +1413,7 @@ int is_ntfs_dotgit(const char *name)
 
 	for (;;) {
 		c = *(name++);
-		if (!c || c == '\\' || c == '/' || c == ':')
+		if (!c || is_xplatform_dir_sep(c) || c == ':')
 			return 1;
 		if (c != '.' && c != ' ')
 			return 0;
