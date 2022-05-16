@@ -2623,8 +2623,12 @@ int read_loose_object(const char *path,
 		goto out;
 	}
 
-	if (unpack_loose_header(&stream, map, mapsize, hdr, sizeof(hdr),
-				NULL) < 0) {
+	switch (unpack_loose_header(&stream, map, mapsize, hdr, sizeof(hdr),
+				    NULL)) {
+	case ULHR_OK:
+		break;
+	case ULHR_BAD:
+	case ULHR_TOO_LONG:
 		error(_("unable to unpack header of %s"), path);
 		goto out;
 	}
