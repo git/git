@@ -72,135 +72,6 @@ static char *get_default_remote(void)
 	return repo_get_default_remote(the_repository);
 }
 
-/*
- * Returns 1 if it was the last chop before ':'.
- */
-static int chop_last_dir(char **remoteurl, int is_relative)
-{
-	char *rfind = find_last_dir_sep(*remoteurl);
-	if (rfind) {
-		*rfind = '\0';
-		return 0;
-	}
-
-	rfind = strrchr(*remoteurl, ':');
-	if (rfind) {
-		*rfind = '\0';
-		return 1;
-	}
-
-	if (is_relative || !strcmp(".", *remoteurl))
-		die(_("cannot strip one component off url '%s'"),
-			*remoteurl);
-
-	free(*remoteurl);
-	*remoteurl = xstrdup(".");
-	return 0;
-}
-
-static int starts_with_dot_slash(const char *const path)
-{
-	return starts_with_dot_slash_native(path);;
-}
-
-static int starts_with_dot_dot_slash(const char *const path)
-{
-	return starts_with_dot_dot_slash_native(path);
-}
-
-/*
- * The `url` argument is the URL that navigates to the submodule origin
- * repo. When relative, this URL is relative to the superproject origin
- * URL repo. The `up_path` argument, if specified, is the relative
- * path that navigates from the submodule working tree to the superproject
- * working tree. Returns the origin URL of the submodule.
- *
- * Return either an absolute URL or filesystem path (if the superproject
- * origin URL is an absolute URL or filesystem path, respectively) or a
- * relative file system path (if the superproject origin URL is a relative
- * file system path).
- *
- * When the output is a relative file system path, the path is either
- * relative to the submodule working tree, if up_path is specified, or to
- * the superproject working tree otherwise.
- *
- * NEEDSWORK: This works incorrectly on the domain and protocol part.
- * remote_url      url              outcome          expectation
- * http://a.com/b  ../c             http://a.com/c   as is
- * http://a.com/b/ ../c             http://a.com/c   same as previous line, but
- *                                                   ignore trailing slash in url
- * http://a.com/b  ../../c          http://c         error out
- * http://a.com/b  ../../../c       http:/c          error out
- * http://a.com/b  ../../../../c    http:c           error out
- * http://a.com/b  ../../../../../c    .:c           error out
- * NEEDSWORK: Given how chop_last_dir() works, this function is broken
- * when a local part has a colon in its path component, too.
- */
-static char *relative_url(const char *remote_url,
-				const char *url,
-				const char *up_path)
-{
-	int is_relative = 0;
-	int colonsep = 0;
-	char *out;
-	char *remoteurl = xstrdup(remote_url);
-	struct strbuf sb = STRBUF_INIT;
-	size_t len = strlen(remoteurl);
-
-	if (is_dir_sep(remoteurl[len-1]))
-		remoteurl[len-1] = '\0';
-
-	if (!url_is_local_not_ssh(remoteurl) || is_absolute_path(remoteurl))
-		is_relative = 0;
-	else {
-		is_relative = 1;
-		/*
-		 * Prepend a './' to ensure all relative
-		 * remoteurls start with './' or '../'
-		 */
-		if (!starts_with_dot_slash(remoteurl) &&
-		    !starts_with_dot_dot_slash(remoteurl)) {
-			strbuf_reset(&sb);
-			strbuf_addf(&sb, "./%s", remoteurl);
-			free(remoteurl);
-			remoteurl = strbuf_detach(&sb, NULL);
-		}
-	}
-	/*
-	 * When the url starts with '../', remove that and the
-	 * last directory in remoteurl.
-	 */
-	while (url) {
-		if (starts_with_dot_dot_slash(url)) {
-			url += 3;
-			colonsep |= chop_last_dir(&remoteurl, is_relative);
-		} else if (starts_with_dot_slash(url))
-			url += 2;
-		else
-			break;
-	}
-	strbuf_reset(&sb);
-	strbuf_addf(&sb, "%s%s%s", remoteurl, colonsep ? ":" : "/", url);
-	if (ends_with(url, "/"))
-		strbuf_setlen(&sb, sb.len - 1);
-	free(remoteurl);
-
-	if (starts_with_dot_slash(sb.buf))
-		out = xstrdup(sb.buf + 2);
-	else
-		out = xstrdup(sb.buf);
-
-	if (!up_path || !is_relative) {
-		strbuf_release(&sb);
-		return out;
-	}
-
-	strbuf_reset(&sb);
-	strbuf_addf(&sb, "%s%s", up_path, out);
-	free(out);
-	return strbuf_detach(&sb, NULL);
-}
-
 static char *resolve_relative_url(const char *rel_url, const char *up_path, int quiet)
 {
 	char *remoteurl, *resolved_url;
@@ -590,6 +461,18 @@ static int module_foreach(int argc, const char **argv, const char *prefix)
 	for_each_listed_submodule(&list, runcommand_in_submodule_cb, &info);
 
 	return 0;
+}
+
+static int starts_with_dot_slash(const char *const path)
+{
+	return path_match_flags(path, PATH_MATCH_STARTS_WITH_DOT_SLASH |
+				PATH_MATCH_XPLATFORM);
+}
+
+static int starts_with_dot_dot_slash(const char *const path)
+{
+	return path_match_flags(path, PATH_MATCH_STARTS_WITH_DOT_DOT_SLASH |
+				PATH_MATCH_XPLATFORM);
 }
 
 struct init_cb {
