@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (May 2022, #04; Thu, 12)
+Subject: What's cooking in git.git (May 2022, #05; Mon, 16)
 X-master-at: 277cf0bc36094f6dc4297d8c9cef79df045b735d
-X-next-at: 0e6072fb45b2316f096b16b5a8b4fee15a93929e
+X-next-at: 265bb02f2a67ce96a9eebc26ed274aaae0a30ddb
 
-What's cooking in git.git (May 2022, #04; Thu, 12)
+What's cooking in git.git (May 2022, #05; Mon, 16)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -13,23 +13,13 @@ topic is stable enough to be used and are candidate to be in a
 future release).  Commits prefixed with '-' are only in 'seen',
 and aren't considered "accepted" at all.
 
-There unfortunately are still a few regressions whose fixes have
-been reviewed but not yet rerolled.
-
- - hooks no longer is connected directly to the standard output.
-   cf. <CA+dzEBn108QoMA28f0nC8K21XT+Afua0V2Qv8XkR8rAeqUCCZw@mail.gmail.com>
-
- - "sudo make install" does not work out-of-the-box.
-   cf. <4ef9287b-6260-9538-7c89-cffb611520ee@maurel.de>
-
-With these fixed soon, a new maintenance release needs to follow.
-
-The tip of 'next' has been rewound and rebuilt, after the remaining
-topics that have been cooking in 'next' from the previous cycle have
-been flushed to 'master'.
+There are too many topics that are marked as "Will merge to next?"
+that can use a gentle reminder like "no, the issue raised at $URL
+hasn't been resolved yet for that" or "yes, we have discussed it
+long and poked at it hard enough and there is no holes".
 
 This cycle will conclude in early July (https://tinyurl.com/gitCal);
-we are in week #3 of the cycle.
+we are in week #4 of the cycle.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -60,156 +50,89 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* ab/misc-cleanup (2022-04-01) 6 commits
-  (merged to 'next' on 2022-04-04 at c5fb674865)
- + alloc.[ch]: remove alloc_report() function
- + object-store.h: remove unused has_sha1_file*()
- + pack-bitmap-write: remove unused bitmap_reset() function
- + xdiff/xmacros.h: remove unused XDL_PTRFREE
- + configure.ac: remove USE_PIC comment
- + run-command.h: remove always unused "clean_on_exit_handler_cbdata"
-
- Code clean-up.
- source: <cover-v4-0.6-00000000000-20220331T014349Z-avarab@gmail.com>
-
-
-* ah/rebase-keep-base-fix (2022-04-21) 1 commit
-  (merged to 'next' on 2022-05-02 at 8e6071e208)
- + rebase: use correct base for --keep-base when a branch is given
-
- "git rebase --keep-base <upstream> <branch-to-rebase>" computed the
- commit to rebase onto incorrectly, which has been corrected.
- source: <20220421044233.894255-1-alexhenrie24@gmail.com>
-
-
-* ea/progress-partial-blame (2022-04-06) 1 commit
-  (merged to 'next' on 2022-04-07 at 7df8392d71)
- + blame: report correct number of lines in progress when using ranges
-
- The progress meter of "git blame" was showing incorrect numbers
- when processing only parts of the file.
- source: <20220406181320.16911-1-eantoranz@gmail.com>
-
-
-* ea/rebase-code-simplify (2022-04-20) 1 commit
-  (merged to 'next' on 2022-05-02 at 88ed49c2d0)
- + rebase: simplify an assignment of options.type in cmd_rebase
-
- Code clean-up.
- source: <20220418172721.215898-1-eantoranz@gmail.com>
-
-
-* fr/vimdiff-layout (2022-04-03) 4 commits
-  (merged to 'next' on 2022-04-04 at 5d1c8197d0)
- + mergetools: add description to all diff/merge tools
- + vimdiff: add tool documentation
- + vimdiff: integrate layout tests in the unit tests framework ('t' folder)
- + vimdiff: new implementation with layout support
-
- Reimplement "vimdiff[123]" mergetool drivers with a more generic
- layout mechanism.
- source: <20220330191909.294610-1-greenfoo@u92.eu>
-
-
-* jh/p4-various-fixups (2022-04-01) 22 commits
-  (merged to 'next' on 2022-04-04 at 251b14976f)
- + git-p4: sort imports
- + git-p4: seperate multiple statements onto seperate lines
- + git-p4: move inline comments to line above
- + git-p4: only seperate code blocks by a single empty line
- + git-p4: compare to singletons with "is" and "is not"
- + git-p4: normalize indentation of lines in conditionals
- + git-p4: ensure there is a single space around all operators
- + git-p4: ensure every comment has a single #
- + git-p4: remove spaces between dictionary keys and colons
- + git-p4: remove redundant backslash-continuations inside brackets
- + git-p4: remove extraneous spaces before function arguments
- + git-p4: place a single space after every comma
- + git-p4: removed brackets when assigning multiple return values
- + git-p4: remove spaces around default arguments
- + git-p4: remove padding from lists, tuples and function arguments
- + git-p4: sort and de-duplcate pylint disable list
- + git-p4: remove commented code
- + git-p4: convert descriptive class and function comments into docstrings
- + git-p4: improve consistency of docstring formatting
- + git-p4: indent with 4-spaces
- + git-p4: remove unneeded semicolons from statements
- + git-p4: add blank lines between functions and class definitions
-
- Various cleanups to "git p4".
- source: <20220401142504.58995-1-jholdsworth@nvidia.com>
-
-
-* kt/commit-graph-plug-fp-leak-on-error (2022-04-20) 1 commit
-  (merged to 'next' on 2022-05-02 at c3bcb92518)
- + commit-graph: close file before returning NULL
-
- Fix a leak of FILE * in an error codepath.
- source: <pull.1213.git.1650302007395.gitgitgadget@gmail.com>
-
-
-* pw/test-malloc-with-sanitize-address (2022-04-11) 1 commit
-  (merged to 'next' on 2022-05-02 at a25766055f)
- + tests: make SANITIZE=address imply TEST_NO_MALLOC_CHECK
-
- Avoid problems from interaction between malloc_check and address
- sanitizer.
- source: <pull.1210.git.1649507317350.gitgitgadget@gmail.com>
-
-
-* rs/commit-summary-wo-break-rewrite (2022-04-06) 1 commit
-  (merged to 'next' on 2022-05-02 at c40509b820)
- + commit, sequencer: turn off break_opt for commit summary
-
- The commit summary shown after making a commit is matched to what
- is given in "git status" not to use the break-rewrite heuristics.
- source: <c35bd0aa-2e46-e710-2b39-89f18bad0097@web.de>
-
-
-* tk/untracked-cache-with-uall (2022-04-01) 2 commits
-  (merged to 'next' on 2022-04-04 at 2e11f1ac0c)
- + untracked-cache: support '--untracked-files=all' if configured
- + untracked-cache: test untracked-cache-bypassing behavior with -uall
-
- The performance of the "untracked cache" feature has been improved
- when "--untracked-files=<mode>" and "status.showUntrackedFiles"
- are combined.
- source: <pull.985.v6.git.1648742535.gitgitgadget@gmail.com>
-
---------------------------------------------------
 [New Topics]
 
-* gg/worktree-from-the-above (2022-05-11) 2 commits
- - dir: minor refactoring / clean-up
- - dir: consider worktree config in path recursion
+* tb/midx-race-in-pack-objects (2022-05-13) 2 commits
+ - builtin/pack-objects.c: ensure pack validity from MIDX bitmap objects
+ - pack-bitmap: check preferred pack validity when opening MIDX bitmap
 
- With a non-bare repository, with core.worktree pointing at a
- directory that has the repository as its subdirectory, regressed in
- Git 2.27 days.
-
- Expecting a reroll.
- source: <20220510171527.25778-1-ggossdev@gmail.com>
-
-
-* jc/update-ozlabs-url (2022-05-11) 1 commit
-  (merged to 'next' on 2022-05-12 at d6b14040b6)
- + SubmittingPatches: use more stable git.ozlabs.org URL
-
- Will merge to 'master'.
-
-
-* jc/archive-add-file-normalize-mode (2022-05-12) 1 commit
- - archive: do not let on-disk mode leak to zip archives
-
- "git archive --add-file=<path>" picked up the raw permission bits
- from the path and propagated to zip output in some cases, without
- normalization, which has been corrected (tar output did not have
- this issue).
+ The multi-pack-index code did not protect the packfile it is going
+ to depend on from getting removed while in use, which has been
+ corrected.
 
  Will merge to 'next'?
- source: <xmqqmtfme8v6.fsf@gitster.g>
+ source: <cover.1652458395.git.me@ttaylorr.com>
+
+
+* ds/bundle-uri (2022-05-16) 8 commits
+ - bundle.h: make "fd" version of read_bundle_header() public
+ - remote: allow relative_url() to return an absolute url
+ - remote: move relative_url()
+ - http: make http_get_file() external
+ - fetch-pack: move --keep=* option filling to a function
+ - fetch-pack: add a deref_without_lazy_fetch_extended()
+ - dir API: add a generalized path_match_flags() function
+ - connect.c: refactor sending of agent & object-format
+
+ source: <pull.1233.git.1652731865.gitgitgadget@gmail.com>
+
+
+* ds/sparse-sparse-checkout (2022-05-16) 8 commits
+ - sparse-checkout: integrate with sparse index
+ - p2000: add test for 'git sparse-checkout [add|set]'
+ - sparse-index: complete partial expansion
+ - sparse-index: partially expand directories
+ - sparse-checkout: --no-sparse-index needs a full index
+ - cache-tree: implement cache_tree_find_path()
+ - sparse-index: introduce partially-sparse indexes
+ - sparse-index: create expand_to_pattern_list()
+
+ "sparse-checkout" learns to work well with the sparse-index
+ feature.
+ source: <pull.1208.git.1652724693.gitgitgadget@gmail.com>
+
+
+* gc/bare-repo-discovery (2022-05-16) 3 commits
+ - SQUASH??? move new test to t0035
+ - setup.c: learn discovery.bareRepository=cwd
+ - setup.c: make bare repo discovery optional
+
+ Introduce a discovery.barerepository configuration variable that
+ allows users to forbid discovery of bare repositories.
+
+ Expecting a reroll.
+ source: <pull.1261.v2.git.git.1652485058.gitgitgadget@gmail.com>
+
+
+* jt/fetch-peek-optional-section (2022-05-16) 1 commit
+ - fetch-pack: make unexpected peek result non-fatal
+
+ "git fetch" unnecessarily failed when an unexpected optional
+ section appeared in the output, which has been corrected.
+
+ Will merge to 'next'.
+ source: <20220516110221.3490982-1-jonathantanmy@google.com>
+
+
+* os/fetch-check-not-current-branch (2022-05-16) 1 commit
+ - fetch: limit shared symref check only for local branches
+
+ The way "git fetch" without "--update-head-ok" ensures that HEAD in
+ no worktree points at any ref being updated was too wasteful, which
+ has been optimized a bit.
+
+ Will merge to 'next'?
+ source: <pull.1266.v2.git.git.1652690501963.gitgitgadget@gmail.com>
+
+
+* ds/object-file-unpack-loose-header-fix (2022-05-16) 1 commit
+ - object-file: convert 'switch' back to 'if'
+ (this branch uses ab/valgrind-fixes.)
+
+ Coding style fix.
+
+ Will merge to 'next'?
+ source: <377be0e9-8a0f-4a86-0a66-3b08c0284dae@github.com>
 
 --------------------------------------------------
 [Stalled]
@@ -354,25 +277,60 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* gg/worktree-from-the-above (2022-05-11) 2 commits
+ - dir: minor refactoring / clean-up
+ - dir: consider worktree config in path recursion
+
+ With a non-bare repository, with core.worktree pointing at a
+ directory that has the repository as its subdirectory, regressed in
+ Git 2.27 days.
+
+ Expecting a reroll.
+ source: <20220510171527.25778-1-ggossdev@gmail.com>
+
+
+* jc/update-ozlabs-url (2022-05-11) 1 commit
+  (merged to 'next' on 2022-05-12 at d6b14040b6)
+ + SubmittingPatches: use more stable git.ozlabs.org URL
+
+ Will merge to 'master'.
+
+
+* jc/archive-add-file-normalize-mode (2022-05-12) 1 commit
+  (merged to 'next' on 2022-05-16 at 265bb02f2a)
+ + archive: do not let on-disk mode leak to zip archives
+
+ "git archive --add-file=<path>" picked up the raw permission bits
+ from the path and propagated to zip output in some cases, without
+ normalization, which has been corrected (tar output did not have
+ this issue).
+
+ Will merge to 'master'.
+ source: <xmqqmtfme8v6.fsf@gitster.g>
+
+
 * ab/commit-plug-leaks (2022-05-12) 1 commit
- - commit: fix "author_ident" leak
+  (merged to 'next' on 2022-05-16 at 00bcda44af)
+ + commit: fix "author_ident" leak
 
  Leakfix in the top-level called-once function.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <xmqqzgjmcqlg.fsf@gitster.g>
 
 
 * ab/valgrind-fixes (2022-05-12) 4 commits
- - commit-graph.c: don't assume that stat() succeeds
- - object-file: fix a unpack_loose_header() regression in 3b6a8db3b03
- - log test: skip a failing mkstemp() test under valgrind
- - tests: using custom GIT_EXEC_PATH breaks --valgrind tests
+  (merged to 'next' on 2022-05-16 at 75d760528f)
+ + commit-graph.c: don't assume that stat() succeeds
+ + object-file: fix a unpack_loose_header() regression in 3b6a8db3b03
+ + log test: skip a failing mkstemp() test under valgrind
+ + tests: using custom GIT_EXEC_PATH breaks --valgrind tests
+ (this branch is used by ds/object-file-unpack-loose-header-fix.)
 
  A bit of test framework fixes with a few fixes to issues found by
  valgrind.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <20220512223218.237544-1-gitster@pobox.com>
 
 
@@ -415,10 +373,12 @@ Release tarballs are available at:
 
  "git remote -v" now shows the list-objects-filter used during
  fetching from the remote, if available.
+
+ Will merge to 'next'?
  source: <pull.1227.v4.git.1652095969026.gitgitgadget@gmail.com>
 
 
-* cc/http-curlopt-resolve (2022-05-09) 1 commit
+* cc/http-curlopt-resolve (2022-05-16) 1 commit
  - http: add custom hostname to IP address resolutions
 
  With the new http.curloptResolve configuration, the CURLOPT_RESOLVE
@@ -426,7 +386,7 @@ Release tarballs are available at:
  IP addresses for the requests is exposed to the scripts.
 
  Will merge to 'next'?
- source: <20220509153834.485871-1-chriscool@tuxfamily.org>
+ source: <20220516083851.202057-1-chriscool@tuxfamily.org>
 
 
 * js/trace2-doc-fixes (2022-05-04) 6 commits
@@ -462,53 +422,58 @@ Release tarballs are available at:
 
 
 * tk/p4-metadata-coding-strategies (2022-05-04) 1 commit
- - git-p4: improve encoding handling to support inconsistent encodings
+  (merged to 'next' on 2022-05-13 at d083cc3ff0)
+ + git-p4: improve encoding handling to support inconsistent encodings
 
  "git p4" updates.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <pull.1206.v4.git.1651346812586.gitgitgadget@gmail.com>
 
 
 * ep/equals-null-cocci (2022-05-02) 2 commits
- - tree-wide: apply equals-null.cocci
- - Merge branch 'ep/maint-equals-null-cocci' into ep/equals-null-cocci
+  (merged to 'next' on 2022-05-13 at a8de51ce7a)
+ + tree-wide: apply equals-null.cocci
+ + Merge branch 'ep/maint-equals-null-cocci' into ep/equals-null-cocci
  (this branch uses ep/maint-equals-null-cocci.)
 
  Merges up ep/maint-equals-null-cocci to the current codebase.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ep/maint-equals-null-cocci (2022-05-02) 4 commits
- - tree-wide: apply equals-null.cocci
- - Merge branch 'ep/maint-equals-null-cocci' for maint-2.35
- - tree-wide: apply equals-null.cocci
- - contrib/coccinnelle: add equals-null.cocci
+  (merged to 'next' on 2022-05-13 at 022e914848)
+ + tree-wide: apply equals-null.cocci
+ + Merge branch 'ep/maint-equals-null-cocci' for maint-2.35
+ + tree-wide: apply equals-null.cocci
+ + contrib/coccinnelle: add equals-null.cocci
  (this branch is used by ep/equals-null-cocci.)
 
  Introduce and apply coccinelle rule to discourage an explicit
  comparison between a pointer and NULL, and applies the clean-up to
  the maintenance track.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ds/sparse-colon-path (2022-04-26) 5 commits
- - rev-parse: integrate with sparse index
- - object-name: diagnose trees in index properly
- - object-name: reject trees found in the index
- - show: integrate with the sparse index
- - t1092: add compatibility tests for 'git show'
+  (merged to 'next' on 2022-05-13 at f1740d248a)
+ + rev-parse: integrate with sparse index
+ + object-name: diagnose trees in index properly
+ + object-name: reject trees found in the index
+ + show: integrate with the sparse index
+ + t1092: add compatibility tests for 'git show'
 
  "git show :<path>" learned to work better with the sparse-index
  feature.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1207.v2.git.1651005800.gitgitgadget@gmail.com>
 
 
-* cb/path-owner-check-with-sudo (2022-05-10) 3 commits
+* cb/path-owner-check-with-sudo (2022-05-12) 4 commits
+ - git-compat-util: allow root to access both SUDO_UID and root owned
  - t0034: add negative tests and allow git init to mostly work under sudo
  - git-compat-util: avoid failing dir ownership checks if running privileged
  - t: regression git needs safe.directory when using sudo
@@ -519,10 +484,10 @@ Release tarballs are available at:
  the safety.
 
  Will merge to 'next'?
- source: <20220510174616.18629-1-carenas@gmail.com>
+ source: <20220513010020.55361-1-carenas@gmail.com>
 
 
-* pb/ggg-in-mfc-doc (2022-05-10) 5 commits
+* pb/ggg-in-mfc-doc (2022-05-12) 5 commits
  - MyFirstContribution: drop PR description for GGG single-patch contributions
  - MyFirstContribution: reference "The cover letter" in GitGitGadget section
  - MyFirstContribution: reference "The cover letter" in "Preparing Email"
@@ -531,9 +496,8 @@ Release tarballs are available at:
 
  Documentation update.
 
- Expecting a reroll.
- cf. <a955b9f1-3e11-70c5-b390-a35b420d6835@gmail.com>
- source: <pull.1226.v2.git.1652233654.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <pull.1226.v3.git.1652399017.gitgitgadget@gmail.com>
 
 
 * sg/safe-directory-tests-and-docs (2022-04-27) 3 commits
@@ -553,22 +517,23 @@ Release tarballs are available at:
 
  A new doc that lists tips for tools to work with Git's codebase.
 
- Thoughts?
+ Will merge to 'next'?
  source: <20220421084515.21236-2-cogoni.guillaume@gmail.com>
 
 
 * cb/ci-make-p4-optional (2022-05-12) 4 commits
- - ci: use https, not http to download binaries from perforce.com
- - ci: reintroduce prevention from perforce being quarantined in macOS
- - ci: avoid brew for installing perforce
- - ci: make failure to find perforce more user friendly
+  (merged to 'next' on 2022-05-13 at 7e84679e2a)
+ + ci: use https, not http to download binaries from perforce.com
+ + ci: reintroduce prevention from perforce being quarantined in macOS
+ + ci: avoid brew for installing perforce
+ + ci: make failure to find perforce more user friendly
 
  macOS CI jobs have been occasionally flaky due to tentative version
  skew between perforce and the homebrew packager.  Instead of
  failing the whole CI job, just let it skip the p4 tests when this
  happens.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <20220512223940.238367-1-gitster@pobox.com>
 
 
@@ -578,6 +543,8 @@ Release tarballs are available at:
  The "--current" option of "git show-branch" should have been made
  incompatible with the "--reflog" mode, but this was not enforced,
  which has been corrected.
+
+ Will merge to 'next'.
  source: <xmqqh76mf7s4.fsf_-_@gitster.g>
 
 
@@ -598,6 +565,12 @@ Release tarballs are available at:
 
  "git send-email" is changed so that by default it asks for
  confirmation before sending each message out.
+
+ Will discard.
+
+ I wanted to like this, and had it in the version of Git I use
+ myself for daily work, but the prompting turned out to be somewhat
+ distracting.
 
  Thoughts?
  source: <20220422083629.1404989-1-hi@alyssa.is>
@@ -628,16 +601,17 @@ Release tarballs are available at:
 
 
 * vd/sparse-stash (2022-05-10) 6 commits
- - unpack-trees: preserve index sparsity
- - stash: apply stash using 'merge_ort_nonrecursive()'
- - read-cache: set sparsity when index is new
- - sparse-index: expose 'is_sparse_index_allowed()'
- - stash: integrate with sparse index
- - stash: expand sparse-checkout compatibility testing
+  (merged to 'next' on 2022-05-13 at 0f52519a0e)
+ + unpack-trees: preserve index sparsity
+ + stash: apply stash using 'merge_ort_nonrecursive()'
+ + read-cache: set sparsity when index is new
+ + sparse-index: expose 'is_sparse_index_allowed()'
+ + stash: integrate with sparse index
+ + stash: expand sparse-checkout compatibility testing
 
  Teach "git stash" to work better with sparse index entries.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <pull.1171.v3.git.1652225552.gitgitgadget@gmail.com>
 
 
@@ -654,6 +628,10 @@ Release tarballs are available at:
 * ep/coverage-report-wants-test-to-have-run (2022-04-13) 1 commit
  - Makefile: add a prerequisite to the coverage-report target
 
+ "make coverage-report" without first running "make coverage" did
+ not produce any meaningful result, which has been corrected.
+
+ Will merge to 'next'.
  source: <20220414022513.31465-1-gitter.spiros@gmail.com>
 
 
@@ -859,7 +837,7 @@ Release tarballs are available at:
 
  "git p4" update.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <pull.1180.git.1647866603032.gitgitgadget@gmail.com>
 
 
@@ -887,19 +865,20 @@ Release tarballs are available at:
 
 
 * en/sparse-cone-becomes-default (2022-04-21) 9 commits
- - Documentation: some sparsity wording clarifications
- - git-sparse-checkout.txt: mark non-cone mode as deprecated
- - git-sparse-checkout.txt: flesh out pattern set sections a bit
- - git-sparse-checkout.txt: add a new EXAMPLES section
- - git-sparse-checkout.txt: shuffle some sections and mark as internal
- - git-sparse-checkout.txt: update docs for deprecation of 'init'
- - git-sparse-checkout.txt: wording updates for the cone mode default
- - sparse-checkout: make --cone the default
- - tests: stop assuming --no-cone is the default mode for sparse-checkout
+  (merged to 'next' on 2022-05-13 at c168eb55cf)
+ + Documentation: some sparsity wording clarifications
+ + git-sparse-checkout.txt: mark non-cone mode as deprecated
+ + git-sparse-checkout.txt: flesh out pattern set sections a bit
+ + git-sparse-checkout.txt: add a new EXAMPLES section
+ + git-sparse-checkout.txt: shuffle some sections and mark as internal
+ + git-sparse-checkout.txt: update docs for deprecation of 'init'
+ + git-sparse-checkout.txt: wording updates for the cone mode default
+ + sparse-checkout: make --cone the default
+ + tests: stop assuming --no-cone is the default mode for sparse-checkout
 
  Deprecate non-cone mode of the sparse-checkout feature.
 
- Will merge to 'next'.
+ Will cook in 'next' til 06-03 and then merge to 'master'.
  source: <pull.1148.v3.git.1650594746.gitgitgadget@gmail.com>
 
 
@@ -942,7 +921,7 @@ Release tarballs are available at:
  branch $A at the remote $B came from.  Also more places use the
  sole remote, if exists, before defaulting to 'origin'.
 
- Thoughts?
+ Will merge to 'next'?
  source: <pull.1161.v5.git.1651226206.gitgitgadget@gmail.com>
 
 
