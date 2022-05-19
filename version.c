@@ -3,7 +3,7 @@
 #include "strbuf.h"
 
 const char git_version_string[] = GIT_VERSION;
-const char git_built_from_cummit_string[] = GIT_BUILT_FROM_cummit;
+const char git_built_from_cummit_string[] = GIT_BUILT_FROM_CUMMIT;
 
 const char *git_user_agent(void)
 {

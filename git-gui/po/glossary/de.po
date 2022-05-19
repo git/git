@@ -123,7 +123,7 @@ msgstr ""
 
 #. "a message that gets attached with any cummit"
 msgid "cummit message"
-msgstr "cummit-Beschreibung (Meldung?, Nachricht?; Source Safe: Kommentar)"
+msgstr "CUMMIT-Beschreibung (Meldung?, Nachricht?; Source Safe: Kommentar)"
 
 #.   "The person who cummitted a cummit (to the current branch), which might be different than the author."
 msgid "cummitter"
@@ -286,7 +286,7 @@ msgstr "Referenz"
 
 #. "the log file containing all states of the HEAD reference (in other words past pristine states of the working copy)"
 msgid "reflog"
-msgstr "cummit-Log, »reflog«"
+msgstr "CUMMIT-Log, »reflog«"
 
 msgid "refmap"
 msgstr "Refmap"

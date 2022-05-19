@@ -2,8 +2,8 @@
 
 # After setting the fake editor with this function, you can
 #
-# - override the cummit message with $FAKE_cummit_MESSAGE
-# - amend the cummit message with $FAKE_cummit_AMEND
+# - override the cummit message with $FAKE_CUMMIT_MESSAGE
+# - amend the cummit message with $FAKE_CUMMIT_AMEND
 # - copy the original cummit message to a file with $FAKE_MESSAGE_COPY
 # - check that non-cummit messages have a certain line count with $EXPECT_COUNT
 # - check the cummit count in the cummit message header with $EXPECT_HEADER_COUNT
@@ -28,12 +28,12 @@
 set_fake_editor () {
 	write_script fake-editor.sh <<-\EOF
 	case "$1" in
-	*/cummit_EDITMSG)
+	*/CUMMIT_EDITMSG)
 		test -z "$EXPECT_HEADER_COUNT" ||
 			test "$EXPECT_HEADER_COUNT" = "$(sed -n '1s/^# This is a combination of \(.*\) cummits\./\1/p' < "$1")" ||
 			exit
-		test -z "$FAKE_cummit_MESSAGE" || echo "$FAKE_cummit_MESSAGE" > "$1"
-		test -z "$FAKE_cummit_AMEND" || echo "$FAKE_cummit_AMEND" >> "$1"
+		test -z "$FAKE_CUMMIT_MESSAGE" || echo "$FAKE_CUMMIT_MESSAGE" > "$1"
+		test -z "$FAKE_CUMMIT_AMEND" || echo "$FAKE_CUMMIT_AMEND" >> "$1"
 		test -z "$FAKE_MESSAGE_COPY" || cat "$1" >"$FAKE_MESSAGE_COPY"
 		exit
 		;;
@@ -131,8 +131,8 @@ test_editor_unchanged () {
 	# We're only interested in exported variables hence 'sh -c'
 	sh -c 'cat >actual <<-EOF
 	EDITOR=$EDITOR
-	FAKE_cummit_AMEND=$FAKE_cummit_AMEND
-	FAKE_cummit_MESSAGE=$FAKE_cummit_MESSAGE
+	FAKE_CUMMIT_AMEND=$FAKE_CUMMIT_AMEND
+	FAKE_CUMMIT_MESSAGE=$FAKE_CUMMIT_MESSAGE
 	FAKE_LINES=$FAKE_LINES
 	GIT_EDITOR=$GIT_EDITOR
 	GIT_SEQUENCE_EDITOR=$GIT_SEQUENCE_EDITOR
@@ -141,8 +141,8 @@ test_editor_unchanged () {
 	EOF'
 	cat >expect <<-\EOF
 	EDITOR=:
-	FAKE_cummit_AMEND=
-	FAKE_cummit_MESSAGE=
+	FAKE_CUMMIT_AMEND=
+	FAKE_CUMMIT_MESSAGE=
 	FAKE_LINES=
 	GIT_EDITOR=
 	GIT_SEQUENCE_EDITOR=

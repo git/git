@@ -34,7 +34,7 @@ VARIABLES
 GIT_AUTHOR_IDENT::
     The author of a piece of code.
 
-GIT_cummitTER_IDENT::
+GIT_CUMMITTER_IDENT::
     The person who put a piece of code into Git.
 
 GIT_EDITOR::

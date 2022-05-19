@@ -548,7 +548,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 			free(ref);
 		}
 
-		if (write_locked_index(&the_index, &lock, cummit_LOCK))
+		if (write_locked_index(&the_index, &lock, CUMMIT_LOCK))
 			die(_("Could not write new index file."));
 	}
 

@@ -22,7 +22,7 @@ struct object *get_indexed_object(unsigned int idx)
 
 static const char *object_type_strings[] = {
 	NULL,		/* OBJ_NONE = 0 */
-	"cummit",		/* OBJ_cummit = 1 */
+	"cummit",		/* OBJ_CUMMIT = 1 */
 	"tree",		/* OBJ_TREE = 2 */
 	"blob",		/* OBJ_BLOB = 3 */
 	"tag",		/* OBJ_TAG = 4 */
@@ -162,7 +162,7 @@ void *object_as_type(struct object *obj, enum object_type type, int quiet)
 	if (obj->type == type)
 		return obj;
 	else if (obj->type == OBJ_NONE) {
-		if (type == OBJ_cummit)
+		if (type == OBJ_CUMMIT)
 			init_cummit_node((struct cummit *) obj);
 		else
 			obj->type = type;
@@ -190,7 +190,7 @@ struct object *lookup_object_by_type(struct repository *r,
 			    enum object_type type)
 {
 	switch (type) {
-	case OBJ_cummit:
+	case OBJ_CUMMIT:
 		return (struct object *)lookup_cummit(r, oid);
 	case OBJ_TREE:
 		return (struct object *)lookup_tree(r, oid);
@@ -228,7 +228,7 @@ struct object *parse_object_buffer(struct repository *r, const struct object_id 
 				*eaten_p = 1;
 			}
 		}
-	} else if (type == OBJ_cummit) {
+	} else if (type == OBJ_CUMMIT) {
 		struct cummit *cummit = lookup_cummit(r, oid);
 		if (cummit) {
 			if (parse_cummit_buffer(r, cummit, buffer, size, 1))
@@ -477,7 +477,7 @@ void repo_clear_cummit_marks(struct repository *r, unsigned int flags)
 
 	for (i = 0; i < r->parsed_objects->obj_hash_size; i++) {
 		struct object *obj = r->parsed_objects->obj_hash[i];
-		if (obj && obj->type == OBJ_cummit)
+		if (obj && obj->type == OBJ_CUMMIT)
 			obj->flags &= ~flags;
 	}
 }
@@ -574,7 +574,7 @@ void parsed_object_pool_clear(struct parsed_object_pool *o)
 
 		if (obj->type == OBJ_TREE)
 			free_tree_buffer((struct tree*)obj);
-		else if (obj->type == OBJ_cummit)
+		else if (obj->type == OBJ_CUMMIT)
 			release_cummit_memory(o, (struct cummit*)obj);
 		else if (obj->type == OBJ_TAG)
 			release_tag_memory((struct tag*)obj);

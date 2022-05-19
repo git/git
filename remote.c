@@ -1227,7 +1227,7 @@ static void show_push_unqualified_ref_name_error(const char *dst_value,
 		    "match_explicit_lhs() should catch this!",
 		    matched_src_name);
 	type = oid_object_info(the_repository, &oid, NULL);
-	if (type == OBJ_cummit) {
+	if (type == OBJ_CUMMIT) {
 		advise(_("The <src> part of the refspec is a cummit object.\n"
 			 "Did you mean to create a new branch by pushing to\n"
 			 "'%s:refs/heads/%s'?"),
@@ -2519,7 +2519,7 @@ struct reflog_cummit_array {
 	size_t nr, alloc;
 };
 
-#define REFLOG_cummit_ARRAY_INIT { 0 }
+#define REFLOG_CUMMIT_ARRAY_INIT { 0 }
 
 /* Append a cummit to the array. */
 static void append_cummit(struct reflog_cummit_array *arr,
@@ -2593,7 +2593,7 @@ static int is_reachable_in_reflog(const char *local, const struct ref *remote)
 	struct cummit *cummit;
 	struct cummit **chunk;
 	struct check_and_collect_until_cb_data cb;
-	struct reflog_cummit_array arr = REFLOG_cummit_ARRAY_INIT;
+	struct reflog_cummit_array arr = REFLOG_CUMMIT_ARRAY_INIT;
 	size_t size = 0;
 	int ret = 0;
 

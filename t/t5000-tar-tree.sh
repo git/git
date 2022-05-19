@@ -147,7 +147,7 @@ test_expect_success \
 
 test_expect_success 'add files to repository' '
 	git add a &&
-	GIT_cummitTER_DATE="2005-05-27 22:00" git cummit -m initial
+	GIT_CUMMITTER_DATE="2005-05-27 22:00" git cummit -m initial
 '
 
 test_expect_success 'setup export-subst' '
@@ -447,7 +447,7 @@ test_expect_success TIME_IS_64BIT 'set up repository with far-future (2^34 - 1) 
 	rm -f .git/index &&
 	echo foo >file &&
 	git add file &&
-	GIT_cummitTER_DATE="@17179869183 +0000" \
+	GIT_CUMMITTER_DATE="@17179869183 +0000" \
 		git cummit -m "tempori parendum"
 '
 
@@ -465,7 +465,7 @@ test_expect_success TIME_IS_64BIT 'set up repository with far-far-future (2^36 +
 	rm -f .git/index &&
 	echo content >file &&
 	git add file &&
-	GIT_TEST_cummit_GRAPH=0 GIT_cummitTER_DATE="@68719476737 +0000" \
+	GIT_TEST_CUMMIT_GRAPH=0 GIT_CUMMITTER_DATE="@68719476737 +0000" \
 		git cummit -m "tempori parendum"
 '
 

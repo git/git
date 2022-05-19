@@ -48,24 +48,24 @@ test_expect_success "proc-receive: report status v1" '
 	make_user_friendly_and_stable_output <out >actual &&
 	cat >expect <<-EOF &&
 	# pre-receive hook
-	pre-receive< <cummit-A> <cummit-B> refs/heads/main
-	pre-receive< <ZERO-OID> <cummit-A> refs/for/main/topic1
-	pre-receive< <ZERO-OID> <cummit-A> refs/heads/foo
-	pre-receive< <ZERO-OID> <cummit-A> refs/for/next/topic
-	pre-receive< <ZERO-OID> <cummit-A> refs/for/main/topic2
+	pre-receive< <CUMMIT-A> <CUMMIT-B> refs/heads/main
+	pre-receive< <ZERO-OID> <CUMMIT-A> refs/for/main/topic1
+	pre-receive< <ZERO-OID> <CUMMIT-A> refs/heads/foo
+	pre-receive< <ZERO-OID> <CUMMIT-A> refs/for/next/topic
+	pre-receive< <ZERO-OID> <CUMMIT-A> refs/for/main/topic2
 	# proc-receive hook
-	proc-receive< <ZERO-OID> <cummit-A> refs/for/main/topic1
-	proc-receive< <ZERO-OID> <cummit-A> refs/for/next/topic
-	proc-receive< <ZERO-OID> <cummit-A> refs/for/main/topic2
+	proc-receive< <ZERO-OID> <CUMMIT-A> refs/for/main/topic1
+	proc-receive< <ZERO-OID> <CUMMIT-A> refs/for/next/topic
+	proc-receive< <ZERO-OID> <CUMMIT-A> refs/for/main/topic2
 	proc-receive> ok refs/for/main/topic1
 	proc-receive> option fall-through
 	proc-receive> ok refs/for/main/topic2
 	proc-receive> option refname refs/for/changes/23/123/1
-	proc-receive> option new-oid <cummit-A>
+	proc-receive> option new-oid <CUMMIT-A>
 	proc-receive> ok refs/for/main/topic2
 	proc-receive> option refname refs/for/changes/24/124/2
-	proc-receive> option old-oid <cummit-B>
-	proc-receive> option new-oid <cummit-A>
+	proc-receive> option old-oid <CUMMIT-B>
+	proc-receive> option new-oid <CUMMIT-A>
 	proc-receive> option forced-update
 	proc-receive> ng refs/for/next/topic target branch not exist
 	000eunpack ok
@@ -75,17 +75,17 @@ test_expect_success "proc-receive: report status v1" '
 	0033ng refs/for/next/topic target branch not exist
 	001cok refs/for/main/topic2
 	0000# post-receive hook
-	post-receive< <cummit-A> <cummit-B> refs/heads/main
-	post-receive< <ZERO-OID> <cummit-A> refs/for/main/topic1
-	post-receive< <ZERO-OID> <cummit-A> refs/heads/foo
-	post-receive< <ZERO-OID> <cummit-A> refs/for/changes/23/123/1
-	post-receive< <cummit-B> <cummit-A> refs/for/changes/24/124/2
+	post-receive< <CUMMIT-A> <CUMMIT-B> refs/heads/main
+	post-receive< <ZERO-OID> <CUMMIT-A> refs/for/main/topic1
+	post-receive< <ZERO-OID> <CUMMIT-A> refs/heads/foo
+	post-receive< <ZERO-OID> <CUMMIT-A> refs/for/changes/23/123/1
+	post-receive< <CUMMIT-B> <CUMMIT-A> refs/for/changes/24/124/2
 	EOF
 	test_cmp expect actual &&
 
 	test_cmp_refs -C "$upstream" <<-EOF
-	<cummit-A> refs/for/main/topic1
-	<cummit-A> refs/heads/foo
-	<cummit-B> refs/heads/main
+	<CUMMIT-A> refs/for/main/topic1
+	<CUMMIT-A> refs/heads/foo
+	<CUMMIT-B> refs/heads/main
 	EOF
 '

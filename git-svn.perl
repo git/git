@@ -1847,8 +1847,8 @@ sub get_cummit_entry {
 	my ($treeish) = shift;
 	my %log_entry = ( log => '', tree => get_tree_from_treeish($treeish) );
 	my @git_path = qw(rev-parse --git-path);
-	my $cummit_editmsg = command_oneline(@git_path, 'cummit_EDITMSG');
-	my $cummit_msg = command_oneline(@git_path, 'cummit_MSG');
+	my $cummit_editmsg = command_oneline(@git_path, 'CUMMIT_EDITMSG');
+	my $cummit_msg = command_oneline(@git_path, 'CUMMIT_MSG');
 	open my $log_fh, '>', $cummit_editmsg or croak $!;
 
 	my $type = command_oneline(qw/cat-file -t/, $treeish);

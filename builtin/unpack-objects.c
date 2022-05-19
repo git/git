@@ -467,7 +467,7 @@ static void unpack_one(unsigned nr)
 	}
 
 	switch (type) {
-	case OBJ_cummit:
+	case OBJ_CUMMIT:
 	case OBJ_TREE:
 	case OBJ_BLOB:
 	case OBJ_TAG:

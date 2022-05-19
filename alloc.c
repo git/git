@@ -110,7 +110,7 @@ static unsigned int alloc_cummit_index(void)
 
 void init_cummit_node(struct cummit *c)
 {
-	c->object.type = OBJ_cummit;
+	c->object.type = OBJ_CUMMIT;
 	c->index = alloc_cummit_index();
 }
 

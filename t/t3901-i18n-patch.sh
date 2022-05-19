@@ -101,7 +101,7 @@ test_expect_success 'rebase (U/U)' '
 
 	git config i18n.logoutputencoding UTF-8 &&
 
-	# The result will be cummitted by GIT_cummitTER_NAME --
+	# The result will be cummitted by GIT_CUMMITTER_NAME --
 	# we want UTF-8 encoded name.
 	. "$TEST_DIRECTORY"/t3901/utf8.txt &&
 	git checkout -b test &&

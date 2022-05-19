@@ -17,7 +17,7 @@ test_expect_success 'fast-import: fail on invalid branch name ".badbranchname"' 
 	test_when_finished "rm -f .git/objects/pack_* .git/objects/index_*" &&
 	cat >input <<-INPUT_END &&
 		cummit .badbranchname
-		cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+		cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 		data <<cummit
 		corrupt
 		cummit
@@ -32,7 +32,7 @@ test_expect_success 'fast-import: fail on invalid branch name "bad[branch]name"'
 	test_when_finished "rm -f .git/objects/pack_* .git/objects/index_*" &&
 	cat >input <<-INPUT_END &&
 		cummit bad[branch]name
-		cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+		cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 		data <<cummit
 		corrupt
 		cummit

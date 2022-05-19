@@ -152,7 +152,7 @@ cummit_chk_wrnNNO () {
 
 # cummit a file with mixed line endings on top of different files
 # in the index. Check for warnings
-cummit_MIX_chkwrn () {
+CUMMIT_MIX_chkwrn () {
 	attr=$1 ; shift
 	aeol=$1 ; shift
 	crlf=$1 ; shift
@@ -448,13 +448,13 @@ test_expect_success 'cummit files attr=crlf' '
 #                                         mixed     mixed     mixed       mixed       mixed
 #                                         onto      onto      onto        onto        onto
 #                 attr                    LF        CRLF      CRLFmixLF   LF_mix_CR   CRLFNUL
-cummit_MIX_chkwrn ""      ""      false   ""        ""        ""          ""          ""
-cummit_MIX_chkwrn ""      ""      true    "LF_CRLF" ""        ""          "LF_CRLF"   "LF_CRLF"
-cummit_MIX_chkwrn ""      ""      input   "CRLF_LF" ""        ""          "CRLF_LF"   "CRLF_LF"
+CUMMIT_MIX_chkwrn ""      ""      false   ""        ""        ""          ""          ""
+CUMMIT_MIX_chkwrn ""      ""      true    "LF_CRLF" ""        ""          "LF_CRLF"   "LF_CRLF"
+CUMMIT_MIX_chkwrn ""      ""      input   "CRLF_LF" ""        ""          "CRLF_LF"   "CRLF_LF"
 
-cummit_MIX_chkwrn "auto"  ""      false   "$WAMIX"  ""        ""          "$WAMIX"    "$WAMIX"
-cummit_MIX_chkwrn "auto"  ""      true    "LF_CRLF" ""        ""          "LF_CRLF"   "LF_CRLF"
-cummit_MIX_chkwrn "auto"  ""      input   "CRLF_LF" ""        ""          "CRLF_LF"   "CRLF_LF"
+CUMMIT_MIX_chkwrn "auto"  ""      false   "$WAMIX"  ""        ""          "$WAMIX"    "$WAMIX"
+CUMMIT_MIX_chkwrn "auto"  ""      true    "LF_CRLF" ""        ""          "LF_CRLF"   "LF_CRLF"
+CUMMIT_MIX_chkwrn "auto"  ""      input   "CRLF_LF" ""        ""          "CRLF_LF"   "CRLF_LF"
 
 #                 attr                    LF        CRLF      CRLFmixLF   LF_mix_CR   CRLFNUL
 cummit_chk_wrnNNO ""      ""      false   ""        ""        ""          ""          ""

@@ -35,7 +35,7 @@ test_expect_success "proc-receive: bad protocol (unknown version, $PROTOCOL)" '
 	test_cmp expect actual-error &&
 
 	test_cmp_refs -C "$upstream" <<-EOF
-	<cummit-A> refs/heads/main
+	<CUMMIT-A> refs/heads/main
 	EOF
 '
 
@@ -66,7 +66,7 @@ test_expect_success "proc-receive: bad protocol (hook --die-read-version, $PROTO
 	grep "remote: error: fail to negotiate version with proc-receive hook" out-$test_count &&
 
 	test_cmp_refs -C "$upstream" <<-\EOF
-	<cummit-A> refs/heads/main
+	<CUMMIT-A> refs/heads/main
 	EOF
 '
 
@@ -97,7 +97,7 @@ test_expect_success "proc-receive: bad protocol (hook --die-write-version, $PROT
 	grep "remote: error: fail to negotiate version with proc-receive hook" out-$test_count &&
 
 	test_cmp_refs -C "$upstream" <<-EOF
-	<cummit-A> refs/heads/main
+	<CUMMIT-A> refs/heads/main
 	EOF
 '
 
@@ -127,7 +127,7 @@ test_expect_success "proc-receive: bad protocol (hook --die-read-commands, $PROT
 	grep "remote: fatal: die with the --die-read-commands option" out-$test_count &&
 
 	test_cmp_refs -C "$upstream" <<-EOF
-	<cummit-A> refs/heads/main
+	<CUMMIT-A> refs/heads/main
 	EOF
 '
 
@@ -159,7 +159,7 @@ test_expect_success "proc-receive: bad protocol (hook --die-read-push-options, $
 	grep "remote: fatal: die with the --die-read-push-options option" out-$test_count &&
 
 	test_cmp_refs -C "$upstream" <<-EOF
-	<cummit-A> refs/heads/main
+	<CUMMIT-A> refs/heads/main
 	EOF
 '
 
@@ -189,7 +189,7 @@ test_expect_success "proc-receive: bad protocol (hook --die-write-report, $PROTO
 	grep "remote: fatal: die with the --die-write-report option" out-$test_count &&
 
 	test_cmp_refs -C "$upstream" <<-EOF
-	<cummit-A> refs/heads/main
+	<CUMMIT-A> refs/heads/main
 	EOF
 '
 
@@ -210,12 +210,12 @@ test_expect_success "proc-receive: bad protocol (no report, $PROTOCOL)" '
 	make_user_friendly_and_stable_output <out-$test_count >actual &&
 	format_and_save_expect <<-EOF &&
 	> remote: # pre-receive hook        Z
-	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/heads/next        Z
-	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
+	> remote: pre-receive< <ZERO-OID> <CUMMIT-A> refs/heads/next        Z
+	> remote: pre-receive< <ZERO-OID> <CUMMIT-A> refs/for/main/topic        Z
 	> remote: # proc-receive hook        Z
-	> remote: proc-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
+	> remote: proc-receive< <ZERO-OID> <CUMMIT-A> refs/for/main/topic        Z
 	> remote: # post-receive hook        Z
-	> remote: post-receive< <ZERO-OID> <cummit-A> refs/heads/next        Z
+	> remote: post-receive< <ZERO-OID> <CUMMIT-A> refs/heads/next        Z
 	> To <URL/of/upstream.git>
 	>  * [new branch]      HEAD -> next
 	>  ! [remote rejected] HEAD -> refs/for/main/topic (proc-receive failed to report status)
@@ -223,8 +223,8 @@ test_expect_success "proc-receive: bad protocol (no report, $PROTOCOL)" '
 	test_cmp expect actual &&
 
 	test_cmp_refs -C "$upstream" <<-EOF
-	<cummit-A> refs/heads/main
-	<cummit-A> refs/heads/next
+	<CUMMIT-A> refs/heads/main
+	<CUMMIT-A> refs/heads/next
 	EOF
 '
 
@@ -253,9 +253,9 @@ test_expect_success "proc-receive: bad protocol (no ref, $PROTOCOL)" '
 	make_user_friendly_and_stable_output <out-$test_count >actual &&
 	format_and_save_expect <<-EOF &&
 	> remote: # pre-receive hook        Z
-	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
+	> remote: pre-receive< <ZERO-OID> <CUMMIT-A> refs/for/main/topic        Z
 	> remote: # proc-receive hook        Z
-	> remote: proc-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
+	> remote: proc-receive< <ZERO-OID> <CUMMIT-A> refs/for/main/topic        Z
 	> remote: proc-receive> ok        Z
 	> remote: error: proc-receive reported incomplete status line: "ok"        Z
 	> To <URL/of/upstream.git>
@@ -264,7 +264,7 @@ test_expect_success "proc-receive: bad protocol (no ref, $PROTOCOL)" '
 	test_cmp expect actual &&
 
 	test_cmp_refs -C "$upstream" <<-EOF
-	<cummit-A> refs/heads/main
+	<CUMMIT-A> refs/heads/main
 	EOF
 '
 
@@ -286,9 +286,9 @@ test_expect_success "proc-receive: bad protocol (unknown status, $PROTOCOL)" '
 	make_user_friendly_and_stable_output <out-$test_count >actual &&
 	format_and_save_expect <<-EOF &&
 	> remote: # pre-receive hook        Z
-	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
+	> remote: pre-receive< <ZERO-OID> <CUMMIT-A> refs/for/main/topic        Z
 	> remote: # proc-receive hook        Z
-	> remote: proc-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
+	> remote: proc-receive< <ZERO-OID> <CUMMIT-A> refs/for/main/topic        Z
 	> remote: proc-receive> xx refs/for/main/topic        Z
 	> remote: error: proc-receive reported bad status "xx" on ref "refs/for/main/topic"        Z
 	> To <URL/of/upstream.git>
@@ -297,6 +297,6 @@ test_expect_success "proc-receive: bad protocol (unknown status, $PROTOCOL)" '
 	test_cmp expect actual &&
 
 	test_cmp_refs -C "$upstream" <<-EOF
-	<cummit-A> refs/heads/main
+	<CUMMIT-A> refs/heads/main
 	EOF
 '

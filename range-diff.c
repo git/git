@@ -375,7 +375,7 @@ static void output_pair_header(struct diff_options *diffopt,
 	const char *color_reset = diff_get_color_opt(diffopt, DIFF_RESET);
 	const char *color_old = diff_get_color_opt(diffopt, DIFF_FILE_OLD);
 	const char *color_new = diff_get_color_opt(diffopt, DIFF_FILE_NEW);
-	const char *color_cummit = diff_get_color_opt(diffopt, DIFF_cummit);
+	const char *color_cummit = diff_get_color_opt(diffopt, DIFF_CUMMIT);
 	const char *color;
 
 	if (!dashes->len)
@@ -589,7 +589,7 @@ int is_range_diff_range(const char *arg)
 		for (i = 0; i < revs.pending.nr; i++) {
 			struct object *obj = revs.pending.objects[i].item;
 
-			if (obj->type == OBJ_cummit)
+			if (obj->type == OBJ_CUMMIT)
 				clear_cummit_marks((struct cummit *)obj,
 						   ALL_REV_FLAGS);
 		}

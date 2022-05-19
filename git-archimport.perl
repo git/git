@@ -589,9 +589,9 @@ foreach my $ps (@psets) {
     $ENV{GIT_AUTHOR_NAME}     = $ps->{author};
     $ENV{GIT_AUTHOR_EMAIL}    = $ps->{email};
     $ENV{GIT_AUTHOR_DATE}     = $ps->{date};
-    $ENV{GIT_cummitTER_NAME}  = $ps->{author};
-    $ENV{GIT_cummitTER_EMAIL} = $ps->{email};
-    $ENV{GIT_cummitTER_DATE}  = $ps->{date};
+    $ENV{GIT_CUMMITTER_NAME}  = $ps->{author};
+    $ENV{GIT_CUMMITTER_EMAIL} = $ps->{email};
+    $ENV{GIT_CUMMITTER_DATE}  = $ps->{date};
 
     my $pid = open2(*READER, *WRITER,'git-cummit-tree',$tree,@par)
         or die $!;

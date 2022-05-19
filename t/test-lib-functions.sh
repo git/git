@@ -129,9 +129,9 @@ test_tick () {
 	else
 		test_tick=$(($test_tick + 60))
 	fi
-	GIT_cummitTER_DATE="$test_tick -0700"
+	GIT_CUMMITTER_DATE="$test_tick -0700"
 	GIT_AUTHOR_DATE="$test_tick -0700"
-	export GIT_cummitTER_DATE GIT_AUTHOR_DATE
+	export GIT_CUMMITTER_DATE GIT_AUTHOR_DATE
 }
 
 # Stop execution and start a shell. This is useful for debugging tests.
@@ -301,7 +301,7 @@ test_cummit () {
 			;;
 		--date)
 			notick=yes
-			GIT_cummitTER_DATE="$2"
+			GIT_CUMMITTER_DATE="$2"
 			GIT_AUTHOR_DATE="$2"
 			shift
 			;;
@@ -451,9 +451,9 @@ test_cummit_bulk () {
 			"$GIT_AUTHOR_EMAIL" \
 			"$GIT_AUTHOR_DATE"
 		printf 'cummitter %s <%s> %s\n' \
-			"$GIT_cummitTER_NAME" \
-			"$GIT_cummitTER_EMAIL" \
-			"$GIT_cummitTER_DATE"
+			"$GIT_CUMMITTER_NAME" \
+			"$GIT_CUMMITTER_EMAIL" \
+			"$GIT_CUMMITTER_DATE"
 		echo "data <<EOF"
 		printf "$message\n" $n
 		echo "EOF"

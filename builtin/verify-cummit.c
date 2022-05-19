@@ -45,7 +45,7 @@ static int verify_cummit(const char *name, unsigned flags)
 	obj = parse_object(the_repository, &oid);
 	if (!obj)
 		return error("%s: unable to read file.", name);
-	if (obj->type != OBJ_cummit)
+	if (obj->type != OBJ_CUMMIT)
 		return error("%s: cannot verify a non-cummit object of type %s.",
 				name, type_name(obj->type));
 

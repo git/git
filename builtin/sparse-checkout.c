@@ -235,7 +235,7 @@ static int update_working_directory(struct pattern_list *pl)
 		 */
 		result = UPDATE_SPARSITY_SUCCESS;
 	if (result == UPDATE_SPARSITY_SUCCESS)
-		write_locked_index(r->index, &lock_file, cummit_LOCK);
+		write_locked_index(r->index, &lock_file, CUMMIT_LOCK);
 	else
 		rollback_lock_file(&lock_file);
 

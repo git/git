@@ -1299,7 +1299,7 @@ test_expect_success 'with simple command' '
 
 test_expect_success 'with command using cummitter information' '
 	git config trailer.sign.ifExists "addIfDifferent" &&
-	git config trailer.sign.command "echo \"\$GIT_cummitTER_NAME <\$GIT_cummitTER_EMAIL>\"" &&
+	git config trailer.sign.command "echo \"\$GIT_CUMMITTER_NAME <\$GIT_CUMMITTER_EMAIL>\"" &&
 	cat complex_message_body >expected &&
 	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
 		Fixes: Z

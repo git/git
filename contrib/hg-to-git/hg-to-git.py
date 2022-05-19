@@ -63,17 +63,17 @@ def getgitenv(user, date):
     elems = re.compile('(.*?)\s+<(.*)>').match(user)
     if elems:
         env += 'export GIT_AUTHOR_NAME="%s" ;' % elems.group(1)
-        env += 'export GIT_cummitTER_NAME="%s" ;' % elems.group(1)
+        env += 'export GIT_CUMMITTER_NAME="%s" ;' % elems.group(1)
         env += 'export GIT_AUTHOR_EMAIL="%s" ;' % elems.group(2)
-        env += 'export GIT_cummitTER_EMAIL="%s" ;' % elems.group(2)
+        env += 'export GIT_CUMMITTER_EMAIL="%s" ;' % elems.group(2)
     else:
         env += 'export GIT_AUTHOR_NAME="%s" ;' % user
-        env += 'export GIT_cummitTER_NAME="%s" ;' % user
+        env += 'export GIT_CUMMITTER_NAME="%s" ;' % user
         env += 'export GIT_AUTHOR_EMAIL= ;'
-        env += 'export GIT_cummitTER_EMAIL= ;'
+        env += 'export GIT_CUMMITTER_EMAIL= ;'
 
     env += 'export GIT_AUTHOR_DATE="%s" ;' % date
-    env += 'export GIT_cummitTER_DATE="%s" ;' % date
+    env += 'export GIT_CUMMITTER_DATE="%s" ;' % date
     return env
 
 #------------------------------------------------------------------------------

@@ -44,8 +44,8 @@ get_abbrev_oid () {
 # of the output.
 make_user_friendly_and_stable_output () {
 	sed \
-		-e "s/$(get_abbrev_oid $A)[0-9a-f]*/<cummit-A>/g" \
-		-e "s/$(get_abbrev_oid $B)[0-9a-f]*/<cummit-B>/g" \
+		-e "s/$(get_abbrev_oid $A)[0-9a-f]*/<CUMMIT-A>/g" \
+		-e "s/$(get_abbrev_oid $B)[0-9a-f]*/<CUMMIT-B>/g" \
 		-e "s/$ZERO_OID/<ZERO-OID>/g" \
 		-e "s#To $URL_PREFIX/upstream.git#To <URL/of/upstream.git>#"
 }
@@ -112,9 +112,9 @@ run_git_push_porcelain_output_test() {
 		format_and_save_expect <<-EOF &&
 		> To <URL/of/upstream.git>
 		> =	refs/heads/baz:refs/heads/baz	[up to date]
-		>  	<cummit-B>:refs/heads/bar	<cummit-A>..<cummit-B>
+		>  	<CUMMIT-B>:refs/heads/bar	<CUMMIT-A>..<CUMMIT-B>
 		> -	:refs/heads/foo	[deleted]
-		> +	refs/heads/main:refs/heads/main	<cummit-B>...<cummit-A> (forced update)
+		> +	refs/heads/main:refs/heads/main	<CUMMIT-B>...<CUMMIT-A> (forced update)
 		> *	refs/heads/next:refs/heads/next	[new branch]
 		> Done
 		EOF
@@ -123,10 +123,10 @@ run_git_push_porcelain_output_test() {
 		git -C "$upstream" show-ref >out &&
 		make_user_friendly_and_stable_output <out >actual &&
 		cat >expect <<-EOF &&
-		<cummit-B> refs/heads/bar
-		<cummit-A> refs/heads/baz
-		<cummit-A> refs/heads/main
-		<cummit-A> refs/heads/next
+		<CUMMIT-B> refs/heads/bar
+		<CUMMIT-A> refs/heads/baz
+		<CUMMIT-A> refs/heads/main
+		<CUMMIT-A> refs/heads/next
 		EOF
 		test_cmp expect actual
 	'
@@ -159,10 +159,10 @@ run_git_push_porcelain_output_test() {
 		git -C "$upstream" show-ref >out &&
 		make_user_friendly_and_stable_output <out >actual &&
 		cat >expect <<-EOF &&
-		<cummit-B> refs/heads/bar
-		<cummit-A> refs/heads/baz
-		<cummit-A> refs/heads/main
-		<cummit-A> refs/heads/next
+		<CUMMIT-B> refs/heads/bar
+		<CUMMIT-A> refs/heads/baz
+		<CUMMIT-A> refs/heads/main
+		<CUMMIT-A> refs/heads/next
 		EOF
 		test_cmp expect actual
 	'
@@ -201,10 +201,10 @@ run_git_push_porcelain_output_test() {
 		git -C "$upstream" show-ref >out &&
 		make_user_friendly_and_stable_output <out >actual &&
 		cat >expect <<-EOF &&
-		<cummit-B> refs/heads/bar
-		<cummit-A> refs/heads/baz
-		<cummit-A> refs/heads/main
-		<cummit-A> refs/heads/next
+		<CUMMIT-B> refs/heads/bar
+		<CUMMIT-A> refs/heads/baz
+		<CUMMIT-A> refs/heads/main
+		<CUMMIT-A> refs/heads/next
 		EOF
 		test_cmp expect actual
 	'
@@ -230,7 +230,7 @@ run_git_push_porcelain_output_test() {
 		To <URL/of/upstream.git>
 		> =	refs/heads/next:refs/heads/next	[up to date]
 		> -	:refs/heads/baz	[deleted]
-		>  	refs/heads/main:refs/heads/main	<cummit-A>..<cummit-B>
+		>  	refs/heads/main:refs/heads/main	<CUMMIT-A>..<CUMMIT-B>
 		> !	refs/heads/bar:refs/heads/bar	[rejected] (non-fast-forward)
 		Done
 		EOF
@@ -239,9 +239,9 @@ run_git_push_porcelain_output_test() {
 		git -C "$upstream" show-ref >out &&
 		make_user_friendly_and_stable_output <out >actual &&
 		cat >expect <<-EOF &&
-		<cummit-B> refs/heads/bar
-		<cummit-B> refs/heads/main
-		<cummit-A> refs/heads/next
+		<CUMMIT-B> refs/heads/bar
+		<CUMMIT-B> refs/heads/main
+		<CUMMIT-A> refs/heads/next
 		EOF
 		test_cmp expect actual
 	'

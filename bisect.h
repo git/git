@@ -44,7 +44,7 @@ struct rev_list_info {
  * BISECT_ONLY_SKIPPED_LEFT error code: only skipped
  * cummits left to be tested.
  * BISECT_MERGE_BASE_CHECK error code: merge base check failed.
- * BISECT_NO_TESTABLE_cummit error code: no testable cummit found.
+ * BISECT_NO_TESTABLE_CUMMIT error code: no testable cummit found.
  * BISECT_INTERNAL_SUCCESS_1ST_BAD_FOUND early success code:
  * first term_bad cummit found.
  * BISECT_INTERNAL_SUCCESS_MERGE_BASE early success
@@ -57,7 +57,7 @@ enum bisect_error {
 	BISECT_FAILED = -1,
 	BISECT_ONLY_SKIPPED_LEFT = -2,
 	BISECT_MERGE_BASE_CHECK = -3,
-	BISECT_NO_TESTABLE_cummit = -4,
+	BISECT_NO_TESTABLE_CUMMIT = -4,
 	BISECT_INTERNAL_SUCCESS_1ST_BAD_FOUND = -10,
 	BISECT_INTERNAL_SUCCESS_MERGE_BASE = -11
 };

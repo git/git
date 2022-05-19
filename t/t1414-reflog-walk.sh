@@ -124,7 +124,7 @@ test_expect_success 'min/max age uses entry date to limit' '
 test_expect_success REFFILES 'walk prefers reflog to ref tip' '
 	head=$(git rev-parse HEAD) &&
 	one=$(git rev-parse one) &&
-	ident="$GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE" &&
+	ident="$GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE" &&
 	echo "$head $one $ident	broken reflog entry" >>.git/logs/HEAD &&
 
 	echo $one >expect &&

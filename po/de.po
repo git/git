@@ -1611,7 +1611,7 @@ msgstr "Timestamp zu groß für dieses System: %<PRIuMAX>"
 
 #: archive.c:14
 msgid "git archive [<options>] <tree-ish> [<path>...]"
-msgstr "git archive [<Optionen>] <cummit-Referenz> [<Pfad>...]"
+msgstr "git archive [<Optionen>] <CUMMIT-Referenz> [<Pfad>...]"
 
 #: archive.c:16
 msgid ""
@@ -1791,7 +1791,7 @@ msgstr "Keine binäre Suche mehr möglich!\n"
 #: bisect.c:765
 #, c-format
 msgid "Not a valid cummit name %s"
-msgstr "%s ist kein gültiger cummit-Name"
+msgstr "%s ist kein gültiger CUMMIT-Name"
 
 #: bisect.c:790
 #, c-format
@@ -1905,7 +1905,7 @@ msgstr "--contents und --reverse funktionieren gemeinsam nicht."
 #: blame.c:2787
 msgid "cannot use --contents with final cummit object name"
 msgstr ""
-"kann --contents nicht mit endgültigem Namen des cummit-Objektes benutzen"
+"kann --contents nicht mit endgültigem Namen des CUMMIT-Objektes benutzen"
 
 #: blame.c:2808
 msgid "--reverse and --first-parent together require specified latest cummit"
@@ -2260,48 +2260,48 @@ msgstr "ungültige Hash-Version"
 
 #: cummit-graph.c:262
 msgid "cummit-graph file is too small"
-msgstr "cummit-Graph-Datei ist zu klein"
+msgstr "CUMMIT-Graph-Datei ist zu klein"
 
 #: cummit-graph.c:355
 #, c-format
 msgid "cummit-graph signature %X does not match signature %X"
-msgstr "cummit-Graph-Signatur %X stimmt nicht mit Signatur %X überein"
+msgstr "CUMMIT-Graph-Signatur %X stimmt nicht mit Signatur %X überein"
 
 #: cummit-graph.c:362
 #, c-format
 msgid "cummit-graph version %X does not match version %X"
-msgstr "cummit-Graph-Version %X stimmt nicht mit Version %X überein"
+msgstr "CUMMIT-Graph-Version %X stimmt nicht mit Version %X überein"
 
 #: cummit-graph.c:369
 #, c-format
 msgid "cummit-graph hash version %X does not match version %X"
-msgstr "Hash-Version des cummit-Graph %X stimmt nicht mit Version %X überein"
+msgstr "Hash-Version des CUMMIT-Graph %X stimmt nicht mit Version %X überein"
 
 #: cummit-graph.c:386
 #, c-format
 msgid "cummit-graph file is too small to hold %u chunks"
-msgstr "cummit-Graph-Datei ist zu klein, um %u Chunks zu enthalten"
+msgstr "CUMMIT-Graph-Datei ist zu klein, um %u Chunks zu enthalten"
 
 #: cummit-graph.c:485
 msgid "cummit-graph has no base graphs chunk"
-msgstr "cummit-Graph hat keinen Basis-Graph-Chunk"
+msgstr "CUMMIT-Graph hat keinen Basis-Graph-Chunk"
 
 #: cummit-graph.c:495
 msgid "cummit-graph chain does not match"
-msgstr "cummit-Graph Verkettung stimmt nicht überein"
+msgstr "CUMMIT-Graph Verkettung stimmt nicht überein"
 
 #: cummit-graph.c:543
 #, c-format
 msgid "invalid cummit-graph chain: line '%s' not a hash"
-msgstr "Ungültige cummit-Graph Verkettung: Zeile '%s' ist kein Hash"
+msgstr "Ungültige CUMMIT-Graph Verkettung: Zeile '%s' ist kein Hash"
 
 #: cummit-graph.c:567
 msgid "unable to find all cummit-graph files"
-msgstr "konnte nicht alle cummit-Graph-Dateien finden"
+msgstr "konnte nicht alle CUMMIT-Graph-Dateien finden"
 
 #: cummit-graph.c:752 cummit-graph.c:789
 msgid "invalid cummit position. cummit-graph is likely corrupt"
-msgstr "ungültige cummit-Position. cummit-Graph ist wahrscheinlich beschädigt"
+msgstr "ungültige CUMMIT-Position. CUMMIT-Graph ist wahrscheinlich beschädigt"
 
 #: cummit-graph.c:773
 #, c-format
@@ -2310,7 +2310,7 @@ msgstr "konnte cummit %s nicht finden"
 
 #: cummit-graph.c:806
 msgid "cummit-graph requires overflow generation data but has none"
-msgstr "cummit-Graph erfordert Überlaufgenerierungsdaten, aber hat keine"
+msgstr "CUMMIT-Graph erfordert Überlaufgenerierungsdaten, aber hat keine"
 
 #: cummit-graph.c:1111 builtin/am.c:1370 builtin/checkout.c:775
 #: builtin/clone.c:705
@@ -2325,23 +2325,23 @@ msgstr "konnte Art von Objekt '%s' nicht bestimmen"
 
 #: cummit-graph.c:1404
 msgid "Loading known cummits in cummit graph"
-msgstr "Lade bekannte cummits in cummit-Graph"
+msgstr "Lade bekannte cummits in CUMMIT-Graph"
 
 #: cummit-graph.c:1421
 msgid "Expanding reachable cummits in cummit graph"
-msgstr "Erweitere erreichbare cummits in cummit-Graph"
+msgstr "Erweitere erreichbare cummits in CUMMIT-Graph"
 
 #: cummit-graph.c:1441
 msgid "Clearing cummit marks in cummit graph"
-msgstr "Lösche cummit-Markierungen in cummit-Graph"
+msgstr "Lösche CUMMIT-Markierungen in CUMMIT-Graph"
 
 #: cummit-graph.c:1460
 msgid "Computing cummit graph topological levels"
-msgstr "Topologische Ebenen des cummit-Graph werden berechnet"
+msgstr "Topologische Ebenen des CUMMIT-Graph werden berechnet"
 
 #: cummit-graph.c:1513
 msgid "Computing cummit graph generation numbers"
-msgstr "cummit-Graph Generationsnummern berechnen"
+msgstr "CUMMIT-Graph Generationsnummern berechnen"
 
 #: cummit-graph.c:1598
 msgid "Computing cummit changed paths Bloom filters"
@@ -2355,8 +2355,8 @@ msgstr "Sammle referenzierte cummits"
 #, c-format
 msgid "Finding cummits for cummit graph in %<PRIuMAX> pack"
 msgid_plural "Finding cummits for cummit graph in %<PRIuMAX> packs"
-msgstr[0] "Suche cummits für cummit-Graph in %<PRIuMAX> Paket"
-msgstr[1] "Suche cummits für cummit-Graph in %<PRIuMAX> Paketen"
+msgstr[0] "Suche cummits für CUMMIT-Graph in %<PRIuMAX> Paket"
+msgstr[1] "Suche cummits für CUMMIT-Graph in %<PRIuMAX> Paketen"
 
 #: cummit-graph.c:1714
 #, c-format
@@ -2370,11 +2370,11 @@ msgstr "Fehler beim Öffnen des Index für %s"
 
 #: cummit-graph.c:1756
 msgid "Finding cummits for cummit graph among packed objects"
-msgstr "Suche cummits für cummit-Graph in gepackten Objekten"
+msgstr "Suche cummits für CUMMIT-Graph in gepackten Objekten"
 
 #: cummit-graph.c:1774
 msgid "Finding extra edges in cummit graph"
-msgstr "Suche zusätzliche Ränder in cummit-Graph"
+msgstr "Suche zusätzliche Ränder in CUMMIT-Graph"
 
 #: cummit-graph.c:1823
 msgid "failed to write correct number of base graph ids"
@@ -2398,20 +2398,20 @@ msgstr "konnte geteilte Zugriffsberechtigungen für '%s' nicht ändern"
 #, c-format
 msgid "Writing out cummit graph in %d pass"
 msgid_plural "Writing out cummit graph in %d passes"
-msgstr[0] "Schreibe cummit-Graph in %d Durchgang"
-msgstr[1] "Schreibe cummit-Graph in %d Durchgängen"
+msgstr[0] "Schreibe CUMMIT-Graph in %d Durchgang"
+msgstr[1] "Schreibe CUMMIT-Graph in %d Durchgängen"
 
 #: cummit-graph.c:1967
 msgid "unable to open cummit-graph chain file"
-msgstr "konnte cummit-Graph Chain-Datei nicht öffnen"
+msgstr "konnte CUMMIT-Graph Chain-Datei nicht öffnen"
 
 #: cummit-graph.c:1983
 msgid "failed to rename base cummit-graph file"
-msgstr "konnte Basis-cummit-Graph-Datei nicht umbenennen"
+msgstr "konnte Basis-CUMMIT-Graph-Datei nicht umbenennen"
 
 #: cummit-graph.c:2004
 msgid "failed to rename temporary cummit-graph file"
-msgstr "konnte temporäre cummit-Graph-Datei nicht umbenennen"
+msgstr "konnte temporäre CUMMIT-Graph-Datei nicht umbenennen"
 
 #: cummit-graph.c:2137
 msgid "Scanning merged cummits"
@@ -2419,12 +2419,12 @@ msgstr "Durchsuche zusammengeführte cummits"
 
 #: cummit-graph.c:2181
 msgid "Merging cummit-graph"
-msgstr "Zusammenführen von cummit-Graph"
+msgstr "Zusammenführen von CUMMIT-Graph"
 
 #: cummit-graph.c:2289
 msgid "attempting to write a cummit-graph, but 'core.cummitGraph' is disabled"
 msgstr ""
-"versuche einen cummit-Graph zu schreiben, aber 'core.cummitGraph' ist "
+"versuche einen CUMMIT-Graph zu schreiben, aber 'core.cummitGraph' ist "
 "deaktiviert"
 
 #: cummit-graph.c:2396
@@ -2434,61 +2434,61 @@ msgstr "zu viele cummits zum Schreiben des Graphen"
 #: cummit-graph.c:2494
 msgid "the cummit-graph file has incorrect checksum and is likely corrupt"
 msgstr ""
-"die cummit-Graph-Datei hat eine falsche Prüfsumme und ist wahrscheinlich "
+"die CUMMIT-Graph-Datei hat eine falsche Prüfsumme und ist wahrscheinlich "
 "beschädigt"
 
 #: cummit-graph.c:2504
 #, c-format
 msgid "cummit-graph has incorrect OID order: %s then %s"
-msgstr "cummit-Graph hat fehlerhafte OID-Reihenfolge: %s dann %s"
+msgstr "CUMMIT-Graph hat fehlerhafte OID-Reihenfolge: %s dann %s"
 
 #: cummit-graph.c:2514 cummit-graph.c:2529
 #, c-format
 msgid "cummit-graph has incorrect fanout value: fanout[%d] = %u != %u"
-msgstr "cummit-Graph hat fehlerhaften Fanout-Wert: fanout[%d] = %u != %u"
+msgstr "CUMMIT-Graph hat fehlerhaften Fanout-Wert: fanout[%d] = %u != %u"
 
 #: cummit-graph.c:2521
 #, c-format
 msgid "failed to parse cummit %s from cummit-graph"
-msgstr "konnte cummit %s von cummit-Graph nicht parsen"
+msgstr "konnte cummit %s von CUMMIT-Graph nicht parsen"
 
 #: cummit-graph.c:2539
 msgid "Verifying cummits in cummit graph"
-msgstr "cummit in cummit-Graph überprüfen"
+msgstr "cummit in CUMMIT-Graph überprüfen"
 
 #: cummit-graph.c:2554
 #, c-format
 msgid "failed to parse cummit %s from object database for cummit-graph"
 msgstr ""
-"Fehler beim Parsen des cummits %s von Objekt-Datenbank für cummit-Graph"
+"Fehler beim Parsen des cummits %s von Objekt-Datenbank für CUMMIT-Graph"
 
 #: cummit-graph.c:2561
 #, c-format
 msgid "root tree OID for cummit %s in cummit-graph is %s != %s"
 msgstr ""
-"OID des Wurzelverzeichnisses für cummit %s in cummit-Graph ist %s != %s"
+"OID des Wurzelverzeichnisses für cummit %s in CUMMIT-Graph ist %s != %s"
 
 #: cummit-graph.c:2571
 #, c-format
 msgid "cummit-graph parent list for cummit %s is too long"
-msgstr "cummit-Graph Vorgänger-Liste für cummit %s ist zu lang"
+msgstr "CUMMIT-Graph Vorgänger-Liste für cummit %s ist zu lang"
 
 #: cummit-graph.c:2580
 #, c-format
 msgid "cummit-graph parent for %s is %s != %s"
-msgstr "cummit-Graph-Vorgänger für %s ist %s != %s"
+msgstr "CUMMIT-Graph-Vorgänger für %s ist %s != %s"
 
 #: cummit-graph.c:2594
 #, c-format
 msgid "cummit-graph parent list for cummit %s terminates early"
-msgstr "cummit-Graph Vorgänger-Liste für cummit %s endet zu früh"
+msgstr "CUMMIT-Graph Vorgänger-Liste für cummit %s endet zu früh"
 
 #: cummit-graph.c:2599
 #, c-format
 msgid ""
 "cummit-graph has generation number zero for cummit %s, but non-zero elsewhere"
 msgstr ""
-"cummit-Graph hat Generationsnummer null für cummit %s, aber sonst ungleich "
+"CUMMIT-Graph hat Generationsnummer null für cummit %s, aber sonst ungleich "
 "null"
 
 #: cummit-graph.c:2603
@@ -2496,19 +2496,19 @@ msgstr ""
 msgid ""
 "cummit-graph has non-zero generation number for cummit %s, but zero elsewhere"
 msgstr ""
-"cummit-Graph hat Generationsnummer ungleich null für cummit %s, aber sonst "
+"CUMMIT-Graph hat Generationsnummer ungleich null für cummit %s, aber sonst "
 "null"
 
 #: cummit-graph.c:2620
 #, c-format
 msgid "cummit-graph generation for cummit %s is %<PRIuMAX> < %<PRIuMAX>"
-msgstr "cummit-Graph Erstellung für cummit %s ist %<PRIuMAX> < %<PRIuMAX>"
+msgstr "CUMMIT-Graph Erstellung für cummit %s ist %<PRIuMAX> < %<PRIuMAX>"
 
 #: cummit-graph.c:2626
 #, c-format
 msgid "cummit date for cummit %s in cummit-graph is %<PRIuMAX> != %<PRIuMAX>"
 msgstr ""
-"cummit-Datum für cummit %s in cummit-Graph ist %<PRIuMAX> != %<PRIuMAX>"
+"CUMMIT-Datum für cummit %s in CUMMIT-Graph ist %<PRIuMAX> != %<PRIuMAX>"
 
 #: cummit.c:54 sequencer.c:3105 builtin/am.c:400 builtin/am.c:445
 #: builtin/am.c:450 builtin/am.c:1449 builtin/am.c:2124 builtin/replace.c:456
@@ -2569,7 +2569,7 @@ msgid ""
 "You may want to amend it after fixing the message, or set the config\n"
 "variable i18n.cummitencoding to the encoding your project uses.\n"
 msgstr ""
-"Warnung: Die cummit-Beschreibung ist nicht UTF-8 konform.\n"
+"Warnung: Die CUMMIT-Beschreibung ist nicht UTF-8 konform.\n"
 "Sie können das nachbessern, nachdem Sie die Beschreibung korrigiert haben,\n"
 "oder Sie setzen die Konfigurationsvariable i18n.cummitencoding auf das "
 "Encoding,\n"
@@ -2806,7 +2806,7 @@ msgstr "'%s' ist kein gültiger Zeitstempel für '%s'"
 #: config.c:1545
 #, c-format
 msgid "abbrev length out of range: %d"
-msgstr "Länge für Abkürzung von cummit-IDs außerhalb des Bereichs: %d"
+msgstr "Länge für Abkürzung von CUMMIT-IDs außerhalb des Bereichs: %d"
 
 #: config.c:1559 config.c:1570
 #, c-format
@@ -4810,7 +4810,7 @@ msgstr "Identität des Autors unbekannt\n"
 
 #: ident.c:357
 msgid "cummitter identity unknown\n"
-msgstr "Identität des cummit-Erstellers unbekannt\n"
+msgstr "Identität des CUMMIT-Erstellers unbekannt\n"
 
 #: ident.c:363
 msgid ""
@@ -6999,12 +6999,12 @@ msgstr ""
 "\n"
 "Befehle:\n"
 "p, pick <cummit> = cummit verwenden\n"
-"r, reword <cummit> = cummit verwenden, aber cummit-Beschreibung bearbeiten\n"
+"r, reword <cummit> = cummit verwenden, aber CUMMIT-Beschreibung bearbeiten\n"
 "e, edit <cummit> = cummit verwenden, aber zum Nachbessern anhalten\n"
 "s, squash <cummit> = cummit verwenden, aber mit vorherigem cummit vereinen\n"
 "f, fixup [-C | -c] <cummit> = wie \"squash\", aber nur die vorherige\n"
-"                   cummit-Beschreibung behalten, außer -C wird verwendet,\n"
-"                   in diesem Fall wird nur diese cummit-Beschreibung "
+"                   CUMMIT-Beschreibung behalten, außer -C wird verwendet,\n"
+"                   in diesem Fall wird nur diese CUMMIT-Beschreibung "
 "behalten;\n"
 "                   -c ist das Gleiche wie -C, aber ein Editor wird geöffnet\n"
 "x, exec <cummit> = Befehl (Rest der Zeile) mittels Shell ausführen\n"
@@ -7014,11 +7014,11 @@ msgstr ""
 "l, label <Label> = aktuellen HEAD mit Label versehen\n"
 "t, reset <Label> = HEAD zu einem Label umsetzen\n"
 "m, merge [-C <cummit> | -c <cummit>] <Label> [# <eineZeile>]\n"
-".       Merge-cummit mit der originalen Merge-cummit-Beschreibung erstellen\n"
+".       Merge-cummit mit der originalen Merge-CUMMIT-Beschreibung erstellen\n"
 ".       (oder die eine Zeile, wenn keine originale Merge-cummit-"
 "Beschreibung\n"
 ".       spezifiziert ist). Benutzen Sie -c <cummit> zum Bearbeiten der\n"
-".       cummit-Beschreibung.\n"
+".       CUMMIT-Beschreibung.\n"
 "\n"
 "Diese Zeilen können umsortiert werden; sie werden von oben nach unten\n"
 "ausgeführt.\n"
@@ -7566,7 +7566,7 @@ msgid ""
 "Did you mean to create a new branch by pushing to\n"
 "'%s:refs/heads/%s'?"
 msgstr ""
-"Der <Quelle> Teil der Refspec ist ein cummit-Objekt.\n"
+"Der <Quelle> Teil der Refspec ist ein CUMMIT-Objekt.\n"
 "Meinten Sie, einen neuen Branch mittels Push nach\n"
 "'%s:refs/heads/%s' zu erstellen?"
 
@@ -7952,7 +7952,7 @@ msgstr "die Gegenseite unterstützt keine Push-Optionen"
 #: sequencer.c:197
 #, c-format
 msgid "invalid cummit message cleanup mode '%s'"
-msgstr "Ungültiger \"cleanup\"-Modus '%s' für cummit-Beschreibungen."
+msgstr "Ungültiger \"cleanup\"-Modus '%s' für CUMMIT-Beschreibungen."
 
 #: sequencer.c:325
 #, c-format
@@ -8257,7 +8257,7 @@ msgstr "Konnte cummit von HEAD nicht analysieren."
 
 #: sequencer.c:1425 sequencer.c:2310
 msgid "unable to parse cummit author"
-msgstr "Konnte cummit-Autor nicht parsen."
+msgstr "Konnte CUMMIT-Autor nicht parsen."
 
 #: sequencer.c:1436 builtin/am.c:1644 builtin/merge.c:710
 msgid "git write-tree failed to write a tree"
@@ -8266,7 +8266,7 @@ msgstr "\"git write-tree\" schlug beim Schreiben eines \"Tree\"-Objektes fehl"
 #: sequencer.c:1469 sequencer.c:1589
 #, c-format
 msgid "unable to read cummit message from '%s'"
-msgstr "Konnte cummit-Beschreibung von '%s' nicht lesen."
+msgstr "Konnte CUMMIT-Beschreibung von '%s' nicht lesen."
 
 #: sequencer.c:1500 sequencer.c:1532
 #, c-format
@@ -8280,7 +8280,7 @@ msgstr "unbrauchbarer Autor: Datumsinformationen fehlen"
 #: sequencer.c:1545 builtin/am.c:1671 builtin/cummit.c:1821 builtin/merge.c:921
 #: builtin/merge.c:946 t/helper/test-fast-rebase.c:78
 msgid "failed to write cummit object"
-msgstr "Fehler beim Schreiben des cummit-Objektes."
+msgstr "Fehler beim Schreiben des CUMMIT-Objektes."
 
 #: sequencer.c:1572 sequencer.c:4496 t/helper/test-fast-rebase.c:199
 #: t/helper/test-fast-rebase.c:217
@@ -8305,21 +8305,21 @@ msgstr "Unbekannter Befehl: %d"
 
 #: sequencer.c:1751
 msgid "This is the 1st cummit message:"
-msgstr "Das ist die erste cummit-Beschreibung:"
+msgstr "Das ist die erste CUMMIT-Beschreibung:"
 
 #: sequencer.c:1752
 #, c-format
 msgid "This is the cummit message #%d:"
-msgstr "Das ist cummit-Beschreibung #%d:"
+msgstr "Das ist CUMMIT-Beschreibung #%d:"
 
 #: sequencer.c:1753
 msgid "The 1st cummit message will be skipped:"
-msgstr "Die erste cummit-Beschreibung wird übersprungen:"
+msgstr "Die erste CUMMIT-Beschreibung wird übersprungen:"
 
 #: sequencer.c:1754
 #, c-format
 msgid "The cummit message #%d will be skipped:"
-msgstr "Die cummit-Beschreibung #%d wird ausgelassen:"
+msgstr "Die CUMMIT-Beschreibung #%d wird ausgelassen:"
 
 #: sequencer.c:1755
 #, c-format
@@ -8341,12 +8341,12 @@ msgstr "Konnte HEAD nicht lesen"
 
 #: sequencer.c:1953
 msgid "could not read HEAD's cummit message"
-msgstr "Konnte cummit-Beschreibung von HEAD nicht lesen"
+msgstr "Konnte CUMMIT-Beschreibung von HEAD nicht lesen"
 
 #: sequencer.c:1977
 #, c-format
 msgid "could not read cummit message of %s"
-msgstr "Konnte cummit-Beschreibung von %s nicht lesen."
+msgstr "Konnte CUMMIT-Beschreibung von %s nicht lesen."
 
 #: sequencer.c:2087
 msgid "your index file is unmerged."
@@ -8369,7 +8369,7 @@ msgstr "cummit %s hat keinen Eltern-cummit %d"
 #: sequencer.c:2135
 #, c-format
 msgid "cannot get cummit message for %s"
-msgstr "Kann keine cummit-Beschreibung für %s bekommen."
+msgstr "Kann keine CUMMIT-Beschreibung für %s bekommen."
 
 #. TRANSLATORS: The first %s will be a "todo" command like
 #. "revert" or "pick", the second %s a SHA1.
@@ -8696,7 +8696,7 @@ msgstr ""
 #: sequencer.c:3869
 #, c-format
 msgid "could not get cummit message of '%s'"
-msgstr "konnte keine cummit-Beschreibung von '%s' bekommen"
+msgstr "konnte keine CUMMIT-Beschreibung von '%s' bekommen"
 
 #: sequencer.c:4013
 #, c-format
@@ -11193,7 +11193,7 @@ msgstr "Kann nicht fortsetzen: %s existiert nicht"
 
 #: builtin/am.c:1726
 msgid "cummit Body is:"
-msgstr "cummit-Beschreibung ist:"
+msgstr "CUMMIT-Beschreibung ist:"
 
 #. TRANSLATORS: Make sure to include [y], [n], [e], [v] and [a]
 #. in your translation. The program will only accept English
@@ -11326,7 +11326,7 @@ msgstr "weniger Ausgaben"
 
 #: builtin/am.c:2337
 msgid "add a Signed-off-by trailer to the cummit message"
-msgstr "eine Signed-off-by Zeile der cummit-Beschreibung hinzufügen"
+msgstr "eine Signed-off-by Zeile der CUMMIT-Beschreibung hinzufügen"
 
 #: builtin/am.c:2340
 msgid "recode into utf8 (default)"
@@ -11422,7 +11422,7 @@ msgstr "leerer Patch als leeren cummit gespeichert"
 
 #: builtin/am.c:2415
 msgid "lie about cummitter date"
-msgstr "Autor-Datum als cummit-Datum verwenden"
+msgstr "Autor-Datum als CUMMIT-Datum verwenden"
 
 #: builtin/am.c:2417
 msgid "use current timestamp for author date"
@@ -11949,7 +11949,7 @@ msgstr "Anzeige in einem Format für maschinelle Auswertung"
 #: builtin/blame.c:873
 msgid "show porcelain format with per-line cummit information"
 msgstr ""
-"Anzeige in Format für Fremdprogramme mit cummit-Informationen pro Zeile"
+"Anzeige in Format für Fremdprogramme mit CUMMIT-Informationen pro Zeile"
 
 #: builtin/blame.c:874
 msgid "use the same output mode as git-annotate (Default: off)"
@@ -11962,7 +11962,7 @@ msgstr "unbearbeiteten Zeitstempel anzeigen (Standard: aus)"
 
 #: builtin/blame.c:876
 msgid "show long cummit SHA1 (Default: off)"
-msgstr "langen cummit-SHA1 anzeigen (Standard: aus)"
+msgstr "langen CUMMIT-SHA1 anzeigen (Standard: aus)"
 
 #: builtin/blame.c:877
 msgid "suppress author name and timestamp (Default: off)"
@@ -12118,7 +12118,7 @@ msgstr ""
 #: builtin/branch.c:183
 #, c-format
 msgid "Couldn't look up cummit object for '%s'"
-msgstr "Konnte cummit-Objekt für '%s' nicht nachschlagen."
+msgstr "Konnte CUMMIT-Objekt für '%s' nicht nachschlagen."
 
 #: builtin/branch.c:187
 #, c-format
@@ -12140,7 +12140,7 @@ msgstr "kann -a nicht mit -d benutzen"
 
 #: builtin/branch.c:242
 msgid "Couldn't look up cummit object for HEAD"
-msgstr "Konnte cummit-Objekt für HEAD nicht nachschlagen."
+msgstr "Konnte CUMMIT-Objekt für HEAD nicht nachschlagen."
 
 #: builtin/branch.c:259
 #, c-format
@@ -12708,7 +12708,7 @@ msgid ""
 "             [<rev>:<path|tree-ish> | --path=<path|tree-ish> <rev>]"
 msgstr ""
 "git cat-file (--textconv | --filters)\n"
-"             [<cummit>:<Pfad|cummit-Referenz> | --path=<Pfad|cummit-"
+"             [<cummit>:<Pfad|CUMMIT-Referenz> | --path=<Pfad|cummit-"
 "Referenz> <cummit>]"
 
 #: builtin/cat-file.c:836
@@ -12810,7 +12810,7 @@ msgstr "'%s=<%s>' benötigt '%s' oder '%s'"
 
 #: builtin/cat-file.c:896
 msgid "path|tree-ish"
-msgstr "Pfad|cummit-Referenz"
+msgstr "Pfad|CUMMIT-Referenz"
 
 #: builtin/cat-file.c:903 builtin/cat-file.c:906 builtin/cat-file.c:909
 #, c-format
@@ -13366,7 +13366,7 @@ msgstr "Kann Branch nicht zu Nicht-cummit '%s' wechseln"
 
 #: builtin/checkout.c:1512
 msgid "missing branch or cummit argument"
-msgstr "Branch- oder cummit-Argument fehlt"
+msgstr "Branch- oder CUMMIT-Argument fehlt"
 
 #: builtin/checkout.c:1555
 msgid "perform a 3-way merge with the new branch"
@@ -13511,7 +13511,7 @@ msgstr "lokale Änderungen verwerfen"
 
 #: builtin/checkout.c:1916
 msgid "which tree-ish to checkout from"
-msgstr "Von welcher cummit-Referenz ausgecheckt werden soll"
+msgstr "Von welcher CUMMIT-Referenz ausgecheckt werden soll"
 
 #: builtin/checkout.c:1918
 msgid "restore the index"
@@ -14154,12 +14154,12 @@ msgstr "das Objektverzeichnis zum Speichern des Graphen"
 #: builtin/cummit-graph.c:73
 msgid "if the cummit-graph is split, only verify the tip file"
 msgstr ""
-"Wenn der cummit-Graph aufgeteilt ist, nur die Datei an der Spitze überprüfen"
+"Wenn der CUMMIT-Graph aufgeteilt ist, nur die Datei an der Spitze überprüfen"
 
 #: builtin/cummit-graph.c:100
 #, c-format
 msgid "Could not open cummit-graph '%s'"
-msgstr "Konnte cummit-Graph '%s' nicht öffnen."
+msgstr "Konnte CUMMIT-Graph '%s' nicht öffnen."
 
 #: builtin/cummit-graph.c:137
 #, c-format
@@ -14191,7 +14191,7 @@ msgstr "Lauf bei cummits beginnen, die über die Standard-Eingabe gelistet sind"
 #: builtin/cummit-graph.c:211
 msgid "include all cummits already in the cummit-graph file"
 msgstr ""
-"alle cummits einschließen, die sich bereits in der cummit-Graph-Datei "
+"alle cummits einschließen, die sich bereits in der CUMMIT-Graph-Datei "
 "befinden"
 
 #: builtin/cummit-graph.c:213
@@ -14200,17 +14200,17 @@ msgstr "Berechnung für veränderte Pfade aktivieren"
 
 #: builtin/cummit-graph.c:215
 msgid "allow writing an incremental cummit-graph file"
-msgstr "erlaube das Schreiben einer inkrementellen cummit-Graph-Datei"
+msgstr "erlaube das Schreiben einer inkrementellen CUMMIT-Graph-Datei"
 
 #: builtin/cummit-graph.c:219
 msgid "maximum number of cummits in a non-base split cummit-graph"
 msgstr ""
-"maximale Anzahl von cummits in einem aufgeteilten cummit-Graph ohne Basis"
+"maximale Anzahl von cummits in einem aufgeteilten CUMMIT-Graph ohne Basis"
 
 #: builtin/cummit-graph.c:221
 msgid "maximum ratio between two levels of a split cummit-graph"
 msgstr ""
-"maximales Verhältnis zwischen zwei Ebenen eines aufgeteilten cummit-Graph"
+"maximales Verhältnis zwischen zwei Ebenen eines aufgeteilten CUMMIT-Graph"
 
 #: builtin/cummit-graph.c:223
 msgid "only expire files older than a given date-time"
@@ -14269,7 +14269,7 @@ msgstr "Eltern-cummit"
 
 #: builtin/cummit-tree.c:110
 msgid "id of a parent cummit object"
-msgstr "ID eines Eltern-cummit-Objektes."
+msgstr "ID eines Eltern-CUMMIT-Objektes."
 
 #: builtin/cummit-tree.c:112 builtin/cummit.c:1626 builtin/merge.c:284
 #: builtin/notes.c:407 builtin/notes.c:573 builtin/stash.c:1666
@@ -14279,11 +14279,11 @@ msgstr "Beschreibung"
 
 #: builtin/cummit-tree.c:113 builtin/cummit.c:1626
 msgid "cummit message"
-msgstr "cummit-Beschreibung"
+msgstr "CUMMIT-Beschreibung"
 
 #: builtin/cummit-tree.c:116
 msgid "read cummit log message from file"
-msgstr "cummit-Beschreibung von Datei lesen"
+msgstr "CUMMIT-Beschreibung von Datei lesen"
 
 #: builtin/cummit-tree.c:119 builtin/cummit.c:1643 builtin/merge.c:303
 #: builtin/pull.c:180 builtin/revert.c:118
@@ -14430,7 +14430,7 @@ msgid ""
 "in the current cummit message"
 msgstr ""
 "Konnte kein Kommentar-Zeichen auswählen, das nicht in\n"
-"der aktuellen cummit-Beschreibung verwendet wird."
+"der aktuellen CUMMIT-Beschreibung verwendet wird."
 
 #: builtin/cummit.c:750 builtin/cummit.c:784 builtin/cummit.c:1170
 #, c-format
@@ -14466,7 +14466,7 @@ msgstr "Konnte MERGE_MSG nicht lesen"
 
 #: builtin/cummit.c:884
 msgid "could not write cummit template"
-msgstr "Konnte cummit-Vorlage nicht schreiben"
+msgstr "Konnte CUMMIT-Vorlage nicht schreiben"
 
 #: builtin/cummit.c:897
 #, c-format
@@ -14474,7 +14474,7 @@ msgid ""
 "Please enter the cummit message for your changes. Lines starting\n"
 "with '%c' will be ignored.\n"
 msgstr ""
-"Bitte geben Sie eine cummit-Beschreibung für Ihre Änderungen ein. Zeilen,\n"
+"Bitte geben Sie eine CUMMIT-Beschreibung für Ihre Änderungen ein. Zeilen,\n"
 "die mit '%c' beginnen, werden ignoriert.\n"
 
 #: builtin/cummit.c:899
@@ -14483,7 +14483,7 @@ msgid ""
 "Please enter the cummit message for your changes. Lines starting\n"
 "with '%c' will be ignored, and an empty message aborts the cummit.\n"
 msgstr ""
-"Bitte geben Sie eine cummit-Beschreibung für Ihre Änderungen ein. Zeilen,\n"
+"Bitte geben Sie eine CUMMIT-Beschreibung für Ihre Änderungen ein. Zeilen,\n"
 "die mit '%c' beginnen, werden ignoriert, und eine leere Beschreibung\n"
 "bricht den cummit ab.\n"
 
@@ -14493,7 +14493,7 @@ msgid ""
 "Please enter the cummit message for your changes. Lines starting\n"
 "with '%c' will be kept; you may remove them yourself if you want to.\n"
 msgstr ""
-"Bitte geben Sie eine cummit-Beschreibung für Ihre Änderungen ein. Zeilen,\n"
+"Bitte geben Sie eine CUMMIT-Beschreibung für Ihre Änderungen ein. Zeilen,\n"
 "die mit '%c' beginnen, werden beibehalten; wenn Sie möchten, können Sie\n"
 "diese entfernen.\n"
 
@@ -14504,7 +14504,7 @@ msgid ""
 "with '%c' will be kept; you may remove them yourself if you want to.\n"
 "An empty message aborts the cummit.\n"
 msgstr ""
-"Bitte geben Sie eine cummit-Beschreibung für Ihre Änderungen ein. Zeilen, "
+"Bitte geben Sie eine CUMMIT-Beschreibung für Ihre Änderungen ein. Zeilen, "
 "die\n"
 "mit '%c' beginnen, werden beibehalten; wenn Sie möchten, können Sie diese "
 "entfernen.\n"
@@ -14551,7 +14551,7 @@ msgstr "%sDatum:            %s"
 #: builtin/cummit.c:966
 #, c-format
 msgid "%scummitter: %.*s <%.*s>"
-msgstr "%scummit-Ersteller: %.*s <%.*s>"
+msgstr "%sCUMMIT-Ersteller: %.*s <%.*s>"
 
 #: builtin/cummit.c:984
 msgid "Cannot read index"
@@ -14728,11 +14728,11 @@ msgstr "Zusammenfassung nach erfolgreichem cummit unterdrücken"
 
 #: builtin/cummit.c:1620
 msgid "show diff in cummit message template"
-msgstr "Unterschiede in cummit-Beschreibungsvorlage anzeigen"
+msgstr "Unterschiede in CUMMIT-Beschreibungsvorlage anzeigen"
 
 #: builtin/cummit.c:1622
 msgid "cummit message options"
-msgstr "Optionen für cummit-Beschreibung"
+msgstr "Optionen für CUMMIT-Beschreibung"
 
 #: builtin/cummit.c:1623 builtin/merge.c:288 builtin/tag.c:457
 msgid "read message from file"
@@ -14814,11 +14814,11 @@ msgstr "Bearbeitung des cummits erzwingen"
 
 #: builtin/cummit.c:1641
 msgid "include status in cummit message template"
-msgstr "Status in die cummit-Beschreibungsvorlage einfügen"
+msgstr "Status in die CUMMIT-Beschreibungsvorlage einfügen"
 
 #: builtin/cummit.c:1646
 msgid "cummit contents options"
-msgstr "Optionen für cummit-Inhalt"
+msgstr "Optionen für CUMMIT-Inhalt"
 
 #: builtin/cummit.c:1647
 msgid "cummit all changed files"
@@ -14876,7 +14876,7 @@ msgstr "Konnte MERGE_MODE nicht lesen"
 #: builtin/cummit.c:1780
 #, c-format
 msgid "could not read cummit message: %s"
-msgstr "Konnte cummit-Beschreibung nicht lesen: %s"
+msgstr "Konnte CUMMIT-Beschreibung nicht lesen: %s"
 
 #: builtin/cummit.c:1787
 #, c-format
@@ -14891,7 +14891,7 @@ msgstr "cummit abgebrochen; Sie haben die Beschreibung nicht editiert.\n"
 #: builtin/cummit.c:1803
 #, c-format
 msgid "Aborting cummit due to empty cummit message body.\n"
-msgstr "cummit aufgrund leerer cummit-Beschreibung abgebrochen.\n"
+msgstr "cummit aufgrund leerer CUMMIT-Beschreibung abgebrochen.\n"
 
 #: builtin/cummit.c:1839
 msgid ""
@@ -15278,7 +15278,7 @@ msgstr "konnte Sperre für Zugangsdatenspeicher nicht in %d ms bekommen"
 
 #: builtin/describe.c:26
 msgid "git describe [<options>] [<cummit-ish>...]"
-msgstr "git describe [<Optionen>] [<cummit-Angabe>...]"
+msgstr "git describe [<Optionen>] [<CUMMIT-Angabe>...]"
 
 #: builtin/describe.c:27
 msgid "git describe [<options>] --dirty"
@@ -15412,7 +15412,7 @@ msgstr "keine Tags betrachten, die <Muster> entsprechen"
 
 #: builtin/describe.c:570 builtin/name-rev.c:595
 msgid "show abbreviated cummit object as fallback"
-msgstr "gekürztes cummit-Objekt anzeigen, wenn sonst nichts zutrifft"
+msgstr "gekürztes CUMMIT-Objekt anzeigen, wenn sonst nichts zutrifft"
 
 #: builtin/describe.c:571 builtin/describe.c:574
 msgid "mark"
@@ -15436,7 +15436,7 @@ msgstr "Keine Namen gefunden, kann nichts beschreiben."
 #: builtin/describe.c:673 builtin/describe.c:675
 #, c-format
 msgid "option '%s' and cummit-ishes cannot be used together"
-msgstr "Option '%s' und cummit-Angaben können nicht gemeinsam verwendet werden"
+msgstr "Option '%s' und CUMMIT-Angaben können nicht gemeinsam verwendet werden"
 
 #: builtin/diff-tree.c:157
 msgid "--merge-base only works with two cummits"
@@ -15645,7 +15645,7 @@ msgstr "Behandlung von Tags wählen, die gefilterte Objekte markieren"
 #: builtin/fast-export.c:1179
 msgid "select handling of cummit messages in an alternate encoding"
 msgstr ""
-"Auswählen der Behandlung von cummit-Beschreibungen bei wechselndem Encoding"
+"Auswählen der Behandlung von CUMMIT-Beschreibungen bei wechselndem Encoding"
 
 #: builtin/fast-export.c:1182
 msgid "dump marks to this file"
@@ -15908,7 +15908,7 @@ msgstr "Prüfe auf erzwungene Aktualisierungen in allen aktualisierten Branches"
 
 #: builtin/fetch.c:224
 msgid "write the cummit-graph after fetching"
-msgstr "Schreibe den cummit-Graph nach \"fetch\""
+msgstr "Schreibe den CUMMIT-Graph nach \"fetch\""
 
 #: builtin/fetch.c:226
 msgid "accept refspecs from stdin"
@@ -16772,7 +16772,7 @@ msgstr "nicht erkanntes --schedule Argument '%s'"
 
 #: builtin/gc.c:870
 msgid "failed to write cummit-graph"
-msgstr "Fehler beim Schreiben des cummit-Graph"
+msgstr "Fehler beim Schreiben des CUMMIT-Graph"
 
 #: builtin/gc.c:906
 msgid "failed to prefetch remotes"
@@ -17975,11 +17975,11 @@ msgstr "Kann Patch-Datei %s nicht öffnen"
 
 #: builtin/log.c:1033
 msgid "need exactly one range"
-msgstr "Brauche genau einen cummit-Bereich."
+msgstr "Brauche genau einen CUMMIT-Bereich."
 
 #: builtin/log.c:1043
 msgid "not a range"
-msgstr "Kein cummit-Bereich."
+msgstr "Kein CUMMIT-Bereich."
 
 #: builtin/log.c:1207
 msgid "cover letter needs email format"
@@ -18026,7 +18026,7 @@ msgstr ""
 "Fehler beim Bestimmen des Upstream-Branches. Wenn Sie den Basis-cummit\n"
 "automatisch speichern lassen möchten, benutzen Sie bitte\n"
 "'git branch --set-upstream-to', um einem Remote-Branch zu folgen.\n"
-"Oder geben Sie den Basis-cummit mit '--base=<Basis-cummit-Id>' manuell an."
+"Oder geben Sie den Basis-cummit mit '--base=<Basis-CUMMIT-Id>' manuell an."
 
 #: builtin/log.c:1589
 msgid "failed to find exact merge base"
@@ -18170,7 +18170,7 @@ msgstr "Ident"
 #: builtin/log.c:1833
 msgid "set From address to <ident> (or cummitter ident if absent)"
 msgstr ""
-"\"From\"-Adresse auf <Ident> setzen (oder Ident des cummit-Erstellers, wenn "
+"\"From\"-Adresse auf <Ident> setzen (oder Ident des CUMMIT-Erstellers, wenn "
 "fehlend)"
 
 #: builtin/log.c:1835
@@ -18408,12 +18408,12 @@ msgstr "als Fehler behandeln, wenn sich eine <Datei> nicht im Index befindet"
 
 #: builtin/ls-files.c:670
 msgid "tree-ish"
-msgstr "cummit-Referenz"
+msgstr "CUMMIT-Referenz"
 
 #: builtin/ls-files.c:671
 msgid "pretend that paths removed since <tree-ish> are still present"
 msgstr ""
-"vorgeben, dass Pfade, die seit <cummit-Referenz> gelöscht wurden, immer noch "
+"vorgeben, dass Pfade, die seit <CUMMIT-Referenz> gelöscht wurden, immer noch "
 "vorhanden sind"
 
 #: builtin/ls-files.c:673
@@ -18478,7 +18478,7 @@ msgstr "zusätzlich zum Objekt die darauf verweisenden Referenzen anzeigen"
 
 #: builtin/ls-tree.c:36
 msgid "git ls-tree [<options>] <tree-ish> [<path>...]"
-msgstr "git ls-tree [<Optionen>] <cummit-Referenz> [<Pfad>...]"
+msgstr "git ls-tree [<Optionen>] <CUMMIT-Referenz> [<Pfad>...]"
 
 #: builtin/ls-tree.c:54
 #, c-format
@@ -18558,7 +18558,7 @@ msgstr "behalte Klammern im Betreff, die nicht zum Patch gehören"
 
 #: builtin/mailinfo.c:62
 msgid "copy Message-ID to the end of cummit message"
-msgstr "Message-ID an das Ende der cummit-Beschreibung kopieren"
+msgstr "Message-ID an das Ende der CUMMIT-Beschreibung kopieren"
 
 #: builtin/mailinfo.c:64
 msgid "re-code metadata to i18n.cummitEncoding"
@@ -18806,7 +18806,7 @@ msgstr "Option für ausgewählte Merge-Strategie"
 #: builtin/merge.c:285
 msgid "merge cummit message (for a non-fast-forward merge)"
 msgstr ""
-"cummit-Beschreibung zusammenführen (für einen Merge, der kein Vorspulen war)"
+"CUMMIT-Beschreibung zusammenführen (für einen Merge, der kein Vorspulen war)"
 
 #: builtin/merge.c:291
 msgid "use <name> instead of the real target"
@@ -18861,7 +18861,7 @@ msgstr "Squash cummit -- HEAD wird nicht aktualisiert\n"
 #: builtin/merge.c:467
 #, c-format
 msgid "No merge message -- not updating HEAD\n"
-msgstr "Keine Merge-cummit-Beschreibung -- HEAD wird nicht aktualisiert\n"
+msgstr "Keine Merge-CUMMIT-Beschreibung -- HEAD wird nicht aktualisiert\n"
 
 #: builtin/merge.c:517
 #, c-format
@@ -18905,14 +18905,14 @@ msgid ""
 "especially if it merges an updated upstream into a topic branch.\n"
 "\n"
 msgstr ""
-"Bitte geben Sie eine cummit-Beschreibung ein, um zu erklären, warum dieser\n"
+"Bitte geben Sie eine CUMMIT-Beschreibung ein, um zu erklären, warum dieser\n"
 "Merge erforderlich ist, insbesondere wenn es einen aktualisierten\n"
 "Upstream-Branch mit einem Thema-Branch zusammenführt.\n"
 "\n"
 
 #: builtin/merge.c:836
 msgid "An empty message aborts the cummit.\n"
-msgstr "Eine leere cummit-Beschreibung bricht den cummit ab.\n"
+msgstr "Eine leere CUMMIT-Beschreibung bricht den cummit ab.\n"
 
 #: builtin/merge.c:839
 #, c-format
@@ -18925,7 +18925,7 @@ msgstr ""
 
 #: builtin/merge.c:900
 msgid "Empty cummit message."
-msgstr "Leere cummit-Beschreibung"
+msgstr "Leere CUMMIT-Beschreibung"
 
 #: builtin/merge.c:915
 #, c-format
@@ -20160,7 +20160,7 @@ msgstr "kann --filter nicht mit --stdin-packs benutzen"
 #: builtin/pack-objects.c:4110
 msgid "cannot use internal rev list with --stdin-packs"
 msgstr ""
-"interne cummit-Liste kann nicht gemeinsam mit --stdin-packs verwendet werden"
+"interne CUMMIT-Liste kann nicht gemeinsam mit --stdin-packs verwendet werden"
 
 #: builtin/pack-objects.c:4169
 msgid "Enumerating objects"
@@ -20791,7 +20791,7 @@ msgstr "nur Ausgaben anzeigen, die sich auf den zweiten Bereich beziehen"
 #: builtin/range-diff.c:60 builtin/range-diff.c:64
 #, c-format
 msgid "not a cummit range: '%s'"
-msgstr "kein cummit-Bereich: '%s'"
+msgstr "kein CUMMIT-Bereich: '%s'"
 
 #: builtin/range-diff.c:74
 msgid "single arg format must be symmetric range"
@@ -20799,7 +20799,7 @@ msgstr "Format mit einfachem Argument muss symmetrischer Bereich sein."
 
 #: builtin/range-diff.c:89
 msgid "need two cummit ranges"
-msgstr "Benötige zwei cummit-Bereiche."
+msgstr "Benötige zwei CUMMIT-Bereiche."
 
 #: builtin/read-tree.c:41
 msgid ""
@@ -20809,7 +20809,7 @@ msgid ""
 msgstr ""
 "git read-tree [(-m [--trivial] [--aggressive] | --reset | --prefix=<Präfix>) "
 "[-u | -i]] [--no-sparse-checkout] [--index-output=<Datei>] (--empty | "
-"<cummit-Referenz1> [<cummit-Referenz2> [<cummit-Referenz3>]])"
+"<CUMMIT-Referenz1> [<CUMMIT-Referenz2> [<CUMMIT-Referenz3>]])"
 
 #: builtin/read-tree.c:116
 msgid "write resulting index to <file>"
@@ -21057,7 +21057,7 @@ msgstr "eine Signed-off-by Zeile zu jedem Commit hinzufügen"
 
 #: builtin/rebase.c:1069
 msgid "make cummitter date match author date"
-msgstr "Datum des cummit-Erstellers soll mit Datum des Autors übereinstimmen"
+msgstr "Datum des CUMMIT-Erstellers soll mit Datum des Autors übereinstimmen"
 
 #: builtin/rebase.c:1071
 msgid "ignore author date and use current date"
@@ -22480,7 +22480,7 @@ msgstr ""
 
 #: builtin/reset.c:34
 msgid "git reset [-q] [<tree-ish>] [--] <pathspec>..."
-msgstr "git reset [-q] [<cummit-Referenz>] [--] <Pfadspezifikation>..."
+msgstr "git reset [-q] [<CUMMIT-Referenz>] [--] <Pfadspezifikation>..."
 
 #: builtin/reset.c:35
 msgid ""
@@ -22491,7 +22491,7 @@ msgstr ""
 
 #: builtin/reset.c:36
 msgid "git reset --patch [<tree-ish>] [--] [<pathspec>...]"
-msgstr "git reset --patch [<cummit-Referenz>] [--] [<Pfadspezifikation>...]"
+msgstr "git reset --patch [<CUMMIT-Referenz>] [--] [<Pfadspezifikation>...]"
 
 #: builtin/reset.c:42
 msgid "mixed"
@@ -22713,7 +22713,7 @@ msgstr "unbekannter Modus für --show-object-format: %s"
 
 #: builtin/revert.c:24
 msgid "git revert [<options>] <cummit-ish>..."
-msgstr "git revert [<Optionen>] <cummit-Angabe>..."
+msgstr "git revert [<Optionen>] <CUMMIT-Angabe>..."
 
 #: builtin/revert.c:25
 msgid "git revert <subcommand>"
@@ -22721,7 +22721,7 @@ msgstr "git revert <Unterbefehl>"
 
 #: builtin/revert.c:30
 msgid "git cherry-pick [<options>] <cummit-ish>..."
-msgstr "git cherry-pick [<Optionen>] <cummit-Angabe>..."
+msgstr "git cherry-pick [<Optionen>] <CUMMIT-Angabe>..."
 
 #: builtin/revert.c:31
 msgid "git cherry-pick <subcommand>"
@@ -22759,7 +22759,7 @@ msgstr "nicht automatisch cummitten"
 
 #: builtin/revert.c:108
 msgid "edit the cummit message"
-msgstr "cummit-Beschreibung bearbeiten"
+msgstr "CUMMIT-Beschreibung bearbeiten"
 
 #: builtin/revert.c:111
 msgid "parent-number"
@@ -22779,7 +22779,7 @@ msgstr "Option für Merge-Strategie"
 
 #: builtin/revert.c:125
 msgid "append cummit name"
-msgstr "cummit-Namen anhängen"
+msgstr "CUMMIT-Namen anhängen"
 
 #: builtin/revert.c:127
 msgid "preserve initially empty cummits"
@@ -22943,7 +22943,7 @@ msgstr "unbekannter Gruppen-Typ: %s"
 
 #: builtin/shortlog.c:351
 msgid "group by cummitter rather than author"
-msgstr "nach cummit-Ersteller statt Autor gruppieren"
+msgstr "nach CUMMIT-Ersteller statt Autor gruppieren"
 
 #: builtin/shortlog.c:354
 msgid "sort output according to the number of cummits per author"
@@ -22951,7 +22951,7 @@ msgstr "die Ausgabe entsprechend der Anzahl von cummits pro Autor sortieren"
 
 #: builtin/shortlog.c:356
 msgid "suppress cummit descriptions, only provides cummit count"
-msgstr "cummit-Beschreibungen unterdrücken, nur Anzahl der cummits liefern"
+msgstr "CUMMIT-Beschreibungen unterdrücken, nur Anzahl der cummits liefern"
 
 #: builtin/shortlog.c:358
 msgid "show the email address of each author"
@@ -24944,7 +24944,7 @@ msgstr "git verify-cummit [-v | --verbose] <cummit>..."
 
 #: builtin/verify-cummit.c:68
 msgid "print cummit contents"
-msgstr "cummit-Inhalte ausgeben"
+msgstr "CUMMIT-Inhalte ausgeben"
 
 #: builtin/verify-cummit.c:69 builtin/verify-tag.c:37
 msgid "print raw gpg status output"
@@ -24972,7 +24972,7 @@ msgstr "Tag-Inhalte ausgeben"
 
 #: builtin/worktree.c:19
 msgid "git worktree add [<options>] <path> [<cummit-ish>]"
-msgstr "git worktree add [<Optionen>] <Pfad> [<cummit-Angabe>]"
+msgstr "git worktree add [<Optionen>] <Pfad> [<CUMMIT-Angabe>]"
 
 #: builtin/worktree.c:20
 msgid "git worktree list [<options>]"
@@ -25976,7 +25976,7 @@ msgstr "eine Serie von Patches von einer Mailbox anwenden"
 
 #: command-list.h:52
 msgid "Annotate file lines with cummit information"
-msgstr "Zeilen der Datei mit cummit-Informationen versehen und anzeigen"
+msgstr "Zeilen der Datei mit CUMMIT-Informationen versehen und anzeigen"
 
 #: command-list.h:53
 msgid "Apply a patch to files and/or to the index"
@@ -26076,11 +26076,11 @@ msgstr "Änderungen in das Repository eintragen"
 
 #: command-list.h:75
 msgid "Write and verify Git cummit-graph files"
-msgstr "Git cummit-Graph-Dateien schreiben und überprüfen"
+msgstr "Git CUMMIT-Graph-Dateien schreiben und überprüfen"
 
 #: command-list.h:76
 msgid "Create a new cummit object"
-msgstr "ein neues cummit-Objekt erstellen"
+msgstr "ein neues CUMMIT-Objekt erstellen"
 
 #: command-list.h:77
 msgid "Get and set repository or global options"
@@ -26195,7 +26195,7 @@ msgstr "nicht benötigte Dateien entfernen und das lokale Repository optimieren"
 #: command-list.h:103
 msgid "Extract cummit ID from an archive created using git-archive"
 msgstr ""
-"cummit-ID eines Archivs extrahieren, welches mit git-archive erstellt wurde"
+"CUMMIT-ID eines Archivs extrahieren, welches mit git-archive erstellt wurde"
 
 #: command-list.h:104
 msgid "Print lines matching a pattern"
@@ -26252,7 +26252,7 @@ msgstr "Ihr aktuelles Repository sofort in gitweb betrachten"
 #: command-list.h:116
 msgid "Add or parse structured information in cummit messages"
 msgstr ""
-"Strukturierte Informationen in cummit-Beschreibungen hinzufügen oder parsen"
+"Strukturierte Informationen in CUMMIT-Beschreibungen hinzufügen oder parsen"
 
 #: command-list.h:117
 msgid "Show cummit logs"
@@ -26384,7 +26384,7 @@ msgstr "Patches aus quilt auf aktuellen Branch anwenden"
 
 #: command-list.h:147
 msgid "Compare two cummit ranges (e.g. two versions of a branch)"
-msgstr "zwei cummit-Bereiche vergleichen (zwei Versionen eines Branches)"
+msgstr "zwei CUMMIT-Bereiche vergleichen (zwei Versionen eines Branches)"
 
 #: command-list.h:148
 msgid "Reads tree information into the index"
@@ -26432,7 +26432,7 @@ msgstr "Dateien im Arbeitsverzeichnis wiederherstellen"
 
 #: command-list.h:159
 msgid "Lists cummit objects in reverse chronological order"
-msgstr "cummit-Objekte in umgekehrter chronologischer Ordnung auflisten"
+msgstr "CUMMIT-Objekte in umgekehrter chronologischer Ordnung auflisten"
 
 #: command-list.h:160
 msgid "Pick out and massage parameters"
@@ -26639,7 +26639,7 @@ msgstr "der Git-Repository-Browser"
 
 #: command-list.h:209
 msgid "Map author/cummitter names and/or E-Mail addresses"
-msgstr "Autor/cummit-Ersteller und/oder E-Mail-Adressen zuordnen"
+msgstr "Autor/CUMMIT-Ersteller und/oder E-Mail-Adressen zuordnen"
 
 #: command-list.h:210
 msgid "Defining submodule properties"
@@ -27225,7 +27225,7 @@ msgstr ""
 "indem Sie...\n"
 "\n"
 "    * \"./%s\" angeben, wenn Sie eine Datei meinen, oder\n"
-"    * die Option --format-patch angeben, wenn Sie einen cummit-Bereich "
+"    * die Option --format-patch angeben, wenn Sie einen CUMMIT-Bereich "
 "meinen.\n"
 
 #: git-send-email.perl:768
@@ -27363,7 +27363,7 @@ msgid ""
 msgstr ""
 "    Die Cc-Liste oberhalb wurde um zusätzliche Adressen erweitert, die in "
 "der\n"
-"    cummit-Beschreibung des Patches gefunden wurden. Wenn dies passiert, "
+"    CUMMIT-Beschreibung des Patches gefunden wurden. Wenn dies passiert, "
 "werden\n"
 "    Sie von send-email zu einer Eingabe aufgefordert. Dieses Verhalten wird\n"
 "    durch die Konfigurationseinstellung sendemail.confirm gesteuert.\n"

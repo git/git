@@ -549,7 +549,7 @@ void pp_user_info(struct pretty_print_context *pp,
 		if (!strcmp(what, "Author"))
 			field = GREP_HEADER_AUTHOR;
 		else if (!strcmp(what, "cummit"))
-			field = GREP_HEADER_cummitTER;
+			field = GREP_HEADER_CUMMITTER;
 
 		strbuf_addf(sb, "%s: ", what);
 		if (pp->fmt == CMIT_FMT_FULLER)
@@ -1445,12 +1445,12 @@ static size_t format_cummit_one(struct strbuf *sb, /* in UTF-8 */
 
 	switch (placeholder[0]) {
 	case 'H':		/* commit hash */
-		strbuf_addstr(sb, diff_get_color(c->auto_color, DIFF_cummit));
+		strbuf_addstr(sb, diff_get_color(c->auto_color, DIFF_CUMMIT));
 		strbuf_addstr(sb, oid_to_hex(&cummit->object.oid));
 		strbuf_addstr(sb, diff_get_color(c->auto_color, DIFF_RESET));
 		return 1;
 	case 'h':		/* abbreviated commit hash */
-		strbuf_addstr(sb, diff_get_color(c->auto_color, DIFF_cummit));
+		strbuf_addstr(sb, diff_get_color(c->auto_color, DIFF_CUMMIT));
 		strbuf_add_unique_abbrev(sb, &cummit->object.oid,
 					 c->pretty_ctx->abbrev);
 		strbuf_addstr(sb, diff_get_color(c->auto_color, DIFF_RESET));

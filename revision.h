@@ -381,7 +381,7 @@ void parse_revision_opt(struct rev_info *revs, struct parse_opt_ctx_t *ctx,
 			const struct option *options,
 			const char * const usagestr[]);
 #define REVARG_CANNOT_BE_FILENAME 01
-#define REVARG_cummitTISH 02
+#define REVARG_CUMMITTISH 02
 int handle_revision_arg(const char *arg, struct rev_info *revs,
 			int flags, unsigned revarg_opt);
 void revision_opts_finish(struct rev_info *revs);

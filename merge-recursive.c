@@ -3794,7 +3794,7 @@ static struct cummit *get_ref(struct repository *repo,
 		return NULL;
 	if (object->type == OBJ_TREE)
 		return make_virtual_cummit(repo, (struct tree*)object, name);
-	if (object->type != OBJ_cummit)
+	if (object->type != OBJ_CUMMIT)
 		return NULL;
 	if (parse_cummit((struct cummit *)object))
 		return NULL;
@@ -3837,7 +3837,7 @@ int merge_recursive_generic(struct merge_options *opt,
 	}
 
 	if (write_locked_index(opt->repo->index, &lock,
-			       cummit_LOCK | SKIP_IF_UNCHANGED))
+			       CUMMIT_LOCK | SKIP_IF_UNCHANGED))
 		return err(opt, _("Unable to write index."));
 
 	return clean ? 0 : 1;

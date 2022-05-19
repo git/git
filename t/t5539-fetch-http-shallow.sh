@@ -85,9 +85,9 @@ test_expect_success 'clone shallow since ...' '
 	test_create_repo shallow-since &&
 	(
 	cd shallow-since &&
-	GIT_cummitTER_DATE="100000000 +0700" git cummit --allow-empty -m one &&
-	GIT_cummitTER_DATE="200000000 +0700" git cummit --allow-empty -m two &&
-	GIT_cummitTER_DATE="300000000 +0700" git cummit --allow-empty -m three &&
+	GIT_CUMMITTER_DATE="100000000 +0700" git cummit --allow-empty -m one &&
+	GIT_CUMMITTER_DATE="200000000 +0700" git cummit --allow-empty -m two &&
+	GIT_CUMMITTER_DATE="300000000 +0700" git cummit --allow-empty -m three &&
 	mv .git "$HTTPD_DOCUMENT_ROOT_PATH/shallow-since.git" &&
 	git clone --shallow-since "300000000 +0700" $HTTPD_URL/smart/shallow-since.git ../shallow11 &&
 	git -C ../shallow11 log --pretty=tformat:%s HEAD >actual &&

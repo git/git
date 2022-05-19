@@ -311,7 +311,7 @@ test_expect_success 'submodule fast-export | fast-import' '
 '
 
 GIT_AUTHOR_NAME='A U Thor'; export GIT_AUTHOR_NAME
-GIT_cummitTER_NAME='C O Mitter'; export GIT_cummitTER_NAME
+GIT_CUMMITTER_NAME='C O Mitter'; export GIT_CUMMITTER_NAME
 
 test_expect_success 'setup copies' '
 
@@ -569,7 +569,7 @@ test_expect_success 'handling tags of blobs' '
 
 	tag blobtag
 	from :1
-	tagger $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	tagger $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data 14
 	Tag of a blob
 

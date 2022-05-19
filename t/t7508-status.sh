@@ -188,7 +188,7 @@ cummit_template_commented () {
 	! grep '^[^#]' output
 }
 
-test_expect_success 'cummit ignores status.displayCommentPrefix=false in cummit_EDITMSG' '
+test_expect_success 'cummit ignores status.displayCommentPrefix=false in CUMMIT_EDITMSG' '
 	cummit_template_commented
 '
 

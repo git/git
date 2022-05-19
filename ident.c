@@ -353,7 +353,7 @@ static void ident_env_hint(enum want_ident whose_ident)
 	case WANT_AUTHOR_IDENT:
 		fputs(_("Author identity unknown\n"), stderr);
 		break;
-	case WANT_cummitTER_IDENT:
+	case WANT_CUMMITTER_IDENT:
 		fputs(_("cummitter identity unknown\n"), stderr);
 		break;
 	default:
@@ -388,7 +388,7 @@ const char *fmt_ident(const char *name, const char *email,
 	if (!email) {
 		if (whose_ident == WANT_AUTHOR_IDENT && git_author_email.len)
 			email = git_author_email.buf;
-		else if (whose_ident == WANT_cummitTER_IDENT && git_cummitter_email.len)
+		else if (whose_ident == WANT_CUMMITTER_IDENT && git_cummitter_email.len)
 			email = git_cummitter_email.buf;
 	}
 	if (!email) {
@@ -409,7 +409,7 @@ const char *fmt_ident(const char *name, const char *email,
 		if (!name) {
 			if (whose_ident == WANT_AUTHOR_IDENT && git_author_name.len)
 				name = git_author_name.buf;
-			else if (whose_ident == WANT_cummitTER_IDENT &&
+			else if (whose_ident == WANT_CUMMITTER_IDENT &&
 					git_cummitter_name.len)
 				name = git_cummitter_name.buf;
 		}
@@ -473,9 +473,9 @@ const char *fmt_name(enum want_ident whose_ident)
 		name = getenv("GIT_AUTHOR_NAME");
 		email = getenv("GIT_AUTHOR_EMAIL");
 		break;
-	case WANT_cummitTER_IDENT:
-		name = getenv("GIT_cummitTER_NAME");
-		email = getenv("GIT_cummitTER_EMAIL");
+	case WANT_CUMMITTER_IDENT:
+		name = getenv("GIT_CUMMITTER_NAME");
+		email = getenv("GIT_CUMMITTER_EMAIL");
 		break;
 	}
 	return fmt_ident(name, email, whose_ident, NULL,
@@ -497,14 +497,14 @@ const char *git_author_info(int flag)
 
 const char *git_cummitter_info(int flag)
 {
-	if (getenv("GIT_cummitTER_NAME"))
+	if (getenv("GIT_CUMMITTER_NAME"))
 		cummitter_ident_explicitly_given |= IDENT_NAME_GIVEN;
-	if (getenv("GIT_cummitTER_EMAIL"))
+	if (getenv("GIT_CUMMITTER_EMAIL"))
 		cummitter_ident_explicitly_given |= IDENT_MAIL_GIVEN;
-	return fmt_ident(getenv("GIT_cummitTER_NAME"),
-			 getenv("GIT_cummitTER_EMAIL"),
-			 WANT_cummitTER_IDENT,
-			 getenv("GIT_cummitTER_DATE"),
+	return fmt_ident(getenv("GIT_CUMMITTER_NAME"),
+			 getenv("GIT_CUMMITTER_EMAIL"),
+			 WANT_CUMMITTER_IDENT,
+			 getenv("GIT_CUMMITTER_DATE"),
 			 flag);
 }
 
@@ -618,9 +618,9 @@ void prepare_fallback_ident(const char *name, const char *email)
 		   &author_ident_explicitly_given, IDENT_NAME_GIVEN);
 	set_env_if("GIT_AUTHOR_EMAIL", email,
 		   &author_ident_explicitly_given, IDENT_MAIL_GIVEN);
-	set_env_if("GIT_cummitTER_NAME", name,
+	set_env_if("GIT_CUMMITTER_NAME", name,
 		   &cummitter_ident_explicitly_given, IDENT_NAME_GIVEN);
-	set_env_if("GIT_cummitTER_EMAIL", email,
+	set_env_if("GIT_CUMMITTER_EMAIL", email,
 		   &cummitter_ident_explicitly_given, IDENT_MAIL_GIVEN);
 }
 

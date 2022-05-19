@@ -1312,7 +1312,7 @@ static enum object_type packed_to_object_type(struct repository *r,
 
 	switch (type) {
 	case OBJ_BAD:
-	case OBJ_cummit:
+	case OBJ_CUMMIT:
 	case OBJ_TREE:
 	case OBJ_BLOB:
 	case OBJ_TAG:
@@ -1757,7 +1757,7 @@ void *unpack_entry(struct repository *r, struct packed_git *p, off_t obj_offset,
 		if (data)
 			BUG("unpack_entry: left loop at a valid delta");
 		break;
-	case OBJ_cummit:
+	case OBJ_CUMMIT:
 	case OBJ_TREE:
 	case OBJ_BLOB:
 	case OBJ_TAG:
@@ -2237,7 +2237,7 @@ static int add_promisor_object(const struct object_id *oid,
 		while (tree_entry_gently(&desc, &entry))
 			oidset_insert(set, &entry.oid);
 		free_tree_buffer(tree);
-	} else if (obj->type == OBJ_cummit) {
+	} else if (obj->type == OBJ_CUMMIT) {
 		struct cummit *cummit = (struct cummit *) obj;
 		struct cummit_list *parents = cummit->parents;
 

@@ -182,16 +182,16 @@ EOF
 
 test_format cummitter %cn%n%ce%n%cl%n%cd%n%cD%n%ct <<EOF
 cummit $head2
-$GIT_cummitTER_NAME
-$GIT_cummitTER_EMAIL
-$TEST_cummitTER_LOCALNAME
+$GIT_CUMMITTER_NAME
+$GIT_CUMMITTER_EMAIL
+$TEST_CUMMITTER_LOCALNAME
 Thu Apr 7 15:13:13 2005 -0700
 Thu, 7 Apr 2005 15:13:13 -0700
 1112911993
 cummit $head1
-$GIT_cummitTER_NAME
-$GIT_cummitTER_EMAIL
-$TEST_cummitTER_LOCALNAME
+$GIT_CUMMITTER_NAME
+$GIT_CUMMITTER_EMAIL
+$TEST_CUMMITTER_LOCALNAME
 Thu Apr 7 15:13:13 2005 -0700
 Thu, 7 Apr 2005 15:13:13 -0700
 1112911993
@@ -579,7 +579,7 @@ test_expect_success '%gd shortens ref name' '
 '
 
 test_expect_success 'reflog identity' '
-	echo "$GIT_cummitTER_NAME:$GIT_cummitTER_EMAIL" >expect &&
+	echo "$GIT_CUMMITTER_NAME:$GIT_CUMMITTER_EMAIL" >expect &&
 	git log -g -1 --format="%gn:%ge" >actual &&
 	test_cmp expect actual
 '

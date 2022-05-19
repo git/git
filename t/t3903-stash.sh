@@ -1363,8 +1363,8 @@ test_expect_success 'stash works when user.name and user.email are not set' '
 	(
 		sane_unset GIT_AUTHOR_NAME &&
 		sane_unset GIT_AUTHOR_EMAIL &&
-		sane_unset GIT_cummitTER_NAME &&
-		sane_unset GIT_cummitTER_EMAIL &&
+		sane_unset GIT_CUMMITTER_NAME &&
+		sane_unset GIT_CUMMITTER_EMAIL &&
 		test_unconfig user.email &&
 		test_unconfig user.name &&
 		test_must_fail git cummit -m "should fail" &&

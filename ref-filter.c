@@ -130,10 +130,10 @@ enum atom_type {
 	ATOM_AUTHORNAME,
 	ATOM_AUTHOREMAIL,
 	ATOM_AUTHORDATE,
-	ATOM_cummitTER,
-	ATOM_cummitTERNAME,
-	ATOM_cummitTEREMAIL,
-	ATOM_cummitTERDATE,
+	ATOM_CUMMITTER,
+	ATOM_CUMMITTERNAME,
+	ATOM_CUMMITTEREMAIL,
+	ATOM_CUMMITTERDATE,
 	ATOM_TAGGER,
 	ATOM_TAGGERNAME,
 	ATOM_TAGGEREMAIL,
@@ -599,10 +599,10 @@ static struct {
 	[ATOM_AUTHORNAME] = { "authorname", SOURCE_OBJ },
 	[ATOM_AUTHOREMAIL] = { "authoremail", SOURCE_OBJ, FIELD_STR, person_email_atom_parser },
 	[ATOM_AUTHORDATE] = { "authordate", SOURCE_OBJ, FIELD_TIME },
-	[ATOM_cummitTER] = { "cummitter", SOURCE_OBJ },
-	[ATOM_cummitTERNAME] = { "cummittername", SOURCE_OBJ },
-	[ATOM_cummitTEREMAIL] = { "cummitteremail", SOURCE_OBJ, FIELD_STR, person_email_atom_parser },
-	[ATOM_cummitTERDATE] = { "cummitterdate", SOURCE_OBJ, FIELD_TIME },
+	[ATOM_CUMMITTER] = { "cummitter", SOURCE_OBJ },
+	[ATOM_CUMMITTERNAME] = { "cummittername", SOURCE_OBJ },
+	[ATOM_CUMMITTEREMAIL] = { "cummitteremail", SOURCE_OBJ, FIELD_STR, person_email_atom_parser },
+	[ATOM_CUMMITTERDATE] = { "cummitterdate", SOURCE_OBJ, FIELD_TIME },
 	[ATOM_TAGGER] = { "tagger", SOURCE_OBJ },
 	[ATOM_TAGGERNAME] = { "taggername", SOURCE_OBJ },
 	[ATOM_TAGGEREMAIL] = { "taggeremail", SOURCE_OBJ, FIELD_STR, person_email_atom_parser },
@@ -1453,7 +1453,7 @@ static void grab_sub_body_contents(struct atom_value *val, int deref, struct exp
 		}
 
 		if ((data->type != OBJ_TAG &&
-		     data->type != OBJ_cummit) ||
+		     data->type != OBJ_CUMMIT) ||
 		    (strcmp(name, "body") &&
 		     !starts_with(name, "subject") &&
 		     !starts_with(name, "trailers") &&
@@ -1531,7 +1531,7 @@ static void grab_values(struct atom_value *val, int deref, struct object *obj, s
 		grab_sub_body_contents(val, deref, data);
 		grab_person("tagger", val, deref, buf);
 		break;
-	case OBJ_cummit:
+	case OBJ_CUMMIT:
 		grab_cummit_values(val, deref, obj);
 		grab_sub_body_contents(val, deref, data);
 		grab_person("author", val, deref, buf);

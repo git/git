@@ -114,17 +114,17 @@ void setup_unpack_trees_porcelain(struct unpack_trees_options *opts,
 	strvec_init(&opts->msgs_to_free);
 
 	if (!strcmp(cmd, "checkout"))
-		msg = advice_enabled(ADVICE_cummit_BEFORE_MERGE)
+		msg = advice_enabled(ADVICE_CUMMIT_BEFORE_MERGE)
 		      ? _("Your local changes to the following files would be overwritten by checkout:\n%%s"
 			  "Please cummit your changes or stash them before you switch branches.")
 		      : _("Your local changes to the following files would be overwritten by checkout:\n%%s");
 	else if (!strcmp(cmd, "merge"))
-		msg = advice_enabled(ADVICE_cummit_BEFORE_MERGE)
+		msg = advice_enabled(ADVICE_CUMMIT_BEFORE_MERGE)
 		      ? _("Your local changes to the following files would be overwritten by merge:\n%%s"
 			  "Please cummit your changes or stash them before you merge.")
 		      : _("Your local changes to the following files would be overwritten by merge:\n%%s");
 	else
-		msg = advice_enabled(ADVICE_cummit_BEFORE_MERGE)
+		msg = advice_enabled(ADVICE_CUMMIT_BEFORE_MERGE)
 		      ? _("Your local changes to the following files would be overwritten by %s:\n%%s"
 			  "Please cummit your changes or stash them before you %s.")
 		      : _("Your local changes to the following files would be overwritten by %s:\n%%s");
@@ -138,17 +138,17 @@ void setup_unpack_trees_porcelain(struct unpack_trees_options *opts,
 		_("Refusing to remove the current working directory:\n%s");
 
 	if (!strcmp(cmd, "checkout"))
-		msg = advice_enabled(ADVICE_cummit_BEFORE_MERGE)
+		msg = advice_enabled(ADVICE_CUMMIT_BEFORE_MERGE)
 		      ? _("The following untracked working tree files would be removed by checkout:\n%%s"
 			  "Please move or remove them before you switch branches.")
 		      : _("The following untracked working tree files would be removed by checkout:\n%%s");
 	else if (!strcmp(cmd, "merge"))
-		msg = advice_enabled(ADVICE_cummit_BEFORE_MERGE)
+		msg = advice_enabled(ADVICE_CUMMIT_BEFORE_MERGE)
 		      ? _("The following untracked working tree files would be removed by merge:\n%%s"
 			  "Please move or remove them before you merge.")
 		      : _("The following untracked working tree files would be removed by merge:\n%%s");
 	else
-		msg = advice_enabled(ADVICE_cummit_BEFORE_MERGE)
+		msg = advice_enabled(ADVICE_CUMMIT_BEFORE_MERGE)
 		      ? _("The following untracked working tree files would be removed by %s:\n%%s"
 			  "Please move or remove them before you %s.")
 		      : _("The following untracked working tree files would be removed by %s:\n%%s");
@@ -156,17 +156,17 @@ void setup_unpack_trees_porcelain(struct unpack_trees_options *opts,
 		strvec_pushf(&opts->msgs_to_free, msg, cmd, cmd);
 
 	if (!strcmp(cmd, "checkout"))
-		msg = advice_enabled(ADVICE_cummit_BEFORE_MERGE)
+		msg = advice_enabled(ADVICE_CUMMIT_BEFORE_MERGE)
 		      ? _("The following untracked working tree files would be overwritten by checkout:\n%%s"
 			  "Please move or remove them before you switch branches.")
 		      : _("The following untracked working tree files would be overwritten by checkout:\n%%s");
 	else if (!strcmp(cmd, "merge"))
-		msg = advice_enabled(ADVICE_cummit_BEFORE_MERGE)
+		msg = advice_enabled(ADVICE_CUMMIT_BEFORE_MERGE)
 		      ? _("The following untracked working tree files would be overwritten by merge:\n%%s"
 			  "Please move or remove them before you merge.")
 		      : _("The following untracked working tree files would be overwritten by merge:\n%%s");
 	else
-		msg = advice_enabled(ADVICE_cummit_BEFORE_MERGE)
+		msg = advice_enabled(ADVICE_CUMMIT_BEFORE_MERGE)
 		      ? _("The following untracked working tree files would be overwritten by %s:\n%%s"
 			  "Please move or remove them before you %s.")
 		      : _("The following untracked working tree files would be overwritten by %s:\n%%s");

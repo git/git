@@ -561,7 +561,7 @@ int cmd_whatchanged(int argc, const char **argv, const char *prefix)
 	rev.simplify_history = 0;
 	memset(&opt, 0, sizeof(opt));
 	opt.def = "HEAD";
-	opt.revarg_opt = REVARG_cummitTISH;
+	opt.revarg_opt = REVARG_CUMMITTISH;
 	cmd_log_init(argc, argv, prefix, &rev, &opt);
 	if (!rev.diffopt.output_format)
 		rev.diffopt.output_format = DIFF_FORMAT_RAW;
@@ -703,7 +703,7 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 			if (rev.shown_one)
 				putchar('\n');
 			fprintf(rev.diffopt.file, "%stag %s%s\n",
-					diff_get_color_opt(&rev.diffopt, DIFF_cummit),
+					diff_get_color_opt(&rev.diffopt, DIFF_CUMMIT),
 					t->tag,
 					diff_get_color_opt(&rev.diffopt, DIFF_RESET));
 			ret = show_tag_object(&o->oid, &rev);
@@ -722,7 +722,7 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 			if (rev.shown_one)
 				putchar('\n');
 			fprintf(rev.diffopt.file, "%stree %s%s\n\n",
-					diff_get_color_opt(&rev.diffopt, DIFF_cummit),
+					diff_get_color_opt(&rev.diffopt, DIFF_CUMMIT),
 					name,
 					diff_get_color_opt(&rev.diffopt, DIFF_RESET));
 			read_tree(the_repository, (struct tree *)o,
@@ -730,7 +730,7 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 				  rev.diffopt.file);
 			rev.shown_one = 1;
 			break;
-		case OBJ_cummit:
+		case OBJ_CUMMIT:
 			rev.pending.nr = rev.pending.alloc = 0;
 			rev.pending.objects = NULL;
 			add_object_array(o, name, &rev.pending);
@@ -801,7 +801,7 @@ int cmd_log(int argc, const char **argv, const char *prefix)
 	rev.always_show_header = 1;
 	memset(&opt, 0, sizeof(opt));
 	opt.def = "HEAD";
-	opt.revarg_opt = REVARG_cummitTISH;
+	opt.revarg_opt = REVARG_CUMMITTISH;
 	opt.tweak = log_setup_revisions_tweak;
 	cmd_log_init(argc, argv, prefix, &rev, &opt);
 	return cmd_log_walk(&rev);
@@ -1900,7 +1900,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	rev.subject_prefix = fmt_patch_subject_prefix;
 	memset(&s_r_opt, 0, sizeof(s_r_opt));
 	s_r_opt.def = "HEAD";
-	s_r_opt.revarg_opt = REVARG_cummitTISH;
+	s_r_opt.revarg_opt = REVARG_CUMMITTISH;
 
 	if (default_attach) {
 		rev.mime_boundary = default_attach;

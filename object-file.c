@@ -1762,7 +1762,7 @@ void *read_object_with_reference(struct repository *r,
 			return buffer;
 		}
 		/* Handle references */
-		else if (type == OBJ_cummit)
+		else if (type == OBJ_CUMMIT)
 			ref_type = "tree ";
 		else if (type == OBJ_TAG)
 			ref_type = "object ";
@@ -2185,7 +2185,7 @@ static int index_mem(struct index_state *istate,
 	if (flags & HASH_FORMAT_CHECK) {
 		if (type == OBJ_TREE)
 			check_tree(buf, size);
-		if (type == OBJ_cummit)
+		if (type == OBJ_CUMMIT)
 			check_cummit(buf, size);
 		if (type == OBJ_TAG)
 			check_tag(buf, size);

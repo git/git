@@ -17,7 +17,7 @@ git rev-parse --verify $branch_merge >/dev/null 2>&1 || {
 
 write_script swap-first-two.sh <<\EOF
 case "$1" in
-*/cummit_EDITMSG)
+*/CUMMIT_EDITMSG)
 	mv "$1" "$1".bak &&
 	sed -e '1{h;d}' -e 2G <"$1".bak >"$1"
 	;;

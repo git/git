@@ -25,7 +25,7 @@ create_repo () {
 			cat <<-INPUT_END &&
 			cummit refs/heads/main
 			mark :$mark
-			cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+			cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 			data <<cummit
 			cummit #$nr
 			cummit
@@ -47,7 +47,7 @@ create_repo () {
 		test_tick &&
 		cat <<-INPUT_END &&
 		cummit refs/notes/cummits
-		cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+		cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 		data <<cummit
 		notes
 		cummit

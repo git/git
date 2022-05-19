@@ -1,5 +1,5 @@
-#ifndef cummit_SLAB_H
-#define cummit_SLAB_H
+#ifndef CUMMIT_SLAB_H
+#define CUMMIT_SLAB_H
 
 #include "cummit-slab-decl.h"
 #include "cummit-slab-impl.h"
@@ -63,4 +63,4 @@
 	declare_cummit_slab(slabname, elemtype); \
 	implement_static_cummit_slab(slabname, elemtype)
 
-#endif /* cummit_SLAB_H */
+#endif /* CUMMIT_SLAB_H */

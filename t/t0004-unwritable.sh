@@ -37,8 +37,8 @@ test_expect_success POSIXPERM,SANITY,!SANITIZE_LEAK 'cummit should notice unwrit
 	test_must_fail git cummit -m second 2>out.cummit
 '
 
-test_lazy_prereq cummit_OUT 'test -e "$TRASH_DIRECTORY"/out.cummit'
-test_expect_success cummit_OUT 'cummit output on unwritable repository' '
+test_lazy_prereq CUMMIT_OUT 'test -e "$TRASH_DIRECTORY"/out.cummit'
+test_expect_success CUMMIT_OUT 'cummit output on unwritable repository' '
 	cat >expect <<-\EOF &&
 	error: insufficient permission for adding an object to repository database .git/objects
 	error: Error building trees

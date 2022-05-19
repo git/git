@@ -38,7 +38,7 @@ test_expect_success 'empty configured name does not auto-detect' '
 
 test_expect_success 'empty configured name does not auto-detect for cummitter' '
 	(
-		sane_unset GIT_cummitTER_NAME &&
+		sane_unset GIT_CUMMITTER_NAME &&
 		test_must_fail \
 			git -c user.name= cummit --allow-empty -m foo 2>err &&
 		test_i18ngrep "empty ident name" err &&

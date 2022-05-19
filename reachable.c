@@ -85,7 +85,7 @@ static void add_recent_object(const struct object_id *oid,
 
 	switch (type) {
 	case OBJ_TAG:
-	case OBJ_cummit:
+	case OBJ_CUMMIT:
 		obj = parse_object_or_die(oid, NULL);
 		break;
 	case OBJ_TREE:

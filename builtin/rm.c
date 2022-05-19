@@ -426,7 +426,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 	}
 
 	if (write_locked_index(&the_index, &lock_file,
-			       cummit_LOCK | SKIP_IF_UNCHANGED))
+			       CUMMIT_LOCK | SKIP_IF_UNCHANGED))
 		die(_("Unable to write new index file"));
 
 	return ret;

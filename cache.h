@@ -464,7 +464,7 @@ extern struct index_state the_index;
 enum object_type {
 	OBJ_BAD = -1,
 	OBJ_NONE = 0,
-	OBJ_cummit = 1,
+	OBJ_CUMMIT = 1,
 	OBJ_TREE = 2,
 	OBJ_BLOB = 3,
 	OBJ_TAG = 4,
@@ -478,7 +478,7 @@ enum object_type {
 static inline enum object_type object_type(unsigned int mode)
 {
 	return S_ISDIR(mode) ? OBJ_TREE :
-		S_ISGITLINK(mode) ? OBJ_cummit :
+		S_ISGITLINK(mode) ? OBJ_CUMMIT :
 		OBJ_BLOB;
 }
 
@@ -749,12 +749,12 @@ int is_index_unborn(struct index_state *);
 void ensure_full_index(struct index_state *istate);
 
 /* For use with `write_locked_index()`. */
-#define cummit_LOCK		(1 << 0)
+#define CUMMIT_LOCK		(1 << 0)
 #define SKIP_IF_UNCHANGED	(1 << 1)
 
 /*
  * Write the index while holding an already-taken lock. Close the lock,
- * and if `cummit_LOCK` is given, cummit it.
+ * and if `CUMMIT_LOCK` is given, cummit it.
  *
  * Unless a split index is in use, write the index into the lockfile.
  *
@@ -764,12 +764,12 @@ void ensure_full_index(struct index_state *istate);
  * index cannot be created, fall back to the behavior described in
  * the previous paragraph.
  *
- * With `cummit_LOCK`, the lock is always cummitted or rolled back.
+ * With `CUMMIT_LOCK`, the lock is always cummitted or rolled back.
  * Without it, the lock is closed, but neither cummitted nor rolled
  * back.
  *
  * If `SKIP_IF_UNCHANGED` is given and the index is unchanged, nothing
- * is written (and the lock is rolled back if `cummit_LOCK` is given).
+ * is written (and the lock is rolled back if `CUMMIT_LOCK` is given).
  */
 int write_locked_index(struct index_state *, struct lock_file *lock, unsigned flags);
 
@@ -930,7 +930,7 @@ int refresh_index(struct index_state *, unsigned int flags, const struct pathspe
  * Refresh the index and write it to disk.
  *
  * 'refresh_flags' is passed directly to 'refresh_index()', while
- * 'cummit_LOCK | write_flags' is passed to 'write_locked_index()', so
+ * 'CUMMIT_LOCK | write_flags' is passed to 'write_locked_index()', so
  * the lockfile is always either cummitted or rolled back.
  *
  * If 'gentle' is passed, errors locking the index are ignored.
@@ -1003,7 +1003,7 @@ enum fsync_component {
 	FSYNC_COMPONENT_LOOSE_OBJECT		= 1 << 0,
 	FSYNC_COMPONENT_PACK			= 1 << 1,
 	FSYNC_COMPONENT_PACK_METADATA		= 1 << 2,
-	FSYNC_COMPONENT_cummit_GRAPH		= 1 << 3,
+	FSYNC_COMPONENT_CUMMIT_GRAPH		= 1 << 3,
 	FSYNC_COMPONENT_INDEX			= 1 << 4,
 	FSYNC_COMPONENT_REFERENCE		= 1 << 5,
 };
@@ -1012,22 +1012,22 @@ enum fsync_component {
 				  FSYNC_COMPONENT_PACK)
 
 #define FSYNC_COMPONENTS_DERIVED_METADATA (FSYNC_COMPONENT_PACK_METADATA | \
-					   FSYNC_COMPONENT_cummit_GRAPH)
+					   FSYNC_COMPONENT_CUMMIT_GRAPH)
 
 #define FSYNC_COMPONENTS_DEFAULT ((FSYNC_COMPONENTS_OBJECTS | \
 				   FSYNC_COMPONENTS_DERIVED_METADATA) & \
 				  ~FSYNC_COMPONENT_LOOSE_OBJECT)
 
-#define FSYNC_COMPONENTS_cummitTED (FSYNC_COMPONENTS_OBJECTS | \
+#define FSYNC_COMPONENTS_CUMMITTED (FSYNC_COMPONENTS_OBJECTS | \
 				    FSYNC_COMPONENT_REFERENCE)
 
-#define FSYNC_COMPONENTS_ADDED (FSYNC_COMPONENTS_cummitTED | \
+#define FSYNC_COMPONENTS_ADDED (FSYNC_COMPONENTS_CUMMITTED | \
 				FSYNC_COMPONENT_INDEX)
 
 #define FSYNC_COMPONENTS_ALL (FSYNC_COMPONENT_LOOSE_OBJECT | \
 			      FSYNC_COMPONENT_PACK | \
 			      FSYNC_COMPONENT_PACK_METADATA | \
-			      FSYNC_COMPONENT_cummit_GRAPH | \
+			      FSYNC_COMPONENT_CUMMIT_GRAPH | \
 			      FSYNC_COMPONENT_INDEX | \
 			      FSYNC_COMPONENT_REFERENCE)
 
@@ -1430,8 +1430,8 @@ struct object_context {
 };
 
 #define GET_OID_QUIETLY           01
-#define GET_OID_cummit            02
-#define GET_OID_cummitTISH        04
+#define GET_OID_CUMMIT            02
+#define GET_OID_CUMMITTISH        04
 #define GET_OID_TREE             010
 #define GET_OID_TREEISH          020
 #define GET_OID_BLOB             040
@@ -1441,7 +1441,7 @@ struct object_context {
 #define GET_OID_REQUIRE_PATH  010000
 
 #define GET_OID_DISAMBIGUATORS \
-	(GET_OID_cummit | GET_OID_cummitTISH | \
+	(GET_OID_CUMMIT | GET_OID_CUMMITTISH | \
 	GET_OID_TREE | GET_OID_TREEISH | \
 	GET_OID_BLOB)
 
@@ -1628,7 +1628,7 @@ struct object *repo_peel_to_type(struct repository *r,
 enum want_ident {
 	WANT_BLANK_IDENT,
 	WANT_AUTHOR_IDENT,
-	WANT_cummitTER_IDENT
+	WANT_CUMMITTER_IDENT
 };
 
 const char *git_author_info(int);

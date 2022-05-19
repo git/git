@@ -435,7 +435,7 @@ int encode_in_pack_object_header(unsigned char *hdr, int hdr_len,
 	int n = 1;
 	unsigned char c;
 
-	if (type < OBJ_cummit || type > OBJ_REF_DELTA)
+	if (type < OBJ_CUMMIT || type > OBJ_REF_DELTA)
 		die("bad type %d", type);
 
 	c = (type << 4) | (size & 15);

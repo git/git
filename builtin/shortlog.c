@@ -126,7 +126,7 @@ static void read_from_stdin(struct shortlog *log)
 	case SHORTLOG_GROUP_AUTHOR:
 		match = author_match;
 		break;
-	case SHORTLOG_GROUP_cummitTER:
+	case SHORTLOG_GROUP_CUMMITTER:
 		match = cummitter_match;
 		break;
 	case SHORTLOG_GROUP_TRAILER:
@@ -229,7 +229,7 @@ void shortlog_add_cummit(struct shortlog *log, struct cummit *cummit)
 		    strset_add(&dups, ident.buf))
 			insert_one_record(log, ident.buf, oneline_str);
 	}
-	if (log->groups & SHORTLOG_GROUP_cummitTER) {
+	if (log->groups & SHORTLOG_GROUP_CUMMITTER) {
 		strbuf_reset(&ident);
 		format_cummit_message(cummit,
 				      log->email ? "%cN <%cE>" : "%cN",
@@ -315,7 +315,7 @@ static int parse_group_option(const struct option *opt, const char *arg, int uns
 	} else if (!strcasecmp(arg, "author"))
 		log->groups |= SHORTLOG_GROUP_AUTHOR;
 	else if (!strcasecmp(arg, "cummitter"))
-		log->groups |= SHORTLOG_GROUP_cummitTER;
+		log->groups |= SHORTLOG_GROUP_CUMMITTER;
 	else if (skip_prefix(arg, "trailer:", &field)) {
 		log->groups |= SHORTLOG_GROUP_TRAILER;
 		string_list_append(&log->trailers, field);
@@ -349,7 +349,7 @@ int cmd_shortlog(int argc, const char **argv, const char *prefix)
 	const struct option options[] = {
 		OPT_BIT('c', "cummitter", &log.groups,
 			N_("group by cummitter rather than author"),
-			SHORTLOG_GROUP_cummitTER),
+			SHORTLOG_GROUP_CUMMITTER),
 		OPT_BOOL('n', "numbered", &log.sort_by_number,
 			 N_("sort output according to the number of cummits per author")),
 		OPT_BOOL('s', "summary", &log.summary,

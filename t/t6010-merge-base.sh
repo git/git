@@ -11,11 +11,11 @@ test_description='Merge base and parent list computation.
 M=1130000000
 Z=+0000
 
-GIT_cummitTER_EMAIL=git@comm.iter.xz
-GIT_cummitTER_NAME='C O Mmiter'
+GIT_CUMMITTER_EMAIL=git@comm.iter.xz
+GIT_CUMMITTER_NAME='C O Mmiter'
 GIT_AUTHOR_NAME='A U Thor'
 GIT_AUTHOR_EMAIL=git@au.thor.xz
-export GIT_cummitTER_EMAIL GIT_cummitTER_NAME GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL
+export GIT_CUMMITTER_EMAIL GIT_CUMMITTER_NAME GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL
 
 doit () {
 	OFFSET=$1 &&
@@ -28,9 +28,9 @@ doit () {
 		PARENTS="${PARENTS}-p $P "
 	done &&
 
-	GIT_cummitTER_DATE="$(($M + $OFFSET)) $Z" &&
-	GIT_AUTHOR_DATE=$GIT_cummitTER_DATE &&
-	export GIT_cummitTER_DATE GIT_AUTHOR_DATE &&
+	GIT_CUMMITTER_DATE="$(($M + $OFFSET)) $Z" &&
+	GIT_AUTHOR_DATE=$GIT_CUMMITTER_DATE &&
+	export GIT_CUMMITTER_DATE GIT_AUTHOR_DATE &&
 
 	cummit=$(echo $NAME | git cummit-tree $T $PARENTS) &&
 

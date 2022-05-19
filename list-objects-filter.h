@@ -55,7 +55,7 @@ enum list_objects_filter_result {
 };
 
 enum list_objects_filter_situation {
-	LOFS_cummit,
+	LOFS_CUMMIT,
 	LOFS_TAG,
 	LOFS_BEGIN_TREE,
 	LOFS_END_TREE,

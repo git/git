@@ -296,7 +296,7 @@ void format_decorations_extended(struct strbuf *sb,
 	const struct name_decoration *decoration;
 	const struct name_decoration *current_and_HEAD;
 	const char *color_cummit =
-		diff_get_color(use_color, DIFF_cummit);
+		diff_get_color(use_color, DIFF_CUMMIT);
 	const char *color_reset =
 		decorate_get_color(use_color, DECORATION_NONE);
 
@@ -517,7 +517,7 @@ static void show_signature(struct rev_info *opt, struct cummit *cummit)
 	if (parse_signed_cummit(cummit, &payload, &signature, the_hash_algo) <= 0)
 		goto out;
 
-	sigc.payload_type = SIGNATURE_PAYLOAD_cummit;
+	sigc.payload_type = SIGNATURE_PAYLOAD_CUMMIT;
 	sigc.payload = strbuf_detach(&payload, &sigc.payload_len);
 	status = check_signature(&sigc, signature.buf, signature.len);
 	if (status && !sigc.output)
@@ -692,7 +692,7 @@ void show_log(struct rev_info *opt)
 		ctx.rev = opt;
 		ctx.print_email_subject = 1;
 	} else if (opt->cummit_format != CMIT_FMT_USERFORMAT) {
-		fputs(diff_get_color_opt(&opt->diffopt, DIFF_cummit), opt->diffopt.file);
+		fputs(diff_get_color_opt(&opt->diffopt, DIFF_CUMMIT), opt->diffopt.file);
 		if (opt->cummit_format != CMIT_FMT_ONELINE)
 			fputs("cummit ", opt->diffopt.file);
 
@@ -752,7 +752,7 @@ void show_log(struct rev_info *opt)
 	 */
 	if (ctx.need_8bit_cte >= 0 && opt->add_signoff)
 		ctx.need_8bit_cte =
-			has_non_ascii(fmt_name(WANT_cummitTER_IDENT));
+			has_non_ascii(fmt_name(WANT_CUMMITTER_IDENT));
 	ctx.date_mode = opt->date_mode;
 	ctx.date_mode_explicit = opt->date_mode_explicit;
 	ctx.abbrev = opt->diffopt.abbrev;

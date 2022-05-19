@@ -55,7 +55,7 @@ static int parse_parent_arg_callback(const struct option *opt,
 	if (get_oid_cummit(arg, &oid))
 		die(_("not a valid object name %s"), arg);
 
-	assert_oid_type(&oid, OBJ_cummit);
+	assert_oid_type(&oid, OBJ_CUMMIT);
 	new_parent(lookup_cummit(the_repository, &oid), parents);
 	return 0;
 }

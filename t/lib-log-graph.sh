@@ -2,7 +2,7 @@
 
 sanitize_log_output () {
 	sed -e 's/ *$//' \
-	    -e 's/cummit [0-9a-f]*$/cummit cummit_OBJECT_NAME/' \
+	    -e 's/cummit [0-9a-f]*$/cummit CUMMIT_OBJECT_NAME/' \
 	    -e 's/Merge: [ 0-9a-f]*$/Merge: MERGE_PARENTS/' \
 	    -e 's/Merge tag.*/Merge HEADS DESCRIPTION/' \
 	    -e 's/Merge cummit.*/Merge HEADS DESCRIPTION/' \

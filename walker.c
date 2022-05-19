@@ -116,7 +116,7 @@ static struct object_list **process_queue_end = &process_queue;
 
 static int process_object(struct walker *walker, struct object *obj)
 {
-	if (obj->type == OBJ_cummit) {
+	if (obj->type == OBJ_CUMMIT) {
 		if (process_cummit(walker, (struct cummit *)obj))
 			return -1;
 		return 0;

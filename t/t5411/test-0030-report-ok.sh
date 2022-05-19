@@ -16,18 +16,18 @@ test_expect_success "proc-receive: ok ($PROTOCOL)" '
 	make_user_friendly_and_stable_output <out >actual &&
 	format_and_save_expect <<-EOF &&
 	> remote: # pre-receive hook        Z
-	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
+	> remote: pre-receive< <ZERO-OID> <CUMMIT-A> refs/for/main/topic        Z
 	> remote: # proc-receive hook        Z
-	> remote: proc-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
+	> remote: proc-receive< <ZERO-OID> <CUMMIT-A> refs/for/main/topic        Z
 	> remote: proc-receive> ok refs/for/main/topic        Z
 	> remote: # post-receive hook        Z
-	> remote: post-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
+	> remote: post-receive< <ZERO-OID> <CUMMIT-A> refs/for/main/topic        Z
 	> To <URL/of/upstream.git>
 	>  * [new reference]   HEAD -> refs/for/main/topic
 	EOF
 	test_cmp expect actual &&
 
 	test_cmp_refs -C "$upstream" <<-EOF
-	<cummit-A> refs/heads/main
+	<CUMMIT-A> refs/heads/main
 	EOF
 '

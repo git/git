@@ -1,7 +1,7 @@
 DATE FORMATS
 ------------
 
-The `GIT_AUTHOR_DATE` and `GIT_cummitTER_DATE` environment variables
+The `GIT_AUTHOR_DATE` and `GIT_CUMMITTER_DATE` environment variables
 support the following date formats:
 
 Git internal format::

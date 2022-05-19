@@ -403,7 +403,7 @@ static int fsck_walk_cummit(struct cummit *cummit, void *data, struct fsck_optio
 			else
 				fsck_put_object_name(options, oid, "%s^", name);
 		}
-		result = options->walk((struct object *)parents->item, OBJ_cummit, data, options);
+		result = options->walk((struct object *)parents->item, OBJ_CUMMIT, data, options);
 		if (result < 0)
 			return result;
 		if (!res)
@@ -437,7 +437,7 @@ int fsck_walk(struct object *obj, void *data, struct fsck_options *options)
 		return 0;
 	case OBJ_TREE:
 		return fsck_walk_tree((struct tree *)obj, data, options);
-	case OBJ_cummit:
+	case OBJ_CUMMIT:
 		return fsck_walk_cummit((struct cummit *)obj, data, options);
 	case OBJ_TAG:
 		return fsck_walk_tag((struct tag *)obj, data, options);
@@ -830,20 +830,20 @@ static int fsck_cummit(const struct object_id *oid,
 	const char *buffer_begin = buffer;
 	const char *p;
 
-	if (verify_headers(buffer, size, oid, OBJ_cummit, options))
+	if (verify_headers(buffer, size, oid, OBJ_CUMMIT, options))
 		return -1;
 
 	if (!skip_prefix(buffer, "tree ", &buffer))
-		return report(options, oid, OBJ_cummit, FSCK_MSG_MISSING_TREE, "invalid format - expected 'tree' line");
+		return report(options, oid, OBJ_CUMMIT, FSCK_MSG_MISSING_TREE, "invalid format - expected 'tree' line");
 	if (parse_oid_hex(buffer, &tree_oid, &p) || *p != '\n') {
-		err = report(options, oid, OBJ_cummit, FSCK_MSG_BAD_TREE_SHA1, "invalid 'tree' line format - bad sha1");
+		err = report(options, oid, OBJ_CUMMIT, FSCK_MSG_BAD_TREE_SHA1, "invalid 'tree' line format - bad sha1");
 		if (err)
 			return err;
 	}
 	buffer = p + 1;
 	while (skip_prefix(buffer, "parent ", &buffer)) {
 		if (parse_oid_hex(buffer, &parent_oid, &p) || *p != '\n') {
-			err = report(options, oid, OBJ_cummit, FSCK_MSG_BAD_PARENT_SHA1, "invalid 'parent' line format - bad sha1");
+			err = report(options, oid, OBJ_CUMMIT, FSCK_MSG_BAD_PARENT_SHA1, "invalid 'parent' line format - bad sha1");
 			if (err)
 				return err;
 		}
@@ -852,23 +852,23 @@ static int fsck_cummit(const struct object_id *oid,
 	author_count = 0;
 	while (skip_prefix(buffer, "author ", &buffer)) {
 		author_count++;
-		err = fsck_ident(&buffer, oid, OBJ_cummit, options);
+		err = fsck_ident(&buffer, oid, OBJ_CUMMIT, options);
 		if (err)
 			return err;
 	}
 	if (author_count < 1)
-		err = report(options, oid, OBJ_cummit, FSCK_MSG_MISSING_AUTHOR, "invalid format - expected 'author' line");
+		err = report(options, oid, OBJ_CUMMIT, FSCK_MSG_MISSING_AUTHOR, "invalid format - expected 'author' line");
 	else if (author_count > 1)
-		err = report(options, oid, OBJ_cummit, FSCK_MSG_MULTIPLE_AUTHORS, "invalid format - multiple 'author' lines");
+		err = report(options, oid, OBJ_CUMMIT, FSCK_MSG_MULTIPLE_AUTHORS, "invalid format - multiple 'author' lines");
 	if (err)
 		return err;
 	if (!skip_prefix(buffer, "cummitter ", &buffer))
-		return report(options, oid, OBJ_cummit, FSCK_MSG_MISSING_cummitTER, "invalid format - expected 'cummitter' line");
-	err = fsck_ident(&buffer, oid, OBJ_cummit, options);
+		return report(options, oid, OBJ_CUMMIT, FSCK_MSG_MISSING_CUMMITTER, "invalid format - expected 'cummitter' line");
+	err = fsck_ident(&buffer, oid, OBJ_CUMMIT, options);
 	if (err)
 		return err;
 	if (memchr(buffer_begin, '\0', size)) {
-		err = report(options, oid, OBJ_cummit, FSCK_MSG_NUL_IN_cummit,
+		err = report(options, oid, OBJ_CUMMIT, FSCK_MSG_NUL_IN_CUMMIT,
 			     "NUL byte in the cummit object body");
 		if (err)
 			return err;
@@ -1214,7 +1214,7 @@ int fsck_object(struct object *obj, void *data, unsigned long size,
 		return fsck_blob(&obj->oid, data, size, options);
 	if (obj->type == OBJ_TREE)
 		return fsck_tree(&obj->oid, data, size, options);
-	if (obj->type == OBJ_cummit)
+	if (obj->type == OBJ_CUMMIT)
 		return fsck_cummit(&obj->oid, data, size, options);
 	if (obj->type == OBJ_TAG)
 		return fsck_tag(&obj->oid, data, size, options);

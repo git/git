@@ -608,7 +608,7 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 			strbuf_reset(&buf);
 			strbuf_addf(&buf, "%s/wtindex", tmpdir.buf);
 			if (hold_lock_file_for_update(&lock, buf.buf, 0) < 0 ||
-			    write_locked_index(&wtindex, &lock, cummit_LOCK)) {
+			    write_locked_index(&wtindex, &lock, CUMMIT_LOCK)) {
 				ret = error("could not write %s", buf.buf);
 				goto finish;
 			}

@@ -1065,7 +1065,7 @@ enum bisect_error bisect_next_all(struct repository *r, const char *prefix)
 		fprintf(stderr, _("No testable cummit found.\n"
 			"Maybe you started with bad path arguments?\n"));
 
-		return BISECT_NO_TESTABLE_cummit;
+		return BISECT_NO_TESTABLE_CUMMIT;
 	}
 
 	bisect_rev = &revs.cummits->item->object.oid;

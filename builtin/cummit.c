@@ -94,9 +94,9 @@ static const char *use_message_buffer;
 static struct lock_file index_lock; /* real index */
 static struct lock_file false_lock; /* used only for partial cummits */
 static enum {
-	cummit_AS_IS = 1,
-	cummit_NORMAL,
-	cummit_PARTIAL
+	CUMMIT_AS_IS = 1,
+	CUMMIT_NORMAL,
+	CUMMIT_PARTIAL
 } cummit_style;
 
 static const char *logfile, *force_author;
@@ -194,7 +194,7 @@ static void determine_whence(struct wt_status *s)
 	if (file_exists(git_path_merge_head(the_repository)))
 		whence = FROM_MERGE;
 	else if (!sequencer_determine_whence(the_repository, &whence))
-		whence = FROM_cummit;
+		whence = FROM_CUMMIT;
 	if (s)
 		s->whence = whence;
 }
@@ -211,12 +211,12 @@ static void status_init_config(struct wt_status *s, config_fn_t fn)
 static void rollback_index_files(void)
 {
 	switch (cummit_style) {
-	case cummit_AS_IS:
+	case CUMMIT_AS_IS:
 		break; /* nothing to do */
-	case cummit_NORMAL:
+	case CUMMIT_NORMAL:
 		rollback_lock_file(&index_lock);
 		break;
-	case cummit_PARTIAL:
+	case CUMMIT_PARTIAL:
 		rollback_lock_file(&index_lock);
 		rollback_lock_file(&false_lock);
 		break;
@@ -228,12 +228,12 @@ static int cummit_index_files(void)
 	int err = 0;
 
 	switch (cummit_style) {
-	case cummit_AS_IS:
+	case CUMMIT_AS_IS:
 		break; /* nothing to do */
-	case cummit_NORMAL:
+	case CUMMIT_NORMAL:
 		err = cummit_lock_file(&index_lock);
 		break;
-	case cummit_PARTIAL:
+	case CUMMIT_PARTIAL:
 		err = cummit_lock_file(&index_lock);
 		rollback_lock_file(&false_lock);
 		break;
@@ -413,7 +413,7 @@ static const char *prepare_index(const char **argv, const char *prefix,
 		} else
 			warning(_("Failed to update main cache tree"));
 
-		cummit_style = cummit_NORMAL;
+		cummit_style = CUMMIT_NORMAL;
 		ret = get_lock_file_path(&index_lock);
 		goto out;
 	}
@@ -437,7 +437,7 @@ static const char *prepare_index(const char **argv, const char *prefix,
 		update_main_cache_tree(WRITE_TREE_SILENT);
 		if (write_locked_index(&the_index, &index_lock, 0))
 			die(_("unable to write new_index file"));
-		cummit_style = cummit_NORMAL;
+		cummit_style = CUMMIT_NORMAL;
 		ret = get_lock_file_path(&index_lock);
 		goto out;
 	}
@@ -458,9 +458,9 @@ static const char *prepare_index(const char **argv, const char *prefix,
 		    || !cache_tree_fully_valid(active_cache_tree))
 			update_main_cache_tree(WRITE_TREE_SILENT);
 		if (write_locked_index(&the_index, &index_lock,
-				       cummit_LOCK | SKIP_IF_UNCHANGED))
+				       CUMMIT_LOCK | SKIP_IF_UNCHANGED))
 			die(_("unable to write new_index file"));
-		cummit_style = cummit_AS_IS;
+		cummit_style = CUMMIT_AS_IS;
 		ret = get_index_file();
 		goto out;
 	}
@@ -484,9 +484,9 @@ static const char *prepare_index(const char **argv, const char *prefix,
 	 * (B) on failure, rollback the real index;
 	 * In either case, rollback the false index.
 	 */
-	cummit_style = cummit_PARTIAL;
+	cummit_style = CUMMIT_PARTIAL;
 
-	if (whence != FROM_cummit) {
+	if (whence != FROM_CUMMIT) {
 		if (whence == FROM_MERGE)
 			die(_("cannot do a partial cummit during a merge."));
 		else if (is_from_cherry_pick(whence))
@@ -723,7 +723,7 @@ static int prepare_to_cummit(const char *index_file, const char *prefix,
 	struct strbuf sb = STRBUF_INIT;
 	const char *hook_arg1 = NULL;
 	const char *hook_arg2 = NULL;
-	int clean_message_contents = (cleanup_mode != cummit_MSG_CLEANUP_NONE);
+	int clean_message_contents = (cleanup_mode != CUMMIT_MSG_CLEANUP_NONE);
 	int old_display_comment_prefix;
 	int merge_contains_scissors = 0;
 	int invoked_hook;
@@ -823,7 +823,7 @@ static int prepare_to_cummit(const char *index_file, const char *prefix,
 		if (strbuf_read_file(&sb, git_path_merge_msg(the_repository), 0) < 0)
 			die_errno(_("could not read MERGE_MSG"));
 
-		if (cleanup_mode == cummit_MSG_CLEANUP_SCISSORS &&
+		if (cleanup_mode == CUMMIT_MSG_CLEANUP_SCISSORS &&
 		    wt_status_locate_end(sb.buf + merge_msg_start,
 					 sb.len - merge_msg_start) <
 				sb.len - merge_msg_start)
@@ -864,7 +864,7 @@ static int prepare_to_cummit(const char *index_file, const char *prefix,
 	if (s->fp == NULL)
 		die_errno(_("could not open '%s'"), git_path_cummit_editmsg());
 
-	/* Ignore status.displayCommentPrefix: we do need comments in cummit_EDITMSG. */
+	/* Ignore status.displayCommentPrefix: we do need comments in CUMMIT_EDITMSG. */
 	old_display_comment_prefix = s->display_comment_prefix;
 	s->display_comment_prefix = 1;
 
@@ -909,8 +909,8 @@ static int prepare_to_cummit(const char *index_file, const char *prefix,
 			  "with '%c' will be kept; you may remove them"
 			  " yourself if you want to.\n"
 			  "An empty message aborts the cummit.\n");
-		if (whence != FROM_cummit) {
-			if (cleanup_mode == cummit_MSG_CLEANUP_SCISSORS &&
+		if (whence != FROM_CUMMIT) {
+			if (cleanup_mode == CUMMIT_MSG_CLEANUP_SCISSORS &&
 				!merge_contains_scissors)
 				wt_status_add_cut_line(s->fp);
 			status_printf_ln(
@@ -929,12 +929,12 @@ static int prepare_to_cummit(const char *index_file, const char *prefix,
 		}
 
 		fprintf(s->fp, "\n");
-		if (cleanup_mode == cummit_MSG_CLEANUP_ALL)
+		if (cleanup_mode == CUMMIT_MSG_CLEANUP_ALL)
 			status_printf(s, GIT_COLOR_NORMAL, hint_cleanup_all, comment_line_char);
-		else if (cleanup_mode == cummit_MSG_CLEANUP_SCISSORS) {
-			if (whence == FROM_cummit && !merge_contains_scissors)
+		else if (cleanup_mode == CUMMIT_MSG_CLEANUP_SCISSORS) {
+			if (whence == FROM_CUMMIT && !merge_contains_scissors)
 				wt_status_add_cut_line(s->fp);
-		} else /* cummit_MSG_CLEANUP_SPACE, that is. */
+		} else /* CUMMIT_MSG_CLEANUP_SPACE, that is. */
 			status_printf(s, GIT_COLOR_NORMAL, hint_cleanup_space, comment_line_char);
 
 		/*
@@ -1226,7 +1226,7 @@ static void finalize_deferred_config(struct wt_status *s)
 }
 
 static void check_fixup_reword_options(int argc, const char *argv[]) {
-	if (whence != FROM_cummit) {
+	if (whence != FROM_CUMMIT) {
 		if (whence == FROM_MERGE)
 			die(_("You are in the middle of a merge -- cannot reword."));
 		else if (is_from_cherry_pick(whence))
@@ -1261,7 +1261,7 @@ static int parse_and_validate_options(int argc, const char *argv[],
 	/* Sanity check options */
 	if (amend && !current_head)
 		die(_("You have nothing to amend."));
-	if (amend && whence != FROM_cummit) {
+	if (amend && whence != FROM_CUMMIT) {
 		if (whence == FROM_MERGE)
 			die(_("You are in the middle of a merge -- cannot amend."));
 		else if (is_from_cherry_pick(whence))
@@ -1853,7 +1853,7 @@ int cmd_cummit(int argc, const char **argv, const char *prefix)
 		unsigned int flags = 0;
 
 		if (!current_head)
-			flags |= SUMMARY_INITIAL_cummit;
+			flags |= SUMMARY_INITIAL_CUMMIT;
 		if (author_date_is_interesting())
 			flags |= SUMMARY_SHOW_AUTHOR_DATE;
 		print_cummit_summary(the_repository, prefix,

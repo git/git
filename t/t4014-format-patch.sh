@@ -790,7 +790,7 @@ test_expect_success 'format-patch --in-reply-to' '
 
 test_expect_success 'format-patch --signoff' '
 	git format-patch -1 --signoff --stdout >out &&
-	grep "^Signed-off-by: $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL>" out
+	grep "^Signed-off-by: $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL>" out
 '
 
 test_expect_success 'format-patch --notes --signoff' '

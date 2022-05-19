@@ -841,7 +841,7 @@ static void handle_tag(const char *name, struct tag *tag)
 		case REWRITE:
 			if (tagged->type == OBJ_TAG && !mark_tags) {
 				die(_("Error: Cannot export nested tags unless --mark-tags is specified."));
-			} else if (tagged->type == OBJ_cummit) {
+			} else if (tagged->type == OBJ_CUMMIT) {
 				p = rewrite_cummit((struct cummit *)tagged);
 				if (!p) {
 					printf("reset %s\nfrom %s\n\n",
@@ -884,7 +884,7 @@ static void handle_tag(const char *name, struct tag *tag)
 static struct cummit *get_cummit(struct rev_cmdline_entry *e, char *full_name)
 {
 	switch (e->item->type) {
-	case OBJ_cummit:
+	case OBJ_CUMMIT:
 		return (struct cummit *)e->item;
 	case OBJ_TAG: {
 		struct tag *tag = (struct tag *)e->item;
@@ -938,7 +938,7 @@ static void get_tags_and_duplicates(struct rev_cmdline_info *info)
 		}
 
 		switch(cummit->object.type) {
-		case OBJ_cummit:
+		case OBJ_CUMMIT:
 			break;
 		case OBJ_BLOB:
 			export_blob(&cummit->object.oid);
@@ -978,7 +978,7 @@ static void handle_tags_and_duplicates(struct string_list *extras)
 		case OBJ_TAG:
 			handle_tag(name, (struct tag *)object);
 			break;
-		case OBJ_cummit:
+		case OBJ_CUMMIT:
 			if (anonymize)
 				name = anonymize_refname(name);
 			/* create refs pointing to already seen cummits */
@@ -1092,7 +1092,7 @@ static void import_marks(char *input_file, int check_exists)
 		if (type < 0)
 			die("object not found: %s", oid_to_hex(&oid));
 
-		if (type != OBJ_cummit)
+		if (type != OBJ_CUMMIT)
 			/* only cummits */
 			continue;
 

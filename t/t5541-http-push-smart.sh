@@ -345,7 +345,7 @@ test_expect_success 'http push gives sane defaults to reflog' '
 	test_cmp expect actual
 '
 
-test_expect_success 'http push respects GIT_cummitTER_* in reflog' '
+test_expect_success 'http push respects GIT_CUMMITTER_* in reflog' '
 	cd "$ROOT_PATH"/test_repo_clone &&
 	test_cummit custom-reflog-test &&
 	git push "$HTTPD_URL"/smart_custom_env/test_repo.git &&

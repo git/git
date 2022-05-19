@@ -203,7 +203,7 @@ test_expect_success 'shortlog --cummitter (internal)' '
 	git checkout --orphan side &&
 	git cummit --allow-empty -m one &&
 	git cummit --allow-empty -m two &&
-	GIT_cummitTER_NAME="Sin Nombre" git cummit --allow-empty -m three &&
+	GIT_CUMMITTER_NAME="Sin Nombre" git cummit --allow-empty -m three &&
 
 	cat >expect <<-\EOF &&
 	     2	C O Mitter
@@ -225,8 +225,8 @@ test_expect_success '--group=cummitter is the same as --cummitter' '
 
 test_expect_success 'shortlog --group=trailer:signed-off-by' '
 	git cummit --allow-empty -m foo -s &&
-	GIT_cummitTER_NAME="SOB One" \
-	GIT_cummitTER_EMAIL=sob@example.com \
+	GIT_CUMMITTER_NAME="SOB One" \
+	GIT_CUMMITTER_EMAIL=sob@example.com \
 		git cummit --allow-empty -m foo -s &&
 	git cummit --allow-empty --amend --no-edit -s &&
 	cat >expect <<-\EOF &&

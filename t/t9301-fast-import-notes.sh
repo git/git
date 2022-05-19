@@ -13,7 +13,7 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 test_tick
 cat >input <<INPUT_END
 cummit refs/heads/main
-cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 data <<cummit
 first cummit
 cummit
@@ -34,7 +34,7 @@ file baz/xyzzy in first cummit
 EOF
 
 cummit refs/heads/main
-cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 data <<cummit
 second cummit
 cummit
@@ -50,7 +50,7 @@ file baz/xyzzy in second cummit
 EOF
 
 cummit refs/heads/main
-cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 data <<cummit
 third cummit
 cummit
@@ -61,7 +61,7 @@ file foo in third cummit
 EOF
 
 cummit refs/heads/main
-cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 data <<cummit
 fourth cummit
 cummit
@@ -87,7 +87,7 @@ cummit1=$(git rev-parse "$cummit4~3")
 test_tick
 cat >input <<INPUT_END
 cummit refs/notes/test
-cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 data <<cummit
 first notes cummit
 cummit
@@ -125,7 +125,7 @@ test_tick
 cat >input <<INPUT_END
 feature notes
 cummit refs/notes/test
-cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 data <<cummit
 second notes cummit
 cummit
@@ -165,7 +165,7 @@ test_expect_success 'add notes with simple N command' '
 test_tick
 cat >input <<INPUT_END
 cummit refs/notes/test
-cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 data <<cummit
 third notes cummit
 cummit
@@ -215,7 +215,7 @@ test_expect_success 'update existing notes with N command' '
 test_tick
 cat >input <<INPUT_END
 cummit refs/notes/test
-cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 data <<cummit
 fourth notes cummit
 cummit
@@ -289,7 +289,7 @@ test_expect_success 'add concatenation notes with M command' '
 test_tick
 cat >input <<INPUT_END
 cummit refs/notes/test
-cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 data <<cummit
 fifth notes cummit
 cummit
@@ -317,7 +317,7 @@ test_expect_success 'verify that deleteall also removes notes' '
 test_tick
 cat >input <<INPUT_END
 cummit refs/notes/test
-cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 data <<cummit
 sixth notes cummit
 cummit
@@ -375,7 +375,7 @@ fast_import_cummits () {
 		cat >>"$my_append_to_file" <<INPUT_END
 cummit $my_ref
 mark :$my_i
-cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 data <<cummit
 cummit #$my_i
 cummit
@@ -399,7 +399,7 @@ fast_import_notes () {
 	test_tick
 	cat >>"$my_append_to_file" <<INPUT_END
 cummit $my_notes_ref
-cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 data <<cummit
 cummitting $my_num_cummits notes
 cummit
@@ -431,7 +431,7 @@ fast_import_notes "refs/notes/many_notes" $num_cummits input
 test_tick
 cat >>input <<INPUT_END
 cummit refs/notes/many_notes
-cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 data <<cummit
 cummitting some non-notes to the notes tree
 cummit
@@ -491,7 +491,7 @@ test_expect_success 'verify that lots of notes trigger a fanout scheme' '
 SP=" "
 cat >>input <<INPUT_END
 cummit refs/heads/other_cummits
-cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 data <<cummit
 cummit #$(($num_cummit + 1))
 cummit
@@ -503,7 +503,7 @@ file contents in cummit #$(($num_cummit + 1))
 EOF
 
 cummit refs/notes/other_notes
-cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 data <<cummit
 cummitting one more note on a tree imported from a previous notes tree
 cummit
@@ -556,7 +556,7 @@ test_expect_success 'verify that non-notes are untouched by a fanout change' '
 test_tick
 cat >input <<INPUT_END
 cummit refs/notes/many_notes
-cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 data <<cummit
 changing notes for the top three cummits
 cummit
@@ -609,7 +609,7 @@ remaining_notes=10
 test_tick
 cat >input <<INPUT_END
 cummit refs/notes/many_notes
-cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 data <<cummit
 removing all notes but $remaining_notes
 cummit

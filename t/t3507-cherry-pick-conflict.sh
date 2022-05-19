@@ -518,7 +518,7 @@ test_expect_success 'cummit after failed cherry-pick adds -s at the right place'
 	Signed-off-by: C O Mitter <cummitter@example.com>
 	# Conflicts:
 	EOF
-	grep -e "^# Conflicts:" -e "^Signed-off-by" .git/cummit_EDITMSG >actual &&
+	grep -e "^# Conflicts:" -e "^Signed-off-by" .git/CUMMIT_EDITMSG >actual &&
 	test_cmp expect actual &&
 
 	cat <<-\EOF >expected &&
@@ -547,7 +547,7 @@ test_expect_success 'cummit --amend -s places the sign-off at the right place' '
 	Signed-off-by: C O Mitter <cummitter@example.com>
 	Conflicts:
 	EOF
-	grep -e "^Conflicts:" -e "^Signed-off-by" .git/cummit_EDITMSG >actual &&
+	grep -e "^Conflicts:" -e "^Signed-off-by" .git/CUMMIT_EDITMSG >actual &&
 	test_cmp expect actual
 '
 

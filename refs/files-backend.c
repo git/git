@@ -35,7 +35,7 @@
  * Used as a flag in ref_update::flags when the lockfile needs to be
  * cummitted.
  */
-#define REF_NEEDS_cummit (1 << 6)
+#define REF_NEEDS_CUMMIT (1 << 6)
 
 /*
  * Used as a flag in ref_update::flags when the ref_update was via an
@@ -1787,7 +1787,7 @@ static int write_ref_to_lockfile(struct ref_lock *lock,
 			unlock_ref(lock);
 			return -1;
 		}
-		if (o->type != OBJ_cummit && is_branch(lock->ref_name)) {
+		if (o->type != OBJ_CUMMIT && is_branch(lock->ref_name)) {
 			strbuf_addf(
 				err,
 				"trying to write non-cummit object %s to branch '%s'",
@@ -2605,10 +2605,10 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 			ret = TRANSACTION_GENERIC_ERROR;
 			goto out;
 		} else {
-			update->flags |= REF_NEEDS_cummit;
+			update->flags |= REF_NEEDS_CUMMIT;
 		}
 	}
-	if (!(update->flags & REF_NEEDS_cummit)) {
+	if (!(update->flags & REF_NEEDS_CUMMIT)) {
 		/*
 		 * We didn't call write_ref_to_lockfile(), so
 		 * the lockfile is still open. Close it to
@@ -2871,7 +2871,7 @@ static int files_transaction_finish(struct ref_store *ref_store,
 		struct ref_update *update = transaction->updates[i];
 		struct ref_lock *lock = update->backend_data;
 
-		if (update->flags & REF_NEEDS_cummit ||
+		if (update->flags & REF_NEEDS_CUMMIT ||
 		    update->flags & REF_LOG_ONLY) {
 			if (files_log_ref_write(refs,
 						lock->ref_name,
@@ -2890,7 +2890,7 @@ static int files_transaction_finish(struct ref_store *ref_store,
 				goto cleanup;
 			}
 		}
-		if (update->flags & REF_NEEDS_cummit) {
+		if (update->flags & REF_NEEDS_CUMMIT) {
 			clear_loose_ref_cache(refs);
 			if (cummit_ref(lock)) {
 				strbuf_addf(err, "couldn't set '%s'", lock->ref_name);

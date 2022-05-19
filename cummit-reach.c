@@ -575,13 +575,13 @@ int ref_newer(const struct object_id *new_oid, const struct object_id *old_oid)
 	 */
 	o = deref_tag(the_repository, parse_object(the_repository, old_oid),
 		      NULL, 0);
-	if (!o || o->type != OBJ_cummit)
+	if (!o || o->type != OBJ_CUMMIT)
 		return 0;
 	old_cummit = (struct cummit *) o;
 
 	o = deref_tag(the_repository, parse_object(the_repository, new_oid),
 		      NULL, 0);
-	if (!o || o->type != OBJ_cummit)
+	if (!o || o->type != OBJ_CUMMIT)
 		return 0;
 	new_cummit = (struct cummit *) o;
 
@@ -737,7 +737,7 @@ int can_all_from_reach_with_flag(struct object_array *from,
 
 		from_one = deref_tag(the_repository, from_one,
 				     "a from object", 0);
-		if (!from_one || from_one->type != OBJ_cummit) {
+		if (!from_one || from_one->type != OBJ_CUMMIT) {
 			/*
 			 * no way to tell if this is reachable by
 			 * looking at the ancestry chain alone, so

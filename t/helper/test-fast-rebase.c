@@ -36,7 +36,7 @@ static struct cummit *peel_cummittish(const char *name)
 	if (get_oid(name, &oid))
 		return NULL;
 	obj = parse_object(the_repository, &oid);
-	return (struct cummit *)peel_to_type(name, 0, obj, OBJ_cummit);
+	return (struct cummit *)peel_to_type(name, 0, obj, OBJ_CUMMIT);
 }
 
 static char *get_author(const char *message)
@@ -219,7 +219,7 @@ int cmd__fast_rebase(int argc, const char **argv)
 		}
 	}
 	if (write_locked_index(&the_index, &lock,
-			       cummit_LOCK | SKIP_IF_UNCHANGED))
+			       CUMMIT_LOCK | SKIP_IF_UNCHANGED))
 		die(_("unable to write %s"), get_index_file());
 	return (result.clean == 0);
 }

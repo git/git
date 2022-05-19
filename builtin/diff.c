@@ -535,7 +535,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 		obj = deref_tag(the_repository, obj, NULL, 0);
 		if (!obj)
 			die(_("invalid object '%s' given."), name);
-		if (obj->type == OBJ_cummit)
+		if (obj->type == OBJ_CUMMIT)
 			obj = &get_cummit_tree(((struct cummit *)obj))->object;
 
 		if (obj->type == OBJ_TREE) {

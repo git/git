@@ -238,10 +238,10 @@ test_expect_success GPG 'fail without key and heed user.signingkey' '
 
 	test_config user.email hasnokey@nowhere.com &&
 	(
-		sane_unset GIT_cummitTER_EMAIL &&
+		sane_unset GIT_CUMMITTER_EMAIL &&
 		test_must_fail git push --signed dst noop ff +noff
 	) &&
-	test_config user.signingkey $GIT_cummitTER_EMAIL &&
+	test_config user.signingkey $GIT_CUMMITTER_EMAIL &&
 	git push --signed dst noop ff +noff &&
 
 	(
@@ -288,10 +288,10 @@ test_expect_success GPGSM 'fail without key and heed user.signingkey x509' '
 	test_config user.email hasnokey@nowhere.com &&
 	test_config user.signingkey "" &&
 	(
-		sane_unset GIT_cummitTER_EMAIL &&
+		sane_unset GIT_CUMMITTER_EMAIL &&
 		test_must_fail git push --signed dst noop ff +noff
 	) &&
-	test_config user.signingkey $GIT_cummitTER_EMAIL &&
+	test_config user.signingkey $GIT_CUMMITTER_EMAIL &&
 	git push --signed dst noop ff +noff &&
 
 	(
@@ -342,7 +342,7 @@ test_expect_success GPGSSH 'fail without key and heed user.signingkey ssh' '
 	test_config gpg.format ssh &&
 	test_config user.signingkey "" &&
 	(
-		sane_unset GIT_cummitTER_EMAIL &&
+		sane_unset GIT_CUMMITTER_EMAIL &&
 		test_must_fail git push --signed dst noop ff +noff
 	) &&
 	test_config user.signingkey "${GPGSSH_KEY_PRIMARY}" &&

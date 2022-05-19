@@ -204,7 +204,7 @@ struct bloom_filter *get_or_compute_bloom_filter(struct repository *r,
 
 	if (!filter->data) {
 		load_cummit_graph_info(r, c);
-		if (cummit_graph_position(c) != cummit_NOT_FROM_GRAPH)
+		if (cummit_graph_position(c) != CUMMIT_NOT_FROM_GRAPH)
 			load_bloom_filter_from_graph(r->objects->cummit_graph, filter, c);
 	}
 

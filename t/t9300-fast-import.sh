@@ -67,7 +67,7 @@ test_expect_success 'A: create pack from stdin' '
 	$file4_data
 	cummit refs/heads/main
 	mark :5
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	initial
 	cummit
@@ -129,8 +129,8 @@ test_expect_success 'A: verify pack' '
 
 test_expect_success 'A: verify cummit' '
 	cat >expect <<-EOF &&
-	author $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	author $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 
 	initial
 	EOF
@@ -268,7 +268,7 @@ test_expect_success 'A: verify marks import does not crash' '
 	test_tick &&
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/verify--import-marks
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	recreate from :5
 	cummit
@@ -306,7 +306,7 @@ test_expect_success 'A: export marks with large values' '
 
 	cat >input.cummit <<-EOF &&
 	cummit refs/heads/verify--dump-marks
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	test the sparse array dumping routines with exponentially growing marks
 	cummit
@@ -362,7 +362,7 @@ test_expect_success 'B: fail on invalid blob sha1' '
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/branch
 	mark :1
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	corrupt
 	cummit
@@ -379,7 +379,7 @@ test_expect_success 'B: fail on invalid blob sha1' '
 test_expect_success 'B: accept branch name "TEMP_TAG"' '
 	cat >input <<-INPUT_END &&
 	cummit TEMP_TAG
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	tag base
 	cummit
@@ -399,7 +399,7 @@ test_expect_success 'B: accept branch name "TEMP_TAG"' '
 test_expect_success 'B: accept empty cummitter' '
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/empty-cummitter-1
-	cummitter  <> $GIT_cummitTER_DATE
+	cummitter  <> $GIT_CUMMITTER_DATE
 	data <<cummit
 	empty cummit
 	cummit
@@ -417,7 +417,7 @@ test_expect_success 'B: accept empty cummitter' '
 test_expect_success 'B: reject invalid timezone' '
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/invalid-timezone
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> 1234567890 +051800
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> 1234567890 +051800
 	data <<cummit
 	empty cummit
 	cummit
@@ -430,7 +430,7 @@ test_expect_success 'B: reject invalid timezone' '
 test_expect_success 'B: accept invalid timezone with raw-permissive' '
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/invalid-timezone
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> 1234567890 +051800
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> 1234567890 +051800
 	data <<cummit
 	empty cummit
 	cummit
@@ -445,7 +445,7 @@ test_expect_success 'B: accept invalid timezone with raw-permissive' '
 test_expect_success 'B: accept and fixup cummitter with no name' '
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/empty-cummitter-2
-	cummitter <a@b.com> $GIT_cummitTER_DATE
+	cummitter <a@b.com> $GIT_CUMMITTER_DATE
 	data <<cummit
 	empty cummit
 	cummit
@@ -463,7 +463,7 @@ test_expect_success 'B: accept and fixup cummitter with no name' '
 test_expect_success 'B: fail on invalid cummitter (1)' '
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/invalid-cummitter
-	cummitter Name email> $GIT_cummitTER_DATE
+	cummitter Name email> $GIT_CUMMITTER_DATE
 	data <<cummit
 	empty cummit
 	cummit
@@ -476,7 +476,7 @@ test_expect_success 'B: fail on invalid cummitter (1)' '
 test_expect_success 'B: fail on invalid cummitter (2)' '
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/invalid-cummitter
-	cummitter Name <e<mail> $GIT_cummitTER_DATE
+	cummitter Name <e<mail> $GIT_CUMMITTER_DATE
 	data <<cummit
 	empty cummit
 	cummit
@@ -489,7 +489,7 @@ test_expect_success 'B: fail on invalid cummitter (2)' '
 test_expect_success 'B: fail on invalid cummitter (3)' '
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/invalid-cummitter
-	cummitter Name <email>> $GIT_cummitTER_DATE
+	cummitter Name <email>> $GIT_CUMMITTER_DATE
 	data <<cummit
 	empty cummit
 	cummit
@@ -502,7 +502,7 @@ test_expect_success 'B: fail on invalid cummitter (3)' '
 test_expect_success 'B: fail on invalid cummitter (4)' '
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/invalid-cummitter
-	cummitter Name <email $GIT_cummitTER_DATE
+	cummitter Name <email $GIT_CUMMITTER_DATE
 	data <<cummit
 	empty cummit
 	cummit
@@ -515,7 +515,7 @@ test_expect_success 'B: fail on invalid cummitter (4)' '
 test_expect_success 'B: fail on invalid cummitter (5)' '
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/invalid-cummitter
-	cummitter Name<email> $GIT_cummitTER_DATE
+	cummitter Name<email> $GIT_CUMMITTER_DATE
 	data <<cummit
 	empty cummit
 	cummit
@@ -536,7 +536,7 @@ test_expect_success 'C: incremental import create pack from stdin' '
 	test_tick &&
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/branch
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	second
 	cummit
@@ -564,8 +564,8 @@ test_expect_success 'C: validate reuse existing blob' '
 test_expect_success 'C: verify cummit' '
 	cat >expect <<-EOF &&
 	parent $(git rev-parse --verify main^0)
-	author $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	author $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 
 	second
 	EOF
@@ -593,7 +593,7 @@ test_expect_success 'D: inline data in cummit' '
 	test_tick &&
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/branch
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	third
 	cummit
@@ -650,7 +650,7 @@ test_expect_success 'E: rfc2822 date, --date-format=raw' '
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/branch
 	author $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> Tue Feb 6 11:22:18 2007 -0500
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> Tue Feb 6 12:35:02 2007 -0500
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> Tue Feb 6 12:35:02 2007 -0500
 	data <<cummit
 	RFC 2822 type date
 	cummit
@@ -672,7 +672,7 @@ test_expect_success 'E: verify pack' '
 test_expect_success 'E: verify cummit' '
 	cat >expect <<-EOF &&
 	author $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> 1170778938 -0500
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> 1170783302 -0500
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> 1170783302 -0500
 
 	RFC 2822 type date
 	EOF
@@ -689,7 +689,7 @@ test_expect_success 'F: non-fast-forward update skips' '
 	test_tick &&
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/branch
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	losing things already?
 	cummit
@@ -714,8 +714,8 @@ test_expect_success 'F: verify other cummit' '
 	cat >expect <<-EOF &&
 	tree $(git rev-parse branch~1^{tree})
 	parent $(git rev-parse branch~1)
-	author $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	author $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 
 	losing things already?
 	EOF
@@ -732,7 +732,7 @@ test_expect_success 'G: non-fast-forward update forced' '
 	test_tick &&
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/branch
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	losing things already?
 	cummit
@@ -760,7 +760,7 @@ test_expect_success 'H: deletall, add 1' '
 	test_tick &&
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/H
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	third
 	cummit
@@ -812,7 +812,7 @@ test_expect_success 'H: verify file' '
 test_expect_success 'I: export-pack-edges' '
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/export-boundary
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	we have a border.  its only 40 characters wide.
 	cummit
@@ -838,7 +838,7 @@ test_expect_success 'I: verify edge list' '
 test_expect_success 'J: reset existing branch creates empty cummit' '
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/J
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	create J
 	cummit
@@ -848,7 +848,7 @@ test_expect_success 'J: reset existing branch creates empty cummit' '
 	reset refs/heads/J
 
 	cummit refs/heads/J
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	initialize J
 	cummit
@@ -881,7 +881,7 @@ test_expect_success 'J: tag must fail on empty branch' '
 test_expect_success 'K: reinit branch with from' '
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/K
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	create K
 	cummit
@@ -889,7 +889,7 @@ test_expect_success 'K: reinit branch with from' '
 	from refs/heads/branch
 
 	cummit refs/heads/K
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	redo K
 	cummit
@@ -923,7 +923,7 @@ test_expect_success 'L: verify internal tree sorting' '
 	EOF
 
 	cummit refs/heads/L
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	create L
 	cummit
@@ -933,7 +933,7 @@ test_expect_success 'L: verify internal tree sorting' '
 	M 644 :1 ba
 
 	cummit refs/heads/L
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	update L
 	cummit
@@ -1003,7 +1003,7 @@ test_expect_success 'M: rename file in same subdirectory' '
 	test_tick &&
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/M1
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	file rename
 	cummit
@@ -1024,7 +1024,7 @@ test_expect_success 'M: rename file in same subdirectory' '
 test_expect_success 'M: rename file to new subdirectory' '
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/M2
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	file rename
 	cummit
@@ -1045,7 +1045,7 @@ test_expect_success 'M: rename file to new subdirectory' '
 test_expect_success 'M: rename subdirectory to new subdirectory' '
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/M3
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	file rename
 	cummit
@@ -1066,7 +1066,7 @@ test_expect_success 'M: rename subdirectory to new subdirectory' '
 test_expect_success 'M: rename root to subdirectory' '
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/M4
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	rename root
 	cummit
@@ -1096,7 +1096,7 @@ test_expect_success 'N: copy file in same subdirectory' '
 	test_tick &&
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/N1
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	file copy
 	cummit
@@ -1117,7 +1117,7 @@ test_expect_success 'N: copy file in same subdirectory' '
 test_expect_success 'N: copy then modify subdirectory' '
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/N2
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	clean directory copy
 	cummit
@@ -1126,7 +1126,7 @@ test_expect_success 'N: copy then modify subdirectory' '
 	C file2 file3
 
 	cummit refs/heads/N2
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	modify directory copy
 	cummit
@@ -1151,7 +1151,7 @@ test_expect_success 'N: copy then modify subdirectory' '
 test_expect_success 'N: copy dirty subdirectory' '
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/N3
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	dirty directory copy
 	cummit
@@ -1179,7 +1179,7 @@ test_expect_success 'N: copy directory by id' '
 	subdir=$(git rev-parse refs/heads/branch^0:file2) &&
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/N4
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	copy by tree hash
 	cummit
@@ -1204,7 +1204,7 @@ test_expect_success PIPE 'N: read and copy directory' '
 		exec <backflow &&
 		cat <<-EOF &&
 		cummit refs/heads/N4
-		cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+		cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 		data <<cummit
 		copy by tree hash, part 2
 		cummit
@@ -1233,7 +1233,7 @@ test_expect_success PIPE 'N: empty directory reads as missing' '
 		exec <backflow &&
 		cat <<-EOF &&
 		cummit refs/heads/read-empty
-		cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+		cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 		data <<cummit
 		read "empty" (missing) directory
 		cummit
@@ -1271,7 +1271,7 @@ test_expect_success 'N: copy root directory by tree hash' '
 	root=$(git rev-parse refs/heads/branch^0^{tree}) &&
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/N6
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	copy root directory by tree hash
 	cummit
@@ -1294,7 +1294,7 @@ test_expect_success 'N: copy root by path' '
 	EOF
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/N-copy-root-path
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	copy root directory by (empty) path
 	cummit
@@ -1318,7 +1318,7 @@ test_expect_success 'N: delete directory by copying' '
 	empty_tree=$(git mktree </dev/null) &&
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/N-delete
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	collect data to be deleted
 	cummit
@@ -1335,7 +1335,7 @@ test_expect_success 'N: delete directory by copying' '
 	M 040000 $empty_tree foo/bar/quuux
 
 	cummit refs/heads/N-delete
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	delete subdirectory
 	cummit
@@ -1358,7 +1358,7 @@ test_expect_success 'N: modify copied tree' '
 	subdir=$(git rev-parse refs/heads/branch^0:file2) &&
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/N5
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	copy by tree hash
 	cummit
@@ -1367,7 +1367,7 @@ test_expect_success 'N: modify copied tree' '
 	M 040000 $subdir file3
 
 	cummit refs/heads/N5
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	modify directory copy
 	cummit
@@ -1386,7 +1386,7 @@ test_expect_success 'N: reject foo/ syntax' '
 	subdir=$(git rev-parse refs/heads/branch^0:file2) &&
 	test_must_fail git fast-import <<-INPUT_END
 	cummit refs/heads/N5B
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	copy with invalid syntax
 	cummit
@@ -1399,7 +1399,7 @@ test_expect_success 'N: reject foo/ syntax' '
 test_expect_success 'N: reject foo/ syntax in copy source' '
 	test_must_fail git fast-import <<-INPUT_END
 	cummit refs/heads/N5C
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	copy with invalid syntax
 	cummit
@@ -1412,7 +1412,7 @@ test_expect_success 'N: reject foo/ syntax in copy source' '
 test_expect_success 'N: reject foo/ syntax in rename source' '
 	test_must_fail git fast-import <<-INPUT_END
 	cummit refs/heads/N5D
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	rename with invalid syntax
 	cummit
@@ -1425,7 +1425,7 @@ test_expect_success 'N: reject foo/ syntax in rename source' '
 test_expect_success 'N: reject foo/ syntax in ls argument' '
 	test_must_fail git fast-import <<-INPUT_END
 	cummit refs/heads/N5E
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	copy with invalid syntax
 	cummit
@@ -1440,7 +1440,7 @@ test_expect_success 'N: copy to root by id and modify' '
 	echo hello >expect.bar &&
 	git fast-import <<-SETUP_END &&
 	cummit refs/heads/N7
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	hello, tree
 	cummit
@@ -1455,7 +1455,7 @@ test_expect_success 'N: copy to root by id and modify' '
 	tree=$(git rev-parse --verify N7:) &&
 	git fast-import <<-INPUT_END &&
 	cummit refs/heads/N8
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	copy to root by id and modify
 	cummit
@@ -1476,7 +1476,7 @@ test_expect_success 'N: extract subtree' '
 	branch=$(git rev-parse --verify refs/heads/branch^{tree}) &&
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/N9
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	extract subtree branch:newdir
 	cummit
@@ -1493,7 +1493,7 @@ test_expect_success 'N: modify subtree, extract it, and modify again' '
 	echo hello, world >expect.qux &&
 	git fast-import <<-SETUP_END &&
 	cummit refs/heads/N10
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	hello, tree
 	cummit
@@ -1508,7 +1508,7 @@ test_expect_success 'N: modify subtree, extract it, and modify again' '
 	tree=$(git rev-parse --verify N10:) &&
 	git fast-import <<-INPUT_END &&
 	cummit refs/heads/N11
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	copy to root by id and modify
 	cummit
@@ -1537,7 +1537,7 @@ test_expect_success 'O: comments are all skipped' '
 	#we will
 	cummit refs/heads/O1
 	# -- ignore all of this text
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	dirty directory copy
 	cummit
@@ -1570,7 +1570,7 @@ test_expect_success 'O: comments are all skipped' '
 test_expect_success 'O: blank lines not necessary after data commands' '
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/O2
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	dirty directory copy
 	cummit
@@ -1595,25 +1595,25 @@ test_expect_success 'O: repack before next test' '
 test_expect_success 'O: blank lines not necessary after other commands' '
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/O3
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	zstring
 	cummit
 	cummit refs/heads/O3
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	zof
 	cummit
 	checkpoint
 	cummit refs/heads/O3
 	mark :5
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	zempty
 	cummit
 	checkpoint
 	cummit refs/heads/O3
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	zcummits
 	cummit
@@ -1643,24 +1643,24 @@ test_expect_success 'O: blank lines not necessary after other commands' '
 test_expect_success 'O: progress outputs as requested by input' '
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/O4
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	zstring
 	cummit
 	cummit refs/heads/O4
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	zof
 	cummit
 	progress Two cummits down, 2 to go!
 	cummit refs/heads/O4
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	zempty
 	cummit
 	progress Three cummits down, 1 to go!
 	cummit refs/heads/O4
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	zcummits
 	cummit
@@ -1685,7 +1685,7 @@ test_expect_success 'P: superproject & submodule mix' '
 	reset refs/heads/sub
 	cummit refs/heads/sub
 	mark :2
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data 12
 	sub_initial
 	M 100644 :1 file
@@ -1700,7 +1700,7 @@ test_expect_success 'P: superproject & submodule mix' '
 
 	cummit refs/heads/subuse1
 	mark :4
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data 8
 	initial
 	from refs/heads/main
@@ -1715,7 +1715,7 @@ test_expect_success 'P: superproject & submodule mix' '
 
 	cummit refs/heads/sub
 	mark :6
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data 11
 	sub_second
 	from :2
@@ -1723,7 +1723,7 @@ test_expect_success 'P: superproject & submodule mix' '
 
 	cummit refs/heads/subuse1
 	mark :7
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data 7
 	second
 	from :4
@@ -1760,7 +1760,7 @@ test_expect_success 'P: verbatim SHA gitlinks' '
 
 	cummit refs/heads/subuse2
 	mark :2
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data 8
 	initial
 	from refs/heads/main
@@ -1769,7 +1769,7 @@ test_expect_success 'P: verbatim SHA gitlinks' '
 
 	cummit refs/heads/subuse2
 	mark :3
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data 7
 	second
 	from :2
@@ -1789,7 +1789,7 @@ test_expect_success 'P: fail on inline gitlink' '
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/subuse3
 	mark :1
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	corrupt
 	cummit
@@ -1816,7 +1816,7 @@ test_expect_success 'P: fail on blob mark in gitlink' '
 
 	cummit refs/heads/subuse3
 	mark :2
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	corrupt
 	cummit
@@ -1851,7 +1851,7 @@ test_expect_success 'Q: cummit notes' '
 
 	cummit refs/heads/notes-test
 	mark :3
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	first (:3)
 	cummit
@@ -1864,7 +1864,7 @@ test_expect_success 'Q: cummit notes' '
 	$file4_data
 	cummit refs/heads/notes-test
 	mark :5
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	second (:5)
 	cummit
@@ -1873,7 +1873,7 @@ test_expect_success 'Q: cummit notes' '
 
 	cummit refs/heads/notes-test
 	mark :6
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	third (:6)
 	cummit
@@ -1902,7 +1902,7 @@ test_expect_success 'Q: cummit notes' '
 
 	cummit refs/notes/foobar
 	mark :9
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	notes (:9)
 	cummit
@@ -1916,7 +1916,7 @@ test_expect_success 'Q: cummit notes' '
 
 	cummit refs/notes/foobar
 	mark :10
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	notes (:10)
 	cummit
@@ -1928,7 +1928,7 @@ test_expect_success 'Q: cummit notes' '
 
 	cummit refs/notes/foobar2
 	mark :11
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	notes (:11)
 	cummit
@@ -1940,7 +1940,7 @@ test_expect_success 'Q: cummit notes' '
 
 	cummit refs/notes/foobar
 	mark :12
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	notes (:12)
 	cummit
@@ -1967,8 +1967,8 @@ test_expect_success 'Q: verify first cummit' '
 	cummit3=$(git rev-parse notes-test) &&
 
 	cat >expect <<-EOF &&
-	author $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	author $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 
 	first (:3)
 	EOF
@@ -1979,8 +1979,8 @@ test_expect_success 'Q: verify first cummit' '
 test_expect_success 'Q: verify second cummit' '
 	cat >expect <<-EOF &&
 	parent $cummit1
-	author $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	author $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 
 	second (:5)
 	EOF
@@ -1991,8 +1991,8 @@ test_expect_success 'Q: verify second cummit' '
 test_expect_success 'Q: verify third cummit' '
 	cat >expect <<-EOF &&
 	parent $cummit2
-	author $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	author $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 
 	third (:6)
 	EOF
@@ -2002,8 +2002,8 @@ test_expect_success 'Q: verify third cummit' '
 
 test_expect_success 'Q: verify first notes cummit' '
 	cat >expect <<-EOF &&
-	author $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	author $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 
 	notes (:9)
 	EOF
@@ -2043,8 +2043,8 @@ test_expect_success 'Q: verify first note for third cummit' '
 test_expect_success 'Q: verify second notes cummit' '
 	cat >expect <<-EOF &&
 	parent $(git rev-parse --verify refs/notes/foobar~2)
-	author $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	author $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 
 	notes (:10)
 	EOF
@@ -2083,8 +2083,8 @@ test_expect_success 'Q: verify first note for third cummit' '
 
 test_expect_success 'Q: verify third notes cummit' '
 	cat >expect <<-EOF &&
-	author $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	author $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 
 	notes (:11)
 	EOF
@@ -2110,8 +2110,8 @@ test_expect_success 'Q: verify third note for first cummit' '
 test_expect_success 'Q: verify fourth notes cummit' '
 	cat >expect <<-EOF &&
 	parent $(git rev-parse --verify refs/notes/foobar^)
-	author $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	author $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 
 	notes (:12)
 	EOF
@@ -2139,7 +2139,7 @@ test_expect_success 'Q: deny note on empty branch' '
 	reset refs/heads/Q0
 
 	cummit refs/heads/note-Q0
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	Note for an empty branch.
 	cummit
@@ -2549,7 +2549,7 @@ test_expect_success PIPE 'R: copy using cat-file' '
 
 	mkfifo blobs &&
 	(
-		export GIT_cummitTER_NAME GIT_cummitTER_EMAIL GIT_cummitTER_DATE &&
+		export GIT_CUMMITTER_NAME GIT_CUMMITTER_EMAIL GIT_CUMMITTER_DATE &&
 		cat <<-\EOF &&
 		feature cat-blob
 		blob
@@ -2569,7 +2569,7 @@ test_expect_success PIPE 'R: copy using cat-file' '
 
 		cat <<-EOF &&
 		cummit refs/heads/copied
-		cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+		cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 		data <<cummit
 		copy big file as file3
 		cummit
@@ -2599,7 +2599,7 @@ test_expect_success PIPE 'R: print blob mid-cummit' '
 		A blob from _before_ the cummit.
 		BLOB
 		cummit refs/heads/temporary
-		cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+		cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 		data <<cummit
 		Empty cummit
 		cummit
@@ -2625,7 +2625,7 @@ test_expect_success PIPE 'R: print staged blob within cummit' '
 		cat <<-EOF &&
 		feature cat-blob
 		cummit refs/heads/within
-		cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+		cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 		data <<cummit
 		Empty cummit
 		cummit
@@ -2689,7 +2689,7 @@ test_expect_success 'R: terminating "done" within cummit' '
 	EOF
 	git fast-import <<-EOF &&
 	cummit refs/heads/done-ends
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<EOT
 	cummit terminated by "done" command
 	EOT
@@ -2757,7 +2757,7 @@ test_expect_success 'R: blob bigger than threshold' '
 	test-tool genrandom bar $blobsize >expect &&
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/big-file
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	R - big file
 	cummit
@@ -2835,7 +2835,7 @@ test_expect_success 'S: initialize for S tests' '
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/S
 	mark :301
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	cummit 1
 	cummit
@@ -2846,7 +2846,7 @@ test_expect_success 'S: initialize for S tests' '
 
 	cummit refs/heads/S
 	mark :302
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	cummit 2
 	cummit
@@ -2878,7 +2878,7 @@ test_expect_success 'S: initialize for S tests' '
 test_expect_success 'S: filemodify with garbage after mark must fail' '
 	test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
 	cummit refs/heads/S
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	cummit N
 	cummit
@@ -2891,7 +2891,7 @@ test_expect_success 'S: filemodify with garbage after mark must fail' '
 test_expect_success 'S: filemodify with garbage after inline must fail' '
 	test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
 	cummit refs/heads/S
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	cummit N
 	cummit
@@ -2907,7 +2907,7 @@ test_expect_success 'S: filemodify with garbage after sha1 must fail' '
 	sha1=$(grep :403 marks | cut -d\  -f2) &&
 	test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
 	cummit refs/heads/S
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	cummit N
 	cummit
@@ -2922,7 +2922,7 @@ test_expect_success 'S: filemodify with garbage after sha1 must fail' '
 test_expect_success 'S: notemodify with garbage after mark dataref must fail' '
 	test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
 	cummit refs/heads/S
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	cummit S note dataref markref
 	cummit
@@ -2934,7 +2934,7 @@ test_expect_success 'S: notemodify with garbage after mark dataref must fail' '
 test_expect_success 'S: notemodify with garbage after inline dataref must fail' '
 	test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
 	cummit refs/heads/S
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	cummit S note dataref inline
 	cummit
@@ -2950,7 +2950,7 @@ test_expect_success 'S: notemodify with garbage after sha1 dataref must fail' '
 	sha1=$(grep :202 marks | cut -d\  -f2) &&
 	test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
 	cummit refs/heads/S
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	cummit S note dataref sha1
 	cummit
@@ -2965,7 +2965,7 @@ test_expect_success 'S: notemodify with garbage after sha1 dataref must fail' '
 test_expect_success 'S: notemodify with garbage after mark cummit-ish must fail' '
 	test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
 	cummit refs/heads/Snotes
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	cummit S note cummit-ish
 	cummit
@@ -2982,7 +2982,7 @@ test_expect_success 'S: from with garbage after mark must fail' '
 	git fast-import --import-marks=marks --export-marks=marks <<-EOF 2>err &&
 	cummit refs/heads/S2
 	mark :303
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	cummit 3
 	cummit
@@ -2995,7 +2995,7 @@ test_expect_success 'S: from with garbage after mark must fail' '
 	git fast-import --import-marks=marks --export-marks=marks <<-EOF &&
 	cummit refs/heads/S2
 	mark :303
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	cummit 3
 	cummit
@@ -3015,7 +3015,7 @@ test_expect_success 'S: merge with garbage after mark must fail' '
 	test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
 	cummit refs/heads/S
 	mark :304
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	merge 4
 	cummit
@@ -3033,7 +3033,7 @@ test_expect_success 'S: tag with garbage after mark must fail' '
 	test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
 	tag refs/tags/Stag
 	from :302x
-	tagger $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	tagger $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<TAG
 	tag S
 	TAG
@@ -3110,7 +3110,7 @@ test_expect_success 'T: empty reset doesnt delete branch' '
 test_expect_success 'U: initialize for U tests' '
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/U
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	test setup
 	cummit
@@ -3138,7 +3138,7 @@ test_expect_success 'U: initialize for U tests' '
 test_expect_success 'U: filedelete file succeeds' '
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/U
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	delete good/night.txt
 	cummit
@@ -3163,7 +3163,7 @@ test_expect_success 'U: validate file delete result' '
 test_expect_success 'U: filedelete directory succeeds' '
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/U
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	delete good dir
 	cummit
@@ -3188,7 +3188,7 @@ test_expect_success 'U: validate directory delete result' '
 test_expect_success 'U: filedelete root succeeds' '
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/U
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data <<cummit
 	must succeed
 	cummit
@@ -3317,7 +3317,7 @@ test_expect_success PIPE 'V: checkpoint updates refs and marks after cummit' '
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/V
 	mark :1
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data 0
 	from refs/heads/U
 
@@ -3338,7 +3338,7 @@ test_expect_success PIPE 'V: checkpoint updates refs and marks after cummit (no 
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/V2
 	mark :2
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data 0
 	from refs/heads/U
 
@@ -3357,7 +3357,7 @@ test_expect_success PIPE 'V: checkpoint updates tags after tag' '
 	cat >input <<-INPUT_END &&
 	tag Vtag
 	from refs/heads/V
-	tagger $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	tagger $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	data 0
 
 	INPUT_END
@@ -3412,7 +3412,7 @@ test_expect_success 'X: handling encoding' '
 	test_tick &&
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/encoding
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 	encoding iso-8859-7
 	data <<cummit
 	INPUT_END

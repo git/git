@@ -366,13 +366,13 @@ the tag object affects, for example, the ordering of tags in the
 gitweb interface.
 
 To set the date used in future tag objects, set the environment
-variable GIT_cummitTER_DATE (see the later discussion of possible
+variable GIT_CUMMITTER_DATE (see the later discussion of possible
 values; the most common form is "YYYY-MM-DD HH:MM").
 
 For example:
 
 ------------
-$ GIT_cummitTER_DATE="2006-10-02 10:31" git tag -s v1.0.1
+$ GIT_CUMMITTER_DATE="2006-10-02 10:31" git tag -s v1.0.1
 ------------
 
 include::date-formats.txt[]

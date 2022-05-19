@@ -345,7 +345,7 @@ static int open_istream_pack_non_delta(struct git_istream *st,
 	switch (in_pack_type) {
 	default:
 		return -1; /* we do not do deltas for now */
-	case OBJ_cummit:
+	case OBJ_CUMMIT:
 	case OBJ_TREE:
 	case OBJ_BLOB:
 	case OBJ_TAG:

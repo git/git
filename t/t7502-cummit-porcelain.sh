@@ -158,7 +158,7 @@ test_expect_success 'sign off' '
 	git cummit -s -m "thank you" &&
 	git cat-file commit HEAD >cummit.msg &&
 	sed -ne "s/Signed-off-by: //p" cummit.msg >actual &&
-	git var GIT_cummitTER_IDENT >ident &&
+	git var GIT_CUMMITTER_IDENT >ident &&
 	sed -e "s/>.*/>/" ident >expected &&
 	test_cmp expected actual
 
@@ -603,7 +603,7 @@ test_expect_success 'cleanup cummit messages (strip option,-F,-e)' '
 	echo >>negative &&
 	test_write_lines "" "sample" "" >text &&
 	git cummit -e -F text -a &&
-	head -n 4 .git/cummit_EDITMSG >actual
+	head -n 4 .git/CUMMIT_EDITMSG >actual
 '
 
 echo "sample
@@ -689,27 +689,27 @@ test_expect_success 'message shows author when it is not equal to cummitter' '
 	git cummit -e -m "sample" -a &&
 	test_i18ngrep \
 	  "^# Author: *A U Thor <author@example.com>\$" \
-	  .git/cummit_EDITMSG
+	  .git/CUMMIT_EDITMSG
 '
 
 test_expect_success 'message shows date when it is explicitly set' '
 	git cummit --allow-empty -e -m foo --date="2010-01-02T03:04:05" &&
 	test_i18ngrep \
 	  "^# Date: *Sat Jan 2 03:04:05 2010 +0000" \
-	  .git/cummit_EDITMSG
+	  .git/CUMMIT_EDITMSG
 '
 
 test_expect_success AUTOIDENT 'message shows cummitter when it is automatic' '
 
 	echo >>negative &&
 	(
-		sane_unset GIT_cummitTER_EMAIL &&
-		sane_unset GIT_cummitTER_NAME &&
+		sane_unset GIT_CUMMITTER_EMAIL &&
+		sane_unset GIT_CUMMITTER_NAME &&
 		git cummit -e -m "sample" -a
 	) &&
 	# the ident is calculated from the system, so we cannot
 	# check the actual value, only that it is there
-	test_i18ngrep "^# cummitter: " .git/cummit_EDITMSG
+	test_i18ngrep "^# cummitter: " .git/CUMMIT_EDITMSG
 '
 
 write_script .git/FAKE_EDITOR <<EOF
@@ -722,8 +722,8 @@ test_expect_success !FAIL_PREREQS,!AUTOIDENT 'do not fire editor when cummitter 
 
 	echo >>negative &&
 	(
-		sane_unset GIT_cummitTER_EMAIL &&
-		sane_unset GIT_cummitTER_NAME &&
+		sane_unset GIT_CUMMITTER_EMAIL &&
+		sane_unset GIT_CUMMITTER_NAME &&
 		GIT_EDITOR="\"$(pwd)/.git/FAKE_EDITOR\"" &&
 		export GIT_EDITOR &&
 		test_must_fail git cummit -e -m sample -a
@@ -788,7 +788,7 @@ test_expect_success EXECKEEPSPID 'a SIGTERM should break locks' '
 	test ! -f .git/index.lock
 '
 
-rm -f .git/MERGE_MSG .git/cummit_EDITMSG
+rm -f .git/MERGE_MSG .git/CUMMIT_EDITMSG
 git reset -q --hard
 
 test_expect_success 'Hand cummitting of a redundant merge removes dups' '
@@ -818,10 +818,10 @@ test_expect_success 'cummit -s places sob on third line after two empty lines' '
 	cat <<-EOF >expect &&
 
 
-	Signed-off-by: $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL>
+	Signed-off-by: $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL>
 
 	EOF
-	sed -e "/^#/d" -e "s/^:.*//" .git/cummit_EDITMSG >actual &&
+	sed -e "/^#/d" -e "s/^:.*//" .git/CUMMIT_EDITMSG >actual &&
 	test_cmp expect actual
 '
 
@@ -841,9 +841,9 @@ try_cummit () {
 	GIT_EDITOR=.git/FAKE_EDITOR git cummit -a $* $use_template &&
 	case "$use_template" in
 	'')
-		test_i18ngrep ! "^## Custom template" .git/cummit_EDITMSG ;;
+		test_i18ngrep ! "^## Custom template" .git/CUMMIT_EDITMSG ;;
 	*)
-		test_i18ngrep "^## Custom template" .git/cummit_EDITMSG ;;
+		test_i18ngrep "^## Custom template" .git/CUMMIT_EDITMSG ;;
 	esac
 }
 
@@ -851,53 +851,53 @@ try_cummit_status_combo () {
 
 	test_expect_success 'cummit' '
 		try_cummit "" &&
-		test_i18ngrep "^# Changes to be cummitted:" .git/cummit_EDITMSG
+		test_i18ngrep "^# Changes to be cummitted:" .git/CUMMIT_EDITMSG
 	'
 
 	test_expect_success 'cummit --status' '
 		try_cummit --status &&
-		test_i18ngrep "^# Changes to be cummitted:" .git/cummit_EDITMSG
+		test_i18ngrep "^# Changes to be cummitted:" .git/CUMMIT_EDITMSG
 	'
 
 	test_expect_success 'cummit --no-status' '
 		try_cummit --no-status &&
-		test_i18ngrep ! "^# Changes to be cummitted:" .git/cummit_EDITMSG
+		test_i18ngrep ! "^# Changes to be cummitted:" .git/CUMMIT_EDITMSG
 	'
 
 	test_expect_success 'cummit with cummit.status = yes' '
 		test_config cummit.status yes &&
 		try_cummit "" &&
-		test_i18ngrep "^# Changes to be cummitted:" .git/cummit_EDITMSG
+		test_i18ngrep "^# Changes to be cummitted:" .git/CUMMIT_EDITMSG
 	'
 
 	test_expect_success 'cummit with cummit.status = no' '
 		test_config cummit.status no &&
 		try_cummit "" &&
-		test_i18ngrep ! "^# Changes to be cummitted:" .git/cummit_EDITMSG
+		test_i18ngrep ! "^# Changes to be cummitted:" .git/CUMMIT_EDITMSG
 	'
 
 	test_expect_success 'cummit --status with cummit.status = yes' '
 		test_config cummit.status yes &&
 		try_cummit --status &&
-		test_i18ngrep "^# Changes to be cummitted:" .git/cummit_EDITMSG
+		test_i18ngrep "^# Changes to be cummitted:" .git/CUMMIT_EDITMSG
 	'
 
 	test_expect_success 'cummit --no-status with cummit.status = yes' '
 		test_config cummit.status yes &&
 		try_cummit --no-status &&
-		test_i18ngrep ! "^# Changes to be cummitted:" .git/cummit_EDITMSG
+		test_i18ngrep ! "^# Changes to be cummitted:" .git/CUMMIT_EDITMSG
 	'
 
 	test_expect_success 'cummit --status with cummit.status = no' '
 		test_config cummit.status no &&
 		try_cummit --status &&
-		test_i18ngrep "^# Changes to be cummitted:" .git/cummit_EDITMSG
+		test_i18ngrep "^# Changes to be cummitted:" .git/CUMMIT_EDITMSG
 	'
 
 	test_expect_success 'cummit --no-status with cummit.status = no' '
 		test_config cummit.status no &&
 		try_cummit --no-status &&
-		test_i18ngrep ! "^# Changes to be cummitted:" .git/cummit_EDITMSG
+		test_i18ngrep ! "^# Changes to be cummitted:" .git/CUMMIT_EDITMSG
 	'
 
 }
@@ -911,13 +911,13 @@ try_cummit_status_combo
 test_expect_success 'cummit --status with custom comment character' '
 	test_config core.commentchar ";" &&
 	try_cummit --status &&
-	test_i18ngrep "^; Changes to be cummitted:" .git/cummit_EDITMSG
+	test_i18ngrep "^; Changes to be cummitted:" .git/CUMMIT_EDITMSG
 '
 
 test_expect_success 'switch core.commentchar' '
 	test_cummit "#foo" foo &&
 	GIT_EDITOR=.git/FAKE_EDITOR git -c core.commentChar=auto cummit --amend &&
-	test_i18ngrep "^; Changes to be cummitted:" .git/cummit_EDITMSG
+	test_i18ngrep "^; Changes to be cummitted:" .git/CUMMIT_EDITMSG
 '
 
 test_expect_success 'switch core.commentchar but out of options' '

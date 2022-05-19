@@ -74,10 +74,10 @@ Filters
 The filters are applied in the order as listed below.  The <command>
 argument is always evaluated in the shell context using the 'eval' command
 (with the notable exception of the cummit filter, for technical reasons).
-Prior to that, the `$GIT_cummit` environment variable will be set to contain
+Prior to that, the `$GIT_CUMMIT` environment variable will be set to contain
 the id of the cummit being rewritten.  Also, GIT_AUTHOR_NAME,
-GIT_AUTHOR_EMAIL, GIT_AUTHOR_DATE, GIT_cummitTER_NAME, GIT_cummitTER_EMAIL,
-and GIT_cummitTER_DATE are taken from the current cummit and exported to
+GIT_AUTHOR_EMAIL, GIT_AUTHOR_DATE, GIT_CUMMITTER_NAME, GIT_CUMMITTER_EMAIL,
+and GIT_CUMMITTER_DATE are taken from the current cummit and exported to
 the environment, in order to affect the author and cummitter identities of
 the replacement cummit created by linkgit:git-cummit-tree[1] after the
 filters have run.
@@ -146,7 +146,7 @@ OPTIONS
 	This is the filter for performing the cummit.
 	If this filter is specified, it will be called instead of the
 	'git cummit-tree' command, with arguments of the form
-	"<TREE_ID> [(-p <PARENT_cummit_ID>)...]" and the log message on
+	"<TREE_ID> [(-p <PARENT_CUMMIT_ID>)...]" and the log message on
 	stdin.  The cummit id is expected on stdout.
 +
 As a special extension, the cummit filter may emit multiple
@@ -295,7 +295,7 @@ happened).  If this is not the case, use:
 
 --------------------------------------------------------------------------
 git filter-branch --parent-filter \
-	'test $GIT_cummit = <cummit-id> && echo "-p <graft-id>" || cat' HEAD
+	'test $GIT_CUMMIT = <cummit-id> && echo "-p <graft-id>" || cat' HEAD
 --------------------------------------------------------------------------
 
 or even simpler:
@@ -374,9 +374,9 @@ git filter-branch --env-filter '
 	then
 		GIT_AUTHOR_EMAIL=john@example.com
 	fi
-	if test "$GIT_cummitTER_EMAIL" = "root@localhost"
+	if test "$GIT_CUMMITTER_EMAIL" = "root@localhost"
 	then
-		GIT_cummitTER_EMAIL=john@example.com
+		GIT_CUMMITTER_EMAIL=john@example.com
 	fi
 ' -- --all
 --------------------------------------------------------

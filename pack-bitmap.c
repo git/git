@@ -758,7 +758,7 @@ static struct bitmap *find_objects(struct bitmap_index *bitmap_git,
 		struct object *object = roots->item;
 		roots = roots->next;
 
-		if (object->type == OBJ_cummit &&
+		if (object->type == OBJ_CUMMIT &&
 		    add_cummit_to_bitmap(bitmap_git, &base, (struct cummit *)object)) {
 			object->flags |= SEEN;
 			continue;
@@ -863,7 +863,7 @@ static void init_type_iterator(struct ewah_iterator *it,
 			       enum object_type type)
 {
 	switch (type) {
-	case OBJ_cummit:
+	case OBJ_CUMMIT:
 		ewah_iterator_init(it, bitmap_git->cummits);
 		break;
 
@@ -1145,13 +1145,13 @@ static void filter_bitmap_object_type(struct bitmap_index *bitmap_git,
 				      struct bitmap *to_filter,
 				      enum object_type object_type)
 {
-	if (object_type < OBJ_cummit || object_type > OBJ_TAG)
+	if (object_type < OBJ_CUMMIT || object_type > OBJ_TAG)
 		BUG("filter_bitmap_object_type given invalid object");
 
 	if (object_type != OBJ_TAG)
 		filter_bitmap_exclude_type(bitmap_git, tip_objects, to_filter, OBJ_TAG);
-	if (object_type != OBJ_cummit)
-		filter_bitmap_exclude_type(bitmap_git, tip_objects, to_filter, OBJ_cummit);
+	if (object_type != OBJ_CUMMIT)
+		filter_bitmap_exclude_type(bitmap_git, tip_objects, to_filter, OBJ_CUMMIT);
 	if (object_type != OBJ_TREE)
 		filter_bitmap_exclude_type(bitmap_git, tip_objects, to_filter, OBJ_TREE);
 	if (object_type != OBJ_BLOB)
@@ -1535,7 +1535,7 @@ void traverse_bitmap_cummit_list(struct bitmap_index *bitmap_git,
 {
 	assert(bitmap_git->result);
 
-	show_objects_for_type(bitmap_git, OBJ_cummit, show_reachable);
+	show_objects_for_type(bitmap_git, OBJ_CUMMIT, show_reachable);
 	if (revs->tree_objects)
 		show_objects_for_type(bitmap_git, OBJ_TREE, show_reachable);
 	if (revs->blob_objects)
@@ -1579,7 +1579,7 @@ void count_bitmap_cummit_list(struct bitmap_index *bitmap_git,
 	assert(bitmap_git->result);
 
 	if (cummits)
-		*cummits = count_object_type(bitmap_git, OBJ_cummit);
+		*cummits = count_object_type(bitmap_git, OBJ_CUMMIT);
 
 	if (trees)
 		*trees = count_object_type(bitmap_git, OBJ_TREE);
@@ -1609,7 +1609,7 @@ static void test_bitmap_type(struct bitmap_test_data *tdata,
 	int bitmaps_nr = 0;
 
 	if (bitmap_get(tdata->cummits, pos)) {
-		bitmap_type = OBJ_cummit;
+		bitmap_type = OBJ_CUMMIT;
 		bitmaps_nr++;
 	}
 	if (bitmap_get(tdata->trees, pos)) {
@@ -1983,7 +1983,7 @@ off_t get_disk_usage_from_bitmap(struct bitmap_index *bitmap_git,
 {
 	off_t total = 0;
 
-	total += get_disk_usage_for_type(bitmap_git, OBJ_cummit);
+	total += get_disk_usage_for_type(bitmap_git, OBJ_CUMMIT);
 	if (revs->tree_objects)
 		total += get_disk_usage_for_type(bitmap_git, OBJ_TREE);
 	if (revs->blob_objects)

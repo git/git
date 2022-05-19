@@ -3,8 +3,8 @@
 test_description='split cummit graph'
 . ./test-lib.sh
 
-GIT_TEST_cummit_GRAPH=0
-GIT_TEST_cummit_GRAPH_CHANGED_PATHS=0
+GIT_TEST_CUMMIT_GRAPH=0
+GIT_TEST_CUMMIT_GRAPH_CHANGED_PATHS=0
 
 test_expect_success 'setup repo' '
 	git init &&
@@ -463,19 +463,19 @@ test_expect_success 'prevent regression for duplicate cummits across layers' '
 	git -C dup cummit-graph verify
 '
 
-NUM_FIRST_LAYER_cummitS=64
-NUM_SECOND_LAYER_cummitS=16
-NUM_THIRD_LAYER_cummitS=7
-NUM_FOURTH_LAYER_cummitS=8
-NUM_FIFTH_LAYER_cummitS=16
-SECOND_LAYER_SEQUENCE_START=$(($NUM_FIRST_LAYER_cummitS + 1))
-SECOND_LAYER_SEQUENCE_END=$(($SECOND_LAYER_SEQUENCE_START + $NUM_SECOND_LAYER_cummitS - 1))
+NUM_FIRST_LAYER_CUMMITS=64
+NUM_SECOND_LAYER_CUMMITS=16
+NUM_THIRD_LAYER_CUMMITS=7
+NUM_FOURTH_LAYER_CUMMITS=8
+NUM_FIFTH_LAYER_CUMMITS=16
+SECOND_LAYER_SEQUENCE_START=$(($NUM_FIRST_LAYER_CUMMITS + 1))
+SECOND_LAYER_SEQUENCE_END=$(($SECOND_LAYER_SEQUENCE_START + $NUM_SECOND_LAYER_CUMMITS - 1))
 THIRD_LAYER_SEQUENCE_START=$(($SECOND_LAYER_SEQUENCE_END + 1))
-THIRD_LAYER_SEQUENCE_END=$(($THIRD_LAYER_SEQUENCE_START + $NUM_THIRD_LAYER_cummitS - 1))
+THIRD_LAYER_SEQUENCE_END=$(($THIRD_LAYER_SEQUENCE_START + $NUM_THIRD_LAYER_CUMMITS - 1))
 FOURTH_LAYER_SEQUENCE_START=$(($THIRD_LAYER_SEQUENCE_END + 1))
-FOURTH_LAYER_SEQUENCE_END=$(($FOURTH_LAYER_SEQUENCE_START + $NUM_FOURTH_LAYER_cummitS - 1))
+FOURTH_LAYER_SEQUENCE_END=$(($FOURTH_LAYER_SEQUENCE_START + $NUM_FOURTH_LAYER_CUMMITS - 1))
 FIFTH_LAYER_SEQUENCE_START=$(($FOURTH_LAYER_SEQUENCE_END + 1))
-FIFTH_LAYER_SEQUENCE_END=$(($FIFTH_LAYER_SEQUENCE_START + $NUM_FIFTH_LAYER_cummitS - 1))
+FIFTH_LAYER_SEQUENCE_END=$(($FIFTH_LAYER_SEQUENCE_START + $NUM_FIFTH_LAYER_CUMMITS - 1))
 
 # Current split graph chain:
 #
@@ -494,13 +494,13 @@ test_expect_success 'setup repo for mixed generation cummit-graph-chain' '
 		cd mixed &&
 		git config core.cummitGraph true &&
 		git config gc.writecummitGraph false &&
-		for i in $(test_seq $NUM_FIRST_LAYER_cummitS)
+		for i in $(test_seq $NUM_FIRST_LAYER_CUMMITS)
 		do
 			test_cummit $i &&
 			git branch cummits/$i || return 1
 		done &&
 		git -c cummitGraph.generationVersion=2 cummit-graph write --reachable --split &&
-		graph_read_expect $NUM_FIRST_LAYER_cummitS &&
+		graph_read_expect $NUM_FIRST_LAYER_CUMMITS &&
 		test_line_count = 1 $graphdir/cummit-graph-chain &&
 		for i in $(test_seq $SECOND_LAYER_SEQUENCE_START $SECOND_LAYER_SEQUENCE_END)
 		do
@@ -512,7 +512,7 @@ test_expect_success 'setup repo for mixed generation cummit-graph-chain' '
 		test-tool read-graph >output &&
 		cat >expect <<-EOF &&
 		header: 43475048 1 $(test_oid oid_version) 4 1
-		num_cummits: $NUM_SECOND_LAYER_cummitS
+		num_cummits: $NUM_SECOND_LAYER_CUMMITS
 		chunks: oid_fanout oid_lookup cummit_metadata
 		options:
 		EOF
@@ -545,7 +545,7 @@ test_expect_success 'do not write generation data chunk if not present on existi
 		test-tool read-graph >output &&
 		cat >expect <<-EOF &&
 		header: 43475048 1 $(test_oid oid_version) 4 2
-		num_cummits: $NUM_THIRD_LAYER_cummitS
+		num_cummits: $NUM_THIRD_LAYER_CUMMITS
 		chunks: oid_fanout oid_lookup cummit_metadata
 		options:
 		EOF
@@ -587,7 +587,7 @@ test_expect_success 'do not write generation data chunk if the topmost remaining
 		test-tool read-graph >output &&
 		cat >expect <<-EOF &&
 		header: 43475048 1 $(test_oid oid_version) 4 2
-		num_cummits: $(($NUM_THIRD_LAYER_cummitS + $NUM_FOURTH_LAYER_cummitS))
+		num_cummits: $(($NUM_THIRD_LAYER_CUMMITS + $NUM_FOURTH_LAYER_CUMMITS))
 		chunks: oid_fanout oid_lookup cummit_metadata
 		options:
 		EOF
@@ -627,7 +627,7 @@ test_expect_success 'write generation data chunk if topmost remaining layer has 
 		test-tool read-graph >output &&
 		cat >expect <<-EOF &&
 		header: 43475048 1 $(test_oid oid_version) 5 1
-		num_cummits: $(($NUM_SECOND_LAYER_cummitS + $NUM_THIRD_LAYER_cummitS + $NUM_FOURTH_LAYER_cummitS + $NUM_FIFTH_LAYER_cummitS))
+		num_cummits: $(($NUM_SECOND_LAYER_CUMMITS + $NUM_THIRD_LAYER_CUMMITS + $NUM_FOURTH_LAYER_CUMMITS + $NUM_FIFTH_LAYER_CUMMITS))
 		chunks: oid_fanout oid_lookup cummit_metadata generation_data
 		options: read_generation_data
 		EOF
@@ -643,7 +643,7 @@ test_expect_success 'write generation data chunk when cummit-graph chain is repl
 		test_path_is_file $graphdir/cummit-graph-chain &&
 		test_line_count = 1 $graphdir/cummit-graph-chain &&
 		verify_chain_files_exist $graphdir &&
-		graph_read_expect $(($NUM_FIRST_LAYER_cummitS + $NUM_SECOND_LAYER_cummitS)) &&
+		graph_read_expect $(($NUM_FIRST_LAYER_CUMMITS + $NUM_SECOND_LAYER_CUMMITS)) &&
 		git cummit-graph verify
 	)
 '

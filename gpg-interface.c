@@ -597,7 +597,7 @@ static int parse_payload_metadata(struct signature_check *sigc)
 	const char *signer_header;
 
 	switch (sigc->payload_type) {
-	case SIGNATURE_PAYLOAD_cummit:
+	case SIGNATURE_PAYLOAD_CUMMIT:
 		signer_header = "cummitter";
 		break;
 	case SIGNATURE_PAYLOAD_TAG:

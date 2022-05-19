@@ -481,7 +481,7 @@ static struct cummit *check_single_cummit(struct rev_info *revs)
 		if (obj->flags & UNINTERESTING)
 			continue;
 		obj = deref_tag(revs->repo, obj, NULL, 0);
-		if (!obj || obj->type != OBJ_cummit)
+		if (!obj || obj->type != OBJ_CUMMIT)
 			die("Non cummit %s?", revs->pending.objects[i].name);
 		if (cummit)
 			die("More than one cummit to dig from: %s and %s?",

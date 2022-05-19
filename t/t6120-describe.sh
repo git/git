@@ -438,7 +438,7 @@ test_expect_success 'name-rev a rev shortly after epoch' '
 	git checkout --orphan no-timestamp-underflow &&
 	# Any date closer to epoch than the CUTOFF_DATE_SLOP constant
 	# in builtin/name-rev.c.
-	GIT_cummitTER_DATE="@1234 +0000" \
+	GIT_CUMMITTER_DATE="@1234 +0000" \
 	git cummit -m "cummitter date shortly after epoch" &&
 	old_cummit_oid=$(git rev-parse HEAD) &&
 
@@ -642,14 +642,14 @@ test_expect_success 'setup: describe cummits with disjoint bases 2' '
 	(
 		cd disjoint2 &&
 
-		echo A >> file && git add file && GIT_cummitTER_DATE="2020-01-01 18:00" git cummit -m A &&
+		echo A >> file && git add file && GIT_CUMMITTER_DATE="2020-01-01 18:00" git cummit -m A &&
 		git tag A -a -m A &&
-		echo o >> file && git add file && GIT_cummitTER_DATE="2020-01-01 18:01" git cummit -m o &&
+		echo o >> file && git add file && GIT_CUMMITTER_DATE="2020-01-01 18:01" git cummit -m o &&
 
 		git checkout --orphan branch &&
-		echo o >> file2 && git add file2 && GIT_cummitTER_DATE="2020-01-01 15:00" git cummit -m o &&
-		echo o >> file2 && git add file2 && GIT_cummitTER_DATE="2020-01-01 15:01" git cummit -m o &&
-		echo B >> file2 && git add file2 && GIT_cummitTER_DATE="2020-01-01 15:02" git cummit -m B &&
+		echo o >> file2 && git add file2 && GIT_CUMMITTER_DATE="2020-01-01 15:00" git cummit -m o &&
+		echo o >> file2 && git add file2 && GIT_CUMMITTER_DATE="2020-01-01 15:01" git cummit -m o &&
+		echo B >> file2 && git add file2 && GIT_CUMMITTER_DATE="2020-01-01 15:02" git cummit -m B &&
 		git tag B -a -m B &&
 		git merge --no-ff --allow-unrelated-histories main -m x
 	)

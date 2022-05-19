@@ -4,7 +4,7 @@ Git v1.7.11.4 Release Notes
 Fixes since v1.7.11.3
 ---------------------
 
- * "$GIT_DIR/cummit_EDITMSG" file that is used to hold the cummit log
+ * "$GIT_DIR/CUMMIT_EDITMSG" file that is used to hold the cummit log
    message user edits was not documented.
 
  * The advise() function did not use varargs correctly to format

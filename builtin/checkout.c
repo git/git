@@ -599,7 +599,7 @@ static int checkout_paths(const struct checkout_opts *opts,
 		checkout_index = opts->checkout_index;
 
 	if (checkout_index) {
-		if (write_locked_index(&the_index, &lock_file, cummit_LOCK))
+		if (write_locked_index(&the_index, &lock_file, CUMMIT_LOCK))
 			die(_("unable to write new index file"));
 	} else {
 		/*
@@ -861,7 +861,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 	if (!cache_tree_fully_valid(active_cache_tree))
 		cache_tree_update(&the_index, WRITE_TREE_SILENT | WRITE_TREE_REPAIR);
 
-	if (write_locked_index(&the_index, &lock_file, cummit_LOCK))
+	if (write_locked_index(&the_index, &lock_file, CUMMIT_LOCK))
 		die(_("unable to write new index file"));
 
 	if (!opts->discard_changes && !opts->quiet && new_branch_info->cummit)

@@ -97,22 +97,22 @@ get_abbrev_oid () {
 # about future changes of the cummit ID.
 make_user_friendly_and_stable_output () {
 	sed \
-		-e "s/$(get_abbrev_oid $A)[0-9a-f]*/<cummit-A>/g" \
-		-e "s/$(get_abbrev_oid $B)[0-9a-f]*/<cummit-B>/g" \
-		-e "s/$(get_abbrev_oid $C)[0-9a-f]*/<cummit-C>/g" \
-		-e "s/$(get_abbrev_oid $D)[0-9a-f]*/<cummit-D>/g" \
-		-e "s/$(get_abbrev_oid $E)[0-9a-f]*/<cummit-E>/g" \
-		-e "s/$(get_abbrev_oid $F)[0-9a-f]*/<cummit-F>/g" \
-		-e "s/$(get_abbrev_oid $G)[0-9a-f]*/<cummit-G>/g" \
+		-e "s/$(get_abbrev_oid $A)[0-9a-f]*/<CUMMIT-A>/g" \
+		-e "s/$(get_abbrev_oid $B)[0-9a-f]*/<CUMMIT-B>/g" \
+		-e "s/$(get_abbrev_oid $C)[0-9a-f]*/<CUMMIT-C>/g" \
+		-e "s/$(get_abbrev_oid $D)[0-9a-f]*/<CUMMIT-D>/g" \
+		-e "s/$(get_abbrev_oid $E)[0-9a-f]*/<CUMMIT-E>/g" \
+		-e "s/$(get_abbrev_oid $F)[0-9a-f]*/<CUMMIT-F>/g" \
+		-e "s/$(get_abbrev_oid $G)[0-9a-f]*/<CUMMIT-G>/g" \
 		-e "s/$(get_abbrev_oid $H)[0-9a-f]*/<COMMIT-H>/g" \
-		-e "s/$(get_abbrev_oid $I)[0-9a-f]*/<cummit-I>/g" \
-		-e "s/$(get_abbrev_oid $J)[0-9a-f]*/<cummit-J>/g" \
-		-e "s/$(get_abbrev_oid $K)[0-9a-f]*/<cummit-K>/g" \
-		-e "s/$(get_abbrev_oid $L)[0-9a-f]*/<cummit-L>/g" \
-		-e "s/$(get_abbrev_oid $M)[0-9a-f]*/<cummit-M>/g" \
-		-e "s/$(get_abbrev_oid $N)[0-9a-f]*/<cummit-N>/g" \
-		-e "s/$(get_abbrev_oid $O)[0-9a-f]*/<cummit-O>/g" \
-		-e "s/$(get_abbrev_oid $P)[0-9a-f]*/<cummit-P>/g" \
+		-e "s/$(get_abbrev_oid $I)[0-9a-f]*/<CUMMIT-I>/g" \
+		-e "s/$(get_abbrev_oid $J)[0-9a-f]*/<CUMMIT-J>/g" \
+		-e "s/$(get_abbrev_oid $K)[0-9a-f]*/<CUMMIT-K>/g" \
+		-e "s/$(get_abbrev_oid $L)[0-9a-f]*/<CUMMIT-L>/g" \
+		-e "s/$(get_abbrev_oid $M)[0-9a-f]*/<CUMMIT-M>/g" \
+		-e "s/$(get_abbrev_oid $N)[0-9a-f]*/<CUMMIT-N>/g" \
+		-e "s/$(get_abbrev_oid $O)[0-9a-f]*/<CUMMIT-O>/g" \
+		-e "s/$(get_abbrev_oid $P)[0-9a-f]*/<CUMMIT-P>/g" \
 		-e "s/$(get_abbrev_oid $TAG1)[0-9a-f]*/<TAG-1>/g" \
 		-e "s/$(get_abbrev_oid $TAG2)[0-9a-f]*/<TAG-2>/g" \
 		-e "s/$(get_abbrev_oid $TAG3)[0-9a-f]*/<TAG-3>/g"
@@ -190,7 +190,7 @@ test_expect_success 'create bundle from special rev: main^!' '
 	git bundle list-heads special-rev.bdl |
 		make_user_friendly_and_stable_output >actual &&
 	cat >expect <<-\EOF &&
-	<cummit-P> refs/heads/main
+	<CUMMIT-P> refs/heads/main
 	EOF
 	test_cmp expect actual &&
 
@@ -198,9 +198,9 @@ test_expect_success 'create bundle from special rev: main^!' '
 		make_user_friendly_and_stable_output >actual &&
 	format_and_save_expect <<-EOF &&
 	The bundle contains this ref:
-	<cummit-P> refs/heads/main
+	<CUMMIT-P> refs/heads/main
 	The bundle requires this ref:
-	<cummit-O> Z
+	<CUMMIT-O> Z
 	$HASH_MESSAGE
 	EOF
 	test_cmp expect actual &&
@@ -220,10 +220,10 @@ test_expect_success 'create bundle with --max-count option' '
 		make_user_friendly_and_stable_output >actual &&
 	format_and_save_expect <<-EOF &&
 	The bundle contains these 2 refs:
-	<cummit-P> refs/heads/main
+	<CUMMIT-P> refs/heads/main
 	<TAG-1> refs/tags/v1
 	The bundle requires this ref:
-	<cummit-O> Z
+	<CUMMIT-O> Z
 	$HASH_MESSAGE
 	EOF
 	test_cmp expect actual &&
@@ -246,14 +246,14 @@ test_expect_success 'create bundle with --since option' '
 		make_user_friendly_and_stable_output >actual &&
 	format_and_save_expect <<-EOF &&
 	The bundle contains these 5 refs:
-	<cummit-P> refs/heads/main
-	<cummit-N> refs/heads/release
+	<CUMMIT-P> refs/heads/main
+	<CUMMIT-N> refs/heads/release
 	<TAG-2> refs/tags/v2
 	<TAG-3> refs/tags/v3
-	<cummit-P> HEAD
+	<CUMMIT-P> HEAD
 	The bundle requires these 2 refs:
-	<cummit-M> Z
-	<cummit-K> Z
+	<CUMMIT-M> Z
+	<CUMMIT-K> Z
 	$HASH_MESSAGE
 	EOF
 	test_cmp expect actual &&
@@ -274,7 +274,7 @@ test_expect_success 'create bundle 1 - no prerequisites' '
 
 	format_and_save_expect <<-EOF &&
 	The bundle contains these 2 refs:
-	<cummit-D> refs/heads/topic/1
+	<CUMMIT-D> refs/heads/topic/1
 	<COMMIT-H> refs/heads/topic/2
 	The bundle records a complete history.
 	$HASH_MESSAGE
@@ -316,11 +316,11 @@ test_expect_success 'create bundle 2 - has prerequisites' '
 
 	format_and_save_expect <<-EOF &&
 	The bundle contains this ref:
-	<cummit-N> refs/heads/release
+	<CUMMIT-N> refs/heads/release
 	The bundle requires these 3 refs:
-	<cummit-D> Z
-	<cummit-E> Z
-	<cummit-G> Z
+	<CUMMIT-D> Z
+	<CUMMIT-E> Z
+	<CUMMIT-G> Z
 	$HASH_MESSAGE
 	EOF
 
@@ -341,9 +341,9 @@ test_expect_success 'fail to verify bundle without prerequisites' '
 
 	format_and_save_expect <<-\EOF &&
 	error: Repository lacks these prerequisite cummits:
-	error: <cummit-D> Z
-	error: <cummit-E> Z
-	error: <cummit-G> Z
+	error: <CUMMIT-D> Z
+	error: <CUMMIT-E> Z
+	error: <CUMMIT-G> Z
 	EOF
 
 	test_must_fail git -C test1.git bundle verify ../2.bdl 2>&1 |
@@ -376,11 +376,11 @@ test_expect_success 'create bundle 3 - two refs, same object' '
 
 	format_and_save_expect <<-EOF &&
 	The bundle contains these 2 refs:
-	<cummit-P> refs/heads/main
-	<cummit-P> HEAD
+	<CUMMIT-P> refs/heads/main
+	<CUMMIT-P> HEAD
 	The bundle requires these 2 refs:
-	<cummit-M> Z
-	<cummit-K> Z
+	<CUMMIT-M> Z
+	<CUMMIT-K> Z
 	$HASH_MESSAGE
 	EOF
 
@@ -443,7 +443,7 @@ test_expect_success 'clone from bundle' '
 	git -C mirror.git show-ref |
 		make_user_friendly_and_stable_output >actual &&
 	cat >expect <<-\EOF &&
-	<cummit-D> refs/heads/topic/1
+	<CUMMIT-D> refs/heads/topic/1
 	<COMMIT-H> refs/heads/topic/2
 	EOF
 	test_cmp expect actual &&
@@ -452,8 +452,8 @@ test_expect_success 'clone from bundle' '
 	git -C mirror.git show-ref |
 		make_user_friendly_and_stable_output >actual &&
 	cat >expect <<-\EOF &&
-	<cummit-N> refs/heads/release
-	<cummit-D> refs/heads/topic/1
+	<CUMMIT-N> refs/heads/release
+	<CUMMIT-D> refs/heads/topic/1
 	<COMMIT-H> refs/heads/topic/2
 	EOF
 	test_cmp expect actual &&
@@ -462,9 +462,9 @@ test_expect_success 'clone from bundle' '
 	git -C mirror.git show-ref |
 		make_user_friendly_and_stable_output >actual &&
 	cat >expect <<-\EOF &&
-	<cummit-P> refs/heads/main
-	<cummit-N> refs/heads/release
-	<cummit-D> refs/heads/topic/1
+	<CUMMIT-P> refs/heads/main
+	<CUMMIT-N> refs/heads/release
+	<CUMMIT-D> refs/heads/topic/1
 	<COMMIT-H> refs/heads/topic/2
 	EOF
 	test_cmp expect actual &&
@@ -473,9 +473,9 @@ test_expect_success 'clone from bundle' '
 	git -C mirror.git show-ref |
 		make_user_friendly_and_stable_output >actual &&
 	cat >expect <<-\EOF &&
-	<cummit-P> refs/heads/main
-	<cummit-N> refs/heads/release
-	<cummit-D> refs/heads/topic/1
+	<CUMMIT-P> refs/heads/main
+	<CUMMIT-N> refs/heads/release
+	<CUMMIT-D> refs/heads/topic/1
 	<COMMIT-H> refs/heads/topic/2
 	<TAG-1> refs/tags/v1
 	<TAG-2> refs/tags/v2
@@ -509,16 +509,16 @@ do
 
 		cat >expect <<-EOF &&
 		The bundle contains these 10 refs:
-		<cummit-P> refs/heads/main
-		<cummit-N> refs/heads/release
-		<cummit-D> refs/heads/topic/1
+		<CUMMIT-P> refs/heads/main
+		<CUMMIT-N> refs/heads/release
+		<CUMMIT-D> refs/heads/topic/1
 		<COMMIT-H> refs/heads/topic/2
-		<cummit-D> refs/pull/1/head
-		<cummit-G> refs/pull/2/head
+		<CUMMIT-D> refs/pull/1/head
+		<CUMMIT-G> refs/pull/2/head
 		<TAG-1> refs/tags/v1
 		<TAG-2> refs/tags/v2
 		<TAG-3> refs/tags/v3
-		<cummit-P> HEAD
+		<CUMMIT-P> HEAD
 		The bundle records a complete history.
 		$HASH_MESSAGE
 		The bundle uses this filter: $filter

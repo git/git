@@ -16,14 +16,14 @@ EOF
 cat >expected-initial-signed <<EOF
 Initial empty cummit
 
-Signed-off-by: $(git var GIT_cummitTER_IDENT | sed -e "s/>.*/>/")
+Signed-off-by: $(git var GIT_CUMMITTER_IDENT | sed -e "s/>.*/>/")
 EOF
 
 # Expected cummit message after rebase --signoff
 cat >expected-signed <<EOF
 first
 
-Signed-off-by: $(git var GIT_cummitTER_IDENT | sed -e "s/>.*/>/")
+Signed-off-by: $(git var GIT_CUMMITTER_IDENT | sed -e "s/>.*/>/")
 EOF
 
 # Expected cummit message after rebase without --signoff (or with --no-signoff)

@@ -144,7 +144,7 @@ static struct cummit *deref_without_lazy_fetch(const struct object_id *oid,
 		}
 	}
 
-	if (type == OBJ_cummit) {
+	if (type == OBJ_CUMMIT) {
 		struct cummit *cummit = lookup_cummit(the_repository, oid);
 		if (!cummit || repo_parse_cummit(the_repository, cummit))
 			return NULL;
@@ -712,7 +712,7 @@ static void mark_complete_and_common_ref(struct fetch_negotiator *negotiator,
 						OBJECT_INFO_SKIP_FETCH_OBJECT))
 				continue;
 			o = parse_object(the_repository, &ref->old_oid);
-			if (!o || o->type != OBJ_cummit)
+			if (!o || o->type != OBJ_CUMMIT)
 				continue;
 
 			cummit = (struct cummit *)o;

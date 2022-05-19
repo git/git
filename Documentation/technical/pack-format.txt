@@ -46,7 +46,7 @@ Similarly, in SHA-256 repositories, these values are computed using SHA-256.
 
 Valid object types are:
 
-- OBJ_cummit (1)
+- OBJ_CUMMIT (1)
 - OBJ_TREE (2)
 - OBJ_BLOB (3)
 - OBJ_TAG (4)

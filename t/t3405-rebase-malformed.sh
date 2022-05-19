@@ -86,7 +86,7 @@ test_expect_success 'rebase -m cummit with empty message' '
 test_expect_success 'rebase -i cummit with empty message' '
 	git checkout diff-in-message &&
 	set_fake_editor &&
-	test_must_fail env FAKE_cummit_MESSAGE=" " FAKE_LINES="reword 1" \
+	test_must_fail env FAKE_CUMMIT_MESSAGE=" " FAKE_LINES="reword 1" \
 		git rebase -i HEAD^
 '
 

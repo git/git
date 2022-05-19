@@ -34,12 +34,12 @@ test_expect_success setup '
 	echo c >c &&
 	git add c &&
 	git cummit -m C &&
-	git tag cummit-C &&
+	git tag CUMMIT-C &&
 	git merge -m D main &&
-	git tag cummit-D &&
+	git tag CUMMIT-D &&
 	git checkout main &&
-	git merge -m E cummit-C &&
-	git checkout -b br2 cummit-C &&
+	git merge -m E CUMMIT-C &&
+	git checkout -b br2 CUMMIT-C &&
 	echo f >f &&
 	git add f &&
 	git cummit -m F &&
@@ -50,7 +50,7 @@ test_expect_success setup '
 '
 
 test_expect_success 'diff with one merge base' '
-	git diff cummit-D...br1 >tmp &&
+	git diff CUMMIT-D...br1 >tmp &&
 	tail -n 1 tmp >actual &&
 	echo +f >expect &&
 	test_cmp expect actual
@@ -87,7 +87,7 @@ test_expect_success 'diff with two ranges' '
 '
 
 test_expect_success 'diff with ranges and extra arg' '
-	test_must_fail git diff main br1..main cummit-D 2>err &&
+	test_must_fail git diff main br1..main CUMMIT-D 2>err &&
 	test_i18ngrep "usage" err
 '
 
@@ -104,7 +104,7 @@ for cmd in diff-index diff
 do
 	test_expect_success "$cmd --merge-base with one cummit" '
 		git checkout main &&
-		git $cmd cummit-C >expect &&
+		git $cmd CUMMIT-C >expect &&
 		git $cmd --merge-base br2 >actual &&
 		test_cmp expect actual
 	'
@@ -113,7 +113,7 @@ do
 		git checkout main &&
 		test_when_finished git reset --hard &&
 		echo unstaged >>c &&
-		git $cmd cummit-C >expect &&
+		git $cmd CUMMIT-C >expect &&
 		git $cmd --merge-base br2 >actual &&
 		test_cmp expect actual
 	'
@@ -124,7 +124,7 @@ do
 		echo staged >>c &&
 		git add c &&
 		echo unstaged >>c &&
-		git $cmd cummit-C >expect &&
+		git $cmd CUMMIT-C >expect &&
 		git $cmd --merge-base br2 >actual &&
 		test_cmp expect actual
 	'
@@ -135,7 +135,7 @@ do
 		echo staged >>c &&
 		git add c &&
 		echo unstaged >>c &&
-		git $cmd --cached cummit-C >expect &&
+		git $cmd --cached CUMMIT-C >expect &&
 		git $cmd --cached --merge-base br2 >actual &&
 		test_cmp expect actual
 	'
@@ -162,7 +162,7 @@ done
 for cmd in diff-tree diff
 do
 	test_expect_success "$cmd --merge-base with two cummits" '
-		git $cmd cummit-C main >expect &&
+		git $cmd CUMMIT-C main >expect &&
 		git $cmd --merge-base br2 main >actual &&
 		test_cmp expect actual
 	'

@@ -307,7 +307,7 @@ static struct cummit *next_reflog_cummit(struct cummit_reflog *log)
 		struct object *obj = parse_object(the_repository,
 						  &entry->noid);
 
-		if (obj && obj->type == OBJ_cummit)
+		if (obj && obj->type == OBJ_CUMMIT)
 			return (struct cummit *)obj;
 	}
 	return NULL;

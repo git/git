@@ -432,9 +432,9 @@ test_expect_success 'am --no-scissors overrides mailinfo.scissors' '
 test_expect_success 'setup: new author and cummitter' '
 	GIT_AUTHOR_NAME="Another Thor" &&
 	GIT_AUTHOR_EMAIL="a.thor@example.com" &&
-	GIT_cummitTER_NAME="Co M Miter" &&
-	GIT_cummitTER_EMAIL="c.miter@example.com" &&
-	export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_cummitTER_NAME GIT_cummitTER_EMAIL
+	GIT_CUMMITTER_NAME="Co M Miter" &&
+	GIT_CUMMITTER_EMAIL="c.miter@example.com" &&
+	export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_CUMMITTER_NAME GIT_CUMMITTER_EMAIL
 '
 
 compare () {
@@ -455,7 +455,7 @@ test_expect_success 'am changes cummitter and keeps author' '
 	git diff --exit-code main^..HEAD^ &&
 	compare author main HEAD &&
 	compare author main^ HEAD^ &&
-	test "$GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL>" = \
+	test "$GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL>" = \
 	     "$(git log -1 --pretty=format:"%cn <%ce>" HEAD)"
 '
 
@@ -466,10 +466,10 @@ test_expect_success 'am --signoff adds Signed-off-by: line' '
 	git am --signoff <patch2 &&
 	{
 		printf "third\n\nSigned-off-by: %s <%s>\n\n" \
-			"$GIT_cummitTER_NAME" "$GIT_cummitTER_EMAIL" &&
+			"$GIT_CUMMITTER_NAME" "$GIT_CUMMITTER_EMAIL" &&
 		cat msg &&
 		printf "Signed-off-by: %s <%s>\n\n" \
-			"$GIT_cummitTER_NAME" "$GIT_cummitTER_EMAIL"
+			"$GIT_CUMMITTER_NAME" "$GIT_CUMMITTER_EMAIL"
 	} >expected-log &&
 	git log --pretty=%B -2 HEAD >actual &&
 	test_cmp expected-log actual
@@ -494,15 +494,15 @@ test_expect_success 'am --signoff adds Signed-off-by: if another author is prese
 	EMAIL="a.n.other@example.com" &&
 	{
 		printf "third\n\nSigned-off-by: %s <%s>\nSigned-off-by: %s <%s>\n\n" \
-			"$GIT_cummitTER_NAME" "$GIT_cummitTER_EMAIL" \
+			"$GIT_CUMMITTER_NAME" "$GIT_CUMMITTER_EMAIL" \
 			"$NAME" "$EMAIL" &&
 		cat msg &&
 		printf "Signed-off-by: %s <%s>\nSigned-off-by: %s <%s>\n\n" \
-			"$GIT_cummitTER_NAME" "$GIT_cummitTER_EMAIL" \
+			"$GIT_CUMMITTER_NAME" "$GIT_CUMMITTER_EMAIL" \
 			"$NAME" "$EMAIL"
 	} >expected-log &&
 	git reset --hard first &&
-	GIT_cummitTER_NAME="$NAME" GIT_cummitTER_EMAIL="$EMAIL" \
+	GIT_CUMMITTER_NAME="$NAME" GIT_CUMMITTER_EMAIL="$EMAIL" \
 		git am --signoff <patch3 &&
 	git log --pretty=%B -2 HEAD >actual &&
 	test_cmp expected-log actual
@@ -514,15 +514,15 @@ test_expect_success 'am --signoff duplicates Signed-off-by: if it is not the las
 	{
 		printf "third\n\nSigned-off-by: %s <%s>\n\
 Signed-off-by: %s <%s>\nSigned-off-by: %s <%s>\n\n" \
-			"$GIT_cummitTER_NAME" "$GIT_cummitTER_EMAIL" \
+			"$GIT_CUMMITTER_NAME" "$GIT_CUMMITTER_EMAIL" \
 			"$NAME" "$EMAIL" \
-			"$GIT_cummitTER_NAME" "$GIT_cummitTER_EMAIL" &&
+			"$GIT_CUMMITTER_NAME" "$GIT_CUMMITTER_EMAIL" &&
 		cat msg &&
 		printf "Signed-off-by: %s <%s>\nSigned-off-by: %s <%s>\n\
 Signed-off-by: %s <%s>\n\n" \
-			"$GIT_cummitTER_NAME" "$GIT_cummitTER_EMAIL" \
+			"$GIT_CUMMITTER_NAME" "$GIT_CUMMITTER_EMAIL" \
 			"$NAME" "$EMAIL" \
-			"$GIT_cummitTER_NAME" "$GIT_cummitTER_EMAIL"
+			"$GIT_CUMMITTER_NAME" "$GIT_CUMMITTER_EMAIL"
 	} >expected-log &&
 	git format-patch --stdout first >patch3 &&
 	git reset --hard first &&
@@ -981,7 +981,7 @@ test_expect_success 'am -s unexpected trailer block' '
 	cat >msg <<-EOF &&
 	subject here
 
-	Signed-off-by: $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL>
+	Signed-off-by: $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL>
 	[jc: tweaked log message]
 	Signed-off-by: J C H <j@c.h>
 	EOF
@@ -993,7 +993,7 @@ test_expect_success 'am -s unexpected trailer block' '
 	git am -s patch &&
 	(
 		cat original &&
-		echo "Signed-off-by: $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL>"
+		echo "Signed-off-by: $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL>"
 	) >expect &&
 	git cat-file commit HEAD | sed -e "1,/^$/d" >actual &&
 	test_cmp expect actual &&
@@ -1015,7 +1015,7 @@ test_expect_success 'am -s unexpected trailer block' '
 	(
 		cat original &&
 		echo &&
-		echo "Signed-off-by: $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL>"
+		echo "Signed-off-by: $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL>"
 	) >expect &&
 	git cat-file commit HEAD | sed -e "1,/^$/d" >actual &&
 	test_cmp expect actual

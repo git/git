@@ -22,10 +22,10 @@ enum replay_action {
 };
 
 enum cummit_msg_cleanup_mode {
-	cummit_MSG_CLEANUP_SPACE,
-	cummit_MSG_CLEANUP_NONE,
-	cummit_MSG_CLEANUP_SCISSORS,
-	cummit_MSG_CLEANUP_ALL
+	CUMMIT_MSG_CLEANUP_SPACE,
+	CUMMIT_MSG_CLEANUP_NONE,
+	CUMMIT_MSG_CLEANUP_SCISSORS,
+	CUMMIT_MSG_CLEANUP_ALL
 };
 
 struct replay_opts {
@@ -202,7 +202,7 @@ int save_autostash(const char *path);
 int apply_autostash(const char *path);
 int apply_autostash_oid(const char *stash_oid);
 
-#define SUMMARY_INITIAL_cummit   (1 << 0)
+#define SUMMARY_INITIAL_CUMMIT   (1 << 0)
 #define SUMMARY_SHOW_AUTHOR_DATE (1 << 1)
 void print_cummit_summary(struct repository *repo,
 			  const char *prefix,

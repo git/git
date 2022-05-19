@@ -101,7 +101,7 @@ struct cummit_info {
 	struct strbuf summary;
 };
 
-#define cummit_INFO_INIT { \
+#define CUMMIT_INFO_INIT { \
 	.author = STRBUF_INIT, \
 	.author_mail = STRBUF_INIT, \
 	.author_tz = STRBUF_INIT, \
@@ -242,7 +242,7 @@ static void write_filename_info(struct blame_origin *suspect)
  */
 static int emit_one_suspect_detail(struct blame_origin *suspect, int repeat)
 {
-	struct cummit_info ci = cummit_INFO_INIT;
+	struct cummit_info ci = CUMMIT_INFO_INIT;
 
 	if (!repeat && (suspect->cummit->object.flags & METAINFO_SHOWN))
 		return 0;
@@ -436,7 +436,7 @@ static void emit_other(struct blame_scoreboard *sb, struct blame_entry *ent, int
 	int cnt;
 	const char *cp;
 	struct blame_origin *suspect = ent->suspect;
-	struct cummit_info ci = cummit_INFO_INIT;
+	struct cummit_info ci = CUMMIT_INFO_INIT;
 	char hex[GIT_MAX_HEXSZ + 1];
 	int show_raw_time = !!(opt & OUTPUT_RAW_TIMESTAMP);
 	const char *default_color = NULL, *color = NULL, *reset = NULL;
@@ -626,7 +626,7 @@ static void find_alignment(struct blame_scoreboard *sb, int *option)
 		if (longest_file < num)
 			longest_file = num;
 		if (!(suspect->cummit->object.flags & METAINFO_SHOWN)) {
-			struct cummit_info ci = cummit_INFO_INIT;
+			struct cummit_info ci = CUMMIT_INFO_INIT;
 			suspect->cummit->object.flags |= METAINFO_SHOWN;
 			get_cummit_info(suspect->cummit, &ci, 1);
 			if (*option & OUTPUT_SHOW_EMAIL)
@@ -808,7 +808,7 @@ static int peel_to_cummit_oid(struct object_id *oid_ret, void *cbdata)
 	while (1) {
 		struct object *obj;
 		int kind = oid_object_info(r, &oid, NULL);
-		if (kind == OBJ_cummit) {
+		if (kind == OBJ_CUMMIT) {
 			oidcpy(oid_ret, &oid);
 			return 0;
 		}

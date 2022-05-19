@@ -75,16 +75,16 @@ assign_fake_date () {
 }
 
 on_cummitter_date () {
-	assign_fake_date GIT_cummitTER_DATE "$1"
-	export GIT_cummitTER_DATE
+	assign_fake_date GIT_CUMMITTER_DATE "$1"
+	export GIT_CUMMITTER_DATE
 	shift 1
 	"$@"
 }
 
 on_dates () {
-	assign_fake_date GIT_cummitTER_DATE "$1"
+	assign_fake_date GIT_CUMMITTER_DATE "$1"
 	assign_fake_date GIT_AUTHOR_DATE "$2"
-	export GIT_cummitTER_DATE GIT_AUTHOR_DATE
+	export GIT_CUMMITTER_DATE GIT_AUTHOR_DATE
 	shift 2
 	"$@"
 }

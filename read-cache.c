@@ -1583,7 +1583,7 @@ int repo_refresh_and_write_index(struct repository *repo,
 		return -1;
 	if (refresh_index(repo->index, refresh_flags, pathspec, seen, header_msg))
 		ret = 1;
-	if (0 <= fd && write_locked_index(repo->index, &lock_file, cummit_LOCK | write_flags))
+	if (0 <= fd && write_locked_index(repo->index, &lock_file, CUMMIT_LOCK | write_flags))
 		ret = -1;
 	return ret;
 }
@@ -2812,7 +2812,7 @@ void repo_update_index_if_able(struct repository *repo,
 	if ((repo->index->cache_changed ||
 	     has_racy_timestamp(repo->index)) &&
 	    repo_verify_index(repo))
-		write_locked_index(repo->index, lockfile, cummit_LOCK);
+		write_locked_index(repo->index, lockfile, CUMMIT_LOCK);
 	else
 		rollback_lock_file(lockfile);
 }
@@ -3104,7 +3104,7 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 	}
 
 	csum_fsync_flag = 0;
-	if (!alternate_index_output && (flags & cummit_LOCK))
+	if (!alternate_index_output && (flags & CUMMIT_LOCK))
 		csum_fsync_flag = CSUM_FSYNC;
 
 	finalize_hashfile(f, istate->oid.hash, FSYNC_COMPONENT_INDEX,
@@ -3173,7 +3173,7 @@ static int do_write_locked_index(struct index_state *istate, struct lock_file *l
 
 	if (ret)
 		return ret;
-	if (flags & cummit_LOCK)
+	if (flags & CUMMIT_LOCK)
 		ret = cummit_locked_index(lock);
 	else
 		ret = close_lock_file_gently(lock);
@@ -3332,7 +3332,7 @@ int write_locked_index(struct index_state *istate, struct lock_file *lock,
 		cache_tree_verify(the_repository, istate);
 
 	if ((flags & SKIP_IF_UNCHANGED) && !istate->cache_changed) {
-		if (flags & cummit_LOCK)
+		if (flags & CUMMIT_LOCK)
 			rollback_lock_file(lock);
 		return 0;
 	}
@@ -3398,7 +3398,7 @@ int write_locked_index(struct index_state *istate, struct lock_file *lock,
 	}
 
 out:
-	if (flags & cummit_LOCK)
+	if (flags & CUMMIT_LOCK)
 		rollback_lock_file(lock);
 	return ret;
 }

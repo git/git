@@ -464,7 +464,7 @@ int delete_reflog(const char *refname);
  * below).
  *
  * The cummitter parameter is a single string, in the form
- * "$GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL>" (without double quotes).
+ * "$GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL>" (without double quotes).
  *
  * The timestamp parameter gives the time when entry was created as the number
  * of seconds since the UNIX epoch.

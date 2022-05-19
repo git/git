@@ -760,7 +760,7 @@ static int try_merge_strategy(const char *strategy, struct cummit_list *common,
 		if (clean < 0)
 			exit(128);
 		if (write_locked_index(&the_index, &lock,
-				       cummit_LOCK | SKIP_IF_UNCHANGED))
+				       CUMMIT_LOCK | SKIP_IF_UNCHANGED))
 			die(_("unable to write %s"), get_index_file());
 		return clean ? 0 : 1;
 	} else {
@@ -865,12 +865,12 @@ static void prepare_to_cummit(struct cummit_list *remoteheads)
 		BUG("the control must not reach here under --squash");
 	if (0 < option_edit) {
 		strbuf_addch(&msg, '\n');
-		if (cleanup_mode == cummit_MSG_CLEANUP_SCISSORS) {
+		if (cleanup_mode == CUMMIT_MSG_CLEANUP_SCISSORS) {
 			wt_status_append_cut_line(&msg);
 			strbuf_commented_addf(&msg, "\n");
 		}
 		strbuf_commented_addf(&msg, _(merge_editor_comment));
-		if (cleanup_mode == cummit_MSG_CLEANUP_SCISSORS)
+		if (cleanup_mode == CUMMIT_MSG_CLEANUP_SCISSORS)
 			strbuf_commented_addf(&msg, _(scissors_editor_comment));
 		else
 			strbuf_commented_addf(&msg,
@@ -962,7 +962,7 @@ static int suggest_conflicts(void)
 
 	/*
 	 * We can't use cleanup_mode because if we're not using the editor,
-	 * get_cleanup_mode will return cummit_MSG_CLEANUP_SPACE instead, even
+	 * get_cleanup_mode will return CUMMIT_MSG_CLEANUP_SPACE instead, even
 	 * though the message is meant to be processed later by git-cummit.
 	 * Thus, we will get the cleanup mode which is returned when we _are_
 	 * using an editor.

@@ -192,7 +192,7 @@ allowing access over SSH.
 4. For SSH clients that will make cummits, make sure their server-side
    .ssh/environment files (or .bashrc, etc., according to their specific shell)
    export appropriate values for GIT_AUTHOR_NAME, GIT_AUTHOR_EMAIL,
-   GIT_cummitTER_NAME, and GIT_cummitTER_EMAIL.  For SSH clients whose login
+   GIT_CUMMITTER_NAME, and GIT_CUMMITTER_EMAIL.  For SSH clients whose login
    shell is bash, .bashrc may be a reasonable alternative.
 
 5. Clients should now be able to check out the project. Use the CVS 'module'

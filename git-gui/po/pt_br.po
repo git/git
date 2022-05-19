@@ -1353,8 +1353,8 @@ msgid "Unable to obtain your identity:"
 msgstr "Não foi possível obter a sua identidade:"
 
 #: lib/cummit.tcl:80
-msgid "Invalid GIT_cummitTER_IDENT:"
-msgstr "Variável \"GIT_cummitTER_IDENT\" inválida:"
+msgid "Invalid GIT_CUMMITTER_IDENT:"
+msgstr "Variável \"GIT_CUMMITTER_IDENT\" inválida:"
 
 #: lib/cummit.tcl:129
 #, tcl-format

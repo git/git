@@ -39,17 +39,17 @@ test_expect_success setup '
 
 	echo "l3" >two &&
 	test_tick &&
-	GIT_cummitTER_NAME="Another cummitter" \
+	GIT_CUMMITTER_NAME="Another cummitter" \
 	GIT_AUTHOR_NAME="Another Author" git cummit -a -m "Left #3" &&
 
 	echo "l4" >two &&
 	test_tick &&
-	GIT_cummitTER_NAME="Another cummitter" \
+	GIT_CUMMITTER_NAME="Another cummitter" \
 	GIT_AUTHOR_NAME="Another Author" git cummit -a -m "Left #4" &&
 
 	echo "l5" >two &&
 	test_tick &&
-	GIT_cummitTER_NAME="Another cummitter" \
+	GIT_CUMMITTER_NAME="Another cummitter" \
 	GIT_AUTHOR_NAME="Another Author" git cummit -a -m "Left #5" &&
 	git tag tag-l5 &&
 

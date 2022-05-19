@@ -1114,13 +1114,13 @@ test_expect_success 'git log -c --follow' '
 '
 
 cat >expect <<\EOF
-*   cummit cummit_OBJECT_NAME
+*   cummit CUMMIT_OBJECT_NAME
 |\  Merge: MERGE_PARENTS
 | | Author: A U Thor <author@example.com>
 | |
 | |     Merge HEADS DESCRIPTION
 | |
-| * cummit cummit_OBJECT_NAME
+| * cummit CUMMIT_OBJECT_NAME
 | | Author: A U Thor <author@example.com>
 | |
 | |     reach
@@ -1137,13 +1137,13 @@ cat >expect <<\EOF
 | | +reach
 | |
 |  \
-*-. \   cummit cummit_OBJECT_NAME
+*-. \   cummit CUMMIT_OBJECT_NAME
 |\ \ \  Merge: MERGE_PARENTS
 | | | | Author: A U Thor <author@example.com>
 | | | |
 | | | |     Merge HEADS DESCRIPTION
 | | | |
-| | * | cummit cummit_OBJECT_NAME
+| | * | cummit CUMMIT_OBJECT_NAME
 | | |/  Author: A U Thor <author@example.com>
 | | |
 | | |       octopus-b
@@ -1159,7 +1159,7 @@ cat >expect <<\EOF
 | | |   @@ -0,0 +1 @@
 | | |   +octopus-b
 | | |
-| * | cummit cummit_OBJECT_NAME
+| * | cummit CUMMIT_OBJECT_NAME
 | |/  Author: A U Thor <author@example.com>
 | |
 | |       octopus-a
@@ -1175,7 +1175,7 @@ cat >expect <<\EOF
 | |   @@ -0,0 +1 @@
 | |   +octopus-a
 | |
-* | cummit cummit_OBJECT_NAME
+* | cummit CUMMIT_OBJECT_NAME
 |/  Author: A U Thor <author@example.com>
 |
 |       seventh
@@ -1191,25 +1191,25 @@ cat >expect <<\EOF
 |   @@ -0,0 +1 @@
 |   +seventh
 |
-*   cummit cummit_OBJECT_NAME
+*   cummit CUMMIT_OBJECT_NAME
 |\  Merge: MERGE_PARENTS
 | | Author: A U Thor <author@example.com>
 | |
 | |     Merge branch 'tangle'
 | |
-| *   cummit cummit_OBJECT_NAME
+| *   cummit CUMMIT_OBJECT_NAME
 | |\  Merge: MERGE_PARENTS
 | | | Author: A U Thor <author@example.com>
 | | |
 | | |     Merge branch 'side' (early part) into tangle
 | | |
-| * |   cummit cummit_OBJECT_NAME
+| * |   cummit CUMMIT_OBJECT_NAME
 | |\ \  Merge: MERGE_PARENTS
 | | | | Author: A U Thor <author@example.com>
 | | | |
 | | | |     Merge branch 'main' (early part) into tangle
 | | | |
-| * | | cummit cummit_OBJECT_NAME
+| * | | cummit CUMMIT_OBJECT_NAME
 | | | | Author: A U Thor <author@example.com>
 | | | |
 | | | |     tangle-a
@@ -1225,13 +1225,13 @@ cat >expect <<\EOF
 | | | | @@ -0,0 +1 @@
 | | | | +a
 | | | |
-* | | |   cummit cummit_OBJECT_NAME
+* | | |   cummit CUMMIT_OBJECT_NAME
 |\ \ \ \  Merge: MERGE_PARENTS
 | | | | | Author: A U Thor <author@example.com>
 | | | | |
 | | | | |     Merge branch 'side'
 | | | | |
-| * | | | cummit cummit_OBJECT_NAME
+| * | | | cummit CUMMIT_OBJECT_NAME
 | | |_|/  Author: A U Thor <author@example.com>
 | |/| |
 | | | |       side-2
@@ -1247,7 +1247,7 @@ cat >expect <<\EOF
 | | | |   @@ -0,0 +1 @@
 | | | |   +2
 | | | |
-| * | | cummit cummit_OBJECT_NAME
+| * | | cummit CUMMIT_OBJECT_NAME
 | | | | Author: A U Thor <author@example.com>
 | | | |
 | | | |     side-1
@@ -1263,7 +1263,7 @@ cat >expect <<\EOF
 | | | | @@ -0,0 +1 @@
 | | | | +1
 | | | |
-* | | | cummit cummit_OBJECT_NAME
+* | | | cummit CUMMIT_OBJECT_NAME
 | | | | Author: A U Thor <author@example.com>
 | | | |
 | | | |     Second
@@ -1279,7 +1279,7 @@ cat >expect <<\EOF
 | | | | @@ -0,0 +1 @@
 | | | | +case
 | | | |
-* | | | cummit cummit_OBJECT_NAME
+* | | | cummit CUMMIT_OBJECT_NAME
 | |_|/  Author: A U Thor <author@example.com>
 |/| |
 | | |       sixth
@@ -1295,7 +1295,7 @@ cat >expect <<\EOF
 | | |   @@ -1 +0,0 @@
 | | |   -ni
 | | |
-* | | cummit cummit_OBJECT_NAME
+* | | cummit CUMMIT_OBJECT_NAME
 | | | Author: A U Thor <author@example.com>
 | | |
 | | |     fifth
@@ -1311,7 +1311,7 @@ cat >expect <<\EOF
 | | | @@ -0,0 +1 @@
 | | | +ni
 | | |
-* | | cummit cummit_OBJECT_NAME
+* | | cummit CUMMIT_OBJECT_NAME
 |/ /  Author: A U Thor <author@example.com>
 | |
 | |       fourth
@@ -1327,7 +1327,7 @@ cat >expect <<\EOF
 | |   @@ -0,0 +1 @@
 | |   +ichi
 | |
-* | cummit cummit_OBJECT_NAME
+* | cummit CUMMIT_OBJECT_NAME
 |/  Author: A U Thor <author@example.com>
 |
 |       third
@@ -1351,7 +1351,7 @@ cat >expect <<\EOF
 |   @@ -1 +0,0 @@
 |   -ichi
 |
-* cummit cummit_OBJECT_NAME
+* cummit CUMMIT_OBJECT_NAME
 | Author: A U Thor <author@example.com>
 |
 |     second
@@ -1367,7 +1367,7 @@ cat >expect <<\EOF
 | -one
 | +ichi
 |
-* cummit cummit_OBJECT_NAME
+* cummit CUMMIT_OBJECT_NAME
   Author: A U Thor <author@example.com>
 
       initial
@@ -1389,13 +1389,13 @@ test_expect_success 'log --graph with diff and stats' '
 '
 
 cat >expect <<\EOF
-*** *   cummit cummit_OBJECT_NAME
+*** *   cummit CUMMIT_OBJECT_NAME
 *** |\  Merge: MERGE_PARENTS
 *** | | Author: A U Thor <author@example.com>
 *** | |
 *** | |     Merge HEADS DESCRIPTION
 *** | |
-*** | * cummit cummit_OBJECT_NAME
+*** | * cummit CUMMIT_OBJECT_NAME
 *** | | Author: A U Thor <author@example.com>
 *** | |
 *** | |     reach
@@ -1412,13 +1412,13 @@ cat >expect <<\EOF
 *** | | +reach
 *** | |
 *** |  \
-*** *-. \   cummit cummit_OBJECT_NAME
+*** *-. \   cummit CUMMIT_OBJECT_NAME
 *** |\ \ \  Merge: MERGE_PARENTS
 *** | | | | Author: A U Thor <author@example.com>
 *** | | | |
 *** | | | |     Merge HEADS DESCRIPTION
 *** | | | |
-*** | | * | cummit cummit_OBJECT_NAME
+*** | | * | cummit CUMMIT_OBJECT_NAME
 *** | | |/  Author: A U Thor <author@example.com>
 *** | | |
 *** | | |       octopus-b
@@ -1434,7 +1434,7 @@ cat >expect <<\EOF
 *** | | |   @@ -0,0 +1 @@
 *** | | |   +octopus-b
 *** | | |
-*** | * | cummit cummit_OBJECT_NAME
+*** | * | cummit CUMMIT_OBJECT_NAME
 *** | |/  Author: A U Thor <author@example.com>
 *** | |
 *** | |       octopus-a
@@ -1450,7 +1450,7 @@ cat >expect <<\EOF
 *** | |   @@ -0,0 +1 @@
 *** | |   +octopus-a
 *** | |
-*** * | cummit cummit_OBJECT_NAME
+*** * | cummit CUMMIT_OBJECT_NAME
 *** |/  Author: A U Thor <author@example.com>
 *** |
 *** |       seventh
@@ -1466,25 +1466,25 @@ cat >expect <<\EOF
 *** |   @@ -0,0 +1 @@
 *** |   +seventh
 *** |
-*** *   cummit cummit_OBJECT_NAME
+*** *   cummit CUMMIT_OBJECT_NAME
 *** |\  Merge: MERGE_PARENTS
 *** | | Author: A U Thor <author@example.com>
 *** | |
 *** | |     Merge branch 'tangle'
 *** | |
-*** | *   cummit cummit_OBJECT_NAME
+*** | *   cummit CUMMIT_OBJECT_NAME
 *** | |\  Merge: MERGE_PARENTS
 *** | | | Author: A U Thor <author@example.com>
 *** | | |
 *** | | |     Merge branch 'side' (early part) into tangle
 *** | | |
-*** | * |   cummit cummit_OBJECT_NAME
+*** | * |   cummit CUMMIT_OBJECT_NAME
 *** | |\ \  Merge: MERGE_PARENTS
 *** | | | | Author: A U Thor <author@example.com>
 *** | | | |
 *** | | | |     Merge branch 'main' (early part) into tangle
 *** | | | |
-*** | * | | cummit cummit_OBJECT_NAME
+*** | * | | cummit CUMMIT_OBJECT_NAME
 *** | | | | Author: A U Thor <author@example.com>
 *** | | | |
 *** | | | |     tangle-a
@@ -1500,13 +1500,13 @@ cat >expect <<\EOF
 *** | | | | @@ -0,0 +1 @@
 *** | | | | +a
 *** | | | |
-*** * | | |   cummit cummit_OBJECT_NAME
+*** * | | |   cummit CUMMIT_OBJECT_NAME
 *** |\ \ \ \  Merge: MERGE_PARENTS
 *** | | | | | Author: A U Thor <author@example.com>
 *** | | | | |
 *** | | | | |     Merge branch 'side'
 *** | | | | |
-*** | * | | | cummit cummit_OBJECT_NAME
+*** | * | | | cummit CUMMIT_OBJECT_NAME
 *** | | |_|/  Author: A U Thor <author@example.com>
 *** | |/| |
 *** | | | |       side-2
@@ -1522,7 +1522,7 @@ cat >expect <<\EOF
 *** | | | |   @@ -0,0 +1 @@
 *** | | | |   +2
 *** | | | |
-*** | * | | cummit cummit_OBJECT_NAME
+*** | * | | cummit CUMMIT_OBJECT_NAME
 *** | | | | Author: A U Thor <author@example.com>
 *** | | | |
 *** | | | |     side-1
@@ -1538,7 +1538,7 @@ cat >expect <<\EOF
 *** | | | | @@ -0,0 +1 @@
 *** | | | | +1
 *** | | | |
-*** * | | | cummit cummit_OBJECT_NAME
+*** * | | | cummit CUMMIT_OBJECT_NAME
 *** | | | | Author: A U Thor <author@example.com>
 *** | | | |
 *** | | | |     Second
@@ -1554,7 +1554,7 @@ cat >expect <<\EOF
 *** | | | | @@ -0,0 +1 @@
 *** | | | | +case
 *** | | | |
-*** * | | | cummit cummit_OBJECT_NAME
+*** * | | | cummit CUMMIT_OBJECT_NAME
 *** | |_|/  Author: A U Thor <author@example.com>
 *** |/| |
 *** | | |       sixth
@@ -1570,7 +1570,7 @@ cat >expect <<\EOF
 *** | | |   @@ -1 +0,0 @@
 *** | | |   -ni
 *** | | |
-*** * | | cummit cummit_OBJECT_NAME
+*** * | | cummit CUMMIT_OBJECT_NAME
 *** | | | Author: A U Thor <author@example.com>
 *** | | |
 *** | | |     fifth
@@ -1586,7 +1586,7 @@ cat >expect <<\EOF
 *** | | | @@ -0,0 +1 @@
 *** | | | +ni
 *** | | |
-*** * | | cummit cummit_OBJECT_NAME
+*** * | | cummit CUMMIT_OBJECT_NAME
 *** |/ /  Author: A U Thor <author@example.com>
 *** | |
 *** | |       fourth
@@ -1602,7 +1602,7 @@ cat >expect <<\EOF
 *** | |   @@ -0,0 +1 @@
 *** | |   +ichi
 *** | |
-*** * | cummit cummit_OBJECT_NAME
+*** * | cummit CUMMIT_OBJECT_NAME
 *** |/  Author: A U Thor <author@example.com>
 *** |
 *** |       third
@@ -1626,7 +1626,7 @@ cat >expect <<\EOF
 *** |   @@ -1 +0,0 @@
 *** |   -ichi
 *** |
-*** * cummit cummit_OBJECT_NAME
+*** * cummit CUMMIT_OBJECT_NAME
 *** | Author: A U Thor <author@example.com>
 *** |
 *** |     second
@@ -1642,7 +1642,7 @@ cat >expect <<\EOF
 *** | -one
 *** | +ichi
 *** |
-*** * cummit cummit_OBJECT_NAME
+*** * cummit CUMMIT_OBJECT_NAME
 ***   Author: A U Thor <author@example.com>
 ***
 ***       initial
@@ -1805,7 +1805,7 @@ test_expect_success GPGSM 'setup signed branch x509' '
 	echo foo >foo &&
 	git add foo &&
 	test_config gpg.format x509 &&
-	test_config user.signingkey $GIT_cummitTER_EMAIL &&
+	test_config user.signingkey $GIT_CUMMITTER_EMAIL &&
 	git cummit -S -m signed_cummit
 '
 
@@ -2001,7 +2001,7 @@ test_expect_success GPG 'log --show-signature for merged tag with GPG failure' '
 test_expect_success GPGSM 'log --graph --show-signature for merged tag x509' '
 	test_when_finished "git reset --hard && git checkout main" &&
 	test_config gpg.format x509 &&
-	test_config user.signingkey $GIT_cummitTER_EMAIL &&
+	test_config user.signingkey $GIT_CUMMITTER_EMAIL &&
 	git checkout -b plain-x509 main &&
 	echo aaa >bar &&
 	git add bar &&
@@ -2022,7 +2022,7 @@ test_expect_success GPGSM 'log --graph --show-signature for merged tag x509' '
 test_expect_success GPGSM 'log --graph --show-signature for merged tag x509 missing key' '
 	test_when_finished "git reset --hard && git checkout main" &&
 	test_config gpg.format x509 &&
-	test_config user.signingkey $GIT_cummitTER_EMAIL &&
+	test_config user.signingkey $GIT_CUMMITTER_EMAIL &&
 	git checkout -b plain-x509-nokey main &&
 	echo aaa >bar &&
 	git add bar &&
@@ -2043,7 +2043,7 @@ test_expect_success GPGSM 'log --graph --show-signature for merged tag x509 miss
 test_expect_success GPGSM 'log --graph --show-signature for merged tag x509 bad signature' '
 	test_when_finished "git reset --hard && git checkout main" &&
 	test_config gpg.format x509 &&
-	test_config user.signingkey $GIT_cummitTER_EMAIL &&
+	test_config user.signingkey $GIT_CUMMITTER_EMAIL &&
 	git checkout -b plain-x509-bad main &&
 	echo aaa >bar &&
 	git add bar &&

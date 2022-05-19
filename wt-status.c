@@ -179,7 +179,7 @@ static void wt_longstatus_print_unmerged_header(struct wt_status *s)
 
 	if (!s->hints)
 		return;
-	if (s->whence != FROM_cummit)
+	if (s->whence != FROM_CUMMIT)
 		;
 	else if (!s->is_initial) {
 		if (!strcmp(s->reference, "HEAD"))
@@ -211,7 +211,7 @@ static void wt_longstatus_print_cached_header(struct wt_status *s)
 	status_printf_ln(s, c, _("Changes to be cummitted:"));
 	if (!s->hints)
 		return;
-	if (s->whence != FROM_cummit)
+	if (s->whence != FROM_CUMMIT)
 		; /* NEEDSWORK: use "git reset --unresolve"??? */
 	else if (!s->is_initial) {
 		if (!strcmp(s->reference, "HEAD"))

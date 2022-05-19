@@ -42,7 +42,7 @@ test_expect_success 'corrupt second cummit object' \
    '
 
 test_expect_success 'rev-list should fail' '
-	test_must_fail env GIT_TEST_cummit_GRAPH=0 git -c core.cummitGraph=false rev-list --all > /dev/null
+	test_must_fail env GIT_TEST_CUMMIT_GRAPH=0 git -c core.cummitGraph=false rev-list --all > /dev/null
 '
 
 test_expect_success 'git repack _MUST_ fail' \

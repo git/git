@@ -61,8 +61,8 @@ test_expect_success 'stream omits other refnames' '
 '
 
 test_expect_success 'stream omits identities' '
-	! grep "$GIT_cummitTER_NAME" stream &&
-	! grep "$GIT_cummitTER_EMAIL" stream &&
+	! grep "$GIT_CUMMITTER_NAME" stream &&
+	! grep "$GIT_CUMMITTER_EMAIL" stream &&
 	! grep "$GIT_AUTHOR_NAME" stream &&
 	! grep "$GIT_AUTHOR_EMAIL" stream
 '

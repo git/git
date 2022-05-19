@@ -9,7 +9,7 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 test_expect_success 'setup' '
 	test_cummit A &&
-	GIT_cummitTER_DATE="@0 +0000" GIT_AUTHOR_DATE="@0 +0000" &&
+	GIT_CUMMITTER_DATE="@0 +0000" GIT_AUTHOR_DATE="@0 +0000" &&
 	test_cummit --notick B &&
 	git checkout -b branch B &&
 	test_cummit D &&
@@ -202,7 +202,7 @@ test_expect_success 'author information is preserved' '
 	git branch preserved-author &&
 	(sane_unset GIT_AUTHOR_NAME &&
 	 git filter-branch -f --msg-filter "cat; \
-			test \$GIT_cummit != $(git rev-parse main) || \
+			test \$GIT_CUMMIT != $(git rev-parse main) || \
 			echo Hallo" \
 		preserved-author) &&
 	git rev-list --author="B V Uips" preserved-author >actual &&
@@ -235,7 +235,7 @@ test_expect_success 'barf on invalid name' '
 
 test_expect_success '"map" works in cummit filter' '
 	git filter-branch -f --cummit-filter "\
-		parent=\$(git rev-parse \$GIT_cummit^) &&
+		parent=\$(git rev-parse \$GIT_CUMMIT^) &&
 		mapped=\$(map \$parent) &&
 		actual=\$(echo \"\$@\" | sed \"s/^.*-p //\") &&
 		test \$mapped = \$actual &&
@@ -339,7 +339,7 @@ test_expect_success 'setup --prune-empty comparisons' '
 	git rm -rf . &&
 	unset test_tick &&
 	test_tick &&
-	GIT_cummitTER_DATE="@0 +0000" GIT_AUTHOR_DATE="@0 +0000" &&
+	GIT_CUMMITTER_DATE="@0 +0000" GIT_AUTHOR_DATE="@0 +0000" &&
 	test_cummit --notick B B.t B Bx &&
 	git checkout -b branch-no-a Bx &&
 	test_cummit D D.t D Dx &&

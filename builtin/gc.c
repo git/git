@@ -700,7 +700,7 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 	prepare_repo_settings(the_repository);
 	if (the_repository->settings.gc_write_cummit_graph == 1)
 		write_cummit_graph_reachable(the_repository->objects->odb,
-					     !quiet && !daemonized ? cummit_GRAPH_WRITE_PROGRESS : 0,
+					     !quiet && !daemonized ? CUMMIT_GRAPH_WRITE_PROGRESS : 0,
 					     NULL);
 
 	if (auto_gc && too_many_loose_objects())
@@ -780,14 +780,14 @@ static int dfs_on_ref(const char *refname,
 
 	if (!peel_iterated_oid(oid, &peeled))
 		oid = &peeled;
-	if (oid_object_info(the_repository, oid, NULL) != OBJ_cummit)
+	if (oid_object_info(the_repository, oid, NULL) != OBJ_CUMMIT)
 		return 0;
 
 	cummit = lookup_cummit(the_repository, oid);
 	if (!cummit)
 		return 0;
 	if (parse_cummit(cummit) ||
-	    cummit_graph_position(cummit) != cummit_NOT_FROM_GRAPH)
+	    cummit_graph_position(cummit) != CUMMIT_NOT_FROM_GRAPH)
 		return 0;
 
 	data->num_not_in_graph++;
@@ -804,7 +804,7 @@ static int dfs_on_ref(const char *refname,
 
 		for (parent = cummit->parents; parent; parent = parent->next) {
 			if (parse_cummit(parent->item) ||
-			    cummit_graph_position(parent->item) != cummit_NOT_FROM_GRAPH ||
+			    cummit_graph_position(parent->item) != CUMMIT_NOT_FROM_GRAPH ||
 			    parent->item->object.flags & SEEN)
 				continue;
 
@@ -1210,7 +1210,7 @@ enum maintenance_task_label {
 	TASK_LOOSE_OBJECTS,
 	TASK_INCREMENTAL_REPACK,
 	TASK_GC,
-	TASK_cummit_GRAPH,
+	TASK_CUMMIT_GRAPH,
 	TASK_PACK_REFS,
 
 	/* Leave as final value */
@@ -1238,7 +1238,7 @@ static struct maintenance_task tasks[] = {
 		need_to_gc,
 		1,
 	},
-	[TASK_cummit_GRAPH] = {
+	[TASK_CUMMIT_GRAPH] = {
 		"cummit-graph",
 		maintenance_task_cummit_graph,
 		should_write_cummit_graph,
@@ -1324,8 +1324,8 @@ static void initialize_maintenance_strategy(void)
 
 	if (!strcasecmp(config_str, "incremental")) {
 		tasks[TASK_GC].schedule = SCHEDULE_NONE;
-		tasks[TASK_cummit_GRAPH].enabled = 1;
-		tasks[TASK_cummit_GRAPH].schedule = SCHEDULE_HOURLY;
+		tasks[TASK_CUMMIT_GRAPH].enabled = 1;
+		tasks[TASK_CUMMIT_GRAPH].schedule = SCHEDULE_HOURLY;
 		tasks[TASK_PREFETCH].enabled = 1;
 		tasks[TASK_PREFETCH].schedule = SCHEDULE_HOURLY;
 		tasks[TASK_INCREMENTAL_REPACK].enabled = 1;

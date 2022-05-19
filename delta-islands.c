@@ -206,7 +206,7 @@ static void mark_remote_island_1(struct repository *r,
 		marks = create_or_get_island_marks(obj);
 		island_bitmap_set(marks, island_counter);
 
-		if (is_core_island && obj->type == OBJ_cummit)
+		if (is_core_island && obj->type == OBJ_CUMMIT)
 			obj->flags |= NEEDS_BITMAP;
 
 		/* If it was a tag, also make sure we hit the underlying object. */

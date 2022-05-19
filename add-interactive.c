@@ -705,7 +705,7 @@ static int run_update(struct add_i_state *s, const struct pathspec *ps,
 		}
 	}
 
-	if (!res && write_locked_index(s->r->index, &index_lock, cummit_LOCK) < 0)
+	if (!res && write_locked_index(s->r->index, &index_lock, CUMMIT_LOCK) < 0)
 		res = error(_("could not write index"));
 
 	if (!res)
@@ -809,7 +809,7 @@ static int run_revert(struct add_i_state *s, const struct pathspec *ps,
 	free(paths);
 
 	if (!res && write_locked_index(s->r->index, &index_lock,
-				       cummit_LOCK) < 0)
+				       CUMMIT_LOCK) < 0)
 		res = -1;
 	else
 		res = repo_refresh_and_write_index(s->r, REFRESH_QUIET, 0, 1,
@@ -894,7 +894,7 @@ static int run_add_untracked(struct add_i_state *s, const struct pathspec *ps,
 	}
 
 	if (!res &&
-	    write_locked_index(s->r->index, &index_lock, cummit_LOCK) < 0)
+	    write_locked_index(s->r->index, &index_lock, CUMMIT_LOCK) < 0)
 		res = error(_("could not write index"));
 
 	if (!res)

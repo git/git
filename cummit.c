@@ -39,7 +39,7 @@ struct cummit *lookup_cummit_reference_gently(struct repository *r,
 
 	if (!obj)
 		return NULL;
-	return object_as_type(obj, OBJ_cummit, quiet);
+	return object_as_type(obj, OBJ_CUMMIT, quiet);
 }
 
 struct cummit *lookup_cummit_reference(struct repository *r, const struct object_id *oid)
@@ -64,7 +64,7 @@ struct cummit *lookup_cummit(struct repository *r, const struct object_id *oid)
 	struct object *obj = lookup_object(r, oid);
 	if (!obj)
 		return create_object(r, oid, alloc_cummit_node(r));
-	return object_as_type(obj, OBJ_cummit, 0);
+	return object_as_type(obj, OBJ_CUMMIT, 0);
 }
 
 struct cummit *lookup_cummit_reference_by_name(const char *name)
@@ -312,7 +312,7 @@ const void *repo_get_cummit_buffer(struct repository *r,
 		if (!ret)
 			die("cannot read cummit object %s",
 			    oid_to_hex(&cummit->object.oid));
-		if (type != OBJ_cummit)
+		if (type != OBJ_CUMMIT)
 			die("expected cummit for %s, got %s",
 			    oid_to_hex(&cummit->object.oid), type_name(type));
 		if (sizep)
@@ -352,7 +352,7 @@ struct tree *repo_get_cummit_tree(struct repository *r,
 	if (cummit->maybe_tree || !cummit->object.parsed)
 		return cummit->maybe_tree;
 
-	if (cummit_graph_position(cummit) != cummit_NOT_FROM_GRAPH)
+	if (cummit_graph_position(cummit) != CUMMIT_NOT_FROM_GRAPH)
 		return get_cummit_tree_in_graph(r, cummit);
 
 	return NULL;
@@ -502,7 +502,7 @@ int repo_parse_cummit_internal(struct repository *r,
 		return quiet_on_missing ? -1 :
 			error("Could not read %s",
 			     oid_to_hex(&item->object.oid));
-	if (type != OBJ_cummit) {
+	if (type != OBJ_CUMMIT) {
 		free(buffer);
 		return error("Object %s not a cummit",
 			     oid_to_hex(&item->object.oid));
@@ -831,7 +831,7 @@ void sort_in_topological_order(struct cummit_list **list, enum rev_sort_order so
 	default: /* REV_SORT_IN_GRAPH_ORDER */
 		queue.compare = NULL;
 		break;
-	case REV_SORT_BY_cummit_DATE:
+	case REV_SORT_BY_CUMMIT_DATE:
 		queue.compare = compare_cummits_by_cummit_date;
 		break;
 	case REV_SORT_BY_AUTHOR_DATE:
@@ -1224,7 +1224,7 @@ int check_cummit_signature(const struct cummit *cummit, struct signature_check *
 	if (parse_signed_cummit(cummit, &payload, &signature, the_hash_algo) <= 0)
 		goto out;
 
-	sigc->payload_type = SIGNATURE_PAYLOAD_cummit;
+	sigc->payload_type = SIGNATURE_PAYLOAD_CUMMIT;
 	sigc->payload = strbuf_detach(&payload, &sigc->payload_len);
 	ret = check_signature(sigc, signature.buf, signature.len);
 
@@ -1578,14 +1578,14 @@ int cummit_tree_extended(const char *msg, size_t msg_len,
 		goto out;
 	}
 
-	result = write_object_file(buffer.buf, buffer.len, OBJ_cummit, ret);
+	result = write_object_file(buffer.buf, buffer.len, OBJ_CUMMIT, ret);
 out:
 	strbuf_release(&buffer);
 	return result;
 }
 
 define_cummit_slab(merge_desc_slab, struct merge_remote_desc *);
-static struct merge_desc_slab merge_desc_slab = cummit_SLAB_INIT(1, merge_desc_slab);
+static struct merge_desc_slab merge_desc_slab = CUMMIT_SLAB_INIT(1, merge_desc_slab);
 
 struct merge_remote_desc *merge_remote_util(struct cummit *cummit)
 {
@@ -1609,7 +1609,7 @@ struct cummit *get_merge_parent(const char *name)
 	if (get_oid(name, &oid))
 		return NULL;
 	obj = parse_object(the_repository, &oid);
-	cummit = (struct cummit *)peel_to_type(name, 0, obj, OBJ_cummit);
+	cummit = (struct cummit *)peel_to_type(name, 0, obj, OBJ_CUMMIT);
 	if (cummit && !merge_remote_util(cummit))
 		set_merge_remote_desc(cummit, name, obj);
 	return cummit;

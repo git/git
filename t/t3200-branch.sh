@@ -72,10 +72,10 @@ test_expect_success 'git branch HEAD should fail' '
 '
 
 cat >expect <<EOF
-$ZERO_OID $HEAD $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> 1117150200 +0000	branch: Created from main
+$ZERO_OID $HEAD $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> 1117150200 +0000	branch: Created from main
 EOF
 test_expect_success 'git branch --create-reflog d/e/f should create a branch and a log' '
-	GIT_cummitTER_DATE="2005-05-26 23:30" \
+	GIT_CUMMITTER_DATE="2005-05-26 23:30" \
 	git -c core.logallrefupdates=false branch --create-reflog d/e/f &&
 	test_path_is_file .git/refs/heads/d/e/f &&
 	test_path_is_file .git/logs/refs/heads/d/e/f &&
@@ -1008,10 +1008,10 @@ test_expect_success '--set-upstream-to notices an error to set branch as own ups
 
 # Keep this test last, as it changes the current branch
 cat >expect <<EOF
-$ZERO_OID $HEAD $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> 1117150200 +0000	branch: Created from main
+$ZERO_OID $HEAD $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> 1117150200 +0000	branch: Created from main
 EOF
 test_expect_success 'git checkout -b g/h/i -l should create a branch and a log' '
-	GIT_cummitTER_DATE="2005-05-26 23:30" \
+	GIT_CUMMITTER_DATE="2005-05-26 23:30" \
 	git checkout -b g/h/i -l main &&
 	test_path_is_file .git/refs/heads/g/h/i &&
 	test_path_is_file .git/logs/refs/heads/g/h/i &&

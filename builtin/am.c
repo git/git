@@ -89,9 +89,9 @@ enum show_patch_type {
 };
 
 enum empty_action {
-	STOP_ON_EMPTY_cummit = 0,  /* output errors and stop in the middle of an am session */
-	DROP_EMPTY_cummit,         /* skip with a notice message, unless "--quiet" has been passed */
-	KEEP_EMPTY_cummit,         /* keep recording as empty cummits */
+	STOP_ON_EMPTY_CUMMIT = 0,  /* output errors and stop in the middle of an am session */
+	DROP_EMPTY_CUMMIT,         /* skip with a notice message, unless "--quiet" has been passed */
+	KEEP_EMPTY_CUMMIT,         /* keep recording as empty cummits */
 };
 
 struct am_state {
@@ -194,11 +194,11 @@ static int am_option_parse_empty(const struct option *opt,
 	BUG_ON_OPT_NEG(unset);
 
 	if (!strcmp(arg, "stop"))
-		*opt_value = STOP_ON_EMPTY_cummit;
+		*opt_value = STOP_ON_EMPTY_CUMMIT;
 	else if (!strcmp(arg, "drop"))
-		*opt_value = DROP_EMPTY_cummit;
+		*opt_value = DROP_EMPTY_CUMMIT;
 	else if (!strcmp(arg, "keep"))
-		*opt_value = KEEP_EMPTY_cummit;
+		*opt_value = KEEP_EMPTY_CUMMIT;
 	else
 		return error(_("invalid value for '%s': '%s'"), "--empty", arg);
 
@@ -1658,9 +1658,9 @@ static void do_cummit(const struct am_state *state)
 			IDENT_STRICT);
 
 	if (state->cummitter_date_is_author_date)
-		cummitter = fmt_ident(getenv("GIT_cummitTER_NAME"),
-				      getenv("GIT_cummitTER_EMAIL"),
-				      WANT_cummitTER_IDENT,
+		cummitter = fmt_ident(getenv("GIT_CUMMITTER_NAME"),
+				      getenv("GIT_CUMMITTER_EMAIL"),
+				      WANT_CUMMITTER_IDENT,
 				      state->ignore_date ? NULL
 							 : state->author_date,
 				      IDENT_STRICT);
@@ -1824,16 +1824,16 @@ static void am_run(struct am_state *state, int resume)
 		to_keep = 0;
 		if (is_empty_or_missing_file(am_path(state, "patch"))) {
 			switch (state->empty_type) {
-			case DROP_EMPTY_cummit:
+			case DROP_EMPTY_CUMMIT:
 				say(state, stdout, _("Skipping: %.*s"), linelen(state->msg), state->msg);
 				goto next;
 				break;
-			case KEEP_EMPTY_cummit:
+			case KEEP_EMPTY_CUMMIT:
 				to_keep = 1;
 				say(state, stdout, _("Creating an empty cummit: %.*s"),
 					linelen(state->msg), state->msg);
 				break;
-			case STOP_ON_EMPTY_cummit:
+			case STOP_ON_EMPTY_CUMMIT:
 				printf_ln(_("Patch is empty."));
 				die_user_resolve(state);
 				break;
@@ -1985,7 +1985,7 @@ static int fast_forward_to(struct tree *head, struct tree *remote, int reset)
 		return -1;
 	}
 
-	if (write_locked_index(&the_index, &lock_file, cummit_LOCK))
+	if (write_locked_index(&the_index, &lock_file, CUMMIT_LOCK))
 		die(_("unable to write new index file"));
 
 	return 0;
@@ -2019,7 +2019,7 @@ static int merge_tree(struct tree *tree)
 		return -1;
 	}
 
-	if (write_locked_index(&the_index, &lock_file, cummit_LOCK))
+	if (write_locked_index(&the_index, &lock_file, CUMMIT_LOCK))
 		die(_("unable to write new index file"));
 
 	return 0;
@@ -2419,7 +2419,7 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		{ OPTION_STRING, 'S', "gpg-sign", &state.sign_cummit, N_("key-id"),
 		  N_("GPG-sign cummits"),
 		  PARSE_OPT_OPTARG, NULL, (intptr_t) "" },
-		OPT_CALLBACK_F(STOP_ON_EMPTY_cummit, "empty", &state.empty_type, "{stop,drop,keep}",
+		OPT_CALLBACK_F(STOP_ON_EMPTY_CUMMIT, "empty", &state.empty_type, "{stop,drop,keep}",
 		  N_("how to handle empty patches"),
 		  PARSE_OPT_NONEG, am_option_parse_empty),
 		OPT_HIDDEN_BOOL(0, "rebasing", &state.rebasing,

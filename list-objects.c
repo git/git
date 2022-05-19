@@ -337,7 +337,7 @@ void mark_edges_uninteresting(struct rev_info *revs,
 		for (i = 0; i < revs->cmdline.nr; i++) {
 			struct object *obj = revs->cmdline.rev[i].item;
 			struct cummit *cummit = (struct cummit *)obj;
-			if (obj->type != OBJ_cummit || !(obj->flags & UNINTERESTING))
+			if (obj->type != OBJ_CUMMIT || !(obj->flags & UNINTERESTING))
 				continue;
 			mark_tree_uninteresting(revs->repo,
 						get_cummit_tree(cummit));
@@ -398,7 +398,7 @@ static void do_traverse(struct traversal_context *ctx)
 		enum list_objects_filter_result r;
 
 		r = list_objects_filter__filter_object(ctx->revs->repo,
-				LOFS_cummit, &cummit->object,
+				LOFS_CUMMIT, &cummit->object,
 				NULL, NULL, ctx->filter);
 
 		/*

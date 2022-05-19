@@ -27,8 +27,8 @@ my $branch_name = 'import-tars';
 my $branch_ref = "refs/heads/$branch_name";
 my $author_name = $ENV{'GIT_AUTHOR_NAME'} || 'T Ar Creator';
 my $author_email = $ENV{'GIT_AUTHOR_EMAIL'} || 'tar@example.com';
-my $cummitter_name = $ENV{'GIT_cummitTER_NAME'} || `git config --get user.name`;
-my $cummitter_email = $ENV{'GIT_cummitTER_EMAIL'} || `git config --get user.email`;
+my $cummitter_name = $ENV{'GIT_CUMMITTER_NAME'} || `git config --get user.name`;
+my $cummitter_email = $ENV{'GIT_CUMMITTER_EMAIL'} || `git config --get user.email`;
 
 chomp($cummitter_name, $cummitter_email);
 
@@ -196,9 +196,9 @@ foreach my $tar_file (@ARGV)
 cummit $branch_ref
 author $this_author_name <$this_author_email> $author_time +0000
 cummitter $this_cummitter_name <$this_cummitter_email> $cummit_time +0000
-data <<END_OF_cummit_MESSAGE
+data <<END_OF_CUMMIT_MESSAGE
 $cummit_msg
-END_OF_cummit_MESSAGE
+END_OF_CUMMIT_MESSAGE
 
 deleteall
 EOF

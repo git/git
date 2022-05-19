@@ -892,7 +892,7 @@ test_expect_success 'log --author does not search in timestamp' '
 '
 
 test_expect_success 'log --cummitter does not search in timestamp' '
-	git log --cummitter="$GIT_cummitTER_DATE" >actual &&
+	git log --cummitter="$GIT_CUMMITTER_DATE" >actual &&
 	test_must_be_empty actual
 '
 

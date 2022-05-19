@@ -242,9 +242,9 @@ ORIG_GIT_INDEX_FILE="$GIT_INDEX_FILE"
 ORIG_GIT_AUTHOR_NAME="$GIT_AUTHOR_NAME"
 ORIG_GIT_AUTHOR_EMAIL="$GIT_AUTHOR_EMAIL"
 ORIG_GIT_AUTHOR_DATE="$GIT_AUTHOR_DATE"
-ORIG_GIT_cummitTER_NAME="$GIT_cummitTER_NAME"
-ORIG_GIT_cummitTER_EMAIL="$GIT_cummitTER_EMAIL"
-ORIG_GIT_cummitTER_DATE="$GIT_cummitTER_DATE"
+ORIG_GIT_CUMMITTER_NAME="$GIT_CUMMITTER_NAME"
+ORIG_GIT_CUMMITTER_EMAIL="$GIT_CUMMITTER_EMAIL"
+ORIG_GIT_CUMMITTER_DATE="$GIT_CUMMITTER_DATE"
 
 GIT_WORK_TREE=.
 export GIT_DIR GIT_WORK_TREE
@@ -409,8 +409,8 @@ while read cummit parents; do
 		}
 	esac || die "Could not initialize the index"
 
-	GIT_cummit=$cummit
-	export GIT_cummit
+	GIT_CUMMIT=$cummit
+	export GIT_CUMMIT
 	git cat-file cummit "$cummit" >../cummit ||
 		die "Cannot read cummit $cummit"
 
@@ -557,8 +557,8 @@ if [ "$filter_tag_name" ]; then
 
 		[ -f "../map/$sha1" ] || continue
 		new_sha1="$(cat "../map/$sha1")"
-		GIT_cummit="$sha1"
-		export GIT_cummit
+		GIT_CUMMIT="$sha1"
+		export GIT_CUMMIT
 		new_ref="$(echo "$ref" | eval "$filter_tag_name")" ||
 			die "tag name filter failed: $filter_tag_name"
 
@@ -592,7 +592,7 @@ fi
 
 unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE
 unset GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE
-unset GIT_cummitTER_NAME GIT_cummitTER_EMAIL GIT_cummitTER_DATE
+unset GIT_CUMMITTER_NAME GIT_CUMMITTER_EMAIL GIT_CUMMITTER_DATE
 test -z "$ORIG_GIT_DIR" || {
 	GIT_DIR="$ORIG_GIT_DIR" && export GIT_DIR
 }
@@ -616,17 +616,17 @@ test -z "$ORIG_GIT_AUTHOR_DATE" || {
 	GIT_AUTHOR_DATE="$ORIG_GIT_AUTHOR_DATE" &&
 	export GIT_AUTHOR_DATE
 }
-test -z "$ORIG_GIT_cummitTER_NAME" || {
-	GIT_cummitTER_NAME="$ORIG_GIT_cummitTER_NAME" &&
-	export GIT_cummitTER_NAME
+test -z "$ORIG_GIT_CUMMITTER_NAME" || {
+	GIT_CUMMITTER_NAME="$ORIG_GIT_CUMMITTER_NAME" &&
+	export GIT_CUMMITTER_NAME
 }
-test -z "$ORIG_GIT_cummitTER_EMAIL" || {
-	GIT_cummitTER_EMAIL="$ORIG_GIT_cummitTER_EMAIL" &&
-	export GIT_cummitTER_EMAIL
+test -z "$ORIG_GIT_CUMMITTER_EMAIL" || {
+	GIT_CUMMITTER_EMAIL="$ORIG_GIT_CUMMITTER_EMAIL" &&
+	export GIT_CUMMITTER_EMAIL
 }
-test -z "$ORIG_GIT_cummitTER_DATE" || {
-	GIT_cummitTER_DATE="$ORIG_GIT_cummitTER_DATE" &&
-	export GIT_cummitTER_DATE
+test -z "$ORIG_GIT_CUMMITTER_DATE" || {
+	GIT_CUMMITTER_DATE="$ORIG_GIT_CUMMITTER_DATE" &&
+	export GIT_CUMMITTER_DATE
 }
 
 if test -n "$state_branch"

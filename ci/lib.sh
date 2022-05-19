@@ -24,7 +24,7 @@ skip_branch_tip_with_tag () {
 # job if we encounter the same tree again and can provide a useful info
 # message.
 save_good_tree () {
-	echo "$(git rev-parse $CI_cummit^{tree}) $CI_cummit $CI_JOB_NUMBER $CI_JOB_ID" >>"$good_trees_file"
+	echo "$(git rev-parse $CI_cummit^{tree}) $CI_CUMMIT $CI_JOB_NUMBER $CI_JOB_ID" >>"$good_trees_file"
 	# limit the file size
 	tail -1000 "$good_trees_file" >"$good_trees_file".tmp
 	mv "$good_trees_file".tmp "$good_trees_file"
@@ -39,7 +39,7 @@ skip_good_tree () {
 		return
 	fi
 
-	if ! good_tree_info="$(grep "^$(git rev-parse $CI_cummit^{tree}) " "$good_trees_file")"
+	if ! good_tree_info="$(grep "^$(git rev-parse $CI_CUMMIT^{tree}) " "$good_trees_file")"
 	then
 		# Haven't seen this tree yet, or no cached good trees file yet.
 		# Continue the build job.
@@ -52,13 +52,13 @@ skip_good_tree () {
 		if test "$CI_JOB_ID" = "$prev_good_job_id"
 		then
 			cat <<-EOF
-			$(tput setaf 2)Skipping build job for cummit $CI_cummit.$(tput sgr0)
+			$(tput setaf 2)Skipping build job for cummit $CI_CUMMIT.$(tput sgr0)
 			This commit has already been built and tested successfully by this build job.
 			To force a re-build delete the branch's cache and then hit 'Restart job'.
 			EOF
 		else
 			cat <<-EOF
-			$(tput setaf 2)Skipping build job for cummit $CI_cummit.$(tput sgr0)
+			$(tput setaf 2)Skipping build job for cummit $CI_CUMMIT.$(tput sgr0)
 			This cummit's tree has already been built and tested successfully in build job $prev_good_job_number for cummit $prev_good_cummit.
 			The log of that build job is available at $SYSTEM_TASKDEFINITIONSURI$SYSTEM_TEAMPROJECT/_build/results?buildId=$prev_good_job_id
 			To force a re-build delete the branch's cache and then hit 'Restart job'.
@@ -96,7 +96,7 @@ then
 	CI_TYPE=azure-pipelines
 	# We are running in Azure Pipelines
 	CI_BRANCH="$BUILD_SOURCEBRANCH"
-	CI_cummit="$BUILD_SOURCEVERSION"
+	CI_CUMMIT="$BUILD_SOURCEVERSION"
 	CI_JOB_ID="$BUILD_BUILDID"
 	CI_JOB_NUMBER="$BUILD_BUILDNUMBER"
 	CI_OS_NAME="$(echo "$AGENT_OS" | tr A-Z a-z)"
@@ -117,7 +117,7 @@ elif test true = "$GITHUB_ACTIONS"
 then
 	CI_TYPE=github-actions
 	CI_BRANCH="$GITHUB_REF"
-	CI_cummit="$GITHUB_SHA"
+	CI_CUMMIT="$GITHUB_SHA"
 	CI_OS_NAME="$(echo "$RUNNER_OS" | tr A-Z a-z)"
 	test macos != "$CI_OS_NAME" || CI_OS_NAME=osx
 	CI_REPO_SLUG="$GITHUB_REPOSITORY"

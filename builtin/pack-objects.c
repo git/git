@@ -868,7 +868,7 @@ static void compute_layer_order(struct object_entry **wo, unsigned int *wo_end)
 	 * And then all remaining cummits and tags.
 	 */
 	for (i = last_untagged; i < to_pack.nr_objects; i++) {
-		if (oe_type(&objects[i]) != OBJ_cummit &&
+		if (oe_type(&objects[i]) != OBJ_CUMMIT &&
 		    oe_type(&objects[i]) != OBJ_TAG)
 			continue;
 		add_to_write_order(wo, wo_end, &objects[i]);
@@ -1966,7 +1966,7 @@ static void check_object(struct object_entry *entry, uint32_t object_index)
 			oe_set_type(entry, entry->in_pack_type);
 			SET_SIZE(entry, in_pack_size);
 			entry->in_pack_header_size = used;
-			if (oe_type(entry) < OBJ_cummit || oe_type(entry) > OBJ_BLOB)
+			if (oe_type(entry) < OBJ_CUMMIT || oe_type(entry) > OBJ_BLOB)
 				goto give_up;
 			unuse_pack(&w_curs);
 			return;
@@ -3219,7 +3219,7 @@ static int add_object_entry_from_pack(const struct object_id *oid,
 	if (packed_object_info(the_repository, p, ofs, &oi) < 0)
 		die(_("could not get type of object %s in pack %s"),
 		    oid_to_hex(oid), p->pack_name);
-	else if (type == OBJ_cummit) {
+	else if (type == OBJ_CUMMIT) {
 		/*
 		 * cummits in included packs are used as starting points for the
 		 * subsequent revision walk
@@ -3428,7 +3428,7 @@ static void read_object_list_from_stdin(void)
 
 static void show_cummit(struct cummit *cummit, void *data)
 {
-	add_object_entry(&cummit->object.oid, OBJ_cummit, NULL, 0);
+	add_object_entry(&cummit->object.oid, OBJ_CUMMIT, NULL, 0);
 
 	if (write_bitmap_index)
 		index_cummit_for_bitmap(cummit);
@@ -3702,7 +3702,7 @@ static int mark_bitmap_preferred_tip(const char *refname,
 		oid = &peeled;
 
 	object = parse_object_or_die(oid, refname);
-	if (object->type == OBJ_cummit)
+	if (object->type == OBJ_CUMMIT)
 		object->flags |= NEEDS_BITMAP;
 
 	return 0;

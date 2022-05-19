@@ -952,7 +952,7 @@ static int match_one_pattern(struct grep_pat *p,
 
 		switch (p->field) {
 		case GREP_HEADER_AUTHOR:
-		case GREP_HEADER_cummitTER:
+		case GREP_HEADER_CUMMITTER:
 			strip_timestamp(bol, &eol);
 			break;
 		default:

@@ -40,7 +40,7 @@ Fixes since v1.7.10.1
    ref.
 
  * The http-backend (the server side of the smart http transfer) used
-   to overwrite GIT_cummitTER_NAME and GIT_cummitTER_EMAIL with the
+   to overwrite GIT_CUMMITTER_NAME and GIT_CUMMITTER_EMAIL with the
    value obtained from REMOTE_USER unconditionally, making it
    impossible for the server side site-specific customization to use
    different identity sources to affect the names logged. It now uses

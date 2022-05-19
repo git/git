@@ -349,8 +349,8 @@ test_expect_success $PREREQ,AUTOIDENT 'implicit ident is allowed' '
 	clean_fake_sendmail &&
 	(sane_unset GIT_AUTHOR_NAME &&
 	sane_unset GIT_AUTHOR_EMAIL &&
-	sane_unset GIT_cummitTER_NAME &&
-	sane_unset GIT_cummitTER_EMAIL &&
+	sane_unset GIT_CUMMITTER_NAME &&
+	sane_unset GIT_CUMMITTER_EMAIL &&
 	GIT_SEND_EMAIL_NOTTY=1 git send-email \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		--to=to@example.com \
@@ -362,8 +362,8 @@ test_expect_success $PREREQ,!AUTOIDENT 'broken implicit ident aborts send-email'
 	clean_fake_sendmail &&
 	(sane_unset GIT_AUTHOR_NAME &&
 	sane_unset GIT_AUTHOR_EMAIL &&
-	sane_unset GIT_cummitTER_NAME &&
-	sane_unset GIT_cummitTER_EMAIL &&
+	sane_unset GIT_CUMMITTER_NAME &&
+	sane_unset GIT_CUMMITTER_EMAIL &&
 	GIT_SEND_EMAIL_NOTTY=1 && export GIT_SEND_EMAIL_NOTTY &&
 	test_must_fail git send-email \
 		--smtp-server="$(pwd)/fake.sendmail" \

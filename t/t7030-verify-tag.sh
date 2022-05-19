@@ -46,7 +46,7 @@ test_expect_success GPG 'create signed tags' '
 
 test_expect_success GPGSM 'create signed tags x509 ' '
 	test_config gpg.format x509 &&
-	test_config user.signingkey $GIT_cummitTER_EMAIL &&
+	test_config user.signingkey $GIT_CUMMITTER_EMAIL &&
 	echo 9 >file && test_tick && git cummit -a -m "ninth gpgsm-signed" &&
 	git tag -s -m ninth ninth-signed-x509
 '

@@ -12,18 +12,18 @@ test_expect_success 'get GIT_AUTHOR_IDENT' '
 	test_cmp expect actual
 '
 
-test_expect_success 'get GIT_cummitTER_IDENT' '
+test_expect_success 'get GIT_CUMMITTER_IDENT' '
 	test_tick &&
-	echo "$GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE" >expect &&
-	git var GIT_cummitTER_IDENT >actual &&
+	echo "$GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE" >expect &&
+	git var GIT_CUMMITTER_IDENT >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success !FAIL_PREREQS,!AUTOIDENT 'requested identities are strict' '
 	(
-		sane_unset GIT_cummitTER_NAME &&
-		sane_unset GIT_cummitTER_EMAIL &&
-		test_must_fail git var GIT_cummitTER_IDENT
+		sane_unset GIT_CUMMITTER_NAME &&
+		sane_unset GIT_CUMMITTER_EMAIL &&
+		test_must_fail git var GIT_CUMMITTER_IDENT
 	)
 '
 
@@ -65,7 +65,7 @@ test_expect_success 'git var -l lists config' '
 '
 
 test_expect_success 'listing and asking for variables are exclusive' '
-	test_must_fail git var -l GIT_cummitTER_IDENT
+	test_must_fail git var -l GIT_CUMMITTER_IDENT
 '
 
 test_done

@@ -18,7 +18,7 @@ struct shortlog {
 
 	enum {
 		SHORTLOG_GROUP_AUTHOR = (1 << 0),
-		SHORTLOG_GROUP_cummitTER = (1 << 1),
+		SHORTLOG_GROUP_CUMMITTER = (1 << 1),
 		SHORTLOG_GROUP_TRAILER = (1 << 2),
 	} groups;
 	struct string_list trailers;

@@ -9,28 +9,28 @@
 #include "progress.h"
 #include "tag.h"
 
-#define BUILTIN_cummit_GRAPH_VERIFY_USAGE \
+#define BUILTIN_CUMMIT_GRAPH_VERIFY_USAGE \
 	N_("git cummit-graph verify [--object-dir <objdir>] [--shallow] [--[no-]progress]")
 
-#define BUILTIN_cummit_GRAPH_WRITE_USAGE \
+#define BUILTIN_CUMMIT_GRAPH_WRITE_USAGE \
 	N_("git cummit-graph write [--object-dir <objdir>] [--append] " \
 	   "[--split[=<strategy>]] [--reachable|--stdin-packs|--stdin-cummits] " \
 	   "[--changed-paths] [--[no-]max-new-filters <n>] [--[no-]progress] " \
 	   "<split options>")
 
 static const char * builtin_cummit_graph_verify_usage[] = {
-	BUILTIN_cummit_GRAPH_VERIFY_USAGE,
+	BUILTIN_CUMMIT_GRAPH_VERIFY_USAGE,
 	NULL
 };
 
 static const char * builtin_cummit_graph_write_usage[] = {
-	BUILTIN_cummit_GRAPH_WRITE_USAGE,
+	BUILTIN_CUMMIT_GRAPH_WRITE_USAGE,
 	NULL
 };
 
 static char const * const builtin_cummit_graph_usage[] = {
-	BUILTIN_cummit_GRAPH_VERIFY_USAGE,
-	BUILTIN_cummit_GRAPH_WRITE_USAGE,
+	BUILTIN_CUMMIT_GRAPH_VERIFY_USAGE,
+	BUILTIN_CUMMIT_GRAPH_WRITE_USAGE,
 	NULL,
 };
 
@@ -89,9 +89,9 @@ static int graph_verify(int argc, const char **argv)
 	if (!opts.obj_dir)
 		opts.obj_dir = get_object_directory();
 	if (opts.shallow)
-		flags |= cummit_GRAPH_VERIFY_SHALLOW;
+		flags |= CUMMIT_GRAPH_VERIFY_SHALLOW;
 	if (opts.progress)
-		flags |= cummit_GRAPH_WRITE_PROGRESS;
+		flags |= CUMMIT_GRAPH_WRITE_PROGRESS;
 
 	odb = find_odb(the_repository, opts.obj_dir);
 	graph_name = get_cummit_graph_filename(odb);
@@ -130,9 +130,9 @@ static int write_option_parse_split(const struct option *opt, const char *arg,
 		return 0;
 
 	if (!strcmp(arg, "no-merge"))
-		*flags = cummit_GRAPH_SPLIT_MERGE_PROHIBITED;
+		*flags = CUMMIT_GRAPH_SPLIT_MERGE_PROHIBITED;
 	else if (!strcmp(arg, "replace"))
-		*flags = cummit_GRAPH_SPLIT_REPLACE;
+		*flags = CUMMIT_GRAPH_SPLIT_REPLACE;
 	else
 		die(_("unrecognized --split argument, %s"), arg);
 
@@ -153,7 +153,7 @@ static int read_one_cummit(struct oidset *cummits, struct progress *progress,
 			   NULL, 0);
 	if (!result)
 		return error(_("invalid object: %s"), hash);
-	else if (object_as_type(result, OBJ_cummit, 1))
+	else if (object_as_type(result, OBJ_CUMMIT, 1))
 		oidset_insert(cummits, &result->oid);
 
 	display_progress(progress, oidset_size(cummits));
@@ -252,16 +252,16 @@ static int graph_write(int argc, const char **argv)
 	if (!opts.obj_dir)
 		opts.obj_dir = get_object_directory();
 	if (opts.append)
-		flags |= cummit_GRAPH_WRITE_APPEND;
+		flags |= CUMMIT_GRAPH_WRITE_APPEND;
 	if (opts.split)
-		flags |= cummit_GRAPH_WRITE_SPLIT;
+		flags |= CUMMIT_GRAPH_WRITE_SPLIT;
 	if (opts.progress)
-		flags |= cummit_GRAPH_WRITE_PROGRESS;
+		flags |= CUMMIT_GRAPH_WRITE_PROGRESS;
 	if (!opts.enable_changed_paths)
-		flags |= cummit_GRAPH_NO_WRITE_BLOOM_FILTERS;
+		flags |= CUMMIT_GRAPH_NO_WRITE_BLOOM_FILTERS;
 	if (opts.enable_changed_paths == 1 ||
-	    git_env_bool(GIT_TEST_cummit_GRAPH_CHANGED_PATHS, 0))
-		flags |= cummit_GRAPH_WRITE_BLOOM_FILTERS;
+	    git_env_bool(GIT_TEST_CUMMIT_GRAPH_CHANGED_PATHS, 0))
+		flags |= CUMMIT_GRAPH_WRITE_BLOOM_FILTERS;
 
 	odb = find_odb(the_repository, opts.obj_dir);
 

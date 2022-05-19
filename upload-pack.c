@@ -467,7 +467,7 @@ static int do_got_oid(struct upload_pack_data *data, const struct object_id *oid
 
 	if (!o)
 		die("oops (%s)", oid_to_hex(oid));
-	if (o->type == OBJ_cummit) {
+	if (o->type == OBJ_CUMMIT) {
 		struct cummit_list *parents;
 		struct cummit *cummit = (struct cummit *)o;
 		if (o->flags & THEY_HAVE)
@@ -629,7 +629,7 @@ static int do_reachable_revlist(struct child_process *cmd,
 		o = get_indexed_object(--i);
 		if (!o)
 			continue;
-		if (reachable && o->type == OBJ_cummit)
+		if (reachable && o->type == OBJ_CUMMIT)
 			o->flags &= ~TMP_MARK;
 		if (!is_our_ref(o, allow_uor))
 			continue;
@@ -643,7 +643,7 @@ static int do_reachable_revlist(struct child_process *cmd,
 				add_object_array(o, NULL, reachable);
 			continue;
 		}
-		if (reachable && o->type == OBJ_cummit)
+		if (reachable && o->type == OBJ_CUMMIT)
 			o->flags |= TMP_MARK;
 		if (fprintf(cmd_in, "%s\n", oid_to_hex(&o->oid)) < 0)
 			goto error;
@@ -687,13 +687,13 @@ static int get_reachable_list(struct upload_pack_data *data,
 			break;
 
 		o = lookup_object(the_repository, &oid);
-		if (o && o->type == OBJ_cummit) {
+		if (o && o->type == OBJ_CUMMIT) {
 			o->flags &= ~TMP_MARK;
 		}
 	}
 	for (i = get_max_object_index(); 0 < i; i--) {
 		o = get_indexed_object(i - 1);
-		if (o && o->type == OBJ_cummit &&
+		if (o && o->type == OBJ_CUMMIT &&
 		    (o->flags & TMP_MARK)) {
 			add_object_array(o, NULL, reachable);
 				o->flags &= ~TMP_MARK;
@@ -931,7 +931,7 @@ static int process_shallow(const char *line, struct object_array *shallows)
 		object = parse_object(the_repository, &oid);
 		if (!object)
 			return 1;
-		if (object->type != OBJ_cummit)
+		if (object->type != OBJ_CUMMIT)
 			die("invalid shallow object %s", oid_to_hex(&oid));
 		if (!(object->flags & CLIENT_SHALLOW)) {
 			object->flags |= CLIENT_SHALLOW;

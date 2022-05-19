@@ -52,17 +52,17 @@ test_expect_success "proc-receive: process all refs ($PROTOCOL)" '
 	make_user_friendly_and_stable_output <out >actual &&
 	format_and_save_expect <<-EOF &&
 	> remote: # pre-receive hook        Z
-	> remote: pre-receive< <cummit-A> <cummit-B> refs/heads/bar        Z
-	> remote: pre-receive< <cummit-A> <ZERO-OID> refs/heads/foo        Z
-	> remote: pre-receive< <cummit-B> <cummit-A> refs/heads/main        Z
-	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
-	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/for/next/topic        Z
+	> remote: pre-receive< <CUMMIT-A> <CUMMIT-B> refs/heads/bar        Z
+	> remote: pre-receive< <CUMMIT-A> <ZERO-OID> refs/heads/foo        Z
+	> remote: pre-receive< <CUMMIT-B> <CUMMIT-A> refs/heads/main        Z
+	> remote: pre-receive< <ZERO-OID> <CUMMIT-A> refs/for/main/topic        Z
+	> remote: pre-receive< <ZERO-OID> <CUMMIT-A> refs/for/next/topic        Z
 	> remote: # proc-receive hook        Z
-	> remote: proc-receive< <cummit-A> <cummit-B> refs/heads/bar        Z
-	> remote: proc-receive< <cummit-A> <ZERO-OID> refs/heads/foo        Z
-	> remote: proc-receive< <cummit-B> <cummit-A> refs/heads/main        Z
-	> remote: proc-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
-	> remote: proc-receive< <ZERO-OID> <cummit-A> refs/for/next/topic        Z
+	> remote: proc-receive< <CUMMIT-A> <CUMMIT-B> refs/heads/bar        Z
+	> remote: proc-receive< <CUMMIT-A> <ZERO-OID> refs/heads/foo        Z
+	> remote: proc-receive< <CUMMIT-B> <CUMMIT-A> refs/heads/main        Z
+	> remote: proc-receive< <ZERO-OID> <CUMMIT-A> refs/for/main/topic        Z
+	> remote: proc-receive< <ZERO-OID> <CUMMIT-A> refs/for/next/topic        Z
 	> remote: proc-receive> ok refs/heads/main        Z
 	> remote: proc-receive> option fall-through        Z
 	> remote: proc-receive> ok refs/heads/foo        Z
@@ -71,32 +71,32 @@ test_expect_success "proc-receive: process all refs ($PROTOCOL)" '
 	> remote: proc-receive> option fall-through        Z
 	> remote: proc-receive> ok refs/for/main/topic        Z
 	> remote: proc-receive> option refname refs/pull/123/head        Z
-	> remote: proc-receive> option old-oid <cummit-A>        Z
-	> remote: proc-receive> option new-oid <cummit-B>        Z
+	> remote: proc-receive> option old-oid <CUMMIT-A>        Z
+	> remote: proc-receive> option new-oid <CUMMIT-B>        Z
 	> remote: proc-receive> ok refs/for/next/topic        Z
 	> remote: proc-receive> option refname refs/pull/124/head        Z
-	> remote: proc-receive> option old-oid <cummit-B>        Z
-	> remote: proc-receive> option new-oid <cummit-A>        Z
+	> remote: proc-receive> option old-oid <CUMMIT-B>        Z
+	> remote: proc-receive> option new-oid <CUMMIT-A>        Z
 	> remote: proc-receive> option forced-update        Z
 	> remote: # post-receive hook        Z
-	> remote: post-receive< <cummit-A> <cummit-B> refs/heads/bar        Z
-	> remote: post-receive< <cummit-A> <ZERO-OID> refs/heads/foo        Z
-	> remote: post-receive< <cummit-B> <cummit-A> refs/heads/main        Z
-	> remote: post-receive< <cummit-A> <cummit-B> refs/pull/123/head        Z
-	> remote: post-receive< <cummit-B> <cummit-A> refs/pull/124/head        Z
+	> remote: post-receive< <CUMMIT-A> <CUMMIT-B> refs/heads/bar        Z
+	> remote: post-receive< <CUMMIT-A> <ZERO-OID> refs/heads/foo        Z
+	> remote: post-receive< <CUMMIT-B> <CUMMIT-A> refs/heads/main        Z
+	> remote: post-receive< <CUMMIT-A> <CUMMIT-B> refs/pull/123/head        Z
+	> remote: post-receive< <CUMMIT-B> <CUMMIT-A> refs/pull/124/head        Z
 	> To <URL/of/upstream.git>
-	>    <cummit-A>..<cummit-B>  <cummit-B> -> bar
+	>    <CUMMIT-A>..<CUMMIT-B>  <CUMMIT-B> -> bar
 	>  - [deleted]         foo
-	>  + <cummit-B>...<cummit-A> HEAD -> main (forced update)
-	>    <cummit-A>..<cummit-B>  HEAD -> refs/pull/123/head
-	>  + <cummit-B>...<cummit-A> HEAD -> refs/pull/124/head (forced update)
+	>  + <CUMMIT-B>...<CUMMIT-A> HEAD -> main (forced update)
+	>    <CUMMIT-A>..<CUMMIT-B>  HEAD -> refs/pull/123/head
+	>  + <CUMMIT-B>...<CUMMIT-A> HEAD -> refs/pull/124/head (forced update)
 	EOF
 	test_cmp expect actual &&
 
 	test_cmp_refs -C "$upstream" <<-EOF
-	<cummit-B> refs/heads/bar
-	<cummit-A> refs/heads/baz
-	<cummit-A> refs/heads/main
+	<CUMMIT-B> refs/heads/bar
+	<CUMMIT-A> refs/heads/baz
+	<CUMMIT-A> refs/heads/main
 	EOF
 '
 

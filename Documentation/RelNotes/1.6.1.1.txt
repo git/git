@@ -14,7 +14,7 @@ Fixes since v1.6.1
 
 * "git checkout $tree" did not trigger an error.
 
-* "git cummit" tried to remove cummit_EDITMSG from the work tree by mistake.
+* "git cummit" tried to remove CUMMIT_EDITMSG from the work tree by mistake.
 
 * "git describe --all" complained when a cummit is described with a tag,
   which was nonsense.

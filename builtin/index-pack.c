@@ -541,7 +541,7 @@ static void *unpack_raw_entry(struct object_entry *obj,
 		if (*ofs_offset <= 0 || *ofs_offset >= obj->idx.offset)
 			bad_object(obj->idx.offset, _("delta base offset is out of bound"));
 		break;
-	case OBJ_cummit:
+	case OBJ_CUMMIT:
 	case OBJ_TREE:
 	case OBJ_BLOB:
 	case OBJ_TAG:
@@ -871,7 +871,7 @@ static void sha1_object(const void *data, struct object_entry *obj_entry,
 				item->buffer = NULL;
 				obj->parsed = 0;
 			}
-			if (obj->type == OBJ_cummit) {
+			if (obj->type == OBJ_CUMMIT) {
 				struct cummit *cummit = (struct cummit *) obj;
 				if (detach_cummit_buffer(cummit, NULL) != data)
 					BUG("parse_object_buffer transmogrified our buffer");

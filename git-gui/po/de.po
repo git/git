@@ -339,7 +339,7 @@ msgstr "Geänderte Dateien für cummit bereitstellen"
 
 #: git-gui.sh:2936
 msgid "Unstage From cummit"
-msgstr "Aus cummit-Bereitstellung herausnehmen"
+msgstr "Aus CUMMIT-Bereitstellung herausnehmen"
 
 #: git-gui.sh:2942 lib/index.tcl:521
 msgid "Revert Changes"
@@ -444,7 +444,7 @@ msgstr "Versenden"
 
 #: git-gui.sh:3413
 msgid "Initial cummit Message:"
-msgstr "Erste cummit-Beschreibung:"
+msgstr "Erste CUMMIT-Beschreibung:"
 
 #: git-gui.sh:3414
 msgid "Amended cummit Message:"
@@ -464,7 +464,7 @@ msgstr "Zusammenführungs-Beschreibung:"
 
 #: git-gui.sh:3418
 msgid "cummit Message:"
-msgstr "cummit-Beschreibung:"
+msgstr "CUMMIT-Beschreibung:"
 
 #: git-gui.sh:3477 git-gui.sh:3641 lib/console.tcl:73
 msgid "Copy All"
@@ -1361,7 +1361,7 @@ msgstr "Zusätzliche Vergleich-/diff-Parameter"
 
 #: lib/option.tcl:158
 msgid "cummit Message Text Width"
-msgstr "Textbreite der cummit-Beschreibung"
+msgstr "Textbreite der CUMMIT-Beschreibung"
 
 #: lib/option.tcl:159
 msgid "New Branch Name Template"
@@ -2438,8 +2438,8 @@ msgid "Unable to obtain your identity:"
 msgstr "Benutzername konnte nicht bestimmt werden:"
 
 #: lib/cummit.tcl:88
-msgid "Invalid GIT_cummitTER_IDENT:"
-msgstr "Ungültiger Wert von GIT_cummitTER_INDENT:"
+msgid "Invalid GIT_CUMMITTER_IDENT:"
+msgstr "Ungültiger Wert von GIT_CUMMITTER_INDENT:"
 
 #: lib/cummit.tcl:138
 #, tcl-format
@@ -2537,7 +2537,7 @@ msgstr ""
 "Sie sind dabei, einen cummit auf losgelöste Branchspitze (»cummit to "
 "detached head«) zu erstellen. Das ist riskant, denn wenn Sie zu einem "
 "anderen Branch wechseln, würden Sie diese Änderungen verlieren und es ist "
-"nachträglich schwierig, diese aus dem cummit-Log (»reflog«) wiederzufinden. "
+"nachträglich schwierig, diese aus dem CUMMIT-Log (»reflog«) wiederzufinden. "
 "Es wird empfohlen, diesen cummit abzubrechen und zunächst einen neuen Branch "
 "zu erstellen.\n"
 "\n"

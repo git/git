@@ -265,7 +265,7 @@ notes for details).
 
  * "git cummit --allow-empty-message -C $cummit" did not work when the
    cummit did not have any log message.
-   (merge 076cbd6 jk/cummit-C-pick-empty later to maint).
+   (merge 076cbd6 jk/CUMMIT-C-pick-empty later to maint).
 
  * "git diff --find-copies-harder" sometimes pretended as if the mode
    bits have changed for paths that are marked with the assume-unchanged

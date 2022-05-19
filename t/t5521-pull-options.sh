@@ -207,7 +207,7 @@ test_expect_success 'git pull --no-signoff does not add sign-off line' '
 
 test_expect_success 'git pull --signoff add a sign-off line' '
 	test_when_finished "rm -fr src dst expected actual" &&
-	echo "Signed-off-by: $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL>" >expected &&
+	echo "Signed-off-by: $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL>" >expected &&
 	git init src &&
 	test_cummit -C src one &&
 	git clone src dst &&

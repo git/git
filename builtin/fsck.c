@@ -48,7 +48,7 @@ static int name_objects;
 #define ERROR_REACHABLE 02
 #define ERROR_PACK 04
 #define ERROR_REFS 010
-#define ERROR_cummit_GRAPH 020
+#define ERROR_CUMMIT_GRAPH 020
 #define ERROR_MULTI_PACK_INDEX 040
 
 static const char *describe_object(const struct object_id *oid)
@@ -313,7 +313,7 @@ static void check_unreachable_object(struct object *obj)
 				  describe_object(&obj->oid));
 		if (write_lost_and_found) {
 			char *filename = git_pathdup("lost-found/%s/%s",
-				obj->type == OBJ_cummit ? "cummit" : "other",
+				obj->type == OBJ_CUMMIT ? "cummit" : "other",
 				describe_object(&obj->oid));
 			FILE *f;
 
@@ -413,7 +413,7 @@ static int fsck_obj(struct object *obj, void *buffer, unsigned long size)
 	if (err)
 		goto out;
 
-	if (obj->type == OBJ_cummit) {
+	if (obj->type == OBJ_CUMMIT) {
 		struct cummit *cummit = (struct cummit *) obj;
 
 		if (!cummit->parents && show_root)
@@ -436,7 +436,7 @@ static int fsck_obj(struct object *obj, void *buffer, unsigned long size)
 out:
 	if (obj->type == OBJ_TREE)
 		free_tree_buffer((struct tree *)obj);
-	if (obj->type == OBJ_cummit)
+	if (obj->type == OBJ_CUMMIT)
 		free_cummit_buffer(the_repository->parsed_objects,
 				   (struct cummit *)obj);
 	return err;
@@ -533,7 +533,7 @@ static int fsck_handle_ref(const char *refname, const struct object_id *oid,
 		/* We'll continue with the rest despite the error.. */
 		return 0;
 	}
-	if (obj->type != OBJ_cummit && is_branch(refname)) {
+	if (obj->type != OBJ_CUMMIT && is_branch(refname)) {
 		error(_("%s: not a cummit"), refname);
 		errors_found |= ERROR_REFS;
 	}
@@ -952,7 +952,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 			strvec_pushl(&cummit_graph_verify.args, "cummit-graph",
 				     "verify", "--object-dir", odb->path, NULL);
 			if (run_command(&cummit_graph_verify))
-				errors_found |= ERROR_cummit_GRAPH;
+				errors_found |= ERROR_CUMMIT_GRAPH;
 		}
 	}
 

@@ -2318,7 +2318,7 @@ static void file_change_m(const char *p, struct branch *b)
 			die("Git links cannot be specified 'inline': %s",
 				command_buf.buf);
 		else if (oe) {
-			if (oe->type != OBJ_cummit)
+			if (oe->type != OBJ_CUMMIT)
 				die("Not a cummit (actually a %s): %s",
 					type_name(oe->type), command_buf.buf);
 		}
@@ -2483,14 +2483,14 @@ static void note_change_n(const char *p, struct branch *b, unsigned char *old_fa
 	} else if (*p == ':') {
 		uintmax_t cummit_mark = parse_mark_ref_eol(p);
 		struct object_entry *cummit_oe = find_mark(marks, cummit_mark);
-		if (cummit_oe->type != OBJ_cummit)
+		if (cummit_oe->type != OBJ_CUMMIT)
 			die("Mark :%" PRIuMAX " not a cummit", cummit_mark);
 		oidcpy(&cummit_oid, &cummit_oe->idx.oid);
 	} else if (!get_oid(p, &cummit_oid)) {
 		unsigned long size;
 		char *buf = read_object_with_reference(the_repository,
 						       &cummit_oid,
-						       OBJ_cummit, &size,
+						       OBJ_CUMMIT, &size,
 						       &cummit_oid);
 		if (!buf || size < the_hash_algo->hexsz + 6)
 			die("Not a valid cummit: %s", p);
@@ -2562,7 +2562,7 @@ static void parse_from_existing(struct branch *b)
 		char *buf;
 
 		buf = read_object_with_reference(the_repository,
-						 &b->oid, OBJ_cummit, &size,
+						 &b->oid, OBJ_CUMMIT, &size,
 						 &b->oid);
 		parse_from_cummit(b, buf, size);
 		free(buf);
@@ -2587,7 +2587,7 @@ static int parse_objectish(struct branch *b, const char *objectish)
 	} else if (*objectish == ':') {
 		uintmax_t idnum = parse_mark_ref_eol(objectish);
 		struct object_entry *oe = find_mark(marks, idnum);
-		if (oe->type != OBJ_cummit)
+		if (oe->type != OBJ_CUMMIT)
 			die("Mark :%" PRIuMAX " not a cummit", idnum);
 		if (!oideq(&b->oid, &oe->idx.oid)) {
 			oidcpy(&b->oid, &oe->idx.oid);
@@ -2651,14 +2651,14 @@ static struct hash_list *parse_merge(unsigned int *count)
 		else if (*from == ':') {
 			uintmax_t idnum = parse_mark_ref_eol(from);
 			struct object_entry *oe = find_mark(marks, idnum);
-			if (oe->type != OBJ_cummit)
+			if (oe->type != OBJ_CUMMIT)
 				die("Mark :%" PRIuMAX " not a cummit", idnum);
 			oidcpy(&n->oid, &oe->idx.oid);
 		} else if (!get_oid(from, &n->oid)) {
 			unsigned long size;
 			char *buf = read_object_with_reference(the_repository,
 							       &n->oid,
-							       OBJ_cummit,
+							       OBJ_CUMMIT,
 							       &size, &n->oid);
 			if (!buf || size < the_hash_algo->hexsz + 6)
 				die("Not a valid cummit: %s", from);
@@ -2784,9 +2784,9 @@ static void parse_new_cummit(const char *arg)
 	free(cummitter);
 	free(encoding);
 
-	if (!store_object(OBJ_cummit, &new_data, NULL, &b->oid, next_mark))
+	if (!store_object(OBJ_CUMMIT, &new_data, NULL, &b->oid, next_mark))
 		b->pack_id = pack_id;
-	b->last_cummit = object_count_by_type[OBJ_cummit];
+	b->last_cummit = object_count_by_type[OBJ_CUMMIT];
 }
 
 static void parse_new_tag(const char *arg)
@@ -2820,7 +2820,7 @@ static void parse_new_tag(const char *arg)
 		if (is_null_oid(&s->oid))
 			die("Can't tag an empty branch.");
 		oidcpy(&oid, &s->oid);
-		type = OBJ_cummit;
+		type = OBJ_CUMMIT;
 	} else if (*from == ':') {
 		struct object_entry *oe;
 		from_mark = parse_mark_ref_eol(from);
@@ -3033,7 +3033,7 @@ static struct object_entry *dereference(struct object_entry *oe,
 	switch (oe->type) {
 	case OBJ_TREE:	/* easy case. */
 		return oe;
-	case OBJ_cummit:
+	case OBJ_CUMMIT:
 	case OBJ_TAG:
 		break;
 	default:
@@ -3056,7 +3056,7 @@ static struct object_entry *dereference(struct object_entry *oe,
 		    get_oid_hex(buf + strlen("object "), oid))
 			die("Invalid SHA1 in tag: %s", command_buf.buf);
 		break;
-	case OBJ_cummit:
+	case OBJ_CUMMIT:
 		if (size < hexsz + strlen("tree ") ||
 		    get_oid_hex(buf + strlen("tree "), oid))
 			die("Invalid SHA1 in cummit: %s", command_buf.buf);
@@ -3627,7 +3627,7 @@ int cmd_fast_import(int argc, const char **argv, const char *prefix)
 		fprintf(stderr, "Total objects:   %10" PRIuMAX " (%10" PRIuMAX " duplicates                  )\n", total_count, duplicate_count);
 		fprintf(stderr, "      blobs  :   %10" PRIuMAX " (%10" PRIuMAX " duplicates %10" PRIuMAX " deltas of %10" PRIuMAX" attempts)\n", object_count_by_type[OBJ_BLOB], duplicate_count_by_type[OBJ_BLOB], delta_count_by_type[OBJ_BLOB], delta_count_attempts_by_type[OBJ_BLOB]);
 		fprintf(stderr, "      trees  :   %10" PRIuMAX " (%10" PRIuMAX " duplicates %10" PRIuMAX " deltas of %10" PRIuMAX" attempts)\n", object_count_by_type[OBJ_TREE], duplicate_count_by_type[OBJ_TREE], delta_count_by_type[OBJ_TREE], delta_count_attempts_by_type[OBJ_TREE]);
-		fprintf(stderr, "      cummits:   %10" PRIuMAX " (%10" PRIuMAX " duplicates %10" PRIuMAX " deltas of %10" PRIuMAX" attempts)\n", object_count_by_type[OBJ_cummit], duplicate_count_by_type[OBJ_cummit], delta_count_by_type[OBJ_cummit], delta_count_attempts_by_type[OBJ_cummit]);
+		fprintf(stderr, "      cummits:   %10" PRIuMAX " (%10" PRIuMAX " duplicates %10" PRIuMAX " deltas of %10" PRIuMAX" attempts)\n", object_count_by_type[OBJ_CUMMIT], duplicate_count_by_type[OBJ_CUMMIT], delta_count_by_type[OBJ_CUMMIT], delta_count_attempts_by_type[OBJ_CUMMIT]);
 		fprintf(stderr, "      tags   :   %10" PRIuMAX " (%10" PRIuMAX " duplicates %10" PRIuMAX " deltas of %10" PRIuMAX" attempts)\n", object_count_by_type[OBJ_TAG], duplicate_count_by_type[OBJ_TAG], delta_count_by_type[OBJ_TAG], delta_count_attempts_by_type[OBJ_TAG]);
 		fprintf(stderr, "Total branches:  %10lu (%10lu loads     )\n", branch_count, branch_load_count);
 		fprintf(stderr, "      marks:     %10" PRIuMAX " (%10" PRIuMAX " unique    )\n", (((uintmax_t)1) << marks->shift) * 1024, marks_set_count);

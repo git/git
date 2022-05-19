@@ -72,22 +72,22 @@ test_expect_success 'setup' '
 	git cummit --fixup=HEAD -a &&
 	git tag B1 &&
 	test_tick &&
-	FAKE_cummit_AMEND="edited 1" git cummit --fixup=reword:B &&
+	FAKE_CUMMIT_AMEND="edited 1" git cummit --fixup=reword:B &&
 	test_tick &&
-	FAKE_cummit_AMEND="edited 2" git cummit --fixup=reword:HEAD &&
+	FAKE_CUMMIT_AMEND="edited 2" git cummit --fixup=reword:HEAD &&
 	echo B2 >B &&
 	test_tick &&
-	FAKE_cummit_AMEND="edited squash" git cummit --squash=HEAD -a &&
+	FAKE_CUMMIT_AMEND="edited squash" git cummit --squash=HEAD -a &&
 	git tag B2 &&
 	echo B3 >B &&
 	test_tick &&
-	FAKE_cummit_AMEND="edited 3" git cummit -a --fixup=amend:HEAD^ &&
+	FAKE_CUMMIT_AMEND="edited 3" git cummit -a --fixup=amend:HEAD^ &&
 	git tag B3 &&
 
 	GIT_AUTHOR_NAME="Rebase Author" &&
 	GIT_AUTHOR_EMAIL="rebase.author@example.com" &&
-	GIT_cummitTER_NAME="Rebase cummitter" &&
-	GIT_cummitTER_EMAIL="rebase.cummitter@example.com"
+	GIT_CUMMITTER_NAME="Rebase cummitter" &&
+	GIT_CUMMITTER_EMAIL="rebase.cummitter@example.com"
 '
 
 test_expect_success 'simple fixup -C works' '
@@ -105,7 +105,7 @@ test_expect_success 'simple fixup -c works' '
 	git log -1 --pretty=format:%B >expected-fixup-message &&
 	test_write_lines "" "Modified A2" >>expected-fixup-message &&
 	FAKE_LINES="1 fixup_-c 2" \
-		FAKE_cummit_AMEND="Modified A2" \
+		FAKE_CUMMIT_AMEND="Modified A2" \
 		git rebase -i B &&
 	test_cmp_rev HEAD^ B &&
 	test_cmp_rev HEAD^{tree} A2^{tree} &&
@@ -132,7 +132,7 @@ test_expect_success 'fixup -C with conflicts gives correct message' '
 	test_must_fail env FAKE_LINES="1 fixup_-C 2" git rebase -i conflicts &&
 	git checkout --theirs -- A &&
 	git add A &&
-	FAKE_cummit_AMEND=edited git rebase --continue &&
+	FAKE_CUMMIT_AMEND=edited git rebase --continue &&
 	test_cmp_rev HEAD^ conflicts &&
 	test_cmp_rev HEAD^{tree} A1^{tree} &&
 	test_cummit_message HEAD expected-message &&
@@ -145,14 +145,14 @@ test_expect_success 'skipping fixup -C after fixup gives correct message' '
 	git checkout --detach A3 &&
 	test_must_fail env FAKE_LINES="1 fixup 2 fixup_-C 4" git rebase -i A &&
 	git reset --hard &&
-	FAKE_cummit_AMEND=edited git rebase --continue &&
+	FAKE_CUMMIT_AMEND=edited git rebase --continue &&
 	test_cummit_message HEAD -m "B"
 '
 
 test_expect_success 'sequence of fixup, fixup -C & squash --signoff works' '
 	git checkout --detach B3 &&
 	FAKE_LINES="1 fixup 2 fixup_-C 3 fixup_-C 4 squash 5 fixup_-C 6" \
-		FAKE_cummit_AMEND=squashed \
+		FAKE_CUMMIT_AMEND=squashed \
 		FAKE_MESSAGE_COPY=actual-squash-message \
 		git -c cummit.status=false rebase -ik --signoff A &&
 	git diff-tree --exit-code --patch HEAD B3 -- &&
@@ -175,7 +175,7 @@ test_expect_success 'multiple fixup -c opens editor once' '
 	git checkout --detach A3 &&
 	git log -1 --pretty=format:%B >expected-message &&
 	test_write_lines "" "Modified-A3" >>expected-message &&
-	FAKE_cummit_AMEND="Modified-A3" \
+	FAKE_CUMMIT_AMEND="Modified-A3" \
 		FAKE_LINES="1 fixup_-C 2 fixup_-c 3 fixup_-c 4" \
 		EXPECT_HEADER_COUNT=4 \
 		git rebase -i A &&
@@ -198,7 +198,7 @@ test_expect_success 'sequence squash, fixup & fixup -c gives combined message' '
 
 test_expect_success 'fixup -C works upon --autosquash with amend!' '
 	git checkout --detach B3 &&
-	FAKE_cummit_AMEND=squashed \
+	FAKE_CUMMIT_AMEND=squashed \
 		FAKE_MESSAGE_COPY=actual-squash-message \
 		git -c cummit.status=false rebase -ik --autosquash \
 						--signoff A &&

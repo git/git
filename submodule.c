@@ -974,7 +974,7 @@ static int check_has_cummit(const struct object_id *oid, void *data)
 	type = oid_object_info(&subrepo, oid, NULL);
 
 	switch (type) {
-	case OBJ_cummit:
+	case OBJ_CUMMIT:
 		goto cleanup;
 	case OBJ_BAD:
 		/*
@@ -1749,7 +1749,7 @@ static int cummit_missing_in_sub(const struct object_id *oid, void *data)
 
 	enum object_type type = oid_object_info(subrepo, oid, NULL);
 
-	return type != OBJ_cummit;
+	return type != OBJ_CUMMIT;
 }
 
 static int fetch_finish(int retvalue, struct strbuf *err,

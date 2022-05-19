@@ -33,7 +33,7 @@ UI, Workflows & Features
    untarring on a filesystem that has poor support for hardlinks.
    There is a Makefile option NO_INSTALL_HARDLINKS for you.
 
- * The smart-http backend used to always override GIT_cummitTER_*
+ * The smart-http backend used to always override GIT_CUMMITTER_*
    variables with REMOTE_USER and REMOTE_ADDR, but these variables are
    now preserved when set.
 

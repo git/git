@@ -135,7 +135,7 @@ struct cummit_list *get_shallow_cummits(struct object_array *heads, int depth,
 					deref_tag(the_repository,
 						  heads->objects[i++].item,
 						  NULL, 0);
-				if (!cummit || cummit->object.type != OBJ_cummit) {
+				if (!cummit || cummit->object.type != OBJ_CUMMIT) {
 					cummit = NULL;
 					continue;
 				}
@@ -589,7 +589,7 @@ static void paint_down(struct paint_info *info, const struct object_id *oid,
 	nr = get_max_object_index();
 	for (i = 0; i < nr; i++) {
 		struct object *o = get_indexed_object(i);
-		if (o && o->type == OBJ_cummit)
+		if (o && o->type == OBJ_CUMMIT)
 			o->flags &= ~SEEN;
 	}
 
@@ -648,7 +648,7 @@ void assign_shallow_cummits_to_refs(struct shallow_info *info,
 	nr = get_max_object_index();
 	for (i = 0; i < nr; i++) {
 		struct object *o = get_indexed_object(i);
-		if (!o || o->type != OBJ_cummit)
+		if (!o || o->type != OBJ_CUMMIT)
 			continue;
 
 		o->flags &= ~(UNINTERESTING | BOTTOM | SEEN);

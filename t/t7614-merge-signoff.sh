@@ -16,7 +16,7 @@ test_setup() {
 	cat >expected-signed <<EOF &&
 Merge branch 'main' into other-branch
 
-Signed-off-by: $(git var GIT_cummitTER_IDENT | sed -e "s/>.*/>/")
+Signed-off-by: $(git var GIT_CUMMITTER_IDENT | sed -e "s/>.*/>/")
 EOF
 
 	# Expected cummit message after merge without --signoff (or with --no-signoff)

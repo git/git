@@ -80,7 +80,7 @@ Updates since v1.5.1
 
 * Updated behavior of existing commands.
 
-  - When $GIT_cummitTER_EMAIL or $GIT_AUTHOR_EMAIL is not set
+  - When $GIT_CUMMITTER_EMAIL or $GIT_AUTHOR_EMAIL is not set
     but $EMAIL is set, the latter is used as a substitute.
 
   - "git diff --stat" shows size of preimage and postimage blobs

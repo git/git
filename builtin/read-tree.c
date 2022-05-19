@@ -270,7 +270,7 @@ int cmd_read_tree(int argc, const char **argv, const char *cmd_prefix)
 				 the_repository->index,
 				 trees[0]);
 
-	if (write_locked_index(&the_index, &lock_file, cummit_LOCK))
+	if (write_locked_index(&the_index, &lock_file, CUMMIT_LOCK))
 		die("unable to write new index file");
 	return 0;
 }

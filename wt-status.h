@@ -36,7 +36,7 @@ enum show_ignored_type {
 
 /* from where does this cummit originate */
 enum cummit_whence {
-	FROM_cummit,     /* normal */
+	FROM_CUMMIT,     /* normal */
 	FROM_MERGE,      /* cummit came from merge */
 	FROM_CHERRY_PICK_SINGLE, /* cummit came from cherry-pick */
 	FROM_CHERRY_PICK_MULTI, /* cummit came from a sequence of cherry-picks */

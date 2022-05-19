@@ -527,7 +527,7 @@ test_expect_success 'gitmailmap(5) example output: example #3' '
 test_expect_success 'Shortlog output (complex mapping)' '
 	test_config mailmap.file complex.map &&
 	cat >complex.map <<-EOF &&
-	cummitted <$GIT_cummitTER_EMAIL>
+	cummitted <$GIT_CUMMITTER_EMAIL>
 	<cto@company.xx> <cto@coompany.xx>
 	Some Dude <some@dude.xx>         nick1 <bugs@company.xx>
 	Other Author <other@author.xx>   nick2 <bugs@company.xx>
@@ -571,25 +571,25 @@ test_expect_success 'Log output (complex mapping)' '
 
 	cat >expect <<-EOF &&
 	Author CTO <cto@coompany.xx> maps to CTO <cto@company.xx>
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> maps to cummitted <$GIT_cummitTER_EMAIL>
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> maps to cummitted <$GIT_CUMMITTER_EMAIL>
 
 	Author claus <me@company.xx> maps to Santa Claus <santa.claus@northpole.xx>
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> maps to cummitted <$GIT_cummitTER_EMAIL>
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> maps to cummitted <$GIT_CUMMITTER_EMAIL>
 
 	Author santa <me@company.xx> maps to Santa Claus <santa.claus@northpole.xx>
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> maps to cummitted <$GIT_cummitTER_EMAIL>
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> maps to cummitted <$GIT_CUMMITTER_EMAIL>
 
 	Author nick2 <nick2@company.xx> maps to Other Author <other@author.xx>
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> maps to cummitted <$GIT_cummitTER_EMAIL>
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> maps to cummitted <$GIT_CUMMITTER_EMAIL>
 
 	Author nick2 <bugs@company.xx> maps to Other Author <other@author.xx>
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> maps to cummitted <$GIT_cummitTER_EMAIL>
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> maps to cummitted <$GIT_CUMMITTER_EMAIL>
 
 	Author nick1 <bugs@company.xx> maps to Some Dude <some@dude.xx>
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> maps to cummitted <$GIT_cummitTER_EMAIL>
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> maps to cummitted <$GIT_CUMMITTER_EMAIL>
 
 	Author $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> maps to $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
-	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> maps to cummitted <$GIT_cummitTER_EMAIL>
+	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> maps to cummitted <$GIT_CUMMITTER_EMAIL>
 	EOF
 
 	git log --pretty=format:"Author %an <%ae> maps to %aN <%aE>%ncummitter %cn <%ce> maps to %cN <%cE>%n" >actual &&
@@ -599,25 +599,25 @@ test_expect_success 'Log output (complex mapping)' '
 test_expect_success 'Log output (local-part email address)' '
 	cat >expect <<-EOF &&
 	Author email cto@coompany.xx has local-part cto
-	cummitter email $GIT_cummitTER_EMAIL has local-part $TEST_cummitTER_LOCALNAME
+	cummitter email $GIT_CUMMITTER_EMAIL has local-part $TEST_CUMMITTER_LOCALNAME
 
 	Author email me@company.xx has local-part me
-	cummitter email $GIT_cummitTER_EMAIL has local-part $TEST_cummitTER_LOCALNAME
+	cummitter email $GIT_CUMMITTER_EMAIL has local-part $TEST_CUMMITTER_LOCALNAME
 
 	Author email me@company.xx has local-part me
-	cummitter email $GIT_cummitTER_EMAIL has local-part $TEST_cummitTER_LOCALNAME
+	cummitter email $GIT_CUMMITTER_EMAIL has local-part $TEST_CUMMITTER_LOCALNAME
 
 	Author email nick2@company.xx has local-part nick2
-	cummitter email $GIT_cummitTER_EMAIL has local-part $TEST_cummitTER_LOCALNAME
+	cummitter email $GIT_CUMMITTER_EMAIL has local-part $TEST_CUMMITTER_LOCALNAME
 
 	Author email bugs@company.xx has local-part bugs
-	cummitter email $GIT_cummitTER_EMAIL has local-part $TEST_cummitTER_LOCALNAME
+	cummitter email $GIT_CUMMITTER_EMAIL has local-part $TEST_CUMMITTER_LOCALNAME
 
 	Author email bugs@company.xx has local-part bugs
-	cummitter email $GIT_cummitTER_EMAIL has local-part $TEST_cummitTER_LOCALNAME
+	cummitter email $GIT_CUMMITTER_EMAIL has local-part $TEST_CUMMITTER_LOCALNAME
 
 	Author email author@example.com has local-part author
-	cummitter email $GIT_cummitTER_EMAIL has local-part $TEST_cummitTER_LOCALNAME
+	cummitter email $GIT_CUMMITTER_EMAIL has local-part $TEST_CUMMITTER_LOCALNAME
 	EOF
 
 	git log --pretty=format:"Author email %ae has local-part %al%ncummitter email %ce has local-part %cl%n" >actual &&

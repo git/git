@@ -408,7 +408,7 @@ static int name_ref(const char *path, const struct object_id *oid, int flags, vo
 		deref = 1;
 		taggerdate = t->date;
 	}
-	if (o && o->type == OBJ_cummit) {
+	if (o && o->type == OBJ_CUMMIT) {
 		cummit = (struct cummit *)o;
 		from_tag = starts_with(path, "refs/tags/");
 		if (taggerdate == TIME_MAX)
@@ -469,7 +469,7 @@ static const char *get_rev_name(const struct object *o, struct strbuf *buf)
 	struct rev_name *n;
 	const struct cummit *c;
 
-	if (o->type != OBJ_cummit)
+	if (o->type != OBJ_CUMMIT)
 		return get_exact_ref_match(o);
 	c = (const struct cummit *) o;
 	n = get_cummit_rev_name(c);
@@ -625,7 +625,7 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 		if (object) {
 			struct object *peeled = deref_tag(the_repository,
 							  object, *argv, 0);
-			if (peeled && peeled->type == OBJ_cummit)
+			if (peeled && peeled->type == OBJ_CUMMIT)
 				cummit = (struct cummit *)peeled;
 		}
 
@@ -668,7 +668,7 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 		max = get_max_object_index();
 		for (i = 0; i < max; i++) {
 			struct object *obj = get_indexed_object(i);
-			if (!obj || obj->type != OBJ_cummit)
+			if (!obj || obj->type != OBJ_CUMMIT)
 				continue;
 			show_name(obj, NULL,
 				  always, allow_undefined, data.name_only);

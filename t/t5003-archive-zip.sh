@@ -125,7 +125,7 @@ test_expect_success \
 
 test_expect_success 'add files to repository' '
 	git add a &&
-	GIT_cummitTER_DATE="2005-05-27 22:00" git cummit -m initial
+	GIT_CUMMITTER_DATE="2005-05-27 22:00" git cummit -m initial
 '
 
 test_expect_success 'setup export-subst and diff attributes' '

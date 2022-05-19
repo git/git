@@ -813,9 +813,9 @@ test_expect_success 'clone shallow since ...' '
 	test_create_repo shallow-since &&
 	(
 	cd shallow-since &&
-	GIT_cummitTER_DATE="100000000 +0700" git cummit --allow-empty -m one &&
-	GIT_cummitTER_DATE="200000000 +0700" git cummit --allow-empty -m two &&
-	GIT_cummitTER_DATE="300000000 +0700" git cummit --allow-empty -m three &&
+	GIT_CUMMITTER_DATE="100000000 +0700" git cummit --allow-empty -m one &&
+	GIT_CUMMITTER_DATE="200000000 +0700" git cummit --allow-empty -m two &&
+	GIT_CUMMITTER_DATE="300000000 +0700" git cummit --allow-empty -m three &&
 	git clone --shallow-since "300000000 +0700" "file://$(pwd)/." ../shallow11 &&
 	git -C ../shallow11 log --pretty=tformat:%s HEAD >actual &&
 	echo three >expected &&
@@ -837,9 +837,9 @@ test_expect_success 'clone shallow since selects no cummits' '
 	test_create_repo shallow-since-the-future &&
 	(
 	cd shallow-since-the-future &&
-	GIT_cummitTER_DATE="100000000 +0700" git cummit --allow-empty -m one &&
-	GIT_cummitTER_DATE="200000000 +0700" git cummit --allow-empty -m two &&
-	GIT_cummitTER_DATE="300000000 +0700" git cummit --allow-empty -m three &&
+	GIT_CUMMITTER_DATE="100000000 +0700" git cummit --allow-empty -m one &&
+	GIT_CUMMITTER_DATE="200000000 +0700" git cummit --allow-empty -m two &&
+	GIT_CUMMITTER_DATE="300000000 +0700" git cummit --allow-empty -m three &&
 	test_must_fail git clone --shallow-since "900000000 +0700" "file://$(pwd)/." ../shallow111
 	)
 '

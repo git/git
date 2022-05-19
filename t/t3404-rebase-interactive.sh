@@ -358,7 +358,7 @@ test_expect_success '--continue tries to cummit' '
 		test_must_fail git rebase -i --onto new-branch1 HEAD^ &&
 		echo resolved > file1 &&
 		git add file1 &&
-		FAKE_cummit_MESSAGE="chouette!" git rebase --continue
+		FAKE_CUMMIT_MESSAGE="chouette!" git rebase --continue
 	) &&
 	test_cmp_rev HEAD^ new-branch1 &&
 	git show HEAD | grep chouette
@@ -378,7 +378,7 @@ test_expect_success 'multi-squash only fires up editor once' '
 	base=$(git rev-parse HEAD~4) &&
 	(
 		set_fake_editor &&
-		FAKE_cummit_AMEND="ONCE" \
+		FAKE_CUMMIT_AMEND="ONCE" \
 			FAKE_LINES="1 squash 2 squash 3 squash 4" \
 			EXPECT_HEADER_COUNT=4 \
 			git rebase -i $base
@@ -392,7 +392,7 @@ test_expect_success 'multi-fixup does not fire up editor' '
 	base=$(git rev-parse HEAD~4) &&
 	(
 		set_fake_editor &&
-		FAKE_cummit_AMEND="NEVER" \
+		FAKE_CUMMIT_AMEND="NEVER" \
 			FAKE_LINES="1 fixup 2 fixup 3 fixup 4" \
 			git rebase -i $base
 	) &&
@@ -411,7 +411,7 @@ test_expect_success 'cummit message used after conflict' '
 			git rebase -i $base &&
 		echo three > conflict &&
 		git add conflict &&
-		FAKE_cummit_AMEND="ONCE" EXPECT_HEADER_COUNT=2 \
+		FAKE_CUMMIT_AMEND="ONCE" EXPECT_HEADER_COUNT=2 \
 			git rebase --continue
 	) &&
 	test $base = $(git rev-parse HEAD^) &&
@@ -429,7 +429,7 @@ test_expect_success 'cummit message retained after conflict' '
 			git rebase -i $base &&
 		echo three > conflict &&
 		git add conflict &&
-		FAKE_cummit_AMEND="TWICE" EXPECT_HEADER_COUNT=2 \
+		FAKE_CUMMIT_AMEND="TWICE" EXPECT_HEADER_COUNT=2 \
 			git rebase --continue
 	) &&
 	test $base = $(git rev-parse HEAD^) &&
@@ -450,7 +450,7 @@ test_expect_success 'squash and fixup generate correct log messages' '
 	base=$(git rev-parse HEAD~4) &&
 	(
 		set_fake_editor &&
-		FAKE_cummit_AMEND="ONCE" \
+		FAKE_CUMMIT_AMEND="ONCE" \
 			FAKE_LINES="1 fixup 2 squash 3 fixup 4" \
 			EXPECT_HEADER_COUNT=4 \
 			git rebase -i $base
@@ -470,7 +470,7 @@ test_expect_success 'squash ignores comments' '
 	base=$(git rev-parse HEAD~4) &&
 	(
 		set_fake_editor &&
-		FAKE_cummit_AMEND="ONCE" \
+		FAKE_CUMMIT_AMEND="ONCE" \
 			FAKE_LINES="# 1 # squash 2 # squash 3 # squash 4 #" \
 			EXPECT_HEADER_COUNT=4 \
 			git rebase -i $base
@@ -486,7 +486,7 @@ test_expect_success 'squash ignores blank lines' '
 	base=$(git rev-parse HEAD~4) &&
 	(
 		set_fake_editor &&
-		FAKE_cummit_AMEND="ONCE" \
+		FAKE_CUMMIT_AMEND="ONCE" \
 			FAKE_LINES="> 1 > squash 2 > squash 3 > squash 4 >" \
 			EXPECT_HEADER_COUNT=4 \
 			git rebase -i $base
@@ -556,7 +556,7 @@ test_expect_success '--continue tries to cummit, even for "edit"' '
 		FAKE_LINES="edit 1" git rebase -i HEAD^ &&
 		echo edited > file7 &&
 		git add file7 &&
-		FAKE_cummit_MESSAGE="chouette!" git rebase --continue
+		FAKE_CUMMIT_MESSAGE="chouette!" git rebase --continue
 	) &&
 	test edited = $(git show HEAD:file7) &&
 	git show HEAD | grep chouette &&
@@ -571,7 +571,7 @@ test_expect_success 'aborted --continue does not squash cummits after "edit"' '
 		FAKE_LINES="edit 1" git rebase -i HEAD^ &&
 		echo "edited again" > file7 &&
 		git add file7 &&
-		test_must_fail env FAKE_cummit_MESSAGE=" " git rebase --continue
+		test_must_fail env FAKE_CUMMIT_MESSAGE=" " git rebase --continue
 	) &&
 	test $old = $(git rev-parse HEAD) &&
 	git rebase --abort
@@ -584,11 +584,11 @@ test_expect_success 'auto-amend only edited cummits after "edit"' '
 		FAKE_LINES="edit 1" git rebase -i HEAD^ &&
 		echo "edited again" > file7 &&
 		git add file7 &&
-		FAKE_cummit_MESSAGE="edited file7 again" git cummit &&
+		FAKE_CUMMIT_MESSAGE="edited file7 again" git cummit &&
 		echo "and again" > file7 &&
 		git add file7 &&
 		test_tick &&
-		test_must_fail env FAKE_cummit_MESSAGE="and again" \
+		test_must_fail env FAKE_CUMMIT_MESSAGE="and again" \
 			git rebase --continue
 	) &&
 	git rebase --abort
@@ -741,18 +741,18 @@ test_expect_success 'reword' '
 	git checkout -b reword-branch primary &&
 	(
 		set_fake_editor &&
-		FAKE_LINES="1 2 3 reword 4" FAKE_cummit_MESSAGE="E changed" \
+		FAKE_LINES="1 2 3 reword 4" FAKE_CUMMIT_MESSAGE="E changed" \
 			git rebase -i A &&
 		git show HEAD | grep "E changed" &&
 		test $(git rev-parse primary) != $(git rev-parse HEAD) &&
 		test_cmp_rev primary^ HEAD^ &&
-		FAKE_LINES="1 2 reword 3 4" FAKE_cummit_MESSAGE="D changed" \
+		FAKE_LINES="1 2 reword 3 4" FAKE_CUMMIT_MESSAGE="D changed" \
 			git rebase -i A &&
 		git show HEAD^ | grep "D changed" &&
-		FAKE_LINES="reword 1 2 3 4" FAKE_cummit_MESSAGE="B changed" \
+		FAKE_LINES="reword 1 2 3 4" FAKE_CUMMIT_MESSAGE="B changed" \
 			git rebase -i A &&
 		git show HEAD~3 | grep "B changed" &&
-		FAKE_LINES="1 r 2 pick 3 p 4" FAKE_cummit_MESSAGE="C changed" \
+		FAKE_LINES="1 r 2 pick 3 p 4" FAKE_CUMMIT_MESSAGE="C changed" \
 			git rebase -i A
 	) &&
 	git show HEAD~2 | grep "C changed"
@@ -1019,7 +1019,7 @@ test_expect_success 'rebase -i --root reword original root cummit' '
 	git checkout -b reword-original-root-branch primary &&
 	(
 		set_fake_editor &&
-		FAKE_LINES="reword 1 2" FAKE_cummit_MESSAGE="A changed" \
+		FAKE_LINES="reword 1 2" FAKE_CUMMIT_MESSAGE="A changed" \
 			git rebase -i --root
 	) &&
 	git show HEAD^ | grep "A changed" &&
@@ -1031,7 +1031,7 @@ test_expect_success 'rebase -i --root reword new root cummit' '
 	git checkout -b reword-now-root-branch primary &&
 	(
 		set_fake_editor &&
-		FAKE_LINES="reword 3 1" FAKE_cummit_MESSAGE="C changed" \
+		FAKE_LINES="reword 3 1" FAKE_CUMMIT_MESSAGE="C changed" \
 		git rebase -i --root
 	) &&
 	git show HEAD^ | grep "C changed" &&
@@ -1061,9 +1061,9 @@ test_expect_success 'rebase -i --root reword root when root has untracked file c
 	(
 		set_fake_editor &&
 		test_must_fail env FAKE_LINES="reword 1 2" \
-			FAKE_cummit_MESSAGE="Modified A" git rebase -i --root &&
+			FAKE_CUMMIT_MESSAGE="Modified A" git rebase -i --root &&
 		rm file1 &&
-		FAKE_cummit_MESSAGE="Reworded A" git rebase --continue
+		FAKE_CUMMIT_MESSAGE="Reworded A" git rebase --continue
 	) &&
 	test "$(git log -1 --format=%B HEAD^)" = "Reworded A" &&
 	test "$(git rev-list --count HEAD)" = 2
@@ -1202,7 +1202,7 @@ test_expect_success 'short cummit ID setup' '
 if test -n "$GIT_TEST_FIND_COLLIDER"
 then
 	author="$(unset test_tick; test_tick; git var GIT_AUTHOR_IDENT)"
-	cummitter="$(unset test_tick; test_tick; git var GIT_cummitTER_IDENT)"
+	cummitter="$(unset test_tick; test_tick; git var GIT_CUMMITTER_IDENT)"
 	blob="$(git rev-parse collide2:collide)"
 	from="$(git rev-parse collide1^0)"
 	repl="cummit refs/heads/collider-&\\n"
@@ -1239,7 +1239,7 @@ test_expect_success 'short cummit ID collide' '
 		unset test_tick &&
 		test_tick &&
 		set_fake_editor &&
-		FAKE_cummit_MESSAGE="collide2 $(test_oid t3404_collider)" \
+		FAKE_CUMMIT_MESSAGE="collide2 $(test_oid t3404_collider)" \
 		FAKE_LINES="reword 1 break 2" git rebase -i HEAD~2 &&
 		test $colliding_id = "$(git rev-parse HEAD | cut -c 1-4)" &&
 		grep "^pick $colliding_id " \
@@ -1693,7 +1693,7 @@ test_expect_success 'post-commit hook is called' '
 		FAKE_LINES="edit 4 1 reword 2 fixup 3" git rebase -i A E &&
 		echo x>file3 &&
 		git add file3 &&
-		FAKE_cummit_MESSAGE=edited git rebase --continue
+		FAKE_CUMMIT_MESSAGE=edited git rebase --continue
 	) &&
 	git rev-parse HEAD@{5} HEAD@{4} HEAD@{3} HEAD@{2} HEAD@{1} HEAD \
 		>expect &&

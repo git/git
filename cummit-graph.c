@@ -24,15 +24,15 @@
 void git_test_write_cummit_graph_or_die(void)
 {
 	int flags = 0;
-	if (!git_env_bool(GIT_TEST_cummit_GRAPH, 0))
+	if (!git_env_bool(GIT_TEST_CUMMIT_GRAPH, 0))
 		return;
 
-	if (git_env_bool(GIT_TEST_cummit_GRAPH_CHANGED_PATHS, 0))
-		flags = cummit_GRAPH_WRITE_BLOOM_FILTERS;
+	if (git_env_bool(GIT_TEST_CUMMIT_GRAPH_CHANGED_PATHS, 0))
+		flags = CUMMIT_GRAPH_WRITE_BLOOM_FILTERS;
 
 	if (write_cummit_graph_reachable(the_repository->objects->odb,
 					 flags, NULL))
-		die("failed to write cummit-graph under GIT_TEST_cummit_GRAPH");
+		die("failed to write cummit-graph under GIT_TEST_CUMMIT_GRAPH");
 }
 
 #define GRAPH_SIGNATURE 0x43475048 /* "CGPH" */
@@ -62,7 +62,7 @@ void git_test_write_cummit_graph_or_die(void)
 #define GRAPH_MIN_SIZE (GRAPH_HEADER_SIZE + 4 * CHUNK_TOC_ENTRY_SIZE \
 			+ GRAPH_FANOUT_SIZE + the_hash_algo->rawsz)
 
-#define CORRECTED_cummit_DATE_OFFSET_OVERFLOW (1ULL << 31)
+#define CORRECTED_CUMMIT_DATE_OFFSET_OVERFLOW (1ULL << 31)
 
 /* Remember to update object flag allocation in object.h */
 #define REACHABLE       (1u<<15)
@@ -71,7 +71,7 @@ define_cummit_slab(topo_level_slab, uint32_t);
 
 /* Keep track of the order in which cummits are added to our list. */
 define_cummit_slab(cummit_pos, int);
-static struct cummit_pos cummit_pos = cummit_SLAB_INIT(1, cummit_pos);
+static struct cummit_pos cummit_pos = CUMMIT_SLAB_INIT(1, cummit_pos);
 
 static void set_cummit_pos(struct repository *r, const struct object_id *oid)
 {
@@ -94,7 +94,7 @@ static int cummit_pos_cmp(const void *va, const void *vb)
 
 define_cummit_slab(cummit_graph_data_slab, struct cummit_graph_data);
 static struct cummit_graph_data_slab cummit_graph_data_slab =
-	cummit_SLAB_INIT(1, cummit_graph_data_slab);
+	CUMMIT_SLAB_INIT(1, cummit_graph_data_slab);
 
 static int get_configured_generation_version(struct repository *r)
 {
@@ -108,7 +108,7 @@ uint32_t cummit_graph_position(const struct cummit *c)
 	struct cummit_graph_data *data =
 		cummit_graph_data_slab_peek(&cummit_graph_data_slab, c);
 
-	return data ? data->graph_pos : cummit_NOT_FROM_GRAPH;
+	return data ? data->graph_pos : CUMMIT_NOT_FROM_GRAPH;
 }
 
 timestamp_t cummit_graph_generation(const struct cummit *c)
@@ -118,7 +118,7 @@ timestamp_t cummit_graph_generation(const struct cummit *c)
 
 	if (!data)
 		return GENERATION_NUMBER_INFINITY;
-	else if (data->graph_pos == cummit_NOT_FROM_GRAPH)
+	else if (data->graph_pos == CUMMIT_NOT_FROM_GRAPH)
 		return GENERATION_NUMBER_INFINITY;
 
 	return data->generation;
@@ -138,14 +138,14 @@ static struct cummit_graph_data *cummit_graph_data_at(const struct cummit *c)
 
 	/*
 	 * cummit-slab initializes elements with zero, overwrite this with
-	 * cummit_NOT_FROM_GRAPH for graph_pos.
+	 * CUMMIT_NOT_FROM_GRAPH for graph_pos.
 	 *
 	 * We avoid initializing generation with checking if graph position
-	 * is not cummit_NOT_FROM_GRAPH.
+	 * is not CUMMIT_NOT_FROM_GRAPH.
 	 */
 	for (i = 0; i < cummit_graph_data_slab.slab_size; i++) {
 		cummit_graph_data_slab.slab[nth_slab][i].graph_pos =
-			cummit_NOT_FROM_GRAPH;
+			CUMMIT_NOT_FROM_GRAPH;
 	}
 
 	return data;
@@ -653,7 +653,7 @@ static int prepare_cummit_graph(struct repository *r)
 
 	prepare_repo_settings(r);
 
-	if (!git_env_bool(GIT_TEST_cummit_GRAPH, 0) &&
+	if (!git_env_bool(GIT_TEST_CUMMIT_GRAPH, 0) &&
 	    r->settings.core_cummit_graph != 1)
 		/*
 		 * This repository is not configured to use cummit graphs, so
@@ -804,11 +804,11 @@ static void fill_cummit_graph_info(struct cummit *item, struct cummit_graph *g, 
 	if (g->read_generation_data) {
 		offset = (timestamp_t)get_be32(g->chunk_generation_data + sizeof(uint32_t) * lex_index);
 
-		if (offset & CORRECTED_cummit_DATE_OFFSET_OVERFLOW) {
+		if (offset & CORRECTED_CUMMIT_DATE_OFFSET_OVERFLOW) {
 			if (!g->chunk_generation_data_overflow)
 				die(_("cummit-graph requires overflow generation data but has none"));
 
-			offset_pos = offset ^ CORRECTED_cummit_DATE_OFFSET_OVERFLOW;
+			offset_pos = offset ^ CORRECTED_CUMMIT_DATE_OFFSET_OVERFLOW;
 			graph_data->generation = item->date + get_be64(g->chunk_generation_data_overflow + 8 * offset_pos);
 		} else
 			graph_data->generation = item->date + offset;
@@ -893,7 +893,7 @@ static int search_cummit_pos_in_graph(const struct object_id *id, struct cummit_
 static int find_cummit_pos_in_graph(struct cummit *item, struct cummit_graph *g, uint32_t *pos)
 {
 	uint32_t graph_pos = cummit_graph_position(item);
-	if (graph_pos != cummit_NOT_FROM_GRAPH) {
+	if (graph_pos != CUMMIT_NOT_FROM_GRAPH) {
 		*pos = graph_pos;
 		return 1;
 	} else {
@@ -945,9 +945,9 @@ int parse_cummit_in_graph(struct repository *r, struct cummit *item)
 	static int checked_env = 0;
 
 	if (!checked_env &&
-	    git_env_bool(GIT_TEST_cummit_GRAPH_DIE_ON_PARSE, 0))
+	    git_env_bool(GIT_TEST_CUMMIT_GRAPH_DIE_ON_PARSE, 0))
 		die("dying as requested by the '%s' variable on cummit-graph parse!",
-		    GIT_TEST_cummit_GRAPH_DIE_ON_PARSE);
+		    GIT_TEST_CUMMIT_GRAPH_DIE_ON_PARSE);
 	checked_env = 1;
 
 	if (!prepare_cummit_graph(r))
@@ -990,7 +990,7 @@ static struct tree *get_cummit_tree_in_graph_one(struct repository *r,
 {
 	if (c->maybe_tree)
 		return c->maybe_tree;
-	if (cummit_graph_position(c) == cummit_NOT_FROM_GRAPH)
+	if (cummit_graph_position(c) == CUMMIT_NOT_FROM_GRAPH)
 		BUG("get_cummit_tree_in_graph_one called from non-cummit-graph cummit");
 
 	return load_tree_for_cummit(r, g, (struct cummit *)c);
@@ -1212,7 +1212,7 @@ static int write_graph_chunk_generation_data(struct hashfile *f,
 		display_progress(ctx->progress, ++ctx->progress_cnt);
 
 		if (offset > GENERATION_NUMBER_V2_OFFSET_MAX) {
-			offset = CORRECTED_cummit_DATE_OFFSET_OVERFLOW | num_generation_data_overflows;
+			offset = CORRECTED_CUMMIT_DATE_OFFSET_OVERFLOW | num_generation_data_overflows;
 			num_generation_data_overflows++;
 		}
 
@@ -1375,7 +1375,7 @@ static int add_packed_cummits(const struct object_id *oid,
 	if (packed_object_info(ctx->r, pack, offset, &oi) < 0)
 		die(_("unable to get type of object %s"), oid_to_hex(oid));
 
-	if (type != OBJ_cummit)
+	if (type != OBJ_CUMMIT)
 		return 0;
 
 	oid_array_append(&ctx->oids, oid);
@@ -1400,7 +1400,7 @@ static void close_reachable(struct write_cummit_graph_context *ctx)
 	int i;
 	struct cummit *cummit;
 	enum cummit_graph_split_flags flags = ctx->opts ?
-		ctx->opts->split_flags : cummit_GRAPH_SPLIT_UNSPECIFIED;
+		ctx->opts->split_flags : CUMMIT_GRAPH_SPLIT_UNSPECIFIED;
 
 	if (ctx->report_progress)
 		ctx->progress = start_delayed_progress(
@@ -1431,8 +1431,8 @@ static void close_reachable(struct write_cummit_graph_context *ctx)
 			continue;
 		if (ctx->split) {
 			if ((!repo_parse_cummit(ctx->r, cummit) &&
-			     cummit_graph_position(cummit) == cummit_NOT_FROM_GRAPH) ||
-			    flags == cummit_GRAPH_SPLIT_REPLACE)
+			     cummit_graph_position(cummit) == CUMMIT_NOT_FROM_GRAPH) ||
+			    flags == CUMMIT_GRAPH_SPLIT_REPLACE)
 				add_missing_parents(ctx, cummit);
 		} else if (!repo_parse_cummit_no_graph(ctx->r, cummit))
 			add_missing_parents(ctx, cummit);
@@ -1655,7 +1655,7 @@ static int add_ref_to_set(const char *refname,
 
 	if (!peel_iterated_oid(oid, &peeled))
 		oid = &peeled;
-	if (oid_object_info(the_repository, oid, NULL) == OBJ_cummit)
+	if (oid_object_info(the_repository, oid, NULL) == OBJ_CUMMIT)
 		oidset_insert(data->cummits, oid);
 
 	display_progress(data->progress, oidset_size(data->cummits));
@@ -1673,7 +1673,7 @@ int write_cummit_graph_reachable(struct object_directory *odb,
 
 	memset(&data, 0, sizeof(data));
 	data.cummits = &cummits;
-	if (flags & cummit_GRAPH_WRITE_PROGRESS)
+	if (flags & CUMMIT_GRAPH_WRITE_PROGRESS)
 		data.progress = start_delayed_progress(
 			_("Collecting referenced cummits"), 0);
 
@@ -1769,7 +1769,7 @@ static void copy_oids_to_cummits(struct write_cummit_graph_context *ctx)
 {
 	uint32_t i;
 	enum cummit_graph_split_flags flags = ctx->opts ?
-		ctx->opts->split_flags : cummit_GRAPH_SPLIT_UNSPECIFIED;
+		ctx->opts->split_flags : CUMMIT_GRAPH_SPLIT_UNSPECIFIED;
 
 	ctx->num_extra_edges = 0;
 	if (ctx->report_progress)
@@ -1785,11 +1785,11 @@ static void copy_oids_to_cummits(struct write_cummit_graph_context *ctx)
 		ALLOC_GROW(ctx->cummits.list, ctx->cummits.nr + 1, ctx->cummits.alloc);
 		ctx->cummits.list[ctx->cummits.nr] = lookup_cummit(ctx->r, &ctx->oids.oid[i]);
 
-		if (ctx->split && flags != cummit_GRAPH_SPLIT_REPLACE &&
-		    cummit_graph_position(ctx->cummits.list[ctx->cummits.nr]) != cummit_NOT_FROM_GRAPH)
+		if (ctx->split && flags != CUMMIT_GRAPH_SPLIT_REPLACE &&
+		    cummit_graph_position(ctx->cummits.list[ctx->cummits.nr]) != CUMMIT_NOT_FROM_GRAPH)
 			continue;
 
-		if (ctx->split && flags == cummit_GRAPH_SPLIT_REPLACE)
+		if (ctx->split && flags == CUMMIT_GRAPH_SPLIT_REPLACE)
 			repo_parse_cummit(ctx->r, ctx->cummits.list[ctx->cummits.nr]);
 		else
 			repo_parse_cummit_no_graph(ctx->r, ctx->cummits.list[ctx->cummits.nr]);
@@ -1955,7 +1955,7 @@ static int write_cummit_graph_file(struct write_cummit_graph_context *ctx)
 	}
 
 	close_cummit_graph(ctx->r->objects);
-	finalize_hashfile(f, file_hash, FSYNC_COMPONENT_cummit_GRAPH,
+	finalize_hashfile(f, file_hash, FSYNC_COMPONENT_CUMMIT_GRAPH,
 			  CSUM_HASH_IN_STREAM | CSUM_FSYNC);
 	free_chunkfile(cf);
 
@@ -2018,7 +2018,7 @@ static void split_graph_merge_strategy(struct write_cummit_graph_context *ctx)
 {
 	struct cummit_graph *g;
 	uint32_t num_cummits;
-	enum cummit_graph_split_flags flags = cummit_GRAPH_SPLIT_UNSPECIFIED;
+	enum cummit_graph_split_flags flags = CUMMIT_GRAPH_SPLIT_UNSPECIFIED;
 	uint32_t i;
 
 	int max_cummits = 0;
@@ -2035,13 +2035,13 @@ static void split_graph_merge_strategy(struct write_cummit_graph_context *ctx)
 
 	g = ctx->r->objects->cummit_graph;
 	num_cummits = ctx->cummits.nr;
-	if (flags == cummit_GRAPH_SPLIT_REPLACE)
+	if (flags == CUMMIT_GRAPH_SPLIT_REPLACE)
 		ctx->num_cummit_graphs_after = 1;
 	else
 		ctx->num_cummit_graphs_after = ctx->num_cummit_graphs_before + 1;
 
-	if (flags != cummit_GRAPH_SPLIT_MERGE_PROHIBITED &&
-	    flags != cummit_GRAPH_SPLIT_REPLACE) {
+	if (flags != CUMMIT_GRAPH_SPLIT_MERGE_PROHIBITED &&
+	    flags != CUMMIT_GRAPH_SPLIT_REPLACE) {
 		while (g && (g->num_cummits <= size_mult * num_cummits ||
 			    (max_cummits && num_cummits > max_cummits))) {
 			if (g->odb != ctx->odb)
@@ -2054,7 +2054,7 @@ static void split_graph_merge_strategy(struct write_cummit_graph_context *ctx)
 		}
 	}
 
-	if (flags != cummit_GRAPH_SPLIT_REPLACE)
+	if (flags != CUMMIT_GRAPH_SPLIT_REPLACE)
 		ctx->new_base_graph = g;
 	else if (ctx->num_cummit_graphs_after != 1)
 		BUG("split_graph_merge_strategy: num_cummit_graphs_after "
@@ -2298,9 +2298,9 @@ int write_cummit_graph(struct object_directory *odb,
 	CALLOC_ARRAY(ctx, 1);
 	ctx->r = r;
 	ctx->odb = odb;
-	ctx->append = flags & cummit_GRAPH_WRITE_APPEND ? 1 : 0;
-	ctx->report_progress = flags & cummit_GRAPH_WRITE_PROGRESS ? 1 : 0;
-	ctx->split = flags & cummit_GRAPH_WRITE_SPLIT ? 1 : 0;
+	ctx->append = flags & CUMMIT_GRAPH_WRITE_APPEND ? 1 : 0;
+	ctx->report_progress = flags & CUMMIT_GRAPH_WRITE_PROGRESS ? 1 : 0;
+	ctx->split = flags & CUMMIT_GRAPH_WRITE_SPLIT ? 1 : 0;
 	ctx->opts = opts;
 	ctx->total_bloom_filter_data_size = 0;
 	ctx->write_generation_data = (get_configured_generation_version(r) == 2);
@@ -2327,9 +2327,9 @@ int write_cummit_graph(struct object_directory *odb,
 		}
 	}
 
-	if (flags & cummit_GRAPH_WRITE_BLOOM_FILTERS)
+	if (flags & CUMMIT_GRAPH_WRITE_BLOOM_FILTERS)
 		ctx->changed_paths = 1;
-	if (!(flags & cummit_GRAPH_NO_WRITE_BLOOM_FILTERS)) {
+	if (!(flags & CUMMIT_GRAPH_NO_WRITE_BLOOM_FILTERS)) {
 		struct cummit_graph *g;
 
 		g = ctx->r->objects->cummit_graph;
@@ -2361,7 +2361,7 @@ int write_cummit_graph(struct object_directory *odb,
 		}
 
 		if (ctx->opts)
-			replace = ctx->opts->split_flags & cummit_GRAPH_SPLIT_REPLACE;
+			replace = ctx->opts->split_flags & CUMMIT_GRAPH_SPLIT_REPLACE;
 	}
 
 	ctx->approx_nr_objects = approximate_object_count();
@@ -2453,7 +2453,7 @@ cleanup:
 	return res;
 }
 
-#define VERIFY_cummit_GRAPH_ERROR_HASH 2
+#define VERIFY_CUMMIT_GRAPH_ERROR_HASH 2
 static int verify_cummit_graph_error;
 
 __attribute__((format (printf, 1, 2)))
@@ -2495,7 +2495,7 @@ int verify_cummit_graph(struct repository *r, struct cummit_graph *g, int flags)
 
 	if (!cummit_graph_checksum_valid(g)) {
 		graph_report(_("the cummit-graph file has incorrect checksum and is likely corrupt"));
-		verify_cummit_graph_error = VERIFY_cummit_GRAPH_ERROR_HASH;
+		verify_cummit_graph_error = VERIFY_CUMMIT_GRAPH_ERROR_HASH;
 	}
 
 	for (i = 0; i < g->num_cummits; i++) {
@@ -2535,10 +2535,10 @@ int verify_cummit_graph(struct repository *r, struct cummit_graph *g, int flags)
 		cur_fanout_pos++;
 	}
 
-	if (verify_cummit_graph_error & ~VERIFY_cummit_GRAPH_ERROR_HASH)
+	if (verify_cummit_graph_error & ~VERIFY_CUMMIT_GRAPH_ERROR_HASH)
 		return verify_cummit_graph_error;
 
-	if (flags & cummit_GRAPH_WRITE_PROGRESS)
+	if (flags & CUMMIT_GRAPH_WRITE_PROGRESS)
 		progress = start_progress(_("Verifying cummits in cummit graph"),
 					g->num_cummits);
 
@@ -2635,7 +2635,7 @@ int verify_cummit_graph(struct repository *r, struct cummit_graph *g, int flags)
 
 	local_error = verify_cummit_graph_error;
 
-	if (!(flags & cummit_GRAPH_VERIFY_SHALLOW) && g->base_graph)
+	if (!(flags & CUMMIT_GRAPH_VERIFY_SHALLOW) && g->base_graph)
 		local_error |= verify_cummit_graph(r, g->base_graph, flags);
 
 	return local_error;

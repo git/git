@@ -549,17 +549,17 @@ Git cummits
 	The date used for the author identity when creating cummit or tag objects, or
 	when writing reflogs. See linkgit:git-cummit[1] for valid formats.
 
-`GIT_cummitTER_NAME`::
+`GIT_CUMMITTER_NAME`::
 	The human-readable name used in the cummitter identity when creating cummit or
 	tag objects, or when writing reflogs. Overrides the `user.name` and
 	`cummitter.name` configuration settings.
 
-`GIT_cummitTER_EMAIL`::
+`GIT_CUMMITTER_EMAIL`::
 	The email address used in the author identity when creating cummit or
 	tag objects, or when writing reflogs. Overrides the `user.email` and
 	`cummitter.email` configuration settings.
 
-`GIT_cummitTER_DATE`::
+`GIT_CUMMITTER_DATE`::
 	The date used for the cummitter identity when creating cummit or tag objects, or
 	when writing reflogs. See linkgit:git-cummit[1] for valid formats.
 

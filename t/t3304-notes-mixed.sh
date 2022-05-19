@@ -13,7 +13,7 @@ start_note_cummit () {
 	test_tick &&
 	cat <<INPUT_END
 cummit refs/notes/cummits
-cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 data <<cummit
 notes
 cummit
@@ -40,7 +40,7 @@ test_expect_success "setup: create a couple of cummits" '
 	test_tick &&
 	cat <<INPUT_END >input &&
 cummit refs/heads/main
-cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 data <<cummit
 cummit #1
 cummit
@@ -55,7 +55,7 @@ INPUT_END
 	test_tick &&
 	cat <<INPUT_END >>input &&
 cummit refs/heads/main
-cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 data <<cummit
 cummit #2
 cummit
@@ -76,7 +76,7 @@ test_expect_success "create a notes tree with both notes and non-notes" '
 	test_tick &&
 	cat <<INPUT_END >input &&
 cummit refs/notes/cummits
-cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 data <<cummit
 notes cummit #1
 cummit
@@ -95,7 +95,7 @@ INPUT_END
 	test_tick &&
 	cat <<INPUT_END >>input &&
 cummit refs/notes/cummits
-cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 data <<cummit
 notes cummit #2
 cummit
@@ -114,7 +114,7 @@ INPUT_END
 	test_tick &&
 	cat <<INPUT_END >>input &&
 cummit refs/notes/cummits
-cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
 data <<cummit
 notes cummit #3
 cummit

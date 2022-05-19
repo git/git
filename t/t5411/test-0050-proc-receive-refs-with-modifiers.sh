@@ -31,28 +31,28 @@ test_expect_success "proc-receive: update branch and new tag ($PROTOCOL)" '
 	make_user_friendly_and_stable_output <out >actual &&
 	format_and_save_expect <<-EOF &&
 	> remote: # pre-receive hook        Z
-	> remote: pre-receive< <cummit-A> <cummit-B> refs/heads/main        Z
+	> remote: pre-receive< <CUMMIT-A> <CUMMIT-B> refs/heads/main        Z
 	> remote: pre-receive< <ZERO-OID> <TAG-v123> refs/tags/v123        Z
 	> remote: # proc-receive hook        Z
-	> remote: proc-receive< <cummit-A> <cummit-B> refs/heads/main        Z
+	> remote: proc-receive< <CUMMIT-A> <CUMMIT-B> refs/heads/main        Z
 	> remote: proc-receive< <ZERO-OID> <TAG-v123> refs/tags/v123        Z
 	> remote: proc-receive> ok refs/heads/main        Z
 	> remote: proc-receive> option refname refs/pull/123/head        Z
-	> remote: proc-receive> option old-oid <cummit-A>        Z
-	> remote: proc-receive> option new-oid <cummit-B>        Z
+	> remote: proc-receive> option old-oid <CUMMIT-A>        Z
+	> remote: proc-receive> option new-oid <CUMMIT-B>        Z
 	> remote: proc-receive> ok refs/tags/v123         Z
 	> remote: proc-receive> option refname refs/pull/124/head        Z
 	> remote: # post-receive hook        Z
-	> remote: post-receive< <cummit-A> <cummit-B> refs/pull/123/head        Z
+	> remote: post-receive< <CUMMIT-A> <CUMMIT-B> refs/pull/123/head        Z
 	> remote: post-receive< <ZERO-OID> <TAG-v123> refs/pull/124/head        Z
 	> To <URL/of/upstream.git>
-	>    <cummit-A>..<cummit-B>  <cummit-B> -> refs/pull/123/head
+	>    <CUMMIT-A>..<CUMMIT-B>  <CUMMIT-B> -> refs/pull/123/head
 	>  * [new reference]   v123 -> refs/pull/124/head
 	EOF
 	test_cmp expect actual &&
 
 	test_cmp_refs -C "$upstream" <<-EOF
-	<cummit-A> refs/heads/main
+	<CUMMIT-A> refs/heads/main
 	EOF
 '
 
@@ -63,8 +63,8 @@ test_expect_success "setup upstream: create tags/v123 ($PROTOCOL)" '
 	git -C "$upstream" update-ref refs/tags/v123 $TAG &&
 
 	test_cmp_refs -C "$upstream" <<-EOF
-	<cummit-A> refs/heads/main
-	<cummit-A> refs/heads/topic
+	<CUMMIT-A> refs/heads/main
+	<CUMMIT-A> refs/heads/topic
 	<TAG-v123> refs/tags/v123
 	EOF
 '
@@ -95,35 +95,35 @@ test_expect_success "proc-receive: create/delete branch, and delete tag ($PROTOC
 	make_user_friendly_and_stable_output <out >actual &&
 	format_and_save_expect <<-EOF &&
 	> remote: # pre-receive hook        Z
-	> remote: pre-receive< <cummit-A> <ZERO-OID> refs/heads/main        Z
-	> remote: pre-receive< <cummit-A> <cummit-B> refs/heads/topic        Z
+	> remote: pre-receive< <CUMMIT-A> <ZERO-OID> refs/heads/main        Z
+	> remote: pre-receive< <CUMMIT-A> <CUMMIT-B> refs/heads/topic        Z
 	> remote: pre-receive< <TAG-v123> <ZERO-OID> refs/tags/v123        Z
-	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/heads/next        Z
+	> remote: pre-receive< <ZERO-OID> <CUMMIT-A> refs/heads/next        Z
 	> remote: # proc-receive hook        Z
-	> remote: proc-receive< <cummit-A> <ZERO-OID> refs/heads/main        Z
-	> remote: proc-receive< <ZERO-OID> <cummit-A> refs/heads/next        Z
+	> remote: proc-receive< <CUMMIT-A> <ZERO-OID> refs/heads/main        Z
+	> remote: proc-receive< <ZERO-OID> <CUMMIT-A> refs/heads/next        Z
 	> remote: proc-receive> ok refs/heads/main        Z
 	> remote: proc-receive> option refname refs/pull/123/head        Z
-	> remote: proc-receive> option old-oid <cummit-A>        Z
+	> remote: proc-receive> option old-oid <CUMMIT-A>        Z
 	> remote: proc-receive> option new-oid <ZERO-OID>        Z
 	> remote: proc-receive> ok refs/heads/next        Z
 	> remote: proc-receive> option refname refs/pull/124/head        Z
-	> remote: proc-receive> option new-oid <cummit-A>        Z
+	> remote: proc-receive> option new-oid <CUMMIT-A>        Z
 	> remote: # post-receive hook        Z
-	> remote: post-receive< <cummit-A> <ZERO-OID> refs/pull/123/head        Z
-	> remote: post-receive< <cummit-A> <cummit-B> refs/heads/topic        Z
+	> remote: post-receive< <CUMMIT-A> <ZERO-OID> refs/pull/123/head        Z
+	> remote: post-receive< <CUMMIT-A> <CUMMIT-B> refs/heads/topic        Z
 	> remote: post-receive< <TAG-v123> <ZERO-OID> refs/tags/v123        Z
-	> remote: post-receive< <ZERO-OID> <cummit-A> refs/pull/124/head        Z
+	> remote: post-receive< <ZERO-OID> <CUMMIT-A> refs/pull/124/head        Z
 	> To <URL/of/upstream.git>
 	>  - [deleted]         refs/pull/123/head
-	>    <cummit-A>..<cummit-B>  <cummit-B> -> topic
+	>    <CUMMIT-A>..<CUMMIT-B>  <CUMMIT-B> -> topic
 	>  - [deleted]         v123
-	>  * [new reference]   <cummit-A> -> refs/pull/124/head
+	>  * [new reference]   <CUMMIT-A> -> refs/pull/124/head
 	EOF
 	test_cmp expect actual &&
 
 	test_cmp_refs -C "$upstream" <<-EOF
-	<cummit-A> refs/heads/main
-	<cummit-B> refs/heads/topic
+	<CUMMIT-A> refs/heads/main
+	<CUMMIT-B> refs/heads/topic
 	EOF
 '

@@ -1539,8 +1539,8 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 		new_object = parse_object(the_repository, new_oid);
 
 		if (!old_object || !new_object ||
-		    old_object->type != OBJ_cummit ||
-		    new_object->type != OBJ_cummit) {
+		    old_object->type != OBJ_CUMMIT ||
+		    new_object->type != OBJ_CUMMIT) {
 			error("bad sha1 objects for %s", name);
 			ret = "bad ref";
 			goto out;

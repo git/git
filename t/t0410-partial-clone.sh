@@ -9,7 +9,7 @@ GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=0
 # When enabled, some commands will write cummit-graphs. This causes fsck
 # to fail when delete_object() is called because fsck will attempt to
 # verify the out-of-sync cummit graph.
-GIT_TEST_cummit_GRAPH=0
+GIT_TEST_CUMMIT_GRAPH=0
 
 delete_object () {
 	rm $1/.git/objects/$(echo $2 | sed -e 's|^..|&/|')

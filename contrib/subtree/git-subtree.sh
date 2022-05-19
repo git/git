@@ -467,15 +467,15 @@ copy_cummit () {
 		read GIT_AUTHOR_NAME
 		read GIT_AUTHOR_EMAIL
 		read GIT_AUTHOR_DATE
-		read GIT_cummitTER_NAME
-		read GIT_cummitTER_EMAIL
-		read GIT_cummitTER_DATE
+		read GIT_CUMMITTER_NAME
+		read GIT_CUMMITTER_EMAIL
+		read GIT_CUMMITTER_DATE
 		export  GIT_AUTHOR_NAME \
 			GIT_AUTHOR_EMAIL \
 			GIT_AUTHOR_DATE \
-			GIT_cummitTER_NAME \
-			GIT_cummitTER_EMAIL \
-			GIT_cummitTER_DATE
+			GIT_CUMMITTER_NAME \
+			GIT_CUMMITTER_EMAIL \
+			GIT_CUMMITTER_DATE
 		(
 			printf "%s" "$arg_split_annotate"
 			cat
@@ -544,7 +544,7 @@ rejoin_msg () {
 	EOF
 }
 
-# Usage: squash_msg DIR OLD_SUBTREE_cummit NEW_SUBTREE_cummit
+# Usage: squash_msg DIR OLD_SUBTREE_cummit NEW_SUBTREE_CUMMIT
 squash_msg () {
 	assert test $# = 3
 	dir="$1"
@@ -610,7 +610,7 @@ tree_changed () {
 	fi
 }
 
-# Usage: new_squash_cummit OLD_SQUASHED_cummit OLD_NONSQUASHED_cummit NEW_NONSQUASHED_cummit
+# Usage: new_squash_cummit OLD_SQUASHED_cummit OLD_NONSQUASHED_cummit NEW_NONSQUASHED_CUMMIT
 new_squash_cummit () {
 	assert test $# = 3
 	old="$1"

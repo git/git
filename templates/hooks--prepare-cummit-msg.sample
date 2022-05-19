@@ -20,23 +20,23 @@
 # The third example adds a Signed-off-by line to the message, that can
 # still be edited.  This is rarely a good idea.
 
-cummit_MSG_FILE=$1
-cummit_SOURCE=$2
+CUMMIT_MSG_FILE=$1
+CUMMIT_SOURCE=$2
 SHA1=$3
 
-@PERL_PATH@ -i.bak -ne 'print unless(m/^. Please enter the cummit message/..m/^#$/)' "$cummit_MSG_FILE"
+@PERL_PATH@ -i.bak -ne 'print unless(m/^. Please enter the cummit message/..m/^#$/)' "$CUMMIT_MSG_FILE"
 
-# case "$cummit_SOURCE,$SHA1" in
+# case "$CUMMIT_SOURCE,$SHA1" in
 #  ,|template,)
 #    @PERL_PATH@ -i.bak -pe '
 #       print "\n" . `git diff --cached --name-status -r`
-# 	 if /^#/ && $first++ == 0' "$cummit_MSG_FILE" ;;
+# 	 if /^#/ && $first++ == 0' "$CUMMIT_MSG_FILE" ;;
 #  *) ;;
 # esac
 
-# SOB=$(git var GIT_cummitTER_IDENT | sed -n 's/^\(.*>\).*$/Signed-off-by: \1/p')
-# git interpret-trailers --in-place --trailer "$SOB" "$cummit_MSG_FILE"
-# if test -z "$cummit_SOURCE"
+# SOB=$(git var GIT_CUMMITTER_IDENT | sed -n 's/^\(.*>\).*$/Signed-off-by: \1/p')
+# git interpret-trailers --in-place --trailer "$SOB" "$CUMMIT_MSG_FILE"
+# if test -z "$CUMMIT_SOURCE"
 # then
-#   @PERL_PATH@ -i.bak -pe 'print "\n" if !$first_line++' "$cummit_MSG_FILE"
+#   @PERL_PATH@ -i.bak -pe 'print "\n" if !$first_line++' "$CUMMIT_MSG_FILE"
 # fi

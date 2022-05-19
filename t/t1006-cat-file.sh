@@ -288,7 +288,7 @@ cummit_sha1=$(echo_without_newline "$cummit_message" | git cummit-tree $tree_sha
 cummit_size=$(($(test_oid hexsz) + 137))
 cummit_content="tree $tree_sha1
 author $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> 0000000000 +0000
-cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> 0000000000 +0000
+cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> 0000000000 +0000
 
 $cummit_message"
 
@@ -297,7 +297,7 @@ run_tests 'cummit' $cummit_sha1 $cummit_size "$cummit_content" "$cummit_content"
 tag_header_without_timestamp="object $hello_sha1
 type blob
 tag hellotag
-tagger $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL>"
+tagger $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL>"
 tag_description="This is a tag"
 tag_content="$tag_header_without_timestamp 0000000000 +0000
 

@@ -875,9 +875,9 @@ sub cummit {
 	$ENV{GIT_AUTHOR_NAME} = $author_name;
 	$ENV{GIT_AUTHOR_EMAIL} = $author_email;
 	$ENV{GIT_AUTHOR_DATE} = $cummit_date;
-	$ENV{GIT_cummitTER_NAME} = $author_name;
-	$ENV{GIT_cummitTER_EMAIL} = $author_email;
-	$ENV{GIT_cummitTER_DATE} = $cummit_date;
+	$ENV{GIT_CUMMITTER_NAME} = $author_name;
+	$ENV{GIT_CUMMITTER_EMAIL} = $author_email;
+	$ENV{GIT_CUMMITTER_DATE} = $cummit_date;
 	my $pid = open2(my $cummit_read, my $cummit_write,
 		'git', 'cummit-tree', $tree, @cummit_args);
 

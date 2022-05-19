@@ -357,7 +357,7 @@ static void shortlog(const char *name,
 	branch = deref_tag(the_repository, parse_object(the_repository, oid),
 			   oid_to_hex(oid),
 			   the_hash_algo->hexsz);
-	if (!branch || branch->type != OBJ_cummit)
+	if (!branch || branch->type != OBJ_CUMMIT)
 		return;
 
 	setup_revisions(0, NULL, rev, NULL);
@@ -605,7 +605,7 @@ static void find_merge_parents(struct merge_parents *result,
 		 * util field yet.
 		 */
 		obj = parse_object(the_repository, &oid);
-		parent = (struct cummit *)peel_to_type(NULL, 0, obj, OBJ_cummit);
+		parent = (struct cummit *)peel_to_type(NULL, 0, obj, OBJ_CUMMIT);
 		if (!parent)
 			continue;
 		cummit_list_insert(parent, &parents);

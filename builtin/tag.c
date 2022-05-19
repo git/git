@@ -363,7 +363,7 @@ static void create_reflog_msg(const struct object_id *oid, struct strbuf *sb)
 	default:
 		strbuf_addstr(sb, "object of unknown type");
 		break;
-	case OBJ_cummit:
+	case OBJ_CUMMIT:
 		if ((buf = read_object_file(oid, &type, &size)) != NULL) {
 			subject_len = find_cummit_subject(buf, &subject_start);
 			strbuf_insert(sb, sb->len, subject_start, subject_len);

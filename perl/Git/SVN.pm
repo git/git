@@ -973,12 +973,12 @@ sub set_commit_header_env {
 
 	$ENV{GIT_AUTHOR_NAME} = $log_entry->{name};
 	$ENV{GIT_AUTHOR_EMAIL} = $log_entry->{email};
-	$ENV{GIT_AUTHOR_DATE} = $ENV{GIT_cummitTER_DATE} = $log_entry->{date};
+	$ENV{GIT_AUTHOR_DATE} = $ENV{GIT_CUMMITTER_DATE} = $log_entry->{date};
 
-	$ENV{GIT_cummitTER_NAME} = (defined $log_entry->{cummit_name})
+	$ENV{GIT_CUMMITTER_NAME} = (defined $log_entry->{cummit_name})
 						? $log_entry->{cummit_name}
 						: $log_entry->{name};
-	$ENV{GIT_cummitTER_EMAIL} = (defined $log_entry->{cummit_email})
+	$ENV{GIT_CUMMITTER_EMAIL} = (defined $log_entry->{cummit_email})
 						? $log_entry->{cummit_email}
 						: $log_entry->{email};
 	\%env;

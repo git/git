@@ -146,9 +146,9 @@ test_expect_success POSIXPERM 'forced modes' '
 		git repack
 	) &&
 	# List repository files meant to be protected; note that
-	# cummit_EDITMSG does not matter---0mode is not about a
+	# CUMMIT_EDITMSG does not matter---0mode is not about a
 	# repository with a work tree.
-	find new/.git -type f -name cummit_EDITMSG -prune -o -print |
+	find new/.git -type f -name CUMMIT_EDITMSG -prune -o -print |
 	xargs ls -ld >actual &&
 
 	# Everything must be unaccessible to others

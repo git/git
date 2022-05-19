@@ -40,8 +40,8 @@ get_abbrev_oid () {
 make_user_friendly_and_stable_output () {
 	sed \
 		-e "s/'/\"/g" \
-		-e "s/$(get_abbrev_oid $A)[0-9a-f]*/<cummit-A>/g" \
-		-e "s/$(get_abbrev_oid $B)[0-9a-f]*/<cummit-B>/g" \
+		-e "s/$(get_abbrev_oid $A)[0-9a-f]*/<CUMMIT-A>/g" \
+		-e "s/$(get_abbrev_oid $B)[0-9a-f]*/<CUMMIT-B>/g" \
 		-e "s/$(get_abbrev_oid $TAG)[0-9a-f]*/<TAG-v123>/g" \
 		-e "s/$ZERO_OID/<ZERO-OID>/g" \
 		-e "s#To $URL_PREFIX/upstream.git#To <URL/of/upstream.git>#" \

@@ -670,7 +670,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		OPT_SET_INT(0, "date-order", &sort_order,
 			    N_("topologically sort, maintaining date order "
 			       "where possible"),
-			    REV_SORT_BY_cummit_DATE),
+			    REV_SORT_BY_CUMMIT_DATE),
 		OPT_CALLBACK_F('g', "reflog", &reflog_base, N_("<n>[,<base>]"),
 			    N_("show <n> most recent ref-log entries starting at "
 			       "base"),

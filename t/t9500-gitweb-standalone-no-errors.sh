@@ -524,7 +524,7 @@ test_expect_success \
 	'encode(cummit): utf8' \
 	'. "$TEST_DIRECTORY"/t3901/utf8.txt &&
 	 test_when_finished "GIT_AUTHOR_NAME=\"A U Thor\"" &&
-	 test_when_finished "GIT_cummitTER_NAME=\"C O Mitter\"" &&
+	 test_when_finished "GIT_CUMMITTER_NAME=\"C O Mitter\"" &&
 	 echo "UTF-8" >>file &&
 	 git add file &&
 	 git cummit -F "$TEST_DIRECTORY"/t3900/1-UTF-8.txt &&
@@ -534,7 +534,7 @@ test_expect_success \
 	'encode(cummit): iso-8859-1' \
 	'. "$TEST_DIRECTORY"/t3901/8859-1.txt &&
 	 test_when_finished "GIT_AUTHOR_NAME=\"A U Thor\"" &&
-	 test_when_finished "GIT_cummitTER_NAME=\"C O Mitter\"" &&
+	 test_when_finished "GIT_CUMMITTER_NAME=\"C O Mitter\"" &&
 	 echo "ISO-8859-1" >>file &&
 	 git add file &&
 	 test_config i18n.cummitencoding ISO-8859-1 &&

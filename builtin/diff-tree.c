@@ -73,7 +73,7 @@ static int diff_tree_stdin(char *line)
 	obj = parse_object(the_repository, &oid);
 	if (!obj)
 		return -1;
-	if (obj->type == OBJ_cummit)
+	if (obj->type == OBJ_CUMMIT)
 		return stdin_diff_cummit((struct cummit *)obj, p);
 	if (obj->type == OBJ_TREE)
 		return stdin_diff_trees((struct tree *)obj, p);

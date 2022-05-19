@@ -87,8 +87,8 @@ static enum list_objects_filter_result filter_blobs_none(
 		/* always include all tag objects */
 		return LOFR_MARK_SEEN | LOFR_DO_SHOW;
 
-	case LOFS_cummit:
-		assert(obj->type == OBJ_cummit);
+	case LOFS_CUMMIT:
+		assert(obj->type == OBJ_CUMMIT);
 		/* always include all cummit objects */
 		return LOFR_MARK_SEEN | LOFR_DO_SHOW;
 
@@ -188,8 +188,8 @@ static enum list_objects_filter_result filter_trees_depth(
 		/* always include all tag objects */
 		return LOFR_MARK_SEEN | LOFR_DO_SHOW;
 
-	case LOFS_cummit:
-		assert(obj->type == OBJ_cummit);
+	case LOFS_CUMMIT:
+		assert(obj->type == OBJ_CUMMIT);
 		/* always include all cummit objects */
 		return LOFR_MARK_SEEN | LOFR_DO_SHOW;
 
@@ -292,8 +292,8 @@ static enum list_objects_filter_result filter_blobs_limit(
 		/* always include all tag objects */
 		return LOFR_MARK_SEEN | LOFR_DO_SHOW;
 
-	case LOFS_cummit:
-		assert(obj->type == OBJ_cummit);
+	case LOFS_CUMMIT:
+		assert(obj->type == OBJ_CUMMIT);
 		/* always include all cummit objects */
 		return LOFR_MARK_SEEN | LOFR_DO_SHOW;
 
@@ -406,8 +406,8 @@ static enum list_objects_filter_result filter_sparse(
 		/* always include all tag objects */
 		return LOFR_MARK_SEEN | LOFR_DO_SHOW;
 
-	case LOFS_cummit:
-		assert(obj->type == OBJ_cummit);
+	case LOFS_CUMMIT:
+		assert(obj->type == OBJ_CUMMIT);
 		/* always include all cummit objects */
 		return LOFR_MARK_SEEN | LOFR_DO_SHOW;
 
@@ -574,9 +574,9 @@ static enum list_objects_filter_result filter_object_type(
 			return LOFR_MARK_SEEN | LOFR_DO_SHOW;
 		return LOFR_MARK_SEEN;
 
-	case LOFS_cummit:
-		assert(obj->type == OBJ_cummit);
-		if (filter_data->object_type == OBJ_cummit)
+	case LOFS_CUMMIT:
+		assert(obj->type == OBJ_CUMMIT);
+		if (filter_data->object_type == OBJ_CUMMIT)
 			return LOFR_MARK_SEEN | LOFR_DO_SHOW;
 		return LOFR_MARK_SEEN;
 
@@ -587,7 +587,7 @@ static enum list_objects_filter_result filter_object_type(
 		 * If we only want to show cummits or tags, then there is no
 		 * need to walk down trees.
 		 */
-		if (filter_data->object_type == OBJ_cummit ||
+		if (filter_data->object_type == OBJ_CUMMIT ||
 		    filter_data->object_type == OBJ_TAG)
 			return LOFR_SKIP_TREE;
 

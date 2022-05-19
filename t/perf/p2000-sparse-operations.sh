@@ -24,7 +24,7 @@ test_expect_success 'setup repo and indexes' '
 	git add a b &&
 	git cummit -m "level 0" &&
 	BLOB=$(git rev-parse HEAD:a) &&
-	OLD_cummit=$(git rev-parse HEAD) &&
+	OLD_CUMMIT=$(git rev-parse HEAD) &&
 	OLD_TREE=$(git rev-parse HEAD^{tree}) &&
 
 	for i in $(test_seq 1 3)
@@ -37,14 +37,14 @@ test_expect_success 'setup repo and indexes' '
 			040000 tree $OLD_TREE	f4
 		EOF
 		NEW_TREE=$(git mktree <in) &&
-		NEW_cummit=$(git cummit-tree $NEW_TREE -p $OLD_cummit -m "level $i") &&
+		NEW_cummit=$(git cummit-tree $NEW_TREE -p $OLD_CUMMIT -m "level $i") &&
 		OLD_TREE=$NEW_TREE &&
-		OLD_cummit=$NEW_cummit || return 1
+		OLD_cummit=$NEW_CUMMIT || return 1
 	done &&
 
 	git sparse-checkout init --cone &&
 	git sparse-checkout set $SPARSE_CONE &&
-	git checkout -b wide $OLD_cummit &&
+	git checkout -b wide $OLD_CUMMIT &&
 
 	for l2 in f1 f2 f3 f4
 	do

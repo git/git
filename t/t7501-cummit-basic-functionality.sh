@@ -366,7 +366,7 @@ test_expect_success 'amend cummit to fix author' '
 	git reset --hard &&
 	git cat-file -p HEAD >cummit &&
 	sed -e "s/author.*/author $author $oldtick/" \
-		-e "s/^\(cummitter.*> \).*$/\1$GIT_cummitTER_DATE/" \
+		-e "s/^\(cummitter.*> \).*$/\1$GIT_CUMMITTER_DATE/" \
 		cummit >expected &&
 	git cummit --amend --author="$author" &&
 	git cat-file -p HEAD >current &&
@@ -381,7 +381,7 @@ test_expect_success 'amend cummit to fix date' '
 	git reset --hard &&
 	git cat-file -p HEAD >cummit &&
 	sed -e "s/author.*/author $author $newtick/" \
-		-e "s/^\(cummitter.*> \).*$/\1$GIT_cummitTER_DATE/" \
+		-e "s/^\(cummitter.*> \).*$/\1$GIT_CUMMITTER_DATE/" \
 		cummit >expected &&
 	git cummit --amend --date="$newtick" &&
 	git cat-file -p HEAD >current &&
@@ -416,7 +416,7 @@ test_expect_success 'sign off (1)' '
 	(
 		echo thank you &&
 		echo &&
-		git var GIT_cummitTER_IDENT >ident &&
+		git var GIT_CUMMITTER_IDENT >ident &&
 		sed -e "s/>.*/>/" -e "s/^/Signed-off-by: /" ident
 	) >expected &&
 	test_cmp expected actual
@@ -437,7 +437,7 @@ $existing" &&
 		echo thank you &&
 		echo &&
 		echo $existing &&
-		git var GIT_cummitTER_IDENT >ident &&
+		git var GIT_CUMMITTER_IDENT >ident &&
 		sed -e "s/>.*/>/" -e "s/^/Signed-off-by: /" ident
 	) >expected &&
 	test_cmp expected actual
@@ -458,7 +458,7 @@ $alt" &&
 		echo welcome &&
 		echo &&
 		echo $alt &&
-		git var GIT_cummitTER_IDENT >ident &&
+		git var GIT_CUMMITTER_IDENT >ident &&
 		sed -e "s/>.*/>/" -e "s/^/Signed-off-by: /" ident
 	) >expected &&
 	test_cmp expected actual
@@ -481,7 +481,7 @@ $alt" &&
 		echo We have now &&
 		echo $alt &&
 		echo &&
-		git var GIT_cummitTER_IDENT >ident &&
+		git var GIT_CUMMITTER_IDENT >ident &&
 		sed -e "s/>.*/>/" -e "s/^/Signed-off-by: /" ident
 	) >expected &&
 	test_cmp expected actual
@@ -503,7 +503,7 @@ Myfooter: x" &&
 		echo non-trailer line &&
 		echo Myfooter: x &&
 		echo &&
-		echo "Signed-off-by: $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL>"
+		echo "Signed-off-by: $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL>"
 	) >expected &&
 	test_cmp expected actual &&
 
@@ -520,7 +520,7 @@ Myfooter: x" &&
 		echo &&
 		echo non-trailer line &&
 		echo Myfooter: x &&
-		echo "Signed-off-by: $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL>"
+		echo "Signed-off-by: $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL>"
 	) >expected &&
 	test_cmp expected actual
 '
@@ -533,7 +533,7 @@ test_expect_success 'signoff not confused by ---' '
 		---
 		these dashes confuse the parser!
 
-		Signed-off-by: $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL>
+		Signed-off-by: $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL>
 	EOF
 	# should be a noop, since we already signed
 	git cummit --allow-empty --signoff -F expected &&
@@ -566,7 +566,7 @@ test_expect_success 'amend cummit to fix author' '
 	git reset --hard &&
 	git cat-file -p HEAD >cummit &&
 	sed -e "s/author.*/author $author $oldtick/" \
-		-e "s/^\(cummitter.*> \).*$/\1$GIT_cummitTER_DATE/" \
+		-e "s/^\(cummitter.*> \).*$/\1$GIT_CUMMITTER_DATE/" \
 		cummit >expected &&
 	git cummit --amend --author="$author" &&
 	git cat-file -p HEAD >current &&

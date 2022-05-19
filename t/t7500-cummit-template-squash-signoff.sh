@@ -304,7 +304,7 @@ test_expect_success 'cummit --fixup=amend: creates amend! cummit' '
 	EOF
 	(
 		set_fake_editor &&
-		FAKE_cummit_AMEND="edited" \
+		FAKE_CUMMIT_AMEND="edited" \
 			git cummit --fixup=amend:HEAD~
 	) &&
 	get_cummit_msg HEAD >actual &&
@@ -322,7 +322,7 @@ test_expect_success '--fixup=amend: --only ignores staged changes' '
 	EOF
 	(
 		set_fake_editor &&
-		FAKE_cummit_AMEND="edited" \
+		FAKE_CUMMIT_AMEND="edited" \
 			git cummit --fixup=amend:HEAD~ --only
 	) &&
 	get_cummit_msg HEAD >actual &&
@@ -345,7 +345,7 @@ test_expect_success '--fixup=reword: ignores staged changes' '
 	EOF
 	(
 		set_fake_editor &&
-		FAKE_cummit_AMEND="edited" \
+		FAKE_CUMMIT_AMEND="edited" \
 			git cummit --fixup=reword:HEAD~
 	) &&
 	get_cummit_msg HEAD >actual &&
@@ -385,9 +385,9 @@ test_expect_success 'consecutive amend! cummits remove amend! line from cummit m
 	echo "reword new cummit message" >actual &&
 	(
 		set_fake_editor &&
-		FAKE_cummit_AMEND="edited 1" \
+		FAKE_CUMMIT_AMEND="edited 1" \
 			git cummit --fixup=reword:HEAD~ &&
-		FAKE_cummit_AMEND="edited 2" \
+		FAKE_CUMMIT_AMEND="edited 2" \
 			git cummit --fixup=reword:HEAD
 	) &&
 	get_cummit_msg HEAD >actual &&
@@ -399,7 +399,7 @@ test_expect_success 'deny to create amend! cummit if its cummit msg body is empt
 	echo "Aborting cummit due to empty cummit message body." >expected &&
 	(
 		set_fake_editor &&
-		test_must_fail env FAKE_cummit_MESSAGE="amend! target message subject line" \
+		test_must_fail env FAKE_CUMMIT_MESSAGE="amend! target message subject line" \
 			git cummit --fixup=amend:HEAD~ 2>actual
 	) &&
 	test_cmp expected actual
@@ -412,7 +412,7 @@ test_expect_success 'amend! cummit allows empty cummit msg body with --allow-emp
 	EOF
 	(
 		set_fake_editor &&
-		FAKE_cummit_MESSAGE="amend! target message subject line" \
+		FAKE_CUMMIT_MESSAGE="amend! target message subject line" \
 			git cummit --fixup=amend:HEAD~ --allow-empty-message &&
 		get_cummit_msg HEAD >actual
 	) &&

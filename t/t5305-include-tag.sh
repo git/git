@@ -16,7 +16,7 @@ test_expect_success setup '
 	echo "object $cummit" >sig &&
 	echo "type cummit" >>sig &&
 	echo "tag mytag" >>sig &&
-	echo "tagger $(git var GIT_cummitTER_IDENT)" >>sig &&
+	echo "tagger $(git var GIT_CUMMITTER_IDENT)" >>sig &&
 	echo >>sig &&
 	echo "our test tag" >>sig &&
 	tag=$(git mktag <sig) &&

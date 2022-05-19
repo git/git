@@ -1596,11 +1596,11 @@ proc load_message {file {encoding {}}} {
 proc run_prepare_cummit_msg_hook {} {
 	global pch_error
 
-	# prepare-cummit-msg requires PREPARE_cummit_MSG exist.  From git-gui
+	# prepare-cummit-msg requires PREPARE_CUMMIT_MSG exist.  From git-gui
 	# it will be .git/MERGE_MSG (merge), .git/SQUASH_MSG (squash), or an
 	# empty file but existent file.
 
-	set fd_pcm [open [gitdir PREPARE_cummit_MSG] a]
+	set fd_pcm [open [gitdir PREPARE_CUMMIT_MSG] a]
 
 	if {[file isfile [gitdir MERGE_MSG]]} {
 		set pcm_source "merge"
@@ -1627,9 +1627,9 @@ proc run_prepare_cummit_msg_hook {} {
 	close $fd_pcm
 
 	set fd_ph [githook_read prepare-cummit-msg \
-			[gitdir PREPARE_cummit_MSG] $pcm_source]
+			[gitdir PREPARE_CUMMIT_MSG] $pcm_source]
 	if {$fd_ph eq {}} {
-		catch {file delete [gitdir PREPARE_cummit_MSG]}
+		catch {file delete [gitdir PREPARE_CUMMIT_MSG]}
 		return 0;
 	}
 
@@ -1652,17 +1652,17 @@ proc prepare_cummit_msg_hook_wait {fd_ph} {
 		if {[catch {close $fd_ph}]} {
 			ui_status [mc "cummit declined by prepare-cummit-msg hook."]
 			hook_failed_popup prepare-cummit-msg $pch_error
-			catch {file delete [gitdir PREPARE_cummit_MSG]}
+			catch {file delete [gitdir PREPARE_CUMMIT_MSG]}
 			exit 1
 		} else {
-			load_message PREPARE_cummit_MSG
+			load_message PREPARE_CUMMIT_MSG
 		}
 		set pch_error {}
-		catch {file delete [gitdir PREPARE_cummit_MSG]}
+		catch {file delete [gitdir PREPARE_CUMMIT_MSG]}
 		return
 	}
 	fconfigure $fd_ph -blocking 0
-	catch {file delete [gitdir PREPARE_cummit_MSG]}
+	catch {file delete [gitdir PREPARE_CUMMIT_MSG]}
 }
 
 proc read_diff_index {fd after} {

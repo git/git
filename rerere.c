@@ -701,7 +701,7 @@ static void update_paths(struct repository *r, struct string_list *update)
 	}
 
 	if (write_locked_index(r->index, &index_lock,
-			       cummit_LOCK | SKIP_IF_UNCHANGED))
+			       CUMMIT_LOCK | SKIP_IF_UNCHANGED))
 		die(_("unable to write new index file"));
 }
 

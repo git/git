@@ -2296,10 +2296,10 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	if (fetch_write_cummit_graph > 0 ||
 	    (fetch_write_cummit_graph < 0 &&
 	     the_repository->settings.fetch_write_cummit_graph)) {
-		int cummit_graph_flags = cummit_GRAPH_WRITE_SPLIT;
+		int cummit_graph_flags = CUMMIT_GRAPH_WRITE_SPLIT;
 
 		if (progress)
-			cummit_graph_flags |= cummit_GRAPH_WRITE_PROGRESS;
+			cummit_graph_flags |= CUMMIT_GRAPH_WRITE_PROGRESS;
 
 		write_cummit_graph_reachable(the_repository->objects->odb,
 					     cummit_graph_flags,

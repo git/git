@@ -727,7 +727,7 @@ int write_index_as_tree(struct object_id *oid, struct index_state *index_state, 
 	ret = write_index_as_tree_internal(oid, index_state, was_valid, flags,
 					   prefix);
 	if (!ret && !was_valid) {
-		write_locked_index(index_state, &lock_file, cummit_LOCK);
+		write_locked_index(index_state, &lock_file, CUMMIT_LOCK);
 		/* Not being able to write is fine -- we are only interested
 		 * in updating the cache-tree part, and if the next caller
 		 * ends up using the old index with unupdated cache-tree part

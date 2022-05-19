@@ -83,7 +83,7 @@ See the CONFIGURATION section for `sendemail.multiEdit`.
 	the value of the `sendemail.from` configuration option is used.  If
 	neither the command-line option nor `sendemail.from` are set, then the
 	user will be prompted for the value.  The default for the prompt will be
-	the value of GIT_AUTHOR_IDENT, or GIT_cummitTER_IDENT if that is not
+	the value of GIT_AUTHOR_IDENT, or GIT_CUMMITTER_IDENT if that is not
 	set, as returned by "git var -l".
 
 --reply-to=<address>::

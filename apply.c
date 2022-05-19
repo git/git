@@ -4140,7 +4140,7 @@ static int build_fake_ancestor(struct apply_state *state, struct patch *list)
 	}
 
 	hold_lock_file_for_update(&lock, state->fake_ancestor, LOCK_DIE_ON_ERROR);
-	res = write_locked_index(&result, &lock, cummit_LOCK);
+	res = write_locked_index(&result, &lock, CUMMIT_LOCK);
 	discard_index(&result);
 
 	if (res)
@@ -4970,7 +4970,7 @@ int apply_all_patches(struct apply_state *state,
 	}
 
 	if (state->update_index) {
-		res = write_locked_index(state->repo->index, &state->lock_file, cummit_LOCK);
+		res = write_locked_index(state->repo->index, &state->lock_file, CUMMIT_LOCK);
 		if (res) {
 			error(_("Unable to write new index file"));
 			res = -128;

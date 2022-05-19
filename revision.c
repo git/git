@@ -255,7 +255,7 @@ struct cummit_stack {
 	struct cummit **items;
 	size_t nr, alloc;
 };
-#define cummit_STACK_INIT { 0 }
+#define CUMMIT_STACK_INIT { 0 }
 
 static void cummit_stack_push(struct cummit_stack *stack, struct cummit *cummit)
 {
@@ -300,7 +300,7 @@ static void mark_one_parent_uninteresting(struct rev_info *revs, struct cummit *
 
 void mark_parents_uninteresting(struct rev_info *revs, struct cummit *cummit)
 {
-	struct cummit_stack pending = cummit_STACK_INIT;
+	struct cummit_stack pending = CUMMIT_STACK_INIT;
 	struct cummit_list *l;
 
 	for (l = cummit->parents; l; l = l->next) {
@@ -326,7 +326,7 @@ static void add_pending_object_with_path(struct rev_info *revs,
 		return;
 	if (revs->no_walk && (obj->flags & UNINTERESTING))
 		revs->no_walk = 0;
-	if (revs->reflog_info && obj->type == OBJ_cummit) {
+	if (revs->reflog_info && obj->type == OBJ_CUMMIT) {
 		struct strbuf buf = STRBUF_INIT;
 		size_t namelen = strlen(name);
 		int len = interpret_branch_name(name, namelen, &buf, &options);
@@ -442,7 +442,7 @@ static struct cummit *handle_cummit(struct rev_info *revs,
 	 * cummit object? Just return it, we'll do all the complex
 	 * reachability crud.
 	 */
-	if (object->type == OBJ_cummit) {
+	if (object->type == OBJ_CUMMIT) {
 		struct cummit *cummit = (struct cummit *)object;
 
 		if (repo_parse_cummit(revs->repo, cummit) < 0)
@@ -1799,7 +1799,7 @@ static int add_parents_only(struct rev_info *revs, const char *arg_, int flags,
 			return 0;
 		oidcpy(&oid, &((struct tag*)it)->tagged->oid);
 	}
-	if (it->type != OBJ_cummit)
+	if (it->type != OBJ_CUMMIT)
 		return 0;
 	cummit = (struct cummit *)it;
 	if (exclude_parent &&
@@ -1940,7 +1940,7 @@ static int handle_dotdot_1(const char *arg, char *dotdot,
 	unsigned int a_flags, b_flags;
 	int symmetric = 0;
 	unsigned int flags_exclude = flags ^ (UNINTERESTING | BOTTOM);
-	unsigned int oc_flags = GET_OID_cummitTISH | GET_OID_RECORD_PATH;
+	unsigned int oc_flags = GET_OID_CUMMITTISH | GET_OID_RECORD_PATH;
 
 	a_name = arg;
 	if (!*a_name)
@@ -2086,8 +2086,8 @@ static int handle_revision_arg_1(const char *arg_, struct rev_info *revs, int fl
 		arg++;
 	}
 
-	if (revarg_opt & REVARG_cummitTISH)
-		get_sha1_flags |= GET_OID_cummitTISH;
+	if (revarg_opt & REVARG_CUMMITTISH)
+		get_sha1_flags |= GET_OID_CUMMITTISH;
 
 	if (get_oid_with_context(revs->repo, arg, get_sha1_flags, &oid, &oc))
 		return revs->ignore_missing ? 0 : -1;
@@ -2265,7 +2265,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->limited = 1;
 		revs->prune = 1;
 	} else if (!strcmp(arg, "--date-order")) {
-		revs->sort_order = REV_SORT_BY_cummit_DATE;
+		revs->sort_order = REV_SORT_BY_CUMMIT_DATE;
 		revs->topo_order = 1;
 	} else if (!strcmp(arg, "--author-date-order")) {
 		revs->sort_order = REV_SORT_BY_AUTHOR_DATE;
@@ -2489,7 +2489,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		add_header_grep(revs, GREP_HEADER_AUTHOR, optarg);
 		return argcount;
 	} else if ((argcount = parse_long_opt("cummitter", argv, &optarg))) {
-		add_header_grep(revs, GREP_HEADER_cummitTER, optarg);
+		add_header_grep(revs, GREP_HEADER_CUMMITTER, optarg);
 		return argcount;
 	} else if ((argcount = parse_long_opt("grep-reflog", argv, &optarg))) {
 		add_header_grep(revs, GREP_HEADER_REFLOG, optarg);
@@ -3466,7 +3466,7 @@ static void init_topo_walk(struct rev_info *revs)
 	default: /* REV_SORT_IN_GRAPH_ORDER */
 		info->topo_queue.compare = NULL;
 		break;
-	case REV_SORT_BY_cummit_DATE:
+	case REV_SORT_BY_CUMMIT_DATE:
 		info->topo_queue.compare = compare_cummits_by_cummit_date;
 		break;
 	case REV_SORT_BY_AUTHOR_DATE:

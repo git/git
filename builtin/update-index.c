@@ -1260,7 +1260,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 				exit(128);
 			unable_to_lock_die(get_index_file(), lock_error);
 		}
-		if (write_locked_index(&the_index, &lock_file, cummit_LOCK))
+		if (write_locked_index(&the_index, &lock_file, CUMMIT_LOCK))
 			die("Unable to write new index file");
 	}
 

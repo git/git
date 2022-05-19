@@ -41,7 +41,7 @@
 static const char sign_off_header[] = "Signed-off-by: ";
 static const char cherry_picked_prefix[] = "(cherry picked from cummit ";
 
-GIT_PATH_FUNC(git_path_cummit_editmsg, "cummit_EDITMSG")
+GIT_PATH_FUNC(git_path_cummit_editmsg, "CUMMIT_EDITMSG")
 
 static GIT_PATH_FUNC(git_path_seq_dir, "sequencer")
 
@@ -182,16 +182,16 @@ static int git_sequencer_config(const char *k, const char *v, void *cb)
 			return status;
 
 		if (!strcmp(s, "verbatim")) {
-			opts->default_msg_cleanup = cummit_MSG_CLEANUP_NONE;
+			opts->default_msg_cleanup = CUMMIT_MSG_CLEANUP_NONE;
 			opts->explicit_cleanup = 1;
 		} else if (!strcmp(s, "whitespace")) {
-			opts->default_msg_cleanup = cummit_MSG_CLEANUP_SPACE;
+			opts->default_msg_cleanup = CUMMIT_MSG_CLEANUP_SPACE;
 			opts->explicit_cleanup = 1;
 		} else if (!strcmp(s, "strip")) {
-			opts->default_msg_cleanup = cummit_MSG_CLEANUP_ALL;
+			opts->default_msg_cleanup = CUMMIT_MSG_CLEANUP_ALL;
 			opts->explicit_cleanup = 1;
 		} else if (!strcmp(s, "scissors")) {
-			opts->default_msg_cleanup = cummit_MSG_CLEANUP_SCISSORS;
+			opts->default_msg_cleanup = CUMMIT_MSG_CLEANUP_SCISSORS;
 			opts->explicit_cleanup = 1;
 		} else {
 			warning(_("invalid cummit message cleanup mode '%s'"),
@@ -230,7 +230,7 @@ static int git_sequencer_config(const char *k, const char *v, void *cb)
 
 void sequencer_init_config(struct replay_opts *opts)
 {
-	opts->default_msg_cleanup = cummit_MSG_CLEANUP_NONE;
+	opts->default_msg_cleanup = CUMMIT_MSG_CLEANUP_NONE;
 	git_config(git_sequencer_config, opts);
 }
 
@@ -499,7 +499,7 @@ static int error_dirty_index(struct repository *repo, struct replay_opts *opts)
 	error(_("your local changes would be overwritten by %s."),
 		_(action_name(opts)));
 
-	if (advice_enabled(ADVICE_cummit_BEFORE_MERGE))
+	if (advice_enabled(ADVICE_CUMMIT_BEFORE_MERGE))
 		advise(_("cummit your changes or stash them to proceed."));
 	return -1;
 }
@@ -559,17 +559,17 @@ enum cummit_msg_cleanup_mode get_cleanup_mode(const char *cleanup_arg,
 	int use_editor)
 {
 	if (!cleanup_arg || !strcmp(cleanup_arg, "default"))
-		return use_editor ? cummit_MSG_CLEANUP_ALL :
-				    cummit_MSG_CLEANUP_SPACE;
+		return use_editor ? CUMMIT_MSG_CLEANUP_ALL :
+				    CUMMIT_MSG_CLEANUP_SPACE;
 	else if (!strcmp(cleanup_arg, "verbatim"))
-		return cummit_MSG_CLEANUP_NONE;
+		return CUMMIT_MSG_CLEANUP_NONE;
 	else if (!strcmp(cleanup_arg, "whitespace"))
-		return cummit_MSG_CLEANUP_SPACE;
+		return CUMMIT_MSG_CLEANUP_SPACE;
 	else if (!strcmp(cleanup_arg, "strip"))
-		return cummit_MSG_CLEANUP_ALL;
+		return CUMMIT_MSG_CLEANUP_ALL;
 	else if (!strcmp(cleanup_arg, "scissors"))
-		return use_editor ? cummit_MSG_CLEANUP_SCISSORS :
-				    cummit_MSG_CLEANUP_SPACE;
+		return use_editor ? CUMMIT_MSG_CLEANUP_SCISSORS :
+				    CUMMIT_MSG_CLEANUP_SPACE;
 	else
 		die(_("Invalid cleanup mode %s"), cleanup_arg);
 }
@@ -597,7 +597,7 @@ void append_conflicts_hint(struct index_state *istate,
 {
 	int i;
 
-	if (cleanup_mode == cummit_MSG_CLEANUP_SCISSORS) {
+	if (cleanup_mode == CUMMIT_MSG_CLEANUP_SCISSORS) {
 		strbuf_addch(msgbuf, '\n');
 		wt_status_append_cut_line(msgbuf);
 		strbuf_addch(msgbuf, comment_line_char);
@@ -677,7 +677,7 @@ static int do_recursive_merge(struct repository *r,
 	}
 
 	if (write_locked_index(r->index, &index_lock,
-			       cummit_LOCK | SKIP_IF_UNCHANGED))
+			       CUMMIT_LOCK | SKIP_IF_UNCHANGED))
 		/*
 		 * TRANSLATORS: %s will be "revert", "cherry-pick" or
 		 * "rebase".
@@ -954,7 +954,7 @@ N_("you have staged changes in your working tree\n"
 #define AMEND_MSG   (1<<2)
 #define CLEANUP_MSG (1<<3)
 #define VERIFY_MSG  (1<<4)
-#define CREATE_ROOT_cummit (1<<5)
+#define CREATE_ROOT_CUMMIT (1<<5)
 #define VERBATIM_MSG (1<<6)
 
 static int run_command_silent_on_success(struct child_process *cmd)
@@ -1008,7 +1008,7 @@ static int run_git_cummit(const char *defmsg,
 	}
 
 	if (opts->cummitter_date_is_author_date)
-		strvec_pushf(&cmd.env_array, "GIT_cummitTER_DATE=%s",
+		strvec_pushf(&cmd.env_array, "GIT_CUMMITTER_DATE=%s",
 			     opts->ignore_date ?
 			     "" :
 			     author_date_from_env_array(&cmd.env_array));
@@ -1082,10 +1082,10 @@ void cleanup_message(struct strbuf *msgbuf,
 	enum cummit_msg_cleanup_mode cleanup_mode, int verbose)
 {
 	if (verbose || /* Truncate the message just before the diff, if any. */
-	    cleanup_mode == cummit_MSG_CLEANUP_SCISSORS)
+	    cleanup_mode == CUMMIT_MSG_CLEANUP_SCISSORS)
 		strbuf_setlen(msgbuf, wt_status_locate_end(msgbuf->buf, msgbuf->len));
-	if (cleanup_mode != cummit_MSG_CLEANUP_NONE)
-		strbuf_stripspace(msgbuf, cleanup_mode == cummit_MSG_CLEANUP_ALL);
+	if (cleanup_mode != CUMMIT_MSG_CLEANUP_NONE)
+		strbuf_stripspace(msgbuf, cleanup_mode == CUMMIT_MSG_CLEANUP_ALL);
 }
 
 /*
@@ -1095,7 +1095,7 @@ void cleanup_message(struct strbuf *msgbuf,
 int message_is_empty(const struct strbuf *sb,
 		     enum cummit_msg_cleanup_mode cleanup_mode)
 {
-	if (cleanup_mode == cummit_MSG_CLEANUP_NONE && sb->len)
+	if (cleanup_mode == CUMMIT_MSG_CLEANUP_NONE && sb->len)
 		return 0;
 	return rest_is_empty(sb, 0);
 }
@@ -1110,13 +1110,13 @@ int template_untouched(const struct strbuf *sb, const char *template_file,
 	struct strbuf tmpl = STRBUF_INIT;
 	const char *start;
 
-	if (cleanup_mode == cummit_MSG_CLEANUP_NONE && sb->len)
+	if (cleanup_mode == CUMMIT_MSG_CLEANUP_NONE && sb->len)
 		return 0;
 
 	if (!template_file || strbuf_read_file(&tmpl, template_file, 0) <= 0)
 		return 0;
 
-	strbuf_stripspace(&tmpl, cleanup_mode == cummit_MSG_CLEANUP_ALL);
+	strbuf_stripspace(&tmpl, cleanup_mode == CUMMIT_MSG_CLEANUP_ALL);
 	if (!skip_prefix(sb->buf, tmpl.buf, &start))
 		start = sb->buf;
 	strbuf_release(&tmpl);
@@ -1337,7 +1337,7 @@ void print_cummit_summary(struct repository *r,
 		head = _("detached HEAD");
 	else
 		skip_prefix(head, "refs/heads/", &head);
-	printf("[%s%s ", head, (flags & SUMMARY_INITIAL_cummit) ?
+	printf("[%s%s ", head, (flags & SUMMARY_INITIAL_CUMMIT) ?
 						_(" (root-cummit)") : "");
 
 	if (!log_tree_cummit(&rev, cummit)) {
@@ -1427,7 +1427,7 @@ static int try_to_cummit(struct repository *r,
 		parents = copy_cummit_list(current_head->parents);
 		extra = read_cummit_extra_headers(current_head, exclude_gpgsig);
 	} else if (current_head &&
-		   (!(flags & CREATE_ROOT_cummit) || (flags & AMEND_MSG))) {
+		   (!(flags & CREATE_ROOT_CUMMIT) || (flags & AMEND_MSG))) {
 		cummit_list_insert(current_head, &parents);
 	}
 
@@ -1474,17 +1474,17 @@ static int try_to_cummit(struct repository *r,
 	}
 
 	if (flags & CLEANUP_MSG)
-		cleanup = cummit_MSG_CLEANUP_ALL;
+		cleanup = CUMMIT_MSG_CLEANUP_ALL;
 	else if (flags & VERBATIM_MSG)
-		cleanup = cummit_MSG_CLEANUP_NONE;
+		cleanup = CUMMIT_MSG_CLEANUP_NONE;
 	else if ((opts->signoff || opts->record_origin) &&
 		 !opts->explicit_cleanup)
-		cleanup = cummit_MSG_CLEANUP_SPACE;
+		cleanup = CUMMIT_MSG_CLEANUP_SPACE;
 	else
 		cleanup = opts->default_msg_cleanup;
 
-	if (cleanup != cummit_MSG_CLEANUP_NONE)
-		strbuf_stripspace(msg, cleanup == cummit_MSG_CLEANUP_ALL);
+	if (cleanup != CUMMIT_MSG_CLEANUP_NONE)
+		strbuf_stripspace(msg, cleanup == CUMMIT_MSG_CLEANUP_ALL);
 	if ((flags & EDIT_MSG) && message_is_empty(msg, cleanup)) {
 		res = 1; /* run 'git cummit' to display error message */
 		goto out;
@@ -1513,9 +1513,9 @@ static int try_to_cummit(struct repository *r,
 		} else {
 			reset_ident_date();
 		}
-		cummitter = fmt_ident(getenv("GIT_cummitTER_NAME"),
-				      getenv("GIT_cummitTER_EMAIL"),
-				      WANT_cummitTER_IDENT,
+		cummitter = fmt_ident(getenv("GIT_CUMMITTER_NAME"),
+				      getenv("GIT_CUMMITTER_EMAIL"),
+				      WANT_CUMMITTER_IDENT,
 				      opts->ignore_date ? NULL : date.buf,
 				      IDENT_STRICT);
 		strbuf_release(&date);
@@ -2091,7 +2091,7 @@ static int do_pick_cummit(struct repository *r,
 		    oideq(&head, &opts->squash_onto)) {
 			if (is_fixup(command))
 				return error(_("cannot fixup root cummit"));
-			flags |= CREATE_ROOT_cummit;
+			flags |= CREATE_ROOT_CUMMIT;
 			unborn = 1;
 		} else if (unborn)
 			oidcpy(&head, the_hash_algo->empty_tree);
@@ -2363,7 +2363,7 @@ static int read_and_refresh_cache(struct repository *r,
 
 	if (index_fd >= 0) {
 		if (write_locked_index(r->index, &index_lock,
-				       cummit_LOCK | SKIP_IF_UNCHANGED)) {
+				       CUMMIT_LOCK | SKIP_IF_UNCHANGED)) {
 			return error(_("git %s: failed to refresh the index"),
 				_(action_name(opts)));
 		}
@@ -3704,7 +3704,7 @@ static int do_reset(struct repository *r,
 	tree = parse_tree_indirect(&oid);
 	prime_cache_tree(r, r->index, tree);
 
-	if (write_locked_index(r->index, &lock, cummit_LOCK) < 0)
+	if (write_locked_index(r->index, &lock, CUMMIT_LOCK) < 0)
 		ret = error(_("could not write index"));
 
 	if (!ret)
@@ -3919,7 +3919,7 @@ static int do_merge(struct repository *r,
 		}
 
 		if (opts->cummitter_date_is_author_date)
-			strvec_pushf(&cmd.env_array, "GIT_cummitTER_DATE=%s",
+			strvec_pushf(&cmd.env_array, "GIT_CUMMITTER_DATE=%s",
 				     opts->ignore_date ?
 				     "" :
 				     author_date_from_env_array(&cmd.env_array));
@@ -4024,7 +4024,7 @@ static int do_merge(struct repository *r,
 	ret = !ret;
 
 	if (r->index->cache_changed &&
-	    write_locked_index(r->index, &lock, cummit_LOCK)) {
+	    write_locked_index(r->index, &lock, CUMMIT_LOCK)) {
 		ret = error(_("merge: Unable to write new index file"));
 		goto leave_merge;
 	}
@@ -4905,7 +4905,7 @@ void append_signoff(struct strbuf *msgbuf, size_t ignore_footer, unsigned flag)
 	int has_footer;
 
 	strbuf_addstr(&sob, sign_off_header);
-	strbuf_addstr(&sob, fmt_name(WANT_cummitTER_IDENT));
+	strbuf_addstr(&sob, fmt_name(WANT_CUMMITTER_IDENT));
 	strbuf_addch(&sob, '\n');
 
 	if (!ignore_footer)

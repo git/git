@@ -289,7 +289,7 @@ something like this:
 
 	memset(&opt, 0, sizeof(opt));
 	opt.def = "HEAD";
-	opt.revarg_opt = REVARG_cummitTISH;
+	opt.revarg_opt = REVARG_CUMMITTISH;
 	setup_revisions(argc, argv, rev, &opt);
 ----
 Using a `setup_revision_opt` gives you finer control over your walk's starting
@@ -436,7 +436,7 @@ before all of its children have been shown, and we avoid mixing cummits which
 are in different lines of history. (`git help log`'s section on `--topo-order`
 has a very nice diagram to illustrate this.)
 
-Let's see what happens when we run with `REV_SORT_BY_cummit_DATE` as opposed to
+Let's see what happens when we run with `REV_SORT_BY_CUMMIT_DATE` as opposed to
 `REV_SORT_BY_AUTHOR_DATE`. Add the following:
 
 ----
@@ -446,7 +446,7 @@ static void final_rev_info_setup(int argc, const char **argv,
 	...
 
 	rev->topo_order = 1;
-	rev->sort_order = REV_SORT_BY_cummit_DATE;
+	rev->sort_order = REV_SORT_BY_CUMMIT_DATE;
 
 	...
 }
@@ -587,7 +587,7 @@ static void walken_show_object(struct object *obj, const char *str, void *buf)
 	case OBJ_TAG:
 		tag_count++;
 		break;
-	case OBJ_cummit:
+	case OBJ_CUMMIT:
 		BUG("unexpected cummit object in walken_show_object\n");
 	default:
 		BUG("unexpected object type %s in walken_show_object\n",

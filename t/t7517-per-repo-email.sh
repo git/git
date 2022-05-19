@@ -17,7 +17,7 @@ test_expect_success 'setup a likely user.useConfigOnly use case' '
 	test_cummit foo &&
 
 	sane_unset GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL &&
-	sane_unset GIT_cummitTER_NAME GIT_cummitTER_EMAIL &&
+	sane_unset GIT_CUMMITTER_NAME GIT_CUMMITTER_EMAIL &&
 	git config user.name "test" &&
 	git config --global user.useConfigOnly true
 '
@@ -136,15 +136,15 @@ test_expect_success 'author and cummitter environment variables override config 
 	test_config cummitter.email cummitter@example.com &&
 	GIT_AUTHOR_NAME=env_author && export GIT_AUTHOR_NAME &&
 	GIT_AUTHOR_EMAIL=env_author@example.com && export GIT_AUTHOR_EMAIL &&
-	GIT_cummitTER_NAME=env_cummit && export GIT_cummitTER_NAME &&
-	GIT_cummitTER_EMAIL=env_cummit@example.com && export GIT_cummitTER_EMAIL &&
+	GIT_CUMMITTER_NAME=env_cummit && export GIT_CUMMITTER_NAME &&
+	GIT_CUMMITTER_EMAIL=env_cummit@example.com && export GIT_CUMMITTER_EMAIL &&
 	test_cummit env-override-conf &&
 	echo env_author env_author@example.com > expected-author &&
 	echo env_cummit env_cummit@example.com > expected-cummitter &&
 	git log --format="%an %ae" -1 > actual-author &&
 	git log --format="%cn %ce" -1 > actual-cummitter &&
 	sane_unset GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL &&
-	sane_unset GIT_cummitTER_NAME GIT_cummitTER_EMAIL &&
+	sane_unset GIT_CUMMITTER_NAME GIT_CUMMITTER_EMAIL &&
 	test_cmp expected-author actual-author &&
 	test_cmp expected-cummitter actual-cummitter
 '

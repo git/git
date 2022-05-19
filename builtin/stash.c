@@ -265,7 +265,7 @@ static int reset_tree(struct object_id *i_tree, int update, int reset)
 	if (unpack_trees(nr_trees, t, &opts))
 		return -1;
 
-	if (write_locked_index(&the_index, &lock_file, cummit_LOCK))
+	if (write_locked_index(&the_index, &lock_file, CUMMIT_LOCK))
 		return error(_("unable to write new index file"));
 
 	return 0;
@@ -485,7 +485,7 @@ static void unstage_changes_unless_new(struct object_id *orig_tree)
 	 */
 	repo_hold_locked_index(the_repository, &lock, LOCK_DIE_ON_ERROR);
 	if (write_locked_index(&the_index, &lock,
-			       cummit_LOCK | SKIP_IF_UNCHANGED))
+			       CUMMIT_LOCK | SKIP_IF_UNCHANGED))
 		die(_("Unable to write index."));
 }
 

@@ -268,8 +268,8 @@ test_expect_success 'integer overflow in timestamps is reported' '
 
 test_expect_success 'cummit with NUL in header' '
 	git cat-file commit HEAD >basis &&
-	sed "s/author ./author Q/" <basis | q_to_nul >cummit-NUL-header &&
-	new=$(git hash-object -t cummit -w --stdin <cummit-NUL-header) &&
+	sed "s/author ./author Q/" <basis | q_to_nul >CUMMIT-NUL-header &&
+	new=$(git hash-object -t cummit -w --stdin <CUMMIT-NUL-header) &&
 	test_when_finished "remove_object $new" &&
 	git update-ref refs/heads/bogus "$new" &&
 	test_when_finished "git update-ref -d refs/heads/bogus" &&

@@ -42,22 +42,22 @@ test_expect_success setup '
 '
 
 cat >expected <<EOF
-${c_cummit}cummit_ID${c_reset}${c_cummit} (${c_reset}${c_HEAD}HEAD ->\
+${c_cummit}CUMMIT_ID${c_reset}${c_cummit} (${c_reset}${c_HEAD}HEAD ->\
  ${c_reset}${c_branch}main${c_reset}${c_cummit},\
  ${c_reset}${c_tag}tag: v1.0${c_reset}${c_cummit},\
  ${c_reset}${c_tag}tag: B${c_reset}${c_cummit})${c_reset} B
-${c_cummit}cummit_ID${c_reset}${c_cummit} (${c_reset}${c_tag}tag: A1${c_reset}${c_cummit},\
+${c_cummit}CUMMIT_ID${c_reset}${c_cummit} (${c_reset}${c_tag}tag: A1${c_reset}${c_cummit},\
  ${c_reset}${c_remoteBranch}other/main${c_reset}${c_cummit})${c_reset} A1
-${c_cummit}cummit_ID${c_reset}${c_cummit} (${c_reset}${c_stash}refs/stash${c_reset}${c_cummit})${c_reset}\
+${c_cummit}CUMMIT_ID${c_reset}${c_cummit} (${c_reset}${c_stash}refs/stash${c_reset}${c_cummit})${c_reset}\
  On main: Changes to A.t
-${c_cummit}cummit_ID${c_reset}${c_cummit} (${c_reset}${c_tag}tag: A${c_reset}${c_cummit})${c_reset} A
+${c_cummit}CUMMIT_ID${c_reset}${c_cummit} (${c_reset}${c_tag}tag: A${c_reset}${c_cummit})${c_reset} A
 EOF
 
 # We want log to show all, but the second parent to refs/stash is irrelevant
 # to this test since it does not contain any decoration, hence --first-parent
 test_expect_success 'cummit Decorations Colored Correctly' '
 	git log --first-parent --abbrev=10 --all --decorate --oneline --color=always |
-	sed "s/[0-9a-f]\{10,10\}/cummit_ID/" |
+	sed "s/[0-9a-f]\{10,10\}/CUMMIT_ID/" |
 	test_decode_color >out &&
 	test_cmp expected out
 '

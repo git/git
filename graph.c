@@ -62,8 +62,8 @@ struct column {
 enum graph_state {
 	GRAPH_PADDING,
 	GRAPH_SKIP,
-	GRAPH_PRE_cummit,
-	GRAPH_cummit,
+	GRAPH_PRE_CUMMIT,
+	GRAPH_CUMMIT,
 	GRAPH_POST_MERGE,
 	GRAPH_COLLAPSING
 };
@@ -174,7 +174,7 @@ struct git_graph {
 	int width;
 	/*
 	 * The next expansion row to print
-	 * when state is GRAPH_PRE_cummit
+	 * when state is GRAPH_PRE_CUMMIT
 	 */
 	int expansion_row;
 	/*
@@ -790,9 +790,9 @@ void graph_update(struct git_graph *graph, struct cummit *cummit)
 	if (graph->state != GRAPH_PADDING)
 		graph->state = GRAPH_SKIP;
 	else if (graph_needs_pre_cummit_line(graph))
-		graph->state = GRAPH_PRE_cummit;
+		graph->state = GRAPH_PRE_CUMMIT;
 	else
-		graph->state = GRAPH_cummit;
+		graph->state = GRAPH_CUMMIT;
 }
 
 static int graph_is_mapping_correct(struct git_graph *graph)
@@ -860,9 +860,9 @@ static void graph_output_skip_line(struct git_graph *graph, struct graph_line *l
 	graph_line_addstr(line, "...");
 
 	if (graph_needs_pre_cummit_line(graph))
-		graph_update_state(graph, GRAPH_PRE_cummit);
+		graph_update_state(graph, GRAPH_PRE_CUMMIT);
 	else
-		graph_update_state(graph, GRAPH_cummit);
+		graph_update_state(graph, GRAPH_CUMMIT);
 }
 
 static void graph_output_pre_cummit_line(struct git_graph *graph,
@@ -921,11 +921,11 @@ static void graph_output_pre_cummit_line(struct git_graph *graph,
 
 	/*
 	 * Increment graph->expansion_row,
-	 * and move to state GRAPH_cummit if necessary
+	 * and move to state GRAPH_CUMMIT if necessary
 	 */
 	graph->expansion_row++;
 	if (!graph_needs_pre_cummit_line(graph))
-		graph_update_state(graph, GRAPH_cummit);
+		graph_update_state(graph, GRAPH_CUMMIT);
 }
 
 static void graph_output_cummit_char(struct git_graph *graph, struct graph_line *line)
@@ -1029,7 +1029,7 @@ static void graph_output_cummit_line(struct git_graph *graph, struct graph_line 
 			/*
 			 * This is either a right-skewed 2-way merge
 			 * cummit, or a left-skewed 3-way merge.
-			 * There is no GRAPH_PRE_cummit stage for such
+			 * There is no GRAPH_PRE_CUMMIT stage for such
 			 * merges, so this is the first line of output
 			 * for this cummit.  Check to see what the previous
 			 * line of output was.
@@ -1326,10 +1326,10 @@ int graph_next_line(struct git_graph *graph, struct strbuf *sb)
 	case GRAPH_SKIP:
 		graph_output_skip_line(graph, &line);
 		break;
-	case GRAPH_PRE_cummit:
+	case GRAPH_PRE_CUMMIT:
 		graph_output_pre_cummit_line(graph, &line);
 		break;
-	case GRAPH_cummit:
+	case GRAPH_CUMMIT:
 		graph_output_cummit_line(graph, &line);
 		shown_cummit_line = 1;
 		break;
@@ -1350,7 +1350,7 @@ static void graph_padding_line(struct git_graph *graph, struct strbuf *sb)
 	int i;
 	struct graph_line line = { .buf = sb, .width = 0 };
 
-	if (graph->state != GRAPH_cummit) {
+	if (graph->state != GRAPH_CUMMIT) {
 		graph_next_line(graph, sb);
 		return;
 	}

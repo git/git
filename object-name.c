@@ -226,7 +226,7 @@ static int disambiguate_cummit_only(struct repository *r,
 				    void *cb_data_unused)
 {
 	int kind = oid_object_info(r, oid, NULL);
-	return kind == OBJ_cummit;
+	return kind == OBJ_CUMMIT;
 }
 
 static int disambiguate_cummittish_only(struct repository *r,
@@ -237,14 +237,14 @@ static int disambiguate_cummittish_only(struct repository *r,
 	int kind;
 
 	kind = oid_object_info(r, oid, NULL);
-	if (kind == OBJ_cummit)
+	if (kind == OBJ_CUMMIT)
 		return 1;
 	if (kind != OBJ_TAG)
 		return 0;
 
 	/* We need to do this the hard way... */
 	obj = deref_tag(r, parse_object(r, oid), NULL, 0);
-	if (obj && obj->type == OBJ_cummit)
+	if (obj && obj->type == OBJ_CUMMIT)
 		return 1;
 	return 0;
 }
@@ -265,14 +265,14 @@ static int disambiguate_treeish_only(struct repository *r,
 	int kind;
 
 	kind = oid_object_info(r, oid, NULL);
-	if (kind == OBJ_TREE || kind == OBJ_cummit)
+	if (kind == OBJ_TREE || kind == OBJ_CUMMIT)
 		return 1;
 	if (kind != OBJ_TAG)
 		return 0;
 
 	/* We need to do this the hard way... */
 	obj = deref_tag(r, parse_object(r, oid), NULL, 0);
-	if (obj && (obj->type == OBJ_TREE || obj->type == OBJ_cummit))
+	if (obj && (obj->type == OBJ_TREE || obj->type == OBJ_CUMMIT))
 		return 1;
 	return 0;
 }
@@ -383,10 +383,10 @@ static int show_ambiguous_object(const struct object_id *oid, void *data)
 		goto out;
 	}
 
-	assert(type == OBJ_TREE || type == OBJ_cummit ||
+	assert(type == OBJ_TREE || type == OBJ_CUMMIT ||
 	       type == OBJ_BLOB || type == OBJ_TAG);
 
-	if (type == OBJ_cummit) {
+	if (type == OBJ_CUMMIT) {
 		struct strbuf date = STRBUF_INIT;
 		struct strbuf msg = STRBUF_INIT;
 		struct cummit *cummit = lookup_cummit(ds->repo, oid);
@@ -529,9 +529,9 @@ static enum get_oid_result get_short_oid(struct repository *r,
 	if (HAS_MULTI_BITS(flags & GET_OID_DISAMBIGUATORS))
 		BUG("multiple get_short_oid disambiguator flags");
 
-	if (flags & GET_OID_cummit)
+	if (flags & GET_OID_CUMMIT)
 		ds.fn = disambiguate_cummit_only;
-	else if (flags & GET_OID_cummitTISH)
+	else if (flags & GET_OID_CUMMITTISH)
 		ds.fn = disambiguate_cummittish_only;
 	else if (flags & GET_OID_TREE)
 		ds.fn = disambiguate_tree_only;
@@ -1029,7 +1029,7 @@ static enum get_oid_result get_parent(struct repository *r,
 {
 	struct object_id oid;
 	enum get_oid_result ret = get_oid_1(r, name, len, &oid,
-					    GET_OID_cummitTISH);
+					    GET_OID_CUMMITTISH);
 	struct cummit *cummit;
 	struct cummit_list *p;
 
@@ -1062,7 +1062,7 @@ static enum get_oid_result get_nth_ancestor(struct repository *r,
 	struct cummit *cummit;
 	int ret;
 
-	ret = get_oid_1(r, name, len, &oid, GET_OID_cummitTISH);
+	ret = get_oid_1(r, name, len, &oid, GET_OID_CUMMITTISH);
 	if (ret)
 		return ret;
 	cummit = lookup_cummit_reference(r, &oid);
@@ -1090,7 +1090,7 @@ struct object *repo_peel_to_type(struct repository *r, const char *name, int nam
 			return o;
 		if (o->type == OBJ_TAG)
 			o = ((struct tag*) o)->tagged;
-		else if (o->type == OBJ_cummit)
+		else if (o->type == OBJ_CUMMIT)
 			o = &(repo_get_cummit_tree(r, ((struct cummit *)o))->object);
 		else {
 			if (name)
@@ -1132,7 +1132,7 @@ static int peel_onion(struct repository *r, const char *name, int len,
 
 	sp++; /* beginning of type name, or closing brace for empty */
 	if (starts_with(sp, "cummit}"))
-		expected_type = OBJ_cummit;
+		expected_type = OBJ_CUMMIT;
 	else if (starts_with(sp, "tag}"))
 		expected_type = OBJ_TAG;
 	else if (starts_with(sp, "tree}"))
@@ -1144,13 +1144,13 @@ static int peel_onion(struct repository *r, const char *name, int len,
 	else if (sp[0] == '}')
 		expected_type = OBJ_NONE;
 	else if (sp[0] == '/')
-		expected_type = OBJ_cummit;
+		expected_type = OBJ_CUMMIT;
 	else
 		return -1;
 
 	lookup_flags &= ~GET_OID_DISAMBIGUATORS;
-	if (expected_type == OBJ_cummit)
-		lookup_flags |= GET_OID_cummitTISH;
+	if (expected_type == OBJ_CUMMIT)
+		lookup_flags |= GET_OID_CUMMITTISH;
 	else if (expected_type == OBJ_TREE)
 		lookup_flags |= GET_OID_TREEISH;
 
@@ -1205,7 +1205,7 @@ static int get_describe_name(struct repository *r,
 			     struct object_id *oid)
 {
 	const char *cp;
-	unsigned flags = GET_OID_QUIETLY | GET_OID_cummit;
+	unsigned flags = GET_OID_QUIETLY | GET_OID_CUMMIT;
 
 	for (cp = name + len - 1; name + 2 <= cp; cp--) {
 		char ch = *cp;
@@ -1319,7 +1319,7 @@ static int handle_one_ref(const char *path, const struct object_id *oid,
 		if (!object)
 			return 0;
 	}
-	if (object->type != OBJ_cummit)
+	if (object->type != OBJ_CUMMIT)
 		return 0;
 	cummit_list_insert((struct cummit *)object, list);
 	return 0;
@@ -1736,7 +1736,7 @@ int repo_get_oid_cummittish(struct repository *r,
 			    struct object_id *oid)
 {
 	struct object_context unused;
-	return get_oid_with_context(r, name, GET_OID_cummitTISH,
+	return get_oid_with_context(r, name, GET_OID_CUMMITTISH,
 				    oid, &unused);
 }
 
@@ -1754,7 +1754,7 @@ int repo_get_oid_cummit(struct repository *r,
 			struct object_id *oid)
 {
 	struct object_context unused;
-	return get_oid_with_context(r, name, GET_OID_cummit,
+	return get_oid_with_context(r, name, GET_OID_CUMMIT,
 				    oid, &unused);
 }
 

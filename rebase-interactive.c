@@ -14,9 +14,9 @@ N_("You can fix this with 'git rebase --edit-todo' "
 " --abort'.\n");
 
 enum missing_cummit_check_level {
-	MISSING_cummit_CHECK_IGNORE = 0,
-	MISSING_cummit_CHECK_WARN,
-	MISSING_cummit_CHECK_ERROR
+	MISSING_CUMMIT_CHECK_IGNORE = 0,
+	MISSING_CUMMIT_CHECK_WARN,
+	MISSING_CUMMIT_CHECK_ERROR
 };
 
 static enum missing_cummit_check_level get_missing_cummit_check_level(void)
@@ -25,14 +25,14 @@ static enum missing_cummit_check_level get_missing_cummit_check_level(void)
 
 	if (git_config_get_value("rebase.missingcummitscheck", &value) ||
 			!strcasecmp("ignore", value))
-		return MISSING_cummit_CHECK_IGNORE;
+		return MISSING_CUMMIT_CHECK_IGNORE;
 	if (!strcasecmp("warn", value))
-		return MISSING_cummit_CHECK_WARN;
+		return MISSING_CUMMIT_CHECK_WARN;
 	if (!strcasecmp("error", value))
-		return MISSING_cummit_CHECK_ERROR;
+		return MISSING_CUMMIT_CHECK_ERROR;
 	warning(_("unrecognized setting %s for option "
 		  "rebase.missingcummitsCheck. Ignoring."), value);
-	return MISSING_cummit_CHECK_IGNORE;
+	return MISSING_CUMMIT_CHECK_IGNORE;
 }
 
 void append_todo_help(int command_count,
@@ -71,12 +71,12 @@ void append_todo_help(int command_count,
 
 	strbuf_add_commented_lines(buf, msg, strlen(msg));
 
-	if (get_missing_cummit_check_level() == MISSING_cummit_CHECK_ERROR)
+	if (get_missing_cummit_check_level() == MISSING_CUMMIT_CHECK_ERROR)
 		msg = _("\nDo not remove any line. Use 'drop' "
 			 "explicitly to remove a cummit.\n");
 	else
 		msg = _("\nIf you remove a line here "
-			 "THAT cummit WILL BE LOST.\n");
+			 "THAT CUMMIT WILL BE LOST.\n");
 
 	strbuf_add_commented_lines(buf, msg, strlen(msg));
 
@@ -162,7 +162,7 @@ int todo_list_check(struct todo_list *old_todo, struct todo_list *new_todo)
 
 	init_cummit_seen(&cummit_seen);
 
-	if (check_level == MISSING_cummit_CHECK_IGNORE)
+	if (check_level == MISSING_CUMMIT_CHECK_IGNORE)
 		goto leave_check;
 
 	/* Mark the cummits in git-rebase-todo as seen */
@@ -189,7 +189,7 @@ int todo_list_check(struct todo_list *old_todo, struct todo_list *new_todo)
 	if (!missing.len)
 		goto leave_check;
 
-	if (check_level == MISSING_cummit_CHECK_ERROR)
+	if (check_level == MISSING_CUMMIT_CHECK_ERROR)
 		res = 1;
 
 	fprintf(stderr,

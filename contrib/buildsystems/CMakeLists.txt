@@ -233,7 +233,7 @@ add_compile_definitions(PAGER_ENV="LESS=FRX LV=-c"
 			GIT_VERSION="${PROJECT_VERSION}.GIT"
 			GIT_USER_AGENT="git/${PROJECT_VERSION}.GIT"
 			BINDIR="bin"
-			GIT_BUILT_FROM_cummit="")
+			GIT_BUILT_FROM_CUMMIT="")
 
 if(WIN32)
 	set(FALLBACK_RUNTIME_PREFIX /mingw64)

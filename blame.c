@@ -2666,7 +2666,7 @@ static struct cummit *find_single_final(struct rev_info *revs,
 		if (obj->flags & UNINTERESTING)
 			continue;
 		obj = deref_tag(revs->repo, obj, NULL, 0);
-		if (!obj || obj->type != OBJ_cummit)
+		if (!obj || obj->type != OBJ_CUMMIT)
 			die("Non cummit %s?", revs->pending.objects[i].name);
 		if (found)
 			die("More than one cummit to dig from %s and %s?",
@@ -2697,7 +2697,7 @@ static struct cummit *dwim_reverse_initial(struct rev_info *revs,
 	/* Is that sole rev a cummittish? */
 	obj = revs->pending.objects[0].item;
 	obj = deref_tag(revs->repo, obj, NULL, 0);
-	if (!obj || obj->type != OBJ_cummit)
+	if (!obj || obj->type != OBJ_CUMMIT)
 		return NULL;
 
 	/* Do we have HEAD? */
@@ -2733,7 +2733,7 @@ static struct cummit *find_single_initial(struct rev_info *revs,
 		if (!(obj->flags & UNINTERESTING))
 			continue;
 		obj = deref_tag(revs->repo, obj, NULL, 0);
-		if (!obj || obj->type != OBJ_cummit)
+		if (!obj || obj->type != OBJ_CUMMIT)
 			die("Non cummit %s?", revs->pending.objects[i].name);
 		if (found)
 			die("More than one cummit to dig up from, %s and %s?",

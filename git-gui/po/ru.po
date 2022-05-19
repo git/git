@@ -2310,8 +2310,8 @@ msgid "Unable to obtain your identity:"
 msgstr "Невозможно получить информацию об авторстве:"
 
 #: lib/cummit.tcl:88
-msgid "Invalid GIT_cummitTER_IDENT:"
-msgstr "Недопустимый GIT_cummitTER_IDENT:"
+msgid "Invalid GIT_CUMMITTER_IDENT:"
+msgstr "Недопустимый GIT_CUMMITTER_IDENT:"
 
 #: lib/cummit.tcl:138
 #, tcl-format

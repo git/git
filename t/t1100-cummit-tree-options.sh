@@ -33,9 +33,9 @@ test_expect_success \
      GIT_AUTHOR_NAME="Author Name" \
      GIT_AUTHOR_EMAIL="author@email" \
      GIT_AUTHOR_DATE="2005-05-26 23:00" \
-     GIT_cummitTER_NAME="cummitter Name" \
-     GIT_cummitTER_EMAIL="cummitter@email" \
-     GIT_cummitTER_DATE="2005-05-26 23:30" \
+     GIT_CUMMITTER_NAME="cummitter Name" \
+     GIT_CUMMITTER_EMAIL="cummitter@email" \
+     GIT_CUMMITTER_DATE="2005-05-26 23:30" \
      TZ=GMT git cummit-tree $(cat treeid) >cummitid 2>/dev/null'
 
 test_expect_success \

@@ -69,7 +69,7 @@ void bitmap_writer_build_type_index(struct packing_data *to_pack,
 		oe_set_in_pack_pos(to_pack, entry, i);
 
 		switch (oe_type(entry)) {
-		case OBJ_cummit:
+		case OBJ_CUMMIT:
 		case OBJ_TREE:
 		case OBJ_BLOB:
 		case OBJ_TAG:
@@ -83,7 +83,7 @@ void bitmap_writer_build_type_index(struct packing_data *to_pack,
 		}
 
 		switch (real_type) {
-		case OBJ_cummit:
+		case OBJ_CUMMIT:
 			ewah_set(writer.cummits, i);
 			break;
 
@@ -538,8 +538,8 @@ int bitmap_writer_build(struct packing_data *to_pack)
  */
 static inline unsigned int next_cummit_index(unsigned int idx)
 {
-	static const unsigned int MIN_cummitS = 100;
-	static const unsigned int MAX_cummitS = 5000;
+	static const unsigned int MIN_CUMMITS = 100;
+	static const unsigned int MAX_CUMMITS = 5000;
 
 	static const unsigned int MUST_REGION = 100;
 	static const unsigned int MIN_REGION = 20000;
@@ -551,13 +551,13 @@ static inline unsigned int next_cummit_index(unsigned int idx)
 
 	if (idx <= MIN_REGION) {
 		offset = idx - MUST_REGION;
-		return (offset < MIN_cummitS) ? offset : MIN_cummitS;
+		return (offset < MIN_CUMMITS) ? offset : MIN_CUMMITS;
 	}
 
 	offset = idx - MIN_REGION;
-	next = (offset < MAX_cummitS) ? offset : MAX_cummitS;
+	next = (offset < MAX_CUMMITS) ? offset : MAX_CUMMITS;
 
-	return (next > MIN_cummitS) ? next : MIN_cummitS;
+	return (next > MIN_CUMMITS) ? next : MIN_CUMMITS;
 }
 
 static int date_compare(const void *_a, const void *_b)

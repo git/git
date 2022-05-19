@@ -33,8 +33,8 @@ convert_expected () {
 
 test_expect_success setup '
 	GIT_AUTHOR_DATE="2006-06-26 00:00:00 +0000" &&
-	GIT_cummitTER_DATE="2006-06-26 00:00:00 +0000" &&
-	export GIT_AUTHOR_DATE GIT_cummitTER_DATE &&
+	GIT_CUMMITTER_DATE="2006-06-26 00:00:00 +0000" &&
+	export GIT_AUTHOR_DATE GIT_CUMMITTER_DATE &&
 
 	test_oid_cache <<-EOF &&
 	one sha1:8e32a6d901327a23ef831511badce7bf3bf46689

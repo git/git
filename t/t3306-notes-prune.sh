@@ -23,9 +23,9 @@ test_expect_success 'setup: create a few cummits with notes' '
 	test_tick &&
 	git cummit -m 3rd &&
 	third=$(git rev-parse HEAD) &&
-	cummit_FILE=$(echo $third | sed "s!^..!.git/objects/&/!") &&
-	test -f $cummit_FILE &&
-	test-tool chmtime =+0 $cummit_FILE &&
+	CUMMIT_FILE=$(echo $third | sed "s!^..!.git/objects/&/!") &&
+	test -f $CUMMIT_FILE &&
+	test-tool chmtime =+0 $CUMMIT_FILE &&
 	git notes add -m "Note #3"
 '
 

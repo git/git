@@ -1,5 +1,5 @@
-#ifndef cummit_REACH_H
-#define cummit_REACH_H
+#ifndef CUMMIT_REACH_H
+#define CUMMIT_REACH_H
 
 #include "cummit.h"
 #include "cummit-slab.h"

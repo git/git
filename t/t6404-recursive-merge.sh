@@ -14,12 +14,12 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 #       X   \
 # 2 - C - E - G
 
-GIT_cummitTER_DATE="2006-12-12 23:28:00 +0100"
-export GIT_cummitTER_DATE
+GIT_CUMMITTER_DATE="2006-12-12 23:28:00 +0100"
+export GIT_CUMMITTER_DATE
 
 test_expect_success 'setup tests' '
-	GIT_TEST_cummit_GRAPH=0 &&
-	export GIT_TEST_cummit_GRAPH &&
+	GIT_TEST_CUMMIT_GRAPH=0 &&
+	export GIT_TEST_CUMMIT_GRAPH &&
 	echo 1 >a1 &&
 	git add a1 &&
 	GIT_AUTHOR_DATE="2006-12-12 23:00:00" git cummit -m 1 a1 &&

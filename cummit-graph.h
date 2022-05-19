@@ -1,18 +1,18 @@
-#ifndef cummit_GRAPH_H
-#define cummit_GRAPH_H
+#ifndef CUMMIT_GRAPH_H
+#define CUMMIT_GRAPH_H
 
 #include "git-compat-util.h"
 #include "object-store.h"
 #include "oidset.h"
 
-#define GIT_TEST_cummit_GRAPH "GIT_TEST_cummit_GRAPH"
-#define GIT_TEST_cummit_GRAPH_DIE_ON_PARSE "GIT_TEST_cummit_GRAPH_DIE_ON_PARSE"
-#define GIT_TEST_cummit_GRAPH_CHANGED_PATHS "GIT_TEST_cummit_GRAPH_CHANGED_PATHS"
+#define GIT_TEST_CUMMIT_GRAPH "GIT_TEST_CUMMIT_GRAPH"
+#define GIT_TEST_CUMMIT_GRAPH_DIE_ON_PARSE "GIT_TEST_CUMMIT_GRAPH_DIE_ON_PARSE"
+#define GIT_TEST_CUMMIT_GRAPH_CHANGED_PATHS "GIT_TEST_CUMMIT_GRAPH_CHANGED_PATHS"
 
 /*
  * This method is only used to enhance coverage of the cummit-graph
- * feature in the test suite with the GIT_TEST_cummit_GRAPH and
- * GIT_TEST_cummit_GRAPH_CHANGED_PATHS environment variables. Do not
+ * feature in the test suite with the GIT_TEST_CUMMIT_GRAPH and
+ * GIT_TEST_CUMMIT_GRAPH_CHANGED_PATHS environment variables. Do not
  * call this method oustide of a builtin, and only if you know what
  * you are doing!
  */
@@ -111,17 +111,17 @@ int corrected_cummit_dates_enabled(struct repository *r);
 struct bloom_filter_settings *get_bloom_filter_settings(struct repository *r);
 
 enum cummit_graph_write_flags {
-	cummit_GRAPH_WRITE_APPEND     = (1 << 0),
-	cummit_GRAPH_WRITE_PROGRESS   = (1 << 1),
-	cummit_GRAPH_WRITE_SPLIT      = (1 << 2),
-	cummit_GRAPH_WRITE_BLOOM_FILTERS = (1 << 3),
-	cummit_GRAPH_NO_WRITE_BLOOM_FILTERS = (1 << 4),
+	CUMMIT_GRAPH_WRITE_APPEND     = (1 << 0),
+	CUMMIT_GRAPH_WRITE_PROGRESS   = (1 << 1),
+	CUMMIT_GRAPH_WRITE_SPLIT      = (1 << 2),
+	CUMMIT_GRAPH_WRITE_BLOOM_FILTERS = (1 << 3),
+	CUMMIT_GRAPH_NO_WRITE_BLOOM_FILTERS = (1 << 4),
 };
 
 enum cummit_graph_split_flags {
-	cummit_GRAPH_SPLIT_UNSPECIFIED      = 0,
-	cummit_GRAPH_SPLIT_MERGE_PROHIBITED = 1,
-	cummit_GRAPH_SPLIT_REPLACE          = 2
+	CUMMIT_GRAPH_SPLIT_UNSPECIFIED      = 0,
+	CUMMIT_GRAPH_SPLIT_MERGE_PROHIBITED = 1,
+	CUMMIT_GRAPH_SPLIT_REPLACE          = 2
 };
 
 struct cummit_graph_opts {
@@ -147,7 +147,7 @@ int write_cummit_graph(struct object_directory *odb,
 		       enum cummit_graph_write_flags flags,
 		       const struct cummit_graph_opts *opts);
 
-#define cummit_GRAPH_VERIFY_SHALLOW	(1 << 0)
+#define CUMMIT_GRAPH_VERIFY_SHALLOW	(1 << 0)
 
 int verify_cummit_graph(struct repository *r, struct cummit_graph *g, int flags);
 

@@ -1,9 +1,9 @@
-#ifndef cummit_SLAB_DECL_H
-#define cummit_SLAB_DECL_H
+#ifndef CUMMIT_SLAB_DECL_H
+#define CUMMIT_SLAB_DECL_H
 
 /* allocate ~512kB at once, allowing for malloc overhead */
-#ifndef cummit_SLAB_SIZE
-#define cummit_SLAB_SIZE (512*1024-32)
+#ifndef CUMMIT_SLAB_SIZE
+#define CUMMIT_SLAB_SIZE (512*1024-32)
 #endif
 
 #define declare_cummit_slab(slabname, elemtype) 			\
@@ -19,11 +19,11 @@ struct slabname {							\
  * Statically initialize a cummit slab named "var". Note that this
  * evaluates "stride" multiple times! Example:
  *
- *   struct indegree indegrees = cummit_SLAB_INIT(1, indegrees);
+ *   struct indegree indegrees = CUMMIT_SLAB_INIT(1, indegrees);
  *
  */
-#define cummit_SLAB_INIT(stride, var) { \
-	cummit_SLAB_SIZE / sizeof(**((var).slab)) / (stride), \
+#define CUMMIT_SLAB_INIT(stride, var) { \
+	CUMMIT_SLAB_SIZE / sizeof(**((var).slab)) / (stride), \
 	(stride), 0, NULL \
 }
 
@@ -41,4 +41,4 @@ elemtype *slabname## _peek(struct slabname *s, const struct cummit *c)
 	declare_cummit_slab(slabname, elemtype); \
 	declare_cummit_slab_prototypes(slabname, elemtype)
 
-#endif /* cummit_SLAB_DECL_H */
+#endif /* CUMMIT_SLAB_DECL_H */

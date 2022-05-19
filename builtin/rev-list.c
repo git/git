@@ -262,7 +262,7 @@ static int finish_object(struct object *obj, const char *name, void *cb_data)
 		finish_object__ma(obj);
 		return 1;
 	}
-	if (info->revs->verify_objects && !obj->parsed && obj->type != OBJ_cummit)
+	if (info->revs->verify_objects && !obj->parsed && obj->type != OBJ_CUMMIT)
 		parse_object(the_repository, &obj->oid);
 	return 0;
 }

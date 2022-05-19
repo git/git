@@ -413,7 +413,7 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 		 * this issue as they are not affected by those extra
 		 * constraints.
 		 */
-		if (!(e->item->flags & SHOWN) && e->item->type == OBJ_cummit) {
+		if (!(e->item->flags & SHOWN) && e->item->type == OBJ_CUMMIT) {
 			warning(_("ref '%s' is excluded by the rev-list options"),
 				e->name);
 			goto skip_write_ref;

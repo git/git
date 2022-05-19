@@ -17,22 +17,22 @@ test_expect_success "proc-receive: report unexpected ref ($PROTOCOL)" '
 	make_user_friendly_and_stable_output <out-$test_count >actual &&
 	format_and_save_expect <<-EOF &&
 	> remote: # pre-receive hook        Z
-	> remote: pre-receive< <cummit-A> <cummit-B> refs/heads/main        Z
-	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
+	> remote: pre-receive< <CUMMIT-A> <CUMMIT-B> refs/heads/main        Z
+	> remote: pre-receive< <ZERO-OID> <CUMMIT-A> refs/for/main/topic        Z
 	> remote: # proc-receive hook        Z
-	> remote: proc-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
+	> remote: proc-receive< <ZERO-OID> <CUMMIT-A> refs/for/main/topic        Z
 	> remote: proc-receive> ok refs/heads/main        Z
 	> remote: error: proc-receive reported status on unexpected ref: refs/heads/main        Z
 	> remote: # post-receive hook        Z
-	> remote: post-receive< <cummit-A> <cummit-B> refs/heads/main        Z
+	> remote: post-receive< <CUMMIT-A> <CUMMIT-B> refs/heads/main        Z
 	> To <URL/of/upstream.git>
-	>    <cummit-A>..<cummit-B>  <cummit-B> -> main
+	>    <CUMMIT-A>..<CUMMIT-B>  <CUMMIT-B> -> main
 	>  ! [remote rejected] HEAD -> refs/for/main/topic (proc-receive failed to report status)
 	EOF
 	test_cmp expect actual &&
 
 	test_cmp_refs -C "$upstream" <<-EOF
-	<cummit-B> refs/heads/main
+	<CUMMIT-B> refs/heads/main
 	EOF
 '
 

@@ -951,7 +951,7 @@ static int add_ref_to_pending(const char *refname,
 	}
 
 	object = parse_object_or_die(oid, refname);
-	if (object->type != OBJ_cummit)
+	if (object->type != OBJ_CUMMIT)
 		return 0;
 
 	add_pending_object(revs, object, "");

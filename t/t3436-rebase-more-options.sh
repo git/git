@@ -65,7 +65,7 @@ test_expect_success '--ignore-whitespace is remembered when continuing' '
 '
 
 test_ctime_is_atime () {
-	git log $1 --format="$GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> %ai" >authortime &&
+	git log $1 --format="$GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> %ai" >authortime &&
 	git log $1 --format="%cn <%ce> %ci" >cummittertime &&
 	test_cmp authortime cummittertime
 }
@@ -86,7 +86,7 @@ test_expect_success '--cummitter-date-is-author-date works when rewording' '
 	GIT_AUTHOR_DATE="@1234 +0300" git cummit --amend --reset-author &&
 	(
 		set_fake_editor &&
-		FAKE_cummit_MESSAGE=edited \
+		FAKE_CUMMIT_MESSAGE=edited \
 			FAKE_LINES="reword 1" \
 			git rebase -i --cummitter-date-is-author-date HEAD^
 	) &&
@@ -173,7 +173,7 @@ test_expect_success 'reset-author-date with --cummitter-date-is-author-date work
 	GIT_AUTHOR_DATE="@1234 +0300" git cummit --amend --reset-author &&
 	(
 		set_fake_editor &&
-		FAKE_cummit_MESSAGE=edited \
+		FAKE_CUMMIT_MESSAGE=edited \
 			FAKE_LINES="reword 1" \
 			git rebase -i --cummitter-date-is-author-date \
 				--reset-author-date HEAD^

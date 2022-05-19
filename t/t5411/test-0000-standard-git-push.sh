@@ -9,20 +9,20 @@ test_expect_success "git-push ($PROTOCOL)" '
 	make_user_friendly_and_stable_output <out >actual &&
 	format_and_save_expect <<-EOF &&
 	> remote: # pre-receive hook        Z
-	> remote: pre-receive< <cummit-A> <cummit-B> refs/heads/main        Z
-	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/heads/next        Z
+	> remote: pre-receive< <CUMMIT-A> <CUMMIT-B> refs/heads/main        Z
+	> remote: pre-receive< <ZERO-OID> <CUMMIT-A> refs/heads/next        Z
 	> remote: # post-receive hook        Z
-	> remote: post-receive< <cummit-A> <cummit-B> refs/heads/main        Z
-	> remote: post-receive< <ZERO-OID> <cummit-A> refs/heads/next        Z
+	> remote: post-receive< <CUMMIT-A> <CUMMIT-B> refs/heads/main        Z
+	> remote: post-receive< <ZERO-OID> <CUMMIT-A> refs/heads/next        Z
 	> To <URL/of/upstream.git>
-	>    <cummit-A>..<cummit-B>  <cummit-B> -> main
+	>    <CUMMIT-A>..<CUMMIT-B>  <CUMMIT-B> -> main
 	>  * [new branch]      HEAD -> next
 	EOF
 	test_cmp expect actual &&
 
 	test_cmp_refs -C "$upstream" <<-EOF
-	<cummit-B> refs/heads/main
-	<cummit-A> refs/heads/next
+	<CUMMIT-B> refs/heads/main
+	<CUMMIT-A> refs/heads/next
 	EOF
 '
 
@@ -41,13 +41,13 @@ test_expect_success "git-push --atomic ($PROTOCOL)" '
 	format_and_save_expect <<-EOF &&
 	> To <URL/of/upstream.git>
 	>  ! [rejected]        main -> main (non-fast-forward)
-	>  ! [rejected]        <cummit-B> -> next (atomic push failed)
+	>  ! [rejected]        <CUMMIT-B> -> next (atomic push failed)
 	EOF
 	test_cmp expect actual &&
 
 	test_cmp_refs -C "$upstream" <<-EOF
-	<cummit-B> refs/heads/main
-	<cummit-A> refs/heads/next
+	<CUMMIT-B> refs/heads/main
+	<CUMMIT-A> refs/heads/next
 	EOF
 '
 
@@ -65,18 +65,18 @@ test_expect_success "non-fast-forward git-push ($PROTOCOL)" '
 	make_user_friendly_and_stable_output <out-$test_count >actual &&
 	format_and_save_expect <<-EOF &&
 	> remote: # pre-receive hook        Z
-	> remote: pre-receive< <cummit-A> <cummit-B> refs/heads/next        Z
+	> remote: pre-receive< <CUMMIT-A> <CUMMIT-B> refs/heads/next        Z
 	> remote: # post-receive hook        Z
-	> remote: post-receive< <cummit-A> <cummit-B> refs/heads/next        Z
+	> remote: post-receive< <CUMMIT-A> <CUMMIT-B> refs/heads/next        Z
 	> To <URL/of/upstream.git>
-	>    <cummit-A>..<cummit-B>  <cummit-B> -> next
+	>    <CUMMIT-A>..<CUMMIT-B>  <CUMMIT-B> -> next
 	>  ! [rejected]        main -> main (non-fast-forward)
 	EOF
 	test_cmp expect actual &&
 
 	test_cmp_refs -C "$upstream" <<-EOF
-	<cummit-B> refs/heads/main
-	<cummit-B> refs/heads/next
+	<CUMMIT-B> refs/heads/main
+	<CUMMIT-B> refs/heads/next
 	EOF
 '
 
@@ -94,19 +94,19 @@ test_expect_success "git-push -f ($PROTOCOL)" '
 	make_user_friendly_and_stable_output <out >actual &&
 	format_and_save_expect <<-EOF &&
 	> remote: # pre-receive hook        Z
-	> remote: pre-receive< <cummit-B> <cummit-A> refs/heads/main        Z
-	> remote: pre-receive< <cummit-B> <ZERO-OID> refs/heads/next        Z
+	> remote: pre-receive< <CUMMIT-B> <CUMMIT-A> refs/heads/main        Z
+	> remote: pre-receive< <CUMMIT-B> <ZERO-OID> refs/heads/next        Z
 	> remote: pre-receive< <ZERO-OID> <TAG-v123> refs/tags/v123        Z
-	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/review/main/topic        Z
-	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/heads/a/b/c        Z
+	> remote: pre-receive< <ZERO-OID> <CUMMIT-A> refs/review/main/topic        Z
+	> remote: pre-receive< <ZERO-OID> <CUMMIT-A> refs/heads/a/b/c        Z
 	> remote: # post-receive hook        Z
-	> remote: post-receive< <cummit-B> <cummit-A> refs/heads/main        Z
-	> remote: post-receive< <cummit-B> <ZERO-OID> refs/heads/next        Z
+	> remote: post-receive< <CUMMIT-B> <CUMMIT-A> refs/heads/main        Z
+	> remote: post-receive< <CUMMIT-B> <ZERO-OID> refs/heads/next        Z
 	> remote: post-receive< <ZERO-OID> <TAG-v123> refs/tags/v123        Z
-	> remote: post-receive< <ZERO-OID> <cummit-A> refs/review/main/topic        Z
-	> remote: post-receive< <ZERO-OID> <cummit-A> refs/heads/a/b/c        Z
+	> remote: post-receive< <ZERO-OID> <CUMMIT-A> refs/review/main/topic        Z
+	> remote: post-receive< <ZERO-OID> <CUMMIT-A> refs/heads/a/b/c        Z
 	> To <URL/of/upstream.git>
-	>  + <cummit-B>...<cummit-A> main -> main (forced update)
+	>  + <CUMMIT-B>...<CUMMIT-A> main -> main (forced update)
 	>  - [deleted]         next
 	>  * [new tag]         v123 -> v123
 	>  * [new reference]   main -> refs/review/main/topic
@@ -115,9 +115,9 @@ test_expect_success "git-push -f ($PROTOCOL)" '
 	test_cmp expect actual &&
 
 	test_cmp_refs -C "$upstream" <<-EOF
-	<cummit-A> refs/heads/a/b/c
-	<cummit-A> refs/heads/main
-	<cummit-A> refs/review/main/topic
+	<CUMMIT-A> refs/heads/a/b/c
+	<CUMMIT-A> refs/heads/main
+	<CUMMIT-A> refs/review/main/topic
 	<TAG-v123> refs/tags/v123
 	EOF
 '

@@ -76,7 +76,7 @@ static int clear_marks(const char *refname, const struct object_id *oid,
 {
 	struct object *o = deref_tag(the_repository, parse_object(the_repository, oid), refname, 0);
 
-	if (o && o->type == OBJ_cummit)
+	if (o && o->type == OBJ_CUMMIT)
 		clear_cummit_marks((struct cummit *)o,
 				   COMMON | ADVERTISED | SEEN | POPPED);
 	return 0;

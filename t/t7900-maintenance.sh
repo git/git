@@ -4,7 +4,7 @@ test_description='git maintenance builtin'
 
 . ./test-lib.sh
 
-GIT_TEST_cummit_GRAPH=0
+GIT_TEST_CUMMIT_GRAPH=0
 GIT_TEST_MULTI_PACK_INDEX=0
 
 test_lazy_prereq XMLLINT '
@@ -119,12 +119,12 @@ test_expect_success 'cummit-graph auto condition' '
 	GIT_TRACE2_EVENT="$(pwd)/cg-two-satisfied.txt" \
 		git -c maintenance.cummit-graph.auto=2 $COMMAND &&
 
-	cummit_GRAPH_WRITE="git cummit-graph write --split --reachable --no-progress" &&
-	test_subcommand ! $cummit_GRAPH_WRITE <cg-no.txt &&
-	test_subcommand $cummit_GRAPH_WRITE <cg-negative-means-yes.txt &&
-	test_subcommand ! $cummit_GRAPH_WRITE <cg-zero-means-no.txt &&
-	test_subcommand $cummit_GRAPH_WRITE <cg-one-satisfied.txt &&
-	test_subcommand $cummit_GRAPH_WRITE <cg-two-satisfied.txt
+	CUMMIT_GRAPH_WRITE="git cummit-graph write --split --reachable --no-progress" &&
+	test_subcommand ! $CUMMIT_GRAPH_WRITE <cg-no.txt &&
+	test_subcommand $CUMMIT_GRAPH_WRITE <cg-negative-means-yes.txt &&
+	test_subcommand ! $CUMMIT_GRAPH_WRITE <cg-zero-means-no.txt &&
+	test_subcommand $CUMMIT_GRAPH_WRITE <cg-one-satisfied.txt &&
+	test_subcommand $CUMMIT_GRAPH_WRITE <cg-two-satisfied.txt
 '
 
 test_expect_success 'run --task=bogus' '

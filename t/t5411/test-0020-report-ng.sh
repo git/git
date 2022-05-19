@@ -16,9 +16,9 @@ test_expect_success "proc-receive: fail to update (ng, no message, $PROTOCOL)" '
 	make_user_friendly_and_stable_output <out-$test_count >actual &&
 	format_and_save_expect <<-EOF &&
 	> remote: # pre-receive hook        Z
-	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
+	> remote: pre-receive< <ZERO-OID> <CUMMIT-A> refs/for/main/topic        Z
 	> remote: # proc-receive hook        Z
-	> remote: proc-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
+	> remote: proc-receive< <ZERO-OID> <CUMMIT-A> refs/for/main/topic        Z
 	> remote: proc-receive> ng refs/for/main/topic        Z
 	> To <URL/of/upstream.git>
 	>  ! [remote rejected] HEAD -> refs/for/main/topic (failed)
@@ -26,7 +26,7 @@ test_expect_success "proc-receive: fail to update (ng, no message, $PROTOCOL)" '
 	test_cmp expect actual &&
 
 	test_cmp_refs -C "$upstream" <<-EOF
-	<cummit-A> refs/heads/main
+	<CUMMIT-A> refs/heads/main
 	EOF
 '
 
@@ -48,9 +48,9 @@ test_expect_success "proc-receive: fail to update (ng, with message, $PROTOCOL)"
 	make_user_friendly_and_stable_output <out-$test_count >actual &&
 	format_and_save_expect <<-EOF &&
 	> remote: # pre-receive hook        Z
-	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
+	> remote: pre-receive< <ZERO-OID> <CUMMIT-A> refs/for/main/topic        Z
 	> remote: # proc-receive hook        Z
-	> remote: proc-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
+	> remote: proc-receive< <ZERO-OID> <CUMMIT-A> refs/for/main/topic        Z
 	> remote: proc-receive> ng refs/for/main/topic error msg        Z
 	> To <URL/of/upstream.git>
 	>  ! [remote rejected] HEAD -> refs/for/main/topic (error msg)
@@ -58,6 +58,6 @@ test_expect_success "proc-receive: fail to update (ng, with message, $PROTOCOL)"
 	test_cmp expect actual &&
 
 	test_cmp_refs -C "$upstream" <<-EOF
-	<cummit-A> refs/heads/main
+	<CUMMIT-A> refs/heads/main
 	EOF
 '

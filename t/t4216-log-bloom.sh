@@ -6,8 +6,8 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
-GIT_TEST_cummit_GRAPH=0
-GIT_TEST_cummit_GRAPH_CHANGED_PATHS=0
+GIT_TEST_CUMMIT_GRAPH=0
+GIT_TEST_CUMMIT_GRAPH_CHANGED_PATHS=0
 
 test_expect_success 'setup test - repo, cummits, cummit graph, log outputs' '
 	git init &&

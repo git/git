@@ -10,7 +10,7 @@
 #include "pretty.h"
 #include "cummit-slab.h"
 
-#define cummit_NOT_FROM_GRAPH 0xFFFFFFFF
+#define CUMMIT_NOT_FROM_GRAPH 0xFFFFFFFF
 #define GENERATION_NUMBER_INFINITY ((1ULL << 63) - 1)
 #define GENERATION_NUMBER_V1_MAX 0x3FFFFFFF
 #define GENERATION_NUMBER_ZERO 0
@@ -220,7 +220,7 @@ void clear_cummit_marks_many(int nr, struct cummit **cummit, unsigned int mark);
 
 enum rev_sort_order {
 	REV_SORT_IN_GRAPH_ORDER = 0,
-	REV_SORT_BY_cummit_DATE,
+	REV_SORT_BY_CUMMIT_DATE,
 	REV_SORT_BY_AUTHOR_DATE
 };
 
@@ -232,7 +232,7 @@ enum rev_sort_order {
  *   sort_order further specifies:
  *   REV_SORT_IN_GRAPH_ORDER: try to show a cummit on a single-parent
  *                            chain together.
- *   REV_SORT_BY_cummit_DATE: show eligible cummits in cummitter-date order.
+ *   REV_SORT_BY_CUMMIT_DATE: show eligible cummits in cummitter-date order.
  */
 void sort_in_topological_order(struct cummit_list **, enum rev_sort_order);
 

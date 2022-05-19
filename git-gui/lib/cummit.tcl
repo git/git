@@ -73,24 +73,24 @@ You are currently in the middle of a merge that has not been fully completed.  Y
 	rescan ui_ready
 }
 
-set GIT_cummitTER_IDENT {}
+set GIT_CUMMITTER_IDENT {}
 
 proc cummitter_ident {} {
-	global GIT_cummitTER_IDENT
+	global GIT_CUMMITTER_IDENT
 
-	if {$GIT_cummitTER_IDENT eq {}} {
-		if {[catch {set me [git var GIT_cummitTER_IDENT]} err]} {
+	if {$GIT_CUMMITTER_IDENT eq {}} {
+		if {[catch {set me [git var GIT_CUMMITTER_IDENT]} err]} {
 			error_popup [strcat [mc "Unable to obtain your identity:"] "\n\n$err"]
 			return {}
 		}
 		if {![regexp {^(.*) [0-9]+ [-+0-9]+$} \
-			$me me GIT_cummitTER_IDENT]} {
-			error_popup [strcat [mc "Invalid GIT_cummitTER_IDENT:"] "\n\n$me"]
+			$me me GIT_CUMMITTER_IDENT]} {
+			error_popup [strcat [mc "Invalid GIT_CUMMITTER_IDENT:"] "\n\n$me"]
 			return {}
 		}
 	}
 
-	return $GIT_cummitTER_IDENT
+	return $GIT_CUMMITTER_IDENT
 }
 
 proc do_signoff {} {

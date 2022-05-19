@@ -1553,13 +1553,13 @@ static int dev_zero_fd = -1; /* Cached file descriptor for /dev/zero. */
 
 /* Win32 MMAP via VirtualAlloc */
 static FORCEINLINE void* win32mmap(size_t size) {
-  void* ptr = VirtualAlloc(0, size, MEM_RESERVE|MEM_cummit, PAGE_READWRITE);
+  void* ptr = VirtualAlloc(0, size, MEM_RESERVE|MEM_CUMMIT, PAGE_READWRITE);
   return (ptr != 0)? ptr: MFAIL;
 }
 
 /* For direct MMAP, use MEM_TOP_DOWN to minimize interference */
 static FORCEINLINE void* win32direct_mmap(size_t size) {
-  void* ptr = VirtualAlloc(0, size, MEM_RESERVE|MEM_cummit|MEM_TOP_DOWN,
+  void* ptr = VirtualAlloc(0, size, MEM_RESERVE|MEM_CUMMIT|MEM_TOP_DOWN,
 			   PAGE_READWRITE);
   return (ptr != 0)? ptr: MFAIL;
 }
@@ -1572,7 +1572,7 @@ static FORCEINLINE int win32munmap(void* ptr, size_t size) {
     if (VirtualQuery(cptr, &minfo, sizeof(minfo)) == 0)
       return -1;
     if (minfo.BaseAddress != cptr || minfo.AllocationBase != cptr ||
-	minfo.State != MEM_cummit || minfo.RegionSize > size)
+	minfo.State != MEM_CUMMIT || minfo.RegionSize > size)
       return -1;
     if (VirtualFree(cptr, 0, MEM_RELEASE) == 0)
       return -1;

@@ -268,19 +268,19 @@ test_expect_success "(not) changed .git/$m" '
 rm -f .git/logs/refs/heads/main
 test_expect_success "create $m (logged by touch)" '
 	test_config core.logAllRefUpdates false &&
-	GIT_cummitTER_DATE="2005-05-26 23:30" \
+	GIT_CUMMITTER_DATE="2005-05-26 23:30" \
 	git update-ref --create-reflog HEAD $A -m "Initial Creation" &&
 	test $A = $(git show-ref -s --verify $m)
 '
 test_expect_success "update $m (logged by touch)" '
 	test_config core.logAllRefUpdates false &&
-	GIT_cummitTER_DATE="2005-05-26 23:31" \
+	GIT_CUMMITTER_DATE="2005-05-26 23:31" \
 	git update-ref HEAD $B $A -m "Switch" &&
 	test $B = $(git show-ref -s --verify $m)
 '
 test_expect_success "set $m (logged by touch)" '
 	test_config core.logAllRefUpdates false &&
-	GIT_cummitTER_DATE="2005-05-26 23:41" \
+	GIT_CUMMITTER_DATE="2005-05-26 23:41" \
 	git update-ref HEAD $A &&
 	test $A = $(git show-ref -s --verify $m)
 '
@@ -313,9 +313,9 @@ test_expect_success 'symref empty directory removal' '
 '
 
 cat >expect <<EOF
-$Z $A $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> 1117150200 +0000	Initial Creation
-$A $B $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> 1117150260 +0000	Switch
-$B $A $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> 1117150860 +0000
+$Z $A $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> 1117150200 +0000	Initial Creation
+$A $B $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> 1117150260 +0000	Switch
+$B $A $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> 1117150860 +0000
 EOF
 test_expect_success "verifying $m's log (logged by touch)" '
 	test_when_finished "git update-ref -d $m && rm -rf .git/logs actual expect" &&
@@ -325,27 +325,27 @@ test_expect_success "verifying $m's log (logged by touch)" '
 
 test_expect_success "create $m (logged by config)" '
 	test_config core.logAllRefUpdates true &&
-	GIT_cummitTER_DATE="2005-05-26 23:32" \
+	GIT_CUMMITTER_DATE="2005-05-26 23:32" \
 	git update-ref HEAD $A -m "Initial Creation" &&
 	test $A = $(git show-ref -s --verify $m)
 '
 test_expect_success "update $m (logged by config)" '
 	test_config core.logAllRefUpdates true &&
-	GIT_cummitTER_DATE="2005-05-26 23:33" \
+	GIT_CUMMITTER_DATE="2005-05-26 23:33" \
 	git update-ref HEAD $B $A -m "Switch" &&
 	test $B = $(git show-ref -s --verify $m)
 '
 test_expect_success "set $m (logged by config)" '
 	test_config core.logAllRefUpdates true &&
-	GIT_cummitTER_DATE="2005-05-26 23:43" \
+	GIT_CUMMITTER_DATE="2005-05-26 23:43" \
 	git update-ref HEAD $A &&
 	test $A = $(git show-ref -s --verify $m)
 '
 
 cat >expect <<EOF
-$Z $A $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> 1117150320 +0000	Initial Creation
-$A $B $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> 1117150380 +0000	Switch
-$B $A $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> 1117150980 +0000
+$Z $A $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> 1117150320 +0000	Initial Creation
+$A $B $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> 1117150380 +0000	Switch
+$B $A $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> 1117150980 +0000
 EOF
 test_expect_success "verifying $m's log (logged by config)" '
 	test_when_finished "git update-ref -d $m && rm -rf .git/logs actual expect" &&
@@ -356,11 +356,11 @@ test_expect_success "verifying $m's log (logged by config)" '
 test_expect_success 'set up for querying the reflog' '
 	git update-ref $m $D &&
 	cat >.git/logs/$m <<-EOF
-	$Z $C $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> 1117150320 -0500
-	$C $A $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> 1117150350 -0500
-	$A $B $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> 1117150380 -0500
-	$F $Z $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> 1117150680 -0500
-	$Z $E $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> 1117150980 -0500
+	$Z $C $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> 1117150320 -0500
+	$C $A $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> 1117150350 -0500
+	$A $B $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> 1117150380 -0500
+	$F $Z $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> 1117150680 -0500
+	$Z $E $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> 1117150980 -0500
 	EOF
 '
 
@@ -441,29 +441,29 @@ test_expect_success 'creating initial files' '
 	echo TEST >F &&
 	git add F &&
 	GIT_AUTHOR_DATE="2005-05-26 23:30" \
-	GIT_cummitTER_DATE="2005-05-26 23:30" git cummit -m add -a &&
+	GIT_CUMMITTER_DATE="2005-05-26 23:30" git cummit -m add -a &&
 	h_TEST=$(git rev-parse --verify HEAD) &&
 	echo The other day this did not work. >M &&
 	echo And then Bob told me how to fix it. >>M &&
 	echo OTHER >F &&
 	GIT_AUTHOR_DATE="2005-05-26 23:41" \
-	GIT_cummitTER_DATE="2005-05-26 23:41" git cummit -F M -a &&
+	GIT_CUMMITTER_DATE="2005-05-26 23:41" git cummit -F M -a &&
 	h_OTHER=$(git rev-parse --verify HEAD) &&
 	GIT_AUTHOR_DATE="2005-05-26 23:44" \
-	GIT_cummitTER_DATE="2005-05-26 23:44" git cummit --amend &&
+	GIT_CUMMITTER_DATE="2005-05-26 23:44" git cummit --amend &&
 	h_FIXED=$(git rev-parse --verify HEAD) &&
 	echo Merged initial cummit and a later cummit. >M &&
 	echo $h_TEST >.git/MERGE_HEAD &&
 	GIT_AUTHOR_DATE="2005-05-26 23:45" \
-	GIT_cummitTER_DATE="2005-05-26 23:45" git cummit -F M &&
+	GIT_CUMMITTER_DATE="2005-05-26 23:45" git cummit -F M &&
 	h_MERGED=$(git rev-parse --verify HEAD)
 '
 
 cat >expect <<EOF
-$Z $h_TEST $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> 1117150200 +0000	cummit (initial): add
-$h_TEST $h_OTHER $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> 1117150860 +0000	cummit: The other day this did not work.
-$h_OTHER $h_FIXED $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> 1117151040 +0000	cummit (amend): The other day this did not work.
-$h_FIXED $h_MERGED $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> 1117151100 +0000	cummit (merge): Merged initial cummit and a later cummit.
+$Z $h_TEST $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> 1117150200 +0000	cummit (initial): add
+$h_TEST $h_OTHER $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> 1117150860 +0000	cummit: The other day this did not work.
+$h_OTHER $h_FIXED $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> 1117151040 +0000	cummit (amend): The other day this did not work.
+$h_FIXED $h_MERGED $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> 1117151100 +0000	cummit (merge): Merged initial cummit and a later cummit.
 EOF
 test_expect_success 'git cummit logged updates' '
 	test-tool ref-store main for-each-reflog-ent $m >actual &&

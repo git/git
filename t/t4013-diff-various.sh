@@ -14,8 +14,8 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 test_expect_success setup '
 
 	GIT_AUTHOR_DATE="2006-06-26 00:00:00 +0000" &&
-	GIT_cummitTER_DATE="2006-06-26 00:00:00 +0000" &&
-	export GIT_AUTHOR_DATE GIT_cummitTER_DATE &&
+	GIT_CUMMITTER_DATE="2006-06-26 00:00:00 +0000" &&
+	export GIT_AUTHOR_DATE GIT_CUMMITTER_DATE &&
 
 	mkdir dir &&
 	mkdir dir2 &&
@@ -29,8 +29,8 @@ test_expect_success setup '
 	git branch side &&
 
 	GIT_AUTHOR_DATE="2006-06-26 00:01:00 +0000" &&
-	GIT_cummitTER_DATE="2006-06-26 00:01:00 +0000" &&
-	export GIT_AUTHOR_DATE GIT_cummitTER_DATE &&
+	GIT_CUMMITTER_DATE="2006-06-26 00:01:00 +0000" &&
+	export GIT_AUTHOR_DATE GIT_CUMMITTER_DATE &&
 
 	test_write_lines 4 5 6 >>file0 &&
 	test_write_lines C D >>dir/sub &&
@@ -39,8 +39,8 @@ test_expect_success setup '
 	git cummit -m "Second${LF}${LF}This is the second cummit." &&
 
 	GIT_AUTHOR_DATE="2006-06-26 00:02:00 +0000" &&
-	GIT_cummitTER_DATE="2006-06-26 00:02:00 +0000" &&
-	export GIT_AUTHOR_DATE GIT_cummitTER_DATE &&
+	GIT_CUMMITTER_DATE="2006-06-26 00:02:00 +0000" &&
+	export GIT_AUTHOR_DATE GIT_CUMMITTER_DATE &&
 
 	test_write_lines A B C >file1 &&
 	git add file1 &&
@@ -49,8 +49,8 @@ test_expect_success setup '
 	git cummit -m Third &&
 
 	GIT_AUTHOR_DATE="2006-06-26 00:03:00 +0000" &&
-	GIT_cummitTER_DATE="2006-06-26 00:03:00 +0000" &&
-	export GIT_AUTHOR_DATE GIT_cummitTER_DATE &&
+	GIT_CUMMITTER_DATE="2006-06-26 00:03:00 +0000" &&
+	export GIT_AUTHOR_DATE GIT_CUMMITTER_DATE &&
 
 	git checkout side &&
 	test_write_lines A B C >>file0 &&
@@ -61,15 +61,15 @@ test_expect_success setup '
 	git cummit -m Side &&
 
 	GIT_AUTHOR_DATE="2006-06-26 00:04:00 +0000" &&
-	GIT_cummitTER_DATE="2006-06-26 00:04:00 +0000" &&
-	export GIT_AUTHOR_DATE GIT_cummitTER_DATE &&
+	GIT_CUMMITTER_DATE="2006-06-26 00:04:00 +0000" &&
+	export GIT_AUTHOR_DATE GIT_CUMMITTER_DATE &&
 
 	git checkout master &&
 	git pull -s ours --no-rebase . side &&
 
 	GIT_AUTHOR_DATE="2006-06-26 00:05:00 +0000" &&
-	GIT_cummitTER_DATE="2006-06-26 00:05:00 +0000" &&
-	export GIT_AUTHOR_DATE GIT_cummitTER_DATE &&
+	GIT_CUMMITTER_DATE="2006-06-26 00:05:00 +0000" &&
+	export GIT_AUTHOR_DATE GIT_CUMMITTER_DATE &&
 
 	test_write_lines A B C >>file0 &&
 	test_write_lines 1 2 >>dir/sub &&
@@ -83,8 +83,8 @@ test_expect_success setup '
 	git cummit --amend &&
 
 	GIT_AUTHOR_DATE="2006-06-26 00:06:00 +0000" &&
-	GIT_cummitTER_DATE="2006-06-26 00:06:00 +0000" &&
-	export GIT_AUTHOR_DATE GIT_cummitTER_DATE &&
+	GIT_CUMMITTER_DATE="2006-06-26 00:06:00 +0000" &&
+	export GIT_AUTHOR_DATE GIT_CUMMITTER_DATE &&
 	git checkout -b rearrange initial &&
 	test_write_lines B A >dir/sub &&
 	git add dir/sub &&
@@ -92,16 +92,16 @@ test_expect_success setup '
 	git checkout master &&
 
 	GIT_AUTHOR_DATE="2006-06-26 00:06:00 +0000" &&
-	GIT_cummitTER_DATE="2006-06-26 00:06:00 +0000" &&
-	export GIT_AUTHOR_DATE GIT_cummitTER_DATE &&
+	GIT_CUMMITTER_DATE="2006-06-26 00:06:00 +0000" &&
+	export GIT_AUTHOR_DATE GIT_CUMMITTER_DATE &&
 	git checkout -b mode initial &&
 	git update-index --chmod=+x file0 &&
 	git cummit -m "update mode" &&
 	git checkout -f master &&
 
 	GIT_AUTHOR_DATE="2006-06-26 00:06:00 +0000" &&
-	GIT_cummitTER_DATE="2006-06-26 00:06:00 +0000" &&
-	export GIT_AUTHOR_DATE GIT_cummitTER_DATE &&
+	GIT_CUMMITTER_DATE="2006-06-26 00:06:00 +0000" &&
+	export GIT_AUTHOR_DATE GIT_CUMMITTER_DATE &&
 	git checkout -b note initial &&
 	git update-index --chmod=+x file2 &&
 	git cummit -m "update mode (file2)" &&

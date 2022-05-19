@@ -3,7 +3,7 @@
 test_description='cummit graph'
 . ./test-lib.sh
 
-GIT_TEST_cummit_GRAPH_CHANGED_PATHS=0
+GIT_TEST_CUMMIT_GRAPH_CHANGED_PATHS=0
 
 test_expect_success 'usage' '
 	test_expect_code 129 git cummit-graph write blah 2>err &&
@@ -459,7 +459,7 @@ test_expect_success 'git cummit-graph verify' '
 	graph_read_expect 9 extra_edges 1
 '
 
-NUM_cummitS=9
+NUM_CUMMITS=9
 NUM_OCTOPUS_EDGES=2
 HASH_LEN="$(test_oid rawsz)"
 GRAPH_BYTE_VERSION=4
@@ -471,7 +471,7 @@ GRAPH_CHUNK_LOOKUP_ROWS=5
 GRAPH_BYTE_OID_FANOUT_ID=$GRAPH_CHUNK_LOOKUP_OFFSET
 GRAPH_BYTE_OID_LOOKUP_ID=$(($GRAPH_CHUNK_LOOKUP_OFFSET + \
 			    1 * $GRAPH_CHUNK_LOOKUP_WIDTH))
-GRAPH_BYTE_cummit_DATA_ID=$(($GRAPH_CHUNK_LOOKUP_OFFSET + \
+GRAPH_BYTE_CUMMIT_DATA_ID=$(($GRAPH_CHUNK_LOOKUP_OFFSET + \
 			     2 * $GRAPH_CHUNK_LOOKUP_WIDTH))
 GRAPH_FANOUT_OFFSET=$(($GRAPH_CHUNK_LOOKUP_OFFSET + \
 		       $GRAPH_CHUNK_LOOKUP_WIDTH * $GRAPH_CHUNK_LOOKUP_ROWS))
@@ -480,16 +480,16 @@ GRAPH_BYTE_FANOUT2=$(($GRAPH_FANOUT_OFFSET + 4 * 255))
 GRAPH_OID_LOOKUP_OFFSET=$(($GRAPH_FANOUT_OFFSET + 4 * 256))
 GRAPH_BYTE_OID_LOOKUP_ORDER=$(($GRAPH_OID_LOOKUP_OFFSET + $HASH_LEN * 8))
 GRAPH_BYTE_OID_LOOKUP_MISSING=$(($GRAPH_OID_LOOKUP_OFFSET + $HASH_LEN * 4 + 10))
-GRAPH_cummit_DATA_OFFSET=$(($GRAPH_OID_LOOKUP_OFFSET + $HASH_LEN * $NUM_cummitS))
-GRAPH_BYTE_cummit_TREE=$GRAPH_cummit_DATA_OFFSET
-GRAPH_BYTE_cummit_PARENT=$(($GRAPH_cummit_DATA_OFFSET + $HASH_LEN))
-GRAPH_BYTE_cummit_EXTRA_PARENT=$(($GRAPH_cummit_DATA_OFFSET + $HASH_LEN + 4))
-GRAPH_BYTE_cummit_WRONG_PARENT=$(($GRAPH_cummit_DATA_OFFSET + $HASH_LEN + 3))
-GRAPH_BYTE_cummit_GENERATION=$(($GRAPH_cummit_DATA_OFFSET + $HASH_LEN + 11))
-GRAPH_BYTE_cummit_DATE=$(($GRAPH_cummit_DATA_OFFSET + $HASH_LEN + 12))
-GRAPH_cummit_DATA_WIDTH=$(($HASH_LEN + 16))
-GRAPH_OCTOPUS_DATA_OFFSET=$(($GRAPH_cummit_DATA_OFFSET + \
-			     $GRAPH_cummit_DATA_WIDTH * $NUM_cummitS))
+GRAPH_CUMMIT_DATA_OFFSET=$(($GRAPH_OID_LOOKUP_OFFSET + $HASH_LEN * $NUM_CUMMITS))
+GRAPH_BYTE_CUMMIT_TREE=$GRAPH_CUMMIT_DATA_OFFSET
+GRAPH_BYTE_CUMMIT_PARENT=$(($GRAPH_CUMMIT_DATA_OFFSET + $HASH_LEN))
+GRAPH_BYTE_CUMMIT_EXTRA_PARENT=$(($GRAPH_CUMMIT_DATA_OFFSET + $HASH_LEN + 4))
+GRAPH_BYTE_CUMMIT_WRONG_PARENT=$(($GRAPH_CUMMIT_DATA_OFFSET + $HASH_LEN + 3))
+GRAPH_BYTE_CUMMIT_GENERATION=$(($GRAPH_CUMMIT_DATA_OFFSET + $HASH_LEN + 11))
+GRAPH_BYTE_CUMMIT_DATE=$(($GRAPH_CUMMIT_DATA_OFFSET + $HASH_LEN + 12))
+GRAPH_CUMMIT_DATA_WIDTH=$(($HASH_LEN + 16))
+GRAPH_OCTOPUS_DATA_OFFSET=$(($GRAPH_CUMMIT_DATA_OFFSET + \
+			     $GRAPH_CUMMIT_DATA_WIDTH * $NUM_CUMMITS))
 GRAPH_BYTE_OCTOPUS=$(($GRAPH_OCTOPUS_DATA_OFFSET + 4))
 GRAPH_BYTE_FOOTER=$(($GRAPH_OCTOPUS_DATA_OFFSET + 4 * $NUM_OCTOPUS_EDGES))
 
@@ -510,7 +510,7 @@ corrupt_graph_verify() {
 		cp $objdir/info/cummit-graph cummit-graph-pre-write-test
 	fi &&
 	git status --short &&
-	GIT_TEST_cummit_GRAPH_DIE_ON_PARSE=true git cummit-graph write &&
+	GIT_TEST_CUMMIT_GRAPH_DIE_ON_PARSE=true git cummit-graph write &&
 	chmod u+w $objdir/info/cummit-graph &&
 	git cummit-graph verify
 }
@@ -578,7 +578,7 @@ test_expect_success 'detect missing OID lookup chunk' '
 '
 
 test_expect_success 'detect missing cummit data chunk' '
-	corrupt_graph_and_verify $GRAPH_BYTE_cummit_DATA_ID "\0" \
+	corrupt_graph_and_verify $GRAPH_BYTE_CUMMIT_DATA_ID "\0" \
 		"missing the cummit Data chunk"
 '
 
@@ -603,37 +603,37 @@ test_expect_success 'detect OID not in object database' '
 '
 
 test_expect_success 'detect incorrect tree OID' '
-	corrupt_graph_and_verify $GRAPH_BYTE_cummit_TREE "\01" \
+	corrupt_graph_and_verify $GRAPH_BYTE_CUMMIT_TREE "\01" \
 		"root tree OID for cummit"
 '
 
 test_expect_success 'detect incorrect parent int-id' '
-	corrupt_graph_and_verify $GRAPH_BYTE_cummit_PARENT "\01" \
+	corrupt_graph_and_verify $GRAPH_BYTE_CUMMIT_PARENT "\01" \
 		"invalid parent"
 '
 
 test_expect_success 'detect extra parent int-id' '
-	corrupt_graph_and_verify $GRAPH_BYTE_cummit_EXTRA_PARENT "\00" \
+	corrupt_graph_and_verify $GRAPH_BYTE_CUMMIT_EXTRA_PARENT "\00" \
 		"is too long"
 '
 
 test_expect_success 'detect wrong parent' '
-	corrupt_graph_and_verify $GRAPH_BYTE_cummit_WRONG_PARENT "\01" \
+	corrupt_graph_and_verify $GRAPH_BYTE_CUMMIT_WRONG_PARENT "\01" \
 		"cummit-graph parent for"
 '
 
 test_expect_success 'detect incorrect generation number' '
-	corrupt_graph_and_verify $GRAPH_BYTE_cummit_GENERATION "\070" \
+	corrupt_graph_and_verify $GRAPH_BYTE_CUMMIT_GENERATION "\070" \
 		"generation for cummit"
 '
 
 test_expect_success 'detect incorrect generation number' '
-	corrupt_graph_and_verify $GRAPH_BYTE_cummit_GENERATION "\01" \
+	corrupt_graph_and_verify $GRAPH_BYTE_CUMMIT_GENERATION "\01" \
 		"non-zero generation number"
 '
 
 test_expect_success 'detect incorrect cummit date' '
-	corrupt_graph_and_verify $GRAPH_BYTE_cummit_DATE "\01" \
+	corrupt_graph_and_verify $GRAPH_BYTE_CUMMIT_DATE "\01" \
 		"cummit date"
 '
 

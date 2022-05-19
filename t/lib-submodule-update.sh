@@ -497,7 +497,7 @@ test_submodule_switch_common () {
 
 	########################## Modified submodule #########################
 	# Updating a submodule sha1 doesn't update the submodule's work tree
-	if test "$KNOWN_FAILURE_CHERRY_PICK_SEES_EMPTY_cummit" = 1
+	if test "$KNOWN_FAILURE_CHERRY_PICK_SEES_EMPTY_CUMMIT" = 1
 	then
 		# When cherry picking a SHA-1 update for an ignored submodule
 		# the cummit incorrectly fails with "The previous cherry-pick

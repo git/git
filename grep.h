@@ -44,7 +44,7 @@ enum grep_context {
 enum grep_header_field {
 	GREP_HEADER_FIELD_MIN = 0,
 	GREP_HEADER_AUTHOR = GREP_HEADER_FIELD_MIN,
-	GREP_HEADER_cummitTER,
+	GREP_HEADER_CUMMITTER,
 	GREP_HEADER_REFLOG,
 
 	/* Must be at the end of the enum */

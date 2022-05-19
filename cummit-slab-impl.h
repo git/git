@@ -1,5 +1,5 @@
-#ifndef cummit_SLAB_IMPL_H
-#define cummit_SLAB_IMPL_H
+#ifndef CUMMIT_SLAB_IMPL_H
+#define CUMMIT_SLAB_IMPL_H
 
 #include "git-compat-util.h"
 
@@ -19,7 +19,7 @@ scope void init_ ##slabname## _with_stride(struct slabname *s,		\
 		stride = 1;						\
 	s->stride = stride;						\
 	elem_size = sizeof(elemtype) * stride;				\
-	s->slab_size = cummit_SLAB_SIZE / elem_size;			\
+	s->slab_size = CUMMIT_SLAB_SIZE / elem_size;			\
 	s->slab_count = 0;						\
 	s->slab = NULL;							\
 }									\
@@ -104,4 +104,4 @@ struct slabname
  * catch because GCC silently parses it by default.
  */
 
-#endif	/* cummit_SLAB_IMPL_H */
+#endif	/* CUMMIT_SLAB_IMPL_H */

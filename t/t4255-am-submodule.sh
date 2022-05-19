@@ -58,15 +58,15 @@ test_expect_success 'setup diff.submodule' '
 '
 
 run_test() {
-	START_cummit=$1 &&
+	START_CUMMIT=$1 &&
 	EXPECT=$2 &&
 	# Abort any merges in progress: the previous
 	# test may have failed, and we should clean up.
 	test_might_fail git am --abort &&
-	git reset --hard $START_cummit &&
+	git reset --hard $START_CUMMIT &&
 	rm -f *.patch &&
 	git format-patch -1 &&
-	git reset --hard $START_cummit^ &&
+	git reset --hard $START_CUMMIT^ &&
 	git submodule update &&
 	git am *.patch &&
 	git submodule update &&
