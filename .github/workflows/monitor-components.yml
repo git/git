@@ -70,6 +70,8 @@ jobs:
           - label: perl
             feed: https://github.com/Perl/perl5/tags.atom
             title-pattern: ^(?!.*(5\.[0-9]+[13579]|RC))
+          - label: pcre2
+            feed: https://github.com/PCRE2Project/pcre2/tags.atom
       fail-fast: false
     steps:
       - uses: git-for-windows/rss-to-issues@v0
