@@ -15,6 +15,10 @@ generate_references () {
 	done
 }
 
+test_expect_success 'dies when no remote found' '
+	test_must_fail git ls-remote
+'
+
 test_expect_success setup '
 	>file &&
 	git add file &&
@@ -30,7 +34,8 @@ test_expect_success setup '
 	git show-ref -d	>refs &&
 	sed -e "s/ /	/" refs >>expected.all &&
 
-	git remote add self "$(pwd)/.git"
+	git remote add self "$(pwd)/.git" &&
+	git remote add self2 "."
 '
 
 test_expect_success 'ls-remote --tags .git' '
@@ -83,11 +88,17 @@ test_expect_success 'ls-remote --sort="-refname" --tags self' '
 	test_cmp expect actual
 '
 
-test_expect_success 'dies when no remote specified and no default remotes found' '
+test_expect_success 'dies when no remote specified, multiple remotes found, and no default specified' '
 	test_must_fail git ls-remote
 '
 
-test_expect_success 'use "origin" when no remote specified' '
+test_expect_success 'succeeds when no remote specified but only one found' '
+	test_when_finished git remote add self2 "." &&
+	git remote remove self2 &&
+	git ls-remote
+'
+
+test_expect_success 'use "origin" when no remote specified and multiple found' '
 	URL="$(pwd)/.git" &&
 	echo "From $URL" >exp_err &&
 
